@@ -9,11 +9,14 @@ from plane.db.models import (
     Workspace,
     WorkspaceMemberInvite,
 )
+from plane.license.models import Instance, InstanceAdmin
 
 from .base import BaseSerializer
 
 
 class UserSerializer(BaseSerializer):
+    is_instance_admin = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         # Exclude password field from the serializer
@@ -21,7 +24,7 @@ class UserSerializer(BaseSerializer):
             field.name
             for field in User._meta.fields
             if field.name != "password"
-        ]
+        ] + ["is_instance_admin"]
         # Make all system fields and email read only
         read_only_fields = [
             "id",
@@ -48,11 +51,20 @@ class UserSerializer(BaseSerializer):
             "is_email_verified",
             "is_active",
             "token_updated_at",
+            "is_instance_admin",
         ]
 
         # If the user has already filled first name or last name then he is onboarded
         def get_is_onboarded(self, obj):
             return bool(obj.first_name) or bool(obj.last_name)
+
+    def get_is_instance_admin(self, obj):
+        instance = Instance.objects.first()
+        return InstanceAdmin.objects.filter(
+            instance=instance,
+            user=obj,
+            role__gte=15
+        ).exists()
 
 
 class UserMeSerializer(BaseSerializer):

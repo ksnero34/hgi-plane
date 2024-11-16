@@ -86,27 +86,35 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
 
               if (onSubmit) await onSubmit(res);
             })
-            .catch(() => {
-              captureWorkspaceEvent({
-                eventName: WORKSPACE_CREATED,
-                payload: {
-                  state: "FAILED",
-                  element: "Create workspace page",
-                },
-              });
-              setToast({
-                type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Workspace could not be created. Please try again.",
-              });
+            .catch((error) => {
+              if (error?.error === "Only instance administrators can create workspaces") {
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: "Permission Denied",
+                  message: "Only instance administrators can create workspaces",
+                });
+              } else {
+                captureWorkspaceEvent({
+                  eventName: WORKSPACE_CREATED,
+                  payload: {
+                    state: "FAILED",
+                    element: "Create workspace page",
+                  },
+                });
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: "Error",
+                  message: "Failed to create workspace. Please try again.",
+                });
+              }
             });
         } else setSlugError(true);
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Some error occurred while creating workspace. Please try again.",
+          title: "Error",
+          message: "An error occurred during workspace creation. Please try again.",
         });
       });
   };

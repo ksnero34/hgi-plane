@@ -7,6 +7,7 @@ import {
   IFormattedInstanceConfiguration,
   IInstanceInfo,
   IInstanceConfig,
+  IUser,
 } from "@plane/types";
 // helpers
 import { EInstanceStatus, TInstanceStatus } from "@/helpers/instance.helper";
@@ -33,6 +34,8 @@ export interface IInstanceStore {
   fetchInstanceAdmins: () => Promise<IInstanceAdmin[] | undefined>;
   fetchInstanceConfigurations: () => Promise<IInstanceConfiguration[] | undefined>;
   updateInstanceConfigurations: (data: Partial<IFormattedInstanceConfiguration>) => Promise<IInstanceConfiguration[]>;
+  fetchInstanceMembers: () => Promise<IUser[]>;
+  updateInstanceMember: (userId: string, data: { is_admin: boolean }) => Promise<IUser>;
 }
 
 export class InstanceStore implements IInstanceStore {
@@ -64,6 +67,8 @@ export class InstanceStore implements IInstanceStore {
       updateInstanceInfo: action,
       fetchInstanceConfigurations: action,
       updateInstanceConfigurations: action,
+      fetchInstanceMembers: action,
+      updateInstanceMember: action,
     });
 
     this.instanceService = new InstanceService();
@@ -185,6 +190,33 @@ export class InstanceStore implements IInstanceStore {
       return response;
     } catch (error) {
       console.error("Error updating the instance configurations");
+      throw error;
+    }
+  };
+
+  fetchInstanceMembers = async () => {
+    try {
+      const members = await this.instanceService.fetchInstanceMembers();
+      return members;
+    } catch (error) {
+      console.error("Error fetching instance members");
+      throw error;
+    }
+  };
+
+  updateInstanceMember = async (userId: string, data: { is_admin: boolean }) => {
+    try {
+      const response = await this.instanceService.updateInstanceMember(userId, data);
+      
+      // 멤버 목록을 다시 불러와서 상태 업데이트
+      await this.fetchInstanceMembers()
+        .then(members => {
+          return response;
+        });
+        
+      return response;
+    } catch (error) {
+      console.error("Error updating instance member");
       throw error;
     }
   };

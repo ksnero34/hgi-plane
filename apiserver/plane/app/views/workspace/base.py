@@ -49,6 +49,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django.views.decorators.vary import vary_on_cookie
 from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
+from plane.license.models import Instance, InstanceAdmin
 
 
 class WorkSpaceViewSet(BaseViewSet):
@@ -104,6 +105,26 @@ class WorkSpaceViewSet(BaseViewSet):
     @invalidate_cache(path="/api/instances/", user=False)
     def create(self, request):
         try:
+            # 디버깅 로그 추가
+            print("=== User Debug Info ===")
+            print(f"User ID: {request.user.id}")
+            print(f"User Email: {request.user.email}")
+            print("=====================")
+
+            # 인스턴스 관리자 권한 확인
+            instance = Instance.objects.first()
+            is_instance_admin = InstanceAdmin.objects.filter(
+                instance=instance,
+                user=request.user,
+                role__gte=15
+            ).exists()
+
+            if not is_instance_admin:
+                return Response(
+                    {"error": "Only instance administrators can create workspaces"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
             serializer = WorkSpaceSerializer(data=request.data)
 
             slug = request.data.get("slug", False)
