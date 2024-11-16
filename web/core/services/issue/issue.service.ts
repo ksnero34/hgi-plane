@@ -64,6 +64,39 @@ export class IssueService extends APIService {
 
   async getIssues(workspaceSlug: string, projectId: string, queries?: any, config = {}): Promise<TIssuesResponse> {
     const response = await Sentry.startSpan({ name: "GET_ISSUES" }, async () => {
+      if (queries?.layout === "calendar") {
+        try {
+          const modifiedQueries = {
+            ...queries,
+            layout: "calendar",
+            target_date: undefined,
+            start_target_date: queries.start_date_from,
+            end_target_date: queries.start_date_to
+          };
+
+          const res = await this.getIssuesFromServer(workspaceSlug, projectId, modifiedQueries, config);
+
+          const allIssues = [];
+          if (res?.results) {
+            for (const dateKey in res.results) {
+              const dateGroup = res.results[dateKey];
+              if (dateGroup?.results && Array.isArray(dateGroup.results)) {
+                allIssues.push(...dateGroup.results);
+              }
+            }
+          }
+
+          return {
+            ...res,
+            issues: allIssues,
+            groupedIssues: res.results
+          };
+        } catch (error) {
+          console.error("Calendar view error:", error);
+          throw error;
+        }
+      }
+
       const res = await persistence.getIssues(workspaceSlug, projectId, queries, config);
       return res;
     });

@@ -112,8 +112,35 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       groupId: string | undefined,
       subGroupId: string | undefined
     ) => {
+      console.log("Filter Params Input:", {
+        options,
+        projectId,
+        cursor,
+        groupId,
+        subGroupId
+      });
+
       const filterParams = this.getAppliedFilters(projectId);
       const paginationParams = this.getPaginationParams(filterParams, options, cursor, groupId, subGroupId);
+
+      // 캘린더 뷰인 경우 추가 파라미터
+      if (options.groupedBy === 'target_date' && options.after && options.before) {
+        return {
+          ...paginationParams,
+          layout: 'calendar',
+          start_date_from: options.after,
+          start_date_to: options.before,
+          target_date_from: options.after,
+          target_date_to: options.before,
+          include_in_range: true,
+          include_start_date: true,
+          include_target_date: true,
+          include_date_range: true,
+          per_page: 100
+        };
+      }
+
+      console.log("Final Pagination Params:", paginationParams);
       return paginationParams;
     }
   );

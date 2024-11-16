@@ -4,7 +4,7 @@ import { FC, useCallback, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { EIssueGroupByToServerOptions } from "@plane/constants";
-import { TGroupedIssues } from "@plane/types";
+import { TGroupedIssues, TIssue } from "@plane/types";
 // components
 import { TOAST_TYPE, setToast } from "@plane/ui";
 import { CalendarChart } from "@/components/issues";
@@ -32,7 +32,21 @@ interface IBaseCalendarRoot {
   viewId?: string | undefined;
 }
 
-export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
+const getIssuesForDate = (date: Date, issues: any) => {
+  if (!issues || !Array.isArray(issues.issues)) return [];
+  
+  return {
+    date: date.toLocaleString(),
+    allIssues: issues,
+    filteredIssues: issues.issues.filter((issue: TIssue) => {
+      const startDate = issue.start_date ? new Date(issue.start_date) : null;
+      const targetDate = issue.target_date ? new Date(issue.target_date) : null;
+      return (startDate && startDate <= date) || (targetDate && targetDate >= date);
+    })
+  };
+};
+
+export const BaseCalendarRoot: FC<IBaseCalendarRoot> = observer((props: IBaseCalendarRoot) => {
   const { QuickActions, addIssuesToView, isCompletedCycle = false, viewId } = props;
 
   // router
@@ -126,39 +140,37 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
   );
 
   return (
-    <>
-      <div className="h-full w-full overflow-hidden bg-custom-background-100 pt-4">
-        <CalendarChart
-          issuesFilterStore={issuesFilter}
-          issues={issueMap}
-          groupedIssueIds={groupedIssueIds}
-          layout={displayFilters?.calendar?.layout}
-          showWeekends={displayFilters?.calendar?.show_weekends ?? false}
-          issueCalendarView={issueCalendarView}
-          quickActions={({ issue, parentRef, customActionButton, placement }) => (
-            <QuickActions
-              parentRef={parentRef}
-              customActionButton={customActionButton}
-              issue={issue}
-              handleDelete={async () => removeIssue(issue.project_id, issue.id)}
-              handleUpdate={async (data) => updateIssue && updateIssue(issue.project_id, issue.id, data)}
-              handleRemoveFromView={async () => removeIssueFromView && removeIssueFromView(issue.project_id, issue.id)}
-              handleArchive={async () => archiveIssue && archiveIssue(issue.project_id, issue.id)}
-              handleRestore={async () => restoreIssue && restoreIssue(issue.project_id, issue.id)}
-              readOnly={!isEditingAllowed || isCompletedCycle}
-              placements={placement}
-            />
-          )}
-          loadMoreIssues={loadMoreIssues}
-          getPaginationData={getPaginationData}
-          getGroupIssueCount={getGroupIssueCount}
-          addIssuesToView={addIssuesToView}
-          quickAddCallback={quickAddIssue}
-          readOnly={!isEditingAllowed || isCompletedCycle}
-          updateFilters={updateFilters}
-          handleDragAndDrop={handleDragAndDrop}
-        />
-      </div>
-    </>
+    <div className="h-full w-full overflow-hidden bg-custom-background-100 pt-4">
+      <CalendarChart
+        issuesFilterStore={issuesFilter}
+        issues={issueMap}
+        groupedIssueIds={groupedIssueIds}
+        layout={displayFilters?.calendar?.layout}
+        showWeekends={displayFilters?.calendar?.show_weekends ?? false}
+        issueCalendarView={issueCalendarView}
+        quickActions={({ issue, parentRef, customActionButton, placement }) => (
+          <QuickActions
+            parentRef={parentRef}
+            customActionButton={customActionButton}
+            issue={issue}
+            handleDelete={async () => removeIssue(issue.project_id, issue.id)}
+            handleUpdate={async (data) => updateIssue && updateIssue(issue.project_id, issue.id, data)}
+            handleRemoveFromView={async () => removeIssueFromView && removeIssueFromView(issue.project_id, issue.id)}
+            handleArchive={async () => archiveIssue && archiveIssue(issue.project_id, issue.id)}
+            handleRestore={async () => restoreIssue && restoreIssue(issue.project_id, issue.id)}
+            readOnly={!isEditingAllowed || isCompletedCycle}
+            placements={placement}
+          />
+        )}
+        loadMoreIssues={loadMoreIssues}
+        getPaginationData={getPaginationData}
+        getGroupIssueCount={getGroupIssueCount}
+        addIssuesToView={addIssuesToView}
+        quickAddCallback={quickAddIssue}
+        readOnly={!isEditingAllowed || isCompletedCycle}
+        updateFilters={updateFilters}
+        handleDragAndDrop={handleDragAndDrop}
+      />
+    </div>
   );
 });

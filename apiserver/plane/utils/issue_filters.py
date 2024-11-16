@@ -3,6 +3,7 @@ import uuid
 from datetime import timedelta
 
 from django.utils import timezone
+from django.db.models import Q
 
 # The date from pattern
 pattern = re.compile(r"\d+_(weeks|months)$")
@@ -524,6 +525,28 @@ def filter_logged_by(params, issue_filter, method, prefix=""):
     return issue_filter
 
 
+def filter_calendar_dates(params, issue_filter, method, prefix=""):
+    """캘린더 뷰를 위한 날짜 필터링"""
+    if params.get("layout") == "calendar":
+        start_date_from = params.get("start_date_from")
+        start_date_to = params.get("start_date_to")
+        target_date_from = params.get("target_date_from")
+        target_date_to = params.get("target_date_to")
+
+        if start_date_from and start_date_to and target_date_from and target_date_to:
+            # 일반 필터 조건으로 변경
+            issue_filter.update({
+                # start_date가 범위 내에 있는 경우
+                f"{prefix}start_date__gte": start_date_from,
+                f"{prefix}start_date__lte": start_date_to,
+                # target_date가 범위 내에 있는 경우
+                f"{prefix}target_date__gte": target_date_from,
+                f"{prefix}target_date__lte": target_date_to,
+            })
+
+    return issue_filter
+
+
 def issue_filters(query_params, method, prefix=""):
     issue_filter = {}
 
@@ -552,10 +575,11 @@ def issue_filters(query_params, method, prefix=""):
         "sub_issue": filter_sub_issue_toggle,
         "subscriber": filter_subscribed_issues,
         "start_target_date": filter_start_target_date_issues,
+        "layout": filter_calendar_dates,  # 캘린더 뷰 필터 추가
     }
 
     for key, value in ISSUE_FILTER.items():
         if key in query_params:
             func = value
-            func(query_params, issue_filter, method, prefix)
+            issue_filter = func(query_params, issue_filter, method, prefix)
     return issue_filter

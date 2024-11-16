@@ -127,7 +127,40 @@ export const CalendarChart: React.FC<Props> = observer((props) => {
       </div>
     );
 
-  const issueIdList = groupedIssueIds ? groupedIssueIds[formattedDatePayload] : [];
+  // 날짜에 해당하는 이슈 ID 목록을 가져오는 함수
+  const getIssueIdsForDate = (date: Date) => {
+    if (!groupedIssueIds) return [];
+
+    const formattedDate = renderFormattedPayloadDate(date);
+    if (!formattedDate) return [];
+
+    // 해당 날짜의 모든 이슈 ID를 수집
+    const issueIds = new Set<string>();
+
+    // target_date로 그룹화된 이슈들
+    if (groupedIssueIds[formattedDate]) {
+      groupedIssueIds[formattedDate].forEach(id => issueIds.add(id));
+    }
+
+    // start_date와 target_date 사이에 있는 이슈들도 포함
+    Object.values(issues || {}).forEach(issue => {
+      if (!issue) return;
+
+      const startDate = issue.start_date ? new Date(issue.start_date) : null;
+      const targetDate = issue.target_date ? new Date(issue.target_date) : null;
+
+      if (startDate && targetDate) {
+        // 날짜가 범위 내에 있는지 확인
+        if (date >= startDate && date <= targetDate) {
+          issueIds.add(issue.id);
+        }
+      }
+    });
+
+    return Array.from(issueIds);
+  };
+
+  const issueIdList = getIssueIdsForDate(selectedDate);
 
   return (
     <>

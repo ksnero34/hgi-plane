@@ -234,6 +234,16 @@ class IssueViewSet(BaseViewSet):
     @method_decorator(gzip_page)
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
+        print("\n[Calendar View Debug]")
+        print("Request Parameters:", {
+            'query_params': dict(request.query_params),
+            'GET': dict(request.GET),
+            'layout': request.GET.get('layout'),
+            'target_date': request.GET.get('target_date'),
+            'group_by': request.GET.get('group_by'),
+            'sub_group_by': request.GET.get('sub_group_by')
+        })
+
         extra_filters = {}
         if request.GET.get("updated_at__gt", None) is not None:
             extra_filters = {
@@ -241,21 +251,61 @@ class IssueViewSet(BaseViewSet):
             }
 
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
-        filters = issue_filters(request.query_params, "GET")
+        
+        # 기본 필터 적용 (날짜 필터 제외)
+        filters = {k: v for k, v in issue_filters(request.query_params, "GET").items() 
+                  if not k.startswith('start_date') and not k.startswith('target_date')}
+
+        # 정렬 파라미터 설정
         order_by_param = request.GET.get("order_by", "-created_at")
 
-        issue_queryset = self.get_queryset().filter(**filters, **extra_filters)
-        # Custom ordering for priority and state
+        # 캘린더 뷰인 경우 Q 객체로 필터링
+        if request.GET.get('layout') == 'calendar':
+            start_date_from = request.GET.get('start_date_from')
+            start_date_to = request.GET.get('start_date_to')
+            target_date_from = request.GET.get('target_date_from')
+            target_date_to = request.GET.get('target_date_to')
 
-        # Issue queryset
-        issue_queryset, order_by_param = order_issue_queryset(
-            issue_queryset=issue_queryset,
-            order_by_param=order_by_param,
-        )
+            if start_date_from and start_date_to and target_date_from and target_date_to:
+                # 기본 필터 적용
+                issue_queryset = self.get_queryset().filter(**filters)
+                
+                # 캘린더 날짜 필터 적용
+                calendar_filter = (
+                    # start_date가 범위 내에 있는 경우
+                    Q(start_date__range=(start_date_from, start_date_to)) |
+                    # target_date가 범위 내에 있는 경우
+                    Q(target_date__range=(target_date_from, target_date_to)) |
+                    # 날짜 범위를 걸쳐있는 경우
+                    Q(
+                        Q(start_date__isnull=False) & 
+                        Q(target_date__isnull=False) & 
+                        Q(start_date__lte=target_date_to) & 
+                        Q(target_date__gte=start_date_from)
+                    )
+                )
+                issue_queryset = issue_queryset.filter(calendar_filter)
+                
+                # 필터링된 이슈 로깅
+                print("Filtered Calendar Issues:", {
+                    'total_count': issue_queryset.count(),
+                    'issues': list(issue_queryset.values('id', 'name', 'start_date', 'target_date')),
+                    'filters': filters,
+                    'calendar_filter': str(calendar_filter)
+                })
+        else:
+            issue_queryset = self.get_queryset().filter(**filters, **extra_filters)
 
         # Group by
         group_by = request.GET.get("group_by", False)
         sub_group_by = request.GET.get("sub_group_by", False)
+
+        # 캘린더 뷰인 경우 그룹화 전에 날짜 범위로 한번 더 필터링
+        if request.GET.get('layout') == 'calendar':
+            issue_queryset = issue_queryset.filter(
+                Q(start_date__range=(start_date_from, start_date_to)) |
+                Q(target_date__range=(target_date_from, target_date_to))
+            )
 
         # issue queryset
         issue_queryset = issue_queryset_grouper(
@@ -263,6 +313,10 @@ class IssueViewSet(BaseViewSet):
             group_by=group_by,
             sub_group_by=sub_group_by,
         )
+
+        # 정렬 적용
+        if order_by_param and not group_by:
+            issue_queryset = issue_queryset.order_by(order_by_param)
 
         recent_visited_task.delay(
             slug=slug,

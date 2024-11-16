@@ -41,6 +41,23 @@ export class IssueFiltersService extends APIService {
     projectId: string,
     data: Partial<IIssueFiltersResponse>
   ): Promise<any> {
+    if (data.display_filters?.layout === 'calendar') {
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+      data = {
+        ...data,
+        filters: {
+          ...data.filters,
+          start_date_from: firstDayOfMonth.toISOString().split('T')[0],
+          start_date_to: lastDayOfMonth.toISOString().split('T')[0],
+          target_date_from: firstDayOfMonth.toISOString().split('T')[0],
+          target_date_to: lastDayOfMonth.toISOString().split('T')[0]
+        }
+      };
+    }
+
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-properties/`, data)
       .then((response) => response?.data)
       .catch((error) => {

@@ -45,6 +45,11 @@ type Props = {
   readOnly?: boolean;
   selectedDate: Date;
   setSelectedDate: (date: Date) => void;
+  issueInfo?: Map<string, {
+    isStartDate: boolean;
+    isEndDate: boolean;
+    isContinuous: boolean;
+  }>;
 };
 
 export const CalendarDayTile: React.FC<Props> = observer((props) => {
@@ -65,6 +70,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     selectedDate,
     handleDragAndDrop,
     setSelectedDate,
+    issueInfo,
   } = props;
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -119,7 +125,69 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
   }, [dayTileRef?.current, formattedDatePayload]);
 
   if (!formattedDatePayload) return null;
-  const issueIds = groupedIssueIds?.[formattedDatePayload];
+
+  const getIssuesForDate = () => {
+    const issueIds = new Set<string>();
+
+    if (groupedIssueIds?.[formattedDatePayload]) {
+      groupedIssueIds[formattedDatePayload].forEach(id => issueIds.add(id));
+    }
+
+    Object.values(issues || {}).forEach(issue => {
+      if (!issue) return;
+
+      const startDate = issue.start_date ? new Date(issue.start_date) : null;
+      const targetDate = issue.target_date ? new Date(issue.target_date) : null;
+
+      if (startDate && targetDate) {
+        // 날짜 비교를 위해 시간을 0으로 설정
+        const currentDate = new Date(date.date);
+        currentDate.setHours(0, 0, 0, 0);
+        startDate.setHours(0, 0, 0, 0);
+        targetDate.setHours(0, 0, 0, 0);
+
+        // 시작일부터 종료일까지 모든 날짜에 이슈 표시
+        if (currentDate >= startDate && currentDate <= targetDate) {
+          issueIds.add(issue.id);
+        }
+      } else if (startDate) {
+        // start_date만 있는 경우
+        const currentDate = new Date(date.date);
+        currentDate.setHours(0, 0, 0, 0);
+        startDate.setHours(0, 0, 0, 0);
+
+        if (currentDate.getTime() === startDate.getTime()) {
+          issueIds.add(issue.id);
+        }
+      } else if (targetDate) {
+        // target_date만 있는 경우
+        const currentDate = new Date(date.date);
+        currentDate.setHours(0, 0, 0, 0);
+        targetDate.setHours(0, 0, 0, 0);
+
+        if (currentDate.getTime() === targetDate.getTime()) {
+          issueIds.add(issue.id);
+        }
+      }
+    });
+
+    console.log("Issues for date:", {
+      date: date.date.toLocaleString(),
+      totalIssues: issueIds.size,
+      issues: Array.from(issueIds).map(id => ({
+        id,
+        issue: issues?.[id],
+        start_date: issues?.[id]?.start_date,
+        target_date: issues?.[id]?.target_date,
+        isStartDate: issues?.[id]?.start_date === date.date.toISOString().split('T')[0],
+        isTargetDate: issues?.[id]?.target_date === date.date.toISOString().split('T')[0]
+      }))
+    });
+
+    return Array.from(issueIds);
+  };
+
+  const issueIds = getIssuesForDate();
 
   const isToday = date.date.toDateString() === new Date().toDateString();
   const isSelectedDate = date.date.toDateString() == selectedDate.toDateString();
@@ -166,6 +234,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             <CalendarIssueBlocks
               date={date.date}
               issueIdList={issueIds}
+              issueInfo={issueInfo}
               quickActions={quickActions}
               loadMoreIssues={loadMoreIssues}
               getPaginationData={getPaginationData}
