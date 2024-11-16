@@ -10,6 +10,7 @@ services:
     command: node web/server.js web
     depends_on:
       - api
+    image: hgi-plane-prod/web:latest
 
   admin:
     container_name: admin
@@ -23,6 +24,7 @@ services:
     depends_on:
       - api
       - web
+    image: hgi-plane-prod/admin:latest
 
   space:
     container_name: space
@@ -36,6 +38,7 @@ services:
     depends_on:
       - api
       - web
+    image: hgi-plane-prod/space:latest
 
   api:
     container_name: api
@@ -51,6 +54,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
+    image: hgi-plane-prod/api:latest
 
   worker:
     container_name: bgworker
@@ -67,6 +71,7 @@ services:
       - api
       - plane-db
       - plane-redis
+    image: hgi-plane-prod/worker:latest
 
   beat-worker:
     container_name: beatworker
@@ -83,6 +88,7 @@ services:
       - api
       - plane-db
       - plane-redis
+    image: hgi-plane-prod/beat-worker:latest
 
   migrator:
     container_name: plane-migrator
@@ -98,6 +104,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
+    image: hgi-plane-prod/migrator:latest
 
   live:
     container_name: plane-live
@@ -108,6 +115,7 @@ services:
         DOCKER_BUILDKIT: 1
     restart: always
     command: node live/dist/server.js
+    image: hgi-plane-prod/live:latest
 
   plane-db:
     container_name: plane-db
@@ -172,6 +180,7 @@ services:
       - api
       - space
       - admin
+    image: hgi-plane-prod/proxy:latest
 
 volumes:
   pgdata:

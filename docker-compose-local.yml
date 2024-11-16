@@ -1,5 +1,6 @@
 services:
   plane-redis:
+    container_name: dev-plane-redis
     image: valkey/valkey:7.2.5-alpine
     restart: unless-stopped
     networks:
@@ -8,6 +9,7 @@ services:
       - redisdata:/data
 
   plane-mq:
+    container_name: dev-plane-mq
     image: rabbitmq:3.13.6-management-alpine
     restart: unless-stopped
     networks:
@@ -22,6 +24,7 @@ services:
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
 
   plane-minio:
+    container_name: dev-plane-minio
     image: minio/minio
     restart: unless-stopped
     networks:
@@ -36,6 +39,7 @@ services:
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
 
   plane-db:
+    container_name: dev-plane-db
     image: postgres:15.7-alpine
     restart: unless-stopped
     networks:
@@ -49,9 +53,11 @@ services:
       PGDATA: /var/lib/postgresql/data
 
   web:
+    container_name: dev-web
     build:
       context: .
       dockerfile: ./web/Dockerfile.dev
+    image: hgi-plane-dev/web:latest
     restart: unless-stopped
     networks:
       - dev_env
@@ -64,9 +70,11 @@ services:
       - worker
 
   space:
+    container_name: dev-space
     build:
       context: .
       dockerfile: ./space/Dockerfile.dev
+    image: hgi-plane-dev/space:latest
     restart: unless-stopped
     networks:
       - dev_env
@@ -78,9 +86,11 @@ services:
       - web
 
   admin:
+    container_name: dev-admin
     build:
       context: .
       dockerfile: ./admin/Dockerfile.dev
+    image: hgi-plane-dev/admin:latest
     restart: unless-stopped
     networks:
       - dev_env
@@ -92,9 +102,11 @@ services:
       - web
 
   live:
+    container_name: dev-live
     build:
       context: .
       dockerfile: ./live/Dockerfile.dev
+    image: hgi-plane-dev/live:latest
     restart: unless-stopped
     networks:
       - dev_env
@@ -106,11 +118,13 @@ services:
       - web
 
   api:
+    container_name: dev-api
     build:
       context: ./apiserver
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
+    image: hgi-plane-dev/api:latest
     restart: unless-stopped
     networks:
       - dev_env
@@ -124,6 +138,7 @@ services:
       - plane-redis
 
   worker:
+    container_name: dev-worker
     build:
       context: ./apiserver
       dockerfile: Dockerfile.dev
@@ -143,6 +158,7 @@ services:
       - plane-redis
 
   beat-worker:
+    container_name: dev-beat-worker
     build:
       context: ./apiserver
       dockerfile: Dockerfile.dev
@@ -162,6 +178,7 @@ services:
       - plane-redis
 
   migrator:
+    container_name: dev-migrator
     build:
       context: ./apiserver
       dockerfile: Dockerfile.dev
@@ -180,9 +197,11 @@ services:
       - plane-redis
 
   proxy:
+    container_name: dev-proxy
     build:
       context: ./nginx
       dockerfile: Dockerfile.dev
+    image: hgi-plane-dev/proxy:latest
     restart: unless-stopped
     networks:
       - dev_env
