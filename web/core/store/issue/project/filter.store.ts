@@ -111,33 +111,34 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       cursor: string | undefined,
       groupId: string | undefined,
       subGroupId: string | undefined
-    ) => {
-      console.log("Filter Params Input:", {
-        options,
-        projectId,
-        cursor,
-        groupId,
-        subGroupId
-      });
+    ): Partial<Record<TIssueParams, string | boolean>> => {
+      // console.log("Filter Params Input:", {
+      //   options,
+      //   projectId,
+      //   cursor,
+      //   groupId,
+      //   subGroupId
+      // });
 
       const filterParams = this.getAppliedFilters(projectId);
       const paginationParams = this.getPaginationParams(filterParams, options, cursor, groupId, subGroupId);
 
-      // 캘린더 뷰인 경우 추가 파라미터
-      if (options.groupedBy === 'target_date' && options.after && options.before) {
-        return {
+      // 캘린더 뷰인 경우
+      const displayFilters = this.filters[projectId]?.displayFilters;
+      if (displayFilters?.layout === "calendar") {
+        const calendarParams = this.getCalendarFilterParams(new Date());
+        
+        // 타입 안전한 방식으로 파라미터 병합
+        const mergedParams: Partial<Record<TIssueParams, string | boolean>> = {
           ...paginationParams,
-          layout: 'calendar',
-          start_date_from: options.after,
-          start_date_to: options.before,
-          target_date_from: options.after,
-          target_date_to: options.before,
-          include_in_range: true,
-          include_start_date: true,
-          include_target_date: true,
-          include_date_range: true,
-          per_page: 100
+          group_by: "target_date",
+          start_date: calendarParams.start_date?.[0] || "",
+          target_date: calendarParams.target_date?.[0] || "",
+          order_by: "-created_at",
+          per_page: "100"
         };
+
+        return mergedParams;
       }
 
       console.log("Final Pagination Params:", paginationParams);
@@ -218,23 +219,14 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
           const updatedDisplayFilters = filters as IIssueDisplayFilterOptions;
           _filters.displayFilters = { ..._filters.displayFilters, ...updatedDisplayFilters };
 
-          // set sub_group_by to null if group_by is set to null
-          if (_filters.displayFilters.group_by === null) {
-            _filters.displayFilters.sub_group_by = null;
-            updatedDisplayFilters.sub_group_by = null;
-          }
-          // set sub_group_by to null if layout is switched to kanban group_by and sub_group_by are same
-          if (
-            _filters.displayFilters.layout === "kanban" &&
-            _filters.displayFilters.group_by === _filters.displayFilters.sub_group_by
-          ) {
-            _filters.displayFilters.sub_group_by = null;
-            updatedDisplayFilters.sub_group_by = null;
-          }
-          // set group_by to state if layout is switched to kanban and group_by is null
-          if (_filters.displayFilters.layout === "kanban" && _filters.displayFilters.group_by === null) {
-            _filters.displayFilters.group_by = "state";
-            updatedDisplayFilters.group_by = "state";
+          // 캘린더 뷰로 전환하는 경우
+          if (updatedDisplayFilters.layout === "calendar") {
+            const calendarParams = this.getCalendarFilterParams(new Date());
+            _filters.filters = {
+              ..._filters.filters,
+              start_date: calendarParams.start_date,
+              target_date: calendarParams.target_date
+            };
           }
 
           runInAction(() => {
@@ -248,7 +240,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
           });
 
           if (this.getShouldClearIssues(updatedDisplayFilters)) {
-            this.rootIssueStore.projectIssues.clear(true, true); // clear issues for local store when some filters like layout changes
+            this.rootIssueStore.projectIssues.clear(true, true);
           }
 
           if (this.getShouldReFetchIssues(updatedDisplayFilters)) {
@@ -257,6 +249,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
 
           await this.issueFilterService.patchProjectIssueFilters(workspaceSlug, projectId, {
             display_filters: _filters.displayFilters,
+            filters: _filters.filters
           });
 
           break;

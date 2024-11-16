@@ -49,8 +49,8 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
 
   if (!formattedDatePayload) return null;
 
-  const dayIssueCount = getGroupIssueCount(formattedDatePayload, undefined, false);
-  const nextPageResults = getPaginationData(formattedDatePayload, undefined)?.nextPageResults;
+  const dayIssueCount = getGroupIssueCount(formattedDatePayload);
+  const nextPageResults = getPaginationData(formattedDatePayload)?.nextPageResults;
   const isPaginating = !!issues.getIssueLoader(formattedDatePayload);
 
   const shouldLoadMore =
@@ -58,8 +58,8 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
       ? issueIdList?.length < dayIssueCount
       : !!nextPageResults;
 
-  console.log("Current Date:", date);
-  console.log("Issue IDs from props:", issueIdList);
+  // console.log("Current Date:", date);
+  // console.log("Issue IDs from props:", issueIdList);
 
   const filteredIssueIds = issueIdList.filter((issueId) => {
     const issue = getIssueById(issueId);
@@ -94,20 +94,20 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     return false;
   });
 
-  console.log("Final Filtered Issues for Date:", {
-    currentDate: date.toLocaleString(),
-    totalIssues: issueIdList.length,
-    filteredCount: filteredIssueIds.length,
-    filteredIssues: filteredIssueIds.map(id => {
-      const issue = getIssueById(id);
-      return {
-        id: issue?.id,
-        name: issue?.name,
-        start_date: issue?.start_date ? new Date(issue.start_date).toLocaleString() : null,
-        target_date: issue?.target_date ? new Date(issue.target_date).toLocaleString() : null
-      };
-    })
-  });
+  // console.log("Final Filtered Issues for Date:", {
+  //   currentDate: date.toLocaleString(),
+  //   totalIssues: issueIdList.length,
+  //   filteredCount: filteredIssueIds.length,
+  //   filteredIssues: filteredIssueIds.map(id => {
+  //     const issue = getIssueById(id);
+  //     return {
+  //       id: issue?.id,
+  //       name: issue?.name,
+  //       start_date: issue?.start_date ? new Date(issue.start_date).toLocaleString() : null,
+  //       target_date: issue?.target_date ? new Date(issue.target_date).toLocaleString() : null
+  //     };
+  //   })
+  // });
 
   return (
     <>

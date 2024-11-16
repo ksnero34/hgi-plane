@@ -1,23 +1,24 @@
 import { differenceInDays, format, formatDistanceToNow, isAfter, isEqual, isValid, parseISO } from "date-fns";
 import isNumber from "lodash/isNumber";
 
-// Format Date Helpers
 /**
  * @description 주어진 날짜가 시작일과 종료일 사이에 있는지 확인
  * @param date 확인할 날짜
- * @param startDate 시작일 (null 가능)
- * @param endDate 종료일 (null 가능)
- * @returns {boolean} 날짜가 범위 안에 있으면 true
+ * @param startDate 시작일
+ * @param endDate 종료일
+ * @returns boolean
  */
 export const isDateInRange = (date: string | Date | undefined | null, startDate: string | null, endDate: string | null): boolean => {
-  const currentDate = new Date(date);
+  if (!date) return false;
+
+  const currentDate = date instanceof Date ? date : new Date(date);
   currentDate.setHours(0, 0, 0, 0);
 
   // start_date와 target_date가 모두 있는 경우
   if (startDate && endDate) {
     const start = new Date(startDate);
-    const end = new Date(endDate);
     start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
     end.setHours(0, 0, 0, 0);
 
     return currentDate >= start && currentDate <= end;
@@ -39,6 +40,8 @@ export const isDateInRange = (date: string | Date | undefined | null, startDate:
 
   return false;
 };
+
+// Format Date Helpers
 /**
  * @returns {string | null} formatted date in the desired format or platform default format (MMM dd, yyyy)
  * @description Returns date in the formatted format
@@ -49,7 +52,7 @@ export const isDateInRange = (date: string | Date | undefined | null, startDate:
  */
 export const renderFormattedDate = (
   date: string | Date | undefined | null,
-  formatToken: string = "yyyy.MMM.dd"
+  formatToken: string = "MMM dd, yyyy"
 ): string | null => {
   // Parse the date to check if it is valid
   const parsedDate = getDate(date);
@@ -57,15 +60,19 @@ export const renderFormattedDate = (
   if (!parsedDate) return null;
   // Check if the parsed date is valid before formatting
   if (!isValid(parsedDate)) return null; // Return null for invalid dates
-  let formattedDate;
+  
   try {
     // Format the date in the format provided or default format (MMM dd, yyyy)
-    formattedDate = format(parsedDate, formatToken);
+    return format(parsedDate, formatToken);
   } catch (e) {
     // Format the date in format (MMM dd, yyyy) in case of any error
-    formattedDate = format(parsedDate, "MMM dd, yyyy");
+    try {
+      return format(parsedDate, "MMM dd, yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return null;
+    }
   }
-  return formattedDate;
 };
 
 /**
@@ -92,13 +99,13 @@ export const renderFormattedDateWithoutYear = (date: string | Date): string => {
  * @param {Date | string} date
  * @example renderFormattedPayloadDate("Jan 01, 20224") // "2024-01-01"
  */
-export const renderFormattedPayloadDate = (date: Date | string | undefined | null): string | null => {
+export const renderFormattedPayloadDate = (date: Date | string | undefined | null): string | undefined => {
   // Parse the date to check if it is valid
   const parsedDate = getDate(date);
   // return if undefined
-  if (!parsedDate) return null;
+  if (!parsedDate) return;
   // Check if the parsed date is valid before formatting
-  if (!isValid(parsedDate)) return null; // Return null for invalid dates
+  if (!isValid(parsedDate)) return; // Return null for invalid dates
   // Format the date in payload format (yyyy-mm-dd)
   const formattedDate = format(parsedDate, "yyyy-MM-dd");
   return formattedDate;
@@ -155,6 +162,25 @@ export const findTotalDaysInRange = (
   const diffInDays = differenceInDays(parsedEndDate, parsedStartDate);
   // Return the difference in days based on inclusive flag
   return inclusive ? diffInDays + 1 : diffInDays;
+};
+
+/**
+ * Add number of days to the provided date and return a resulting new date
+ * @param startDate
+ * @param numberOfDays
+ * @returns
+ */
+export const addDaysToDate = (startDate: Date | string | undefined | null, numberOfDays: number) => {
+  // Parse the dates to check if they are valid
+  const parsedStartDate = getDate(startDate);
+
+  // return if undefined
+  if (!parsedStartDate) return;
+
+  const newDate = new Date(parsedStartDate);
+  newDate.setDate(newDate.getDate() + numberOfDays);
+
+  return newDate;
 };
 
 /**

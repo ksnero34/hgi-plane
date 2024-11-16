@@ -50,6 +50,17 @@ export interface IIssueFilterHelperStore {
   computedDisplayProperties(filters: IIssueDisplayProperties): IIssueDisplayProperties;
 }
 
+// 캘린더 뷰 관련 타입 추가
+export interface ICalendarFilters {
+  start_date?: string[];
+  target_date?: string[];
+  group_by?: string;
+  order_by?: string;
+  include_in_range?: boolean;
+  include_start_date?: boolean;
+  include_target_date?: boolean;
+}
+
 export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   constructor() {}
 
@@ -282,13 +293,32 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   };
 
   /**
-   * This Method is used to construct the url params along with paginated values
-   * @param filterParams params generated from filters
-   * @param options pagination options
-   * @param cursor cursor if exists
-   * @param groupId groupId if to fetch By group
-   * @param subGroupId groupId if to fetch By sub group
-   * @returns
+   * 캘린더 뷰를 위한 필터 파라미터 생성
+   */
+  getCalendarFilterParams(date: Date): IIssueFilterOptions {
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+    return {
+      priority: null,
+      state: null,
+      state_group: null,
+      assignees: null,
+      mentions: null,
+      created_by: null,
+      labels: null,
+      cycle: null,
+      module: null,
+      start_date: [firstDayOfMonth.toISOString().split('T')[0]],
+      target_date: [lastDayOfMonth.toISOString().split('T')[0]],
+      project: null,
+      subscriber: null,
+      issue_type: null
+    };
+  }
+
+  /**
+   * 필터 파라미터 생성 메서드
    */
   getPaginationParams(
     filterParams: Partial<Record<TIssueParams, string | boolean>> | undefined,
@@ -297,15 +327,24 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     groupId?: string,
     subGroupId?: string
   ) {
-    // if cursor exists, use the cursor. If it doesn't exist construct the cursor based on per page count
-    const pageCursor = cursor ? cursor : groupId ? `${options.perPageCount}:1:0` : `${options.perPageCount}:0:0`;
-
-    // pagination params
-    const paginationParams: Partial<Record<TIssueParams, string | boolean>> = {
+    // 기본 페이지네이션 파라미터 생성
+    const paginationParams = {
       ...filterParams,
-      cursor: pageCursor,
+      cursor: cursor ? cursor : groupId ? `${options.perPageCount}:1:0` : `${options.perPageCount}:0:0`,
       per_page: options.perPageCount.toString(),
     };
+
+    // 캘린더 뷰인 경우 추가 파라미터 적용
+    if (options.groupedBy === "target_date" && options.after && options.before) {
+      const calendarParams = this.getCalendarFilterParams(new Date(options.after));
+      return {
+        ...paginationParams,
+        group_by: "target_date",
+        target_date: `${options.after};after,${options.before};before`,
+        order_by: "-created_at",
+        per_page: "100"
+      };
+    }
 
     // If group by is specifically sent through options, like that for calendar layout, use that to group
     if (options.groupedBy) {

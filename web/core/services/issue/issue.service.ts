@@ -17,6 +17,22 @@ import { persistence } from "@/local-db/storage.sqlite";
 import { addIssue, addIssuesBulk, deleteIssueFromLocal } from "@/local-db/utils/load-issues";
 import { APIService } from "@/services/api.service";
 
+// 타입 정의 부분
+interface IssueGroupResults {
+  results: TIssue[] | { [key: string]: { results: TIssue[]; total_results: number } };
+  total_results: number;
+  next_page_results?: boolean;
+  prev_page_results?: boolean;
+}
+
+interface TIssueResponseResults {
+  [key: string]: IssueGroupResults;
+}
+
+interface TIssuesCalendarResponse extends TIssuesResponse {
+  results: TIssueResponseResults;
+}
+
 export class IssueService extends APIService {
   constructor() {
     super(API_BASE_URL);
@@ -76,30 +92,53 @@ export class IssueService extends APIService {
 
           const res = await this.getIssuesFromServer(workspaceSlug, projectId, modifiedQueries, config);
 
-          const allIssues = [];
+          const allIssues: TIssue[] = [];
           if (res?.results) {
-            for (const dateKey in res.results) {
-              const dateGroup = res.results[dateKey];
-              if (dateGroup?.results && Array.isArray(dateGroup.results)) {
-                allIssues.push(...dateGroup.results);
+            Object.entries(res.results).forEach(([_, group]) => {
+              if (group?.results) {
+                if (Array.isArray(group.results)) {
+                  allIssues.push(...group.results);
+                } else if (typeof group.results === 'object') {
+                  Object.values(group.results as { [key: string]: { results: TIssue[] } })
+                    .forEach(subGroup => {
+                      if (Array.isArray(subGroup?.results)) {
+                        allIssues.push(...subGroup.results);
+                      }
+                    });
+                }
               }
-            }
+            });
           }
 
-          return {
-            ...res,
-            issues: allIssues,
-            groupedIssues: res.results
+          // console.log("Calendar API Response:", {
+          //   totalIssues: allIssues.length,
+          //   groupedResults: res.results,
+          //   dates: Object.keys(res.results || {})
+          // });
+
+          const calendarResponse: TIssuesResponse = {
+            grouped_by: "target_date",
+            results: res.results || {},
+            prev_page_results: false,
+            next_page_results: false,
+            count: allIssues.length,
+            extra_stats: null,
+            next_cursor: "",
+            prev_cursor: "",
+            total_count: allIssues.length,
+            total_pages: 1
           };
+
+          return calendarResponse;
         } catch (error) {
           console.error("Calendar view error:", error);
           throw error;
         }
       }
 
-      const res = await persistence.getIssues(workspaceSlug, projectId, queries, config);
-      return res;
+      return await persistence.getIssues(workspaceSlug, projectId, queries, config);
     });
+
     return response as TIssuesResponse;
   }
 

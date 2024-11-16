@@ -29,17 +29,17 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
 
   const issue = getIssueById(issueId);
 
-  console.log("Calendar Block Root - Issue Details:", {
-    date: date.toLocaleString(),
-    issueId,
-    issue: issue ? {
-      id: issue.id,
-      name: issue.name,
-      start_date: issue.start_date,
-      target_date: issue.target_date,
-      state: issue.state_id
-    } : null
-  });
+  // console.log("Calendar Block Root - Issue Details:", {
+  //   date: date.toLocaleString(),
+  //   issueId,
+  //   issue: issue ? {
+  //     id: issue.id,
+  //     name: issue.name,
+  //     start_date: issue.start_date,
+  //     target_date: issue.target_date,
+  //     state: issue.state_id
+  //   } : null
+  // });
 
   useEffect(() => {
     const element = issueRef.current;

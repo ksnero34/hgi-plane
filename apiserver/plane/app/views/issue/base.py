@@ -234,15 +234,15 @@ class IssueViewSet(BaseViewSet):
     @method_decorator(gzip_page)
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
-        print("\n[Calendar View Debug]")
-        print("Request Parameters:", {
-            'query_params': dict(request.query_params),
-            'GET': dict(request.GET),
-            'layout': request.GET.get('layout'),
-            'target_date': request.GET.get('target_date'),
-            'group_by': request.GET.get('group_by'),
-            'sub_group_by': request.GET.get('sub_group_by')
-        })
+        # print("\n[Calendar View Debug]")
+        # print("Request Parameters:", {
+        #     'query_params': dict(request.query_params),
+        #     'GET': dict(request.GET),
+        #     'layout': request.GET.get('layout'),
+        #     'target_date': request.GET.get('target_date'),
+        #     'group_by': request.GET.get('group_by'),
+        #     'sub_group_by': request.GET.get('sub_group_by')
+        # })
 
         extra_filters = {}
         if request.GET.get("updated_at__gt", None) is not None:
@@ -287,12 +287,12 @@ class IssueViewSet(BaseViewSet):
                 issue_queryset = issue_queryset.filter(calendar_filter)
                 
                 # 필터링된 이슈 로깅
-                print("Filtered Calendar Issues:", {
-                    'total_count': issue_queryset.count(),
-                    'issues': list(issue_queryset.values('id', 'name', 'start_date', 'target_date')),
-                    'filters': filters,
-                    'calendar_filter': str(calendar_filter)
-                })
+                # print("Filtered Calendar Issues:", {
+                #     'total_count': issue_queryset.count(),
+                #     'issues': list(issue_queryset.values('id', 'name', 'start_date', 'target_date')),
+                #     'filters': filters,
+                #     'calendar_filter': str(calendar_filter)
+                # })
         else:
             issue_queryset = self.get_queryset().filter(**filters, **extra_filters)
 

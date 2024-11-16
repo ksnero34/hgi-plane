@@ -133,6 +133,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       groupedIssueIds[formattedDatePayload].forEach(id => issueIds.add(id));
     }
 
+    // 날짜 범위에 있는 이슈들 수집
     Object.values(issues || {}).forEach(issue => {
       if (!issue) return;
 
@@ -140,18 +141,15 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       const targetDate = issue.target_date ? new Date(issue.target_date) : null;
 
       if (startDate && targetDate) {
-        // 날짜 비교를 위해 시간을 0으로 설정
         const currentDate = new Date(date.date);
         currentDate.setHours(0, 0, 0, 0);
         startDate.setHours(0, 0, 0, 0);
         targetDate.setHours(0, 0, 0, 0);
 
-        // 시작일부터 종료일까지 모든 날짜에 이슈 표시
         if (currentDate >= startDate && currentDate <= targetDate) {
           issueIds.add(issue.id);
         }
       } else if (startDate) {
-        // start_date만 있는 경우
         const currentDate = new Date(date.date);
         currentDate.setHours(0, 0, 0, 0);
         startDate.setHours(0, 0, 0, 0);
@@ -160,7 +158,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           issueIds.add(issue.id);
         }
       } else if (targetDate) {
-        // target_date만 있는 경우
         const currentDate = new Date(date.date);
         currentDate.setHours(0, 0, 0, 0);
         targetDate.setHours(0, 0, 0, 0);
@@ -171,20 +168,61 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       }
     });
 
-    console.log("Issues for date:", {
-      date: date.date.toLocaleString(),
-      totalIssues: issueIds.size,
-      issues: Array.from(issueIds).map(id => ({
-        id,
-        issue: issues?.[id],
-        start_date: issues?.[id]?.start_date,
-        target_date: issues?.[id]?.target_date,
-        isStartDate: issues?.[id]?.start_date === date.date.toISOString().split('T')[0],
-        isTargetDate: issues?.[id]?.target_date === date.date.toISOString().split('T')[0]
-      }))
+    // 수집된 이슈 ID들을 정렬
+    const sortedIssueIds = Array.from(issueIds).sort((a, b) => {
+      const issueA = issues?.[a];
+      const issueB = issues?.[b];
+      
+      if (!issueA || !issueB) return 0;
+
+      // 1. 시작일 기준 정렬
+      const startDateA = issueA.start_date ? new Date(issueA.start_date) : null;
+      const startDateB = issueB.start_date ? new Date(issueB.start_date) : null;
+      
+      if (startDateA && !startDateB) return -1;
+      if (!startDateA && startDateB) return 1;
+      if (startDateA && startDateB) {
+        const startDateCompare = startDateA.getTime() - startDateB.getTime();
+        if (startDateCompare !== 0) return startDateCompare;
+      }
+
+      // 2. 종료일 기준 정렬
+      const targetDateA = issueA.target_date ? new Date(issueA.target_date) : null;
+      const targetDateB = issueB.target_date ? new Date(issueB.target_date) : null;
+      
+      if (targetDateA && !targetDateB) return -1;
+      if (!targetDateA && targetDateB) return 1;
+      if (targetDateA && targetDateB) {
+        const targetDateCompare = targetDateA.getTime() - targetDateB.getTime();
+        if (targetDateCompare !== 0) return targetDateCompare;
+      }
+
+      // 3. 우선순위 기준 정렬
+      const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3, none: 4 };
+      const priorityA = priorityOrder[issueA.priority || "none"];
+      const priorityB = priorityOrder[issueB.priority || "none"];
+      if (priorityA !== priorityB) return priorityA - priorityB;
+
+      // 4. 이슈 생성일 기준 정렬
+      const createdAtA = new Date(issueA.created_at).getTime();
+      const createdAtB = new Date(issueB.created_at).getTime();
+      return createdAtA - createdAtB;
     });
 
-    return Array.from(issueIds);
+    // console.log("Sorted Issues for date:", {
+    //   date: date.date.toLocaleString(),
+    //   totalIssues: sortedIssueIds.length,
+    //   issues: sortedIssueIds.map(id => ({
+    //     id,
+    //     issue: issues?.[id],
+    //     start_date: issues?.[id]?.start_date,
+    //     target_date: issues?.[id]?.target_date,
+    //     priority: issues?.[id]?.priority,
+    //     created_at: issues?.[id]?.created_at
+    //   }))
+    // });
+
+    return sortedIssueIds;
   };
 
   const issueIds = getIssuesForDate();
@@ -234,7 +272,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             <CalendarIssueBlocks
               date={date.date}
               issueIdList={issueIds}
-              issueInfo={issueInfo}
+              //issueInfo={issueInfo}
               quickActions={quickActions}
               loadMoreIssues={loadMoreIssues}
               getPaginationData={getPaginationData}
