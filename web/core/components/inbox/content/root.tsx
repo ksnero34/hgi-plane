@@ -35,6 +35,7 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   const [isSubmitting, setIsSubmitting] = useState<"submitting" | "submitted" | "saved">("saved");
   // hooks
   const { data: currentUser } = useUser();
+  const { checkIssueEditPermission } = useUserPermissions();
   const { currentTab, fetchInboxIssueById, getIssueInboxByIssueId, getIsIssueAvailable } = useProjectInbox();
   const inboxIssue = getIssueInboxByIssueId(inboxIssueId);
   const { allowPermissions, projectPermissionsByWorkspaceSlugAndProjectId } = useUserPermissions();
@@ -62,9 +63,31 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
     }
   );
 
-  const isEditable =
-    allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT) ||
-    inboxIssue.created_by === currentUser?.id;
+  // 권한 체크 로깅
+  console.log("Inbox Issue Details:", {
+    workspaceSlug,
+    projectId,
+    assignees: inboxIssue?.issue?.assignees,
+    currentUserId: currentUser?.id,
+    issue: inboxIssue?.issue
+  });
+
+  // checking if issue is editable, based on user role
+  const isEditable = checkIssueEditPermission(
+    workspaceSlug,
+    projectId,
+    inboxIssue?.issue?.assignees || [],
+    currentUser?.id || ""
+  );
+
+  // 권한 상태 로깅
+  console.log("Inbox Permission Check:", {
+    isEditable,
+    currentUser: currentUser?.id,
+    assignees: inboxIssue?.issue?.assignees,
+    workspaceSlug,
+    projectId
+  });
 
   const isGuest = projectPermissionsByWorkspaceSlugAndProjectId(workspaceSlug, projectId) === EUserPermissions.GUEST;
   const isOwner = inboxIssue?.issue.created_by === currentUser?.id;

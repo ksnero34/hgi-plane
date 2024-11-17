@@ -11,7 +11,7 @@ import { IssueView, TIssueOperations } from "@/components/issues";
 import { ISSUE_UPDATED, ISSUE_DELETED, ISSUE_ARCHIVED, ISSUE_RESTORED } from "@/constants/event-tracker";
 import { EIssuesStoreType } from "@/constants/issue";
 // hooks
-import { useEventTracker, useIssueDetail, useIssues, useUserPermissions } from "@/hooks/store";
+import { useEventTracker, useIssueDetail, useIssues, useUserPermissions, useUser } from "@/hooks/store";
 import { useIssuesStore } from "@/hooks/use-issue-layout-store";
 import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
 
@@ -27,7 +27,8 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
   // router
   const pathname = usePathname();
   // store hook
-  const { allowPermissions } = useUserPermissions();
+  const { allowPermissions, checkIssueEditPermission } = useUserPermissions();
+  const { currentUser } = useUser();
 
   const {
     issues: { restoreIssue },
@@ -35,7 +36,7 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
   const {
     peekIssue,
     setPeekIssue,
-    issue: { fetchIssue, getIsFetchingIssueDetails },
+    issue: { fetchIssue, getIsFetchingIssueDetails, getIssueById },
     fetchActivities,
   } = useIssueDetail();
 
@@ -331,13 +332,34 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
 
   if (!peekIssue?.workspaceSlug || !peekIssue?.projectId || !peekIssue?.issueId) return <></>;
 
-  // Check if issue is editable, based on user role
-  const isEditable = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.PROJECT,
-    peekIssue?.workspaceSlug,
-    peekIssue?.projectId
+  const issue = getIssueById(peekIssue.issueId);
+
+  console.log("Peek Issue Details:", {
+    workspaceSlug: peekIssue.workspaceSlug,
+    projectId: peekIssue.projectId,
+    assignees: issue?.assignee_ids,
+    currentUserId: currentUser?.id,
+    issue: {
+      ...issue,
+      assignees: issue?.assignee_ids,
+      raw_issue: issue
+    }
+  });
+
+  const isEditable = checkIssueEditPermission(
+    peekIssue.workspaceSlug,
+    peekIssue.projectId,
+    issue?.assignee_ids || [],
+    currentUser?.id || ""
   );
+
+  console.log("Peek Permission Check:", {
+    isEditable,
+    currentUser: currentUser?.id,
+    assignees: issue?.assignee_ids,
+    workspaceSlug: peekIssue.workspaceSlug,
+    projectId: peekIssue.projectId
+  });
 
   return (
     <IssueView

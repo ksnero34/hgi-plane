@@ -42,6 +42,19 @@ export interface IUserPermissionStore {
     projectId?: string,
     onPermissionAllowed?: () => boolean
   ) => boolean;
+  // permission check helpers
+  checkIssueViewPermission: (
+    workspaceSlug: string,
+    projectId: string,
+    issueAssignees: string[],
+    currentUserId: string
+  ) => boolean;
+  checkIssueEditPermission: (
+    workspaceSlug: string,
+    projectId: string,
+    issueAssignees: string[],
+    currentUserId: string
+  ) => boolean;
   // action helpers
   // actions
   fetchUserWorkspaceInfo: (workspaceSlug: string) => Promise<IWorkspaceMemberMe | undefined>;
@@ -243,7 +256,7 @@ export class UserPermissionStore implements IUserPermissionStore {
   joinProject = async (workspaceSlug: string, projectId: string): Promise<void | undefined> => {
     try {
       const response = await userService.joinProject(workspaceSlug, [projectId]);
-      const projectMemberRole = this.workspaceInfoBySlug(workspaceSlug)?.role ?? EUserPermissions.MEMBER;
+      const projectMemberRole = this.workspaceInfoBySlug(workspaceSlug)?.role ?? EUserPermissions.VIEWER;
       if (response) {
         runInAction(() => {
           set(this.workspaceProjectsPermissions, [workspaceSlug, projectId], projectMemberRole);
@@ -274,5 +287,73 @@ export class UserPermissionStore implements IUserPermissionStore {
       console.error("Error user leaving the project", error);
       throw error;
     }
+  };
+
+  /**
+   * 이슈 조회 권한을 체크하는 함수
+   */
+  checkIssueViewPermission = (
+    workspaceSlug: string,
+    projectId: string,
+    issueAssignees: string[],
+    currentUserId: string
+  ): boolean => {
+    // 1. Admin/Member/Viewer는 모든 이슈 조회 가능
+    const hasFullViewAccess = this.allowPermissions(
+      [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER],
+      EUserPermissionsLevel.PROJECT,
+      workspaceSlug,
+      projectId
+    );
+    
+    if (hasFullViewAccess) return true;
+
+    // 2. Restricted는 자신에게 할당된 이슈만 조회 가능
+    const isRestricted = this.allowPermissions(
+      [EUserPermissions.RESTRICTED],
+      EUserPermissionsLevel.PROJECT,
+      workspaceSlug,
+      projectId
+    );
+
+    if (isRestricted && issueAssignees.includes(currentUserId)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * 이슈 수정 권한을 체크하는 함수
+   */
+  checkIssueEditPermission = (
+    workspaceSlug: string,
+    projectId: string,
+    issueAssignees: string[],
+    currentUserId: string
+  ): boolean => {
+    // 1. Admin/Member는 모든 이슈 수정 가능
+    const hasFullEditAccess = this.allowPermissions(
+      [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+      EUserPermissionsLevel.PROJECT,
+      workspaceSlug,
+      projectId
+    );
+    
+    if (hasFullEditAccess) return true;
+
+    // 2. Viewer/Restricted는 자신에게 할당된 이슈만 수정 가능
+    const isViewerOrRestricted = this.allowPermissions(
+      [EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
+      EUserPermissionsLevel.PROJECT,
+      workspaceSlug,
+      projectId
+    );
+
+    if (isViewerOrRestricted && issueAssignees.includes(currentUserId)) {
+      return true;
+    }
+
+    return false;
   };
 }

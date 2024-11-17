@@ -14,7 +14,7 @@ import { IssuePeekOverview } from "@/components/issues";
 import { ISSUE_UPDATED, ISSUE_DELETED, ISSUE_ARCHIVED } from "@/constants/event-tracker";
 import { EIssuesStoreType } from "@/constants/issue";
 // hooks
-import { useAppTheme, useEventTracker, useIssueDetail, useIssues, useUserPermissions } from "@/hooks/store";
+import { useAppTheme, useEventTracker, useIssueDetail, useIssues, useUserPermissions ,useUser} from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
 // images
@@ -76,7 +76,8 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
     issues: { removeIssue: removeArchivedIssue },
   } = useIssues(EIssuesStoreType.ARCHIVED);
   const { captureIssueEvent } = useEventTracker();
-  const { allowPermissions } = useUserPermissions();
+  const { currentUser } = useUser();
+  const { allowPermissions, checkIssueEditPermission} = useUserPermissions();
   const { issueDetailSidebarCollapsed } = useAppTheme();
 
   const issueOperations: TIssueOperations = useMemo(
@@ -328,8 +329,32 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
 
   // issue details
   const issue = getIssueById(issueId);
+  
+  // 권한 체크 로깅
+  console.log("Issue Details:", {
+    workspaceSlug,
+    projectId,
+    assignees: issue?.assignees,
+    currentUserId: currentUser?.id,
+    issue
+  });
+
   // checking if issue is editable, based on user role
-  const isEditable = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
+  const isEditable = checkIssueEditPermission(
+    workspaceSlug,
+    projectId,
+    issue?.assignees || [],
+    currentUser?.id || ""
+  );
+
+  // 권한 상태 로깅
+  console.log("Permission Check:", {
+    isEditable,
+    currentUser: currentUser?.id,
+    assignees: issue?.assignees,
+    workspaceSlug,
+    projectId
+  });
 
   return (
     <>

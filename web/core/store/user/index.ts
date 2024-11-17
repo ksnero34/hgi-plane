@@ -32,6 +32,7 @@ export interface IUserStore {
   isLoading: boolean;
   error: TUserErrorStatus | undefined;
   data: IUser | undefined;
+  currentUser: IUser | undefined;
   // store observables
   userProfile: IUserProfileStore;
   userSettings: IUserSettingsStore;
@@ -56,6 +57,7 @@ export class UserStore implements IUserStore {
   isLoading: boolean = false;
   error: TUserErrorStatus | undefined = undefined;
   data: IUser | undefined = undefined;
+  currentUser: IUser | undefined = undefined;
   // store observables
   userProfile: IUserProfileStore;
   userSettings: IUserSettingsStore;
@@ -98,6 +100,7 @@ export class UserStore implements IUserStore {
 
       localDBEnabled: computed,
     });
+    this.currentUser = undefined;
   }
 
   /**
@@ -112,6 +115,7 @@ export class UserStore implements IUserStore {
       });
       const user = await this.userService.currentUser();
       if (user && user?.id) {
+        this.currentUser = user;
         await Promise.all([
           this.userProfile.fetchUserProfile(),
           this.userSettings.fetchCurrentUserSettings(),
