@@ -48,7 +48,7 @@ class StateViewSet(BaseViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def list(self, request, slug, project_id):
         states = StateSerializer(self.get_queryset(), many=True).data
         grouped = request.GET.get("grouped", False)

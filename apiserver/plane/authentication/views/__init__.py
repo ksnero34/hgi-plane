@@ -27,6 +27,10 @@ from .app.magic import (
     MagicSignInEndpoint,
     MagicSignUpEndpoint,
 )
+from .app.oidc import (
+    OIDCOauthInitiateEndpoint,
+    OIDCCallbackEndpoint,
+)
 
 from .app.signout import SignOutAuthEndpoint
 
@@ -65,4 +69,9 @@ from .space.password_management import (
 from .app.password_management import (
     ForgotPasswordEndpoint,
     ResetPasswordEndpoint,
+)
+
+from .space.oidc import (
+    OIDCOauthInitiateSpaceEndpoint,
+    OIDCCallbackSpaceEndpoint,
 )

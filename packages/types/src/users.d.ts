@@ -1,7 +1,7 @@
 import { IIssueActivity, TIssuePriorities, TStateGroups } from ".";
 import { TUserPermissions } from "./enums";
 
-type TLoginMediums = "email" | "magic-code" | "github" | "gitlab" | "google";
+type TLoginMediums = "email" | "magic-code" | "github" | "gitlab" | "google" | "oidc";
 
 export interface IUser {
   id: string;

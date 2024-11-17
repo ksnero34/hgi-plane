@@ -10,6 +10,8 @@ import JSONLogo from "@/public/services/json.svg";
 
 export const ROLE = {
   [EUserPermissions.GUEST]: "Guest",
+  [EUserPermissions.RESTRICTED]: "Restricted",
+  [EUserPermissions.VIEWER]: "Viewer",
   [EUserPermissions.MEMBER]: "Member",
   [EUserPermissions.ADMIN]: "Admin",
 };
@@ -19,13 +21,21 @@ export const ROLE_DETAILS = {
     title: "Guest",
     description: "External members of organizations can be invited as guests.",
   },
+  [EUserPermissions.RESTRICTED]: {
+    title: "Restricted",
+    description: "Can only view and modify issues assigned to them.",
+  },
+  [EUserPermissions.VIEWER]: {
+    title: "Viewer",
+    description: "Can only view issues without modification rights.",
+  },
   [EUserPermissions.MEMBER]: {
     title: "Member",
     description: "Ability to read, write, edit, and delete entities inside projects, cycles, and modules",
   },
   [EUserPermissions.ADMIN]: {
     title: "Admin",
-    description: "All permissions set to true within the workspace.",
+    description: "All permissions set to true within the workspace.",
   },
 };
 

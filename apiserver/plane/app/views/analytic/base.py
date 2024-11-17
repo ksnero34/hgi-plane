@@ -24,6 +24,8 @@ class AnalyticsEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
+            ROLE.RESTRICTED
         ],
         level="WORKSPACE",
     )
@@ -314,7 +316,7 @@ class ExportAnalyticsEndpoint(BaseAPIView):
 
 class DefaultAnalyticsEndpoint(BaseAPIView):
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug):
         filters = issue_filters(request.GET, "GET")
         base_issues = Issue.issue_objects.filter(

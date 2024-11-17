@@ -13,7 +13,8 @@ export type TInstanceAuthenticationMethodKeys =
   | "ENABLE_EMAIL_PASSWORD"
   | "IS_GOOGLE_ENABLED"
   | "IS_GITHUB_ENABLED"
-  | "IS_GITLAB_ENABLED";
+  | "IS_GITLAB_ENABLED"
+  | "IS_OIDC_ENABLED";
 
 export type TInstanceGoogleAuthenticationConfigurationKeys =
   | "GOOGLE_CLIENT_ID"
@@ -28,10 +29,19 @@ export type TInstanceGitlabAuthenticationConfigurationKeys =
   | "GITLAB_CLIENT_ID"
   | "GITLAB_CLIENT_SECRET";
 
+export type TInstanceOIDCAuthenticationConfigurationKeys =
+  | "OIDC_CLIENT_ID"
+  | "OIDC_CLIENT_SECRET"
+  | "OIDC_ISSUER_URL"
+  | "OIDC_SCOPES"
+  | "OIDC_NAME_CLAIM"
+  | "OIDC_EMAIL_CLAIM";
+
 type TInstanceAuthenticationConfigurationKeys =
   | TInstanceGoogleAuthenticationConfigurationKeys
   | TInstanceGithubAuthenticationConfigurationKeys
-  | TInstanceGitlabAuthenticationConfigurationKeys;
+  | TInstanceGitlabAuthenticationConfigurationKeys
+  | TInstanceOIDCAuthenticationConfigurationKeys;
 
 export type TInstanceAuthenticationKeys =
   | TInstanceAuthenticationMethodKeys

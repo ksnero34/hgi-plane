@@ -16,6 +16,8 @@ from .base import BaseModel
 ROLE_CHOICES = (
     (20, "Admin"),
     (15, "Member"),
+    (10, "Viewer"),
+    (8, "Restricted"),
     (5, "Guest"),
 )
 

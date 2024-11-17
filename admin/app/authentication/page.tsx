@@ -33,14 +33,14 @@ const InstanceAuthenticationPage = observer(() => {
     const updateConfigPromise = updateInstanceConfigurations(payload);
 
     setPromiseToast(updateConfigPromise, {
-      loading: "Saving configuration",
+      loading: "설정 저장 중",
       success: {
-        title: "Success",
-        message: () => "Configuration saved successfully",
+        title: "성공",
+        message: () => "설정이 저장되었습니다",
       },
       error: {
-        title: "Error",
-        message: () => "Failed to save configuration",
+        title: "오류",
+        message: () => "설정 저장에 실패했습니다",
       },
     });
 
@@ -58,9 +58,9 @@ const InstanceAuthenticationPage = observer(() => {
     <>
       <div className="relative container mx-auto w-full h-full p-4 py-4 space-y-6 flex flex-col">
         <div className="border-b border-custom-border-100 mx-4 py-4 space-y-1 flex-shrink-0">
-          <div className="text-xl font-medium text-custom-text-100">Manage authentication modes for your instance</div>
+          <div className="text-xl font-medium text-custom-text-100">인스턴스의 인증 방식 관리</div>
           <div className="text-sm font-normal text-custom-text-300">
-            Configure authentication modes for your team and restrict sign ups to be invite only.
+            팀을 위한 인증 방식을 구성하고 가입을 초대 전용으로 제한하세요.
           </div>
         </div>
         <div className="flex-grow overflow-hidden overflow-y-scroll vertical-scrollbar scrollbar-md px-4">
@@ -69,9 +69,9 @@ const InstanceAuthenticationPage = observer(() => {
               <div className={cn("w-full flex items-center gap-14 rounded")}>
                 <div className="flex grow items-center gap-4">
                   <div className="grow">
-                    <div className="text-lg font-medium pb-1">Allow anyone to sign up even without an invite</div>
+                    <div className="text-lg font-medium pb-1">초대 없이도 가입 허용</div>
                     <div className={cn("font-normal leading-5 text-custom-text-300 text-xs")}>
-                      Toggling this off will only let users sign up when they are invited.
+                      이 옵션을 끄면 초대를 받은 사용자만 가입할 수 있습니다.
                     </div>
                   </div>
                 </div>
@@ -90,7 +90,7 @@ const InstanceAuthenticationPage = observer(() => {
                   </div>
                 </div>
               </div>
-              <div className="text-lg font-medium pt-6">Authentication modes</div>
+              <div className="text-lg font-medium pt-6">인증 방식</div>
               <AuthenticationModes disabled={isSubmitting} updateConfig={updateConfig} />
             </div>
           ) : (

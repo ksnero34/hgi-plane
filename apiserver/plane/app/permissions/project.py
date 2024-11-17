@@ -3,11 +3,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 # Module import
 from plane.db.models import ProjectMember, WorkspaceMember
-
-# Permission Mappings
-Admin = 20
-Member = 15
-Guest = 5
+from .base import ROLE
 
 
 class ProjectBasePermission(BasePermission):
@@ -28,7 +24,7 @@ class ProjectBasePermission(BasePermission):
             return WorkspaceMember.objects.filter(
                 workspace__slug=view.workspace_slug,
                 member=request.user,
-                role__in=[Admin, Member],
+                role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value, ROLE.VIEWER.value, ROLE.RESTRICTED.value],
                 is_active=True,
             ).exists()
 
@@ -36,7 +32,7 @@ class ProjectBasePermission(BasePermission):
         return ProjectMember.objects.filter(
             workspace__slug=view.workspace_slug,
             member=request.user,
-            role=Admin,
+            role=ROLE.ADMIN.value,
             project_id=view.project_id,
             is_active=True,
         ).exists()
@@ -59,7 +55,7 @@ class ProjectMemberPermission(BasePermission):
             return WorkspaceMember.objects.filter(
                 workspace__slug=view.workspace_slug,
                 member=request.user,
-                role__in=[Admin, Member],
+                role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
                 is_active=True,
             ).exists()
 
@@ -67,7 +63,7 @@ class ProjectMemberPermission(BasePermission):
         return ProjectMember.objects.filter(
             workspace__slug=view.workspace_slug,
             member=request.user,
-            role__in=[Admin, Member],
+            role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
             project_id=view.project_id,
             is_active=True,
         ).exists()
@@ -101,7 +97,7 @@ class ProjectEntityPermission(BasePermission):
         return ProjectMember.objects.filter(
             workspace__slug=view.workspace_slug,
             member=request.user,
-            role__in=[Admin, Member],
+            role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
             project_id=view.project_id,
             is_active=True,
         ).exists()

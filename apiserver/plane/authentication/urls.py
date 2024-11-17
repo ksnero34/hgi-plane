@@ -36,6 +36,10 @@ from .views import (
     SignInAuthSpaceEndpoint,
     SignUpAuthSpaceEndpoint,
     SignOutAuthSpaceEndpoint,
+    OIDCOauthInitiateEndpoint,
+    OIDCCallbackEndpoint,
+    OIDCOauthInitiateSpaceEndpoint,
+    OIDCCallbackSpaceEndpoint,
 )
 
 urlpatterns = [
@@ -217,5 +221,27 @@ urlpatterns = [
         "set-password/",
         SetUserPasswordEndpoint.as_view(),
         name="set-password",
+    ),
+    ## OIDC OAuth
+    path(
+        "oidc/",
+        OIDCOauthInitiateEndpoint.as_view(),
+        name="oidc-initiate",
+    ),
+    path(
+        "oidc/callback/",
+        OIDCCallbackEndpoint.as_view(),
+        name="oidc-callback",
+    ),
+    ## OIDC OAuth - Space
+    path(
+        "spaces/oidc/",
+        OIDCOauthInitiateSpaceEndpoint.as_view(),
+        name="oidc-initiate-space",
+    ),
+    path(
+        "spaces/oidc/callback/",
+        OIDCCallbackSpaceEndpoint.as_view(),
+        name="oidc-callback-space",
     ),
 ]

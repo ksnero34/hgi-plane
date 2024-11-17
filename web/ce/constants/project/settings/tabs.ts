@@ -10,7 +10,7 @@ export const PROJECT_SETTINGS = {
     key: "general",
     label: "General",
     href: `/settings`,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/`,
     Icon: SettingIcon,
   },

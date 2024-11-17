@@ -63,7 +63,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
 
     @cache_response(60 * 60 * 2)
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def list(self, request, slug):
         workspace_member = WorkspaceMember.objects.get(
@@ -208,7 +208,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
         path="api/users/me/workspaces/", user=False, multiple=True
     )
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def leave(self, request, slug):
         workspace_member = WorkspaceMember.objects.get(

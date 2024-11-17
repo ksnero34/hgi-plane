@@ -15,7 +15,7 @@ from plane.app.permissions import allow_permission, ROLE
 class WorkspaceFavoriteEndpoint(BaseAPIView):
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED,], level="WORKSPACE"
     )
     def get(self, request, slug):
         # the second filter is to check if the user is a member of the project
@@ -35,7 +35,7 @@ class WorkspaceFavoriteEndpoint(BaseAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED], level="WORKSPACE"
     )
     def post(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
@@ -50,7 +50,7 @@ class WorkspaceFavoriteEndpoint(BaseAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED], level="WORKSPACE"
     )
     def patch(self, request, slug, favorite_id):
         favorite = UserFavorite.objects.get(
@@ -65,7 +65,7 @@ class WorkspaceFavoriteEndpoint(BaseAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED], level="WORKSPACE"
     )
     def delete(self, request, slug, favorite_id):
         favorite = UserFavorite.objects.get(
@@ -78,7 +78,7 @@ class WorkspaceFavoriteEndpoint(BaseAPIView):
 class WorkspaceFavoriteGroupEndpoint(BaseAPIView):
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED], level="WORKSPACE"
     )
     def get(self, request, slug, favorite_id):
         favorites = UserFavorite.objects.filter(

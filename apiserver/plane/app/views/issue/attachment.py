@@ -23,7 +23,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
     model = IssueAttachment
     parser_classes = (MultiPartParser, FormParser)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def post(self, request, slug, project_id, issue_id):
         serializer = IssueAttachmentSerializer(data=request.data)
         if serializer.is_valid():
@@ -68,6 +68,8 @@ class IssueAttachmentEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
     )

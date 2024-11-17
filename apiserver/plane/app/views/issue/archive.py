@@ -101,6 +101,7 @@ class IssueArchiveViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
         ]
     )
     def list(self, request, slug, project_id):
@@ -222,6 +223,7 @@ class IssueArchiveViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
         ]
     )
     def retrieve(self, request, slug, project_id, pk=None):
@@ -338,7 +340,7 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
         ProjectEntityPermission,
     ]
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER])
     def post(self, request, slug, project_id):
         issue_ids = request.data.get("issue_ids", [])
 

@@ -148,7 +148,7 @@ class ProjectViewSet(BaseViewSet):
         )
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def list(self, request, slug):
@@ -173,7 +173,7 @@ class ProjectViewSet(BaseViewSet):
             member=request.user,
             workspace__slug=slug,
             is_active=True,
-            role=15,
+            role=8,
         ).exists():
             projects = projects.filter(
                 Q(
@@ -201,7 +201,7 @@ class ProjectViewSet(BaseViewSet):
         return Response(projects, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def retrieve(self, request, slug, pk):

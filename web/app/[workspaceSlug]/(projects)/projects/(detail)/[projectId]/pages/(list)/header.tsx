@@ -33,7 +33,7 @@ export const PagesListHeader = observer(() => {
   const { setTrackElement } = useEventTracker();
   // auth
   const canUserCreatePage = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER,EUserPermissions.RESTRICTED,EUserPermissions.GUEST],
     EUserPermissionsLevel.PROJECT
   );
   // handle page create

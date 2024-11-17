@@ -41,7 +41,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         )
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def list(self, request, slug):
@@ -174,7 +174,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def partial_update(self, request, slug, pk):
@@ -195,7 +195,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def mark_read(self, request, slug, pk):
         notification = Notification.objects.get(
@@ -207,7 +207,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def mark_unread(self, request, slug, pk):
         notification = Notification.objects.get(
@@ -219,7 +219,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def archive(self, request, slug, pk):
         notification = Notification.objects.get(
@@ -231,7 +231,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def unarchive(self, request, slug, pk):
         notification = Notification.objects.get(
@@ -245,7 +245,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
 
 class UnreadNotificationEndpoint(BaseAPIView):
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def get(self, request, slug):
@@ -286,7 +286,7 @@ class UnreadNotificationEndpoint(BaseAPIView):
 
 class MarkAllReadNotificationViewSet(BaseViewSet):
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST], level="WORKSPACE"
     )
     def create(self, request, slug):
         snoozed = request.data.get("snoozed", False)

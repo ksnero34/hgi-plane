@@ -8,6 +8,8 @@ from enum import Enum
 class ROLE(Enum):
     ADMIN = 20
     MEMBER = 15
+    VIEWER = 10      # 추가: 모든 이슈 보기 + 할당된 이슈만 수정 가능
+    RESTRICTED = 8   # 추가: 할당된 이슈만 보기/수정 가능
     GUEST = 5
 
 

@@ -489,7 +489,7 @@ const emptyStateDetails = {
       },
     },
     accessType: "project",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   // project pages
   [EmptyStateType.PROJECT_PAGE]: {
@@ -502,7 +502,7 @@ const emptyStateDetails = {
       text: "Create your first page",
     },
     accessType: "project",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   [EmptyStateType.PROJECT_PAGE_PRIVATE]: {
     key: EmptyStateType.PROJECT_PAGE_PRIVATE,
@@ -513,7 +513,7 @@ const emptyStateDetails = {
       text: "Create your first page",
     },
     accessType: "project",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   [EmptyStateType.PROJECT_PAGE_PUBLIC]: {
     key: EmptyStateType.PROJECT_PAGE_PUBLIC,
@@ -524,7 +524,7 @@ const emptyStateDetails = {
       text: "Create your first page",
     },
     accessType: "project",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   [EmptyStateType.PROJECT_PAGE_ARCHIVED]: {
     key: EmptyStateType.PROJECT_PAGE_ARCHIVED,
@@ -542,7 +542,7 @@ const emptyStateDetails = {
       text: "Create your first page",
     },
     accessType: "workspace",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   [EmptyStateType.WORKSPACE_PAGE_PRIVATE]: {
     key: EmptyStateType.WORKSPACE_PAGE_PRIVATE,
@@ -553,7 +553,7 @@ const emptyStateDetails = {
       text: "Create your first page",
     },
     accessType: "workspace",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   [EmptyStateType.WORKSPACE_PAGE_PUBLIC]: {
     key: EmptyStateType.WORKSPACE_PAGE_PUBLIC,
@@ -564,7 +564,7 @@ const emptyStateDetails = {
       text: "Create your first page",
     },
     accessType: "workspace",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   [EmptyStateType.WORKSPACE_PAGE_ARCHIVED]: {
     key: EmptyStateType.WORKSPACE_PAGE_ARCHIVED,

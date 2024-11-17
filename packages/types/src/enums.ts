@@ -1,12 +1,16 @@
 export enum EUserPermissions {
   ADMIN = 20,
   MEMBER = 15,
+  VIEWER = 10,
+  RESTRICTED = 8,
   GUEST = 5,
 }
 
 export type TUserPermissions =
   | EUserPermissions.ADMIN
   | EUserPermissions.MEMBER
+  | EUserPermissions.VIEWER
+  | EUserPermissions.RESTRICTED
   | EUserPermissions.GUEST;
 
 // project pages

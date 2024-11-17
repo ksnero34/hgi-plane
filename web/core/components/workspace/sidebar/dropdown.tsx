@@ -26,7 +26,7 @@ const userLinks = (workspaceSlug: string) => [
     name: "Workspace invites",
     href: "/invitations",
     icon: Mails,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
   },
   {
     key: "settings",

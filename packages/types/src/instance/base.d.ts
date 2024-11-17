@@ -55,6 +55,7 @@ export interface IInstanceConfig {
   // intercom
   is_intercom_enabled: boolean;
   intercom_app_id: string | undefined;
+  is_oidc_enabled: boolean;
 }
 
 export interface IInstanceAdmin {

@@ -60,7 +60,7 @@ class InboxViewSet(BaseViewSet):
             .select_related("workspace", "project")
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED])
     def list(self, request, slug, project_id):
         inbox = self.get_queryset().first()
         return Response(
@@ -68,7 +68,7 @@ class InboxViewSet(BaseViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED])
     def perform_create(self, serializer):
         serializer.save(project_id=self.kwargs.get("project_id"))
 
@@ -165,7 +165,7 @@ class InboxIssueViewSet(BaseViewSet):
             )
         ).distinct()
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def list(self, request, slug, project_id):
         inbox_id = Inbox.objects.filter(
             workspace__slug=slug, project_id=project_id
@@ -220,7 +220,7 @@ class InboxIssueViewSet(BaseViewSet):
             ).data,
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def create(self, request, slug, project_id):
         if not request.data.get("issue", {}).get("name", False):
             return Response(
@@ -521,6 +521,8 @@ class InboxIssueViewSet(BaseViewSet):
         allowed_roles=[
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ],
         creator=True,

@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
                     ("google", "Google"),
                     ("github", "Github"),
                     ("gitlab", "GitLab"),
+                    ("oidc", "OpenID Connect"),
                 ]
             ),
         ),
@@ -39,6 +40,7 @@ class Migration(migrations.Migration):
                     ("Google", "google"),
                     ("Github", "github"),
                     ("GitLab", "gitlab"),
+                    ("OIDC", "oidc"),
                     ("Jira", "jira"),
                 ],
                 default=None,

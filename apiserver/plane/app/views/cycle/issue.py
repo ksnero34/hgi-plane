@@ -84,6 +84,7 @@ class CycleIssueViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
         ]
     )
     def list(self, request, slug, project_id, cycle_id):

@@ -69,6 +69,8 @@ class IssueCommentViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
     )
@@ -202,6 +204,8 @@ class CommentReactionViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
     )
@@ -231,6 +235,8 @@ class CommentReactionViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
     )

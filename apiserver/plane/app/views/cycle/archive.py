@@ -292,6 +292,7 @@ class CycleArchiveUnarchiveEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
         ]
     )
     def get(self, request, slug, project_id, pk=None):
@@ -598,7 +599,7 @@ class CycleArchiveUnarchiveEndpoint(BaseAPIView):
                 status=status.HTTP_200_OK,
             )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER])
     def post(self, request, slug, project_id, cycle_id):
         cycle = Cycle.objects.get(
             pk=cycle_id, project_id=project_id, workspace__slug=slug
@@ -623,7 +624,7 @@ class CycleArchiveUnarchiveEndpoint(BaseAPIView):
             status=status.HTTP_200_OK,
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER])
     def delete(self, request, slug, project_id, cycle_id):
         cycle = Cycle.objects.get(
             pk=cycle_id, project_id=project_id, workspace__slug=slug

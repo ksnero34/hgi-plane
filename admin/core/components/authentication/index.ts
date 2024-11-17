@@ -5,3 +5,4 @@ export * from "./authentication-method-card";
 export * from "./gitlab-config";
 export * from "./github-config";
 export * from "./google-config";
+export * from "./oidc-config";

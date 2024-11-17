@@ -23,6 +23,8 @@ import { IModuleIssuesFilter } from "@/store/issue/module";
 import { IProjectIssuesFilter } from "@/store/issue/project";
 import { IProjectViewIssuesFilter } from "@/store/issue/project-views";
 import { TRenderQuickActions } from "../list/list-view-types";
+import { useParams } from "next/navigation";
+import { useIssueDetail } from "@/hooks/store";
 
 type Props = {
   issuesFilterStore: IProjectIssuesFilter | IModuleIssuesFilter | ICycleIssuesFilter | IProjectViewIssuesFilter;
@@ -75,6 +77,9 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
+  const { workspaceSlug, projectId } = useParams();
+  const { updateIssue } = useIssueDetail();
+
   const calendarLayout = issuesFilterStore?.issueFilters?.displayFilters?.calendar?.layout ?? "month";
 
   const formattedDatePayload = renderFormattedPayloadDate(date.date);
@@ -98,31 +103,73 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
         },
         onDrop: ({ source, self }) => {
           setIsDraggingOver(false);
-          const sourceData = source?.data as { id: string; date: string } | undefined;
+          const sourceData = source?.data as { id: string; date: string; isStartDate: boolean } | undefined;
           const destinationData = self?.data as { date: string } | undefined;
-          if (!sourceData || !destinationData) return;
+          if (!sourceData || !destinationData || !workspaceSlug || !projectId || !updateIssue) return;
 
           const issueDetails = issues?.[sourceData?.id];
-          if (issueDetails?.start_date) {
-            const issueStartDate = new Date(issueDetails.start_date);
-            const targetDate = new Date(destinationData?.date);
-            const diffInDays = differenceInCalendarDays(targetDate, issueStartDate);
-            if (diffInDays < 0) {
+          if (!issueDetails) return;
+
+          const newDate = new Date(destinationData.date);
+
+          // start_date를 변경하는 경우
+          if (sourceData.isStartDate) {
+            const targetDate = issueDetails.target_date ? new Date(issueDetails.target_date) : null;
+
+            // target_date가 있고, 새로운 start_date가 target_date보다 이후인 경우
+            if (targetDate && newDate > targetDate) {
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: "Error!",
-                message: "Due date cannot be before the start date of the issue.",
+                message: "Start date cannot be after the due date.",
               });
               return;
             }
-          }
 
-          handleDragAndDrop(sourceData?.id, sourceData?.date, destinationData?.date);
-          highlightIssueOnDrop(source?.element?.id, false);
+            // start_date 업데이트
+            updateIssue(workspaceSlug.toString(), projectId, sourceData.id, { start_date: destinationData.date })
+              .then(() => {
+                highlightIssueOnDrop(source?.element?.id, false);
+              })
+              .catch((error) => {
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: "Error!",
+                  message: "Failed to update start date.",
+                });
+              });
+          } 
+          // target_date(due date)를 변경하는 경우
+          else {
+            const startDate = issueDetails.start_date ? new Date(issueDetails.start_date) : null;
+
+            // start_date가 있고, 새로운 target_date가 start_date보다 이전인 경우
+            if (startDate && newDate < startDate) {
+              setToast({
+                type: TOAST_TYPE.ERROR,
+                title: "Error!",
+                message: "Due date cannot be before the start date.",
+              });
+              return;
+            }
+
+            // target_date 업데이트
+            updateIssue(workspaceSlug.toString(), projectId, sourceData.id, { target_date: destinationData.date })
+              .then(() => {
+                highlightIssueOnDrop(source?.element?.id, false);
+              })
+              .catch((error) => {
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: "Error!",
+                  message: "Failed to update due date.",
+                });
+              });
+          }
         },
       })
     );
-  }, [dayTileRef?.current, formattedDatePayload]);
+  }, [dayTileRef?.current, formattedDatePayload, workspaceSlug, projectId, updateIssue]);
 
   if (!formattedDatePayload) return null;
 

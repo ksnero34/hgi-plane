@@ -62,7 +62,7 @@ from plane.bgtasks.webhook_task import model_activity
 
 
 class IssueListEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def get(self, request, slug, project_id):
         issue_ids = request.GET.get("issues", False)
 
@@ -232,7 +232,7 @@ class IssueViewSet(BaseViewSet):
         ).distinct()
 
     @method_decorator(gzip_page)
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def list(self, request, slug, project_id):
         # print("\n[Calendar View Debug]")
         # print("Request Parameters:", {
@@ -507,6 +507,8 @@ class IssueViewSet(BaseViewSet):
         allowed_roles=[
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ],
         creator=True,
@@ -713,7 +715,7 @@ class IssueViewSet(BaseViewSet):
 
 
 class IssueUserDisplayPropertyEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def patch(self, request, slug, project_id):
         issue_property = IssueUserProperty.objects.get(
             user=request.user,
@@ -737,6 +739,8 @@ class IssueUserDisplayPropertyEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
     )
@@ -774,7 +778,7 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
 
 
 class DeletedIssuesListViewSet(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def get(self, request, slug, project_id):
         filters = {}
         if request.GET.get("updated_at__gt", None) is not None:
@@ -842,7 +846,7 @@ class IssuePaginatedViewSet(BaseViewSet):
 
         return paginated_data
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def list(self, request, slug, project_id):
         cursor = request.GET.get("cursor", None)
         is_description_required = request.GET.get("description", False)

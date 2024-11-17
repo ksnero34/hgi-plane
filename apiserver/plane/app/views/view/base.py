@@ -76,7 +76,7 @@ class WorkspaceViewViewSet(BaseViewSet):
         )
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def list(self, request, slug):
@@ -260,7 +260,7 @@ class WorkspaceViewIssuesViewSet(BaseViewSet):
 
     @method_decorator(gzip_page)
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST],
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",
     )
     def list(self, request, slug):
@@ -431,7 +431,7 @@ class IssueViewViewSet(BaseViewSet):
             .distinct()
         )
 
-    allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
 
     def list(self, request, slug, project_id):
         queryset = self.get_queryset()
@@ -457,7 +457,7 @@ class IssueViewViewSet(BaseViewSet):
         ).data
         return Response(views, status=status.HTTP_200_OK)
 
-    allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
 
     def retrieve(self, request, slug, project_id, pk):
         issue_view = (

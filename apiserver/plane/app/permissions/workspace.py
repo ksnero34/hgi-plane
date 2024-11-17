@@ -4,11 +4,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 # Module imports
 from plane.db.models import WorkspaceMember
 
-
-# Permission Mappings
-Admin = 20
-Member = 15
-Guest = 5
+from .base import ROLE
 
 
 # TODO: Move the below logic to python match - python v3.10
@@ -30,7 +26,7 @@ class WorkSpaceBasePermission(BasePermission):
             return WorkspaceMember.objects.filter(
                 member=request.user,
                 workspace__slug=view.workspace_slug,
-                role__in=[Admin, Member],
+                role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value, ROLE.VIEWER.value, ROLE.RESTRICTED.value],
                 is_active=True,
             ).exists()
 
@@ -39,7 +35,7 @@ class WorkSpaceBasePermission(BasePermission):
             return WorkspaceMember.objects.filter(
                 member=request.user,
                 workspace__slug=view.workspace_slug,
-                role=Admin,
+                role=ROLE.ADMIN.value,
                 is_active=True,
             ).exists()
 
@@ -52,7 +48,7 @@ class WorkspaceOwnerPermission(BasePermission):
         return WorkspaceMember.objects.filter(
             workspace__slug=view.workspace_slug,
             member=request.user,
-            role=Admin,
+            role=ROLE.ADMIN.value,
         ).exists()
 
 
@@ -64,7 +60,7 @@ class WorkSpaceAdminPermission(BasePermission):
         return WorkspaceMember.objects.filter(
             member=request.user,
             workspace__slug=view.workspace_slug,
-            role__in=[Admin, Member],
+            role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
             is_active=True,
         ).exists()
 
@@ -85,7 +81,7 @@ class WorkspaceEntityPermission(BasePermission):
         return WorkspaceMember.objects.filter(
             member=request.user,
             workspace__slug=view.workspace_slug,
-            role__in=[Admin, Member],
+            role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
             is_active=True,
         ).exists()
 

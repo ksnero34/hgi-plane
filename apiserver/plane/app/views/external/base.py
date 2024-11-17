@@ -22,7 +22,7 @@ from plane.license.utils.instance_value import get_configuration_value
 
 class GPTIntegrationEndpoint(BaseAPIView):
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
     def post(self, request, slug, project_id):
         OPENAI_API_KEY, GPT_ENGINE = get_configuration_value(
             [
@@ -84,7 +84,7 @@ class GPTIntegrationEndpoint(BaseAPIView):
 class WorkspaceGPTIntegrationEndpoint(BaseAPIView):
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED], level="WORKSPACE"
     )
     def post(self, request, slug):
         OPENAI_API_KEY, GPT_ENGINE = get_configuration_value(

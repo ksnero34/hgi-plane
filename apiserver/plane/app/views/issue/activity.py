@@ -41,6 +41,8 @@ class IssueActivityEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER, 
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
     )

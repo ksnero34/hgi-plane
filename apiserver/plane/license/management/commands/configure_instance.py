@@ -156,6 +156,49 @@ class Command(BaseCommand):
                 "category": "INTERCOM",
                 "is_encrypted": False,
             },
+            # OIDC Settings
+            {
+                "key": "IS_OIDC_ENABLED",
+                "value": os.environ.get("IS_OIDC_ENABLED", "0"),
+                "category": "AUTHENTICATION",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_CLIENT_ID",
+                "value": os.environ.get("OIDC_CLIENT_ID"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_CLIENT_SECRET",
+                "value": os.environ.get("OIDC_CLIENT_SECRET"),
+                "category": "OIDC",
+                "is_encrypted": True,
+            },
+            {
+                "key": "OIDC_ISSUER_URL",
+                "value": os.environ.get("OIDC_ISSUER_URL"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_SCOPES",
+                "value": os.environ.get("OIDC_SCOPES", "openid profile email"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_NAME_CLAIM",
+                "value": os.environ.get("OIDC_NAME_CLAIM", "name"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_EMAIL_CLAIM",
+                "value": os.environ.get("OIDC_EMAIL_CLAIM", "email"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
         ]
 
         for item in config_keys:
@@ -182,7 +225,7 @@ class Command(BaseCommand):
                     )
                 )
 
-        keys = ["IS_GOOGLE_ENABLED", "IS_GITHUB_ENABLED", "IS_GITLAB_ENABLED"]
+        keys = ["IS_GOOGLE_ENABLED", "IS_GITHUB_ENABLED", "IS_GITLAB_ENABLED", "IS_OIDC_ENABLED"]
         if not InstanceConfiguration.objects.filter(key__in=keys).exists():
             for key in keys:
                 if key == "IS_GOOGLE_ENABLED":
@@ -288,6 +331,38 @@ class Command(BaseCommand):
                         value = "0"
                     InstanceConfiguration.objects.create(
                         key="IS_GITLAB_ENABLED",
+                        value=value,
+                        category="AUTHENTICATION",
+                        is_encrypted=False,
+                    )
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f"{key} loaded with value from environment variable."
+                        )
+                    )
+                if key == "IS_OIDC_ENABLED":
+                    OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_ISSUER_URL = get_configuration_value(
+                        [
+                            {
+                                "key": "OIDC_CLIENT_ID",
+                                "default": os.environ.get("OIDC_CLIENT_ID", ""),
+                            },
+                            {
+                                "key": "OIDC_CLIENT_SECRET",
+                                "default": os.environ.get("OIDC_CLIENT_SECRET", ""),
+                            },
+                            {
+                                "key": "OIDC_ISSUER_URL",
+                                "default": os.environ.get("OIDC_ISSUER_URL", ""),
+                            },
+                        ]
+                    )
+                    if bool(OIDC_CLIENT_ID) and bool(OIDC_CLIENT_SECRET) and bool(OIDC_ISSUER_URL):
+                        value = "1"
+                    else:
+                        value = "0"
+                    InstanceConfiguration.objects.create(
+                        key="IS_OIDC_ENABLED",
                         value=value,
                         category="AUTHENTICATION",
                         is_encrypted=False,

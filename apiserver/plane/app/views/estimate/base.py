@@ -37,6 +37,8 @@ class ProjectEstimatePointEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
+            ROLE.RESTRICTED,
         ]
     )
     def get(self, request, slug, project_id):

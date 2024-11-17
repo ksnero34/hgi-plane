@@ -173,6 +173,8 @@ class WorkSpaceViewSet(BaseViewSet):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
+            ROLE.VIEWER,
+            ROLE.RESTRICTED,
             ROLE.GUEST,
         ],
         level="WORKSPACE",

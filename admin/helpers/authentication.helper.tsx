@@ -11,6 +11,7 @@ import {
   GitlabConfiguration,
   GoogleConfiguration,
   PasswordLoginConfiguration,
+  OIDCConfiguration,
 } from "@/components/authentication";
 // helpers
 import { SUPPORT_EMAIL, resolveGeneralTheme } from "@/helpers/common.helper";
@@ -19,6 +20,7 @@ import githubLightModeImage from "@/public/logos/github-black.png";
 import githubDarkModeImage from "@/public/logos/github-white.png";
 import GitlabLogo from "@/public/logos/gitlab-logo.svg";
 import GoogleLogo from "@/public/logos/google-logo.svg";
+import OIDCLogo from "@/public/logos/oidc-logo.svg";
 
 export enum EPageTypes {
   PUBLIC = "PUBLIC",
@@ -199,5 +201,12 @@ export const getBaseAuthenticationModes: (props: TGetBaseAuthenticationModeProps
       description: "Allow members to log in or sign up to plane with their GitLab accounts.",
       icon: <Image src={GitlabLogo} height={20} width={20} alt="GitLab Logo" />,
       config: <GitlabConfiguration disabled={disabled} updateConfig={updateConfig} />,
+    },
+    {
+      key: "hgi-oidc",
+      name: "HGI OpenID Connect",
+      description: "Allow members to log in or sign up to plane with OIDC.",
+      icon: <Image src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />,
+      config: <OIDCConfiguration disabled={disabled} updateConfig={updateConfig} />,
     },
   ];
