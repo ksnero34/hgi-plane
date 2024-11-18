@@ -1,16 +1,17 @@
 "use client";
 
-import { FC } from "react";
-// third-party
+import { FC, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react";
-import { User } from "lucide-react";
-// types
+import { User, ChevronUp, ChevronDown } from "lucide-react";
 import { IUser } from "@plane/types";
-// ui
 import { Avatar, ToggleSwitch } from "@plane/ui";
-// hooks
 import { useUser } from "@/hooks/store";
+import { formatDistanceToNow } from 'date-fns';
+import { ko } from 'date-fns/locale';
+
+type TSortKey = 'display_name' | 'email' | 'date_joined' | 'last_active' | 'is_instance_admin';
+type TSortOrder = 'asc' | 'desc';
 
 export interface IMemberList {
   members: IUser[];
@@ -19,76 +20,148 @@ export interface IMemberList {
 
 export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }) => {
   const { currentUser } = useUser();
+  const [sortKey, setSortKey] = useState<TSortKey>('display_name');
+  const [sortOrder, setSortOrder] = useState<TSortOrder>('asc');
 
-  // 멤버 정렬 함수
-  const sortMembers = (a: IUser, b: IUser) => {
-    // 현재 로그인한 사용자를 최상단에 배치
+  const handleSort = (key: TSortKey) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedMembers = [...members].sort((a, b) => {
     if (a.id === currentUser?.id) return -1;
     if (b.id === currentUser?.id) return 1;
 
-    // role 기준 정렬 (admin이 위로)
-    if (a.role === "admin" && b.role !== "admin") return -1;
-    if (a.role !== "admin" && b.role === "admin") return 1;
+    let compareA: any = a[sortKey];
+    let compareB: any = b[sortKey];
 
-    // 같은 권한을 가진 사용자들은 이름순으로 정렬
-    return a.display_name.localeCompare(b.display_name);
+    if (sortKey === 'date_joined' || sortKey === 'last_active') {
+      compareA = new Date(compareA || 0).getTime();
+      compareB = new Date(compareB || 0).getTime();
+    }
+
+    if (compareA < compareB) return sortOrder === 'asc' ? -1 : 1;
+    if (compareA > compareB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const SortIcon = ({ currentKey }: { currentKey: TSortKey }) => {
+    if (sortKey !== currentKey) return null;
+    return sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
   };
 
-  const sortedMembers = [...members].sort(sortMembers);
-
-  const isAdmin = (member: IUser) => member.role === "admin";
-
   return (
-    <div className="space-y-4">
-      <AnimatePresence>
-        {sortedMembers.map((member) => (
-          <motion.div
-            key={member.id}
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{
-              duration: 0.2,
-              type: "spring",
-              stiffness: 500,
-              damping: 30
-            }}
-            className={`flex items-center justify-between gap-4 rounded-md border border-custom-border-200 px-4 py-3 
-              ${member.id === currentUser?.id ? "bg-custom-background-80" : ""} 
-              ${isAdmin(member) ? "bg-custom-background-90" : ""}`}
-          >
-            <div className="flex items-center gap-x-4">
-              <div className="flex-shrink-0">
-                <Avatar
-                  name={member.display_name}
-                  src={member.avatar || undefined}
-                  size={32}
-                  shape="square"
-                  className="!text-base"
-                />
-              </div>
-              <div>
-                <h4 className="text-sm font-medium">{member.display_name}</h4>
-                <p className="text-xs text-custom-text-200">{member.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-x-4">
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-custom-border-200">
+        <thead>
+          <tr className="bg-custom-background-90">
+            <th 
+              className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
+              onClick={() => handleSort('display_name')}
+            >
               <div className="flex items-center gap-x-2">
-                <User className={`h-4 w-4 ${isAdmin(member) ? "text-custom-primary-100" : "text-custom-text-200"}`} />
-                <span className={`text-xs ${isAdmin(member) ? "text-custom-primary-100 font-medium" : "text-custom-text-200"}`}>
-                  {isAdmin(member) ? "Administrator" : "Member"}
-                </span>
+                이름
+                <SortIcon currentKey="display_name" />
               </div>
-              <ToggleSwitch
-                value={isAdmin(member)}
-                onChange={() => onUpdateMember(member.id, !isAdmin(member))}
-                size="sm"
-              />
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+            </th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
+              onClick={() => handleSort('email')}
+            >
+              <div className="flex items-center gap-x-2">
+                이메일
+                <SortIcon currentKey="email" />
+              </div>
+            </th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
+              onClick={() => handleSort('date_joined')}
+            >
+              <div className="flex items-center gap-x-2">
+                가입일시
+                <SortIcon currentKey="date_joined" />
+              </div>
+            </th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
+              onClick={() => handleSort('last_active')}
+            >
+              <div className="flex items-center gap-x-2">
+                최근 접속
+                <SortIcon currentKey="last_active" />
+              </div>
+            </th>
+            <th 
+              className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
+              onClick={() => handleSort('is_instance_admin')}
+            >
+              <div className="flex items-center gap-x-2">
+                권한
+                <SortIcon currentKey="is_instance_admin" />
+              </div>
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-custom-text-200">
+              관리
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-custom-border-200">
+          <AnimatePresence>
+            {sortedMembers.map((member) => (
+              <motion.tr
+                key={member.id}
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className={`${member.id === currentUser?.id ? "bg-custom-background-80" : ""}`}
+              >
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex items-center gap-x-3">
+                    <Avatar
+                      name={member.display_name}
+                      src={member.avatar || undefined}
+                      size={32}
+                      shape="square"
+                    />
+                    <span className="text-sm font-medium">{member.display_name}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-sm text-custom-text-200">
+                  {member.email}
+                </td>
+                <td className="px-4 py-3 text-sm text-custom-text-200">
+                  {formatDistanceToNow(new Date(member.date_joined), { addSuffix: true, locale: ko })}
+                </td>
+                <td className="px-4 py-3 text-sm text-custom-text-200">
+                  {member.last_active 
+                    ? formatDistanceToNow(new Date(member.last_active), { addSuffix: true, locale: ko })
+                    : "-"}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-x-2">
+                    <User className={`h-4 w-4 ${member.is_instance_admin ? "text-custom-primary-100" : "text-custom-text-200"}`} />
+                    <span className={`text-sm ${member.is_instance_admin ? "text-custom-primary-100 font-medium" : "text-custom-text-200"}`}>
+                      {member.is_instance_admin ? "관리자" : "일반"}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <ToggleSwitch
+                    value={member.is_instance_admin}
+                    onChange={() => onUpdateMember(member.id, !member.is_instance_admin)}
+                    size="sm"
+                  />
+                </td>
+              </motion.tr>
+            ))}
+          </AnimatePresence>
+        </tbody>
+      </table>
     </div>
   );
 });

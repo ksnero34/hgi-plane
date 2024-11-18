@@ -80,33 +80,30 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
               });
               setToast({
                 type: TOAST_TYPE.SUCCESS,
-                title: "Success!",
-                message: "Workspace created successfully.",
+                title: "성공",
+                message: "워크스페이스가 생성되었습니다.",
               });
 
               if (onSubmit) await onSubmit(res);
             })
             .catch((error) => {
-              if (error?.error === "Only instance administrators can create workspaces") {
-                setToast({
-                  type: TOAST_TYPE.ERROR,
-                  title: "Permission Denied",
-                  message: "Only instance administrators can create workspaces",
-                });
-              } else {
-                captureWorkspaceEvent({
-                  eventName: WORKSPACE_CREATED,
-                  payload: {
-                    state: "FAILED",
-                    element: "Create workspace page",
-                  },
-                });
-                setToast({
-                  type: TOAST_TYPE.ERROR,
-                  title: "Error",
-                  message: "Failed to create workspace. Please try again.",
-                });
-              }
+              captureWorkspaceEvent({
+                eventName: WORKSPACE_CREATED,
+                payload: {
+                  state: "FAILED",
+                  element: "Create workspace page",
+                },
+              });
+              
+              const errorMessage = error?.error === "Only instance administrators can create workspaces"
+                ? "인스턴스 관리자만 워크스페이스를 생성할 수 있습니다."
+                : "워크스페이스 생성에 실패했습니다. 다시 시도해주세요.";
+
+              setToast({
+                type: TOAST_TYPE.ERROR,
+                title: "오류",
+                message: errorMessage,
+              });
             });
         } else setSlugError(true);
       })

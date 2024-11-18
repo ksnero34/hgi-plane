@@ -12,7 +12,7 @@ export const MembersConfigurationForm: FC<IMembersConfigurationForm> = observer(
   const { instanceAdmins } = props;
 
   const isAdministrator = (admin: IInstanceAdmin) =>
-    admin.role === "admin";
+    admin.is_instance_admin;
 
   return (
     <div className="space-y-8">

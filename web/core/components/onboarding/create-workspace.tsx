@@ -63,8 +63,8 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
             .then(async (workspaceResponse) => {
               setToast({
                 type: TOAST_TYPE.SUCCESS,
-                title: "Success!",
-                message: "Workspace created successfully.",
+                title: "성공",
+                message: "워크스페이스가 생성되었습니다.",
               });
               captureWorkspaceEvent({
                 eventName: WORKSPACE_CREATED,
@@ -78,7 +78,7 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
               await fetchWorkspaces();
               await completeStep(workspaceResponse.id);
             })
-            .catch(() => {
+            .catch((error) => {
               captureWorkspaceEvent({
                 eventName: WORKSPACE_CREATED,
                 payload: {
@@ -87,10 +87,15 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
                   element: E_ONBOARDING,
                 },
               });
+
+              const errorMessage = error?.error === "Only instance administrators can create workspaces"
+                ? "인스턴스 관리자만 워크스페이스를 생성할 수 있습니다."
+                : "워크스페이스 생성에 실패했습니다. 다시 시도해주세요.";
+
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Workspace could not be created. Please try again.",
+                title: "오류",
+                message: errorMessage,
               });
             });
         } else setSlugError(true);
@@ -98,8 +103,8 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Some error occurred while creating workspace. Please try again.",
+          title: "오류",
+          message: "워크스페이스 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
         })
       );
   };
