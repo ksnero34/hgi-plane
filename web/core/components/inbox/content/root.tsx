@@ -67,7 +67,7 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   console.log("Inbox Issue Details:", {
     workspaceSlug,
     projectId,
-    assignees: inboxIssue?.issue?.assignees,
+    assignees: inboxIssue?.issue?.assignee_ids,
     currentUserId: currentUser?.id,
     issue: inboxIssue?.issue
   });
@@ -76,7 +76,7 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   const isEditable = checkIssueEditPermission(
     workspaceSlug,
     projectId,
-    inboxIssue?.issue?.assignees || [],
+    inboxIssue?.issue?.assignee_ids || [],
     currentUser?.id || ""
   );
 
@@ -84,7 +84,7 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   console.log("Inbox Permission Check:", {
     isEditable,
     currentUser: currentUser?.id,
-    assignees: inboxIssue?.issue?.assignees,
+    assignees: inboxIssue?.issue?.assignee_ids,
     workspaceSlug,
     projectId
   });

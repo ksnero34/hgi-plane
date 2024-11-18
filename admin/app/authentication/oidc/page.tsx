@@ -23,7 +23,7 @@ const InstanceOIDCAuthenticationPage = observer(() => {
   // config
   const enableOIDCConfig = formattedConfig?.IS_OIDC_ENABLED ?? "";
 
-  useSWR("INSTANCE_CONFIGURATIONS", () => fetchInstanceConfigurations());
+  void useSWR("INSTANCE_CONFIGURATIONS", () => fetchInstanceConfigurations());
 
   const updateConfig = async (key: "IS_OIDC_ENABLED", value: string) => {
     setIsSubmitting(true);
@@ -99,4 +99,4 @@ const InstanceOIDCAuthenticationPage = observer(() => {
   );
 });
 
-export default InstanceOIDCAuthenticationPage; 
+export default InstanceOIDCAuthenticationPage;

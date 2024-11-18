@@ -36,7 +36,7 @@ export const ProjectSettingsLabelList: React.FC = observer(() => {
 
   // derived values
   const isEditable = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
-
+  
   const newLabel = () => {
     setIsUpdating(false);
     setLabelForm(true);

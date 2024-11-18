@@ -334,7 +334,7 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
   console.log("Issue Details:", {
     workspaceSlug,
     projectId,
-    assignees: issue?.assignees,
+    assignees: issue?.assignee_ids,
     currentUserId: currentUser?.id,
     issue
   });
@@ -343,7 +343,7 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
   const isEditable = checkIssueEditPermission(
     workspaceSlug,
     projectId,
-    issue?.assignees || [],
+    issue?.assignee_ids || [],
     currentUser?.id || ""
   );
 
@@ -351,7 +351,7 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
   console.log("Permission Check:", {
     isEditable,
     currentUser: currentUser?.id,
-    assignees: issue?.assignees,
+    assignees: issue?.assignee_ids,
     workspaceSlug,
     projectId
   });

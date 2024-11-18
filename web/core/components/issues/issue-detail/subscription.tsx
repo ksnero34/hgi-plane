@@ -7,7 +7,7 @@ import { Bell, BellOff } from "lucide-react";
 // UI
 import { Button, Loader, TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
-import { useIssueDetail, useUserPermissions } from "@/hooks/store";
+import { useIssueDetail, useUserPermissions, useUser } from "@/hooks/store";
 import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
 
 export type TIssueSubscription = {
@@ -23,18 +23,27 @@ export const IssueSubscription: FC<TIssueSubscription> = observer((props) => {
     subscription: { getSubscriptionByIssueId },
     createSubscription,
     removeSubscription,
+    issue: { getIssueById },
   } = useIssueDetail();
+  const { currentUser } = useUser();
   // state
   const [loading, setLoading] = useState(false);
   // hooks
-  const { allowPermissions } = useUserPermissions();
+  const { allowPermissions, checkIssueEditPermission } = useUserPermissions();
 
   const isSubscribed = getSubscriptionByIssueId(issueId);
+  const issue = getIssueById(issueId);
+
   const isEditable = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
     EUserPermissionsLevel.PROJECT,
     workspaceSlug,
     projectId
+  ) || checkIssueEditPermission(
+    workspaceSlug,
+    projectId,
+    issue?.assignee_ids || [],
+    currentUser?.id || ""
   );
 
   const handleSubscription = async () => {

@@ -18,7 +18,7 @@ import { ARCHIVABLE_STATE_GROUPS } from "@/constants/state";
 import { cn } from "@/helpers/common.helper";
 import { copyUrlToClipboard } from "@/helpers/string.helper";
 // hooks
-import { useEventTracker, useIssues, useProjectState, useUserPermissions, useUser } from "@/hooks/store";
+import { useEventTracker, useIssues, useProjectState, useUserPermissions } from "@/hooks/store";
 import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
 // types
 import { IQuickActionProps } from "../list/list-view-types";
@@ -44,8 +44,7 @@ export const ProjectIssueQuickActions: React.FC<IQuickActionProps> = observer((p
   const [deleteIssueModal, setDeleteIssueModal] = useState(false);
   const [archiveIssueModal, setArchiveIssueModal] = useState(false);
   // store hooks
-  const { checkIssueEditPermission } = useUserPermissions();
-  const { currentUser } = useUser();
+  const { allowPermissions } = useUserPermissions();
   const { setTrackElement } = useEventTracker();
   const { issuesFilter } = useIssues(EIssuesStoreType.PROJECT);
   const { getStateById } = useProjectState();
@@ -53,12 +52,8 @@ export const ProjectIssueQuickActions: React.FC<IQuickActionProps> = observer((p
   const activeLayout = `${issuesFilter.issueFilters?.displayFilters?.layout} layout`;
   const stateDetails = getStateById(issue.state_id);
   // auth
-  const isEditingAllowed = !readOnly && checkIssueEditPermission(
-    workspaceSlug.toString(),
-    issue.project_id,
-    issue.assignees || [],
-    currentUser?.id || ""
-  );
+  const isEditingAllowed =
+    allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT) && !readOnly;
   const isArchivingAllowed = handleArchive && isEditingAllowed;
   const isInArchivableGroup = !!stateDetails && ARCHIVABLE_STATE_GROUPS.includes(stateDetails?.group);
   const isDeletingAllowed = isEditingAllowed;

@@ -1,16 +1,18 @@
 "use client";
 import { FC } from "react";
 import { observer } from "mobx-react";
-import { IInstance, IInstanceAdmin } from "@plane/types";
-import { Button, ToggleSwitch } from "@plane/ui";
+import { IInstanceAdmin } from "@plane/types";
+import { ToggleSwitch } from "@plane/ui";
 
 export interface IMembersConfigurationForm {
-  instance: IInstance;
   instanceAdmins: IInstanceAdmin[];
 }
 
 export const MembersConfigurationForm: FC<IMembersConfigurationForm> = observer((props) => {
-  const { instance, instanceAdmins } = props;
+  const { instanceAdmins } = props;
+
+  const isAdministrator = (admin: IInstanceAdmin) =>
+    admin.role === "admin";
 
   return (
     <div className="space-y-8">
@@ -22,11 +24,11 @@ export const MembersConfigurationForm: FC<IMembersConfigurationForm> = observer(
               <div>
                 <div className="text-sm font-medium">{admin.user_detail?.email}</div>
                 <div className="text-xs text-custom-text-300">
-                  {admin.user_detail?.is_instance_admin ? "Administrator" : "Member"}
+                  {isAdministrator(admin) ? "Administrator" : "Member"}
                 </div>
               </div>
               <ToggleSwitch
-                value={admin.user_detail?.is_instance_admin || false}
+                value={isAdministrator(admin)}
                 onChange={() => {/* TODO: 권한 변경 로직 */}}
                 size="sm"
               />

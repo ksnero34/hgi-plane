@@ -11,6 +11,10 @@ import type {
 import { API_BASE_URL } from "@/helpers/common.helper";
 import { APIService } from "@/services/api.service";
 
+interface CSRFResponse {
+  csrf_token: string;
+}
+
 export class InstanceService extends APIService {
   constructor() {
     super(API_BASE_URL);
@@ -85,14 +89,14 @@ export class InstanceService extends APIService {
     userId: string, 
     data: { is_admin: boolean }
   ): Promise<IUser> {
-    const csrfToken = await this.requestCSRFToken();  // CSRF 토큰 요청
+    const csrfToken = await this.requestCSRFToken();
     
     return this.patch<{ is_admin: boolean }, IUser>(
       `/api/instances/members/${userId}/`,
       data,
       {
         headers: {
-          'X-CSRFToken': csrfToken?.csrf_token,  // CSRF 토큰 포함
+          'X-CSRFToken': csrfToken.csrf_token,
         }
       }
     )
@@ -103,8 +107,8 @@ export class InstanceService extends APIService {
   }
 
   // CSRF 토큰 요청 메서드
-  private async requestCSRFToken() {
-    return this.get("/auth/get-csrf-token/")
+  private async requestCSRFToken(): Promise<CSRFResponse> {
+    return this.get<CSRFResponse>("/auth/get-csrf-token/")
       .then((response) => response.data)
       .catch((error) => {
         throw error?.response?.data;

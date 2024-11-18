@@ -77,7 +77,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
-  const { workspaceSlug, projectId } = useParams();
+  const { workspaceSlug, projectId: rawProjectId } = useParams();
+  const projectId = Array.isArray(rawProjectId) ? rawProjectId[0] : rawProjectId;
   const { updateIssue } = useIssueDetail();
 
   const calendarLayout = issuesFilterStore?.issueFilters?.displayFilters?.calendar?.layout ?? "month";

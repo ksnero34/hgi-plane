@@ -8,7 +8,6 @@ import { IFormattedInstanceConfiguration } from "@plane/types";
 import { Button, TOAST_TYPE, getButtonStyling, setToast } from "@plane/ui";
 // components
 import {
-  CodeBlock,
   ConfirmDiscardModal,
   ControllerInput,
   CopyField,
@@ -39,7 +38,7 @@ export const InstanceOIDCConfigForm: FC<Props> = (props) => {
   const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
   // store hooks
   const { updateInstanceConfigurations } = useInstance();
-  
+
   const {
     handleSubmit,
     control,
@@ -70,7 +69,7 @@ export const InstanceOIDCConfigForm: FC<Props> = (props) => {
     },
     {
       key: "OIDC_CLIENT_ID",
-      type: "text", 
+      type: "text",
       label: "클라이언트 ID",
       description: "OIDC 제공자로부터 발급받은 클라이언트 ID를 입력하세요.",
       placeholder: "your-client-id",
@@ -204,4 +203,4 @@ export const InstanceOIDCConfigForm: FC<Props> = (props) => {
       </div>
     </>
   );
-}; 
+};

@@ -2,9 +2,9 @@
 
 import { observer } from "mobx-react";
 import useSWR from "swr";
+import { TOAST_TYPE, setToast } from "@plane/ui";
 import { useInstance } from "@/hooks/store";
 import { MemberList } from "./member-list";
-import { TOAST_TYPE, setToast } from "@plane/ui";
 
 function MembersPage() {
   const { instance, fetchInstanceMembers, updateInstanceMember } = useInstance();
@@ -14,19 +14,17 @@ function MembersPage() {
     try {
       await updateInstanceMember(userId, { is_admin: isAdmin });
       mutate();
-      // 성공 메시지
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Success",
         message: "Member permissions updated successfully",
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-      // 에러 메시지
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "Error",
-        message: error?.error || "Failed to update member permissions",
+        message: error instanceof Error ? error.message : "Failed to update member permissions",
       });
     }
   };

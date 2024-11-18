@@ -106,13 +106,18 @@ export const BaseCalendarRoot: FC<IBaseCalendarRoot> = observer((props: IBaseCal
   ) => {
     if (!issueId || !destinationDate || !sourceDate) return;
 
+    const wrappedUpdateIssue = updateIssue 
+      ? (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => 
+          updateIssue(projectId, issueId, data)
+      : undefined;
+
     await handleDragDrop(
       issueId,
       sourceDate,
       destinationDate,
       workspaceSlug?.toString(),
       projectId?.toString(),
-      updateIssue
+      wrappedUpdateIssue
     ).catch((err) => {
       setToast({
         title: "Error!",

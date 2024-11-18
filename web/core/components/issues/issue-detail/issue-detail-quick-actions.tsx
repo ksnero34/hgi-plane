@@ -46,7 +46,7 @@ export const IssueDetailQuickActions: FC<Props> = observer((props) => {
 
   // hooks
   const { data: currentUser } = useUser();
-  const { allowPermissions } = useUserPermissions();
+  const { allowPermissions, checkIssueEditPermission} = useUserPermissions();
   const { isMobile } = usePlatformOS();
   const { getStateById } = useProjectState();
   const {
@@ -154,7 +154,14 @@ export const IssueDetailQuickActions: FC<Props> = observer((props) => {
   };
 
   // auth
-  const isEditable = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
+  // const isEditable = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
+  const isEditable = checkIssueEditPermission(
+    workspaceSlug,
+    projectId,
+    issue?.assignee_ids || [],
+    currentUser?.id || ""
+  );
+
   const canRestoreIssue = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
     EUserPermissionsLevel.PROJECT
