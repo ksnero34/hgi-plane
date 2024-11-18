@@ -40,7 +40,7 @@ services:
 
   plane-db:
     container_name: dev-plane-db
-    image: postgres:15.7-alpine
+    image: hgi-postgres:16.4
     restart: unless-stopped
     networks:
       - dev_env
