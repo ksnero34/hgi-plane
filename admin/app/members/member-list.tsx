@@ -1,14 +1,14 @@
 "use client";
 
 import { FC, useState } from "react";
+import { formatDistanceToNow } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { motion, AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react";
 import { User, ChevronUp, ChevronDown } from "lucide-react";
 import { IUser } from "@plane/types";
 import { Avatar, ToggleSwitch } from "@plane/ui";
 import { useUser } from "@/hooks/store";
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
 
 type TSortKey = 'display_name' | 'email' | 'date_joined' | 'last_active' | 'is_instance_admin';
 type TSortOrder = 'asc' | 'desc';
@@ -59,7 +59,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
       <table className="min-w-full divide-y divide-custom-border-200">
         <thead>
           <tr className="bg-custom-background-90">
-            <th 
+            <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
               onClick={() => handleSort('display_name')}
             >
@@ -68,7 +68,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                 <SortIcon currentKey="display_name" />
               </div>
             </th>
-            <th 
+            <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
               onClick={() => handleSort('email')}
             >
@@ -77,7 +77,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                 <SortIcon currentKey="email" />
               </div>
             </th>
-            <th 
+            <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
               onClick={() => handleSort('date_joined')}
             >
@@ -86,7 +86,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                 <SortIcon currentKey="date_joined" />
               </div>
             </th>
-            <th 
+            <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
               onClick={() => handleSort('last_active')}
             >
@@ -95,7 +95,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                 <SortIcon currentKey="last_active" />
               </div>
             </th>
-            <th 
+            <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
               onClick={() => handleSort('is_instance_admin')}
             >
@@ -103,9 +103,6 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                 권한
                 <SortIcon currentKey="is_instance_admin" />
               </div>
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-custom-text-200">
-              관리
             </th>
           </tr>
         </thead>
@@ -138,24 +135,24 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                   {formatDistanceToNow(new Date(member.date_joined), { addSuffix: true, locale: ko })}
                 </td>
                 <td className="px-4 py-3 text-sm text-custom-text-200">
-                  {member.last_active 
+                  {member.last_active
                     ? formatDistanceToNow(new Date(member.last_active), { addSuffix: true, locale: ko })
                     : "-"}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-x-2">
-                    <User className={`h-4 w-4 ${member.is_instance_admin ? "text-custom-primary-100" : "text-custom-text-200"}`} />
-                    <span className={`text-sm ${member.is_instance_admin ? "text-custom-primary-100 font-medium" : "text-custom-text-200"}`}>
-                      {member.is_instance_admin ? "관리자" : "일반"}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-x-2">
+                      <User className={`h-4 w-4 ${member.is_instance_admin ? "text-custom-primary-100" : "text-custom-text-200"}`} />
+                      <span className={`text-sm ${member.is_instance_admin ? "text-custom-primary-100 font-medium" : "text-custom-text-200"}`}>
+                        {member.is_instance_admin ? "관리자" : "멤버"}
+                      </span>
+                    </div>
+                    <ToggleSwitch
+                      value={member.is_instance_admin}
+                      onChange={() => onUpdateMember(member.id, !member.is_instance_admin)}
+                      size="sm"
+                    />
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  <ToggleSwitch
-                    value={member.is_instance_admin}
-                    onChange={() => onUpdateMember(member.id, !member.is_instance_admin)}
-                    size="sm"
-                  />
                 </td>
               </motion.tr>
             ))}

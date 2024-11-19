@@ -24,6 +24,8 @@ export interface IUser {
   username: string;
   last_login_medium: TLoginMediums;
   theme: IUserTheme;
+  last_active?: string;
+  is_instance_admin: boolean;
 }
 
 export interface IUserAccount {
@@ -60,7 +62,11 @@ export type TUserProfile = {
 };
 
 export interface IInstanceAdminStatus {
+  id: string;
   is_instance_admin: boolean;
+  user_detail?: {
+    email: string;
+  };
 }
 
 export interface IUserSettings {

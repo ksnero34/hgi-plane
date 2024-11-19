@@ -234,15 +234,25 @@ class IssueViewSet(BaseViewSet):
     @method_decorator(gzip_page)
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def list(self, request, slug, project_id):
-        # print("\n[Calendar View Debug]")
-        # print("Request Parameters:", {
-        #     'query_params': dict(request.query_params),
-        #     'GET': dict(request.GET),
-        #     'layout': request.GET.get('layout'),
-        #     'target_date': request.GET.get('target_date'),
-        #     'group_by': request.GET.get('group_by'),
-        #     'sub_group_by': request.GET.get('sub_group_by')
-        # })
+        print("\n[IssueViewSet.list] Debug Logs:")
+        print("Request Parameters:", {
+            'query_params': dict(request.query_params),
+            'GET': dict(request.GET),
+            'layout': request.GET.get('layout'),
+            'target_date': request.GET.get('target_date'),
+            'group_by': request.GET.get('group_by'),
+            'sub_group_by': request.GET.get('sub_group_by')
+        })
+
+        # 사용자 역할 확인
+        user_role = ProjectMember.objects.filter(
+            workspace__slug=slug,
+            project_id=project_id,
+            member=request.user,
+            is_active=True,
+        ).first()
+
+        print("User Role:", user_role.role if user_role else None)
 
         extra_filters = {}
         if request.GET.get("updated_at__gt", None) is not None:
@@ -255,9 +265,25 @@ class IssueViewSet(BaseViewSet):
         # 기본 필터 적용 (날짜 필터 제외)
         filters = {k: v for k, v in issue_filters(request.query_params, "GET").items() 
                   if not k.startswith('start_date') and not k.startswith('target_date')}
+        
+        # 기본 queryset 가져오기
+        issue_queryset = self.get_queryset()
+        
+        # RESTRICTED 사용자는 자신에게 할당된 이슈만 볼 수 있음
+        if user_role and user_role.role == ROLE.RESTRICTED.value:
+            issue_queryset = issue_queryset.filter(assignees__id=request.user.id)
+            print("Restricted User - Filtering by assignee:", request.user.id)
+
+        # 기본 필터와 extra 필터 적용
+        issue_queryset = issue_queryset.filter(**filters, **extra_filters)
+        
+        print("Applied Filters:", filters)
+        print("Extra Filters:", extra_filters)
+        print("Total Issues:", issue_queryset.count())
 
         # 정렬 파라미터 설정
         order_by_param = request.GET.get("order_by", "-created_at")
+        print("Order By:", order_by_param)
 
         # 캘린더 뷰인 경우 Q 객체로 필터링
         if request.GET.get('layout') == 'calendar':
@@ -266,17 +292,18 @@ class IssueViewSet(BaseViewSet):
             target_date_from = request.GET.get('target_date_from')
             target_date_to = request.GET.get('target_date_to')
 
+            print("Calendar View Parameters:", {
+                'start_date_from': start_date_from,
+                'start_date_to': start_date_to,
+                'target_date_from': target_date_from,
+                'target_date_to': target_date_to
+            })
+
             if start_date_from and start_date_to and target_date_from and target_date_to:
-                # 기본 필터 적용
-                issue_queryset = self.get_queryset().filter(**filters)
-                
                 # 캘린더 날짜 필터 적용
                 calendar_filter = (
-                    # start_date가 범위 내에 있는 경우
                     Q(start_date__range=(start_date_from, start_date_to)) |
-                    # target_date가 범위 내에 있는 경우
                     Q(target_date__range=(target_date_from, target_date_to)) |
-                    # 날짜 범위를 걸쳐있는 경우
                     Q(
                         Q(start_date__isnull=False) & 
                         Q(target_date__isnull=False) & 
@@ -286,26 +313,19 @@ class IssueViewSet(BaseViewSet):
                 )
                 issue_queryset = issue_queryset.filter(calendar_filter)
                 
-                # 필터링된 이슈 로깅
-                # print("Filtered Calendar Issues:", {
-                #     'total_count': issue_queryset.count(),
-                #     'issues': list(issue_queryset.values('id', 'name', 'start_date', 'target_date')),
-                #     'filters': filters,
-                #     'calendar_filter': str(calendar_filter)
-                # })
-        else:
-            issue_queryset = self.get_queryset().filter(**filters, **extra_filters)
+                print("Calendar Filter Query:", str(calendar_filter))
+                print("Total Issues After Calendar Filter:", issue_queryset.count())
+
+        print("Total Issues Before Grouping:", issue_queryset.count())
 
         # Group by
         group_by = request.GET.get("group_by", False)
         sub_group_by = request.GET.get("sub_group_by", False)
 
-        # 캘린더 뷰인 경우 그룹화 전에 날짜 범위로 한번 더 필터링
-        if request.GET.get('layout') == 'calendar':
-            issue_queryset = issue_queryset.filter(
-                Q(start_date__range=(start_date_from, start_date_to)) |
-                Q(target_date__range=(target_date_from, target_date_to))
-            )
+        print("Grouping Parameters:", {
+            'group_by': group_by,
+            'sub_group_by': sub_group_by
+        })
 
         # issue queryset
         issue_queryset = issue_queryset_grouper(
@@ -313,6 +333,9 @@ class IssueViewSet(BaseViewSet):
             group_by=group_by,
             sub_group_by=sub_group_by,
         )
+
+        print("Final Query:", str(issue_queryset.query))
+        print("End Debug Logs\n")
 
         # 정렬 적용
         if order_by_param and not group_by:
@@ -516,6 +539,14 @@ class IssueViewSet(BaseViewSet):
     )
     def retrieve(self, request, slug, project_id, pk=None):
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
+        
+        # 사용자 역할 확인
+        user_role = ProjectMember.objects.filter(
+            workspace__slug=slug,
+            project_id=project_id,
+            member=request.user,
+            is_active=True,
+        ).first()
 
         issue = (
             self.get_queryset()
@@ -579,17 +610,22 @@ class IssueViewSet(BaseViewSet):
                 )
             )
         ).first()
+        
         if not issue:
             return Response(
                 {"error": "The required object does not exist."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        """
-        if the role is guest and guest_view_all_features is false and owned by is not 
-        the requesting user then dont show the issue
-        """
-
+        # RESTRICTED 사용자는 자신에게 할당된 이슈만 볼 수 있음
+        if user_role and user_role.role == ROLE.RESTRICTED.value:
+            if request.user.id not in issue.assignee_ids:
+                return Response(
+                    {"error": "You can only view issues assigned to you"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        
+        # GUEST 권한 체크 (기존 로직 유지)
         if (
             ProjectMember.objects.filter(
                 workspace__slug=slug,
@@ -618,7 +654,9 @@ class IssueViewSet(BaseViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], creator=True, model=Issue
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED], 
+        creator=True, 
+        model=Issue
     )
     def partial_update(self, request, slug, project_id, pk=None):
         issue = (
@@ -659,6 +697,22 @@ class IssueViewSet(BaseViewSet):
                 {"error": "Issue not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        # VIEWER와 RESTRICTED 역할 체크
+        user_role = ProjectMember.objects.filter(
+            workspace__slug=slug,
+            project_id=project_id,
+            member=request.user,
+            is_active=True,
+        ).first()
+
+        if user_role and user_role.role in [ROLE.VIEWER.value, ROLE.RESTRICTED.value]:
+            # 자신에게 할당된 이슈인지 확인
+            if request.user.id not in issue.assignee_ids:
+                return Response(
+                    {"error": "You can only update issues assigned to you"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         current_instance = json.dumps(
             IssueSerializer(issue).data, cls=DjangoJSONEncoder
@@ -768,7 +822,6 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
         )
 
         total_issues = len(issues)
-
         issues.delete()
 
         return Response(

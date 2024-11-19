@@ -1,17 +1,17 @@
 "use client";
 import { FC } from "react";
 import { observer } from "mobx-react";
-import { IInstanceAdmin } from "@plane/types";
+import { IInstanceAdminStatus } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";
 
 export interface IMembersConfigurationForm {
-  instanceAdmins: IInstanceAdmin[];
+  instanceAdmins: IInstanceAdminStatus[];
 }
 
 export const MembersConfigurationForm: FC<IMembersConfigurationForm> = observer((props) => {
   const { instanceAdmins } = props;
 
-  const isAdministrator = (admin: IInstanceAdmin) =>
+  const isAdministrator = (admin: IInstanceAdminStatus) =>
     admin.is_instance_admin;
 
   return (
