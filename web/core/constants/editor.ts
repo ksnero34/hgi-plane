@@ -24,14 +24,14 @@ import { TEditorCommands, TEditorFontStyle } from "@plane/editor";
 // ui
 import { MonospaceIcon, SansSerifIcon, SerifIcon } from "@plane/ui";
 
-type TEditorTypes = "lite" | "document";
+type EditorArray = Array<"lite" | "document">;
 
 export type ToolbarMenuItem = {
   key: TEditorCommands;
   name: string;
   icon: LucideIcon;
   shortcut?: string[];
-  editors: TEditorTypes[];
+  editors: EditorArray;
 };
 
 export const TYPOGRAPHY_ITEMS: ToolbarMenuItem[] = [
@@ -92,7 +92,7 @@ const COMPLEX_ITEMS: ToolbarMenuItem[] = [
 ];
 
 export const TOOLBAR_ITEMS: {
-  [editorType in TEditorTypes]: {
+  [editorType in EditorArray]: {
     [key: string]: ToolbarMenuItem[];
   };
 } = {
