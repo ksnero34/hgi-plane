@@ -8,6 +8,7 @@ import { CustomSelect, PopoverMenu, TOAST_TYPE, setToast } from "@plane/ui";
 import { ROLE } from "@/constants/workspace";
 import { useMember, useUser } from "@/hooks/store";
 import { EUserPermissions } from "@/plane-web/constants/user-permissions";
+import { useState } from "react";
 
 export interface RowData {
   member: IWorkspaceMember;
@@ -114,6 +115,8 @@ export const AccountTypeColumn: React.FC<AccountTypeProps> = observer((props) =>
     );
   };
 
+  const [currentRole, setCurrentRole] = useState<EUserPermissions>(rowData.role);
+
   return (
     <>
       {isRoleNonEditable ? (
@@ -127,13 +130,18 @@ export const AccountTypeColumn: React.FC<AccountTypeProps> = observer((props) =>
           rules={{ required: "Role is required." }}
           render={({ field: { value } }) => (
             <CustomSelect
-              value={value}
+              value={currentRole}
               onChange={(value: EUserPermissions) => {
                 if (!workspaceSlug) return;
 
+                const previousRole = currentRole;
+                setCurrentRole(value as EUserPermissions);
+
                 updateMember(workspaceSlug.toString(), projectId.toString(), rowData.member.id, {
-                  role: value as unknown as EUserPermissions, // Cast value to unknown first, then to EUserPermissions
+                  role: value as unknown as EUserPermissions,
                 }).catch((err) => {
+                  setCurrentRole(previousRole);
+                  
                   console.log(err, "err");
                   const error = err.error;
                   const errorString = Array.isArray(error) ? error[0] : error;
@@ -147,7 +155,7 @@ export const AccountTypeColumn: React.FC<AccountTypeProps> = observer((props) =>
               }}
               label={
                 <div className="flex ">
-                  <span>{ROLE[rowData.role as keyof typeof ROLE]}</span>
+                  <span>{ROLE[currentRole as keyof typeof ROLE]}</span>
                 </div>
               }
               buttonClassName={`!px-0 !justify-start hover:bg-custom-background-100 ${errors.role ? "border-red-500" : "border-none"}`}
