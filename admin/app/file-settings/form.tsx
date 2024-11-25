@@ -84,12 +84,20 @@ export const FileSettingsForm: FC<Props> = observer(({ settings, onSubmit }) => 
   const { control, handleSubmit } = useForm({
     defaultValues: {
       allowed_extensions: settings?.allowed_extensions ?? [],
-      max_file_size: (settings?.max_file_size ?? 5242880) / (1024 * 1024)
+      max_file_size: settings?.max_file_size ? settings.max_file_size / (1024 * 1024) : 5 // bytes를 MB로 변환
     }
   });
 
+  const handleFormSubmit = (data: any) => {
+    // MB를 bytes로 변환해서 서버로 전송
+    return onSubmit({
+      ...data,
+      max_file_size: Math.floor(data.max_file_size * 1024 * 1024) // MB를 bytes로 변환
+    });
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium text-custom-text-200">
