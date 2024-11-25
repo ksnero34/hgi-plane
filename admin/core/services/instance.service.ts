@@ -6,6 +6,7 @@ import type {
   IInstanceConfiguration,
   IInstanceInfo,
   IUser,
+  IFileSettings,
 } from "@plane/types";
 // helpers
 import { API_BASE_URL } from "@/helpers/common.helper";
@@ -110,6 +111,32 @@ export class InstanceService extends APIService {
   private async requestCSRFToken(): Promise<CSRFResponse> {
     return this.get<CSRFResponse>("/auth/get-csrf-token/")
       .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getFileSettings(): Promise<IFileSettings> {
+    return this.get<IFileSettings>("/api/instances/file-settings/")
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateFileSettings(data: Partial<IFileSettings>): Promise<IFileSettings> {
+    const csrfToken = await this.requestCSRFToken();
+    
+    return this.patch<Partial<IFileSettings>, IFileSettings>(
+      "/api/instances/file-settings/",
+      data,
+      {
+        headers: {
+          'X-CSRFToken': csrfToken.csrf_token,
+        }
+      }
+    )
+      .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
       });

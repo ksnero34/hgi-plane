@@ -8,6 +8,7 @@ import {
   IInstanceInfo,
   IInstanceConfig,
   IUser,
+  IFileSettings,
 } from "@plane/types";
 // helpers
 import { EInstanceStatus, TInstanceStatus } from "@/helpers/instance.helper";
@@ -25,6 +26,7 @@ export interface IInstanceStore {
   config: IInstanceConfig | undefined;
   instanceAdmins: IInstanceAdmin[] | undefined;
   instanceConfigurations: IInstanceConfiguration[] | undefined;
+  fileSettings: IFileSettings | undefined;
   // computed
   formattedConfig: IFormattedInstanceConfiguration | undefined;
   // action
@@ -36,6 +38,8 @@ export interface IInstanceStore {
   updateInstanceConfigurations: (data: Partial<IFormattedInstanceConfiguration>) => Promise<IInstanceConfiguration[]>;
   fetchInstanceMembers: () => Promise<IUser[]>;
   updateInstanceMember: (userId: string, data: { is_admin: boolean }) => Promise<IUser>;
+  fetchFileSettings: () => Promise<IFileSettings | undefined>;
+  updateFileSettings: (data: Partial<IFileSettings>) => Promise<IFileSettings>;
 }
 
 export class InstanceStore implements IInstanceStore {
@@ -46,6 +50,7 @@ export class InstanceStore implements IInstanceStore {
   config: IInstanceConfig | undefined = undefined;
   instanceAdmins: IInstanceAdmin[] | undefined = undefined;
   instanceConfigurations: IInstanceConfiguration[] | undefined = undefined;
+  fileSettings: IFileSettings | undefined = undefined;
   // service
   instanceService;
 
@@ -58,6 +63,7 @@ export class InstanceStore implements IInstanceStore {
       instance: observable,
       instanceAdmins: observable,
       instanceConfigurations: observable,
+      fileSettings: observable,
       // computed
       formattedConfig: computed,
       // actions
@@ -69,6 +75,8 @@ export class InstanceStore implements IInstanceStore {
       updateInstanceConfigurations: action,
       fetchInstanceMembers: action,
       updateInstanceMember: action,
+      fetchFileSettings: action,
+      updateFileSettings: action,
     });
 
     this.instanceService = new InstanceService();
@@ -217,6 +225,32 @@ export class InstanceStore implements IInstanceStore {
       return response;
     } catch (error) {
       console.error("Error updating instance member");
+      throw error;
+    }
+  };
+
+  fetchFileSettings = async () => {
+    try {
+      const response = await this.instanceService.getFileSettings();
+      runInAction(() => {
+        this.fileSettings = response;
+      });
+      return response;
+    } catch (error) {
+      console.error("Error fetching file settings");
+      throw error;
+    }
+  };
+
+  updateFileSettings = async (data: Partial<IFileSettings>) => {
+    try {
+      const response = await this.instanceService.updateFileSettings(data);
+      runInAction(() => {
+        this.fileSettings = response;
+      });
+      return response;
+    } catch (error) {
+      console.error("Error updating file settings");
       throw error;
     }
   };

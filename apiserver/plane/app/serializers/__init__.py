@@ -124,3 +124,6 @@ from .webhook import WebhookSerializer, WebhookLogSerializer
 from .dashboard import DashboardSerializer, WidgetSerializer
 
 from .favorite import UserFavoriteSerializer
+
+from .file_settings import FileSettingsSerializer
+

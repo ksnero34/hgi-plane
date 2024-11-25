@@ -3,7 +3,7 @@
 import { observer } from "mobx-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Image, BrainCog, Cog, Lock, Mail, Users } from "lucide-react";
+import { Image, BrainCog, Cog, Lock, Mail, Users, FileText } from "lucide-react";
 import { Tooltip } from "@plane/ui";
 // hooks
 import { cn } from "@/helpers/common.helper";
@@ -46,6 +46,12 @@ const INSTANCE_ADMIN_LINKS = [
     name: "Images in Plane",
     description: "Allow third-party image libraries",
     href: `/image/`,
+  },
+  {
+    Icon: FileText,
+    name: "File Settings",
+    description: "Configure file upload settings",
+    href: `/file-settings/`,
   },
 ];
 

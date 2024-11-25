@@ -27,7 +27,7 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
   const [isLoading, setIsLoading] = useState(false);
 
   // store hooks
-  const { config } = useInstance();
+  const { config, fileSettings } = useInstance();
   const {
     attachment: { getAttachmentsByIssueId },
     attachmentDeleteModalId,
@@ -83,7 +83,11 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxSize: config?.file_size_limit ?? MAX_FILE_SIZE,
+    maxSize: fileSettings?.max_file_size ?? MAX_FILE_SIZE,
+    accept: fileSettings?.allowed_extensions.reduce((acc, ext) => ({
+      ...acc,
+      [`.${ext}`]: []
+    }), {}),
     multiple: false,
     disabled: isLoading || disabled,
   });

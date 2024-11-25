@@ -1,9 +1,12 @@
 # Python imports
 from enum import Enum
+import uuid
+import re
 
 # Django imports
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 # Module imports
 from plane.db.models import BaseModel
@@ -98,3 +101,56 @@ class ChangeLog(BaseModel):
         verbose_name_plural = "Change Logs"
         db_table = "changelogs"
         ordering = ("-created_at",)
+
+
+def validate_extension(extension: str) -> bool:
+    """확장자 유효성 검사 규칙
+    1. 영문자, 숫자만 허용
+    2. 최대 10자
+    3. 점(.) 제외
+    """
+    return bool(re.match(r'^[a-zA-Z0-9]{1,10}$', extension))
+
+
+class FileUploadSettings(models.Model):
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        primary_key=True,
+    )
+    instance = models.OneToOneField(
+        "Instance",
+        on_delete=models.CASCADE,
+        related_name="file_settings",
+    )
+    allowed_extensions = models.JSONField(
+        default=list(["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"]),
+        help_text="허용되는 파일 확장자 목록",
+    )
+    max_file_size = models.PositiveIntegerField(
+        default=5242880,  # 5MB in bytes
+        help_text="최대 파일 크기 (bytes)",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        # 확장자 유효성 검사
+        for extension in self.allowed_extensions:
+            if not validate_extension(extension):
+                raise ValidationError(
+                    f"Invalid extension format: {extension}. "
+                    "Extensions must contain only letters and numbers, "
+                    "and be 10 characters or less."
+                )
+        
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = "파일 업로드 설정"
+        verbose_name_plural = "파일 업로드 설정"
+        db_table = "file_upload_settings"

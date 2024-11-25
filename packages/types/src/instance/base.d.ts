@@ -94,3 +94,12 @@ export interface IInstanceConfiguration {
 export type IFormattedInstanceConfiguration = {
   [key in TInstanceConfigurationKeys]: string;
 };
+
+export interface IFileSettings {
+  allowed_extensions: string[];
+  max_file_size: number;
+  created_at?: string;
+  updated_at?: string;
+  id?: string;
+  instance?: string;
+}
