@@ -329,7 +329,7 @@ if bool(os.environ.get("SENTRY_DSN", False)) and os.environ.get(
     )
 
 
-FILE_SIZE_LIMIT = int(os.environ.get("FILE_SIZE_LIMIT", 5242880))
+FILE_SIZE_LIMIT = int(os.environ.get("FILE_SIZE_LIMIT", 5368709120))
 
 # Unsplash Access key
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
@@ -354,7 +354,7 @@ INSTANCE_KEY = os.environ.get(
 # Skip environment variable configuration
 SKIP_ENV_VAR = os.environ.get("SKIP_ENV_VAR", "1") == "1"
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("FILE_SIZE_LIMIT", 5242880))
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("FILE_SIZE_LIMIT", 5368709120))
 
 # Cookie Settings
 SESSION_COOKIE_SECURE = secure_origins

@@ -3,7 +3,8 @@ events {
 
 http {
     sendfile on;
-
+    more_set_headers 'Server: MIN-WEB';
+    
     server {
         listen 80;
         root /www/data/;

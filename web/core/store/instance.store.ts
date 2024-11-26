@@ -69,6 +69,41 @@ export class InstanceStore implements IInstanceStore {
     });
     // services
     this.instanceService = new InstanceService();
+    
+    // 생성자에서 fileSettings 초기화
+    this.initializeFileSettings();
+  }
+
+  private async initializeFileSettings() {
+    // SSR 환경 체크
+    if (typeof window === 'undefined') {
+      console.log("🖥️ Server-side rendering, skipping file settings initialization");
+      return;
+    }
+
+    // 기본값으로 초기화
+    runInAction(() => {
+      this.fileSettings = {
+        max_file_size: 5 * 1024 * 1024,
+        allowed_extensions: ["jpg", "jpeg", "png", "gif", "pdf"]
+      };
+      console.log("⚠️ Using default file settings initially");
+    });
+
+    try {
+      console.log("🔄 Initializing file settings...");
+      const settings = await this.instanceService.getFileSettings();
+      console.log("✅ Received file settings:", settings);
+      
+      runInAction(() => {
+        this.fileSettings = settings;
+        console.log("💾 Updated file settings in store:", this.fileSettings);
+      });
+    } catch (error) {
+      console.error("❌ Failed to initialize file settings:", error);
+      // 에러 시 기본값 유지
+      console.log("⚠️ Using default settings due to error");
+    }
   }
 
   /**
@@ -99,14 +134,24 @@ export class InstanceStore implements IInstanceStore {
    * @description fetching file settings
    */
   fetchFileSettings = async () => {
+    // SSR 환경 체크
+    if (typeof window === 'undefined') {
+      console.log("🖥️ Server-side rendering, skipping file settings fetch");
+      return;
+    }
+
     try {
+      console.log("🔄 Fetching file settings...");
       const response = await this.instanceService.getFileSettings();
+      console.log("✅ Received file settings:", response);
+      
       runInAction(() => {
         this.fileSettings = response;
+        console.log("💾 Updated file settings in store:", this.fileSettings);
       });
       return response;
     } catch (error) {
-      console.error("Error fetching file settings:", error);
+      console.error("❌ Error fetching file settings:", error);
       throw error;
     }
   };

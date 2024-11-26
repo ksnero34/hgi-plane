@@ -1,24 +1,44 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 // type
 import { TAttachmentOperations } from "@/components/issues/attachment";
 // hooks
-import { useEventTracker, useIssueDetail } from "@/hooks/store";
+import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
+import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
+import { useDropzone } from "react-dropzone";
+import { MAX_FILE_SIZE } from "@/constants/common";
 
 export const useAttachmentOperations = (
   workspaceSlug: string,
   projectId: string,
-  issueId: string
+  issueId: string,
+  disabled: boolean = false
 ): TAttachmentOperations => {
   const { createAttachment, removeAttachment } = useIssueDetail();
   const { captureIssueEvent } = useEventTracker();
+  const { validateFile, getAcceptedFileTypes } = useFileValidation();
+  const { fileSettings, fetchFileSettings } = useInstance();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchFileSettings().catch(console.error);
+  }, [fetchFileSettings]);
 
   const handleAttachmentOperations: TAttachmentOperations = useMemo(
     () => ({
       create: async (data: FormData) => {
         try {
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
+
+          try {
+            await fetchFileSettings();
+          } catch (error) {
+            console.error("Failed to fetch latest file settings:", error);
+          }
+
+          const file = data.get("asset") as File;
+          if (!validateFileBeforeUpload(file, validateFile)) return;
 
           const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, data);
           setPromiseToast(attachmentUploadPromise, {
@@ -43,6 +63,7 @@ export const useAttachmentOperations = (
             },
           });
         } catch (error) {
+          handleUploadError(error);
           captureIssueEvent({
             eventName: "Issue attachment added",
             payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
@@ -83,8 +104,31 @@ export const useAttachmentOperations = (
         }
       },
     }),
-    [workspaceSlug, projectId, issueId, createAttachment, removeAttachment]
+    [workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
+
+  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+    console.log("❌ File rejected:", fileRejections);
+    const [rejection] = fileRejections;
+    if (rejection) {
+      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "파일 업로드 실패",
+        message: errorMessage
+      });
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDropRejected,
+    maxSize: fileSettings?.max_file_size ?? MAX_FILE_SIZE,
+    multiple: false,
+    disabled: isLoading || disabled,
+    accept: getAcceptedFileTypes(),
+    noClick: false,
+    noKeyboard: false,
+  });
 
   return handleAttachmentOperations;
 };

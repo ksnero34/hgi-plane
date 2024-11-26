@@ -37,25 +37,37 @@ const CustomMenu = (props: ICustomMenuDropdownProps) => {
     closeOnSelect,
     openOnHover = false,
     useCaptureForOutsideClick = false,
+    isOpen: controlledIsOpen,
+    onClose: controlledOnClose,
   } = props;
 
   const [referenceElement, setReferenceElement] = React.useState<HTMLButtonElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [internalIsOpen, setInternalIsOpen] = React.useState(false);
   // refs
   const dropdownRef = React.useRef<HTMLDivElement | null>(null);
+
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
 
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: placement ?? "auto",
   });
 
   const openDropdown = () => {
-    setIsOpen(true);
+    if (controlledIsOpen === undefined) {
+      setInternalIsOpen(true);
+    }
     if (referenceElement) referenceElement.focus();
   };
+
   const closeDropdown = () => {
-    isOpen && onMenuClose && onMenuClose();
-    setIsOpen(false);
+    if (isOpen) {
+      onMenuClose && onMenuClose();
+      controlledOnClose && controlledOnClose();
+    }
+    if (controlledIsOpen === undefined) {
+      setInternalIsOpen(false);
+    }
   };
 
   const selectActiveItem = () => {

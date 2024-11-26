@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 // hooks
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 import { IssueAttachmentUpload, IssueAttachmentsList, TAttachmentOperations } from "@/components/issues";
-import { useEventTracker, useIssueDetail } from "@/hooks/store";
+import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
+import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
+import { useDropzone } from "react-dropzone";
 // components
 // ui
 
@@ -22,11 +24,28 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
   const {
     attachment: { createAttachment, removeAttachment },
   } = useIssueDetail();
+  const { validateFile } = useFileValidation();
+  const { fetchFileSettings } = useInstance();
+
+  // 컴포넌트 마운트 시 file settings 가져오기
+  useEffect(() => {
+    fetchFileSettings().catch(console.error);
+  }, [fetchFileSettings]);
 
   const handleAttachmentOperations: TAttachmentOperations = useMemo(
     () => ({
       create: async (data: FormData) => {
         try {
+          // 파일 업로드 전 최신 설정 가져오기
+          try {
+            await fetchFileSettings();
+          } catch (error) {
+            console.error("Failed to fetch latest file settings:", error);
+          }
+
+          const file = data.get("asset") as File;
+          if (!validateFileBeforeUpload(file, validateFile)) return;
+
           const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, data);
           setPromiseToast(attachmentUploadPromise, {
             loading: "Uploading attachment...",
@@ -36,7 +55,7 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
             },
             error: {
               title: "Attachment not uploaded",
-              message: () => "The attachment could not be uploaded",
+              message: (error) => error.response?.data?.error || "The attachment could not be uploaded",
             },
           });
 
@@ -50,6 +69,7 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
             },
           });
         } catch (error) {
+          handleUploadError(error);
           captureIssueEvent({
             eventName: "Issue attachment added",
             payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
@@ -90,8 +110,32 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
         }
       },
     }),
-    [workspaceSlug, projectId, issueId, captureIssueEvent, createAttachment, removeAttachment]
+    [workspaceSlug, projectId, issueId, captureIssueEvent, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
+
+  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+    console.log("❌ File rejected:", fileRejections);
+    const [rejection] = fileRejections;
+    if (rejection) {
+      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "파일 업로드 실패",
+        message: errorMessage
+      });
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    onDropRejected,
+    maxSize: fileSettings?.max_file_size ?? MAX_FILE_SIZE,
+    multiple: false,
+    disabled: isLoading || disabled,
+    accept: getAcceptedFileTypes(),
+    noClick: false,
+    noKeyboard: false,
+  });
 
   return (
     <div>

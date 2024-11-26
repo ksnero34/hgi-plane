@@ -67,3 +67,5 @@ opentelemetry-api==1.27.0
 opentelemetry-sdk==1.27.0
 opentelemetry-instrumentation-django==0.48b0
 opentelemetry-exporter-otlp==1.27.0
+# file type detection
+python-magic==0.4.27

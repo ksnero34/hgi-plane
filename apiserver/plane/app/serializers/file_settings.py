@@ -9,7 +9,7 @@ class FileSettingsSerializer(serializers.ModelSerializer):
         
     def validate_max_file_size(self, value):
         """파일 크기 제한 검증"""
-        max_allowed = 100 * 1024 * 1024  # 100MB
+        max_allowed = 5000 * 1024 * 1024  # 5000MB
         if value > max_allowed:
             raise serializers.ValidationError(f"Maximum allowed file size is {max_allowed} bytes")
         return value

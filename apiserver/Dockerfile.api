@@ -11,7 +11,8 @@ RUN apk add --no-cache \
     "libpq" \
     "libxslt" \
     "nodejs-current" \
-    "xmlsec"
+    "xmlsec" \
+    "file"
 
 COPY requirements.txt ./
 COPY requirements ./requirements
