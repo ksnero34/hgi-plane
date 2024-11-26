@@ -6,7 +6,7 @@ import { MAX_FILE_SIZE } from "@/constants/common";
 // helpers
 import { generateFileName } from "@/helpers/attachment.helper";
 // hooks
-import { useInstance } from "@/hooks/store";
+import { useInstance, useFileValidation } from "@/hooks/store";
 // types
 import { TAttachmentOperations } from "./root";
 
@@ -20,19 +20,54 @@ type Props = {
 
 export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
   const { workspaceSlug, disabled = false, handleAttachmentOperations } = props;
+  
   // store hooks
-  const { config } = useInstance();
+  const { config, fileSettings } = useInstance();
+  const { validateFile, getAcceptedFileTypes } = useFileValidation();
+  
   // states
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       const currentFile: File = acceptedFiles[0];
-      if (!currentFile || !workspaceSlug) return;
+      console.log("📁 Dropped file:", {
+        name: currentFile?.name,
+        size: currentFile?.size,
+        type: currentFile?.type
+      });
+
+      if (!currentFile || !workspaceSlug) {
+        console.log("❌ No file or workspace slug");
+        return;
+      }
+
+      // 파일 검증
+      console.log("🔍 Validating file with settings:", {
+        maxFileSize: fileSettings?.max_file_size,
+        allowedExtensions: fileSettings?.allowed_extensions
+      });
+
+      const { isValid, error } = validateFile(currentFile);
+      console.log("✅ Validation result:", { isValid, error });
+
+      if (!isValid) {
+        console.log("❌ Validation failed:", error);
+        setValidationError(error);
+        return;
+      }
+      setValidationError(null);
 
       const uploadedFile: File = new File([currentFile], generateFileName(currentFile.name), {
         type: currentFile.type,
       });
+      console.log("📝 Prepared file for upload:", {
+        name: uploadedFile.name,
+        size: uploadedFile.size,
+        type: uploadedFile.type
+      });
+      
       const formData = new FormData();
       formData.append("asset", uploadedFile);
       formData.append(
@@ -42,10 +77,22 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
           size: uploadedFile.size,
         })
       );
+      
+      console.log("🚀 Starting upload...");
       setIsLoading(true);
-      handleAttachmentOperations.create(formData).finally(() => setIsLoading(false));
+      handleAttachmentOperations.create(formData)
+        .then(() => {
+          console.log("✅ Upload successful");
+        })
+        .catch((error) => {
+          console.error("❌ Upload failed:", error);
+        })
+        .finally(() => {
+          console.log("🏁 Upload process completed");
+          setIsLoading(false);
+        });
     },
-    [handleAttachmentOperations, workspaceSlug]
+    [handleAttachmentOperations, workspaceSlug, validateFile, fileSettings]
   );
 
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
@@ -53,12 +100,18 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
     maxSize: config?.file_size_limit ?? MAX_FILE_SIZE,
     multiple: false,
     disabled: isLoading || disabled,
+    accept: getAcceptedFileTypes(),
   });
 
-  const maxFileSize = config?.file_size_limit ?? MAX_FILE_SIZE;
+  console.log("📋 Current dropzone state:", {
+    isDragActive,
+    isDragReject,
+    fileRejections,
+    acceptedTypes: getAcceptedFileTypes()
+  });
 
-  const fileError =
-    fileRejections.length > 0 ? `Invalid file type or size (max ${maxFileSize / 1024 / 1024} MB)` : null;
+  const fileError = validationError || 
+    (fileRejections.length > 0 ? `Invalid file type or size (max ${(fileSettings?.max_file_size ?? MAX_FILE_SIZE) / 1024 / 1024} MB)` : null);
 
   return (
     <div

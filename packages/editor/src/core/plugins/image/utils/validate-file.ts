@@ -14,9 +14,9 @@ export function isFileValid(file: File, showAlert = true): boolean {
     return false;
   }
 
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > 50 * 1024 * 1024) {
     if (showAlert) {
-      alert("File size too large. Please select a file smaller than 5MB.");
+      alert("File size too large. Please select a file smaller than 50MB.");
     }
     return false;
   }
