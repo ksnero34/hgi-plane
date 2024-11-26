@@ -10,7 +10,7 @@ services:
     command: node web/server.js web
     depends_on:
       - api
-    image: hgi-plane-prod/web:latest
+    image: hgi-plane-prod/web:0.0.7
 
   admin:
     container_name: admin
@@ -24,7 +24,7 @@ services:
     depends_on:
       - api
       - web
-    image: hgi-plane-prod/admin:latest
+    image: hgi-plane-prod/admin:0.0.16
 
   space:
     container_name: space
@@ -38,7 +38,7 @@ services:
     depends_on:
       - api
       - web
-    image: hgi-plane-prod/space:latest
+    image: hgi-plane-prod/space:0.0.4
 
   api:
     container_name: api
@@ -54,7 +54,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: hgi-plane-prod/api:latest
+    image: hgi-plane-prod/api:0.0.56
 
   worker:
     container_name: bgworker
@@ -71,7 +71,7 @@ services:
       - api
       - plane-db
       - plane-redis
-    image: hgi-plane-prod/worker:latest
+    image: hgi-plane-prod/worker:0.0.16
 
   beat-worker:
     container_name: beatworker
@@ -88,7 +88,7 @@ services:
       - api
       - plane-db
       - plane-redis
-    image: hgi-plane-prod/beat-worker:latest
+    image: hgi-plane-prod/beat-worker:0.0.16
 
   migrator:
     container_name: plane-migrator
@@ -104,7 +104,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: hgi-plane-prod/migrator:latest
+    image: hgi-plane-prod/migrator:0.0.16
 
   live:
     container_name: plane-live
@@ -115,7 +115,9 @@ services:
         DOCKER_BUILDKIT: 1
     restart: always
     command: node live/dist/server.js
-    image: hgi-plane-prod/live:latest
+    image: hgi-plane-prod/live:0.0.25
+    environment:
+      - API_BASE_URL=http://api:8000
 
   plane-db:
     container_name: plane-db
@@ -173,14 +175,14 @@ services:
     ports:
       - ${NGINX_PORT}:80
     environment:
-      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5368709120}
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
     depends_on:
       - web
       - api
       - space
       - admin
-    image: hgi-plane-prod/proxy:latest
+    image: hgi-plane-prod/proxy:0.0.2
 
 volumes:
   pgdata:

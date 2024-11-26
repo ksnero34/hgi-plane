@@ -42,7 +42,7 @@ x-app-env: &app-env
     - MINIO_ROOT_USER=${MINIO_ROOT_USER:-"access-key"}
     - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-"secret-key"}
     - BUCKET_NAME=${BUCKET_NAME:-uploads}
-    - FILE_SIZE_LIMIT=${FILE_SIZE_LIMIT:-5242880}
+    - FILE_SIZE_LIMIT=${FILE_SIZE_LIMIT:-5368709120}
     # Live server env
     - API_BASE_URL=${API_BASE_URL:-http://api:8000}
 

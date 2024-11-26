@@ -13,10 +13,10 @@ import { API_BASE_URL, cn } from "@/helpers/common.helper";
 import { AppProvider } from "./provider";
 
 export const metadata: Metadata = {
-  title: "Plane | Simple, extensible, open-source project management tool.",
+  title: "Plane | HGI suited Issue Traker",
   description: SITE_DESCRIPTION,
   openGraph: {
-    title: "Plane | Simple, extensible, open-source project management tool.",
+    title: "Plane | HGI suited Issue Traker",
     description:
       "Open-source project management tool to manage issues, sprints, and product roadmaps with peace of mind.",
     url: "https://app.plane.so/",

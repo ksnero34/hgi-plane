@@ -23,7 +23,7 @@ AWS_S3_ENDPOINT_URL="http://plane-minio:9000"
 # Changing this requires change in the nginx.conf for uploads if using minio setup
 AWS_S3_BUCKET_NAME="uploads"
 # Maximum file upload limit
-FILE_SIZE_LIMIT=5242880
+FILE_SIZE_LIMIT=5368709120
 # GPT settings
 OPENAI_API_BASE="https://api.openai.com/v1" # deprecated
 OPENAI_API_KEY="sk-" # deprecated
@@ -65,7 +65,7 @@ AWS_S3_ENDPOINT_URL="http://plane-minio:9000"
 # Changing this requires change in the nginx.conf for uploads if using minio setup
 AWS_S3_BUCKET_NAME="uploads"
 # Maximum file upload limit
-FILE_SIZE_LIMIT=5242880
+FILE_SIZE_LIMIT=5368709120
 # Settings related to Docker
 DOCKERIZED=1 # deprecated
 # set to 1 If using the pre-configured minio setup

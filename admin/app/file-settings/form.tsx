@@ -81,20 +81,17 @@ const ExtensionInput: FC<{
 };
 
 export const FileSettingsForm: FC<Props> = observer(({ settings, onSubmit }) => {
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit } = useForm<IFileSettings>({
     defaultValues: {
       allowed_extensions: settings?.allowed_extensions ?? [],
-      max_file_size: settings?.max_file_size ? settings.max_file_size / (1024 * 1024) : 5 // bytes를 MB로 변환
+      max_file_size: settings?.max_file_size ? settings.max_file_size / (1024 * 1024) : 5
     }
   });
 
-  const handleFormSubmit = (data: any) => {
-    // MB를 bytes로 변환해서 서버로 전송
-    return onSubmit({
-      ...data,
-      max_file_size: Math.floor(data.max_file_size * 1024 * 1024) // MB를 bytes로 변환
-    });
-  };
+  const handleFormSubmit = (data: IFileSettings) => onSubmit({
+    allowed_extensions: data.allowed_extensions,
+    max_file_size: Math.floor(data.max_file_size * 1024 * 1024)
+  });
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -119,19 +116,25 @@ export const FileSettingsForm: FC<Props> = observer(({ settings, onSubmit }) => 
           <label className="text-sm font-medium text-custom-text-200">
             최대 파일 크기 (MB)
           </label>
-          <Controller
-            name="max_file_size"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                max={100}
-                className="w-full"
-              />
-            )}
-          />
+          <div className="space-y-2">
+            <Controller
+              name="max_file_size"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="number"
+                  min={1}
+                  max={5000}
+                  className="w-full"
+                  placeholder="1 ~ 500 MB 사이의 값을 입력하세요"
+                />
+              )}
+            />
+            <p className="text-xs text-custom-text-400">
+              허용되는 범위: 1MB ~ 5000MB
+            </p>
+          </div>
         </div>
       </div>
 

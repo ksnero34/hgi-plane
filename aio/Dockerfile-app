@@ -176,7 +176,7 @@ ENV AWS_S3_BUCKET_NAME="uploads"
 ENV MINIO_ROOT_USER="access-key"
 ENV MINIO_ROOT_PASSWORD="secret-key"
 ENV BUCKET_NAME="uploads"
-ENV FILE_SIZE_LIMIT="5242880"
+ENV FILE_SIZE_LIMIT="5368709120"
 
 # *****************************************************************************
 
