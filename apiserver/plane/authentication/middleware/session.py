@@ -16,10 +16,10 @@ class SessionMiddleware(MiddlewareMixin):
         self.SessionStore = engine.SessionStore
 
     def process_request(self, request):
-        if "instances" in request.path:
-            session_key = request.COOKIES.get(
-                settings.ADMIN_SESSION_COOKIE_NAME
-            )
+        if "instances/file-settings" in request.path:
+            session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+        elif "instances" in request.path:
+            session_key = request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME)
         else:
             session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         request.session = self.SessionStore(session_key)

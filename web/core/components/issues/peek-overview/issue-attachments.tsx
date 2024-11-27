@@ -6,9 +6,8 @@ import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 import { IssueAttachmentUpload, IssueAttachmentsList, TAttachmentOperations } from "@/components/issues";
 import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
-import { useDropzone } from "react-dropzone";
-// components
-// ui
+import { useDropzone, FileRejection } from "react-dropzone";
+import { MAX_FILE_SIZE } from "@/constants/common";
 
 type Props = {
   disabled: boolean;
@@ -24,13 +23,33 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
   const {
     attachment: { createAttachment, removeAttachment },
   } = useIssueDetail();
-  const { validateFile } = useFileValidation();
-  const { fetchFileSettings } = useInstance();
+  const { validateFile, getAcceptedFileTypes } = useFileValidation();
+  const { fetchFileSettings, fileSettings } = useInstance();
 
   // 컴포넌트 마운트 시 file settings 가져오기
   useEffect(() => {
     fetchFileSettings().catch(console.error);
   }, [fetchFileSettings]);
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
+    const formData = new FormData();
+    formData.append("asset", acceptedFiles[0]);
+    await handleAttachmentOperations.create(formData);
+  }, []);
+
+  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
+    const [rejection] = fileRejections;
+    if (rejection) {
+      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "파일 업로드 실패",
+        message: errorMessage
+      });
+    }
+  }, []);
 
   const handleAttachmentOperations: TAttachmentOperations = useMemo(
     () => ({
@@ -55,7 +74,10 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
             },
             error: {
               title: "Attachment not uploaded",
-              message: (error) => error.response?.data?.error || "The attachment could not be uploaded",
+              message: (error: any) => {
+                if (error?.response?.data?.error) return error.response.data.error;
+                return "The attachment could not be uploaded";
+              },
             },
           });
 
@@ -113,25 +135,12 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
     [workspaceSlug, projectId, issueId, captureIssueEvent, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
 
-  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
-    console.log("❌ File rejected:", fileRejections);
-    const [rejection] = fileRejections;
-    if (rejection) {
-      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 업로드 실패",
-        message: errorMessage
-      });
-    }
-  }, []);
-
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     onDropRejected,
     maxSize: fileSettings?.max_file_size ?? MAX_FILE_SIZE,
     multiple: false,
-    disabled: isLoading || disabled,
+    disabled: disabled,
     accept: getAcceptedFileTypes(),
     noClick: false,
     noKeyboard: false,

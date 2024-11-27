@@ -49,25 +49,25 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
       
       // 파일이 없는 경우 체크
       if (!currentFile) {
-        console.log("❌ No file selected");
+        // console.log("❌ No file selected");
         return;
       }
 
       if (!workspaceSlug) {
-        console.log("❌ No workspace slug");
+        // console.log("❌ No workspace slug");
         return;
       }
 
-      console.log("📁 Processing file:", {
-        name: currentFile.name,
-        size: currentFile.size,
-        type: currentFile.type
-      });
+      // console.log("📁 Processing file:", {
+      //   name: currentFile.name,
+      //   size: currentFile.size,
+      //   type: currentFile.type
+      // });
 
       // 파일 검증
       const { isValid, error } = validateFile(currentFile);
       if (!isValid) {
-        console.log("❌ Validation failed:", error);
+        // console.log("❌ Validation failed:", error);
         setValidationError(error);
         return;
       }

@@ -91,18 +91,18 @@ export class InstanceStore implements IInstanceStore {
     });
 
     try {
-      console.log("🔄 Initializing file settings...");
+      // console.log("🔄 Initializing file settings...");
       const settings = await this.instanceService.getFileSettings();
-      console.log("✅ Received file settings:", settings);
+      // console.log("✅ Received file settings:", settings);
       
       runInAction(() => {
         this.fileSettings = settings;
-        console.log("💾 Updated file settings in store:", this.fileSettings);
+        // console.log("💾 Updated file settings in store:", this.fileSettings);
       });
     } catch (error) {
       console.error("❌ Failed to initialize file settings:", error);
       // 에러 시 기본값 유지
-      console.log("⚠️ Using default settings due to error");
+      // console.log("⚠️ Using default settings due to error");
     }
   }
 
@@ -141,13 +141,13 @@ export class InstanceStore implements IInstanceStore {
     }
 
     try {
-      console.log("🔄 Fetching file settings...");
+      // console.log("🔄 Fetching file settings...");
       const response = await this.instanceService.getFileSettings();
-      console.log("✅ Received file settings:", response);
+      // console.log("✅ Received file settings:", response);
       
       runInAction(() => {
         this.fileSettings = response;
-        console.log("💾 Updated file settings in store:", this.fileSettings);
+        // console.log("💾 Updated file settings in store:", this.fileSettings);
       });
       return response;
     } catch (error) {

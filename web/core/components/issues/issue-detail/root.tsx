@@ -331,13 +331,13 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
   const issue = getIssueById(issueId);
   
   // 권한 체크 로깅
-  console.log("Issue Details:", {
-    workspaceSlug,
-    projectId,
-    assignees: issue?.assignee_ids,
-    currentUserId: currentUser?.id,
-    issue
-  });
+  // console.log("Issue Details:", {
+  //   workspaceSlug,
+  //   projectId,
+  //   assignees: issue?.assignee_ids,
+  //   currentUserId: currentUser?.id,
+  //   issue
+  // });
 
   // checking if issue is editable, based on user role
   const isEditable = checkIssueEditPermission(
@@ -348,13 +348,13 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
   );
 
   // 권한 상태 로깅
-  console.log("Permission Check:", {
-    isEditable,
-    currentUser: currentUser?.id,
-    assignees: issue?.assignee_ids,
-    workspaceSlug,
-    projectId
-  });
+  // console.log("Permission Check:", {
+  //   isEditable,
+  //   currentUser: currentUser?.id,
+  //   assignees: issue?.assignee_ids,
+  //   workspaceSlug,
+  //   projectId
+  // });
 
   return (
     <>

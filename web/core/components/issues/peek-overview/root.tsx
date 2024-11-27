@@ -334,17 +334,17 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
 
   const issue = getIssueById(peekIssue.issueId);
 
-  console.log("Peek Issue Details:", {
-    workspaceSlug: peekIssue.workspaceSlug,
-    projectId: peekIssue.projectId,
-    assignees: issue?.assignee_ids,
-    currentUserId: currentUser?.id,
-    issue: {
-      ...issue,
-      assignees: issue?.assignee_ids,
-      raw_issue: issue
-    }
-  });
+  // console.log("Peek Issue Details:", {
+  //   workspaceSlug: peekIssue.workspaceSlug,
+  //   projectId: peekIssue.projectId,
+  //   assignees: issue?.assignee_ids,
+  //   currentUserId: currentUser?.id,
+  //   issue: {
+  //     ...issue,
+  //     assignees: issue?.assignee_ids,
+  //     raw_issue: issue
+  //   }
+  // });
 
   const isEditable = checkIssueEditPermission(
     peekIssue.workspaceSlug,
@@ -353,13 +353,13 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
     currentUser?.id || ""
   );
 
-  console.log("Peek Permission Check:", {
-    isEditable,
-    currentUser: currentUser?.id,
-    assignees: issue?.assignee_ids,
-    workspaceSlug: peekIssue.workspaceSlug,
-    projectId: peekIssue.projectId
-  });
+  // console.log("Peek Permission Check:", {
+  //   isEditable,
+  //   currentUser: currentUser?.id,
+  //   assignees: issue?.assignee_ids,
+  //   workspaceSlug: peekIssue.workspaceSlug,
+  //   projectId: peekIssue.projectId
+  // });
 
   return (
     <IssueView

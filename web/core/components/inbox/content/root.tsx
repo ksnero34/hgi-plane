@@ -64,13 +64,13 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   );
 
   // 권한 체크 로깅
-  console.log("Inbox Issue Details:", {
-    workspaceSlug,
-    projectId,
-    assignees: inboxIssue?.issue?.assignee_ids,
-    currentUserId: currentUser?.id,
-    issue: inboxIssue?.issue
-  });
+  // console.log("Inbox Issue Details:", {
+  //   workspaceSlug,
+  //   projectId,
+  //   assignees: inboxIssue?.issue?.assignee_ids,
+  //   currentUserId: currentUser?.id,
+  //   issue: inboxIssue?.issue
+  // });
 
   // checking if issue is editable, based on user role
   const isEditable = checkIssueEditPermission(
@@ -81,13 +81,13 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   );
 
   // 권한 상태 로깅
-  console.log("Inbox Permission Check:", {
-    isEditable,
-    currentUser: currentUser?.id,
-    assignees: inboxIssue?.issue?.assignee_ids,
-    workspaceSlug,
-    projectId
-  });
+  // console.log("Inbox Permission Check:", {
+  //   isEditable,
+  //   currentUser: currentUser?.id,
+  //   assignees: inboxIssue?.issue?.assignee_ids,
+  //   workspaceSlug,
+  //   projectId
+  // });
 
   const isGuest = projectPermissionsByWorkspaceSlugAndProjectId(workspaceSlug, projectId) === EUserPermissions.GUEST;
   const isOwner = inboxIssue?.issue.created_by === currentUser?.id;

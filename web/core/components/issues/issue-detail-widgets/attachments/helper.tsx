@@ -6,7 +6,7 @@ import { TAttachmentOperations } from "@/components/issues/attachment";
 // hooks
 import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, FileRejection } from "react-dropzone";
 import { MAX_FILE_SIZE } from "@/constants/common";
 
 export const useAttachmentOperations = (
