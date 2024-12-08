@@ -6,7 +6,7 @@ http {
     more_set_headers 'Server: MIN-WEB';
     
     server {
-        listen 80;
+        listen 18080;
         root /www/data/;
         access_log /var/log/nginx/access.log;
 

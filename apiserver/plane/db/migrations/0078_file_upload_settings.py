@@ -2,9 +2,13 @@ from django.db import migrations, models
 import django.db.models.deletion
 import uuid
 
+def get_default_extensions():
+    return ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"]
+
 class Migration(migrations.Migration):
     dependencies = [
         ("db", "0077_add_new_user_role_migration"),
+        ("license", "0001_initial"),
     ]
 
     operations = [
@@ -31,7 +35,7 @@ class Migration(migrations.Migration):
                 (
                     "allowed_extensions",
                     models.JSONField(
-                        default=list(["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"]),
+                        default=get_default_extensions,
                         help_text="허용되는 파일 확장자 목록",
                     ),
                 ),

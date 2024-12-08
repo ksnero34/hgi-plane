@@ -54,6 +54,11 @@ class OIDCCallbackSpaceEndpoint(View):
         base_host = request.session.get("host")
         next_path = request.session.get("next_path")
 
+        print(state, request.session.get("state", ""))
+        print(base_host, next_path)
+        print(code)
+        print(request.GET)
+
         if state != request.session.get("state", ""):
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],

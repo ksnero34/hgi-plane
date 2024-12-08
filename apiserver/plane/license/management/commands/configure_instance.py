@@ -84,6 +84,24 @@ class Command(BaseCommand):
                 "is_encrypted": True,
             },
             {
+                "key": "OIDC_ISSUER_URL",
+                "value": os.environ.get("OIDC_ISSUER_URL"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_CLIENT_ID",
+                "value": os.environ.get("OIDC_CLIENT_ID"),
+                "category": "OIDC",
+                "is_encrypted": False,
+            },
+            {
+                "key": "OIDC_CLIENT_SECRET",
+                "value": os.environ.get("OIDC_CLIENT_SECRET"),
+                "category": "OIDC",
+                "is_encrypted": True,
+            },
+            {
                 "key": "EMAIL_HOST",
                 "value": os.environ.get("EMAIL_HOST", ""),
                 "category": "SMTP",

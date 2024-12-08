@@ -32,21 +32,45 @@ class OIDCOAuthProvider(OauthAdapter):
 
         # OIDC 설정 가져오기
         try:
-            config_response = requests.get(f"{OIDC_ISSUER_URL}/.well-known/openid-configuration")
+            config_response = requests.get(
+                f"{OIDC_ISSUER_URL.rstrip('/')}/.well-known/openid-configuration",
+                verify=False  # 개발 환경에서만 사용하세요
+            )
             config_response.raise_for_status()
             config = config_response.json()
-        except:
+            
+            if not all(key in config for key in ['token_endpoint', 'userinfo_endpoint', 'authorization_endpoint']):
+                raise AuthenticationException(
+                    error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
+                    error_message="필수 OIDC 엔드포인트가 누락되었습니다",
+                )
+                
+        except requests.RequestException as e:
+            print(f"OIDC 설정 요청 오류: {str(e)}")
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
-                error_message="OIDC_OAUTH_PROVIDER_ERROR",
+                error_message=f"OIDC 서버 연결 오류: {str(e)}",
+            )
+        except Exception as e:
+            print(f"OIDC 설정 처리 오류: {str(e)}")
+            raise AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
+                error_message=f"OIDC 설정 처리 오류: {str(e)}",
             )
 
         self.token_url = config.get("token_endpoint")
         self.userinfo_url = config.get("userinfo_endpoint")
-        self.auth_url = config.get("authorization_endpoint")
-
+        
         redirect_uri = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}/auth/oidc/callback/"""
-
+        url_params = {
+            "client_id": OIDC_CLIENT_ID,
+            "scope": self.scope,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "state": state,
+        }
+        self.auth_url = config.get("authorization_endpoint") + "?" + urlencode(url_params)
+        
         super().__init__(
             request,
             self.provider,
