@@ -1,8 +1,11 @@
 import { FC } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 // helpers
 import { API_BASE_URL } from "@/helpers/common.helper";
+
+import OidcLogo from "/public/logos/logo-dark.svg";
 
 export type OIDCOAuthButtonProps = {
   text: string;
@@ -26,7 +29,7 @@ export const OIDCOAuthButton: FC<OIDCOAuthButtonProps> = (props) => {
       }`}
       onClick={handleSignIn}
     >
-      <span className="material-icons-outlined text-xl">account_circle</span>
+      <Image src={OidcLogo} height={80} width={60} alt="OIDC Logo" />
       {text}
     </button>
   );

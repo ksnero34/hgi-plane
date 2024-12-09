@@ -31,7 +31,7 @@ export const OAuthOptions: React.FC<TOAuthOptionProps> = observer(() => {
         )}
         {config?.is_github_enabled && <GithubOAuthButton text="Continue with Github" />}
         {config?.is_gitlab_enabled && <GitlabOAuthButton text="Continue with GitLab" />}
-        {config?.is_oidc_enabled && <OIDCOAuthButton text="Continue with OIDC" />}
+        {config?.is_oidc_enabled && <OIDCOAuthButton text="HGI SSO로 로그인하기" />}
       </div>
     </>
   );
