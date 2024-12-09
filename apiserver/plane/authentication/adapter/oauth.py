@@ -66,14 +66,37 @@ class OauthAdapter(Adapter):
         return self.complete_login_or_signup()
 
     def get_user_token(self, data, headers=None):
+        print("data", data)
+        print("get_token_url", self.get_token_url())
         try:
             headers = headers or {}
+            
+            # Basic Auth 헤더 추가
+            if self.client_id and self.client_secret:
+                import base64
+                auth_string = f"{self.client_id}:{self.client_secret}"
+                auth_bytes = auth_string.encode('ascii')
+                base64_bytes = base64.b64encode(auth_bytes)
+                base64_string = base64_bytes.decode('ascii')
+                headers['Authorization'] = f'Basic {base64_string}'
+                
+                # client_id와 client_secret을 data에서 제거
+                data = {k: v for k, v in data.items() if k not in ['client_id', 'client_secret']}
+            
+            print("Request headers:", headers)
+            print("Modified data:", data)
+            
             response = requests.post(
                 self.get_token_url(), data=data, headers=headers
             )
+            print("Response status:", response.status_code)
+            print("Response content:", response.content)
             response.raise_for_status()
             return response.json()
-        except requests.RequestException:
+        except requests.RequestException as e:
+            print("Detailed error in getting token:", str(e))
+            print("Response status code:", getattr(e.response, 'status_code', None))
+            print("Response content:", getattr(e.response, 'content', None))
             code = self.authentication_error_code()
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES[code],
@@ -89,6 +112,7 @@ class OauthAdapter(Adapter):
             response.raise_for_status()
             return response.json()
         except requests.RequestException:
+            print("error in getting user response")
             code = self.authentication_error_code()
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES[code],

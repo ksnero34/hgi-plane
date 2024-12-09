@@ -96,6 +96,7 @@ class OIDCOAuthProvider(OauthAdapter):
         token_response = self.get_user_token(
             data=data, headers={"Accept": "application/json"}
         )
+        print("token_responsessssss", token_response)
         super().set_token_data(
             {
                 "access_token": token_response.get("access_token"),
