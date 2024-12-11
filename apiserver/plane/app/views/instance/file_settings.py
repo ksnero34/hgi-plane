@@ -16,7 +16,7 @@ class FileSettingsViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         """모든 사용자가 file settings를 조회할 수 있도록 허용"""
-        print("CSRF Token:", request.headers.get('X-CSRFToken'))
+        # print("CSRF Token:", request.headers.get('X-CSRFToken'))
         instance = FileUploadSettings.objects.first()
         if not instance:
             return Response(

@@ -2,7 +2,7 @@ services:
   plane-redis:
     container_name: dev-plane-redis
     image: valkey/valkey:7.2.5-alpine
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -11,7 +11,7 @@ services:
   plane-mq:
     container_name: dev-plane-mq
     image: rabbitmq:3.13.6-management-alpine
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -26,7 +26,7 @@ services:
   plane-minio:
     container_name: dev-plane-minio
     image: minio/minio
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     command: server /export --console-address ":9090"
@@ -41,7 +41,7 @@ services:
   plane-db:
     container_name: dev-plane-db
     image: hgi-postgres:16.4
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     command: postgres -c 'max_connections=1000'
@@ -58,7 +58,7 @@ services:
       context: .
       dockerfile: ./web/Dockerfile.dev
     # image: hgi-plane-dev/web:0.0.22
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -75,7 +75,7 @@ services:
       context: .
       dockerfile: ./space/Dockerfile.dev
     # image: hgi-plane-dev/space:0.0.21
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -91,7 +91,7 @@ services:
       context: .
       dockerfile: ./admin/Dockerfile.dev
     # image: hgi-plane-dev/admin:0.0.5
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -107,7 +107,7 @@ services:
       context: .
       dockerfile: ./live/Dockerfile.dev
     # image: hgi-plane-dev/live:0.0.22
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -125,7 +125,7 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # image: hgi-plane-dev/api:0.0.6
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -145,7 +145,7 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # image: hgi-plane-worker-dev:0.0.7
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -166,7 +166,7 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # image: hgi-plane-beat-worker-dev:0.0.7
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     volumes:
@@ -187,7 +187,7 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # image: hgi-plane-migrator-dev:0.0.7
-    restart: "no"
+    #restart: "no"
     networks:
       - dev_env
     volumes:
@@ -205,7 +205,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.dev
     # image: hgi-plane-dev/proxy:0.0.7
-    restart: unless-stopped
+    #restart: unless-stopped
     networks:
       - dev_env
     ports:

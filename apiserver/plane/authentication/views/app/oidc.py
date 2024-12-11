@@ -63,7 +63,7 @@ class OIDCCallbackEndpoint(View):
         next_path = request.session.get("next_path")
 
         if state != request.session.get("state", ""):
-            print("state is not present")
+            # print("state is not present")
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message="OIDC_OAUTH_PROVIDER_ERROR",
@@ -78,7 +78,7 @@ class OIDCCallbackEndpoint(View):
             return HttpResponseRedirect(url)
 
         if not code:
-            print("code is not present")
+            # print("code is not present")
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message="OIDC_OAUTH_PROVIDER_ERROR",
@@ -98,7 +98,7 @@ class OIDCCallbackEndpoint(View):
                 code=code,
                 callback=post_user_auth_workflow,
             )
-            print("provider", provider)
+            # print("provider", provider)
             user = provider.authenticate()
             # Login the user and record his device info
             user_login(request=request, user=user, is_app=True)

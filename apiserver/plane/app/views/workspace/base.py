@@ -106,10 +106,10 @@ class WorkSpaceViewSet(BaseViewSet):
     def create(self, request):
         try:
             # 디버깅 로그 추가
-            print("=== User Debug Info ===")
-            print(f"User ID: {request.user.id}")
-            print(f"User Email: {request.user.email}")
-            print("=====================")
+            # print("=== User Debug Info ===")
+            # print(f"User ID: {request.user.id}")
+            # print(f"User Email: {request.user.email}")
+            # print("=====================")
 
             # 인스턴스 관리자 권한 확인
             instance = Instance.objects.first()

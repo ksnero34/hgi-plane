@@ -54,13 +54,13 @@ class OIDCCallbackSpaceEndpoint(View):
         base_host = request.session.get("host")
         next_path = request.session.get("next_path")
 
-        print(state, request.session.get("state", ""))
-        print(base_host, next_path)
-        print(code)
-        print(request.GET)
+        # print(state, request.session.get("state", ""))
+        # print(base_host, next_path)
+        # print(code)
+        # print(request.GET)
 
         if state != request.session.get("state", ""):
-            print("state is not present")
+            # print("state is not present")
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message="OIDC_OAUTH_PROVIDER_ERROR",
@@ -72,7 +72,7 @@ class OIDCCallbackSpaceEndpoint(View):
             return HttpResponseRedirect(url)
 
         if not code:
-            print("code is not present")
+            # print("code is not present")
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message="OIDC_OAUTH_PROVIDER_ERROR",

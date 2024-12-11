@@ -46,13 +46,13 @@ class OIDCOAuthProvider(OauthAdapter):
                 )
                 
         except requests.RequestException as e:
-            print(f"OIDC 설정 요청 오류: {str(e)}")
+            # print(f"OIDC 설정 요청 오류: {str(e)}")
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message=f"OIDC 서버 연결 오류: {str(e)}",
             )
         except Exception as e:
-            print(f"OIDC 설정 처리 오류: {str(e)}")
+            # print(f"OIDC 설정 처리 오류: {str(e)}")
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message=f"OIDC 설정 처리 오류: {str(e)}",
@@ -96,7 +96,7 @@ class OIDCOAuthProvider(OauthAdapter):
         token_response = self.get_user_token(
             data=data, headers={"Accept": "application/json"}
         )
-        print("token_responsessssss", token_response)
+        # print("token_responsessssss", token_response)
         super().set_token_data(
             {
                 "access_token": token_response.get("access_token"),
