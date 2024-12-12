@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button, Input, Spinner } from "@plane/ui";
 // components
 import { Banner } from "@/components/common";
+import { OAuthOptions } from "../../components/account/oauth/oauth-options";
 // helpers
 import {
   authErrorHandler,
@@ -195,6 +196,8 @@ export const InstanceSignInForm: FC = (props) => {
             </Button>
           </div>
         </form>
+
+        <OAuthOptions />
       </div>
     </div>
   );

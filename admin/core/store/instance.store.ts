@@ -115,13 +115,15 @@ export class InstanceStore implements IInstanceStore {
         this.store.theme.toggleNewUserPopup();
       runInAction(() => {
         console.log("instanceInfo: ", instanceInfo);
+        console.log("config: ", instanceInfo.config);
+        console.log("is_oidc_enabled: ", instanceInfo.config?.is_oidc_enabled);
         this.isLoading = false;
         this.instance = instanceInfo.instance;
         this.config = instanceInfo.config;
       });
       return instanceInfo;
     } catch (error) {
-      console.error("Error fetching the instance info");
+      console.error("Error fetching the instance info", error);
       this.isLoading = false;
       this.error = { message: "Failed to fetch the instance info" };
       this.instanceStatus = {

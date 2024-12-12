@@ -120,6 +120,12 @@ export const InstanceOIDCConfigForm: FC<Props> = (props) => {
       label: "리디렉션 URI",
       url: `${originURL}/auth/oidc/callback/`,
       description: "이 URL을 OIDC 제공자의 허용된 리디렉션 URI로 등록하세요."
+    },
+    {
+      key: "Admin_Callback_URL",
+      label: "관리자 리디렉션 URI",
+      url: `${originURL}/api/instances/admins/oidc/callback/`,
+      description: "이 URL을 OIDC 제공자의 허용된 관리자 리디렉션 URI로 등록하세요."
     }
   ];
 

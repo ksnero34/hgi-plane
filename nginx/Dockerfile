@@ -1,6 +1,6 @@
 # FROM nginx:1.25.0-alpine
 
-FROM min-nginx:1.26.2
+FROM hgi-nginx:1.26.2
 
 RUN apt-get update && apt-get install -y gettext
 #RUN rm /etc/nginx/conf.d/default.conf

@@ -1,14 +1,14 @@
 from .instance import (
     InstanceEndpoint,
     SignUpScreenVisitedEndpoint,
+    OIDCOauthInitiateAdminEndpoint,
+    OIDCCallbackAdminEndpoint,
 )
-
 
 from .configuration import (
     EmailCredentialCheckEndpoint,
     InstanceConfigurationEndpoint,
 )
-
 
 from .admin import (
     InstanceAdminEndpoint,

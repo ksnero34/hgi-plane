@@ -11,6 +11,8 @@ from plane.license.api.views import (
     InstanceAdminUserMeEndpoint,
     InstanceAdminSignOutEndpoint,
     InstanceAdminUserSessionEndpoint,
+    OIDCOauthInitiateAdminEndpoint,
+    OIDCCallbackAdminEndpoint,
 )
 
 urlpatterns = [
@@ -68,5 +70,16 @@ urlpatterns = [
         "email-credentials-check/",
         EmailCredentialCheckEndpoint.as_view(),
         name="email-credential-check",
+    ),
+    # Admin OIDC Authentication
+    path(
+        "admins/oidc/",
+        OIDCOauthInitiateAdminEndpoint.as_view(),
+        name="instance-admin-oidc-initiate",
+    ),
+    path(
+        "admins/oidc/callback/",
+        OIDCCallbackAdminEndpoint.as_view(),
+        name="instance-admin-oidc-callback",
     ),
 ]

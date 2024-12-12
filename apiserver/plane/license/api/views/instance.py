@@ -1,8 +1,12 @@
 # Python imports
 import os
+import uuid
+from urllib.parse import urlencode
 
 # Django imports
 from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.views import View
 
 # Third party imports
 from rest_framework import status
@@ -25,6 +29,13 @@ from plane.license.utils.instance_value import (
 from plane.utils.cache import cache_response, invalidate_cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from plane.authentication.provider.oauth.oidc import OIDCOAuthProvider
+from plane.authentication.utils.login import user_login
+from plane.authentication.utils.host import base_host
+from plane.authentication.adapter.error import (
+    AuthenticationException,
+    AUTHENTICATION_ERROR_CODES,
+)
 
 
 class InstanceEndpoint(BaseAPIView):
@@ -219,3 +230,119 @@ class SignUpScreenVisitedEndpoint(BaseAPIView):
         instance.is_signup_screen_visited = True
         instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OIDCOauthInitiateAdminEndpoint(View):
+    def get(self, request):
+        print("[OIDC Admin] Initiating OIDC login")
+        # Get host and next path
+        request.session["host"] = base_host(request=request, is_admin=True)
+        next_path = request.GET.get("next_path")
+        if next_path:
+            request.session["next_path"] = str(next_path)
+        
+        print(f"[OIDC Admin] Host: {request.session['host']}, Next path: {next_path}")
+
+        # Check instance configuration
+        instance = Instance.objects.first()
+        if instance is None or not instance.is_setup_done:
+            print("[OIDC Admin] Instance not configured")
+            exc = AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["INSTANCE_NOT_CONFIGURED"],
+                error_message="INSTANCE_NOT_CONFIGURED",
+            )
+            params = exc.get_error_dict()
+            if next_path:
+                params["next_path"] = str(next_path)
+            url = f"{base_host(request=request, is_admin=True)}?{urlencode(params)}"
+            return HttpResponseRedirect(url)
+
+        try:
+            state = uuid.uuid4().hex
+            provider = OIDCOAuthProvider(request=request, state=state)
+            request.session["state"] = state
+            auth_url = provider.get_auth_url()
+            print(f"[OIDC Admin] Redirecting to auth URL: {auth_url}")
+            return HttpResponseRedirect(auth_url)
+        except AuthenticationException as e:
+            print(f"[OIDC Admin] Authentication error: {str(e)}")
+            params = e.get_error_dict()
+            if next_path:
+                params["next_path"] = str(next_path)
+            url = f"{base_host(request=request, is_admin=True)}?{urlencode(params)}"
+            return HttpResponseRedirect(url)
+
+
+class OIDCCallbackAdminEndpoint(View):
+    def get(self, request):
+        print("[OIDC Admin Callback] Received callback request")
+        # Get state and code from request
+        state = request.GET.get("state")
+        code = request.GET.get("code")
+        next_path = request.session.get("next_path")
+        base_host = request.session.get("host", "")
+
+        print(f"[OIDC Admin Callback] State: {state}")
+        print(f"[OIDC Admin Callback] Code: {code}")
+        print(f"[OIDC Admin Callback] Next path: {next_path}")
+        print(f"[OIDC Admin Callback] Base host: {base_host}")
+
+        # Validate state
+        session_state = request.session.get("state")
+        if not state or not session_state or state != session_state:
+            print("[OIDC Admin Callback] Invalid state")
+            exc = AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["INVALID_STATE"],
+                error_message="INVALID_STATE",
+            )
+            params = exc.get_error_dict()
+            if next_path:
+                params["next_path"] = str(next_path)
+            url = f"{base_host}?{urlencode(params)}"
+            return HttpResponseRedirect(url)
+
+        # Clear state from session
+        request.session.pop("state", None)
+
+        # Validate code
+        if not code:
+            print("[OIDC Admin Callback] Invalid code")
+            exc = AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["INVALID_CODE"],
+                error_message="INVALID_CODE",
+            )
+            params = exc.get_error_dict()
+            if next_path:
+                params["next_path"] = str(next_path)
+            url = f"{base_host}?{urlencode(params)}"
+            return HttpResponseRedirect(url)
+
+        try:
+            print("[OIDC Admin Callback] Authenticating with provider")
+            provider = OIDCOAuthProvider(
+                request=request,
+                code=code,
+            )
+            user = provider.authenticate()
+            print(f"[OIDC Admin Callback] User authenticated: {user.email}")
+            
+            # admin 세션 로그인 처리 (is_admin=True로 설정)
+            user_login(request=request, user=user, is_admin=True)
+            print("[OIDC Admin Callback] Admin login successful")
+            
+            # admin 대시보드로 리다이렉트
+            if next_path:
+                url = f"{base_host}{str(next_path)}"
+            else:
+                # 기본 admin 대시보드 URL로 리다이렉트
+                url = f"{base_host}/general"
+            
+            print(f"[OIDC Admin Callback] Redirecting to: {url}")
+            return HttpResponseRedirect(url)
+        except AuthenticationException as e:
+            print(f"[OIDC Admin Callback] Authentication error: {str(e)}")
+            params = e.get_error_dict()
+            if next_path:
+                params["next_path"] = str(next_path)
+            url = f"{base_host}?{urlencode(params)}"
+            return HttpResponseRedirect(url)

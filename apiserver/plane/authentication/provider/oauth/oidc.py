@@ -14,7 +14,7 @@ from plane.authentication.adapter.error import (
 
 class OIDCOAuthProvider(OauthAdapter):
     provider = "oidc"
-    scope = "openid profile email"
+    scope = "openid profile email roles"
 
     def __init__(self, request, code=None, state=None, callback=None):
         # OIDC 설정값 가져오기
@@ -61,7 +61,15 @@ class OIDCOAuthProvider(OauthAdapter):
         self.token_url = config.get("token_endpoint")
         self.userinfo_url = config.get("userinfo_endpoint")
         
-        redirect_uri = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}/auth/oidc/callback/"""
+        # admin 로그인인지 확인
+        self.is_admin = request.path.startswith("/api/instances/admins/")
+        
+        # 적절한 콜백 URL 설정
+        if self.is_admin:
+            redirect_uri = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}/api/instances/admins/oidc/callback/"""
+        else:
+            redirect_uri = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}/auth/oidc/callback/"""
+            
         url_params = {
             "client_id": OIDC_CLIENT_ID,
             "scope": self.scope,
@@ -107,7 +115,30 @@ class OIDCOAuthProvider(OauthAdapter):
 
     def set_user_data(self):
         user_info_response = self.get_user_response()
+        print("[OIDC] User info response:", user_info_response)  # 디버깅용 로그
+        
         email = user_info_response.get("email")
+
+        # admin 로그인인 경우 roles 확인
+        if self.is_admin:
+            # ID 토큰에서 roles 확인
+            id_token_claims = self.get_id_token_claims()
+            print("[OIDC] ID token claims:", id_token_claims)  # 디버깅용 로그
+            
+            # ID 토큰이나 userinfo에서 roles 확인
+            roles = id_token_claims.get("roles", []) or user_info_response.get("roles", [])
+            if not isinstance(roles, list):
+                roles = [roles]
+            
+            print("[OIDC] User roles:", roles)  # 디버깅용 로그
+            
+            # 관리자 권한 확인
+            if "ROLE_CLIENT_ADMIN" not in roles:
+                raise AuthenticationException(
+                    error_code="UNAUTHORIZED",  # 문자열로 변경
+                    error_message="관리자 권한이 없습니다.",
+                )
+
         super().set_user_data(
             {
                 "email": email,
@@ -120,4 +151,40 @@ class OIDCOAuthProvider(OauthAdapter):
                     "is_password_autoset": True,
                 },
             }
-        ) 
+        )
+
+    def get_id_token_claims(self):
+        """ID 토큰의 claims를 가져옵니다."""
+        if not hasattr(self, 'token_data'):
+            self.set_token_data()
+        
+        id_token = self.token_data.get("id_token")
+        if not id_token:
+            raise AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
+                error_message="ID 토큰이 없습니다.",
+            )
+        
+        # ID 토큰 디코딩 (서명 검증은 생략)
+        id_token_parts = id_token.split('.')
+        if len(id_token_parts) != 3:
+            raise AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
+                error_message="잘못된 ID 토큰 형식입니다.",
+            )
+        
+        import base64
+        import json
+        
+        # Base64 패딩 추가
+        payload = id_token_parts[1]
+        payload += '=' * ((4 - len(payload) % 4) % 4)
+        
+        try:
+            claims = json.loads(base64.b64decode(payload).decode('utf-8'))
+            return claims
+        except Exception as e:
+            raise AuthenticationException(
+                error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
+                error_message=f"ID 토큰 디코딩 오류: {str(e)}",
+            ) 
