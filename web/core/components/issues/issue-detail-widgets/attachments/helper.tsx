@@ -1,11 +1,9 @@
 "use client";
-import { useMemo, useCallback, useState, useEffect } from "react";
+import { useMemo } from "react";
+// plane ui
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 // hooks
-import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
-import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
-import { useDropzone, FileRejection } from "react-dropzone";
-import { MAX_FILE_SIZE } from "@/constants/common";
+import { useEventTracker, useIssueDetail } from "@/hooks/store";
 // types
 import { TAttachmentUploadStatus } from "@/store/issue/issue-details/attachment.store";
 
@@ -26,46 +24,19 @@ export type TAttachmentHelpers = {
 export const useAttachmentOperations = (
   workspaceSlug: string,
   projectId: string,
-  issueId: string,
-  disabled: boolean = false
-): TAttachmentOperations => {
-  const { createAttachment, removeAttachment } = useIssueDetail();
+  issueId: string
+): TAttachmentHelpers => {
+  const {
+    attachment: { createAttachment, removeAttachment, getAttachmentsUploadStatusByIssueId },
+  } = useIssueDetail();
   const { captureIssueEvent } = useEventTracker();
-  const { validateFile, getAcceptedFileTypes } = useFileValidation();
-  const { fileSettings, fetchFileSettings } = useInstance();
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    fetchFileSettings().catch(console.error);
-  }, [fetchFileSettings]);
 
   const attachmentOperations: TAttachmentOperations = useMemo(
     () => ({
       create: async (file) => {
         try {
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
-
-          try {
-            await fetchFileSettings();
-          } catch (error) {
-            console.error("Failed to fetch latest file settings:", error);
-          }
-
-          const file = data.get("asset") as File;
-          if (!validateFileBeforeUpload(file, validateFile)) return;
-
-          const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, data);
-          setPromiseToast(attachmentUploadPromise, {
-            loading: "Uploading attachment...",
-            success: {
-              title: "Attachment uploaded",
-              message: () => "The attachment has been successfully uploaded",
-            },
-            error: {
-              title: "Attachment not uploaded",
-              message: () => "The attachment could not be uploaded",
-            },
-          });
+          const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, file);
 
           const res = await attachmentUploadPromise;
           captureIssueEvent({
@@ -76,12 +47,16 @@ export const useAttachmentOperations = (
               change_details: res.id,
             },
           });
-        } catch (error) {
-          handleUploadError(error);
+        } catch (error: any) {
           captureIssueEvent({
             eventName: "Issue attachment added",
             payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
           });
+
+          // 에러 객체에 서버 응답 추가
+          if (error.response?.data) {
+            error.serverError = error.response.data;
+          }
           throw error;
         }
       },
@@ -119,32 +94,12 @@ export const useAttachmentOperations = (
         }
       },
     }),
-    [captureIssueEvent,workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
+    [captureIssueEvent, workspaceSlug, projectId, issueId, createAttachment, removeAttachment]
   );
   const attachmentsUploadStatus = getAttachmentsUploadStatusByIssueId(issueId);
 
-  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
-    console.log("❌ File rejected:", fileRejections);
-    const [rejection] = fileRejections;
-    if (rejection) {
-      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 업로드 실패",
-        message: errorMessage
-      });
-    }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDropRejected,
-    maxSize: fileSettings?.max_file_size ?? MAX_FILE_SIZE,
-    multiple: false,
-    disabled: isLoading || disabled,
-    accept: getAcceptedFileTypes(),
-    noClick: false,
-    noKeyboard: false,
-  });
-
-  return handleAttachmentOperations;
+  return {
+    operations: attachmentOperations,
+    snapshot: { uploadStatus: attachmentsUploadStatus },
+  };
 };

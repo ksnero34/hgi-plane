@@ -14,9 +14,7 @@ import { IssueAttachmentUpload } from "./attachment-upload";
 import { IssueAttachmentsList } from "./attachments-list";
 import { useDropzone, FileRejection } from "react-dropzone";
 
-// 상수 정의
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
+// types
 export type TIssueAttachmentRoot = {
   workspaceSlug: string;
   projectId: string;
@@ -29,37 +27,25 @@ export type TAttachmentOperations = {
   remove: (linkId: string) => Promise<void>;
 };
 
-export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = (props) => {
+export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = observer((props) => {
   const { workspaceSlug, projectId, issueId, disabled = false } = props;
   
   const { createAttachment, removeAttachment } = useIssueDetail();
   const { captureIssueEvent } = useEventTracker();
   const { validateFile } = useFileValidation();
   const { fetchFileSettings, fileSettings } = useInstance();
+  const attachmentHelpers = useAttachmentOperations(workspaceSlug, projectId, issueId);
 
   useEffect(() => {
     fetchFileSettings().catch(console.error);
   }, [fetchFileSettings]);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 0) return;
-    
-    const formData = new FormData();
-    formData.append("asset", acceptedFiles[0]);
-    await handleAttachmentOperations.create(formData);
-  }, []);
-
-  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
-    const [rejection] = fileRejections;
-    if (rejection) {
-      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 업로드 실패",
-        message: errorMessage
-      });
-    }
-  }, []);
+  const getAcceptedFileTypes = useCallback(() => {
+    if (!fileSettings?.allowed_extensions) return undefined;
+    return {
+      'image/*': fileSettings.allowed_extensions.map(ext => `.${ext}`)
+    };
+  }, [fileSettings]);
 
   const handleAttachmentOperations: TAttachmentOperations = useMemo(
     () => ({
@@ -145,41 +131,18 @@ export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = (props) => {
     }),
     [captureIssueEvent, workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
-export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = observer((props) => {
-  // props
-  const { workspaceSlug, projectId, issueId, disabled = false } = props;
-  // hooks
-  const attachmentHelpers = useAttachmentOperations(workspaceSlug, projectId, issueId);
-
-  const getAcceptedFileTypes = useCallback(() => {
-    if (!fileSettings?.allowed_extensions) return undefined;
-    return {
-      'image/*': fileSettings.allowed_extensions.map(ext => `.${ext}`)
-    };
-  }, [fileSettings]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    onDropRejected,
-    maxSize: fileSettings?.max_file_size ?? MAX_FILE_SIZE,
-    multiple: false,
-    disabled: disabled,
-    accept: getAcceptedFileTypes(),
-    noClick: false,
-    noKeyboard: false,
-  });
 
   return (
-    <div className="relative py-3 space-y-3">
-      <h3 className="text-lg">Attachments</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        <IssueAttachmentUpload
-          workspaceSlug={workspaceSlug}
-          disabled={disabled}
-          attachmentOperations={attachmentHelpers.operations}
-        />
-        <IssueAttachmentsList issueId={issueId} disabled={disabled} attachmentHelpers={attachmentHelpers} />
-      </div>
+    <div className="relative">
+      <IssueAttachmentUpload
+        handleAttachmentOperations={handleAttachmentOperations}
+        disabled={disabled}
+        getAcceptedFileTypes={getAcceptedFileTypes}
+      />
+      <IssueAttachmentsList
+        handleAttachmentOperations={handleAttachmentOperations}
+        disabled={disabled}
+      />
     </div>
   );
 });

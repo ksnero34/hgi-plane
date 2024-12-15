@@ -41,7 +41,7 @@ from django.views.decorators.vary import vary_on_cookie
 from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
 from plane.license.models import Instance, InstanceAdmin
 from plane.license.utils.instance_value import get_configuration_value
-
+from plane.utils.cache import cache_response
 
 class WorkSpaceViewSet(BaseViewSet):
     model = Workspace

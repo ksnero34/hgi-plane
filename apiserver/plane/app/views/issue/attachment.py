@@ -159,17 +159,81 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
     serializer_class = IssueAttachmentSerializer
     model = FileAsset
 
+    def get_mime_type(self, file):
+        """파일의 실제 MIME 타입을 확인"""
+        mime = magic.Magic(mime=True)
+        file.seek(0)  # 파일 포인터를 처음으로
+        mime_type = mime.from_buffer(file.read(1024))  # 처음 1024바이트만 읽어서 확인
+        file.seek(0)  # 파일 포인터를 다시 처음으로
+        return mime_type
+
+    def is_valid_mime_type(self, file_extension, mime_type):
+        """파일 확장자와 MIME 타입이 일치하는지 확인"""
+        mime_extension_map = {
+            'txt': ['text/plain'],
+            'pdf': ['application/pdf'],
+            'jpg': ['image/jpeg'],
+            'jpeg': ['image/jpeg'],
+            'png': ['image/png'],
+            'gif': ['image/gif'],
+            'doc': ['application/msword'],
+            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'zip': ['application/zip', 'application/x-zip-compressed'],
+            # 필요한 확장자와 MIME 타입을 추가
+        }
+
+        allowed_mime_types = mime_extension_map.get(file_extension.lower(), [])
+        return mime_type in allowed_mime_types
+
+    def validate_file(self, file):
+
+        print("file", file)
+        # Instance 설정 가져오기
+        instance = Instance.objects.first()
+        if not instance:
+            return False, "Instance settings not found"
+
+        # FileUploadSettings 객체에서 직접 속성에 접근
+        file_settings = instance.file_settings
+        if not file_settings:
+            return False, "File settings not found"
+
+        # 파일 크기 검증
+        if file.size > file_settings.max_file_size:
+            return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
+
+        # 파일 확장자 검증
+        file_extension = file.name.split('.')[-1].lower()
+        if file_extension not in file_settings.allowed_extensions:
+            return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
+
+        # MIME 타입 검증
+        mime_type = self.get_mime_type(file)
+        if not self.is_valid_mime_type(file_extension, mime_type):
+            return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
+
+        return True, None
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def post(self, request, slug, project_id, issue_id):
         name = request.data.get("name")
         type = request.data.get("type", False)
         size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
 
-        if not type or type not in settings.ATTACHMENT_MIME_TYPES:
-            return Response(
-                {"error": "Invalid file type.", "status": False},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        file = request.FILES.get('asset')
+        if file:
+            is_valid, error_message = self.validate_file(file)
+            if not is_valid:
+                return Response(
+                    {"error": error_message},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # if not type or type not in settings.ATTACHMENT_MIME_TYPES:
+        #     return Response(
+        #         {"error": "허용되지 않는 파일 형식입니다. 허용된 형식: " + ", ".join(settings.ATTACHMENT_MIME_TYPES), "status": False},
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
 
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)

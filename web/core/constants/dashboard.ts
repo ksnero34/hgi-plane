@@ -2,7 +2,7 @@
 
 import { linearGradientDef } from "@nivo/core";
 // icons
-import { BarChart2, Briefcase, Layers } from "lucide-react";
+import { BarChart2, Briefcase, Layers, Home, Inbox, UserActivityIcon } from "lucide-react";
 // types
 import { TIssuesListTypes, TStateGroups } from "@plane/types";
 // ui

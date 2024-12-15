@@ -1,3 +1,5 @@
+"use client";
+
 import { FC, useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useDropzone, FileRejection } from "react-dropzone";
@@ -24,8 +26,8 @@ type TIssueAttachmentItemList = {
 
 export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((props) => {
   const { workspaceSlug, projectId, issueId, attachmentHelpers, disabled } = props;
-  // states
-  const [isUploading, setIsUploading] = useState(false);
+  // state
+  const [isLoading, setIsLoading] = useState(false);
   // store hooks
   const { config, fileSettings, fetchFileSettings } = useInstance();
   const { validateFile, getAcceptedFileTypes } = useFileValidation();
@@ -39,7 +41,6 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
   // derived values
   const issueAttachments = getAttachmentsByIssueId(issueId);
 
-  // 컴포넌트 마운트 시 file settings 가져오기
   useEffect(() => {
     fetchFileSettings().catch(console.error);
   }, [fetchFileSettings]);
@@ -82,25 +83,14 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
         type: uploadedFile.type
       });
 
-      const formData = new FormData();
-      formData.append("asset", uploadedFile);
-      formData.append(
-        "attributes",
-        JSON.stringify({
-          name: uploadedFile.name,
-          size: uploadedFile.size,
-        })
-      );
-
       console.log("🚀 Starting upload process");
       setIsLoading(true);
-      handleAttachmentOperations.create(formData)
+      attachmentHelpers.operations.create(uploadedFile)
         .then(() => {
           console.log("✅ Upload successful");
         })
         .catch((error: any) => {
           console.error("❌ Upload failed:", error);
-          // 서버 에러 응답 처리
           if (error.response?.data?.error) {
             setToast({
               type: TOAST_TYPE.ERROR,
@@ -119,7 +109,7 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
           setIsLoading(false);
         });
     },
-    [handleAttachmentOperations, workspaceSlug, validateFile, fetchFileSettings]
+    [attachmentHelpers.operations, workspaceSlug, validateFile, fetchFileSettings]
   );
 
   const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
@@ -152,15 +142,15 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
         <IssueAttachmentDeleteModal
           isOpen={Boolean(attachmentDeleteModalId)}
           onClose={() => toggleDeleteAttachmentModal(null)}
-          handleAttachmentOperations={handleAttachmentOperations}
+          handleAttachmentOperations={attachmentHelpers.operations}
           attachmentId={attachmentDeleteModalId}
         />
       )}
       <div
         {...getRootProps()}
-        className={`relative flex flex-col ${isDragActive && issueAttachments.length < 3 ? "min-h-[200px]" : ""} ${
-          disabled ? "cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`relative flex flex-col ${
+          isDragActive && issueAttachments?.length < 3 ? "min-h-[200px]" : ""
+        } ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <input {...getInputProps()} />
@@ -171,13 +161,17 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
                 <UploadCloud className="size-7" />
                 <span className="text-sm text-custom-text-300">Drag and drop anywhere to upload</span>
               </div>
-            )}
-            {issueAttachments?.map((attachmentId) => (
-              <IssueAttachmentsListItem key={attachmentId} attachmentId={attachmentId} disabled={disabled} />
-            ))}
+            </div>
           </div>
-        </>
-      )}
+        )}
+        {issueAttachments?.map((attachmentId) => (
+          <IssueAttachmentsListItem 
+            key={attachmentId} 
+            attachmentId={attachmentId} 
+            disabled={disabled} 
+          />
+        ))}
+      </div>
     </>
   );
 });

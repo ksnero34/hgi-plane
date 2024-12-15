@@ -110,6 +110,10 @@ def validate_extension(extension: str) -> bool:
     return bool(re.match(r'^[a-zA-Z0-9]{1,10}$', extension))
 
 
+def get_default_extensions():
+    return ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"]
+
+
 class FileUploadSettings(models.Model):
     id = models.UUIDField(
         default=uuid.uuid4,
@@ -122,7 +126,7 @@ class FileUploadSettings(models.Model):
         related_name="file_settings",
     )
     allowed_extensions = models.JSONField(
-        default=list(["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx"]),
+        default=get_default_extensions,
         help_text="허용되는 파일 확장자 목록",
     )
     max_file_size = models.PositiveIntegerField(
