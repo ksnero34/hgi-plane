@@ -1,4 +1,5 @@
 import { isFuture, isPast, isToday } from "date-fns";
+import isEmpty from "lodash/isEmpty";
 import set from "lodash/set";
 import sortBy from "lodash/sortBy";
 import { action, computed, observable, makeObservable, runInAction } from "mobx";
@@ -19,6 +20,7 @@ import { orderCycles, shouldFilterCycle, formatActiveCycle } from "@/helpers/cyc
 import { getDate } from "@/helpers/date-time.helper";
 import { DistributionUpdates, updateDistribution } from "@/helpers/distribution-update.helper";
 // services
+import { syncIssuesWithDeletedCycles } from "@/local-db/utils/load-workspace";
 import { CycleService } from "@/services/cycle.service";
 import { CycleArchiveService } from "@/services/cycle_archive.service";
 import { IssueService } from "@/services/issue";
@@ -58,6 +60,8 @@ export interface ICycleStore {
   getProjectCycleIds: (projectId: string) => string[] | null;
   getPlotTypeByCycleId: (cycleId: string) => TCyclePlotType;
   getEstimateTypeByCycleId: (cycleId: string) => TCycleEstimateType;
+  getIsPointsDataAvailable: (cycleId: string) => boolean;
+
   // actions
   updateCycleDistribution: (distributionUpdates: DistributionUpdates, cycleId: string) => void;
   validateDate: (workspaceSlug: string, projectId: string, payload: CycleDateCheckData) => Promise<any>;
@@ -144,7 +148,6 @@ export class CycleStore implements ICycleStore {
       fetchActiveCycleProgress: action,
       fetchActiveCycleAnalytics: action,
       fetchCycleDetails: action,
-      createCycle: action,
       updateCycleDetails: action,
       deleteCycle: action,
       addCycleToFavorites: action,
@@ -271,6 +274,16 @@ export class CycleStore implements ICycleStore {
     if (!projectId && !this.currentProjectActiveCycleId) return null;
     return this.cycleMap?.[this.currentProjectActiveCycleId!] ?? null;
   }
+
+  getIsPointsDataAvailable = computedFn((cycleId: string) => {
+    const cycle = this.cycleMap[cycleId];
+    if (!cycle) return false;
+    if (this.cycleMap[cycleId].version === 2) return cycle.progress.some((p) => p.total_estimate_points > 0);
+    else if (this.cycleMap[cycleId].version === 1) {
+      const completionChart = cycle.estimate_distribution?.completion_chart || {};
+      return !isEmpty(completionChart) && Object.keys(completionChart).some((p) => completionChart[p]! > 0);
+    } else return false;
+  });
 
   /**
    * returns active cycle progress for a project
@@ -617,13 +630,15 @@ export class CycleStore implements ICycleStore {
    * @param data
    * @returns
    */
-  createCycle = async (workspaceSlug: string, projectId: string, data: Partial<ICycle>) =>
-    await this.cycleService.createCycle(workspaceSlug, projectId, data).then((response) => {
-      runInAction(() => {
-        set(this.cycleMap, [response.id], response);
-      });
-      return response;
-    });
+  createCycle = action(
+    async (workspaceSlug: string, projectId: string, data: Partial<ICycle>) =>
+      await this.cycleService.createCycle(workspaceSlug, projectId, data).then((response) => {
+        runInAction(() => {
+          set(this.cycleMap, [response.id], response);
+        });
+        return response;
+      })
+  );
 
   /**
    * @description updates cycle details
@@ -661,6 +676,7 @@ export class CycleStore implements ICycleStore {
         delete this.cycleMap[cycleId];
         delete this.activeCycleIdMap[cycleId];
         if (this.rootStore.favorite.entityMap[cycleId]) this.rootStore.favorite.removeFavoriteFromStore(cycleId);
+        syncIssuesWithDeletedCycles([cycleId]);
       });
     });
 

@@ -2,11 +2,11 @@
 
 import { linearGradientDef } from "@nivo/core";
 // icons
-import { BarChart2, Briefcase, Home, Inbox, Layers } from "lucide-react";
+import { BarChart2, Briefcase, Layers } from "lucide-react";
 // types
 import { TIssuesListTypes, TStateGroups } from "@plane/types";
 // ui
-import { ContrastIcon, UserActivityIcon } from "@plane/ui";
+import { ContrastIcon } from "@plane/ui";
 import { Props } from "@/components/icons/types";
 import { EUserPermissions } from "@/plane-web/constants/user-permissions";
 // assets
@@ -292,7 +292,7 @@ export const SIDEBAR_WORKSPACE_MENU_ITEMS: {
   },
 ];
 
-type TLinkOptions = {
+export type TLinkOptions = {
   userId: string | undefined;
 };
 

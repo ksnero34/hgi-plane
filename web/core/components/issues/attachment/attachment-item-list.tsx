@@ -16,15 +16,16 @@ type TAttachmentOperationsRemoveModal = Exclude<TAttachmentOperations, "create">
 
 type TIssueAttachmentItemList = {
   workspaceSlug: string;
+  projectId: string;
   issueId: string;
-  handleAttachmentOperations: TAttachmentOperationsRemoveModal;
+  attachmentHelpers: TAttachmentHelpers;
   disabled?: boolean;
 };
 
 export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((props) => {
-  const { workspaceSlug, issueId, handleAttachmentOperations, disabled } = props;
-  const [isLoading, setIsLoading] = useState(false);
-
+  const { workspaceSlug, projectId, issueId, attachmentHelpers, disabled } = props;
+  // states
+  const [isUploading, setIsUploading] = useState(false);
   // store hooks
   const { config, fileSettings, fetchFileSettings } = useInstance();
   const { validateFile, getAcceptedFileTypes } = useFileValidation();
@@ -32,6 +33,7 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
     attachment: { getAttachmentsByIssueId },
     attachmentDeleteModalId,
     toggleDeleteAttachmentModal,
+    fetchActivities,
   } = useIssueDetail();
 
   // derived values
@@ -144,8 +146,6 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
     noKeyboard: false,
   });
 
-  if (!issueAttachments) return <></>;
-
   return (
     <>
       {attachmentDeleteModalId && (
@@ -171,13 +171,13 @@ export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((p
                 <UploadCloud className="size-7" />
                 <span className="text-sm text-custom-text-300">Drag and drop anywhere to upload</span>
               </div>
-            </div>
+            )}
+            {issueAttachments?.map((attachmentId) => (
+              <IssueAttachmentsListItem key={attachmentId} attachmentId={attachmentId} disabled={disabled} />
+            ))}
           </div>
-        )}
-        {issueAttachments?.map((attachmentId) => (
-          <IssueAttachmentsListItem key={attachmentId} attachmentId={attachmentId} disabled={disabled} />
-        ))}
-      </div>
+        </>
+      )}
     </>
   );
 });

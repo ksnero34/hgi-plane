@@ -1,13 +1,27 @@
 "use client";
 import { useMemo, useCallback, useState, useEffect } from "react";
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
-// type
-import { TAttachmentOperations } from "@/components/issues/attachment";
 // hooks
 import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { MAX_FILE_SIZE } from "@/constants/common";
+// types
+import { TAttachmentUploadStatus } from "@/store/issue/issue-details/attachment.store";
+
+export type TAttachmentOperations = {
+  create: (file: File) => Promise<void>;
+  remove: (attachmentId: string) => Promise<void>;
+};
+
+export type TAttachmentSnapshot = {
+  uploadStatus: TAttachmentUploadStatus[] | undefined;
+};
+
+export type TAttachmentHelpers = {
+  operations: TAttachmentOperations;
+  snapshot: TAttachmentSnapshot;
+};
 
 export const useAttachmentOperations = (
   workspaceSlug: string,
@@ -25,9 +39,9 @@ export const useAttachmentOperations = (
     fetchFileSettings().catch(console.error);
   }, [fetchFileSettings]);
 
-  const handleAttachmentOperations: TAttachmentOperations = useMemo(
+  const attachmentOperations: TAttachmentOperations = useMemo(
     () => ({
-      create: async (data: FormData) => {
+      create: async (file) => {
         try {
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
 
@@ -68,9 +82,10 @@ export const useAttachmentOperations = (
             eventName: "Issue attachment added",
             payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
           });
+          throw error;
         }
       },
-      remove: async (attachmentId: string) => {
+      remove: async (attachmentId) => {
         try {
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
           await removeAttachment(workspaceSlug, projectId, issueId, attachmentId);
@@ -104,8 +119,9 @@ export const useAttachmentOperations = (
         }
       },
     }),
-    [workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
+    [captureIssueEvent,workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
+  const attachmentsUploadStatus = getAttachmentsUploadStatusByIssueId(issueId);
 
   const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
     console.log("❌ File rejected:", fileRejections);

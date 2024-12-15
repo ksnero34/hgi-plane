@@ -20,9 +20,7 @@ class WorkspaceFavoriteEndpoint(BaseAPIView):
     def get(self, request, slug):
         # the second filter is to check if the user is a member of the project
         favorites = UserFavorite.objects.filter(
-            user=request.user,
-            workspace__slug=slug,
-            parent__isnull=True,
+            user=request.user, workspace__slug=slug, parent__isnull=True
         ).filter(
             Q(project__isnull=True) & ~Q(entity_type="page")
             | (
@@ -56,9 +54,7 @@ class WorkspaceFavoriteEndpoint(BaseAPIView):
         favorite = UserFavorite.objects.get(
             user=request.user, workspace__slug=slug, pk=favorite_id
         )
-        serializer = UserFavoriteSerializer(
-            favorite, data=request.data, partial=True
-        )
+        serializer = UserFavoriteSerializer(favorite, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -82,9 +78,7 @@ class WorkspaceFavoriteGroupEndpoint(BaseAPIView):
     )
     def get(self, request, slug, favorite_id):
         favorites = UserFavorite.objects.filter(
-            user=request.user,
-            workspace__slug=slug,
-            parent_id=favorite_id,
+            user=request.user, workspace__slug=slug, parent_id=favorite_id
         ).filter(
             Q(project__isnull=True)
             | (

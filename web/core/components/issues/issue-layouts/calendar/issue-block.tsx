@@ -7,7 +7,7 @@ import { MoreHorizontal } from "lucide-react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 // plane helpers
-import { useOutsideClickDetector } from "@plane/helpers";
+import { useOutsideClickDetector } from "@plane/hooks";
 // types
 import { TIssue } from "@plane/types";
 // ui

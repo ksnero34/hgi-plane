@@ -46,9 +46,7 @@ class WorkspaceOwnerPermission(BasePermission):
             return False
 
         return WorkspaceMember.objects.filter(
-            workspace__slug=view.workspace_slug,
-            member=request.user,
-            role=ROLE.ADMIN.value,
+            workspace__slug=view.workspace_slug, member=request.user, role=Admin
         ).exists()
 
 
@@ -73,9 +71,7 @@ class WorkspaceEntityPermission(BasePermission):
         ## Safe Methods -> Handle the filtering logic in queryset
         if request.method in SAFE_METHODS:
             return WorkspaceMember.objects.filter(
-                workspace__slug=view.workspace_slug,
-                member=request.user,
-                is_active=True,
+                workspace__slug=view.workspace_slug, member=request.user, is_active=True
             ).exists()
 
         return WorkspaceMember.objects.filter(
@@ -92,9 +88,7 @@ class WorkspaceViewerPermission(BasePermission):
             return False
 
         return WorkspaceMember.objects.filter(
-            member=request.user,
-            workspace__slug=view.workspace_slug,
-            is_active=True,
+            member=request.user, workspace__slug=view.workspace_slug, is_active=True
         ).exists()
 
 
@@ -104,7 +98,5 @@ class WorkspaceUserPermission(BasePermission):
             return False
 
         return WorkspaceMember.objects.filter(
-            member=request.user,
-            workspace__slug=view.workspace_slug,
-            is_active=True,
+            member=request.user, workspace__slug=view.workspace_slug, is_active=True
         ).exists()

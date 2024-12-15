@@ -11,6 +11,7 @@ import { getFileIcon } from "@/components/icons";
 // helpers
 import { convertBytesToSize, getFileExtension, getFileName } from "@/helpers/attachment.helper";
 import { renderFormattedDate } from "@/helpers/date-time.helper";
+import { getFileURL } from "@/helpers/file.helper";
 // hooks
 import { useIssueDetail, useMember } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -31,9 +32,12 @@ export const IssueAttachmentsListItem: FC<TIssueAttachmentsListItem> = observer(
     attachment: { getAttachmentById },
     toggleDeleteAttachmentModal,
   } = useIssueDetail();
-
   // derived values
   const attachment = attachmentId ? getAttachmentById(attachmentId) : undefined;
+  const fileName = getFileName(attachment?.attributes.name ?? "");
+  const fileExtension = getFileExtension(attachment?.asset_url ?? "");
+  const fileIcon = getFileIcon(fileExtension, 18);
+  const fileURL = getFileURL(attachment?.asset_url ?? "");
   // hooks
   const { isMobile } = usePlatformOS();
 

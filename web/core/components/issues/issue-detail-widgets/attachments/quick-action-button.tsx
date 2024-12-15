@@ -1,4 +1,5 @@
 "use client";
+
 import React, { FC, useCallback, useState } from "react";
 import { observer } from "mobx-react";
 import { useDropzone, FileRejection } from "react-dropzone";
@@ -6,6 +7,11 @@ import { Plus } from "lucide-react";
 // hooks
 import { useInstance, useIssueDetail, useFileValidation } from "@/hooks/store";
 import { validateFileBeforeUpload } from "@/components/issues/attachment/helper";
+// plane ui
+// hooks
+// plane web hooks
+import { useFileSize } from "@/plane-web/hooks/use-file-size";
+
 import { useAttachmentOperations } from "./helper";
 // helpers
 import { generateFileName } from "@/helpers/attachment.helper";
@@ -26,13 +32,19 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
   const [isLoading, setIsLoading] = useState(false);
   // store hooks
   const { config, fileSettings, fetchFileSettings } = useInstance();
-  const { setLastWidgetAction } = useIssueDetail();
+
   const { validateFile, getAcceptedFileTypes } = useFileValidation();
 
+  const { setLastWidgetAction, fetchActivities } = useIssueDetail();
+  // file size
+  const { maxFileSize } = useFileSize();
   // operations
-  const handleAttachmentOperations = useAttachmentOperations(workspaceSlug, projectId, issueId);
-
+  const { operations: attachmentOperations } = useAttachmentOperations(workspaceSlug, projectId, issueId);
   // handlers
+  const handleFetchPropertyActivities = useCallback(() => {
+    fetchActivities(workspaceSlug, projectId, issueId);
+  }, [fetchActivities, workspaceSlug, projectId, issueId]);
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       console.log("🎯 onDrop triggered with files:", acceptedFiles);

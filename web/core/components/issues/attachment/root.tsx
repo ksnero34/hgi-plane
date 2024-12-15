@@ -6,6 +6,9 @@ import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
 import { validateFileBeforeUpload, handleUploadError } from "./helper";
 // ui
+import { observer } from "mobx-react";
+// hooks
+import { useAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
 // components
 import { IssueAttachmentUpload } from "./attachment-upload";
 import { IssueAttachmentsList } from "./attachments-list";
@@ -142,6 +145,11 @@ export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = (props) => {
     }),
     [captureIssueEvent, workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
+export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = observer((props) => {
+  // props
+  const { workspaceSlug, projectId, issueId, disabled = false } = props;
+  // hooks
+  const attachmentHelpers = useAttachmentOperations(workspaceSlug, projectId, issueId);
 
   const getAcceptedFileTypes = useCallback(() => {
     if (!fileSettings?.allowed_extensions) return undefined;
@@ -168,14 +176,10 @@ export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = (props) => {
         <IssueAttachmentUpload
           workspaceSlug={workspaceSlug}
           disabled={disabled}
-          handleAttachmentOperations={handleAttachmentOperations}
+          attachmentOperations={attachmentHelpers.operations}
         />
-        <IssueAttachmentsList
-          issueId={issueId}
-          disabled={disabled}
-          handleAttachmentOperations={handleAttachmentOperations}
-        />
+        <IssueAttachmentsList issueId={issueId} disabled={disabled} attachmentHelpers={attachmentHelpers} />
       </div>
     </div>
   );
-};
+});

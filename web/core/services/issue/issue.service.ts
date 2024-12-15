@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/nextjs";
 // types
 import type {
   IIssueDisplayProperties,
@@ -11,10 +10,11 @@ import type {
 } from "@plane/types";
 // helpers
 import { API_BASE_URL } from "@/helpers/common.helper";
+import { getIssuesShouldFallbackToServer } from "@/helpers/issue.helper";
 import { persistence } from "@/local-db/storage.sqlite";
 // services
 
-import { addIssue, addIssuesBulk, deleteIssueFromLocal } from "@/local-db/utils/load-issues";
+import { addIssuesBulk, deleteIssueFromLocal, updateIssue } from "@/local-db/utils/load-issues";
 import { APIService } from "@/services/api.service";
 
 // 타입 정의 부분
@@ -52,8 +52,12 @@ export class IssueService extends APIService {
     queries?: any,
     config = {}
   ): Promise<TIssuesResponse> {
+    const path =
+      (queries.expand as string)?.includes("issue_relation") && !queries.group_by
+        ? `/api/workspaces/${workspaceSlug}/projects/${projectId}/issues-detail/`
+        : `/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/`;
     return this.get(
-      `/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/`,
+      path,
       {
         params: queries,
       },
@@ -79,66 +83,59 @@ export class IssueService extends APIService {
   }
 
   async getIssues(workspaceSlug: string, projectId: string, queries?: any, config = {}): Promise<TIssuesResponse> {
-    const response = await Sentry.startSpan({ name: "GET_ISSUES" }, async () => {
-      if (queries?.layout === "calendar") {
-        try {
-          const modifiedQueries = {
-            ...queries,
-            layout: "calendar",
-            target_date: undefined,
-            start_target_date: queries.start_date_from,
-            end_target_date: queries.start_date_to
-          };
+    if (getIssuesShouldFallbackToServer(queries)) {
+      return await this.getIssuesFromServer(workspaceSlug, projectId, queries, config);
+    }
 
-          const res = await this.getIssuesFromServer(workspaceSlug, projectId, modifiedQueries, config);
+    if (queries?.layout === "calendar") {
+      try {
+        const modifiedQueries = {
+          ...queries,
+          layout: "calendar",
+          target_date: undefined,
+          start_target_date: queries.start_date_from,
+          end_target_date: queries.start_date_to
+        };
 
-          const allIssues: TIssue[] = [];
-          if (res?.results) {
-            Object.entries(res.results).forEach(([_, group]) => {
-              if (group?.results) {
-                if (Array.isArray(group.results)) {
-                  allIssues.push(...group.results);
-                } else if (typeof group.results === 'object') {
-                  Object.values(group.results as { [key: string]: { results: TIssue[] } })
-                    .forEach(subGroup => {
-                      if (Array.isArray(subGroup?.results)) {
-                        allIssues.push(...subGroup.results);
-                      }
-                    });
-                }
+        const res = await this.getIssuesFromServer(workspaceSlug, projectId, modifiedQueries, config);
+        
+        const allIssues: TIssue[] = [];
+        if (res?.results) {
+          Object.entries(res.results).forEach(([_, group]) => {
+            if (group?.results) {
+              if (Array.isArray(group.results)) {
+                allIssues.push(...group.results);
+              } else if (typeof group.results === 'object') {
+                Object.values(group.results as { [key: string]: { results: TIssue[] } })
+                  .forEach(subGroup => {
+                    if (Array.isArray(subGroup?.results)) {
+                      allIssues.push(...subGroup.results);
+                    }
+                  });
               }
-            });
-          }
-
-          // console.log("Calendar API Response:", {
-          //   totalIssues: allIssues.length,
-          //   groupedResults: res.results,
-          //   dates: Object.keys(res.results || {})
-          // });
-
-          const calendarResponse: TIssuesResponse = {
-            grouped_by: "target_date",
-            results: res.results || {},
-            prev_page_results: false,
-            next_page_results: false,
-            count: allIssues.length,
-            extra_stats: null,
-            next_cursor: "",
-            prev_cursor: "",
-            total_count: allIssues.length,
-            total_pages: 1
-          };
-
-          return calendarResponse;
-        } catch (error) {
-          console.error("Calendar view error:", error);
-          throw error;
+            }
+          });
         }
+
+        return {
+          grouped_by: "target_date",
+          results: res.results || {},
+          prev_page_results: false,
+          next_page_results: false,
+          count: allIssues.length,
+          extra_stats: null,
+          next_cursor: "",
+          prev_cursor: "",
+          total_count: allIssues.length,
+          total_pages: 1
+        };
+      } catch (error) {
+        console.error("Calendar view error:", error);
+        throw error;
       }
+    }
 
-      return await persistence.getIssues(workspaceSlug, projectId, queries, config);
-    });
-
+    const response = await persistence.getIssues(workspaceSlug, projectId, queries, config);
     return response as TIssuesResponse;
   }
 
@@ -172,7 +169,7 @@ export class IssueService extends APIService {
     })
       .then((response) => {
         if (response.data) {
-          addIssue(response?.data);
+          updateIssue({ ...response.data, is_local_update: 1 });
         }
         return response?.data;
       })
@@ -291,6 +288,18 @@ export class IssueService extends APIService {
   async deleteIssue(workspaceSlug: string, projectId: string, issuesId: string): Promise<any> {
     deleteIssueFromLocal(issuesId);
     return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/${issuesId}/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateIssueDates(
+    workspaceSlug: string,
+    projectId: string,
+    updates: { id: string; start_date?: string; target_date?: string }[]
+  ): Promise<void> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-dates/`, { updates })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

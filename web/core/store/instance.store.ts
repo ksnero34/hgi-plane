@@ -127,6 +127,7 @@ export class InstanceStore implements IInstanceStore {
           message: "Failed to fetch instance info",
         };
       });
+      throw error;
     }
   };
 

@@ -8,46 +8,24 @@ import { setCustomNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/el
 import { attachInstruction, extractInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { observer } from "mobx-react";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { createRoot } from "react-dom/client";
-import {
-  PenSquare,
-  LinkIcon,
-  Star,
-  FileText,
-  Settings,
-  Share2,
-  LogOut,
-  MoreHorizontal,
-  ChevronRight,
-  Layers,
-} from "lucide-react";
+import { LinkIcon, Star, Settings, Share2, LogOut, MoreHorizontal, ChevronRight } from "lucide-react";
 import { Disclosure, Transition } from "@headlessui/react";
 // plane helpers
-import { useOutsideClickDetector } from "@plane/helpers";
+import { useOutsideClickDetector } from "@plane/hooks";
 // ui
-import {
-  CustomMenu,
-  Tooltip,
-  ArchiveIcon,
-  DiceIcon,
-  ContrastIcon,
-  LayersIcon,
-  setPromiseToast,
-  DropIndicator,
-  DragHandle,
-  Intake,
-  ControlLink,
-} from "@plane/ui";
+import { CustomMenu, Tooltip, ArchiveIcon, setPromiseToast, DropIndicator, DragHandle, ControlLink } from "@plane/ui";
 // components
 import { Logo } from "@/components/common";
 import { LeaveProjectModal, PublishProjectModal } from "@/components/project";
-import { SidebarNavItem } from "@/components/sidebar";
 // helpers
 import { cn } from "@/helpers/common.helper";
 // hooks
 import { useAppTheme, useEventTracker, useProject, useUserPermissions } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// plane-web components
+import { ProjectNavigationRoot } from "@/plane-web/components/sidebar";
 // constants
 import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
 import { HIGHLIGHT_CLASS, highlightIssueOnDrop } from "../../issues/issue-layouts/utils";
@@ -109,7 +87,7 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
   const { projectId, handleCopyText, disableDrag, disableDrop, isLastChild, handleOnProjectDrop, projectListType } =
     props;
   // store hooks
-  const { sidebarCollapsed: isSidebarCollapsed, toggleSidebar } = useAppTheme();
+  const { sidebarCollapsed: isSidebarCollapsed } = useAppTheme();
   const { setTrackElement } = useEventTracker();
   const { addProjectToFavorites, removeProjectFromFavorites, getProjectById } = useProject();
   const { isMobile } = usePlatformOS();
@@ -128,8 +106,6 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
   // router
   const router = useRouter();
   const { workspaceSlug, projectId: URLProjectId } = useParams();
-  // pathname
-  const pathname = usePathname();
   // derived values
   const project = getProjectById(projectId);
   // auth
@@ -183,12 +159,6 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
   const handleLeaveProject = () => {
     setTrackElement("APP_SIDEBAR_PROJECT_DROPDOWN");
     setLeaveProjectModal(true);
-  };
-
-  const handleProjectClick = () => {
-    if (window.innerWidth < 768) {
-      toggleSidebar();
-    }
   };
 
   useEffect(() => {
@@ -287,7 +257,6 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
 
   useEffect(() => {
     if (URLProjectId === project.id) setIsProjectListOpen(true);
-    else setIsProjectListOpen(false);
   }, [URLProjectId]);
 
   const handleItemClick = () => {
@@ -299,12 +268,13 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
     <>
       <PublishProjectModal isOpen={publishModalOpen} project={project} onClose={() => setPublishModal(false)} />
       <LeaveProjectModal project={project} isOpen={leaveProjectModalOpen} onClose={() => setLeaveProjectModal(false)} />
-      <Disclosure key={`${project.id}_${URLProjectId}`} ref={projectRef} defaultOpen={isProjectListOpen} as="div">
+      <Disclosure key={`${project.id}_${URLProjectId}`} defaultOpen={isProjectListOpen} as="div">
         <div
           id={`sidebar-${projectId}-${projectListType}`}
           className={cn("relative", {
             "bg-custom-sidebar-background-80 opacity-60": isDragging,
           })}
+          ref={projectRef}
         >
           <DropIndicator classNames="absolute top-0" isVisible={instruction === "DRAG_OVER"} />
           <div
@@ -428,7 +398,7 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
                       </div>
                     </CustomMenu.MenuItem>
                   )}
-                  {isAuthorized && (
+                  {/* {isAuthorized && (
                     <CustomMenu.MenuItem>
                       <Link href={`/${workspaceSlug}/projects/${project?.id}/draft-issues/`}>
                         <div className="flex items-center justify-start gap-2">
@@ -437,7 +407,7 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
                         </div>
                       </Link>
                     </CustomMenu.MenuItem>
-                  )}
+                  )} */}
                   <CustomMenu.MenuItem onClick={handleCopyText}>
                     <span className="flex items-center justify-start gap-2">
                       <LinkIcon className="h-3.5 w-3.5 stroke-[1.5]" />
@@ -503,50 +473,7 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
           >
             {isProjectListOpen && (
               <Disclosure.Panel as="div" className="flex flex-col gap-0.5 mt-1">
-                {navigation(workspaceSlug?.toString(), project?.id).map((item) => {
-                  if (
-                    (item.name === "Cycles" && !project.cycle_view) ||
-                    (item.name === "Modules" && !project.module_view) ||
-                    (item.name === "Views" && !project.issue_views_view) ||
-                    (item.name === "Pages" && !project.page_view) ||
-                    (item.name === "Intake" && !project.inbox_view)
-                  )
-                    return;
-                  return (
-                    <>
-                      {allowPermissions(
-                        item.access,
-                        EUserPermissionsLevel.PROJECT,
-                        workspaceSlug.toString(),
-                        project.id
-                      ) && (
-                        <Tooltip
-                          key={item.name}
-                          isMobile={isMobile}
-                          tooltipContent={`${project?.name}: ${item.name}`}
-                          position="right"
-                          className="ml-2"
-                          disabled={!isSidebarCollapsed}
-                        >
-                          <Link key={item.name} href={item.href} onClick={handleProjectClick}>
-                            <SidebarNavItem
-                              key={item.name}
-                              className={`pl-[18px]  ${isSidebarCollapsed ? "p-0 size-7 justify-center mx-auto" : ""}`}
-                              isActive={pathname.includes(item.href)}
-                            >
-                              <div className="flex items-center gap-1.5 py-[1px]">
-                                <item.Icon
-                                  className={`flex-shrink-0 size-4 ${item.name === "Intake" ? "stroke-1" : "stroke-[1.5]"}`}
-                                />
-                                {!isSidebarCollapsed && <span className="text-xs font-medium">{item.name}</span>}
-                              </div>
-                            </SidebarNavItem>
-                          </Link>
-                        </Tooltip>
-                      )}
-                    </>
-                  );
-                })}
+                <ProjectNavigationRoot workspaceSlug={workspaceSlug.toString()} projectId={projectId.toString()} />
               </Disclosure.Panel>
             )}
           </Transition>

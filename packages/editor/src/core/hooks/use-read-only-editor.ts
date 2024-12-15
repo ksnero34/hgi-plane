@@ -11,14 +11,22 @@ import { IMarking, scrollSummary } from "@/helpers/scroll-to-node";
 // props
 import { CoreReadOnlyEditorProps } from "@/props";
 // types
-import { EditorReadOnlyRefApi, IMentionHighlight } from "@/types";
+import type {
+  EditorReadOnlyRefApi,
+  IMentionHighlight,
+  TExtensions,
+  TDocumentEventsServer,
+  TFileHandler,
+} from "@/types";
 
 interface CustomReadOnlyEditorProps {
-  initialValue?: string;
+  disabledExtensions: TExtensions[];
   editorClassName: string;
-  forwardedRef?: MutableRefObject<EditorReadOnlyRefApi | null>;
-  extensions?: any;
   editorProps?: EditorProps;
+  extensions?: any;
+  forwardedRef?: MutableRefObject<EditorReadOnlyRefApi | null>;
+  initialValue?: string;
+  fileHandler: Pick<TFileHandler, "getAssetSrc">;
   handleEditorReady?: (value: boolean) => void;
   mentionHandler: {
     highlights: () => Promise<IMentionHighlight[]>;
@@ -28,11 +36,13 @@ interface CustomReadOnlyEditorProps {
 
 export const useReadOnlyEditor = (props: CustomReadOnlyEditorProps) => {
   const {
+    disabledExtensions,
     initialValue,
     editorClassName,
     forwardedRef,
     extensions = [],
     editorProps = {},
+    fileHandler,
     handleEditorReady,
     mentionHandler,
     provider,
@@ -52,7 +62,11 @@ export const useReadOnlyEditor = (props: CustomReadOnlyEditorProps) => {
     },
     extensions: [
       ...CoreReadOnlyEditorExtensions({
-        mentionHighlights: mentionHandler.highlights,
+        disabledExtensions,
+        mentionConfig: {
+          mentionHighlights: mentionHandler.highlights,
+        },
+        fileHandler,
       }),
       ...extensions,
     ],
@@ -112,6 +126,8 @@ export const useReadOnlyEditor = (props: CustomReadOnlyEditorProps) => {
         editorRef.current?.off("update");
       };
     },
+    emitRealTimeUpdate: (message: TDocumentEventsServer) => provider?.sendStateless(message),
+    listenToRealTimeUpdate: () => provider && { on: provider.on.bind(provider), off: provider.off.bind(provider) },
     getHeadings: () => editorRef?.current?.storage.headingList.headings,
   }));
 

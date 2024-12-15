@@ -5,6 +5,7 @@ from rest_framework import status
 
 from enum import Enum
 
+
 class ROLE(Enum):
     ADMIN = 20
     MEMBER = 15
@@ -17,7 +18,6 @@ def allow_permission(allowed_roles, level="PROJECT", creator=False, model=None):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(instance, request, *args, **kwargs):
-
             # Check for creator if required
             if creator and model:
                 obj = model.objects.filter(
@@ -28,8 +28,7 @@ def allow_permission(allowed_roles, level="PROJECT", creator=False, model=None):
 
             # Convert allowed_roles to their values if they are enum members
             allowed_role_values = [
-                role.value if isinstance(role, ROLE) else role
-                for role in allowed_roles
+                role.value if isinstance(role, ROLE) else role for role in allowed_roles
             ]
 
             # Check role permissions

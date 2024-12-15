@@ -9,7 +9,7 @@ from .configuration import (
     EmailCredentialCheckEndpoint,
     InstanceConfigurationEndpoint,
 )
-
+    
 from .admin import (
     InstanceAdminEndpoint,
     InstanceAdminSignInEndpoint,
@@ -17,4 +17,10 @@ from .admin import (
     InstanceAdminUserMeEndpoint,
     InstanceAdminSignOutEndpoint,
     InstanceAdminUserSessionEndpoint,
+)
+
+
+from .workspace import (
+    InstanceWorkSpaceAvailabilityCheckEndpoint,
+    InstanceWorkSpaceEndpoint,
 )

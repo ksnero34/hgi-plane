@@ -13,9 +13,7 @@ import { BreadcrumbLink, Logo } from "@/components/common";
 // constants
 import { EPageAccess } from "@/constants/page";
 // hooks
-import { useEventTracker, useProject, useProjectPages, useUserPermissions } from "@/hooks/store";
-// plane web hooks
-import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
+import { useEventTracker, useProject, useProjectPages } from "@/hooks/store";
 
 export const PagesListHeader = observer(() => {
   // states
@@ -26,10 +24,8 @@ export const PagesListHeader = observer(() => {
   const searchParams = useSearchParams();
   const pageType = searchParams.get("type");
   // store hooks
-  const { allowPermissions } = useUserPermissions();
-
   const { currentProjectDetails, loader } = useProject();
-  const { createPage } = useProjectPages();
+  const { canCurrentUserCreatePage, createPage } = useProjectPages();
   const { setTrackElement } = useEventTracker();
   // auth
   const canUserCreatePage = allowPermissions(
@@ -69,7 +65,6 @@ export const PagesListHeader = observer(() => {
               type="text"
               link={
                 <BreadcrumbLink
-                  href={`/${workspaceSlug}/projects/${currentProjectDetails?.id}/issues`}
                   label={currentProjectDetails?.name ?? "Project"}
                   icon={
                     currentProjectDetails && (
@@ -88,7 +83,7 @@ export const PagesListHeader = observer(() => {
           </Breadcrumbs>
         </div>
       </Header.LeftItem>
-      {canUserCreatePage ? (
+      {canCurrentUserCreatePage ? (
         <Header.RightItem>
           <Button variant="primary" size="sm" onClick={handleCreatePage} loading={isCreatingPage}>
             {isCreatingPage ? "Adding" : "Add page"}

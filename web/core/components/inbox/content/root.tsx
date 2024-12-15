@@ -78,7 +78,8 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
     projectId,
     inboxIssue?.issue?.assignee_ids || [],
     currentUser?.id || ""
-  );
+  )||
+  inboxIssue?.issue.created_by === currentUser?.id;
 
   // 권한 상태 로깅
   // console.log("Inbox Permission Check:", {
@@ -88,6 +89,7 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   //   workspaceSlug,
   //   projectId
   // });
+
 
   const isGuest = projectPermissionsByWorkspaceSlugAndProjectId(workspaceSlug, projectId) === EUserPermissions.GUEST;
   const isOwner = inboxIssue?.issue.created_by === currentUser?.id;

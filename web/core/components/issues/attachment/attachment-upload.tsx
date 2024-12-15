@@ -10,14 +10,14 @@ import { useInstance, useFileValidation } from "@/hooks/store";
 // icons
 import { Plus } from "lucide-react";
 // types
-import { TAttachmentOperations } from "./root";
+import { TAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
 
-type TAttachmentOperationsModal = Exclude<TAttachmentOperations, "remove">;
+type TAttachmentOperationsModal = Pick<TAttachmentOperations, "create">;
 
 type Props = {
   workspaceSlug: string;
   disabled?: boolean;
-  handleAttachmentOperations: TAttachmentOperationsModal;
+  attachmentOperations: TAttachmentOperationsModal;
 };
 
 export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
@@ -111,7 +111,7 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
 
   const { getRootProps, getInputProps, isDragActive, isDragReject, open } = useDropzone({
     onDrop,
-    maxSize: config?.file_size_limit ?? MAX_FILE_SIZE,
+    maxSize: maxFileSize,
     multiple: false,
     disabled: isLoading || disabled,
     accept: getAcceptedFileTypes(),

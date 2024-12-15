@@ -1,5 +1,5 @@
 // types
-import type { IInstanceInfo, IInstance, IInstanceConfig, IFileSettings, ICsrfTokenData } from "@plane/types";
+import type { IInstanceInfo, IInstance, IInstanceConfig, IFileSettings, ICsrfTokenData,TPage } from "@plane/types";
 // helpers
 import { API_BASE_URL } from "@/helpers/common.helper";
 // services

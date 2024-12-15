@@ -53,14 +53,14 @@ export const isDateInRange = (date: string | Date | undefined | null, startDate:
 export const renderFormattedDate = (
   date: string | Date | undefined | null,
   formatToken: string = "MMM dd, yyyy"
-): string | null => {
+): string | undefined => {
   // Parse the date to check if it is valid
   const parsedDate = getDate(date);
   // return if undefined
-  if (!parsedDate) return null;
+  if (!parsedDate) return;
   // Check if the parsed date is valid before formatting
-  if (!isValid(parsedDate)) return null; // Return null for invalid dates
-  
+  if (!isValid(parsedDate)) return; // Return null for invalid dates
+  let formattedDate;
   try {
     // Format the date in the format provided or default format (MMM dd, yyyy)
     return format(parsedDate, formatToken);

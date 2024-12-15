@@ -1,7 +1,10 @@
 # Django imports
-from django.db.models import Count, F, Sum
+from django.db.models import Count, F, Sum, Q
 from django.db.models.functions import ExtractMonth
 from django.utils import timezone
+from django.db.models.functions import Concat
+from django.db.models import Case, When, Value
+from django.db import models
 
 # Third party imports
 from rest_framework import status
@@ -49,10 +52,7 @@ class AnalyticsEndpoint(BaseAPIView):
             "completed_at",
         ]
 
-        valid_yaxis = [
-            "issue_count",
-            "estimate",
-        ]
+        valid_yaxis = ["issue_count", "estimate"]
 
         # Check for x-axis and y-axis as thery are required parameters
         if (
@@ -69,9 +69,7 @@ class AnalyticsEndpoint(BaseAPIView):
             )
 
         # If segment is present it cannot be same as x-axis
-        if segment and (
-            segment not in valid_xaxis_segment or x_axis == segment
-        ):
+        if segment and (segment not in valid_xaxis_segment or x_axis == segment):
             return Response(
                 {
                     "error": "Both segment and x axis cannot be same and segment should be valid"
@@ -96,10 +94,7 @@ class AnalyticsEndpoint(BaseAPIView):
         state_details = {}
         if x_axis in ["state_id"] or segment in ["state_id"]:
             state_details = (
-                Issue.issue_objects.filter(
-                    workspace__slug=slug,
-                    **filters,
-                )
+                Issue.issue_objects.filter(workspace__slug=slug, **filters)
                 .distinct("state_id")
                 .order_by("state_id")
                 .values("state_id", "state__name", "state__color")
@@ -109,7 +104,10 @@ class AnalyticsEndpoint(BaseAPIView):
         if x_axis in ["labels__id"] or segment in ["labels__id"]:
             label_details = (
                 Issue.objects.filter(
-                    workspace__slug=slug, **filters, labels__id__isnull=False
+                    workspace__slug=slug,
+                    **filters,
+                    labels__id__isnull=False,
+                    label_issue__deleted_at__isnull=True,
                 )
                 .distinct("labels__id")
                 .order_by("labels__id")
@@ -120,14 +118,37 @@ class AnalyticsEndpoint(BaseAPIView):
         if x_axis in ["assignees__id"] or segment in ["assignees__id"]:
             assignee_details = (
                 Issue.issue_objects.filter(
+                    Q(
+                        Q(assignees__avatar__isnull=False)
+                        | Q(assignees__avatar_asset__isnull=False)
+                    ),
                     workspace__slug=slug,
                     **filters,
-                    assignees__avatar__isnull=False,
+                )
+                .annotate(
+                    assignees__avatar_url=Case(
+                        # If `avatar_asset` exists, use it to generate the asset URL
+                        When(
+                            assignees__avatar_asset__isnull=False,
+                            then=Concat(
+                                Value("/api/assets/v2/static/"),
+                                "assignees__avatar_asset",  # Assuming avatar_asset has an id or relevant field
+                                Value("/"),
+                            ),
+                        ),
+                        # If `avatar_asset` is None, fall back to using `avatar` field directly
+                        When(
+                            assignees__avatar_asset__isnull=True,
+                            then="assignees__avatar",
+                        ),
+                        default=Value(None),
+                        output_field=models.CharField(),
+                    )
                 )
                 .order_by("assignees__id")
                 .distinct("assignees__id")
                 .values(
-                    "assignees__avatar",
+                    "assignees__avatar_url",
                     "assignees__display_name",
                     "assignees__first_name",
                     "assignees__last_name",
@@ -136,21 +157,17 @@ class AnalyticsEndpoint(BaseAPIView):
             )
 
         cycle_details = {}
-        if x_axis in ["issue_cycle__cycle_id"] or segment in [
-            "issue_cycle__cycle_id"
-        ]:
+        if x_axis in ["issue_cycle__cycle_id"] or segment in ["issue_cycle__cycle_id"]:
             cycle_details = (
                 Issue.issue_objects.filter(
                     workspace__slug=slug,
                     **filters,
                     issue_cycle__cycle_id__isnull=False,
+                    issue_cycle__deleted_at__isnull=True,
                 )
                 .distinct("issue_cycle__cycle_id")
                 .order_by("issue_cycle__cycle_id")
-                .values(
-                    "issue_cycle__cycle_id",
-                    "issue_cycle__cycle__name",
-                )
+                .values("issue_cycle__cycle_id", "issue_cycle__cycle__name")
             )
 
         module_details = {}
@@ -162,13 +179,11 @@ class AnalyticsEndpoint(BaseAPIView):
                     workspace__slug=slug,
                     **filters,
                     issue_module__module_id__isnull=False,
+                    issue_module__deleted_at__isnull=True,
                 )
                 .distinct("issue_module__module_id")
                 .order_by("issue_module__module_id")
-                .values(
-                    "issue_module__module_id",
-                    "issue_module__module__name",
-                )
+                .values("issue_module__module_id", "issue_module__module__name")
             )
 
         return Response(
@@ -188,9 +203,7 @@ class AnalyticsEndpoint(BaseAPIView):
 
 
 class AnalyticViewViewset(BaseViewSet):
-    permission_classes = [
-        WorkSpaceAdminPermission,
-    ]
+    permission_classes = [WorkSpaceAdminPermission]
     model = AnalyticView
     serializer_class = AnalyticViewSerializer
 
@@ -200,25 +213,14 @@ class AnalyticViewViewset(BaseViewSet):
 
     def get_queryset(self):
         return self.filter_queryset(
-            super()
-            .get_queryset()
-            .filter(workspace__slug=self.kwargs.get("slug"))
+            super().get_queryset().filter(workspace__slug=self.kwargs.get("slug"))
         )
 
 
 class SavedAnalyticEndpoint(BaseAPIView):
-
-    @allow_permission(
-        [
-            ROLE.ADMIN,
-            ROLE.MEMBER,
-        ],
-        level="WORKSPACE",
-    )
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
     def get(self, request, slug, analytic_id):
-        analytic_view = AnalyticView.objects.get(
-            pk=analytic_id, workspace__slug=slug
-        )
+        analytic_view = AnalyticView.objects.get(pk=analytic_id, workspace__slug=slug)
 
         filter = analytic_view.query
         queryset = Issue.issue_objects.filter(**filter)
@@ -244,14 +246,7 @@ class SavedAnalyticEndpoint(BaseAPIView):
 
 
 class ExportAnalyticsEndpoint(BaseAPIView):
-
-    @allow_permission(
-        [
-            ROLE.ADMIN,
-            ROLE.MEMBER,
-        ],
-        level="WORKSPACE",
-    )
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
     def post(self, request, slug):
         x_axis = request.data.get("x_axis", False)
         y_axis = request.data.get("y_axis", False)
@@ -272,10 +267,7 @@ class ExportAnalyticsEndpoint(BaseAPIView):
             "completed_at",
         ]
 
-        valid_yaxis = [
-            "issue_count",
-            "estimate",
-        ]
+        valid_yaxis = ["issue_count", "estimate"]
 
         # Check for x-axis and y-axis as thery are required parameters
         if (
@@ -292,9 +284,7 @@ class ExportAnalyticsEndpoint(BaseAPIView):
             )
 
         # If segment is present it cannot be same as x-axis
-        if segment and (
-            segment not in valid_xaxis_segment or x_axis == segment
-        ):
+        if segment and (segment not in valid_xaxis_segment or x_axis == segment):
             return Response(
                 {
                     "error": "Both segment and x axis cannot be same and segment should be valid"
@@ -319,9 +309,7 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug):
         filters = issue_filters(request.GET, "GET")
-        base_issues = Issue.issue_objects.filter(
-            workspace__slug=slug, **filters
-        )
+        base_issues = Issue.issue_objects.filter(workspace__slug=slug, **filters)
 
         total_issues = base_issues.count()
 
@@ -334,9 +322,7 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
         )
 
         open_issues_groups = ["backlog", "unstarted", "started"]
-        open_issues_queryset = state_groups.filter(
-            state__group__in=open_issues_groups
-        )
+        open_issues_queryset = state_groups.filter(state__group__in=open_issues_groups)
 
         open_issues = open_issues_queryset.count()
         open_issues_classified = (
@@ -357,7 +343,6 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
         user_details = [
             "created_by__first_name",
             "created_by__last_name",
-            "created_by__avatar",
             "created_by__display_name",
             "created_by__id",
         ]
@@ -366,13 +351,31 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
             base_issues.exclude(created_by=None)
             .values(*user_details)
             .annotate(count=Count("id"))
+            .annotate(
+                created_by__avatar_url=Case(
+                    # If `avatar_asset` exists, use it to generate the asset URL
+                    When(
+                        created_by__avatar_asset__isnull=False,
+                        then=Concat(
+                            Value("/api/assets/v2/static/"),
+                            "created_by__avatar_asset",  # Assuming avatar_asset has an id or relevant field
+                            Value("/"),
+                        ),
+                    ),
+                    # If `avatar_asset` is None, fall back to using `avatar` field directly
+                    When(
+                        created_by__avatar_asset__isnull=True, then="created_by__avatar"
+                    ),
+                    default=Value(None),
+                    output_field=models.CharField(),
+                )
+            )
             .order_by("-count")[:5]
         )
 
         user_assignee_details = [
             "assignees__first_name",
             "assignees__last_name",
-            "assignees__avatar",
             "assignees__display_name",
             "assignees__id",
         ]
@@ -381,6 +384,25 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
             base_issues.filter(completed_at__isnull=False)
             .exclude(assignees=None)
             .values(*user_assignee_details)
+            .annotate(
+                assignees__avatar_url=Case(
+                    # If `avatar_asset` exists, use it to generate the asset URL
+                    When(
+                        assignees__avatar_asset__isnull=False,
+                        then=Concat(
+                            Value("/api/assets/v2/static/"),
+                            "assignees__avatar_asset",  # Assuming avatar_asset has an id or relevant field
+                            Value("/"),
+                        ),
+                    ),
+                    # If `avatar_asset` is None, fall back to using `avatar` field directly
+                    When(
+                        assignees__avatar_asset__isnull=True, then="assignees__avatar"
+                    ),
+                    default=Value(None),
+                    output_field=models.CharField(),
+                )
+            )
             .annotate(count=Count("id"))
             .order_by("-count")[:5]
         )
@@ -389,12 +411,29 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
             base_issues.filter(completed_at__isnull=True)
             .values(*user_assignee_details)
             .annotate(count=Count("id"))
+            .annotate(
+                assignees__avatar_url=Case(
+                    # If `avatar_asset` exists, use it to generate the asset URL
+                    When(
+                        assignees__avatar_asset__isnull=False,
+                        then=Concat(
+                            Value("/api/assets/v2/static/"),
+                            "assignees__avatar_asset",  # Assuming avatar_asset has an id or relevant field
+                            Value("/"),
+                        ),
+                    ),
+                    # If `avatar_asset` is None, fall back to using `avatar` field directly
+                    When(
+                        assignees__avatar_asset__isnull=True, then="assignees__avatar"
+                    ),
+                    default=Value(None),
+                    output_field=models.CharField(),
+                )
+            )
             .order_by("-count")
         )
 
-        open_estimate_sum = open_issues_queryset.aggregate(sum=Sum("point"))[
-            "sum"
-        ]
+        open_estimate_sum = open_issues_queryset.aggregate(sum=Sum("point"))["sum"]
         total_estimate_sum = base_issues.aggregate(sum=Sum("point"))["sum"]
 
         return Response(
