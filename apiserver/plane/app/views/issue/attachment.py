@@ -57,7 +57,8 @@ class IssueAttachmentEndpoint(BaseAPIView):
         allowed_mime_types = mime_extension_map.get(file_extension.lower(), [])
         return mime_type in allowed_mime_types
 
-    def validate_file(self, file):
+    def validate_file(self, file=None, file_info=None):
+        """파일 또는 파일 정보를 검증"""
         # Instance 설정 가져오기
         instance = Instance.objects.first()
         if not instance:
@@ -68,19 +69,35 @@ class IssueAttachmentEndpoint(BaseAPIView):
         if not file_settings:
             return False, "File settings not found"
 
-        # 파일 크기 검증
-        if file.size > file_settings.max_file_size:
-            return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
+        if file:  # 실제 파일이 있는 경우
+            # 파일 크기 검증
+            if file.size > file_settings.max_file_size:
+                return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
 
-        # 파일 확장자 검증
-        file_extension = file.name.split('.')[-1].lower()
-        if file_extension not in file_settings.allowed_extensions:
-            return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
+            # 파일 확장자 검증
+            file_extension = file.name.split('.')[-1].lower()
+            if file_extension not in file_settings.allowed_extensions:
+                return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
 
-        # MIME 타입 검증
-        mime_type = self.get_mime_type(file)
-        if not self.is_valid_mime_type(file_extension, mime_type):
-            return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
+            # MIME 타입 검증
+            mime_type = self.get_mime_type(file)
+            if not self.is_valid_mime_type(file_extension, mime_type):
+                return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
+
+        elif file_info:  # 파일 정보만 있는 경우
+            # 파일 크기 검증
+            if file_info.get('size', 0) > file_settings.max_file_size:
+                return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
+
+            # 파일 확장자 검증
+            file_extension = file_info.get('name', '').split('.')[-1].lower()
+            if file_extension not in file_settings.allowed_extensions:
+                return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
+
+            # MIME 타입 검증 (file_info에서 제공된 type 사용)
+            mime_type = file_info.get('type', '')
+            if not self.is_valid_mime_type(file_extension, mime_type):
+                return False, f"파일 형식이 허용되지 않습니다. 감지된 형식: {mime_type}"
 
         return True, None
 
@@ -185,9 +202,8 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         allowed_mime_types = mime_extension_map.get(file_extension.lower(), [])
         return mime_type in allowed_mime_types
 
-    def validate_file(self, file):
-
-        print("file", file)
+    def validate_file(self, file=None, file_info=None):
+        """파일 또는 파일 정보를 검증"""
         # Instance 설정 가져오기
         instance = Instance.objects.first()
         if not instance:
@@ -198,19 +214,35 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         if not file_settings:
             return False, "File settings not found"
 
-        # 파일 크기 검증
-        if file.size > file_settings.max_file_size:
-            return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
+        if file:  # 실제 파일이 있는 경우
+            # 파일 크기 검증
+            if file.size > file_settings.max_file_size:
+                return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
 
-        # 파일 확장자 검증
-        file_extension = file.name.split('.')[-1].lower()
-        if file_extension not in file_settings.allowed_extensions:
-            return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
+            # 파일 확장자 검증
+            file_extension = file.name.split('.')[-1].lower()
+            if file_extension not in file_settings.allowed_extensions:
+                return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
 
-        # MIME 타입 검증
-        mime_type = self.get_mime_type(file)
-        if not self.is_valid_mime_type(file_extension, mime_type):
-            return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
+            # MIME 타입 검증
+            mime_type = self.get_mime_type(file)
+            if not self.is_valid_mime_type(file_extension, mime_type):
+                return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
+
+        elif file_info:  # 파일 정보만 있는 경우
+            # 파일 크기 검증
+            if file_info.get('size', 0) > file_settings.max_file_size:
+                return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
+
+            # 파일 확장자 검증
+            file_extension = file_info.get('name', '').split('.')[-1].lower()
+            if file_extension not in file_settings.allowed_extensions:
+                return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
+
+            # MIME 타입 검증 (file_info에서 제공된 type 사용)
+            mime_type = file_info.get('type', '')
+            if not self.is_valid_mime_type(file_extension, mime_type):
+                return False, f"파일 형식이 허용되지 않습니다. 감지된 형식: {mime_type}"
 
         return True, None
 
@@ -219,21 +251,24 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         name = request.data.get("name")
         type = request.data.get("type", False)
         size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
-
+        
+        # 파일이 있는 경우와 파일 정보만 있는 경우를 구분하여 검증
         file = request.FILES.get('asset')
         if file:
-            is_valid, error_message = self.validate_file(file)
-            if not is_valid:
-                return Response(
-                    {"error": error_message},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-        # if not type or type not in settings.ATTACHMENT_MIME_TYPES:
-        #     return Response(
-        #         {"error": "허용되지 않는 파일 형식입니다. 허용된 형식: " + ", ".join(settings.ATTACHMENT_MIME_TYPES), "status": False},
-        #         status=status.HTTP_400_BAD_REQUEST,
-        #     )
+            is_valid, error_message = self.validate_file(file=file)
+        else:
+            file_info = {
+                'name': name,
+                'type': type,
+                'size': size
+            }
+            is_valid, error_message = self.validate_file(file_info=file_info)
+            
+        if not is_valid:
+            return Response(
+                {"error": "파일 검증 실패", "status": False, "message": error_message},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)

@@ -1,20 +1,19 @@
-"use client";
-
-import { FC, useCallback, useState, useEffect } from "react";
+import { FC, useCallback, useState } from "react";
 import { observer } from "mobx-react";
-import { useDropzone, FileRejection } from "react-dropzone";
+import { FileRejection, useDropzone } from "react-dropzone";
 import { UploadCloud } from "lucide-react";
 // hooks
-import { useInstance, useIssueDetail, useFileValidation } from "@/hooks/store";
-import { validateFileBeforeUpload } from "@/components/issues/attachment/helper";
 import { TOAST_TYPE, setToast } from "@plane/ui";
+import { useIssueDetail } from "@/hooks/store";
+// plane web hooks
+import { useFileSize } from "@/plane-web/hooks/use-file-size";
+// types
+import { TAttachmentHelpers } from "../issue-detail-widgets/attachments/helper";
 // components
 import { IssueAttachmentsListItem } from "./attachment-list-item";
+import { IssueAttachmentsUploadItem } from "./attachment-list-upload-item";
+// types
 import { IssueAttachmentDeleteModal } from "./delete-attachment-modal";
-import { TAttachmentOperations } from "./root";
-import { generateFileName } from "@/helpers/attachment.helper";
-
-type TAttachmentOperationsRemoveModal = Exclude<TAttachmentOperations, "create">;
 
 type TIssueAttachmentItemList = {
   workspaceSlug: string;
@@ -26,152 +25,108 @@ type TIssueAttachmentItemList = {
 
 export const IssueAttachmentItemList: FC<TIssueAttachmentItemList> = observer((props) => {
   const { workspaceSlug, projectId, issueId, attachmentHelpers, disabled } = props;
-  // state
-  const [isLoading, setIsLoading] = useState(false);
+  // states
+  const [isUploading, setIsUploading] = useState(false);
   // store hooks
-  const { config, fileSettings, fetchFileSettings } = useInstance();
-  const { validateFile, getAcceptedFileTypes } = useFileValidation();
   const {
     attachment: { getAttachmentsByIssueId },
     attachmentDeleteModalId,
     toggleDeleteAttachmentModal,
     fetchActivities,
   } = useIssueDetail();
-
+  const { operations: attachmentOperations, snapshot: attachmentSnapshot } = attachmentHelpers;
+  const { create: createAttachment } = attachmentOperations;
+  const { uploadStatus } = attachmentSnapshot;
+  // file size
+  const { maxFileSize } = useFileSize();
   // derived values
   const issueAttachments = getAttachmentsByIssueId(issueId);
 
-  useEffect(() => {
-    fetchFileSettings().catch(console.error);
-  }, [fetchFileSettings]);
+  // handlers
+  const handleFetchPropertyActivities = useCallback(() => {
+    fetchActivities(workspaceSlug, projectId, issueId);
+  }, [fetchActivities, workspaceSlug, projectId, issueId]);
 
   const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      console.log("🎯 onDrop triggered with files:", acceptedFiles);
-      
-      try {
-        await fetchFileSettings();
-      } catch (error) {
-        console.error("Failed to fetch latest file settings:", error);
-      }
-      
-      const currentFile: File = acceptedFiles[0];
-      
-      if (!currentFile || !workspaceSlug) {
-        console.log("❌ No file or workspace slug");
+    (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
+      const totalAttachedFiles = acceptedFiles.length + rejectedFiles.length;
+
+      if (rejectedFiles.length === 0) {
+        const currentFile: File = acceptedFiles[0];
+        if (!currentFile || !workspaceSlug) return;
+
+        setIsUploading(true);
+        createAttachment(currentFile)
+          .catch(() => {
+            setToast({
+              type: TOAST_TYPE.ERROR,
+              title: "Error!",
+              message: "File could not be attached. Try uploading again.",
+            });
+          })
+          .finally(() => {
+            handleFetchPropertyActivities();
+            setIsUploading(false);
+          });
         return;
       }
 
-      console.log("📁 Processing file:", {
-        name: currentFile.name,
-        size: currentFile.size,
-        type: currentFile.type
-      });
-
-      if (!validateFileBeforeUpload(currentFile, validateFile)) {
-        console.log("❌ File validation failed");
-        return;
-      }
-
-      const uploadedFile: File = new File([currentFile], generateFileName(currentFile.name), {
-        type: currentFile.type,
-      });
-
-      console.log("📝 Prepared file for upload:", {
-        name: uploadedFile.name,
-        size: uploadedFile.size,
-        type: uploadedFile.type
-      });
-
-      console.log("🚀 Starting upload process");
-      setIsLoading(true);
-      attachmentHelpers.operations.create(uploadedFile)
-        .then(() => {
-          console.log("✅ Upload successful");
-        })
-        .catch((error: any) => {
-          console.error("❌ Upload failed:", error);
-          if (error.response?.data?.error) {
-            setToast({
-              type: TOAST_TYPE.ERROR,
-              title: "파일 업로드 실패",
-              message: error.response.data.error
-            });
-          } else {
-            setToast({
-              type: TOAST_TYPE.ERROR,
-              title: "파일 업로드 실패",
-              message: "파일을 업로드하는 중 오류가 발생했습니다."
-            });
-          }
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    },
-    [attachmentHelpers.operations, workspaceSlug, validateFile, fetchFileSettings]
-  );
-
-  const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
-    console.log("❌ File rejected:", fileRejections);
-    const [rejection] = fileRejections;
-    if (rejection) {
-      const errorMessage = rejection.errors[0]?.message || "파일이 거부되었습니다.";
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "파일 업로드 실패",
-        message: errorMessage
+        title: "Error!",
+        message:
+          totalAttachedFiles > 1
+            ? "Only one file can be uploaded at a time."
+            : `File must be of ${maxFileSize / 1024 / 1024}MB or less in size.`,
       });
-    }
-  }, []);
+      return;
+    },
+    [createAttachment, maxFileSize, workspaceSlug, handleFetchPropertyActivities]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    onDropRejected,
-    maxSize: fileSettings?.max_file_size ?? config?.file_size_limit,
+    maxSize: maxFileSize,
     multiple: false,
-    disabled: isLoading || disabled,
-    accept: getAcceptedFileTypes(),
-    noClick: false,
-    noKeyboard: false,
+    disabled: isUploading || disabled,
   });
 
   return (
     <>
-      {attachmentDeleteModalId && (
-        <IssueAttachmentDeleteModal
-          isOpen={Boolean(attachmentDeleteModalId)}
-          onClose={() => toggleDeleteAttachmentModal(null)}
-          handleAttachmentOperations={attachmentHelpers.operations}
-          attachmentId={attachmentDeleteModalId}
-        />
-      )}
-      <div
-        {...getRootProps()}
-        className={`relative flex flex-col ${
-          isDragActive && issueAttachments?.length < 3 ? "min-h-[200px]" : ""
-        } ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <input {...getInputProps()} />
-        {isDragActive && (
-          <div className="absolute flex items-center justify-center left-0 top-0 h-full w-full bg-custom-background-90/75 z-30">
-            <div className="flex items-center justify-center p-1 rounded-md bg-custom-background-100">
-              <div className="flex flex-col justify-center items-center px-5 py-6 rounded-md border border-dashed border-custom-border-300">
-                <UploadCloud className="size-7" />
-                <span className="text-sm text-custom-text-300">Drag and drop anywhere to upload</span>
+      {uploadStatus?.map((uploadStatus) => (
+        <IssueAttachmentsUploadItem key={uploadStatus.id} uploadStatus={uploadStatus} />
+      ))}
+      {issueAttachments && (
+        <>
+          {attachmentDeleteModalId && (
+            <IssueAttachmentDeleteModal
+              isOpen={Boolean(attachmentDeleteModalId)}
+              onClose={() => toggleDeleteAttachmentModal(null)}
+              attachmentOperations={attachmentOperations}
+              attachmentId={attachmentDeleteModalId}
+            />
+          )}
+          <div
+            {...getRootProps()}
+            className={`relative flex flex-col ${isDragActive && issueAttachments.length < 3 ? "min-h-[200px]" : ""} ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <input {...getInputProps()} />
+            {isDragActive && (
+              <div className="absolute flex items-center justify-center left-0 top-0 h-full w-full bg-custom-background-90/75 z-30 ">
+                <div className="flex items-center justify-center p-1 rounded-md bg-custom-background-100">
+                  <div className="flex flex-col justify-center items-center px-5 py-6 rounded-md border border-dashed border-custom-border-300">
+                    <UploadCloud className="size-7" />
+                    <span className="text-sm text-custom-text-300">Drag and drop anywhere to upload</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+            {issueAttachments?.map((attachmentId) => (
+              <IssueAttachmentsListItem key={attachmentId} attachmentId={attachmentId} disabled={disabled} />
+            ))}
           </div>
-        )}
-        {issueAttachments?.map((attachmentId) => (
-          <IssueAttachmentsListItem 
-            key={attachmentId} 
-            attachmentId={attachmentId} 
-            disabled={disabled} 
-          />
-        ))}
-      </div>
+        </>
+      )}
     </>
   );
 });

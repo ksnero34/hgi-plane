@@ -27,11 +27,7 @@ export const PagesListHeader = observer(() => {
   const { currentProjectDetails, loader } = useProject();
   const { canCurrentUserCreatePage, createPage } = useProjectPages();
   const { setTrackElement } = useEventTracker();
-  // auth
-  const canUserCreatePage = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER,EUserPermissions.RESTRICTED,EUserPermissions.GUEST],
-    EUserPermissionsLevel.PROJECT
-  );
+  
   // handle page create
   const handleCreatePage = async () => {
     setIsCreatingPage(true);
