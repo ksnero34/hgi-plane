@@ -57,7 +57,7 @@ services:
     build:
       context: .
       dockerfile: ./web/Dockerfile.dev
-    image: hgi-plane-dev/web:0.0.30
+    image: hgi-plane-dev/web:0.0.31
     #restart: unless-stopped
     networks:
       - dev_env
@@ -74,7 +74,7 @@ services:
     build:
       context: .
       dockerfile: ./space/Dockerfile.dev
-    image: hgi-plane-dev/space:0.0.30
+    image: hgi-plane-dev/space:0.0.31
     #restart: unless-stopped
     networks:
       - dev_env
@@ -90,7 +90,7 @@ services:
     build:
       context: .
       dockerfile: ./admin/Dockerfile.dev
-    image: hgi-plane-dev/admin:0.0.30
+    image: hgi-plane-dev/admin:0.0.31
     #restart: unless-stopped
     networks:
       - dev_env
@@ -106,7 +106,7 @@ services:
     build:
       context: .
       dockerfile: ./live/Dockerfile.dev
-    image: hgi-plane-dev/live:0.0.30
+    image: hgi-plane-dev/live:0.0.31
     #restart: unless-stopped
     networks:
       - dev_env
@@ -204,7 +204,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.dev
-    image: hgi-plane-dev/proxy:0.0.8
+    image: hgi-plane-dev/proxy:0.0.9
     #restart: unless-stopped
     networks:
       - dev_env
@@ -213,7 +213,7 @@ services:
     env_file:
       - .env.dev
     environment:
-      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+      # FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
     depends_on:
       - web
