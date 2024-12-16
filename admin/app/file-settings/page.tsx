@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useFileSettings } from "@/hooks/store";
 import { FileSettingsForm } from "./form";
+import { toast } from "sonner";
 
 function FileSettingsPage() {
   const { settings, fetchSettings, updateSettings, isLoading } = useFileSettings();
@@ -11,8 +12,19 @@ function FileSettingsPage() {
   useEffect(() => {
     fetchSettings().catch((error) => {
       console.error("Error fetching file settings:", error);
+      toast.error("설정을 불러오는데 실패했습니다.");
     });
   }, [fetchSettings]);
+
+  const handleSubmit = async (data: any) => {
+    try {
+      await updateSettings(data);
+      toast.success("설정이 성공적으로 저장되었습니다.");
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      toast.error("설정 저장에 실패했습니다.");
+    }
+  };
 
   return (
     <div className="relative container mx-auto w-full h-full p-4 py-4 space-y-6 flex flex-col">
@@ -28,7 +40,7 @@ function FileSettingsPage() {
         ) : (
           <FileSettingsForm
             settings={settings}
-            onSubmit={updateSettings}
+            onSubmit={handleSubmit}
           />
         )}
       </div>
