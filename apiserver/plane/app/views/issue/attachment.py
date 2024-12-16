@@ -519,7 +519,8 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                         
                         return Response(
                             {
-                                "error": f"파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, "
+                                "error": "파일 형식이 올바르지 않습니다.",
+                                "message": f"파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, "
                                         f"감지된 MIME 타입: {actual_mime_type}"
                             },
                             status=status.HTTP_400_BAD_REQUEST
@@ -545,7 +546,8 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 
                 return Response(
                     {
-                        "error": f"파일 형식 검증에 실패했습니다: {str(storage_error)}"
+                        "error": f"파일 형식 검증에 실패했습니다: {str(storage_error)}",
+                        "message": "파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, 감지된 MIME 타입: {actual_mime_type}"
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )

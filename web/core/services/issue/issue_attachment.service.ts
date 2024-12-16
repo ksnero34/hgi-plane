@@ -56,7 +56,9 @@ export class IssueAttachmentService extends APIService {
         return signedURLResponse.attachment;
       })
       .catch((error) => {
-        throw error?.response?.data;
+        console.log("Error uploading issue attachment:", error);
+        // throw error?.response?.data;
+        throw error;
       });
   }
 
@@ -64,6 +66,7 @@ export class IssueAttachmentService extends APIService {
     return this.get(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/issues/${issueId}/attachments/`)
       .then((response) => response?.data)
       .catch((error) => {
+        // console.log("Error fetching issue attachments:", error);
         throw error?.response?.data;
       });
   }
