@@ -42,16 +42,71 @@ class IssueAttachmentEndpoint(BaseAPIView):
     def is_valid_mime_type(self, file_extension, mime_type):
         """파일 확장자와 MIME 타입이 일치하는지 확인"""
         mime_extension_map = {
+            # 텍스트 문서
             'txt': ['text/plain'],
-            'pdf': ['application/pdf'],
+            'css': ['text/css'],
+            'js': ['text/javascript'],
+            'json': ['application/json'],
+            'xml': ['text/xml', 'application/xml'],
+            'csv': ['text/csv'],
+            'rtf': ['application/rtf'],
+            
+            # 이미지
             'jpg': ['image/jpeg'],
             'jpeg': ['image/jpeg'],
             'png': ['image/png'],
             'gif': ['image/gif'],
+            'svg': ['image/svg+xml'],
+            'webp': ['image/webp'],
+            'tiff': ['image/tiff'],
+            'bmp': ['image/bmp'],
+            
+            # 문서
+            'pdf': ['application/pdf'],
             'doc': ['application/msword'],
             'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'xls': ['application/vnd.ms-excel'],
+            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'ppt': ['application/vnd.ms-powerpoint'],
+            'pptx': [
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.ms-powerpoint.presentation.macroenabled.12'
+            ],
+            
+            # 오디오
+            'mp3': ['audio/mpeg'],
+            'wav': ['audio/wav'],
+            'ogg': ['audio/ogg'],
+            'midi': ['audio/midi', 'audio/x-midi'],
+            'aac': ['audio/aac'],
+            'flac': ['audio/flac'],
+            'm4a': ['audio/x-m4a'],
+            
+            # 비디오
+            'mp4': ['video/mp4'],
+            'mpeg': ['video/mpeg'],
+            'ogv': ['video/ogg'],
+            'webm': ['video/webm'],
+            'mov': ['video/quicktime'],
+            'avi': ['video/x-msvideo'],
+            'wmv': ['video/x-ms-wmv'],
+            
+            # 압축파일
             'zip': ['application/zip', 'application/x-zip-compressed'],
-            # 필요한 확장자와 MIME 타입을 추가
+            'rar': ['application/x-rar-compressed'],
+            'tar': ['application/x-tar'],
+            'gz': ['application/gzip'],
+            
+            # 3D 모델
+            'glb': ['model/gltf-binary'],
+            'gltf': ['model/gltf+json'],
+            'obj': ['application/octet-stream'],
+            
+            # 폰트
+            'ttf': ['font/ttf'],
+            'otf': ['font/otf'],
+            'woff': ['font/woff'],
+            'woff2': ['font/woff2'],
         }
 
         allowed_mime_types = mime_extension_map.get(file_extension.lower(), [])
@@ -187,16 +242,71 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
     def is_valid_mime_type(self, file_extension, mime_type):
         """파일 확장자와 MIME 타입이 일치하는지 확인"""
         mime_extension_map = {
+            # 텍스트 문서
             'txt': ['text/plain'],
-            'pdf': ['application/pdf'],
+            'css': ['text/css'],
+            'js': ['text/javascript'],
+            'json': ['application/json'],
+            'xml': ['text/xml', 'application/xml'],
+            'csv': ['text/csv'],
+            'rtf': ['application/rtf'],
+            
+            # 이미지
             'jpg': ['image/jpeg'],
             'jpeg': ['image/jpeg'],
             'png': ['image/png'],
             'gif': ['image/gif'],
+            'svg': ['image/svg+xml'],
+            'webp': ['image/webp'],
+            'tiff': ['image/tiff'],
+            'bmp': ['image/bmp'],
+            
+            # 문서
+            'pdf': ['application/pdf'],
             'doc': ['application/msword'],
             'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'xls': ['application/vnd.ms-excel'],
+            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'ppt': ['application/vnd.ms-powerpoint'],
+            'pptx': [
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.ms-powerpoint.presentation.macroenabled.12'
+            ],
+            
+            # 오디오
+            'mp3': ['audio/mpeg'],
+            'wav': ['audio/wav'],
+            'ogg': ['audio/ogg'],
+            'midi': ['audio/midi', 'audio/x-midi'],
+            'aac': ['audio/aac'],
+            'flac': ['audio/flac'],
+            'm4a': ['audio/x-m4a'],
+            
+            # 비디오
+            'mp4': ['video/mp4'],
+            'mpeg': ['video/mpeg'],
+            'ogv': ['video/ogg'],
+            'webm': ['video/webm'],
+            'mov': ['video/quicktime'],
+            'avi': ['video/x-msvideo'],
+            'wmv': ['video/x-ms-wmv'],
+            
+            # 압축파일
             'zip': ['application/zip', 'application/x-zip-compressed'],
-            # 필요한 확장자와 MIME 타입을 추가
+            'rar': ['application/x-rar-compressed'],
+            'tar': ['application/x-tar'],
+            'gz': ['application/gzip'],
+            
+            # 3D 모델
+            'glb': ['model/gltf-binary'],
+            'gltf': ['model/gltf+json'],
+            'obj': ['application/octet-stream'],
+            
+            # 폰트
+            'ttf': ['font/ttf'],
+            'otf': ['font/otf'],
+            'woff': ['font/woff'],
+            'woff2': ['font/woff2'],
         }
 
         allowed_mime_types = mime_extension_map.get(file_extension.lower(), [])
@@ -368,31 +478,115 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def patch(self, request, slug, project_id, issue_id, pk):
-        issue_attachment = FileAsset.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id
-        )
-        serializer = IssueAttachmentSerializer(issue_attachment)
-
-        # Send this activity only if the attachment is not uploaded before
-        if not issue_attachment.is_uploaded:
-            issue_activity.delay(
-                type="attachment.activity.created",
-                requested_data=None,
-                actor_id=str(self.request.user.id),
-                issue_id=str(self.kwargs.get("issue_id", None)),
-                project_id=str(self.kwargs.get("project_id", None)),
-                current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
-                epoch=int(timezone.now().timestamp()),
-                notification=True,
-                origin=request.META.get("HTTP_ORIGIN"),
+        try:
+            issue_attachment = FileAsset.objects.get(
+                pk=pk, workspace__slug=slug, project_id=project_id
             )
+            
+            try:
+                # S3/MinIO에서 파일 가져오기
+                storage = S3Storage(request=request)
+                file_content = storage.get_object(issue_attachment.asset)
+                
+                if not file_content:
+                    return Response(
+                        {"error": "파일을 읽을 수 없습니다."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # 파일의 실제 MIME 타입 확인
+                try:
+                    mime = magic.Magic(mime=True)
+                    # 전체 내용을 읽어서 바이트로 저장
+                    content_bytes = file_content.read()
+                    if not content_bytes:
+                        return Response(
+                            {"error": "파일 내용을 읽을 수 없습니다."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                        
+                    actual_mime_type = mime.from_buffer(content_bytes)
+                    
+                    # 파일 확장자 가져오기
+                    file_name = issue_attachment.attributes.get("name", "")
+                    file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
+                    
+                    # MIME 타입 검증
+                    if not self.is_valid_mime_type(file_extension, actual_mime_type):
+                        # 파일 삭제
+                        storage.delete_object(issue_attachment.asset)
+                        issue_attachment.delete()
+                        
+                        return Response(
+                            {
+                                "error": f"파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, "
+                                        f"감지된 MIME 타입: {actual_mime_type}"
+                            },
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"File validation error: {str(e)}")
+                    logger.error(f"File info - name: {file_name}, asset: {issue_attachment.asset}")
+                    return Response(
+                        {"error": "파일 내용을 처리하는 중 오류가 발생했습니다."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-            # Update the attachment
-            issue_attachment.is_uploaded = True
-            issue_attachment.created_by = request.user
+            except Exception as storage_error:
+                # 에러 로깅
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"File validation error: {str(storage_error)}")
+                logger.error(f"File info - name: {issue_attachment.attributes.get('name')}, "
+                            f"asset: {issue_attachment.asset}")
+                
+                return Response(
+                    {
+                        "error": f"파일 형식 검증에 실패했습니다: {str(storage_error)}"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-        # Get the storage metadata
-        if not issue_attachment.storage_metadata:
-            get_asset_object_metadata.delay(str(issue_attachment.id))
-        issue_attachment.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            # 파일이 정상적으로 검증되면 업로드 완료 처리
+            serializer = IssueAttachmentSerializer(issue_attachment)
+
+            if not issue_attachment.is_uploaded:
+                issue_activity.delay(
+                    type="attachment.activity.created",
+                    requested_data=None,
+                    actor_id=str(request.user.id),
+                    issue_id=str(issue_id),
+                    project_id=str(project_id),
+                    current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
+                    epoch=int(timezone.now().timestamp()),
+                    notification=True,
+                    origin=request.META.get("HTTP_ORIGIN"),
+                )
+
+                # 업로드 상태 업데이트
+                issue_attachment.is_uploaded = True
+                issue_attachment.created_by = request.user
+
+            # 스토리지 메타데이터 업데이트
+            if not issue_attachment.storage_metadata:
+                get_asset_object_metadata.delay(str(issue_attachment.id))
+                
+            issue_attachment.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except FileAsset.DoesNotExist:
+            return Response(
+                {"error": "파일을 찾을 수 없습니다."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response(
+                {"error": "파일 처리 중 오류가 발생했습니다."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

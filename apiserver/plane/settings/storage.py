@@ -151,3 +151,41 @@ class S3Storage(S3Boto3Storage):
             "ETag": response.get("ETag"),
             "Metadata": response.get("Metadata", {}),
         }
+
+    def get_object(self, object_name):
+        """Get an object from MinIO/S3"""
+        try:
+            # object_name이 None이거나 빈 문자열인 경우 체크
+            if not object_name:
+                return None
+            
+            # asset 필드가 PosixPath 객체일 수 있으므로 문자열로 변환
+            key = str(object_name)
+            
+            response = self.s3_client.get_object(
+                Bucket=self.aws_storage_bucket_name,
+                Key=key
+            )
+            return response.get('Body')
+        except ClientError as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"S3 Client Error - Key: {object_name}, Error: {str(e)}")
+            return None
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Unexpected Error - Key: {object_name}, Error: {str(e)}")
+            return None
+
+    def delete_object(self, object_name):
+        """Delete an object from MinIO/S3"""
+        try:
+            self.s3_client.delete_object(
+                Bucket=self.aws_storage_bucket_name,
+                Key=str(object_name)
+            )
+            return True
+        except ClientError as e:
+            log_exception(e)
+            return False

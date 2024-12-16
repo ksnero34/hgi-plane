@@ -8,8 +8,7 @@ import { Plus } from "lucide-react";
 import { TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
 import { useIssueDetail } from "@/hooks/store";
-// plane web hooks
-import { useFileSize } from "@/plane-web/hooks/use-file-size";
+import { useFileValidation } from "@/hooks/store/use-file-validation";
 import { useAttachmentOperations } from "./helper";
 
 type Props = {
@@ -26,8 +25,8 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
   const [isLoading, setIsLoading] = useState(false);
   // store hooks
   const { setLastWidgetAction, fetchActivities } = useIssueDetail();
-  // file size
-  const { maxFileSize } = useFileSize();
+  // validation hooks
+  const { validateFile } = useFileValidation();
   // operations
   const { operations: attachmentOperations } = useAttachmentOperations(workspaceSlug, projectId, issueId);
   // handlers
@@ -36,12 +35,32 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
   }, [fetchActivities, workspaceSlug, projectId, issueId]);
 
   const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
+    async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
       const totalAttachedFiles = acceptedFiles.length + rejectedFiles.length;
 
-      if (rejectedFiles.length === 0) {
-        const currentFile: File = acceptedFiles[0];
-        if (!currentFile || !workspaceSlug) return;
+      if (totalAttachedFiles > 1) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "업로드 실패",
+          message: "한 번에 하나의 파일만 업로드할 수 있습니다.",
+        });
+        return;
+      }
+
+      if (acceptedFiles.length === 1) {
+        const currentFile = acceptedFiles[0];
+        const validationResult = await validateFile(currentFile);
+
+        if (!validationResult.isValid) {
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: "업로드 실패",
+            message: validationResult.error || "파일 업로드 중 오류가 발생했습니다.",
+          });
+          return;
+        }
+
+        if (!workspaceSlug) return;
 
         setIsLoading(true);
         attachmentOperations
@@ -50,7 +69,6 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
             console.error("Upload error:", error);
             let errorMessage = "파일 업로드 중 오류가 발생했습니다.";
             
-            // 서버 에러 응답 처리
             if (error?.serverError?.error) {
               errorMessage = error.serverError.error;
             } else if (error?.message) {
@@ -68,35 +86,19 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
             setLastWidgetAction("attachments");
             setIsLoading(false);
           });
-        return;
       }
-
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "업로드 실패",
-        message:
-          totalAttachedFiles > 1
-            ? "한 번에 하나의 파일만 업로드할 수 있습니다."
-            : `파일 크기는 ${maxFileSize / 1024 / 1024}MB 이하여야 합니다.`,
-      });
-      return;
     },
-    [attachmentOperations, maxFileSize, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction]
+    [attachmentOperations, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction, validateFile]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    maxSize: maxFileSize,
     multiple: false,
     disabled: isLoading || disabled,
   });
 
   return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-      }}
-    >
+    <div onClick={(e) => e.stopPropagation()}>
       <button {...getRootProps()} type="button" disabled={disabled}>
         <input {...getInputProps()} />
         {customButton ? customButton : <Plus className="h-4 w-4" />}

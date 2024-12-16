@@ -1,8 +1,8 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC } from "react";
 import { observer } from "mobx-react";
-import { Trash, ExternalLink, Download } from "lucide-react";
+import { Trash } from "lucide-react";
 // ui
 import { CustomMenu, Tooltip } from "@plane/ui";
 // components
@@ -24,8 +24,6 @@ type TIssueAttachmentsListItem = {
 export const IssueAttachmentsListItem: FC<TIssueAttachmentsListItem> = observer((props) => {
   // props
   const { attachmentId, disabled } = props;
-  // state
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   // store hooks
   const { getUserDetails } = useMember();
   const {
@@ -43,109 +41,58 @@ export const IssueAttachmentsListItem: FC<TIssueAttachmentsListItem> = observer(
 
   if (!attachment) return <></>;
 
-  const handleDownload = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const link = document.createElement('a');
-    link.href = attachment.asset;
-    link.download = `${getFileName(attachment.attributes.name)}.${getFileExtension(attachment.asset)}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handlePreview = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open(attachment.asset, "_blank");
-  };
-
-  const handleFileClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsMenuOpen(true);
-  };
-
-  const handleEllipsisClick = () => {
-    setIsMenuOpen(true);
-  };
-
   return (
     <>
-      <div 
-        className="group flex items-center justify-between gap-3 h-11 hover:bg-custom-background-90 pl-9 pr-2 cursor-pointer"
-        onClick={handleFileClick}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(fileURL, "_blank");
+        }}
       >
-        <div 
-          className="flex items-center gap-3 text-sm truncate flex-grow"
-          onClick={handleFileClick}
-        >
-          <div className="flex items-center gap-3">{getFileIcon(getFileExtension(attachment.asset), 18)}</div>
-          <div className="flex items-center gap-3 flex-grow" onClick={handleFileClick}>
-            <Tooltip
-              tooltipContent={`${getFileName(attachment.attributes.name)}.${getFileExtension(attachment.asset)}`}
-              isMobile={isMobile}
-            >
-              <p className="text-custom-text-200 font-medium truncate">{`${getFileName(attachment.attributes.name)}.${getFileExtension(attachment.asset)}`}</p>
+        <div className="group flex items-center justify-between gap-3 h-11 hover:bg-custom-background-90 pl-9 pr-2">
+          <div className="flex items-center gap-3 text-sm truncate">
+            <div className="flex items-center gap-3">{fileIcon}</div>
+            <Tooltip tooltipContent={`${fileName}.${fileExtension}`} isMobile={isMobile}>
+              <p className="text-custom-text-200 font-medium truncate">{`${fileName}.${fileExtension}`}</p>
             </Tooltip>
             <span className="flex size-1.5 bg-custom-background-80 rounded-full" />
             <span className="flex-shrink-0 text-custom-text-400">{convertBytesToSize(attachment.attributes.size)}</span>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          {attachment?.updated_by && (
-            <>
-              <Tooltip
-                isMobile={isMobile}
-                tooltipContent={`${
-                  getUserDetails(attachment.updated_by)?.display_name ?? ""
-                } uploaded on ${renderFormattedDate(attachment.updated_at)}`}
+          <div className="flex items-center gap-3">
+            {attachment?.updated_by && (
+              <>
+                <Tooltip
+                  isMobile={isMobile}
+                  tooltipContent={`${
+                    getUserDetails(attachment.updated_by)?.display_name ?? ""
+                  } uploaded on ${renderFormattedDate(attachment.updated_at)}`}
+                >
+                  <div className="flex items-center justify-center">
+                    <ButtonAvatars showTooltip userIds={attachment?.updated_by} />
+                  </div>
+                </Tooltip>
+              </>
+            )}
+
+            <CustomMenu ellipsis closeOnSelect placement="bottom-end" disabled={disabled}>
+              <CustomMenu.MenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleDeleteAttachmentModal(attachmentId);
+                }}
               >
-                <div className="flex items-center justify-center">
-                  <ButtonAvatars showTooltip userIds={attachment?.updated_by} />
+                <div className="flex items-center gap-2">
+                  <Trash className="h-3.5 w-3.5" strokeWidth={2} />
+                  <span>Delete</span>
                 </div>
-              </Tooltip>
-            </>
-          )}
-
-          <CustomMenu 
-            ellipsis 
-            closeOnSelect 
-            placement="bottom-end" 
-            disabled={disabled}
-            isOpen={isMenuOpen}
-            onClose={() => setIsMenuOpen(false)}
-            menuButtonOnClick={handleEllipsisClick}
-          >
-            <CustomMenu.MenuItem onClick={handlePreview}>
-              <div className="flex items-center gap-2">
-                <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
-                <span>새 창에서 보기</span>
-              </div>
-            </CustomMenu.MenuItem>
-            <CustomMenu.MenuItem onClick={handleDownload}>
-              <div className="flex items-center gap-2">
-                <Download className="h-3.5 w-3.5" strokeWidth={2} />
-                <span>다운로드</span>
-              </div>
-            </CustomMenu.MenuItem>
-            <CustomMenu.MenuItem
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleDeleteAttachmentModal(attachmentId);
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <Trash className="h-3.5 w-3.5" strokeWidth={2} />
-                <span>삭제</span>
-              </div>
-            </CustomMenu.MenuItem>
-          </CustomMenu>
+              </CustomMenu.MenuItem>
+            </CustomMenu>
+          </div>
         </div>
-      </div>
+      </button>
     </>
   );
 });

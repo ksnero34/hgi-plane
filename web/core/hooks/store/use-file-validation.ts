@@ -14,9 +14,17 @@ export const useFileValidation = () => {
   if (context === undefined) throw new Error("useFileValidation must be used within StoreProvider");
 
   const { instance } = context;
-  const { fileSettings } = instance;
+  const { fileSettings, updateFileSettings } = instance;
 
-  const validateFile = (file: File): ValidationResult => {
+  const validateFile = async (file: File): Promise<ValidationResult> => {
+    // 파일 설정 업데이트
+    try {
+      await updateFileSettings();
+    } catch (error) {
+      console.error("Failed to update file settings:", error);
+      // 설정 업데이트 실패시 현재 설정 사용
+    }
+
     // 서버 설정이 있으면 그것을 사용, 없으면 기본값 사용
     const maxFileSize = fileSettings?.max_file_size ?? MAX_FILE_SIZE;
     const allowedExtensions = fileSettings?.allowed_extensions ?? ["jpg", "jpeg", "png", "gif", "pdf"];
@@ -61,6 +69,6 @@ export const useFileValidation = () => {
     getAcceptedFileTypes,
     getMaxFileSize,
     isLoaded: !!fileSettings,
-    settings: fileSettings  // settings 기본값 제거하고 fileSettings 그대로 반환
+    settings: fileSettings
   } as const;
 }; 
