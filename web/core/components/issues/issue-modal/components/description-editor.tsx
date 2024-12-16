@@ -26,6 +26,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { AIService } from "@/services/ai.service";
 import { FileService } from "@/services/file.service";
+import { maskPrivateInformation } from "@/utils/privacy-masking";
 
 type TIssueDescriptionEditorProps = {
   control: Control<TIssue>;
@@ -181,14 +182,17 @@ export const IssueDescriptionEditor: React.FC<TIssueDescriptionEditorProps> = ob
                 workspaceId={workspaceId}
                 projectId={projectId}
                 onChange={(_description: object, description_html: string) => {
-                  onChange(description_html);
+                  const maskedContent = maskPrivateInformation(description_html);
+                  onChange(maskedContent);
                   handleFormChange();
+                  handleDescriptionHTMLDataChange(maskedContent);
                 }}
                 onEnterKeyPress={() => submitBtnRef?.current?.click()}
                 ref={editorRef}
                 tabIndex={getIndex("description_html")}
                 placeholder={getDescriptionPlaceholder}
                 containerClassName="pt-3 min-h-[120px]"
+                transformContent={(content: string) => maskPrivateInformation(content)}
                 uploadFile={async (file) => {
                   try {
                     const { asset_id } = await fileService.uploadProjectAsset(

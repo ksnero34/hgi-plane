@@ -14,6 +14,7 @@ import { RichTextEditor, RichTextReadOnlyEditor } from "@/components/editor";
 import { TIssueOperations } from "@/components/issues/issue-detail";
 // helpers
 import { getDescriptionPlaceholder } from "@/helpers/issue.helper";
+import { maskPrivateInformation } from "@/utils/privacy-masking";
 // hooks
 import { useWorkspace } from "@/hooks/store";
 // services
@@ -60,8 +61,9 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
 
   const handleDescriptionFormSubmit = useCallback(
     async (formData: Partial<TIssue>) => {
+      const maskedDescription = maskPrivateInformation(formData.description_html ?? "<p></p>");
       await issueOperations.update(workspaceSlug, projectId, issueId, {
-        description_html: formData.description_html ?? "<p></p>",
+        description_html: maskedDescription,
       });
     },
     [workspaceSlug, projectId, issueId, issueOperations]
@@ -112,7 +114,8 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                 dragDropEnabled
                 onChange={(_description: object, description_html: string) => {
                   setIsSubmitting("submitting");
-                  onChange(description_html);
+                  const maskedContent = maskPrivateInformation(description_html);
+                  onChange(maskedContent);
                   debouncedFormSave();
                 }}
                 placeholder={
@@ -136,6 +139,10 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                     throw new Error("Asset upload failed. Please try again later.");
                   }
                 }}
+                transformContent={(content: string) => {
+                  // 모든 텍스트에 대해 개인정보 마스킹 적용
+                  return maskPrivateInformation(content);
+                }}
               />
             ) : (
               <RichTextReadOnlyEditor
@@ -144,6 +151,10 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                 containerClassName={containerClassName}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
+                transformContent={(content: string) => {
+                  // 모든 텍스트에 대해 개인정보 마스킹 적용
+                  return maskPrivateInformation(content);
+                }}
               />
             )
           }

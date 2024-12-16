@@ -22,6 +22,7 @@ import { PageContentBrowser, PageContentLoader, PageEditorTitle } from "@/compon
 import { cn, LIVE_BASE_PATH, LIVE_BASE_URL } from "@/helpers/common.helper";
 import { getEditorFileHandlers, getReadOnlyEditorFileHandlers } from "@/helpers/editor.helper";
 import { generateRandomColor } from "@/helpers/string.helper";
+import { maskPrivateInformation } from "@/utils/privacy-masking";
 // hooks
 import { useMember, useMention, useUser, useWorkspace } from "@/hooks/store";
 import { usePageFilters } from "@/hooks/use-page-filters";
@@ -209,6 +210,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
                 workspaceId,
                 workspaceSlug: workspaceSlug?.toString() ?? "",
               })}
+              dragDropEnabled={true}
               handleEditorReady={handleEditorReady}
               ref={editorRef}
               containerClassName="h-full p-0 pb-64"
@@ -228,6 +230,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
               aiHandler={{
                 menu: getAIMenu,
               }}
+              transformContent={(content: string) => maskPrivateInformation(content)}
             />
           ) : (
             <CollaborativeDocumentReadOnlyEditorWithRef
@@ -252,6 +255,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
               }}
               realtimeConfig={realtimeConfig}
               user={userConfig}
+              transformContent={(content: string) => maskPrivateInformation(content)}
             />
           )}
         </div>

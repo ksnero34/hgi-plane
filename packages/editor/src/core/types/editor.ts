@@ -134,6 +134,7 @@ export interface IRichTextEditor extends IEditorProps {
   extensions?: any[];
   bubbleMenuEnabled?: boolean;
   dragDropEnabled?: boolean;
+  transformContent?: (content: string) => string;
 }
 
 export interface ICollaborativeDocumentEditor

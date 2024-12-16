@@ -8,6 +8,7 @@ import { TextArea } from "@plane/ui";
 import { cn } from "@/helpers/common.helper";
 import useDebounce from "@/hooks/use-debounce";
 import { TIssueOperations } from "./issue-detail";
+import { maskPrivateInformation } from "@/utils/privacy-masking";
 // hooks
 
 export type IssueTitleInputProps = {
@@ -95,7 +96,8 @@ export const IssueTitleInput: FC<IssueTitleInputProps> = observer((props) => {
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setIsSubmitting("submitting");
-      setTitle(e.target.value);
+      const maskedTitle = maskPrivateInformation(e.target.value);
+      setTitle(maskedTitle);
     },
     [setIsSubmitting]
   );

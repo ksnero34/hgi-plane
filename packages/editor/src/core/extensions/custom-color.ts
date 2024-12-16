@@ -46,13 +46,10 @@ export const CustomColorExtension = Mark.create({
     return {
       color: {
         default: null,
-        parseHTML: (element: HTMLElement) => {
-          // customColor 태그에서 color 속성 또는 data-text-color 속성을 가져옴
-          return element.getAttribute("color") || element.getAttribute("data-text-color");
-        },
+        parseHTML: (element: HTMLElement) => element.getAttribute("data-text-color"),
         renderHTML: (attributes: { color: string }) => {
           const { color } = attributes;
-          if (!color || color === "null") {
+          if (!color) {
             return {};
           }
 
@@ -72,13 +69,10 @@ export const CustomColorExtension = Mark.create({
       },
       backgroundColor: {
         default: null,
-        parseHTML: (element: HTMLElement) => {
-          // customColor 태그에서 backgroundColor 속성 또는 data-background-color 속성을 가져옴
-          return element.getAttribute("backgroundColor") || element.getAttribute("data-background-color");
-        },
+        parseHTML: (element: HTMLElement) => element.getAttribute("data-background-color"),
         renderHTML: (attributes: { backgroundColor: string }) => {
           const { backgroundColor } = attributes;
-          if (!backgroundColor || backgroundColor === "null") {
+          if (!backgroundColor) {
             return {};
           }
 
@@ -102,33 +96,18 @@ export const CustomColorExtension = Mark.create({
   parseHTML() {
     return [
       {
-        tag: "customColor",
-        getAttrs: (node) => {
-          if (typeof node === 'string') return false;
-          const element = node as HTMLElement;
-          const color = element.getAttribute("color");
-          const backgroundColor = element.getAttribute("backgroundColor");
-          if (!color && !backgroundColor) return false;
-          return null;
-        },
+        tag: "span",
+        getAttrs: (node) => node.getAttribute("data-text-color") && null,
       },
       {
         tag: "span",
-        getAttrs: (node) => {
-          if (typeof node === 'string') return false;
-          const element = node as HTMLElement;
-          const color = element.getAttribute("data-text-color");
-          const backgroundColor = element.getAttribute("data-background-color");
-          if (!color && !backgroundColor) return false;
-          return null;
-        },
+        getAttrs: (node) => node.getAttribute("data-background-color") && null,
       },
     ];
   },
 
   renderHTML({ HTMLAttributes }) {
-    const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes);
-    return ["span", attrs, 0];
+    return ["span", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
   },
 
   addCommands() {

@@ -13,6 +13,7 @@ import { ETabIndices } from "@/constants/tab-indices";
 import { getTabIndex } from "@/helpers/tab-indices.helper";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { maskPrivateInformation } from "@/utils/privacy-masking";
 
 type TIssueTitleInputProps = {
   control: Control<TIssue>;
@@ -54,7 +55,8 @@ export const IssueTitleInput: React.FC<TIssueTitleInputProps> = observer((props)
             type="text"
             value={value}
             onChange={(e) => {
-              onChange(e.target.value);
+              const maskedValue = maskPrivateInformation(e.target.value);
+              onChange(maskedValue);
               handleFormChange();
             }}
             ref={issueTitleRef || ref}

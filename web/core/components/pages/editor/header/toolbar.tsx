@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useParams } from "next/navigation";
+import { Check, ChevronDown, Upload } from "lucide-react";
 // editor
 import { EditorRefApi } from "@plane/editor";
 // ui
@@ -12,9 +13,17 @@ import { ColorDropdown } from "@/components/pages";
 import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/editor";
 // helpers
 import { cn } from "@/helpers/common.helper";
+// services
+import { FileService } from "@/services/file.service";
+// types
+import { EFileAssetType } from "@plane/types/src/enums";
+import { IPage } from "@/store/pages/page";
+
+const fileService = new FileService();
 
 type Props = {
   editorRef: EditorRefApi;
+  page: IPage;
 };
 
 type ToolbarButtonProps = {
@@ -63,7 +72,78 @@ ToolbarButton.displayName = "ToolbarButton";
 
 const toolbarItems = TOOLBAR_ITEMS.document;
 
-export const PageToolbar: React.FC<Props> = ({ editorRef }) => {
+const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; pageId: string }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { workspaceSlug, projectId } = useParams();
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !workspaceSlug || !projectId || !pageId) return;
+
+    try {
+      if (file.type.startsWith("image/")) {
+        // 이미지 파일인 경우 에디터의 이미지 처리 사용
+        await editorRef.executeMenuItemCommand({
+          itemKey: "image",
+          extraProps: {
+            file,
+          },
+        });
+      } else {
+        // 이미지가 아닌 파일인 경우 FileService를 통해 직접 업로드
+        const { asset_id } = await fileService.uploadProjectAsset(
+          workspaceSlug.toString(),
+          projectId.toString(),
+          {
+            entity_identifier: pageId,
+            entity_type: EFileAssetType.PAGE_DESCRIPTION,
+          },
+          file
+        );
+
+        // 파일 링크를 에디터에 삽입
+        const fileUrl = await fileService.getFileUrl(asset_id);
+        editorRef.commands.insertContent(`<a href="${fileUrl}" target="_blank">${file.name}</a>`);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        className="hidden"
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+      />
+      <Tooltip
+        tooltipContent={
+          <p className="flex flex-col gap-1 text-center text-xs">
+            <span className="font-medium">파일 업로드</span>
+          </p>
+        }
+      >
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="text-custom-text-300 text-sm border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 h-7 rounded px-2 flex items-center gap-2"
+        >
+          <Upload className="size-3" />
+          <span>파일</span>
+        </button>
+      </Tooltip>
+    </>
+  );
+};
+
+export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
   // states
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
 
@@ -158,6 +238,9 @@ export const PageToolbar: React.FC<Props> = ({ editorRef }) => {
           ))}
         </div>
       ))}
+      <div className="flex items-center gap-0.5 px-2">
+        <FileUploadButton editorRef={editorRef} pageId={page?.id ?? ""} />
+      </div>
     </div>
   );
 };

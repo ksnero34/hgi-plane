@@ -24,7 +24,54 @@ export const getHocusPocusServer = async () => {
 
   const processTextNode = (textNode: Y.XmlText): boolean => {
     const text = textNode.toString();
+    //console.log("[Hocuspocus] 텍스트 노드 마스킹 처리 전:", text);
+    
+    // customColor 태그가 포함된 경우, 태그 내부의 텍스트만 추출하여 마스킹
+    if (text.includes('<customColor')) {
+      //console.log("[Hocuspocus] customColor 태그 발견, 파싱 시작");
+      const match = text.match(/<customColor([^>]*)>([^<]+)<\/customColor>/);
+      if (match) {
+        const [fullMatch, attributes, innerText] = match;
+        //console.log("[Hocuspocus] customColor 태그 파싱 결과:", {
+        //   attributes,
+        //   innerText
+        // });
+        
+        const maskedInnerText = maskPrivateInformation(innerText);
+        //console.log("[Hocuspocus] 마스킹된 내부 텍스트:", maskedInnerText);
+        
+        if (maskedInnerText !== innerText) {
+          try {
+            // 속성 파싱
+            const bgMatch = attributes.match(/backgroundColor="([^"]+)"/);
+            const colorMatch = attributes.match(/color="([^"]+)"/);
+            const backgroundColor = bgMatch ? bgMatch[1] : null;
+            const color = colorMatch ? colorMatch[1] : null;
+            
+            // 새로운 customColor 태그 생성
+            const newText = `<customColor${attributes}>${maskedInnerText}</customColor>`;
+            //console.log("[Hocuspocus] 새로 생성된 텍스트:", newText);
+            
+            // 기존 텍스트 교체
+            const length = textNode.length;
+            textNode.delete(0, length);
+            textNode.insert(0, newText);
+            
+            //console.log("[Hocuspocus] customColor 텍스트 교체 완료");
+            return true;
+          } catch (error) {
+            console.error("[Hocuspocus] Error processing customColor text:", error);
+            return false;
+          }
+        }
+      } else {
+        //console.log("[Hocuspocus] customColor 태그 파싱 실패");
+      }
+      return false;
+    }
+    
     const maskedText = maskPrivateInformation(text);
+    //console.log("[Hocuspocus] 텍스트 노드 마스킹 처리 후:", maskedText);
     
     if (maskedText !== text) {
       const length = textNode.length;
@@ -40,7 +87,10 @@ export const getHocusPocusServer = async () => {
 
     // customColor 태그 내부의 텍스트만 마스킹
     if (element.nodeName === 'customColor') {
+      //console.log("[Hocuspocus] customColor 엘리먼트 처리 시작");
       let fullText = '';
+      
+      // 내부 텍스트만 추출
       for (let i = 0; i < element.length; i++) {
         const item = element.get(i);
         if (item instanceof Y.XmlText) {
@@ -48,15 +98,33 @@ export const getHocusPocusServer = async () => {
         }
       }
       
+      //console.log("[Hocuspocus] 마스킹 처리 전 텍스트:", fullText);
       const maskedText = maskPrivateInformation(fullText);
+      //console.log("[Hocuspocus] 마스킹 처리 후 텍스트:", maskedText);
+      
       if (maskedText !== fullText) {
-        // 기존 내용 삭제
-        while (element.length > 0) {
-          element.delete(0, 1);
+        try {
+          //console.log("[Hocuspocus] 마스킹 변환 시작");
+          
+          // 기존 텍스트 노드 찾기
+          for (let i = 0; i < element.length; i++) {
+            const item = element.get(i);
+            if (item instanceof Y.XmlText) {
+              // 기존 텍스트 노드의 내용만 업데이트
+              const length = item.length;
+              item.delete(0, length);
+              item.insert(0, maskedText);
+              hasChanges = true;
+              break;
+            }
+          }
+          
+          //console.log("[Hocuspocus] 마스킹 변환 완료");
+        } catch (error) {
+          console.error("[Hocuspocus] Error processing customColor element:", error);
         }
-        // 마스킹된 텍스트 추가
-        element.push([new Y.XmlText(maskedText)]);
-        hasChanges = true;
+      } else {
+        //console.log("[Hocuspocus] 마스킹 처리가 필요하지 않음 (텍스트 동일)");
       }
       return hasChanges;
     }
@@ -77,6 +145,22 @@ export const getHocusPocusServer = async () => {
     }
 
     return hasChanges;
+  };
+
+  // 마스킹된 텍스트를 처리하는 함수
+  const maskSensitiveContent = (text: string) => {
+    // customColor 태그 내부의 내용만 변환
+    return text.replace(
+      /(<customColor[^>]*>)(.*?)(<\/customColor>)/g,
+      (match, openTag, content, closeTag) => {
+        // 전화번호 마스킹
+        const maskedContent = content.replace(
+          /(\d{3})-?(\d{4})-?(\d{4})/g,
+          '$1-****-$3'
+        );
+        return openTag + maskedContent + closeTag;
+      }
+    );
   };
 
   return Server.configure({
@@ -152,7 +236,7 @@ export const getHocusPocusServer = async () => {
             });
 
             if (hasChanges) {
-              console.log("[Hocuspocus] Document updated with masked content");
+              //console.log("[Hocuspocus] Document updated with masked content");
             }
           });
         } else {
