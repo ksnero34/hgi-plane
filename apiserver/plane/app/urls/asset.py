@@ -12,6 +12,7 @@ from plane.app.views import (
     AssetRestoreEndpoint,
     ProjectAssetEndpoint,
     ProjectBulkAssetEndpoint,
+    PageFileAssetEndpoint,
 )
 
 
@@ -81,5 +82,15 @@ urlpatterns = [
     path(
         "assets/v2/workspaces/<str:slug>/projects/<uuid:project_id>/<uuid:entity_id>/bulk/",
         ProjectBulkAssetEndpoint.as_view(),
+    ),
+    path(
+        "assets/v2/workspaces/<str:slug>/projects/<uuid:project_id>/pages/files/",
+        PageFileAssetEndpoint.as_view(),
+        name="page-file-assets",
+    ),
+    path(
+        "assets/v2/workspaces/<str:slug>/projects/<uuid:project_id>/pages/files/<uuid:pk>/",
+        PageFileAssetEndpoint.as_view(),
+        name="page-file-assets",
     ),
 ]

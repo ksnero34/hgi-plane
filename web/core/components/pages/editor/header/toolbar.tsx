@@ -6,7 +6,7 @@ import { Check, ChevronDown, Upload } from "lucide-react";
 // editor
 import { EditorRefApi } from "@plane/editor";
 // ui
-import { CustomMenu, Tooltip } from "@plane/ui";
+import { CustomMenu, Tooltip, Loader, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { ColorDropdown } from "@/components/pages";
 // constants
@@ -76,22 +76,30 @@ const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; page
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { workspaceSlug, projectId } = useParams();
 
+  console.log("🔍 FileUploadButton 렌더링:", { workspaceSlug, projectId, pageId });
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("👉 파일 선택 이벤트 발생");
+    
     const file = event.target.files?.[0];
-    if (!file || !workspaceSlug || !projectId || !pageId) return;
+    console.log("📂 선택된 파일:", file);
+
+    if (!file || !workspaceSlug || !projectId || !pageId) {
+      console.log("❌ 필수 정보 누락:", { file, workspaceSlug, projectId, pageId });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "업로드 실패",
+        message: "필수 정보가 누락되었습니다. 페이지를 새로고침한 후 다시 시도해주세요."
+      });
+      return;
+    }
 
     try {
-      if (file.type.startsWith("image/")) {
-        // 이미지 파일인 경우 에디터의 이미지 처리 사용
-        await editorRef.executeMenuItemCommand({
-          itemKey: "image",
-          extraProps: {
-            file,
-          },
-        });
-      } else {
-        // 이미지가 아닌 파일인 경우 FileService를 통해 직접 업로드
-        const { asset_id } = await fileService.uploadProjectAsset(
+      console.log("📄 파일 업로드 처리 중...");
+      console.log("FileService 호출 전:", { workspaceSlug, projectId, pageId });
+      
+      try {
+        const response = await fileService.uploadPageFile(
           workspaceSlug.toString(),
           projectId.toString(),
           {
@@ -100,17 +108,37 @@ const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; page
           },
           file
         );
+        
+        console.log("📋 파일 업로드 응답:", response);
 
-        // 파일 링크를 에디터에 삽입
-        const fileUrl = await fileService.getFileUrl(asset_id);
-        editorRef.commands.insertContent(`<a href="${fileUrl}" target="_blank">${file.name}</a>`);
+        // 파일 업로드 완료 이벤트 발생
+        window.dispatchEvent(new CustomEvent("file-uploaded"));
+
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: "파일 업로드 완료",
+          message: "파일이 성공적으로 업로드되었습니다."
+        });
+      } catch (uploadError: any) {
+        console.error("❌ 파일 업로드 실패:", uploadError);
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "파일 업로드 실패",
+          message: uploadError?.message || "파일 업로드에 실패했습니다. 다시 시도해주세요."
+        });
       }
-    } catch (error) {
-      console.error("Error uploading file:", error);
+    } catch (error: any) {
+      console.error("❌ 파일 업로드 실패:", error);
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "파일 업로드 실패",
+        message: error?.message || "파일 업로드 중 오류가 발생했습니다."
+      });
     }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+      console.log("🧹 파일 입력 초기화 완료");
     }
   };
 
@@ -121,7 +149,7 @@ const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; page
         ref={fileInputRef}
         onChange={handleFileUpload}
         className="hidden"
-        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+        accept="*.*"
       />
       <Tooltip
         tooltipContent={
@@ -132,7 +160,10 @@ const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; page
       >
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            console.log("👇 파일 업로드 버튼 클릭");
+            fileInputRef.current?.click();
+          }}
           className="text-custom-text-300 text-sm border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 h-7 rounded px-2 flex items-center gap-2"
         >
           <Upload className="size-3" />
@@ -148,34 +179,45 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
 
   const updateActiveStates = useCallback(() => {
-    // console.log("Updating status");
+    if (!editorRef) return;
+    
     const newActiveStates: Record<string, boolean> = {};
     Object.values(toolbarItems)
       .flat()
       .forEach((item) => {
-        // TODO: update this while toolbar homogenization
-        // @ts-expect-error type mismatch here
         newActiveStates[item.renderKey] = editorRef.isMenuItemActive({
           itemKey: item.itemKey,
           ...item.extraProps,
         });
       });
     setActiveStates(newActiveStates);
-    // console.log("newActiveStates", newActiveStates);
   }, [editorRef]);
 
   useEffect(() => {
+    if (!editorRef) return;
+    
     const unsubscribe = editorRef.onStateChange(updateActiveStates);
     updateActiveStates();
     return () => unsubscribe();
   }, [editorRef, updateActiveStates]);
 
   const activeTypography = TYPOGRAPHY_ITEMS.find((item) =>
-    editorRef.isMenuItemActive({
+    editorRef?.isMenuItemActive({
       itemKey: item.itemKey,
       ...item.extraProps,
     })
   );
+
+  // page가 없거나 id가 없으면 로딩 상태 표시
+  if (!page || !page.id) {
+    return (
+      <div className="flex flex-wrap items-center divide-x divide-custom-border-200">
+        <div className="w-full h-[44px] flex items-center justify-center">
+          <Loader className="w-4 h-4" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center divide-x divide-custom-border-200">
@@ -196,7 +238,7 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
             key={item.renderKey}
             className="flex items-center justify-between gap-2"
             onClick={() =>
-              editorRef.executeMenuItemCommand({
+              editorRef?.executeMenuItemCommand({
                 itemKey: item.itemKey,
                 ...item.extraProps,
               })
@@ -214,13 +256,13 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
       </CustomMenu>
       <ColorDropdown
         handleColorSelect={(key, color) =>
-          editorRef.executeMenuItemCommand({
+          editorRef?.executeMenuItemCommand({
             itemKey: key,
             color,
           })
         }
         isColorActive={(key, color) =>
-          editorRef.isMenuItemActive({
+          editorRef?.isMenuItemActive({
             itemKey: key,
             color,
           })
@@ -233,14 +275,12 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
               key={item.renderKey}
               item={item}
               isActive={activeStates[item.renderKey]}
-              executeCommand={editorRef.executeMenuItemCommand}
+              executeCommand={editorRef?.executeMenuItemCommand}
             />
           ))}
         </div>
       ))}
-      <div className="flex items-center gap-0.5 px-2">
-        <FileUploadButton editorRef={editorRef} pageId={page?.id ?? ""} />
-      </div>
+      <FileUploadButton editorRef={editorRef} pageId={page.id} />
     </div>
   );
 };

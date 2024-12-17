@@ -1,7 +1,7 @@
 import { observer } from "mobx-react";
 import { EditorReadOnlyRefApi, EditorRefApi } from "@plane/editor";
 // components
-import { Header, EHeaderVariant } from "@plane/ui";
+import { Header, EHeaderVariant, Loader } from "@plane/ui";
 import { PageEditorMobileHeaderRoot, PageExtraOptions, PageSummaryPopover, PageToolbar } from "@/components/pages";
 // helpers
 import { cn } from "@/helpers/common.helper";
@@ -32,12 +32,23 @@ export const PageEditorHeaderRoot: React.FC<Props> = observer((props) => {
     setSidePeekVisible,
     sidePeekVisible,
   } = props;
-  // derived values
-  const { isContentEditable } = page;
+
   // page filters
   const { isFullWidth } = usePageFilters();
 
-  if (!editorRef.current && !readOnlyEditorRef.current) return null;
+  // 페이지나 에디터 ref가 없을 때 로딩 상태 표시
+  if (!page || (!editorRef.current && !readOnlyEditorRef.current)) {
+    return (
+      <Header variant={EHeaderVariant.SECONDARY} showOnMobile={false}>
+        <div className="w-full h-[44px] flex items-center justify-center">
+          <Loader className="w-4 h-4" />
+        </div>
+      </Header>
+    );
+  }
+
+  // derived values
+  const { isContentEditable } = page;
 
   return (
     <>
@@ -58,8 +69,8 @@ export const PageEditorHeaderRoot: React.FC<Props> = observer((props) => {
               />
             </div>
           )}
-          {(editorReady || readOnlyEditorReady) && isContentEditable && editorRef.current && (
-            <PageToolbar editorRef={editorRef?.current} />
+          {page && editorRef.current && (editorReady || readOnlyEditorReady) && isContentEditable && (
+            <PageToolbar editorRef={editorRef.current} page={page} />
           )}
         </Header.LeftItem>
         <PageExtraOptions

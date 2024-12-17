@@ -100,6 +100,7 @@ from .asset.v2 import (
     AssetRestoreEndpoint,
     ProjectAssetEndpoint,
     ProjectBulkAssetEndpoint,
+    PageFileAssetEndpoint,
 )
 from .issue.base import (
     IssueListEndpoint,

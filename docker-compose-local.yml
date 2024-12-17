@@ -58,7 +58,7 @@ services:
       context: .
       dockerfile: ./web/Dockerfile.dev
     image: hgi-plane-dev/web:0.0.35
-    #restart: unless-stopped
+    restart: unless-stopped
     networks:
       - dev_env
     volumes:

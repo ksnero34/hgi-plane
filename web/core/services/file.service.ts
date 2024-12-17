@@ -1,11 +1,13 @@
 // plane types
 import { TFileEntityInfo, TFileSignedURLResponse } from "@plane/types";
 // helpers
-import { API_BASE_URL } from "@/helpers/common.helper";
 import { generateFileUploadPayload, getAssetIdFromUrl, getFileMetaDataForUpload } from "@/helpers/file.helper";
+import { API_BASE_URL } from "@/helpers/common.helper";
 // services
 import { APIService } from "@/services/api.service";
 import { FileUploadService } from "@/services/file-upload.service";
+import { IUser } from "@/store/user";
+import { EFileAssetType } from "@plane/types/src/enums";
 
 export interface UnSplashImage {
   id: string;
@@ -40,6 +42,21 @@ export enum TFileAssetType {
   USER_AVATAR = "USER_AVATAR",
   USER_COVER = "USER_COVER",
   WORKSPACE_LOGO = "WORKSPACE_LOGO",
+}
+
+export interface FileUploadResponse {
+  asset_id: string;
+  asset_url: string;
+  upload_data: any;
+}
+
+export interface FileAsset {
+  asset_id: string;
+  asset_url: string;
+  name: string;
+  size: string;
+  created_at: string;
+  created_by: IUser;
 }
 
 export class FileService extends APIService {
@@ -241,6 +258,70 @@ export class FileService extends APIService {
       .then((res) => res?.data)
       .catch((err) => {
         throw err?.response?.data;
+      });
+  }
+
+  async getFileUrl(assetId: string): Promise<string> {
+    return this.get(`/api/assets/v2/${assetId}/`)
+      .then((response) => response?.data?.asset_url)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async uploadPageFile(
+    workspaceSlug: string,
+    projectId: string,
+    data: TFileEntityInfo,
+    file: File
+  ): Promise<TFileSignedURLResponse> {
+    const fileMetaData = getFileMetaDataForUpload(file);
+    return this.post(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/`, {
+      ...data,
+      ...fileMetaData,
+    })
+      .then(async (response) => {
+        const signedURLResponse: TFileSignedURLResponse = response?.data;
+        const fileUploadPayload = generateFileUploadPayload(signedURLResponse, file);
+        await this.fileUploadService.uploadFile(signedURLResponse.upload_data.url, fileUploadPayload);
+        await this.updateProjectAssetUploadStatus(workspaceSlug, projectId, signedURLResponse.asset_id);
+        return signedURLResponse;
+      })
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getPageFiles(
+    workspaceSlug: string,
+    projectId: string,
+    pageId: string
+  ): Promise<FileAsset[]> {
+    return this.get(
+      `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/`,
+      {
+        params: {
+          page_id: pageId
+        }
+      }
+    )
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async deleteFile(
+    workspaceSlug: string,
+    projectId: string,
+    assetId: string
+  ): Promise<void> {
+    return this.delete(
+      `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/${assetId}/`
+    )
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
       });
   }
 }
