@@ -44,6 +44,25 @@ Meet [Plane](https://dub.sh/plane-website-readme), an open-source project manage
 
 > Plane is evolving every day. Your suggestions, ideas, and reported bugs help us immensely. Do not hesitate to join in the conversation on [Discord](https://discord.com/invite/A92xrEGCge) or raise a GitHub issue. We read everything and respond to most.
 
+## Customized Plane for HGI
+
+일정 관리 용도로 사용하기 위해 기존 Plane 코드를 커스터마이징 하였습니다.
+
+#### 추가된 기능
+
+- page에 파일 업로드 기능 추가
+- issue 캘린더 뷰에서 시작일과 종료일 사이의 날엔 모두 블록이 나오도록 수정
+- issue 캘린더 뷰에서 시작일의 블록을 드래그시 시작일 수정 , 다른 날의 블록 드래그시 종료일 수정 되도록 처리
+- OIDC 를 통한 일반 user 로그인 기능 추가 / OIDC 통한 관리자 로그인 기능 추가 (scope 추가 필요, roles 스코프에서 ROLE_CLIENT_ADMIN 있을경우 관리자 로그인 가능)
+- 관리자 페이지에 OIDC 설정 추가
+- 관리자 페이지에 인스턴스 멤버 목록 조회 기능 추가 및 관리자 설정 기능 추가
+- 관리자 페이지에 인스턴스 파일 제어 기능 추가 (허용 확장자 및 허용 용량 수정 가능 , 단 기동시 nginx 프록시 서버의 max_body_size 는 별개의 설정)
+- 워크스페이스 및 프로젝트의 권한에 Viewer, Restricted 권한 추가 (viewer의 경우 모든 이슈 조회 가능 및 자신에게 할당된 이슈 수정가능 / restricted의 경우 자신에게 할당된 이슈만 조회/수정 가능)
+- page 및 issue 설명란에 개인정보 마스킹기능 추가
+- page 의 첨부파일 추가 및 issue의 attachment 추가 시 위 관리자 설정에서 설정한 허용 확장자 및 허용 용량 체크, MIME 타입 체크
+- 이 외 계속 추가중...
+
+
 ## ⚡ Installation
 
 The easiest way to get started with Plane is by creating a [Plane Cloud](https://app.plane.so) account.
