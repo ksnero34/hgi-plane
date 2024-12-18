@@ -1,9 +1,10 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import pytz
 import requests
+import jwt
 
 from plane.authentication.adapter.oauth import OauthAdapter
 from plane.license.utils.instance_value import get_configuration_value
@@ -11,6 +12,9 @@ from plane.authentication.adapter.error import (
     AuthenticationException,
     AUTHENTICATION_ERROR_CODES,
 )
+from plane.license.models import Instance, InstanceAdmin
+from django.conf import settings
+from plane.db.models import User
 
 class OIDCOAuthProvider(OauthAdapter):
     provider = "oidc"
@@ -46,13 +50,11 @@ class OIDCOAuthProvider(OauthAdapter):
                 )
                 
         except requests.RequestException as e:
-            # print(f"OIDC 설정 요청 오류: {str(e)}")
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message=f"OIDC 서버 연결 오류: {str(e)}",
             )
         except Exception as e:
-            # print(f"OIDC 설정 처리 오류: {str(e)}")
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message=f"OIDC 설정 처리 오류: {str(e)}",
@@ -104,7 +106,6 @@ class OIDCOAuthProvider(OauthAdapter):
         token_response = self.get_user_token(
             data=data, headers={"Accept": "application/json"}
         )
-        # print("token_responsessssss", token_response)
         super().set_token_data(
             {
                 "access_token": token_response.get("access_token"),
@@ -135,9 +136,50 @@ class OIDCOAuthProvider(OauthAdapter):
             # 관리자 권한 확인
             if "ROLE_CLIENT_ADMIN" not in roles:
                 raise AuthenticationException(
-                    error_code="UNAUTHORIZED",  # 문자열로 변경
+                    error_code="UNAUTHORIZED",
                     error_message="관리자 권한이 없습니다.",
                 )
+
+            # 인스턴스 관리자 토큰 생성
+            instance = Instance.objects.first()
+            if instance:
+                # 현재 시간을 UTC로 설정
+                current_time = datetime.now(pytz.UTC)
+                
+                # JWT 토큰 생성 (7일 유효)
+                token_data = {
+                    "user_email": email,
+                    "exp": int((current_time + timedelta(days=7)).timestamp()),  # Unix timestamp로 변환
+                    "iat": int(current_time.timestamp()),  # Unix timestamp로 변환
+                }
+                admin_token = jwt.encode(
+                    token_data,
+                    settings.SECRET_KEY,
+                    algorithm="HS256"
+                )
+                
+                # 사용자 정보 업데이트
+                user = User.objects.filter(email=email).first()
+                if user:
+                    user.is_active = True
+                    user.last_active = current_time
+                    user.last_login_time = current_time
+                    user.last_login_ip = self.request.META.get("REMOTE_ADDR")
+                    user.last_login_uagent = self.request.META.get("HTTP_USER_AGENT")
+                    user.token_updated_at = current_time
+                    user.save()
+                
+                # 인스턴스 관리자 생성 또는 업데이트
+                instance_admin, created = InstanceAdmin.objects.update_or_create(
+                    instance=instance,
+                    user=user,
+                    defaults={
+                        "role": 20,  # ROLE.ADMIN.value
+                        "auth_token": admin_token
+                    }
+                )
+                
+                print(f"[OIDC] Instance admin {'created' if created else 'updated'} for user: {email}")
 
         super().set_user_data(
             {

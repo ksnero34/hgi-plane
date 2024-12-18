@@ -17,7 +17,7 @@ class SessionMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         if "instances/file-settings" in request.path:
-            session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+            session_key = request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME) or request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         elif "instances" in request.path:
             session_key = request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME)
         else:
@@ -38,12 +38,21 @@ class SessionMiddleware(MiddlewareMixin):
             return response
         # First check if we need to delete this cookie.
         # The session should be deleted only if the session is entirely empty.
-        is_admin_path = "instances" in request.path
-        cookie_name = (
-            settings.ADMIN_SESSION_COOKIE_NAME
-            if is_admin_path
-            else settings.SESSION_COOKIE_NAME
-        )
+        is_admin_path = "instances" in request.path and "instances/file-settings" not in request.path
+        is_file_settings = "instances/file-settings" in request.path
+        
+        if is_file_settings:
+            cookie_name = (
+                settings.ADMIN_SESSION_COOKIE_NAME 
+                if request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME) 
+                else settings.SESSION_COOKIE_NAME
+            )
+        else:
+            cookie_name = (
+                settings.ADMIN_SESSION_COOKIE_NAME
+                if is_admin_path
+                else settings.SESSION_COOKIE_NAME
+            )
 
         if cookie_name in request.COOKIES and empty:
             response.delete_cookie(
