@@ -204,7 +204,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.dev
-    image: hgi-plane-dev/proxy:0.0.39
+    image: hgi-plane-dev/proxy:0.0.48
     #restart: unless-stopped
     networks:
       - dev_env

@@ -25,12 +25,18 @@ class MinioUploadView(BaseAPIView):
     
     def post(self, request, *args, **kwargs):
         try:
+            print("\n=== MinioUploadView POST ===")
+            print(f"Request Headers: {request.headers}")
+            print(f"Request POST data: {request.POST}")
+            print(f"Request FILES: {request.FILES}")
+            
             # S3Storage를 사용하여 파일 업로드
             storage = S3Storage(request=request)
             
             # 파일 데이터 가져오기 (multipart/form-data에서 file 필드)
             files = request.FILES
             if not files:
+                print("Error: No file provided")
                 return Response(
                     {"error": "No file provided"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -42,15 +48,16 @@ class MinioUploadView(BaseAPIView):
             # Content-Type 확인
             content_type = file.content_type or request.META.get('CONTENT_TYPE', '')
             
-            # Key 파라미터 확인
-            key = request.GET.get('key')
+            # Key 파라미터 확인 (POST 데이터에서)
+            key = request.POST.get('key')
             if not key:
+                print("Error: No key parameter provided in POST data")
                 return Response(
                     {"error": "No key parameter provided"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            logger.info(f"파일 업로드 시작 - Key: {key}, Content-Type: {content_type}")
+            print(f"File Info - Key: {key}, Content-Type: {content_type}, Size: {file.size}")
             
             # 파일 업로드 처리
             response = storage.s3_client.put_object(
@@ -60,11 +67,11 @@ class MinioUploadView(BaseAPIView):
                 ContentType=content_type
             )
             
-            logger.info(f"파일 업로드 완료 - Key: {key}")
+            print("File upload successful")
             return Response(status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.exception(f"파일 업로드 중 에러 발생: {str(e)}")
+            print(f"Error during file upload: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -83,11 +90,11 @@ class StorageObjectView(BaseAPIView):
             # URL 쿼리 파라미터 처리
             query_params = request.GET.dict()
             
-            logger.info(f"요청된 file_path: {file_path}")
+            print(f"요청된 file_path: {file_path}")
             
             # 파일명 추출 (경로의 마지막 부분)
             file_name = file_path.split('/')[-1]
-            logger.info(f"검색할 파일명: {file_name}")
+            print(f"검색할 파일명: {file_name}")
             
             # 파일 검색
             asset = FileAsset.objects.filter(
@@ -96,9 +103,9 @@ class StorageObjectView(BaseAPIView):
             ).first()
             
             if asset:
-                logger.info(f"파일 찾음 - asset.asset: {asset.asset}")
+                print(f"파일 찾음 - asset.asset: {asset.asset}")
             else:
-                logger.error(f"파일을 찾을 수 없음: {file_path}")
+                print(f"파일을 찾을 수 없음: {file_path}")
                 return Response(
                     {"error": f"File not found: {file_path}"},
                     status=status.HTTP_404_NOT_FOUND
@@ -111,7 +118,7 @@ class StorageObjectView(BaseAPIView):
                     member=request.user,
                     is_active=True
                 ).exists():
-                    logger.warning(f"프로젝트 접근 권한 없음: {request.user}")
+                    print(f"프로젝트 접근 권한 없음: {request.user}")
                     return Response(
                         {"error": "You don't have permission to access this file."},
                         status=status.HTTP_403_FORBIDDEN
@@ -124,7 +131,7 @@ class StorageObjectView(BaseAPIView):
                     member=request.user,
                     is_active=True
                 ).exists():
-                    logger.warning(f"워크스페이스 접근 권한 없음: {request.user}")
+                    print(f"워크스페이스 접근 권한 없음: {request.user}")
                     return Response(
                         {"error": "You don't have permission to access this file."},
                         status=status.HTTP_403_FORBIDDEN
@@ -138,17 +145,17 @@ class StorageObjectView(BaseAPIView):
             )
             
             if not s3_response:
-                logger.error(f"파일 스트리밍 실패: {asset.asset}")
+                print(f"파일 스트리밍 실패: {asset.asset}")
                 return Response(
                     {"error": "File streaming failed"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 
-            logger.info(f"파일 스트리밍 시작: {asset.asset}")
+            print(f"파일 스트리밍 시작: {asset.asset}")
             
             # 파일 확장자에 따른 content-type 설정
             content_type = s3_response.get('ContentType', 'application/octet-stream')
-            logger.info(f"Content-Type from S3: {content_type}")
+            print(f"Content-Type from S3: {content_type}")
             
             # S3에서 받은 content-type이 없거나 기본값인 경우 파일 확장자로 판단
             if content_type == 'application/octet-stream':
@@ -157,7 +164,7 @@ class StorageObjectView(BaseAPIView):
                     content_type = 'application/pdf'
                 elif asset_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                     content_type = 'image/' + asset_path.lower().split('.')[-1]
-                logger.info(f"Content-Type from extension: {content_type}")
+                print(f"Content-Type from extension: {content_type}")
             
             # 청크 크기 설정 (8MB)
             chunk_size = 8 * 1024 * 1024
@@ -179,7 +186,7 @@ class StorageObjectView(BaseAPIView):
             
             # Content-Disposition 헤더 설정
             disposition = query_params.get('response-content-disposition', 'inline')
-            response['Content-Disposition'] = f'{disposition}; filename="{file_name}"'
+            response['Content-Disposition'] = disposition
             
             # Content-Length 헤더 설정 (있는 경우)
             if 'ContentLength' in s3_response:
@@ -188,7 +195,7 @@ class StorageObjectView(BaseAPIView):
             return response
                 
         except Exception as e:
-            logger.exception(f"파일 스트리밍 중 에러 발생: {str(e)}")
+            print(f"파일 스트리밍 중 에러 발생: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

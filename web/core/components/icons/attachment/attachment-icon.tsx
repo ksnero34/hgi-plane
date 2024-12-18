@@ -17,7 +17,9 @@ import {
 } from "@/components/icons/attachment";
 
 export const getFileIcon = (fileType: string, size: number = 28) => {
-  switch (fileType) {
+  const type = fileType.toLowerCase();
+  
+  switch (type) {
     case "pdf":
       return <PdfIcon height={size} width={size} />;
     case "csv":
@@ -27,6 +29,7 @@ export const getFileIcon = (fileType: string, size: number = 28) => {
     case "css":
       return <CssIcon height={size} width={size} />;
     case "doc":
+    case "docx":
       return <DocIcon height={size} width={size} />;
     case "fig":
       return <FigmaIcon height={size} width={size} />;
@@ -35,6 +38,7 @@ export const getFileIcon = (fileType: string, size: number = 28) => {
     case "png":
       return <PngIcon height={size} width={size} />;
     case "jpg":
+    case "jpeg":
       return <JpgIcon height={size} width={size} />;
     case "js":
       return <JavaScriptIcon height={size} width={size} />;
@@ -51,6 +55,8 @@ export const getFileIcon = (fileType: string, size: number = 28) => {
     case "wmv":
       return <VideoIcon height={size} width={size} />;
     case "mkv":
+      return <VideoIcon height={size} width={size} />;
+    case "avi":
       return <VideoIcon height={size} width={size} />;
 
     default:

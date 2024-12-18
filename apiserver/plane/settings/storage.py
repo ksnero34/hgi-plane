@@ -57,19 +57,26 @@ class S3Storage(S3Boto3Storage):
         self, object_name, file_type, file_size, expiration=3600
     ):
         """Generate a presigned URL to upload an S3 object"""
+        print(f"\n=== Generate Presigned Post ===")
+        print(f"object_name: {object_name}")
+        print(f"file_type: {file_type}")
+        print(f"file_size: {file_size}")
+
         fields = {
             "Content-Type": file_type,
-            "key": object_name,  # key를 fields에 추가
+            "key": object_name,
         }
 
         conditions = [
             {"bucket": self.aws_storage_bucket_name},
             ["content-length-range", 1, file_size],
             {"Content-Type": file_type},
-            {"key": object_name},  # key condition 추가
+            {"key": object_name},
         ]
 
-        # Generate the presigned POST URL
+        print(f"\nFields: {fields}")
+        print(f"Conditions: {conditions}")
+
         try:
             # Generate a presigned URL for the S3 object
             response = self.s3_client.generate_presigned_post(
@@ -80,13 +87,13 @@ class S3Storage(S3Boto3Storage):
                 ExpiresIn=expiration,
             )
 
-            # 응답의 url을 절대 경로로 변경 (환경변수 사용)
-            response['url'] = f"/{settings.AWS_STORAGE_BUCKET_NAME}"
+            # nginx가 /storage/uploads로 프록시하므로 /uploads로 설정
+            response['url'] = f"/{self.aws_storage_bucket_name}"
             
+            print(f"\nGenerated Response: {response}")
             return response
-        # Handle errors
         except ClientError as e:
-            print(f"Error generating presigned POST URL: {e}")
+            print(f"\nError generating presigned POST URL: {e}")
             return None
 
     def _get_content_disposition(self, disposition, filename=None):
@@ -108,22 +115,11 @@ class S3Storage(S3Boto3Storage):
         content_disposition = self._get_content_disposition(disposition, filename)
         """Generate a presigned URL to share an S3 object"""
         try:
-            response = self.s3_client.generate_presigned_url(
-                "get_object",
-                Params={
-                    "Bucket": self.aws_storage_bucket_name,
-                    "Key": str(object_name),
-                    "ResponseContentDisposition": content_disposition,
-                },
-                ExpiresIn=expiration,
-                HttpMethod=http_method,
-            )
-        except ClientError as e:
-            log_exception(e)
+            # 내부 URL 생성 (/storage 제거)
+            return f"/{self.aws_storage_bucket_name}/{object_name}?response-content-disposition={quote(content_disposition)}"
+        except Exception as e:
+            print(f"Error generating URL: {e}")
             return None
-
-        # The response contains the presigned URL
-        return response
 
     def get_object_metadata(self, object_name):
         """Get the metadata for an S3 object"""

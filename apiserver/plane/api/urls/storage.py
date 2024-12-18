@@ -9,6 +9,6 @@ bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 urlpatterns = [
     # 파일 조회 경로
     path(f"{bucket_name}/<path:file_path>", StorageObjectView.as_view(), name="storage-proxy"),
-    # 파일 업로드 엔드포인트 (trailing slash 처리)
-    re_path(rf"^{bucket_name}/?$", csrf_exempt(MinioUploadView.as_view()), name="minio-upload"),
+    # 파일 업로드 엔드포인트
+    path(f"{bucket_name}", csrf_exempt(MinioUploadView.as_view()), name="minio-upload"),
 ] 
