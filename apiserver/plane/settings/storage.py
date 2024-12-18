@@ -9,6 +9,7 @@ from urllib.parse import quote
 # Module imports
 from plane.utils.exception_logger import log_exception
 from storages.backends.s3boto3 import S3Boto3Storage
+from django.conf import settings
 
 
 class S3Storage(S3Boto3Storage):
@@ -38,11 +39,7 @@ class S3Storage(S3Boto3Storage):
                 aws_access_key_id=self.aws_access_key_id,
                 aws_secret_access_key=self.aws_secret_access_key,
                 region_name=self.aws_region,
-                endpoint_url=(
-                    f"{request.scheme}://{request.get_host()}"
-                    if request
-                    else self.aws_s3_endpoint_url
-                ),
+                endpoint_url=self.aws_s3_endpoint_url,
                 config=boto3.session.Config(signature_version="s3v4"),
             )
         else:
@@ -60,22 +57,17 @@ class S3Storage(S3Boto3Storage):
         self, object_name, file_type, file_size, expiration=3600
     ):
         """Generate a presigned URL to upload an S3 object"""
-        fields = {"Content-Type": file_type}
+        fields = {
+            "Content-Type": file_type,
+            "key": object_name,  # key를 fields에 추가
+        }
 
         conditions = [
             {"bucket": self.aws_storage_bucket_name},
             ["content-length-range", 1, file_size],
             {"Content-Type": file_type},
+            {"key": object_name},  # key condition 추가
         ]
-
-        # Add condition for the object name (key)
-        if object_name.startswith("${filename}"):
-            conditions.append(
-                ["starts-with", "$key", object_name[: -len("${filename}")]]
-            )
-        else:
-            fields["key"] = object_name
-            conditions.append({"key": object_name})
 
         # Generate the presigned POST URL
         try:
@@ -87,12 +79,15 @@ class S3Storage(S3Boto3Storage):
                 Conditions=conditions,
                 ExpiresIn=expiration,
             )
+
+            # 응답의 url을 절대 경로로 변경 (환경변수 사용)
+            response['url'] = f"/{settings.AWS_STORAGE_BUCKET_NAME}"
+            
+            return response
         # Handle errors
         except ClientError as e:
             print(f"Error generating presigned POST URL: {e}")
             return None
-
-        return response
 
     def _get_content_disposition(self, disposition, filename=None):
         """Helper method to generate Content-Disposition header value"""

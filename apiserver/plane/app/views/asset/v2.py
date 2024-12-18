@@ -1,6 +1,7 @@
 # Python imports
 import uuid
 import magic
+from urllib.parse import urlparse, urlunparse
 
 # Django imports
 from django.conf import settings
@@ -29,7 +30,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
         """파일의 실제 MIME 타입을 확인"""
         mime = magic.Magic(mime=True)
         file.seek(0)  # 파일 포인터를 처음으로
-        mime_type = mime.from_buffer(file.read(1024))  # 처음 1024바이트만 읽어서 확인
+        mime_type = mime.from_buffer(file.read(1024))  # 처음 1024바���트만 읽어서 확인
         file.seek(0)  # 파일 포인터를 다시 처음으로
         return mime_type
 
@@ -133,7 +134,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             if not self.is_valid_mime_type(file_extension, mime_type):
                 return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
 
-        elif file_info:  # 파일 정보만 있는 경우
+        elif file_info:  # 파일 정��만 있는 경우
             # 파일 크기 검증
             if file_info.get('size', 0) > file_settings.max_file_size:
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
@@ -149,6 +150,15 @@ class BaseFileAssetEndpoint(BaseAPIView):
                 return False, f"파일 형식이 허용되지 않습니다. 감지된 형식: {mime_type}"
 
         return True, None
+
+
+def modify_presigned_post_url(request, presigned_data):
+    """presigned post URL의 도메인을 요청 도메인으로 변경"""
+    if not presigned_data or 'url' not in presigned_data:
+        return presigned_data
+    
+    presigned_data['url'] = replace_domain_in_url(request, presigned_data['url'])
+    return presigned_data
 
 
 class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
@@ -201,13 +211,15 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(
+        presigned_data = storage.generate_presigned_post(
             object_name=asset_key, file_type=type, file_size=size
         )
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
         # Return the presigned URL
         return Response(
             {
-                "upload_data": presigned_url,
+                "upload_data": modified_presigned_data,
                 "asset_id": str(asset.id),
                 "asset_url": asset.asset_url,
             },
@@ -390,13 +402,15 @@ class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(
+        presigned_data = storage.generate_presigned_post(
             object_name=asset_key, file_type=type, file_size=size
         )
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
         # Return the presigned URL
         return Response(
             {
-                "upload_data": presigned_url,
+                "upload_data": modified_presigned_data,
                 "asset_id": str(asset.id),
                 "asset_url": asset.asset_url,
             },
@@ -450,8 +464,10 @@ class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
-        # Redirect to the signed URL
-        return HttpResponseRedirect(signed_url)
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_url = replace_domain_in_url(request, signed_url)
+        # Redirect to the modified signed URL
+        return HttpResponseRedirect(modified_url)
 
 
 class StaticFileAssetEndpoint(BaseAPIView):
@@ -486,8 +502,10 @@ class StaticFileAssetEndpoint(BaseAPIView):
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
-        # Redirect to the signed URL
-        return HttpResponseRedirect(signed_url)
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_url = replace_domain_in_url(request, signed_url)
+        # Redirect to the modified signed URL
+        return HttpResponseRedirect(modified_url)
 
 
 class AssetRestoreEndpoint(BaseAPIView):
@@ -588,13 +606,15 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(
+        presigned_data = storage.generate_presigned_post(
             object_name=asset_key, file_type=type, file_size=size
         )
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
         # Return the presigned URL
         return Response(
             {
-                "upload_data": presigned_url,
+                "upload_data": modified_presigned_data,
                 "asset_id": str(asset.id),
                 "asset_url": asset.asset_url,
             },
@@ -648,8 +668,10 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
-        # Redirect to the signed URL
-        return HttpResponseRedirect(signed_url)
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_url = replace_domain_in_url(request, signed_url)
+        # Redirect to the modified signed URL
+        return HttpResponseRedirect(modified_url)
 
 
 class ProjectBulkAssetEndpoint(BaseAPIView):
@@ -757,13 +779,15 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(
+        presigned_data = storage.generate_presigned_post(
             object_name=asset_key, file_type=type, file_size=size
         )
+        # URL의 도메인을 요청 도메인으로 변경
+        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
         # Return the presigned URL
         return Response(
             {
-                "upload_data": presigned_url,
+                "upload_data": modified_presigned_data,
                 "asset_id": str(asset.id),
                 "asset_url": asset.asset_url,
             },
@@ -833,3 +857,27 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
             })
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+def replace_domain_in_url(request, url):
+    """URL의 도메인을 요청의 도메인으로 변경"""
+    if not url:
+        return url
+        
+    # 원본 URL 파싱
+    parsed = urlparse(url)
+    
+    # 요청 URL에서 scheme과 netloc 가져오기
+    request_url = request.build_absolute_uri('/')
+    request_parsed = urlparse(request_url)
+    
+    # 새로운 URL 생성 (scheme과 netloc만 변경)
+    new_url = urlunparse((
+        request_parsed.scheme,
+        request_parsed.netloc,
+        parsed.path,
+        parsed.params,
+        parsed.query,
+        parsed.fragment
+    ))
+    
+    return new_url

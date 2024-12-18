@@ -30,6 +30,7 @@ jsonmodels==2.7.0
 sentry-sdk==2.8.0
 # storage
 django-storages==1.14.2
+minio==7.2.5
 # user management
 django-crum==0.7.9
 # web server

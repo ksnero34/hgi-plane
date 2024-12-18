@@ -1,5 +1,6 @@
 # Python imports
 import os
+import json
 import boto3
 from botocore.exceptions import ClientError
 
@@ -32,7 +33,11 @@ class Command(BaseCommand):
             s3_client.head_bucket(Bucket=bucket_name)
             # If the bucket exists, print a success message
             self.stdout.write(self.style.SUCCESS(f"Bucket '{bucket_name}' exists."))
+            
+            # Set bucket policy to private
+            self.set_private_policy(s3_client, bucket_name)
             return
+            
         except ClientError as e:
             error_code = int(e.response["Error"]["Code"])
             bucket_name = os.environ.get("AWS_S3_BUCKET_NAME")
@@ -45,29 +50,50 @@ class Command(BaseCommand):
                 )
                 try:
                     s3_client.create_bucket(Bucket=bucket_name)
+                    # Set bucket policy to private
+                    self.set_private_policy(s3_client, bucket_name)
                     self.stdout.write(
                         self.style.SUCCESS(
-                            f"Bucket '{bucket_name}' created successfully."
+                            f"Bucket '{bucket_name}' created successfully with private policy."
                         )
                     )
-
-                # Handle the exception if the bucket creation fails
-                except ClientError as create_error:
+                except Exception as e:
                     self.stdout.write(
-                        self.style.ERROR(f"Failed to create bucket: {create_error}")
+                        self.style.ERROR(f"Error creating bucket: {str(e)}")
                     )
-
-            # Handle the exception if access to the bucket is forbidden
-            elif error_code == 403:
-                # Access to the bucket is forbidden
-                self.stdout.write(
-                    self.style.ERROR(
-                        f"Access to the bucket '{bucket_name}' is forbidden. Check permissions."
-                    )
-                )
             else:
-                # Another ClientError occurred
-                self.stdout.write(self.style.ERROR(f"Failed to check bucket: {e}"))
-        except Exception as ex:
-            # Handle any other exception
-            self.stdout.write(self.style.ERROR(f"An error occurred: {ex}"))
+                self.stdout.write(
+                    self.style.ERROR(f"Error checking bucket: {str(e)}")
+                )
+
+    def set_private_policy(self, s3_client, bucket_name):
+        try:
+            # Private policy configuration
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Deny",
+                        "Principal": {"AWS": "*"},
+                        "Action": "s3:*",
+                        "Resource": [
+                            f"arn:aws:s3:::{bucket_name}",
+                            f"arn:aws:s3:::{bucket_name}/*"
+                        ]
+                    }
+                ]
+            }
+            
+            # Set the bucket policy
+            s3_client.put_bucket_policy(
+                Bucket=bucket_name,
+                Policy=json.dumps(policy)
+            )
+            
+            self.stdout.write(
+                self.style.SUCCESS(f"Private policy set for bucket '{bucket_name}'")
+            )
+        except Exception as e:
+            self.stdout.write(
+                self.style.WARNING(f"Error setting bucket policy: {str(e)}")
+            )
