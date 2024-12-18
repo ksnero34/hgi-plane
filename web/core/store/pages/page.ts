@@ -43,6 +43,8 @@ export interface IPage extends TPage {
   updatePageLogo: (logo_props: TLogoProps) => Promise<void>;
   addToFavorites: () => Promise<void>;
   removePageFromFavorites: () => Promise<void>;
+  addAttachment: (attachmentId: string) => Promise<void>;
+  removeAttachment: (attachmentId: string) => Promise<void>;
 }
 
 export class Page implements IPage {
@@ -67,6 +69,7 @@ export class Page implements IPage {
   updated_by: string | undefined;
   created_at: Date | undefined;
   updated_at: Date | undefined;
+  attachments: string[] | undefined;
   // helpers
   oldName: string = "";
   // reactions
@@ -97,6 +100,7 @@ export class Page implements IPage {
     this.updated_by = page?.updated_by || undefined;
     this.created_at = page?.created_at || undefined;
     this.updated_at = page?.updated_at || undefined;
+    this.attachments = page?.attachments || [];
     this.oldName = page?.name || "";
 
     makeObservable(this, {
@@ -121,6 +125,7 @@ export class Page implements IPage {
       updated_by: observable.ref,
       created_at: observable.ref,
       updated_at: observable.ref,
+      attachments: observable,
       // helpers
       oldName: observable.ref,
       setIsSubmitting: action,
@@ -149,6 +154,8 @@ export class Page implements IPage {
       updatePageLogo: action,
       addToFavorites: action,
       removePageFromFavorites: action,
+      addAttachment: action,
+      removeAttachment: action,
     });
 
     this.pageService = new ProjectPageService();
@@ -201,6 +208,7 @@ export class Page implements IPage {
       updated_by: this.updated_by,
       created_at: this.created_at,
       updated_at: this.updated_at,
+      attachments: this.attachments,
     };
   }
 
@@ -589,5 +597,55 @@ export class Page implements IPage {
       });
       throw error;
     });
+  };
+
+  /**
+   * @description 첨부파일 추가
+   * @param {string} attachmentId
+   */
+  addAttachment = async (attachmentId: string) => {
+    const { workspaceSlug, projectId } = this.store.router;
+    if (!workspaceSlug || !projectId || !this.id) return undefined;
+
+    const currentAttachments = [...(this.attachments || [])];
+    runInAction(() => {
+      this.attachments = [...(this.attachments || []), attachmentId];
+    });
+
+    try {
+      await this.pageService.update(workspaceSlug, projectId, this.id, {
+        attachments: this.attachments,
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.attachments = currentAttachments;
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * @description 첨부파일 제거
+   * @param {string} attachmentId
+   */
+  removeAttachment = async (attachmentId: string) => {
+    const { workspaceSlug, projectId } = this.store.router;
+    if (!workspaceSlug || !projectId || !this.id) return undefined;
+
+    const currentAttachments = [...(this.attachments || [])];
+    runInAction(() => {
+      this.attachments = (this.attachments || []).filter((id) => id !== attachmentId);
+    });
+
+    try {
+      await this.pageService.update(workspaceSlug, projectId, this.id, {
+        attachments: this.attachments,
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.attachments = currentAttachments;
+      });
+      throw error;
+    }
   };
 }

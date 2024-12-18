@@ -5,6 +5,7 @@ export type TPage = {
   access: EPageAccess | undefined;
   anchor?: string | null | undefined;
   archived_at: string | null | undefined;
+  attachments: string[] | undefined;
   color: string | undefined;
   created_at: Date | undefined;
   created_by: string | undefined;

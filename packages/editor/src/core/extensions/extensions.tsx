@@ -23,6 +23,7 @@ import {
   CustomTextAlignExtension,
   CustomTypographyExtension,
   DropHandlerExtension,
+  FileAttachment,
   ImageExtension,
   ListKeymap,
   Table,
@@ -176,6 +177,7 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
     CustomTextAlignExtension,
     CustomCalloutExtension,
     CustomColorExtension,
+    FileAttachment,
     ...CoreEditorAdditionalExtensions({
       disabledExtensions,
     }),

@@ -72,11 +72,11 @@ ToolbarButton.displayName = "ToolbarButton";
 
 const toolbarItems = TOOLBAR_ITEMS.document;
 
-const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; pageId: string }) => {
+const FileUploadButton = ({ editorRef, page }: { editorRef: EditorRefApi; page: IPage }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { workspaceSlug, projectId } = useParams();
 
-  console.log("🔍 FileUploadButton 렌더링:", { workspaceSlug, projectId, pageId });
+  console.log("🔍 FileUploadButton 렌더링:", { workspaceSlug, projectId, pageId: page.id });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("👉 파일 선택 이벤트 발생");
@@ -84,8 +84,8 @@ const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; page
     const file = event.target.files?.[0];
     console.log("📂 선택된 파일:", file);
 
-    if (!file || !workspaceSlug || !projectId || !pageId) {
-      console.log("❌ 필수 정보 누락:", { file, workspaceSlug, projectId, pageId });
+    if (!file || !workspaceSlug || !projectId || !page.id) {
+      console.log("❌ 필수 정보 누락:", { file, workspaceSlug, projectId, pageId: page.id });
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "업로드 실패",
@@ -96,20 +96,34 @@ const FileUploadButton = ({ editorRef, pageId }: { editorRef: EditorRefApi; page
 
     try {
       console.log("📄 파일 업로드 처리 중...");
-      console.log("FileService 호출 전:", { workspaceSlug, projectId, pageId });
+      console.log("FileService 호출 전:", { workspaceSlug, projectId, pageId: page.id });
       
       try {
         const response = await fileService.uploadPageFile(
           workspaceSlug.toString(),
           projectId.toString(),
           {
-            entity_identifier: pageId,
+            entity_identifier: page.id,
             entity_type: EFileAssetType.PAGE_DESCRIPTION,
           },
           file
         );
         
         console.log("📋 파일 업로드 응답:", response);
+
+        // 첨부파일을 페이지에 추가
+        await page.addAttachment(response.asset_id);
+
+        // 에디터 본문에 파일 블록 삽입
+        editorRef?.commands?.setFileAttachment({
+          fileId: response.asset_id,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          fileUrl: response.asset_url,
+          fileExtension: file.name.split('.').pop() || '',
+          uploadedAt: new Date().toISOString()
+        });
 
         // 파일 업로드 완료 이벤트 발생
         window.dispatchEvent(new CustomEvent("file-uploaded"));
@@ -280,7 +294,7 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
           ))}
         </div>
       ))}
-      <FileUploadButton editorRef={editorRef} pageId={page.id} />
+      <FileUploadButton editorRef={editorRef} page={page} />
     </div>
   );
 };
