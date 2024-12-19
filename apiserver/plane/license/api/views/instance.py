@@ -231,6 +231,7 @@ class OIDCOauthInitiateAdminEndpoint(View):
         print("[OIDC Admin] Initiating OIDC login")
         # Get host and next path
         request.session["host"] = base_host(request=request, is_admin=True)
+        request.session["is_admin_login"] = True
         next_path = request.GET.get("next_path")
         if next_path:
             request.session["next_path"] = str(next_path)

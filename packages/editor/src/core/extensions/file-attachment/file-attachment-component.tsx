@@ -1,7 +1,7 @@
 import { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { Download } from "lucide-react";
-import { formatBytes } from "@/helpers/file.helper";
+import { formatBytes } from "../../helpers/file.helper";
 
 export const FileAttachmentComponent: React.FC<NodeViewProps> = (props) => {
   const { node } = props;

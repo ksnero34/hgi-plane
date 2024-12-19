@@ -19,6 +19,7 @@ class OIDCOauthInitiateEndpoint(View):
     def get(self, request):
         # Get host and next path
         request.session["host"] = base_host(request=request, is_app=True)
+        request.session["is_admin_login"] = False  # admin이 아님을 명시
         next_path = request.GET.get("next_path")
         if next_path:
             request.session["next_path"] = str(next_path)

@@ -64,18 +64,19 @@ class OIDCOAuthProvider(OauthAdapter):
         self.userinfo_url = config.get("userinfo_endpoint")
         
         # admin 로그인인지 확인
-        self.is_admin = request.path.startswith("/api/instances/admins/")
+        self.is_admin = request.session.get('is_admin_login', False)
         
-        # 적절한 콜백 URL 설정
+        # 적절한 콜백 URL 설정 - 하나의 URL만 설정
+        base_url = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}"""
         if self.is_admin:
-            redirect_uri = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}/api/instances/admins/oidc/callback/"""
+            redirect_uri = f"{base_url}/api/instances/admins/oidc/callback/"
         else:
-            redirect_uri = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}/auth/oidc/callback/"""
+            redirect_uri = f"{base_url}/auth/oidc/callback/"
             
         url_params = {
             "client_id": OIDC_CLIENT_ID,
             "scope": self.scope,
-            "redirect_uri": redirect_uri,
+            "redirect_uri": redirect_uri,  # 단일 redirect_uri 사용
             "response_type": "code",
             "state": state,
         }
