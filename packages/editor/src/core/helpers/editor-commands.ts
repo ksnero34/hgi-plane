@@ -5,6 +5,7 @@ import { replaceCodeWithText } from "@/extensions/code/utils/replace-code-block-
 import { findTableAncestor } from "@/helpers/common";
 // types
 import { InsertImageComponentProps } from "@/extensions";
+import { InsertFileAttachmentProps } from "@/extensions/file-attachment";
 
 export const setText = (editor: Editor, range?: Range) => {
   if (range) editor.chain().focus().deleteRange(range).setNode("paragraph").run();
@@ -192,4 +193,25 @@ export const insertHorizontalRule = (editor: Editor, range?: Range) => {
 export const insertCallout = (editor: Editor, range?: Range) => {
   if (range) editor.chain().focus().deleteRange(range).insertCallout().run();
   else editor.chain().focus().insertCallout().run();
+};
+
+export const insertFileAttachment = ({
+  editor,
+  event,
+  pos,
+  file,
+  range,
+}: {
+  editor: Editor;
+  event: "insert" | "drop";
+  pos?: number | null;
+  file?: File;
+  range?: Range;
+}) => {
+  if (range) editor.chain().focus().deleteRange(range).run();
+
+  const fileOptions: InsertFileAttachmentProps = { event };
+  if (pos) fileOptions.pos = pos;
+  if (file) fileOptions.file = file;
+  return editor?.chain().focus().insertFileAttachment(fileOptions).run();
 };

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Check, ChevronDown, Upload } from "lucide-react";
 // editor
 import { EditorRefApi } from "@plane/editor";
+import { useFileAttachmentUploader } from "@plane/editor/src/core/hooks/use-file-attachment-upload";
 // ui
 import { CustomMenu, Tooltip, Loader, setToast, TOAST_TYPE } from "@plane/ui";
 // components
@@ -18,6 +19,8 @@ import { FileService } from "@/services/file.service";
 // types
 import { EFileAssetType } from "@plane/types/src/enums";
 import { IPage } from "@/store/pages/page";
+import { useFileValidation } from "@/hooks/store/use-file-validation";
+import { insertFileAttachment } from "@plane/editor/src/core/helpers/editor-commands";
 
 const fileService = new FileService();
 
@@ -72,96 +75,39 @@ ToolbarButton.displayName = "ToolbarButton";
 
 const toolbarItems = TOOLBAR_ITEMS.document;
 
-const FileUploadButton = ({ editorRef, page }: { editorRef: EditorRefApi; page: IPage }) => {
+const FileUploadButton = ({ editorRef }: { editorRef: EditorRefApi }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { workspaceSlug, projectId } = useParams();
 
-  console.log("🔍 FileUploadButton 렌더링:", { workspaceSlug, projectId, pageId: page.id });
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("👉 파일 선택 이벤트 발생");
-    
-    const file = event.target.files?.[0];
-    console.log("📂 선택된 파일:", file);
-
-    if (!file || !workspaceSlug || !projectId || !page.id) {
-      console.log("❌ 필수 정보 누락:", { file, workspaceSlug, projectId, pageId: page.id });
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "업로드 실패",
-        message: "필수 정보가 누락되었습니다. 페이지를 새로고침한 후 다시 시도해주세요."
-      });
-      return;
-    }
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     try {
-      console.log("📄 파일 업로드 처리 중...");
-      console.log("FileService 호출 전:", { workspaceSlug, projectId, pageId: page.id });
-      
-      try {
-        const response = await fileService.uploadPageFile(
-          workspaceSlug.toString(),
-          projectId.toString(),
-          {
-            entity_identifier: page.id,
-            entity_type: EFileAssetType.PAGE_DESCRIPTION,
-          },
-          file
-        );
-        
-        console.log("📋 파일 업로드 응답:", response);
-
-        // 첨부파일을 페이지에 추가
-        await page.addAttachment(response.asset_id);
-
-        // 에디터 본문에 파일 블록 삽입
-        editorRef?.commands?.setFileAttachment({
-          fileId: response.asset_id,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          fileUrl: response.asset_url,
-          fileExtension: file.name.split('.').pop() || '',
-          uploadedAt: new Date().toISOString()
-        });
-
-        // 파일 업로드 완료 이벤트 발생
-        window.dispatchEvent(new CustomEvent("file-uploaded"));
-
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "파일 업로드 완료",
-          message: "파일이 성공적으로 업로드되었습니다."
-        });
-      } catch (uploadError: any) {
-        console.error("❌ 파일 업로드 실패:", uploadError);
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: "파일 업로드 실패",
-          message: uploadError?.message || "파일 업로드에 실패했습니다. 다시 시도해주세요."
-        });
-      }
-    } catch (error: any) {
-      console.error("❌ 파일 업로드 실패:", error);
+      insertFileAttachment({
+        editor: editorRef,
+        event: "insert",
+        file
+      });
+    } catch (error) {
+      console.error("파일 업로드 실패:", error);
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "파일 업로드 실패",
-        message: error?.message || "파일 업로드 중 오류가 발생했습니다."
+        message: "파일 업로드 중 오류가 발생했습니다."
       });
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-      console.log("🧹 파일 입력 초기화 완료");
-    }
-  };
+  }, [editorRef]);
 
   return (
     <>
       <input
         type="file"
         ref={fileInputRef}
-        onChange={handleFileUpload}
+        onChange={handleFileChange}
         className="hidden"
         accept="*.*"
       />
@@ -174,10 +120,7 @@ const FileUploadButton = ({ editorRef, page }: { editorRef: EditorRefApi; page: 
       >
         <button
           type="button"
-          onClick={() => {
-            console.log("👇 파일 업로드 버튼 클릭");
-            fileInputRef.current?.click();
-          }}
+          onClick={() => fileInputRef.current?.click()}
           className="text-custom-text-300 text-sm border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 h-7 rounded px-2 flex items-center gap-2"
         >
           <Upload className="size-3" />
@@ -294,7 +237,7 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
           ))}
         </div>
       ))}
-      <FileUploadButton editorRef={editorRef} page={page} />
+      <FileUploadButton editorRef={editorRef} />
     </div>
   );
 };
