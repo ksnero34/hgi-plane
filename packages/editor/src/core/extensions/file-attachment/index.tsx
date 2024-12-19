@@ -1,5 +1,5 @@
-export * from "./components";
-export * from "./file-attachment";
-export * from "./file-attachment-component";
-export * from "./file-block";
-export * from "./file-uploader"; 
+import { FileAttachment } from "./file-attachment";
+export * from "./components/file-attachment-component";
+export * from "./components/file-block";
+export * from "./components/file-uploader";
+export { FileAttachment }; 
