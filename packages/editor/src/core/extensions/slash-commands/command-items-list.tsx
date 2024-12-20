@@ -16,6 +16,7 @@ import {
   MinusSquare,
   Table,
   TextQuote,
+  FileIcon,
 } from "lucide-react";
 // constants
 import { COLORS_LIST } from "@/constants/common";
@@ -37,6 +38,7 @@ import {
   insertImage,
   insertCallout,
   setText,
+  insertFile,
 } from "@/helpers/editor-commands";
 // types
 import { CommandProps, ISlashCommandItem, TExtensions, TSlashCommandSectionKeys } from "@/types";
@@ -189,6 +191,15 @@ export const getSlashCommandFilteredSections =
             description: "Insert an image",
             searchTerms: ["img", "photo", "picture", "media", "upload"],
             command: ({ editor, range }: CommandProps) => insertImage({ editor, event: "insert", range }),
+          },
+          {
+            commandKey: "file",
+            key: "file",
+            title: "File",
+            icon: <FileIcon className="size-3.5" />,
+            description: "Insert a file",
+            searchTerms: ["file", "document", "upload", "attachment"],
+            command: ({ editor, range }: CommandProps) => insertFile({ editor, event: "insert", range }),
           },
           {
             commandKey: "callout",

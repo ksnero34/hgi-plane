@@ -6,6 +6,7 @@ import {
   Bold,
   CaseSensitive,
   Code2,
+  FileIcon,
   Heading1,
   Heading2,
   Heading3,
@@ -160,9 +161,10 @@ const USER_ACTION_ITEMS: ToolbarMenuItem<"quote" | "code">[] = [
   { itemKey: "code", renderKey: "code", name: "Code", icon: Code2, editors: ["lite", "document"] },
 ];
 
-const COMPLEX_ITEMS: ToolbarMenuItem<"table" | "image">[] = [
+const COMPLEX_ITEMS: ToolbarMenuItem<"table" | "image" | "file">[] = [
   { itemKey: "table", renderKey: "table", name: "Table", icon: Table, editors: ["document"] },
   { itemKey: "image", renderKey: "image", name: "Image", icon: Image, editors: ["lite", "document"], extraProps: {} },
+  { itemKey: "file", renderKey: "file", name: "File", icon: FileIcon, editors: ["lite", "document"], extraProps: {} },
 ];
 
 export const TOOLBAR_ITEMS: {

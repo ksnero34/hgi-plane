@@ -29,6 +29,7 @@ import {
   TableCell,
   TableHeader,
   TableRow,
+  CustomFileExtension,
 } from "@/extensions";
 // helpers
 import { isValidHttpUrl } from "@/helpers/common";
@@ -115,6 +116,7 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       },
     }),
     CustomImageExtension(fileHandler),
+    CustomFileExtension(fileHandler),
     TiptapUnderline,
     TextStyle,
     TaskList.configure({
