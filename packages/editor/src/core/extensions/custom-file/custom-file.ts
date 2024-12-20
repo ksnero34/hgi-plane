@@ -1,8 +1,10 @@
-import { Node } from "@tiptap/core";
+import { Node, Editor } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuid } from "uuid";
 import { NodeViewProps } from "@tiptap/react";
 import { FileNode } from "./components/file-node";
+import { TrackFileDeletionPlugin } from "./plugins/track-file-deletion";
+import { TrackFileRestorationPlugin } from "./plugins/track-file-restoration";
 
 export interface InsertFileComponentProps {
   event: "insert" | "drop";
@@ -22,6 +24,10 @@ export interface CustomBaseFileNodeViewProps extends NodeViewProps {
   uploadStatus: "uploading" | "success" | "error";
   onDelete?: () => void;
   onDownload?: () => void;
+  editor: Editor;
+  setFailedToLoadFile: (failed: boolean) => void;
+  getPos: () => number;
+  updateAttributes: (attrs: Record<string, any>) => void;
 }
 
 export interface FileStorage {
@@ -41,6 +47,9 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     customFile: {
       insertFileComponent: (options: { event: "insert" | "drop"; pos?: number; file?: File }) => ReturnType;
+      uploadFile: (file: File) => () => Promise<string>;
+      deleteFile: (fileId: string) => () => Promise<void>;
+      restoreFile: (fileId: string) => () => Promise<void>;
     };
   }
 }
@@ -48,10 +57,11 @@ declare module "@tiptap/core" {
 export interface FileHandler {
   upload: (file: File) => Promise<string>;
   delete: (fileId: string) => Promise<void>;
+  restore: (fileId: string) => Promise<void>;
 }
 
 export const CustomFileExtension = (props: FileHandler) => {
-  const { upload, delete: deleteFile } = props;
+  const { upload, delete: deleteFile, restore: restoreFile } = props;
 
   return Node.create({
     name: "customFile",
@@ -102,29 +112,34 @@ export const CustomFileExtension = (props: FileHandler) => {
         insertFileComponent:
           (options) =>
           ({ commands }) => {
-            const fileId = uuid();
-            const fileMap = getFileComponentFileMap(this.editor);
+            try {
+              const fileId = uuid();
+              const fileMap = getFileComponentFileMap(this.editor);
 
-            if (fileMap) {
-              if (options.event === "drop" && options.file) {
-                fileMap.set(fileId, {
-                  file: options.file,
-                  event: options.event,
-                });
-              } else if (options.event === "insert") {
-                fileMap.set(fileId, {
-                  event: options.event,
-                  hasOpenedFileInputOnce: false,
-                });
+              if (fileMap) {
+                if (options.event === "drop" && options.file) {
+                  fileMap.set(fileId, {
+                    file: options.file,
+                    event: options.event,
+                  });
+                } else if (options.event === "insert") {
+                  fileMap.set(fileId, {
+                    event: options.event,
+                    hasOpenedFileInputOnce: false,
+                  });
+                }
               }
-            }
 
-            return commands.insertContent({
-              type: this.name,
-              attrs: {
-                fileId,
-              },
-            });
+              return commands.insertContent({
+                type: this.name,
+                attrs: {
+                  fileId,
+                },
+              });
+            } catch (error) {
+              console.error("Error inserting file component:", error);
+              return false;
+            }
           },
         uploadFile:
           (file: File) =>
@@ -147,11 +162,45 @@ export const CustomFileExtension = (props: FileHandler) => {
               throw error;
             }
           },
+        restoreFile:
+          (fileId: string) =>
+          async () => {
+            try {
+              await restoreFile(fileId);
+            } catch (error) {
+              console.error("Error restoring file:", error);
+              throw error;
+            }
+          },
       };
     },
 
     addNodeView() {
       return ReactNodeViewRenderer(FileNode);
+    },
+
+    addProseMirrorPlugins() {
+      return [
+        TrackFileDeletionPlugin(this.editor, deleteFile, this.name),
+        TrackFileRestorationPlugin(this.editor, restoreFile, this.name),
+      ];
+    },
+
+    onCreate() {
+      const fileSources = new Set<string>();
+      this.editor.state.doc.descendants((node) => {
+        if (node.type.name === this.name) {
+          if (!node.attrs.fileId) return;
+          fileSources.add(node.attrs.fileId);
+        }
+      });
+      fileSources.forEach(async (fileId) => {
+        try {
+          await restoreFile(fileId);
+        } catch (error) {
+          console.error("Error restoring file: ", error);
+        }
+      });
     },
   });
 }; 

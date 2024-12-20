@@ -5,13 +5,15 @@ import { Check, ChevronDown } from "lucide-react";
 // editor
 import { EditorRefApi } from "@plane/editor";
 // ui
-import { CustomMenu, Tooltip } from "@plane/ui";
+import { CustomMenu, Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { ColorDropdown } from "@/components/pages";
 // constants
 import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/editor";
 // helpers
 import { cn } from "@/helpers/common.helper";
+// hooks
+import { useInstance } from "@/hooks/store";
 
 type Props = {
   editorRef: EditorRefApi;
@@ -25,6 +27,70 @@ type ToolbarButtonProps = {
 
 const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
   const { item, isActive, executeCommand } = props;
+  // store hooks
+  const { fileSettings } = useInstance();
+
+  const validateFile = (file: File): boolean => {
+    // 파일 확장자 체크
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !fileSettings?.allowed_extensions.includes(fileExtension)) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "파일 형식 오류",
+        message: `허용되는 파일 형식: ${fileSettings?.allowed_extensions.join(', ')}`,
+      });
+      return false;
+    }
+
+    // 파일 크기 체크 (bytes로 변환)
+    const maxSize = fileSettings?.max_file_size || 5 * 1024 * 1024; // 기본값 5MB
+    if (file.size > maxSize) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "파일 크기 초과",
+        message: `최대 파일 크기: ${Math.floor(maxSize / (1024 * 1024))}MB`,
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleClick = () => {
+    if (item.itemKey === "file") {
+      // 파일 입력 엘리먼트 생성
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.style.display = "none";
+      fileInput.multiple = false;
+      
+      // 허용되는 파일 형식 설정
+      if (fileSettings?.allowed_extensions.length > 0) {
+        fileInput.accept = fileSettings.allowed_extensions
+          .map(ext => `.${ext}`)
+          .join(',');
+      }
+      
+      fileInput.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file && validateFile(file)) {
+          executeCommand({
+            itemKey: "insertFileComponent",
+            event: "insert",
+            file
+          });
+        }
+      };
+
+      // 파일 선택 다이얼로그 트리거
+      fileInput.click();
+    } else {
+      executeCommand({
+        itemKey: item.itemKey,
+        ...item.extraProps,
+      });
+    }
+  };
 
   return (
     <Tooltip
@@ -37,14 +103,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
     >
       <button
         type="button"
-        onClick={() =>
-          // TODO: update this while toolbar homogenization
-          // @ts-expect-error type mismatch here
-          executeCommand({
-            itemKey: item.itemKey,
-            ...item.extraProps,
-          })
-        }
+        onClick={handleClick}
         className={cn("grid size-7 place-items-center rounded text-custom-text-300 hover:bg-custom-background-80", {
           "bg-custom-background-80 text-custom-text-100": isActive,
         })}
@@ -68,20 +127,16 @@ export const PageToolbar: React.FC<Props> = ({ editorRef }) => {
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
 
   const updateActiveStates = useCallback(() => {
-    // console.log("Updating status");
     const newActiveStates: Record<string, boolean> = {};
     Object.values(toolbarItems)
       .flat()
       .forEach((item) => {
-        // TODO: update this while toolbar homogenization
-        // @ts-expect-error type mismatch here
         newActiveStates[item.renderKey] = editorRef.isMenuItemActive({
           itemKey: item.itemKey,
           ...item.extraProps,
         });
       });
     setActiveStates(newActiveStates);
-    // console.log("newActiveStates", newActiveStates);
   }, [editorRef]);
 
   useEffect(() => {

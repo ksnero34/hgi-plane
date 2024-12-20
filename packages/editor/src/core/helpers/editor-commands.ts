@@ -4,7 +4,8 @@ import { replaceCodeWithText } from "@/extensions/code/utils/replace-code-block-
 // helpers
 import { findTableAncestor } from "@/helpers/common";
 // types
-import { InsertImageComponentProps, InsertFileComponentProps } from "@/extensions/custom-file";
+import { InsertFileComponentProps } from "@/extensions/custom-file";
+import { InsertImageComponentProps } from "@/extensions/custom-image";
 
 export const setText = (editor: Editor, range?: Range) => {
   if (range) editor.chain().focus().deleteRange(range).setNode("paragraph").run();
@@ -160,12 +161,18 @@ export const insertFile = ({
   file?: File;
   range?: Range;
 }) => {
-  if (range) editor.chain().focus().deleteRange(range).run();
+  try {
+    if (range) editor.chain().focus().deleteRange(range).run();
 
-  const fileOptions: InsertFileComponentProps = { event };
-  if (pos) fileOptions.pos = pos;
-  if (file) fileOptions.file = file;
-  return editor?.chain().focus().insertFileComponent(fileOptions).run();
+    const fileOptions: InsertFileComponentProps = { event };
+    if (pos) fileOptions.pos = pos;
+    if (file) fileOptions.file = file;
+    
+    return editor?.chain().focus().insertFileComponent(fileOptions).run();
+  } catch (error) {
+    console.error("Error inserting file:", error);
+    return false;
+  }
 };
 
 export const unsetLinkEditor = (editor: Editor) => {

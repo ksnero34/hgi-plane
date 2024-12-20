@@ -4,7 +4,7 @@ import { cn } from "../../../helpers/common";
 import { CustomBaseFileNodeViewProps, getFileComponentFileMap } from "../custom-file";
 
 export const FileUploader = (props: CustomBaseFileNodeViewProps) => {
-  const { editor, fileId } = props;
+  const { editor, fileId, getPos } = props;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fileMap = getFileComponentFileMap(editor);
@@ -13,7 +13,6 @@ export const FileUploader = (props: CustomBaseFileNodeViewProps) => {
   const handleFileChange = useCallback(
     async (file: File) => {
       try {
-        // @ts-expect-error function not expected here
         const url = await editor?.commands?.uploadFile?.(file);
         if (!url) throw new Error("Failed to upload file");
 
@@ -23,6 +22,20 @@ export const FileUploader = (props: CustomBaseFileNodeViewProps) => {
           fileType: file.type,
           uploadStatus: "success",
         });
+
+        const pos = getPos();
+        const getCurrentSelection = editor.state.selection;
+        const currentNode = editor.state.doc.nodeAt(getCurrentSelection.from);
+
+        if (currentNode && currentNode.type.name === "fileComponent") {
+          const nextNode = editor.state.doc.nodeAt(pos + 1);
+
+          if (nextNode && nextNode.type.name === "paragraph") {
+            editor.commands.setTextSelection(pos + 1);
+          } else {
+            editor.commands.createParagraphNear();
+          }
+        }
       } catch (error) {
         console.error("Error uploading file:", error);
         props.updateAttributes({
@@ -30,7 +43,7 @@ export const FileUploader = (props: CustomBaseFileNodeViewProps) => {
         });
       }
     },
-    [editor, props]
+    [editor, props, getPos]
   );
 
   useEffect(() => {

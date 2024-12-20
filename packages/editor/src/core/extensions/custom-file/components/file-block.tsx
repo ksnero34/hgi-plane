@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FileIcon, Download, Trash2 } from "lucide-react";
 import { cn } from "../../../helpers/common";
 import { formatBytes } from "../../../helpers/file";
@@ -11,7 +11,38 @@ export const FileBlock = ({
   fileType,
   onDelete,
   onDownload,
+  editor,
+  setFailedToLoadFile,
 }: CustomBaseFileNodeViewProps) => {
+  const [hasErroredOnFirstLoad, setHasErroredOnFirstLoad] = useState(false);
+  const [hasTriedRestoringFileOnce, setHasTriedRestoringFileOnce] = useState(false);
+
+  const handleFileError = async () => {
+    if (!editor?.commands.restoreFile || hasTriedRestoringFileOnce) {
+      setFailedToLoadFile(true);
+      return;
+    }
+
+    try {
+      setHasErroredOnFirstLoad(true);
+      await editor?.commands.restoreFile?.(fileId);
+      // 파일 다시 로드 시도
+      window.location.reload();
+    } catch {
+      setFailedToLoadFile(true);
+      console.error("Error while loading file");
+    } finally {
+      setHasErroredOnFirstLoad(false);
+      setHasTriedRestoringFileOnce(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!fileName || !fileSize || !fileType) {
+      handleFileError();
+    }
+  }, [fileName, fileSize, fileType]);
+
   return (
     <div className="flex items-center gap-2 p-3 rounded-md border border-custom-border-200">
       <div className="flex items-center justify-center w-10 h-10 bg-custom-background-80 rounded">
