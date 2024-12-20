@@ -1,29 +1,20 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "next/navigation";
-import { Check, ChevronDown, Upload } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Check, ChevronDown } from "lucide-react";
 // editor
 import { EditorRefApi } from "@plane/editor";
 // ui
-import { CustomMenu, Tooltip, Loader, setToast, TOAST_TYPE } from "@plane/ui";
+import { CustomMenu, Tooltip } from "@plane/ui";
 // components
 import { ColorDropdown } from "@/components/pages";
 // constants
 import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/editor";
 // helpers
 import { cn } from "@/helpers/common.helper";
-// services
-import { FileService } from "@/services/file.service";
-// types
-import { EFileAssetType } from "@plane/types/src/enums";
-import { IPage } from "@/store/pages/page";
-
-const fileService = new FileService();
 
 type Props = {
   editorRef: EditorRefApi;
-  page: IPage;
 };
 
 type ToolbarButtonProps = {
@@ -72,166 +63,39 @@ ToolbarButton.displayName = "ToolbarButton";
 
 const toolbarItems = TOOLBAR_ITEMS.document;
 
-const FileUploadButton = ({ editorRef, page }: { editorRef: EditorRefApi; page: IPage }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { workspaceSlug, projectId } = useParams();
-
-  console.log("🔍 FileUploadButton 렌더링:", { workspaceSlug, projectId, pageId: page.id });
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("👉 파일 선택 이벤트 발생");
-    
-    const file = event.target.files?.[0];
-    console.log("📂 선택된 파일:", file);
-
-    if (!file || !workspaceSlug || !projectId || !page.id) {
-      console.log("❌ 필수 정보 누락:", { file, workspaceSlug, projectId, pageId: page.id });
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "업로드 실패",
-        message: "필수 정보가 누락되었습니다. 페이지를 새로고침한 후 다시 시도해주세요."
-      });
-      return;
-    }
-
-    try {
-      console.log("📄 파일 업로드 처리 중...");
-      console.log("FileService 호출 전:", { workspaceSlug, projectId, pageId: page.id });
-      
-      try {
-        const response = await fileService.uploadPageFile(
-          workspaceSlug.toString(),
-          projectId.toString(),
-          {
-            entity_identifier: page.id,
-            entity_type: EFileAssetType.PAGE_DESCRIPTION,
-          },
-          file
-        );
-        
-        console.log("📋 파일 업로드 응답:", response);
-
-        // 첨부파일을 페이지에 추가
-        await page.addAttachment(response.asset_id);
-
-        // 에디터 본문에 파일 블록 삽입
-        editorRef?.commands?.setFileAttachment({
-          fileId: response.asset_id,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          fileUrl: response.asset_url,
-          fileExtension: file.name.split('.').pop() || '',
-          uploadedAt: new Date().toISOString()
-        });
-
-        // 파일 업로드 완료 이벤트 발생
-        window.dispatchEvent(new CustomEvent("file-uploaded"));
-
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "파일 업로드 완료",
-          message: "파일이 성공적으로 업로드되었습니다."
-        });
-      } catch (uploadError: any) {
-        console.error("❌ 파일 업로드 실패:", uploadError);
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: "파일 업로드 실패",
-          message: uploadError?.message || "파일 업로드에 실패했습니다. 다시 시도해주세요."
-        });
-      }
-    } catch (error: any) {
-      console.error("❌ 파일 업로드 실패:", error);
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 업로드 실패",
-        message: error?.message || "파일 업로드 중 오류가 발생했습니다."
-      });
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-      console.log("🧹 파일 입력 초기화 완료");
-    }
-  };
-
-  return (
-    <>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileUpload}
-        className="hidden"
-        accept="*.*"
-      />
-      <Tooltip
-        tooltipContent={
-          <p className="flex flex-col gap-1 text-center text-xs">
-            <span className="font-medium">파일 업로드</span>
-          </p>
-        }
-      >
-        <button
-          type="button"
-          onClick={() => {
-            console.log("👇 파일 업로드 버튼 클릭");
-            fileInputRef.current?.click();
-          }}
-          className="text-custom-text-300 text-sm border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 h-7 rounded px-2 flex items-center gap-2"
-        >
-          <Upload className="size-3" />
-          <span>파일</span>
-        </button>
-      </Tooltip>
-    </>
-  );
-};
-
-export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
+export const PageToolbar: React.FC<Props> = ({ editorRef }) => {
   // states
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
 
   const updateActiveStates = useCallback(() => {
-    if (!editorRef) return;
-    
+    // console.log("Updating status");
     const newActiveStates: Record<string, boolean> = {};
     Object.values(toolbarItems)
       .flat()
       .forEach((item) => {
+        // TODO: update this while toolbar homogenization
+        // @ts-expect-error type mismatch here
         newActiveStates[item.renderKey] = editorRef.isMenuItemActive({
           itemKey: item.itemKey,
           ...item.extraProps,
         });
       });
     setActiveStates(newActiveStates);
+    // console.log("newActiveStates", newActiveStates);
   }, [editorRef]);
 
   useEffect(() => {
-    if (!editorRef) return;
-    
     const unsubscribe = editorRef.onStateChange(updateActiveStates);
     updateActiveStates();
     return () => unsubscribe();
   }, [editorRef, updateActiveStates]);
 
   const activeTypography = TYPOGRAPHY_ITEMS.find((item) =>
-    editorRef?.isMenuItemActive({
+    editorRef.isMenuItemActive({
       itemKey: item.itemKey,
       ...item.extraProps,
     })
   );
-
-  // page가 없거나 id가 없으면 로딩 상태 표시
-  if (!page || !page.id) {
-    return (
-      <div className="flex flex-wrap items-center divide-x divide-custom-border-200">
-        <div className="w-full h-[44px] flex items-center justify-center">
-          <Loader className="w-4 h-4" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-wrap items-center divide-x divide-custom-border-200">
@@ -252,7 +116,7 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
             key={item.renderKey}
             className="flex items-center justify-between gap-2"
             onClick={() =>
-              editorRef?.executeMenuItemCommand({
+              editorRef.executeMenuItemCommand({
                 itemKey: item.itemKey,
                 ...item.extraProps,
               })
@@ -270,13 +134,13 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
       </CustomMenu>
       <ColorDropdown
         handleColorSelect={(key, color) =>
-          editorRef?.executeMenuItemCommand({
+          editorRef.executeMenuItemCommand({
             itemKey: key,
             color,
           })
         }
         isColorActive={(key, color) =>
-          editorRef?.isMenuItemActive({
+          editorRef.isMenuItemActive({
             itemKey: key,
             color,
           })
@@ -289,12 +153,11 @@ export const PageToolbar: React.FC<Props> = ({ editorRef, page }) => {
               key={item.renderKey}
               item={item}
               isActive={activeStates[item.renderKey]}
-              executeCommand={editorRef?.executeMenuItemCommand}
+              executeCommand={editorRef.executeMenuItemCommand}
             />
           ))}
         </div>
       ))}
-      <FileUploadButton editorRef={editorRef} page={page} />
     </div>
   );
 };
