@@ -2,7 +2,7 @@ import { mergeAttributes } from "@tiptap/core";
 import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 // components
-import { CustomFileNode } from "./components/file-node";
+import { FileNode } from "./components/file-node";
 // types
 import { TFileHandler } from "@/types";
 
@@ -61,7 +61,7 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
     },
 
     addNodeView() {
-      return ReactNodeViewRenderer(CustomFileNode);
+      return ReactNodeViewRenderer(FileNode);
     },
   });
 }; 

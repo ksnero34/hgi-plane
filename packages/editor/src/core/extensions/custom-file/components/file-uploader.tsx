@@ -1,86 +1,93 @@
-import React, { useCallback, useEffect, useRef } from "react";
-import { FileIcon, X } from "lucide-react";
-import { cn } from "../../../helpers/common";
-import { CustomBaseFileNodeViewProps, getFileComponentFileMap } from "../custom-file";
+import { useEffect, useRef } from "react";
+import { CustomBaseFileNodeViewProps } from "../custom-file";
 
-export const FileUploader = (props: CustomBaseFileNodeViewProps) => {
-  const { editor, fileId, getPos } = props;
+interface FileUploaderProps extends CustomBaseFileNodeViewProps {
+  setIsUploaded: (uploaded: boolean) => void;
+  setFailedToLoadFile: (failed: boolean) => void;
+}
+
+export const FileUploader = (props: FileUploaderProps) => {
+  const { editor, node, updateAttributes, setIsUploaded, setFailedToLoadFile } = props;
+  const { id: fileId } = node.attrs;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fileMap = getFileComponentFileMap(editor);
-  const fileEntity = fileMap?.get(fileId);
+  useEffect(() => {
+    const fileMap = editor.storage.customFile.fileMap;
+    const fileEntity = fileMap.get(fileId);
 
-  const handleFileChange = useCallback(
-    async (file: File) => {
+    if (!fileEntity) {
+      setFailedToLoadFile(true);
+      return;
+    }
+
+    const uploadFile = async (file: File) => {
       try {
-        const url = await editor?.commands?.uploadFile?.(file);
+        const url = await editor.commands.uploadFile(file);
         if (!url) throw new Error("Failed to upload file");
 
-        props.updateAttributes({
+        updateAttributes({
           fileName: file.name,
           fileSize: file.size,
           fileType: file.type,
           uploadStatus: "success",
         });
-
-        const pos = getPos();
-        const getCurrentSelection = editor.state.selection;
-        const currentNode = editor.state.doc.nodeAt(getCurrentSelection.from);
-
-        if (currentNode && currentNode.type.name === "fileComponent") {
-          const nextNode = editor.state.doc.nodeAt(pos + 1);
-
-          if (nextNode && nextNode.type.name === "paragraph") {
-            editor.commands.setTextSelection(pos + 1);
-          } else {
-            editor.commands.createParagraphNear();
-          }
-        }
+        setIsUploaded(true);
       } catch (error) {
         console.error("Error uploading file:", error);
-        props.updateAttributes({
-          uploadStatus: "error",
-        });
+        updateAttributes({ uploadStatus: "error" });
+        setFailedToLoadFile(true);
       }
-    },
-    [editor, props, getPos]
-  );
+    };
 
-  useEffect(() => {
-    if (!fileEntity) return;
-
-    if (fileEntity.event === "drop" && fileEntity.file) {
-      handleFileChange(fileEntity.file);
+    if (fileEntity.file) {
+      uploadFile(fileEntity.file);
     } else if (fileEntity.event === "insert" && !fileEntity.hasOpenedFileInputOnce) {
       fileInputRef.current?.click();
-      if (fileMap) {
-        fileMap.set(fileId, {
-          ...fileEntity,
-          hasOpenedFileInputOnce: true,
-        });
-      }
+      fileMap.set(fileId, { ...fileEntity, hasOpenedFileInputOnce: true });
     }
-  }, [fileEntity, fileId, fileMap, handleFileChange]);
+  }, [fileId]);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const fileMap = editor.storage.customFile.fileMap;
+    fileMap.set(fileId, { event: "insert", file });
+
+    try {
+      const url = await editor.commands.uploadFile(file);
+      if (!url) throw new Error("Failed to upload file");
+
+      updateAttributes({
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        uploadStatus: "success",
+      });
+      setIsUploaded(true);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      updateAttributes({ uploadStatus: "error" });
+      setFailedToLoadFile(true);
+    }
+  };
 
   return (
-    <div className="relative">
+    <div className="flex items-center justify-center p-4 border-2 border-dashed rounded">
       <input
         type="file"
         ref={fileInputRef}
+        onChange={handleFileChange}
         className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFileChange(file);
-        }}
       />
-      <div className="flex items-center gap-2 p-3 rounded-md border border-custom-border-200">
-        <div className="flex items-center justify-center w-10 h-10 bg-custom-background-80 rounded">
-          <FileIcon className="w-5 h-5 text-custom-text-200" />
-        </div>
-        <div className="flex-grow">
-          <div className="h-2 w-24 bg-custom-background-80 rounded animate-pulse" />
-          <div className="h-2 w-16 bg-custom-background-80 rounded animate-pulse mt-2" />
-        </div>
+      <div className="text-center">
+        <p className="text-sm text-gray-500">
+          {node.attrs.uploadStatus === "error" ? (
+            "Failed to upload file. Click to try again."
+          ) : (
+            "Click to select a file"
+          )}
+        </p>
       </div>
     </div>
   );

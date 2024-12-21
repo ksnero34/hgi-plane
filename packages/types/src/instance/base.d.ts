@@ -34,6 +34,7 @@ export interface IInstance {
   created_by: string | undefined;
   updated_by: string | undefined;
   workspaces_exist: boolean;
+  fileSettings?: IFileSettings;
 }
 
 export interface IInstanceConfig {

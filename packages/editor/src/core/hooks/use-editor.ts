@@ -169,6 +169,10 @@ export const useEditor = (props: CustomEditorProps) => {
             (item as EditorMenuItem<"image">).command({
               savedSelection: savedSelectionRef.current,
             });
+          } else if (item.key === "file") {
+            (item as EditorMenuItem<"file">).command({
+              savedSelection: savedSelectionRef.current,
+            });
           } else {
             item.command(props);
           }

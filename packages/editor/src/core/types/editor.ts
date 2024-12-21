@@ -48,6 +48,9 @@ export type TCommandExtraProps = {
   image: {
     savedSelection: Selection | null;
   };
+  file: {
+    savedSelection: Selection | null;
+  };
   "text-color": {
     color: string | undefined;
   };

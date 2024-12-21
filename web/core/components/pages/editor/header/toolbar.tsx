@@ -14,6 +14,7 @@ import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/ed
 import { cn } from "@/helpers/common.helper";
 // hooks
 import { useInstance } from "@/hooks/store";
+import { v4 as uuid } from "uuid";
 
 type Props = {
   editorRef: EditorRefApi;
@@ -23,21 +24,22 @@ type ToolbarButtonProps = {
   item: ToolbarMenuItem;
   isActive: boolean;
   executeCommand: EditorRefApi["executeMenuItemCommand"];
+  editorRef: EditorRefApi;
 };
 
 const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
-  const { item, isActive, executeCommand } = props;
+  const { item, isActive, executeCommand, editorRef } = props;
   // store hooks
   const { fileSettings } = useInstance();
 
   const validateFile = (file: File): boolean => {
     // 파일 확장자 체크
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExtension || !fileSettings?.allowed_extensions.includes(fileExtension)) {
+    if (!fileExtension || !fileSettings?.allowed_extensions?.includes(fileExtension)) {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "파일 형식 오류",
-        message: `허용되는 파일 형식: ${fileSettings?.allowed_extensions.join(', ')}`,
+        message: `허용되는 파일 형식: ${fileSettings?.allowed_extensions?.join(', ')}`,
       });
       return false;
     }
@@ -57,39 +59,10 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
   };
 
   const handleClick = () => {
-    if (item.itemKey === "file") {
-      // 파일 입력 엘리먼트 생성
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.style.display = "none";
-      fileInput.multiple = false;
-      
-      // 허용되는 파일 형식 설정
-      if (fileSettings?.allowed_extensions.length > 0) {
-        fileInput.accept = fileSettings.allowed_extensions
-          .map(ext => `.${ext}`)
-          .join(',');
-      }
-      
-      fileInput.onchange = (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file && validateFile(file)) {
-          executeCommand({
-            itemKey: "insertFileComponent",
-            event: "insert",
-            file
-          });
-        }
-      };
-
-      // 파일 선택 다이얼로그 트리거
-      fileInput.click();
-    } else {
-      executeCommand({
-        itemKey: item.itemKey,
-        ...item.extraProps,
-      });
-    }
+    executeCommand({
+      itemKey: item.itemKey,
+      ...item.extraProps,
+    });
   };
 
   return (
@@ -209,6 +182,7 @@ export const PageToolbar: React.FC<Props> = ({ editorRef }) => {
               item={item}
               isActive={activeStates[item.renderKey]}
               executeCommand={editorRef.executeMenuItemCommand}
+              editorRef={editorRef}
             />
           ))}
         </div>
