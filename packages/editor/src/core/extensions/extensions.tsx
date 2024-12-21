@@ -116,7 +116,7 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       },
     }),
     CustomImageExtension(fileHandler),
-    CustomFileExtension(fileHandler),
+    CustomFileExtension(fileHandler, "", ""),
     TiptapUnderline,
     TextStyle,
     TaskList.configure({

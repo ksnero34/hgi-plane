@@ -30,30 +30,57 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
       const pos = getPos();
       await editor.commands.deleteFile(fileId);
       editor.commands.deleteRange({ from: pos, to: pos + 1 });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting file:", error);
-      const pos = getPos();
-      editor.commands.deleteRange({ from: pos, to: pos + 1 });
+      const message = error?.response?.data?.message || error?.message || "파일 삭제에 실패했습니다.";
+      updateAttributes({ 
+        uploadStatus: "error",
+        errorMessage: message
+      });
+      setFailedToLoadFile(true);
     }
   };
 
   const handleDownload = async () => {
-    if (!fileName) return;
+    if (!fileId || !fileName) return;
     try {
-      const link = document.createElement("a");
-      link.href = fileName;
-      link.download = fileName.split("/").pop() || "download";
+      const fileHandler = editor.storage.customFile.fileHandler;
+      if (!fileHandler.getAssetSrc) {
+        throw new Error("getAssetSrc not available");
+      }
+
+      const url = await fileHandler.getAssetSrc(`${fileId}/`);
+      if (!url) throw new Error("Failed to get file URL");
+
+      // 파일 다운로드를 위한 임시 링크 생성
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;  // 원본 파일명 사용
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error downloading file:", error);
+      const message = error?.message || "파일 다운로드에 실��했습니다.";
+      updateAttributes({ 
+        uploadStatus: "error",
+        errorMessage: message
+      });
+      setFailedToLoadFile(true);
     }
   };
 
   return (
-    <NodeViewWrapper>
-      <div className="p-0 mx-0 my-2" data-drag-handle ref={fileComponentRef}>
+    <NodeViewWrapper as="div" className="relative group">
+      <div
+        contentEditable={false}
+        draggable
+        data-drag-handle
+        className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-grab"
+      >
+        <div className="w-1 h-4 bg-custom-border-300 rounded" />
+      </div>
+      <div className="p-0 mx-0 my-2" ref={fileComponentRef}>
         {isUploaded && !failedToLoadFile ? (
           <FileBlock
             {...props}

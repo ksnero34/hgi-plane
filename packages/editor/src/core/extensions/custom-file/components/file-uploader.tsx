@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CustomBaseFileNodeViewProps } from "../custom-file";
+import { Upload, AlertCircle } from "lucide-react";
 
 interface FileUploaderProps extends CustomBaseFileNodeViewProps {
   setIsUploaded: (uploaded: boolean) => void;
@@ -10,6 +11,7 @@ export const FileUploader = (props: FileUploaderProps) => {
   const { editor, node, updateAttributes, setIsUploaded, setFailedToLoadFile } = props;
   const { id: fileId } = node.attrs;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
     const fileMap = editor.storage.customFile.fileMap;
@@ -22,19 +24,34 @@ export const FileUploader = (props: FileUploaderProps) => {
 
     const uploadFile = async (file: File) => {
       try {
-        const url = await editor.commands.uploadFile(file);
-        if (!url) throw new Error("Failed to upload file");
+        const fileHandler = editor.storage.customFile.fileHandler;
+        if (fileHandler.validateFile) {
+          const isValid = await fileHandler.validateFile(file);
+          if (!isValid) {
+            throw new Error("파일 검증에 실패했습니다.");
+          }
+        }
+
+        const response = await fileHandler.upload(file);
+        if (!response) throw new Error("Failed to upload file");
+
+        const assetId = response.split("/").filter(Boolean).pop()?.replace("/", "");
+        if (!assetId) throw new Error("Failed to get asset ID");
 
         updateAttributes({
+          id: assetId,
           fileName: file.name,
           fileSize: file.size,
           fileType: file.type,
           uploadStatus: "success",
         });
         setIsUploaded(true);
-      } catch (error) {
+        setErrorMessage("");
+      } catch (error: any) {
         console.error("Error uploading file:", error);
-        updateAttributes({ uploadStatus: "error" });
+        const message = error?.response?.data?.message || error?.message || "파일 업로드에 실패했습니다.";
+        setErrorMessage(message);
+        updateAttributes({ uploadStatus: "error", errorMessage: message });
         setFailedToLoadFile(true);
       }
     };
@@ -55,39 +72,71 @@ export const FileUploader = (props: FileUploaderProps) => {
     fileMap.set(fileId, { event: "insert", file });
 
     try {
-      const url = await editor.commands.uploadFile(file);
-      if (!url) throw new Error("Failed to upload file");
+      const fileHandler = editor.storage.customFile.fileHandler;
+      if (fileHandler.validateFile) {
+        const isValid = await fileHandler.validateFile(file);
+        if (!isValid) {
+          throw new Error("파일 검증에 실패했습니다.");
+        }
+      }
+
+      const response = await fileHandler.upload(file);
+      if (!response) throw new Error("Failed to upload file");
+
+      const assetId = response.split("/").filter(Boolean).pop()?.replace("/", "");
+      if (!assetId) throw new Error("Failed to get asset ID");
 
       updateAttributes({
+        id: assetId,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
         uploadStatus: "success",
       });
       setIsUploaded(true);
-    } catch (error) {
+      setErrorMessage("");
+    } catch (error: any) {
       console.error("Error uploading file:", error);
-      updateAttributes({ uploadStatus: "error" });
+      const message = error?.response?.data?.message || error?.message || "파일 업로드에 실패했습니다.";
+      setErrorMessage(message);
+      updateAttributes({ uploadStatus: "error", errorMessage: message });
       setFailedToLoadFile(true);
     }
   };
 
+  const isError = node.attrs.uploadStatus === "error";
+
   return (
-    <div className="flex items-center justify-center p-4 border-2 border-dashed rounded">
+    <div 
+      className={`flex items-center justify-center p-4 border-2 border-dashed rounded-md transition-colors cursor-pointer
+        ${isError 
+          ? "border-red-300 bg-red-50 hover:bg-red-100" 
+          : "border-custom-border-200 hover:border-custom-border-400 hover:bg-custom-background-90"
+        }`}
+      onClick={() => fileInputRef.current?.click()}
+    >
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
       />
-      <div className="text-center">
-        <p className="text-sm text-gray-500">
-          {node.attrs.uploadStatus === "error" ? (
-            "Failed to upload file. Click to try again."
-          ) : (
-            "Click to select a file"
-          )}
-        </p>
+      <div className="flex flex-col items-center gap-2">
+        {isError ? (
+          <>
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <p className="text-sm text-red-600 text-center">
+              {node.attrs.errorMessage || errorMessage || "Failed to upload file. Click to try again."}
+            </p>
+          </>
+        ) : (
+          <>
+            <Upload className="w-5 h-5 text-custom-text-200" />
+            <p className="text-sm text-custom-text-200">
+              Click to select a file
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

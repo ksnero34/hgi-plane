@@ -39,6 +39,9 @@ export interface FileStorage {
   markdown: {
     serialize: () => void;
   };
+  fileHandler: FileHandler;
+  workspaceSlug: string;
+  projectId: string;
 }
 
 export type FileEntity = {
@@ -57,7 +60,7 @@ declare module "@tiptap/core" {
       uploadFile: (file: File) => () => Promise<string>;
       deleteFile: (fileId: string) => () => Promise<void>;
       restoreFile: (fileId: string) => () => Promise<void>;
-      validateFile: (file: File) => boolean;
+      getFileUrl: (path: string) => () => Promise<string>;
     };
   }
 }
@@ -66,10 +69,11 @@ export interface FileHandler {
   upload: (file: File) => Promise<string>;
   delete: (fileId: string) => Promise<void>;
   restore: (fileId: string) => Promise<void>;
-  validateFile?: (file: File) => boolean;
+  validateFile?: (file: File) => Promise<boolean>;
+  getAssetSrc?: (path: string) => Promise<string>;
 }
 
-export const CustomFileExtension = (fileHandler: FileHandler) => {
+export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: string, projectId: string) => {
   const FileComponent = Node.create({
     name: "fileComponent",
     group: "block",
@@ -94,19 +98,22 @@ export const CustomFileExtension = (fileHandler: FileHandler) => {
         uploadStatus: {
           default: "uploading",
         },
+        errorMessage: {
+          default: null,
+        },
       };
     },
 
     parseHTML() {
       return [
         {
-          tag: "div[data-type='file-component']",
+          tag: "file-component",
         },
       ];
     },
 
     renderHTML({ HTMLAttributes }) {
-      return ["div", { "data-type": "file-component", ...HTMLAttributes }];
+      return ["file-component", { ...HTMLAttributes }];
     },
 
     addKeyboardShortcuts() {
@@ -135,6 +142,9 @@ export const CustomFileExtension = (fileHandler: FileHandler) => {
         markdown: {
           serialize: () => {},
         },
+        fileHandler,
+        workspaceSlug: workspaceSlug || (fileHandler as any).workspaceSlug || "",
+        projectId: projectId || (fileHandler as any).projectId || "",
       };
     },
 
@@ -143,11 +153,6 @@ export const CustomFileExtension = (fileHandler: FileHandler) => {
         insertFileComponent:
           (props: InsertFileComponentProps) =>
           ({ commands }) => {
-            if (props?.file && fileHandler.validateFile) {
-              const isValid = fileHandler.validateFile(props.file);
-              if (!isValid) return false;
-            }
-
             const id = uuid();
             
             this.editor.storage.customFile.fileMap.set(id, {
@@ -188,10 +193,28 @@ export const CustomFileExtension = (fileHandler: FileHandler) => {
           (fileId: string) =>
           async () => {
             try {
-              await fileHandler.delete(fileId);
+              let fileNode = null;
+              this.editor.state.doc.descendants((node) => {
+                if (node.type.name === "fileComponent" && node.attrs.id === fileId) {
+                  fileNode = node;
+                  return false;
+                }
+                return true;
+              });
+
+              if (!fileNode) {
+                throw new Error("파일을 찾을 수 없습니다.");
+              }
+
+              const assetId = fileNode.attrs.fileName?.split("/").pop()?.split(".")[0];
+              if (!assetId) {
+                throw new Error("파일 ID를 찾을 수 없습니다.");
+              }
+
+              await fileHandler.delete(assetId);
             } catch (error) {
               console.error("Error deleting file:", error);
-              // 에러가 발생해도 계속 진행
+              throw error;
             }
           },
         restoreFile:
@@ -204,12 +227,17 @@ export const CustomFileExtension = (fileHandler: FileHandler) => {
               throw error;
             }
           },
-        validateFile: (file: File) => {
-          if (fileHandler.validateFile) {
-            return fileHandler.validateFile(file);
-          }
-          return true;
-        },
+        getFileUrl:
+          (path: string) =>
+          () => {
+            if (!fileHandler.getAssetSrc) {
+              return Promise.resolve(path);
+            }
+            return fileHandler.getAssetSrc(path).catch((error) => {
+              console.error("Error getting file URL:", error);
+              return path;
+            });
+          },
       };
     },
 

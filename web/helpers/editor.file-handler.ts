@@ -25,7 +25,7 @@ export const getEditorFileUploadHandler = (args: TFileHandlerArgs): TFileUploadH
     if (path?.startsWith("http")) {
       return path;
     } else {
-      return getFileURL(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${path}/`) ?? "";
+      return getFileURL(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${path}`) ?? "";
     }
   };
 
@@ -66,5 +66,7 @@ export const getEditorFileUploadHandler = (args: TFileHandlerArgs): TFileUploadH
       maxFileSize,
       allowedExtensions,
     },
+    workspaceSlug,
+    projectId,
   };
 }; 
