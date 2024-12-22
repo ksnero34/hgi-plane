@@ -61,7 +61,7 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
       document.body.removeChild(link);
     } catch (error: any) {
       console.error("Error downloading file:", error);
-      const message = error?.message || "파일 다운로드에 실��했습니다.";
+      const message = error?.message || "파일 다운로드에 실패했습니다.";
       updateAttributes({ 
         uploadStatus: "error",
         errorMessage: message
@@ -72,14 +72,6 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
 
   return (
     <NodeViewWrapper as="div" className="relative group">
-      <div
-        contentEditable={false}
-        draggable
-        data-drag-handle
-        className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-grab"
-      >
-        <div className="w-1 h-4 bg-custom-border-300 rounded" />
-      </div>
       <div className="p-0 mx-0 my-2" ref={fileComponentRef}>
         {isUploaded && !failedToLoadFile ? (
           <FileBlock

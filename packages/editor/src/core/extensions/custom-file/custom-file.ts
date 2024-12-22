@@ -206,12 +206,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
                 throw new Error("파일을 찾을 수 없습니다.");
               }
 
-              const assetId = fileNode.attrs.fileName?.split("/").pop()?.split(".")[0];
-              if (!assetId) {
-                throw new Error("파일 ID를 찾을 수 없습니다.");
-              }
-
-              await fileHandler.delete(assetId);
+              await fileHandler.delete(fileId);
             } catch (error) {
               console.error("Error deleting file:", error);
               throw error;

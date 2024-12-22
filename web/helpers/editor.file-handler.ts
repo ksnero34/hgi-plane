@@ -1,6 +1,7 @@
 import { TFileUploadHandler } from "@plane/editor";
 import { FileService } from "@/services/file.service";
 import { getFileURL } from "@/helpers/file.helper";
+import { useInstance } from "@/hooks/store";
 
 const fileService = new FileService();
 
@@ -10,7 +11,6 @@ type TFileHandlerArgs = {
   uploadFile: (file: File) => Promise<string>;
   workspaceId: string;
   workspaceSlug: string;
-  allowedExtensions?: string[];
 };
 
 /**
@@ -18,7 +18,10 @@ type TFileHandlerArgs = {
  * @param {TFileHandlerArgs} args
  */
 export const getEditorFileUploadHandler = (args: TFileHandlerArgs): TFileUploadHandler => {
-  const { maxFileSize, projectId, uploadFile, workspaceId, workspaceSlug, allowedExtensions } = args;
+  const { maxFileSize, projectId, uploadFile, workspaceId, workspaceSlug } = args;
+  
+  // 인스턴스 스토어에서 파일 설정 가져오기
+  const { fileSettings } = useInstance();
 
   const getAssetSrc = async (path: string) => {
     if (!path) return "";
@@ -32,11 +35,12 @@ export const getEditorFileUploadHandler = (args: TFileHandlerArgs): TFileUploadH
   return {
     getAssetSrc,
     upload: uploadFile,
-    delete: async (src: string) => {
-      if (src?.startsWith("http")) {
-        await fileService.deleteOldWorkspaceAsset(workspaceId, src);
-      } else {
-        await fileService.deleteNewAsset(await getAssetSrc(src));
+    delete: async (fileId: string) => {
+      try {
+        await fileService.deleteNewAsset(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${fileId}/`);
+      } catch (error) {
+        console.error("Error deleting file:", error);
+        throw error;
       }
     },
     restore: async (src: string) => {
@@ -49,22 +53,24 @@ export const getEditorFileUploadHandler = (args: TFileHandlerArgs): TFileUploadH
     cancel: fileService.cancelUpload,
     validateFile: async (file: File) => {
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const allowedExtensions = fileSettings?.allowed_extensions || [];
+      const maxAllowedSize = fileSettings?.max_file_size || maxFileSize;
       
-      if (!fileExtension || !allowedExtensions?.includes(fileExtension)) {
-        console.error(`Invalid file extension. Allowed: ${allowedExtensions?.join(', ')}`);
+      if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+        console.error(`허용되지 않는 파일 형식입니다. 허용된 확자: ${allowedExtensions.join(', ')}`);
         return false;
       }
 
-      if (file.size > maxFileSize) {
-        console.error(`File too large. Max size: ${maxFileSize / (1024 * 1024)}MB`);
+      if (file.size > maxAllowedSize) {
+        console.error(`파일 크기가 너무 큽니다. 최대 크기: ${maxAllowedSize / (1024 * 1024)}MB`);
         return false;
       }
 
       return true;
     },
     validation: {
-      maxFileSize,
-      allowedExtensions,
+      maxFileSize: fileSettings?.max_file_size || maxFileSize,
+      allowedExtensions: fileSettings?.allowed_extensions || [],
     },
     workspaceSlug,
     projectId,

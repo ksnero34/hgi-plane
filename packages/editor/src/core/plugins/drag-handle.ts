@@ -44,6 +44,7 @@ export const nodeDOMAtCoords = (coords: { x: number; y: number }) => {
     ".image-component",
     ".image-upload-component",
     ".editor-callout-component",
+    ".node-fileComponent",
   ].join(", ");
 
   for (const elem of elements) {

@@ -28,7 +28,11 @@ export const FileUploader = (props: FileUploaderProps) => {
         if (fileHandler.validateFile) {
           const isValid = await fileHandler.validateFile(file);
           if (!isValid) {
-            throw new Error("파일 검증에 실패했습니다.");
+            const allowedExtensions = fileHandler.validation.allowedExtensions;
+            const maxFileSize = fileHandler.validation.maxFileSize;
+            const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
+            
+            throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}\n최대 파일 크기: ${maxFileSizeMB}MB`);
           }
         }
 
@@ -76,7 +80,11 @@ export const FileUploader = (props: FileUploaderProps) => {
       if (fileHandler.validateFile) {
         const isValid = await fileHandler.validateFile(file);
         if (!isValid) {
-          throw new Error("파일 검증에 실패했습니다.");
+          const allowedExtensions = fileHandler.validation.allowedExtensions;
+          const maxFileSize = fileHandler.validation.maxFileSize;
+          const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
+          
+          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}\n최대 파일 크기: ${maxFileSizeMB}MB`);
         }
       }
 

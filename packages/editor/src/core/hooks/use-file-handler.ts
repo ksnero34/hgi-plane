@@ -28,12 +28,12 @@ const isFileValid = ({
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
   
   if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-    console.error(`Invalid file extension. Allowed: ${allowedExtensions.join(', ')}`);
+    console.error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
     return false;
   }
 
   if (file.size > maxFileSize) {
-    console.error(`File too large. Max size: ${maxFileSize / (1024 * 1024)}MB`);
+    console.error(`파일 크기가 너무 큽니다. 최대 크기: ${maxFileSize / (1024 * 1024)}MB`);
     return false;
   }
 
@@ -47,22 +47,22 @@ export const useFileHandler = ({ editor, maxFileSize, allowedExtensions, onUploa
     setUploading(true);
     try {
       if (maxFileSize && file.size > maxFileSize) {
-        throw new Error(`File too large. Max size: ${maxFileSize / (1024 * 1024)}MB`);
+        throw new Error(`파일 크기가 너무 큽니다. 최대 크기: ${maxFileSize / (1024 * 1024)}MB`);
       }
 
       if (allowedExtensions) {
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
         if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-          throw new Error(`Invalid file extension. Allowed: ${allowedExtensions.join(', ')}`);
+          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
         }
       }
 
       const uploadFn = editor.commands.uploadFile(file);
       const url = await uploadFn();
-      if (!url) throw new Error("Failed to upload file");
+      if (!url) throw new Error("파일 업로드에 실패했습니다.");
       onUpload(url);
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("파일 업로드 중 오류 발생:", error);
       throw error;
     } finally {
       setUploading(false);
