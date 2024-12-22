@@ -26,13 +26,19 @@ export const FileUploader = (props: FileUploaderProps) => {
       try {
         const fileHandler = editor.storage.customFile.fileHandler;
         if (fileHandler.validateFile) {
-          const isValid = await fileHandler.validateFile(file);
-          if (!isValid) {
-            const allowedExtensions = fileHandler.validation.allowedExtensions;
-            const maxFileSize = fileHandler.validation.maxFileSize;
-            const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
-            
-            throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}\n최대 파일 크기: ${maxFileSizeMB}MB`);
+          const fileExtension = file.name.split('.').pop()?.toLowerCase();
+          const allowedExtensions = fileHandler.validation.allowedExtensions;
+          const maxFileSize = fileHandler.validation.maxFileSize;
+          const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
+
+          // 확장자 검증
+          if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+            throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
+          }
+
+          // 파일 크기 검증
+          if (file.size > maxFileSize) {
+            throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
           }
         }
 
@@ -78,13 +84,19 @@ export const FileUploader = (props: FileUploaderProps) => {
     try {
       const fileHandler = editor.storage.customFile.fileHandler;
       if (fileHandler.validateFile) {
-        const isValid = await fileHandler.validateFile(file);
-        if (!isValid) {
-          const allowedExtensions = fileHandler.validation.allowedExtensions;
-          const maxFileSize = fileHandler.validation.maxFileSize;
-          const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
-          
-          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}\n최대 파일 크기: ${maxFileSizeMB}MB`);
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        const allowedExtensions = fileHandler.validation.allowedExtensions;
+        const maxFileSize = fileHandler.validation.maxFileSize;
+        const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
+
+        // 확장자 검증
+        if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
+        }
+
+        // 파일 크기 검증
+        if (file.size > maxFileSize) {
+          throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
         }
       }
 
