@@ -61,6 +61,7 @@ Meet [Plane](https://dub.sh/plane-website-readme), an open-source project manage
 - page 및 issue 설명란에 개인정보 마스킹기능 추가
 - page 의 첨부파일 추가 및 issue의 attachment 추가 시 위 관리자 설정에서 설정한 허용 확장자 및 허용 용량 체크, MIME 타입 체크
 - page 본문에 파일 노드 추가 및 업로드 기능 구현(이슈에서도 동일기능 사용 가능)
+- 중복로그인 방지 기능 추가 (로그인 시 유저의 다른 활성 세션 삭제)
 - 이 외 계속 추가중...
 
 
