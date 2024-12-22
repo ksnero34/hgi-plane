@@ -7,6 +7,10 @@ from plane.authentication.utils.host import base_host
 
 
 def user_login(request, user, is_app=False, is_admin=False, is_space=False):
+    # 기존 세션 삭제 (중복 로그인 방지)
+    from plane.db.models.session import Session
+    Session.delete_other_sessions(str(user.id), request.session.session_key)
+
     login(request=request, user=user)
 
     # If is admin cookie set the custom age

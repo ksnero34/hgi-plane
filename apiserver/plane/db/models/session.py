@@ -6,6 +6,7 @@ from django.contrib.sessions.backends.db import SessionStore as DBSessionStore
 from django.contrib.sessions.base_session import AbstractBaseSession
 from django.db import models
 from django.utils.crypto import get_random_string
+from django.utils import timezone
 
 VALID_KEY_CHARS = string.ascii_lowercase + string.digits
 
@@ -18,6 +19,21 @@ class Session(AbstractBaseSession):
     @classmethod
     def get_session_store_class(cls):
         return SessionStore
+
+    @classmethod
+    def get_user_sessions(cls, user_id):
+        """사용자의 모든 활성 세션을 조회합니다."""
+        return cls.objects.filter(user_id=user_id, expire_date__gt=timezone.now())
+
+    @classmethod
+    def delete_other_sessions(cls, user_id, current_session_key):
+        """현재 세션을 제외한 사용자의 다른 모든 세션을 삭제합니다."""
+        return cls.objects.filter(
+            user_id=user_id,
+            expire_date__gt=timezone.now()
+        ).exclude(
+            session_key=current_session_key
+        ).delete()
 
     class Meta(AbstractBaseSession.Meta):
         db_table = "sessions"
