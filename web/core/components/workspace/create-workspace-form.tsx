@@ -140,11 +140,11 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
               rules={{
                 required: "This is a required field.",
                 validate: (value) =>
-                  /^[\w\s-]*$/.test(value) ||
-                  `Workspaces names can contain only (" "), ( - ), ( _ ) and alphanumeric characters.`,
+                  /^[a-zA-Z0-9가-힣\s_-]*$/.test(value) ||
+                  `워크스페이스 이름에는 한글, 영문자, 숫자, 공백(" "), 하이픈(-), 언더스코어(_)만 사용할 수 있습니다.`,
                 maxLength: {
                   value: 80,
-                  message: "Limit your name to 80 characters.",
+                  message: "이름은 80자를 초과할 수 없습니다.",
                 },
               }}
               render={({ field: { value, ref, onChange } }) => (
@@ -155,7 +155,14 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
                   onChange={(e) => {
                     onChange(e.target.value);
                     setValue("name", e.target.value);
-                    setValue("slug", e.target.value.toLocaleLowerCase().trim().replace(/ /g, "-"), {
+                    // 한글을 제외한 영문, 숫자, 특수문자만 허용
+                    const englishOnly = e.target.value
+                      .replace(/[가-힣]/g, '')
+                      .toLowerCase()
+                      .trim()
+                      .replace(/ /g, "-")
+                      .replace(/[^a-z0-9-_]/g, '');
+                    setValue("slug", englishOnly, {
                       shouldValidate: true,
                     });
                   }}
