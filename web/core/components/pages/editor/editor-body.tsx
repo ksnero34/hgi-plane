@@ -209,34 +209,9 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
   const handleEditorContentMasking = useCallback(
     (value: boolean) => {
       handleConnectionStatus(false);
-      if (value && editorRef.current) {
-        // 에디터가 준비되면 컨텐츠 변경 이벤트를 구독
-        editorRef.current.on('update', ({ editor }) => {
-          const content = editor.getHTML();
-          const maskedContent = maskPrivateInformation(content);
-          if (content !== maskedContent) {
-            editor.commands.setContent(maskedContent);
-          }
-        });
-      }
     },
-    [editorRef, handleConnectionStatus]
+    [handleConnectionStatus]
   );
-
-  // 에디터 컨텐츠 마스킹을 위한 effect
-  useEffect(() => {
-    if (editorRef.current) {
-      const unsubscribe = editorRef.current.on('update', ({ editor }) => {
-        const content = editor.getHTML();
-        const maskedContent = maskPrivateInformation(content);
-        if (content !== maskedContent) {
-          editor.commands.setContent(maskedContent);
-        }
-      });
-
-      return () => unsubscribe();
-    }
-  }, [editorRef]);
 
   if (pageId === undefined || !realtimeConfig) return <PageContentLoader />;
 
@@ -308,6 +283,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
               aiHandler={{
                 menu: getAIMenu,
               }}
+              transformContent={(content: string) => maskPrivateInformation(content)}
             />
           ) : (
             <CollaborativeDocumentReadOnlyEditorWithRef
