@@ -2,9 +2,14 @@
 
 import { useEffect } from "react";
 import { observer } from "mobx-react";
+import { TOAST_TYPE, setToast } from "@plane/ui";
 import { useFileSettings } from "@/hooks/store";
 import { FileSettingsForm } from "./form";
-import { toast } from "sonner";
+
+interface IFileSettings {
+  allowed_extensions: string[];
+  max_file_size: number;
+}
 
 function FileSettingsPage() {
   const { settings, fetchSettings, updateSettings, isLoading } = useFileSettings();
@@ -12,17 +17,31 @@ function FileSettingsPage() {
   useEffect(() => {
     fetchSettings().catch((error) => {
       console.error("Error fetching file settings:", error);
-      toast.error("설정을 불러오는데 실패했습니다.");
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "설정 불러오기 실패",
+        message: "설정을 불러오는데 실패했습니다."
+      });
     });
   }, [fetchSettings]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: Partial<IFileSettings>): Promise<IFileSettings> => {
     try {
-      await updateSettings(data);
-      toast.success("설정이 성공적으로 저장되었습니다.");
+      const result = await updateSettings(data);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "설정 저장 완료",
+        message: "설정이 성공적으로 저장되었습니다."
+      });
+      return result;
     } catch (error) {
       console.error("Error updating settings:", error);
-      toast.error("설정 저장에 실패했습니다.");
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "설정 저장 실패",
+        message: "설정 저장에 실패했습니다."
+      });
+      throw error;
     }
   };
 

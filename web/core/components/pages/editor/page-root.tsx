@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 // editor
-import { EditorRefApi } from "@plane/editor";
+import { EditorReadOnlyRefApi, EditorRefApi } from "@plane/editor";
 // types
 import { TPage } from "@plane/types";
 // ui
@@ -32,10 +32,12 @@ export const PageRoot = observer((props: TPageRootProps) => {
   // states
   const [editorReady, setEditorReady] = useState(false);
   const [hasConnectionFailed, setHasConnectionFailed] = useState(false);
+  const [readOnlyEditorReady, setReadOnlyEditorReady] = useState(false);
   const [sidePeekVisible, setSidePeekVisible] = useState(window.innerWidth >= 768);
   const [isVersionsOverlayOpen, setIsVersionsOverlayOpen] = useState(false);
   // refs
   const editorRef = useRef<EditorRefApi>(null);
+  const readOnlyEditorRef = useRef<EditorReadOnlyRefApi>(null);
   // router
   const router = useAppRouter();
   // search params
@@ -97,7 +99,9 @@ export const PageRoot = observer((props: TPageRootProps) => {
     editorRef.current?.clearEditor();
     editorRef.current?.setEditorValue(descriptionHTML);
   };
-  const currentVersionDescription = editorRef.current?.getDocument().html;
+  const currentVersionDescription = isContentEditable
+    ? editorRef.current?.getDocument().html
+    : readOnlyEditorRef.current?.getDocument().html;
 
   return (
     <>
@@ -133,6 +137,8 @@ export const PageRoot = observer((props: TPageRootProps) => {
         editorRef={editorRef}
         handleDuplicatePage={handleDuplicatePage}
         page={page}
+        readOnlyEditorReady={readOnlyEditorReady}
+        readOnlyEditorRef={readOnlyEditorRef}
         setSidePeekVisible={(state) => setSidePeekVisible(state)}
         sidePeekVisible={sidePeekVisible}
       />
@@ -141,7 +147,9 @@ export const PageRoot = observer((props: TPageRootProps) => {
         editorRef={editorRef}
         handleConnectionStatus={setHasConnectionFailed}
         handleEditorReady={setEditorReady}
+        handleReadOnlyEditorReady={() => setReadOnlyEditorReady(true)}
         page={page}
+        readOnlyEditorRef={readOnlyEditorRef}
         sidePeekVisible={sidePeekVisible}
       />
     </>

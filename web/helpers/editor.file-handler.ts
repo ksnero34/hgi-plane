@@ -1,4 +1,4 @@
-import { TFileUploadHandler } from "@plane/editor";
+import { TFileUploadHandler, TFileValidation } from "@plane/editor";
 import { FileService } from "@/services/file.service";
 import { getFileURL } from "@/helpers/file.helper";
 import { useInstance } from "@/hooks/store";
@@ -51,28 +51,9 @@ export const getEditorFileUploadHandler = (args: TFileHandlerArgs): TFileUploadH
       }
     },
     cancel: fileService.cancelUpload,
-    validateFile: async (file: File) => {
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      const allowedExtensions = fileSettings?.allowed_extensions || [];
-      const maxAllowedSize = fileSettings?.max_file_size || maxFileSize;
-      
-      if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-        console.error(`허용되지 않는 파일 형식입니다. 허용된 확자: ${allowedExtensions.join(', ')}`);
-        return false;
-      }
-
-      if (file.size > maxAllowedSize) {
-        console.error(`파일 크기가 너무 큽니다. 최대 크기: ${maxAllowedSize / (1024 * 1024)}MB`);
-        return false;
-      }
-
-      return true;
-    },
     validation: {
       maxFileSize: fileSettings?.max_file_size || maxFileSize,
       allowedExtensions: fileSettings?.allowed_extensions || [],
     },
-    workspaceSlug,
-    projectId,
   };
 }; 

@@ -2,7 +2,7 @@
 
 import { linearGradientDef } from "@nivo/core";
 // icons
-import { BarChart2, Briefcase, Layers, Home, Inbox, UserActivityIcon } from "lucide-react";
+import { BarChart2, Briefcase, Layers } from "lucide-react";
 // types
 import { TIssuesListTypes, TStateGroups } from "@plane/types";
 // ui
@@ -262,7 +262,7 @@ export const SIDEBAR_WORKSPACE_MENU_ITEMS: {
     key: "projects",
     label: "Projects",
     href: `/projects`,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST, EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/projects/`,
     Icon: Briefcase,
   },
@@ -270,7 +270,7 @@ export const SIDEBAR_WORKSPACE_MENU_ITEMS: {
     key: "all-issues",
     label: "Views",
     href: `/workspace-views/all-issues`,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST, EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
     highlight: (pathname: string, baseUrl: string) => pathname.includes(`${baseUrl}/workspace-views/`),
     Icon: Layers,
   },
@@ -278,7 +278,7 @@ export const SIDEBAR_WORKSPACE_MENU_ITEMS: {
     key: "active-cycles",
     label: "Cycles",
     href: `/active-cycles`,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/active-cycles/`,
     Icon: ContrastIcon,
   },
@@ -286,7 +286,7 @@ export const SIDEBAR_WORKSPACE_MENU_ITEMS: {
     key: "analytics",
     label: "Analytics",
     href: `/analytics`,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
     highlight: (pathname: string, baseUrl: string) => pathname.includes(`${baseUrl}/analytics/`),
     Icon: BarChart2,
   },
@@ -295,38 +295,3 @@ export const SIDEBAR_WORKSPACE_MENU_ITEMS: {
 export type TLinkOptions = {
   userId: string | undefined;
 };
-
-export const SIDEBAR_USER_MENU_ITEMS: {
-  key: string;
-  label: string;
-  href: string;
-  access: EUserPermissions[];
-  highlight: (pathname: string, baseUrl: string, options?: TLinkOptions) => boolean;
-  Icon: React.FC<Props>;
-}[] = [
-  {
-    key: "home",
-    label: "Home",
-    href: ``,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
-    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/`,
-    Icon: Home,
-  },
-  {
-    key: "your-work",
-    label: "Your work",
-    href: "/profile",
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    highlight: (pathname: string, baseUrl: string, options?: TLinkOptions) =>
-      options?.userId ? pathname.includes(`${baseUrl}/profile/${options?.userId}`) : false,
-    Icon: UserActivityIcon,
-  },
-  {
-    key: "notifications",
-    label: "Inbox",
-    href: `/notifications`,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
-    highlight: (pathname: string, baseUrl: string) => pathname.includes(`${baseUrl}/notifications/`),
-    Icon: Inbox,
-  },
-];

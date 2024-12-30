@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // document-editor
@@ -13,7 +13,7 @@ import {
   TServerHandler,
 } from "@plane/editor";
 // types
-import { IUserLite, IFileSettings } from "@plane/types";
+import { IUserLite } from "@plane/types";
 import { EFileAssetType } from "@plane/types/src/enums";
 // components
 import { Row } from "@plane/ui";
@@ -21,14 +21,10 @@ import { PageContentBrowser, PageContentLoader, PageEditorTitle } from "@/compon
 // helpers
 import { cn, LIVE_BASE_PATH, LIVE_BASE_URL } from "@/helpers/common.helper";
 import { getEditorFileHandlers, getReadOnlyEditorFileHandlers } from "@/helpers/editor.helper";
-import { getEditorFileUploadHandler } from "@/helpers/editor.file-handler";
 import { generateRandomColor } from "@/helpers/string.helper";
-import { maskPrivateInformation } from "@/utils/privacy-masking";
 // hooks
-import { useMember, useMention, useUser, useWorkspace, useInstance } from "@/hooks/store";
+import { useMember, useMention, useUser, useWorkspace } from "@/hooks/store";
 import { usePageFilters } from "@/hooks/use-page-filters";
-import { TOAST_TYPE, setToast } from "@plane/ui";
-import { MAX_FILE_SIZE } from "@/constants/common";
 // plane web components
 import { EditorAIMenu } from "@/plane-web/components/pages";
 // plane web hooks
@@ -73,7 +69,6 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     getUserDetails,
     project: { getProjectMemberIds },
   } = useMember();
-  const { instance } = useInstance();
   // derived values
   const workspaceId = workspaceSlug ? (getWorkspaceBySlug(workspaceSlug.toString())?.id ?? "") : "";
   const pageId = page?.id;
@@ -163,56 +158,6 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     [currentUser]
   );
 
-  const validateFile = (file: File): boolean => {
-    if (!instance?.fileSettings) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 설정을 불러올 수 없습니다",
-        message: "파일 설정을 불러오는 중 오류가 발생했습니다."
-      });
-      return false;
-    }
-
-    const { max_file_size, allowed_extensions } = instance.fileSettings;
-
-    if (!max_file_size || !allowed_extensions) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 설정이 올바르지 않습니다",
-        message: "파일 설정이 올바르게 구성되지 않았습니다."
-      });
-      return false;
-    }
-
-    if (file.size > max_file_size) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 크기 초과",
-        message: `파일 크기는 ${max_file_size / (1024 * 1024)}MB를 초과할 수 없습니다.`
-      });
-      return false;
-    }
-
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExtension || !allowed_extensions.includes(fileExtension)) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "지원하지 않는 파일 형식",
-        message: `지원되는 파일 형식: ${allowed_extensions.join(', ')}`
-      });
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleEditorContentMasking = useCallback(
-    (value: boolean) => {
-      handleConnectionStatus(false);
-    },
-    [handleConnectionStatus]
-  );
-
   if (pageId === undefined || !realtimeConfig) return <PageContentLoader />;
 
   return (
@@ -247,7 +192,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
             <CollaborativeDocumentEditorWithRef
               id={pageId}
               fileHandler={getEditorFileHandlers({
-                maxFileSize: instance?.fileSettings?.max_file_size ?? MAX_FILE_SIZE,
+                maxFileSize,
                 projectId: projectId?.toString() ?? "",
                 uploadFile: async (file) => {
                   const { asset_id } = await fileService.uploadProjectAsset(
@@ -264,7 +209,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
                 workspaceId,
                 workspaceSlug: workspaceSlug?.toString() ?? "",
               })}
-              handleEditorReady={handleEditorContentMasking}
+              handleEditorReady={handleEditorReady}
               ref={editorRef}
               containerClassName="h-full p-0 pb-64"
               displayConfig={displayConfig}
@@ -283,7 +228,6 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
               aiHandler={{
                 menu: getAIMenu,
               }}
-              transformContent={(content: string) => maskPrivateInformation(content)}
             />
           ) : (
             <CollaborativeDocumentReadOnlyEditorWithRef
@@ -308,7 +252,6 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
               }}
               realtimeConfig={realtimeConfig}
               user={userConfig}
-              transformContent={(content: string) => maskPrivateInformation(content)}
             />
           )}
         </div>

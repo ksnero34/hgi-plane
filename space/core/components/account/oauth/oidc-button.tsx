@@ -2,10 +2,10 @@ import { FC } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useTheme } from "next-themes";
-// helpers
-import { API_BASE_URL } from "@/helpers/common.helper";
 // images
 import OIDCLogo from "/public/logos/oidc-logo.svg";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 export type OIDCOAuthButtonProps = {
   text: string;

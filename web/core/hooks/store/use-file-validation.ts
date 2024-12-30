@@ -19,7 +19,11 @@ export const useFileValidation = () => {
   const validateFile = async (file: File): Promise<ValidationResult> => {
     // 파일 설정 업데이트
     try {
-      await updateFileSettings();
+      // 현재 workspace와 project 정보로 설정 업데이트
+      await updateFileSettings({
+        max_file_size: fileSettings?.max_file_size,
+        allowed_extensions: fileSettings?.allowed_extensions
+      });
     } catch (error) {
       console.error("Failed to update file settings:", error);
       // 설정 업데이트 실패시 현재 설정 사용

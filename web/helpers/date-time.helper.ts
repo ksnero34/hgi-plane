@@ -59,7 +59,7 @@ export const renderFormattedDate = (
   // return if undefined
   if (!parsedDate) return;
   // Check if the parsed date is valid before formatting
-  if (!isValid(parsedDate)) return; // Return null for invalid dates
+  if (!isValid(parsedDate)) return; // Return undefined for invalid dates
   let formattedDate;
   try {
     // Format the date in the format provided or default format (MMM dd, yyyy)
@@ -70,7 +70,7 @@ export const renderFormattedDate = (
       return format(parsedDate, "MMM dd, yyyy");
     } catch (error) {
       console.error("Error formatting date:", error);
-      return null;
+      return undefined;
     }
   }
 };

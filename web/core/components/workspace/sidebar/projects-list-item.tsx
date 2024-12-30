@@ -44,45 +44,6 @@ type Props = {
   isLastChild: boolean;
 };
 
-const navigation = (workspaceSlug: string, projectId: string) => [
-  {
-    name: "Issues",
-    href: `/${workspaceSlug}/projects/${projectId}/issues`,
-    Icon: LayersIcon,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
-  },
-  {
-    name: "Cycles",
-    href: `/${workspaceSlug}/projects/${projectId}/cycles`,
-    Icon: ContrastIcon,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED],
-  },
-  {
-    name: "Modules",
-    href: `/${workspaceSlug}/projects/${projectId}/modules`,
-    Icon: DiceIcon,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED],
-  },
-  {
-    name: "Views",
-    href: `/${workspaceSlug}/projects/${projectId}/views`,
-    Icon: Layers,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER,EUserPermissions.RESTRICTED,EUserPermissions.GUEST],
-  },
-  {
-    name: "Pages",
-    href: `/${workspaceSlug}/projects/${projectId}/pages`,
-    Icon: FileText,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
-  },
-  {
-    name: "Intake",
-    href: `/${workspaceSlug}/projects/${projectId}/inbox`,
-    Icon: Intake,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER,EUserPermissions.RESTRICTED,EUserPermissions.GUEST],
-  },
-];
-
 export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
   const { projectId, handleCopyText, disableDrag, disableDrop, isLastChild, handleOnProjectDrop, projectListType } =
     props;
@@ -116,7 +77,7 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
     project?.id
   );
   const isAuthorized = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+    [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
     EUserPermissionsLevel.PROJECT,
     workspaceSlug.toString(),
     project?.id

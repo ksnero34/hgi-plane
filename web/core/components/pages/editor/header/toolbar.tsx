@@ -14,7 +14,6 @@ import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/ed
 import { cn } from "@/helpers/common.helper";
 // hooks
 import { useInstance } from "@/hooks/store";
-import { v4 as uuid } from "uuid";
 
 type Props = {
   editorRef: EditorRefApi;
@@ -59,6 +58,8 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
   };
 
   const handleClick = () => {
+    // TODO: update this while toolbar homogenization
+    // @ts-expect-error type mismatch here
     executeCommand({
       itemKey: item.itemKey,
       ...item.extraProps,
@@ -104,6 +105,8 @@ export const PageToolbar: React.FC<Props> = ({ editorRef }) => {
     Object.values(toolbarItems)
       .flat()
       .forEach((item) => {
+        // TODO: update this while toolbar homogenization
+        // @ts-expect-error type mismatch here
         newActiveStates[item.renderKey] = editorRef.isMenuItemActive({
           itemKey: item.itemKey,
           ...item.extraProps,

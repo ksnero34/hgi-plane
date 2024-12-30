@@ -1,12 +1,11 @@
 // plane types
-import { TFileEntityInfo, TFileSignedURLResponse } from "@plane/types";
+import { TFileEntityInfo, TFileSignedURLResponse, IUser } from "@plane/types";
 // helpers
 import { generateFileUploadPayload, getAssetIdFromUrl, getFileMetaDataForUpload } from "@/helpers/file.helper";
 import { API_BASE_URL } from "@/helpers/common.helper";
 // services
 import { APIService } from "@/services/api.service";
 import { FileUploadService } from "@/services/file-upload.service";
-import { IUser } from "@/store/user";
 import { EFileAssetType } from "@plane/types/src/enums";
 
 export interface UnSplashImage {

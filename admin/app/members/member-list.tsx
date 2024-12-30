@@ -121,7 +121,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                   <div className="flex items-center gap-x-3">
                     <Avatar
                       name={member.display_name}
-                      src={member.avatar || undefined}
+                      src={member.avatar_url || undefined}
                       size={32}
                       shape="square"
                     />

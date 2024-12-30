@@ -127,7 +127,8 @@ export class IssueService extends APIService {
           next_cursor: "",
           prev_cursor: "",
           total_count: allIssues.length,
-          total_pages: 1
+          total_pages: 1,
+          total_results: allIssues.length
         };
       } catch (error) {
         console.error("Calendar view error:", error);
