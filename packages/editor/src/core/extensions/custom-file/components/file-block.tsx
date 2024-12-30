@@ -18,7 +18,11 @@ export const FileBlock = (props: FileBlockProps) => {
 
   const extension = fileName?.split(".").pop()?.toLowerCase() || "";
   const FileTypeIcon = getFileIconByExtension(extension);
-  const formattedSize = fileSize ? `${Math.round(fileSize / 1024)}KB` : "";
+  const formattedSize = fileSize ? (
+    fileSize >= 1024 * 1024 
+      ? `${(fileSize / (1024 * 1024)).toFixed(1)}MB`
+      : `${Math.round(fileSize / 1024)}KB`
+  ) : "";
 
   return (
     <div className="flex items-center gap-3 p-3 border rounded-md bg-custom-background-100 hover:bg-custom-background-90">

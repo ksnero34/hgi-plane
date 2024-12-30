@@ -43,7 +43,7 @@ export const useFileValidation = () => {
     if (!extension || !allowedExtensions.includes(extension)) {
       return { 
         isValid: false, 
-        error: `허용되지 않는 파일 형식입니다. 허용된 형식: ${allowedExtensions.join(', ')}` 
+        error: `허용되지 않는 파일 형식입니다. 허용된 형식: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${extension}` 
       };
     }
 

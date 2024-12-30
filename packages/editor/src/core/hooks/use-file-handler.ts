@@ -53,7 +53,7 @@ export const useFileHandler = ({ editor, maxFileSize, allowedExtensions, onUploa
       if (allowedExtensions) {
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
         if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
+          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${fileExtension}`);
         }
       }
 

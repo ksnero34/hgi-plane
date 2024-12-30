@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CustomBaseFileNodeViewProps } from "../custom-file";
-import { Upload, AlertCircle } from "lucide-react";
+import { Upload, AlertCircle, Loader2 } from "lucide-react";
 
 interface FileUploaderProps extends CustomBaseFileNodeViewProps {
   setIsUploaded: (uploaded: boolean) => void;
@@ -12,6 +12,8 @@ export const FileUploader = (props: FileUploaderProps) => {
   const { id: fileId } = node.attrs;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   useEffect(() => {
     const fileMap = editor.storage.customFile.fileMap;
@@ -23,6 +25,8 @@ export const FileUploader = (props: FileUploaderProps) => {
     }
 
     const uploadFile = async (file: File) => {
+      setIsUploading(true);
+      setUploadProgress(0);
       try {
         const fileHandler = editor.storage.customFile.fileHandler;
         if (fileHandler.validateFile) {
@@ -31,18 +35,30 @@ export const FileUploader = (props: FileUploaderProps) => {
           const maxFileSize = fileHandler.validation.maxFileSize;
           const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
-          // 확장자 검증
           if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-            throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
+            throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')} , 선택한 파일 확장자: ${fileExtension}`);
           }
 
-          // 파일 크기 검증
           if (file.size > maxFileSize) {
             throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
           }
         }
 
+        // 업로드 진행 상태를 시뮬레이션
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return prev;
+            }
+            return prev + 10;
+          });
+        }, 500);
+
         const response = await fileHandler.upload(file);
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+
         if (!response) throw new Error("Failed to upload file");
 
         const assetId = response.split("/").filter(Boolean).pop()?.replace("/", "");
@@ -63,6 +79,8 @@ export const FileUploader = (props: FileUploaderProps) => {
         setErrorMessage(message);
         updateAttributes({ uploadStatus: "error", errorMessage: message });
         setFailedToLoadFile(true);
+      } finally {
+        setIsUploading(false);
       }
     };
 
@@ -78,6 +96,9 @@ export const FileUploader = (props: FileUploaderProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     const fileMap = editor.storage.customFile.fileMap;
     fileMap.set(fileId, { event: "insert", file });
 
@@ -89,18 +110,30 @@ export const FileUploader = (props: FileUploaderProps) => {
         const maxFileSize = fileHandler.validation.maxFileSize;
         const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
-        // 확장자 검증
         if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
+          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${fileExtension}`);
         }
 
-        // 파일 크기 검증
         if (file.size > maxFileSize) {
           throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
         }
       }
 
+      // 업로드 진행 상태를 시뮬레이션
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 500);
+
       const response = await fileHandler.upload(file);
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       if (!response) throw new Error("Failed to upload file");
 
       const assetId = response.split("/").filter(Boolean).pop()?.replace("/", "");
@@ -121,6 +154,8 @@ export const FileUploader = (props: FileUploaderProps) => {
       setErrorMessage(message);
       updateAttributes({ uploadStatus: "error", errorMessage: message });
       setFailedToLoadFile(true);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -128,7 +163,7 @@ export const FileUploader = (props: FileUploaderProps) => {
 
   return (
     <div 
-      className={`flex items-center justify-center p-4 border-2 border-dashed rounded-md transition-colors cursor-pointer
+      className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md transition-colors cursor-pointer
         ${isError 
           ? "border-red-300 bg-red-50 hover:bg-red-100" 
           : "border-custom-border-200 hover:border-custom-border-400 hover:bg-custom-background-90"
@@ -148,6 +183,19 @@ export const FileUploader = (props: FileUploaderProps) => {
             <p className="text-sm text-red-600 text-center">
               {node.attrs.errorMessage || errorMessage || "Failed to upload file. Click to try again."}
             </p>
+          </>
+        ) : isUploading ? (
+          <>
+            <Loader2 className="w-5 h-5 text-custom-text-200 animate-spin" />
+            <p className="text-sm text-custom-text-200">
+              파일 업로드 중... {uploadProgress}%
+            </p>
+            <div className="w-full h-1 bg-gray-200 rounded-full mt-2">
+              <div 
+                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
           </>
         ) : (
           <>

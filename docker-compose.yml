@@ -199,7 +199,9 @@ services:
     ports:
       - ${NGINX_PORT}:18080
     networks:
-      - dev_env
+      dev_env:
+        aliases:
+          - plane.hgi.com
     environment:
       FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5368709120}
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}

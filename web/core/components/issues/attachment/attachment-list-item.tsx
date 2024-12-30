@@ -33,7 +33,7 @@ export const IssueAttachmentsListItem: FC<TIssueAttachmentsListItem> = observer(
   // derived values
   const attachment = attachmentId ? getAttachmentById(attachmentId) : undefined;
   const fileName = getFileName(attachment?.attributes.name ?? "");
-  const fileExtension = attachment?.attributes.extension || (attachment?.attributes.type || "").split("/")[1] || "";
+  const fileExtension = fileName.split('.').pop() || "";
   const fileIcon = getFileIcon(fileExtension, 18);
   const fileURL = getFileURL(attachment?.asset_url ?? "");
   // hooks

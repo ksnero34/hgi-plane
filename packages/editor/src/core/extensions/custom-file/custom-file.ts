@@ -120,6 +120,40 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
       return {
         ArrowDown: insertEmptyParagraphAtNodeBoundaries("down", this.name),
         ArrowUp: insertEmptyParagraphAtNodeBoundaries("up", this.name),
+        "Backspace": ({ editor }) => {
+          const { selection } = editor.state;
+          const { empty, anchor } = selection;
+          
+          if (!empty) {
+            const node = editor.state.doc.nodeAt(anchor);
+            if (node?.type.name === this.name) {
+              const fileId = node.attrs.id;
+              if (fileId) {
+                editor.commands.deleteFile(fileId);
+              }
+              editor.commands.deleteSelection();
+              return true;
+            }
+          }
+          return false;
+        },
+        "Delete": ({ editor }) => {
+          const { selection } = editor.state;
+          const { empty, anchor } = selection;
+          
+          if (!empty) {
+            const node = editor.state.doc.nodeAt(anchor);
+            if (node?.type.name === this.name) {
+              const fileId = node.attrs.id;
+              if (fileId) {
+                editor.commands.deleteFile(fileId);
+              }
+              editor.commands.deleteSelection();
+              return true;
+            }
+          }
+          return false;
+        },
       };
     },
 
