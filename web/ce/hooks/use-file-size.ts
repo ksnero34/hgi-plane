@@ -10,9 +10,8 @@ type TReturnProps = {
 export const useFileSize = (): TReturnProps => {
   // store hooks
   const { instance } = useInstance();
-  const { fileSettings } = instance;
 
   return {
-    maxFileSize: fileSettings?.max_file_size ?? MAX_STATIC_FILE_SIZE,
+    maxFileSize: instance?.fileSettings?.max_file_size ?? MAX_STATIC_FILE_SIZE,
   };
 };

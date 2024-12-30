@@ -3,7 +3,8 @@
 import { useMemo, useCallback, useEffect } from "react";
 // hooks
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
-import { IssueAttachmentUpload, IssueAttachmentsList, TAttachmentOperations } from "@/components/issues";
+import { IssueAttachmentUpload, IssueAttachmentsList } from "@/components/issues";
+import { TAttachmentOperations } from "@/components/issues/issue-detail-widgets/attachments/helper";
 import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
 import { useDropzone, FileRejection } from "react-dropzone";
@@ -34,9 +35,18 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     
-    const formData = new FormData();
-    formData.append("asset", acceptedFiles[0]);
-    await handleAttachmentOperations.create(formData);
+    const file = acceptedFiles[0];
+    const validationResult = await validateFile(file);
+    if (!validationResult.isValid) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Invalid file",
+        message: validationResult.error || "Invalid file",
+      });
+      return;
+    }
+
+    await handleAttachmentOperations.create(file);
   }, []);
 
   const onDropRejected = useCallback((fileRejections: FileRejection[]) => {
@@ -53,19 +63,20 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
 
   const handleAttachmentOperations: TAttachmentOperations = useMemo(
     () => ({
-      create: async (data: FormData) => {
+      create: async (file: File) => {
         try {
-          // 파일 업로드 전 최신 설정 가져오기
+          if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
+
           try {
             await fetchFileSettings();
           } catch (error) {
             console.error("Failed to fetch latest file settings:", error);
           }
 
-          const file = data.get("asset") as File;
-          if (!validateFileBeforeUpload(file, validateFile)) return;
+          const isValid = await validateFileBeforeUpload(file, validateFile);
+          if (!isValid) return;
 
-          const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, data);
+          const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, file);
           setPromiseToast(attachmentUploadPromise, {
             loading: "Uploading attachment...",
             success: {
@@ -153,12 +164,18 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
         <IssueAttachmentUpload
           workspaceSlug={workspaceSlug}
           disabled={disabled}
-          handleAttachmentOperations={handleAttachmentOperations}
+          attachmentOperations={handleAttachmentOperations}
+          validateFile={validateFile}
         />
         <IssueAttachmentsList
           issueId={issueId}
           disabled={disabled}
-          handleAttachmentOperations={handleAttachmentOperations}
+          attachmentHelpers={{
+            operations: handleAttachmentOperations,
+            snapshot: {
+              uploadStatus: undefined
+            }
+          }}
         />
       </div>
     </div>

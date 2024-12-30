@@ -27,7 +27,7 @@ export const PagesListHeader = observer(() => {
   const { currentProjectDetails, loader } = useProject();
   const { canCurrentUserCreatePage, createPage } = useProjectPages();
   const { setTrackElement } = useEventTracker();
-  
+
   // handle page create
   const handleCreatePage = async () => {
     setIsCreatingPage(true);

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // document-editor
@@ -206,6 +206,38 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     return true;
   };
 
+  const handleEditorContentMasking = useCallback(
+    (value: boolean) => {
+      handleConnectionStatus(false);
+      if (value && editorRef.current) {
+        // 에디터가 준비되면 컨텐츠 변경 이벤트를 구독
+        editorRef.current.on('update', ({ editor }) => {
+          const content = editor.getHTML();
+          const maskedContent = maskPrivateInformation(content);
+          if (content !== maskedContent) {
+            editor.commands.setContent(maskedContent);
+          }
+        });
+      }
+    },
+    [editorRef, handleConnectionStatus]
+  );
+
+  // 에디터 컨텐츠 마스킹을 위한 effect
+  useEffect(() => {
+    if (editorRef.current) {
+      const unsubscribe = editorRef.current.on('update', ({ editor }) => {
+        const content = editor.getHTML();
+        const maskedContent = maskPrivateInformation(content);
+        if (content !== maskedContent) {
+          editor.commands.setContent(maskedContent);
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [editorRef]);
+
   if (pageId === undefined || !realtimeConfig) return <PageContentLoader />;
 
   return (
@@ -239,8 +271,8 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
           {isContentEditable ? (
             <CollaborativeDocumentEditorWithRef
               id={pageId}
-              fileHandler={getEditorFileUploadHandler({
-                maxFileSize: instance.fileSettings?.max_file_size ?? MAX_FILE_SIZE,
+              fileHandler={getEditorFileHandlers({
+                maxFileSize: instance?.fileSettings?.max_file_size ?? MAX_FILE_SIZE,
                 projectId: projectId?.toString() ?? "",
                 uploadFile: async (file) => {
                   const { asset_id } = await fileService.uploadProjectAsset(
@@ -256,10 +288,8 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
                 },
                 workspaceId,
                 workspaceSlug: workspaceSlug?.toString() ?? "",
-                allowedExtensions: instance.fileSettings?.allowed_extensions ?? ["pdf", "doc", "docx", "xls", "xlsx", "txt", "csv", "zip", "rar"],
               })}
-              dragDropEnabled={true}
-              handleEditorReady={handleEditorReady}
+              handleEditorReady={handleEditorContentMasking}
               ref={editorRef}
               containerClassName="h-full p-0 pb-64"
               displayConfig={displayConfig}
@@ -278,7 +308,6 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
               aiHandler={{
                 menu: getAIMenu,
               }}
-              transformContent={(content: string) => maskPrivateInformation(content)}
             />
           ) : (
             <CollaborativeDocumentReadOnlyEditorWithRef

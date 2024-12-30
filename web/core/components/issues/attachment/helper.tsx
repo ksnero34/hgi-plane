@@ -1,19 +1,30 @@
 import { TOAST_TYPE, setToast } from "@plane/ui";
 import { ValidationResult } from "@/hooks/store/use-file-validation";
 
-export const validateFileBeforeUpload = (file: File, validateFile: (file: File) => ValidationResult): boolean => {
-  const { isValid, error } = validateFile(file);
-  
-  if (!isValid) {
+export const validateFileBeforeUpload = async (
+  file: File,
+  validateFile: (file: File) => Promise<ValidationResult>
+): Promise<boolean> => {
+  try {
+    const validationResult = await validateFile(file);
+    if (!validationResult.isValid) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Invalid file",
+        message: validationResult.error || "Invalid file",
+      });
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("File validation error:", error);
     setToast({
       type: TOAST_TYPE.ERROR,
-      title: "파일 검증 실패",
-      message: error || "유효하지 않은 파일입니다"
+      title: "Validation error",
+      message: "Failed to validate file",
     });
     return false;
   }
-  
-  return true;
 };
 
 export const handleUploadError = (error: any) => {

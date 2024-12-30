@@ -147,14 +147,10 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
             ) : (
               <RichTextReadOnlyEditor
                 id={issueId}
-                initialValue={localIssueDescription.description_html ?? ""}
+                initialValue={maskPrivateInformation(localIssueDescription.description_html ?? "")}
                 containerClassName={containerClassName}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
-                transformContent={(content: string) => {
-                  // 모든 텍스트에 대해 개인정보 마스킹 적용
-                  return maskPrivateInformation(content);
-                }}
               />
             )
           }
