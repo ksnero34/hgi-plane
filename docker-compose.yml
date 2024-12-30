@@ -191,7 +191,8 @@ services:
 
   # Comment this if you already have a reverse proxy running
   proxy:
-    container_name: proxy
+  # 인증서버 로컬 사용위해 컨테이너 명 지정
+    container_name: plane.hgi.com
     build:
       context: ./nginx
       dockerfile: Dockerfile
