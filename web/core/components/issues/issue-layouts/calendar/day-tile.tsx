@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 import { observer } from "mobx-react";
 // types
 import { TGroupedIssues, TIssue, TIssueMap, TPaginationData } from "@plane/types";
@@ -18,6 +18,7 @@ import { MONTHS_LIST } from "@/constants/calendar";
 import { cn } from "@/helpers/common.helper";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 // types
+import { IProjectEpicsFilter } from "@/plane-web/store/issue/epic";
 import { ICycleIssuesFilter } from "@/store/issue/cycle";
 import { IModuleIssuesFilter } from "@/store/issue/module";
 import { IProjectIssuesFilter } from "@/store/issue/project";
@@ -27,7 +28,12 @@ import { useParams } from "next/navigation";
 import { useIssueDetail } from "@/hooks/store";
 
 type Props = {
-  issuesFilterStore: IProjectIssuesFilter | IModuleIssuesFilter | ICycleIssuesFilter | IProjectViewIssuesFilter;
+  issuesFilterStore:
+    | IProjectIssuesFilter
+    | IModuleIssuesFilter
+    | ICycleIssuesFilter
+    | IProjectViewIssuesFilter
+    | IProjectEpicsFilter;
   date: ICalendarDate;
   issues: TIssueMap | undefined;
   groupedIssueIds: TGroupedIssues;
@@ -40,6 +46,7 @@ type Props = {
   quickActions: TRenderQuickActions;
   handleDragAndDrop: (
     issueId: string | undefined,
+    issueProjectId: string | undefined,
     sourceDate: string | undefined,
     destinationDate: string | undefined
   ) => Promise<void>;
@@ -52,6 +59,8 @@ type Props = {
     isEndDate: boolean;
     isContinuous: boolean;
   }>;
+  canEditProperties: (projectId: string | undefined) => boolean;
+  isEpic?: boolean;
 };
 
 export const CalendarDayTile: React.FC<Props> = observer((props) => {
@@ -73,6 +82,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     handleDragAndDrop,
     setSelectedDate,
     issueInfo,
+    canEditProperties,
+    isEpic = false,
   } = props;
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -122,7 +133,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: "Error!",
-                message: "Start date cannot be after the due date.",
+                message: "Due date cannot be before the start date of the work item.",
               });
               return;
             }
@@ -167,6 +178,13 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 });
               });
           }
+          handleDragAndDrop(
+            sourceData?.id,
+            issueDetails?.project_id ?? undefined,
+            sourceData?.date,
+            destinationData?.date
+          );
+          highlightIssueOnDrop(source?.element?.id, false);
         },
       })
     );
@@ -331,6 +349,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               enableQuickIssueCreate={enableQuickIssueCreate}
               quickAddCallback={quickAddCallback}
               readOnly={readOnly}
+              canEditProperties={canEditProperties}
+              isEpic={isEpic}
             />
           </div>
         </div>

@@ -41,11 +41,11 @@ import {
   insertFile,
 } from "@/helpers/editor-commands";
 // types
-import { CommandProps, ISlashCommandItem, TExtensions, TSlashCommandSectionKeys } from "@/types";
+import { CommandProps, ISlashCommandItem, TSlashCommandSectionKeys } from "@/types";
 // plane editor extensions
 import { coreEditorAdditionalSlashCommandOptions } from "@/plane-editor/extensions";
 // local types
-import { TSlashCommandAdditionalOption } from "./root";
+import { TExtensionProps } from "./root";
 
 export type TSlashCommandSection = {
   key: TSlashCommandSectionKeys;
@@ -53,13 +53,8 @@ export type TSlashCommandSection = {
   items: ISlashCommandItem[];
 };
 
-type TArgs = {
-  additionalOptions?: TSlashCommandAdditionalOption[];
-  disabledExtensions: TExtensions[];
-};
-
 export const getSlashCommandFilteredSections =
-  (args: TArgs) =>
+  (args: TExtensionProps) =>
   ({ query }: { query: string }): TSlashCommandSection[] => {
     const { additionalOptions, disabledExtensions } = args;
     const SLASH_COMMAND_SECTIONS: TSlashCommandSection[] = [

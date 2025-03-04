@@ -15,10 +15,12 @@ type Props = {
   quickActions: TRenderQuickActions;
   isDragDisabled: boolean;
   date: Date;
+  isEpic?: boolean;
+  canEditProperties: (projectId: string | undefined) => boolean;
 };
 
 export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
-  const { issueId, quickActions, isDragDisabled, date } = props;
+  const { issueId, quickActions, isDragDisabled, date , isEpic = false, canEditProperties} = props;
 
   const issueRef = useRef<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -40,6 +42,7 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
   //     state: issue.state_id
   //   } : null
   // });
+  const canDrag = !isDragDisabled && canEditProperties(issue?.project_id ?? undefined);
 
   useEffect(() => {
     const element = issueRef.current;
@@ -49,7 +52,7 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
     return combine(
       draggable({
         element,
-        canDrag: () => !isDragDisabled,
+        canDrag: () => canDrag,
         getInitialData: () => ({ 
           id: issue.id, 
           date: issue.target_date || issue.start_date 
@@ -64,7 +67,7 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
         },
       })
     );
-  }, [issueRef?.current, issue, isDragDisabled]);
+  }, [issueRef?.current, issue, canDrag]);
 
   useOutsideClickDetector(issueRef, () => {
     issueRef?.current?.classList?.remove(HIGHLIGHT_CLASS);
@@ -82,6 +85,7 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
       quickActions={quickActions} 
       ref={issueRef} 
       date={date}
+      isEpic={isEpic} 
     />
   );
 });

@@ -3,7 +3,7 @@ from .api import APIActivityLog, APIToken
 from .asset import FileAsset
 from .base import BaseModel
 from .cycle import Cycle, CycleIssue, CycleUserProperties
-from .dashboard import Dashboard, DashboardWidget, Widget
+from .dashboard import DeprecatedDashboard, DeprecatedDashboardWidget, DeprecatedWidget
 from .deploy_board import DeployBoard
 from .draft import (
     DraftIssue,
@@ -42,6 +42,8 @@ from .issue import (
     IssueSequence,
     IssueSubscriber,
     IssueVote,
+    IssueVersion,
+    IssueDescriptionVersion,
 )
 from .module import Module, ModuleIssue, ModuleLink, ModuleMember, ModuleUserProperties
 from .notification import EmailNotificationLog, Notification, UserNotificationPreference
@@ -67,16 +69,10 @@ from .workspace import (
     WorkspaceMemberInvite,
     WorkspaceTheme,
     WorkspaceUserProperties,
+    WorkspaceUserLink,
+    WorkspaceHomePreference,
+    WorkspaceUserPreference,
 )
-
-
-
-
-
-
-
-
-
 
 from .favorite import UserFavorite
 
@@ -87,3 +83,5 @@ from .recent_visit import UserRecentVisit
 from .label import Label
 
 from .device import Device, DeviceSession
+
+from .sticky import Sticky

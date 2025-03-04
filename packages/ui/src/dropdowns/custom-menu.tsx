@@ -228,7 +228,7 @@ const MenuItem: React.FC<ICustomMenuItemProps> = (props) => {
           )}
           onClick={(e) => {
             close();
-            onClick && onClick(e);
+            onClick?.(e);
           }}
           disabled={disabled}
         >

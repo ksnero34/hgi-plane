@@ -18,7 +18,7 @@ import {
   CustomImageExtension,
   CustomKeymap,
   CustomLinkExtension,
-  CustomMention,
+  CustomMentionExtension,
   CustomQuoteExtension,
   CustomTextAlignExtension,
   CustomTypographyExtension,
@@ -30,30 +30,31 @@ import {
   TableHeader,
   TableRow,
   CustomFileExtension,
+  FileHandler,
 } from "@/extensions";
 // helpers
 import { isValidHttpUrl } from "@/helpers/common";
-// types
-import { IMentionHighlight, IMentionSuggestion, TExtensions, TFileHandler } from "@/types";
 // plane editor extensions
 import { CoreEditorAdditionalExtensions } from "@/plane-editor/extensions";
+// types
+import { TExtensions, TFileHandler, TMentionHandler } from "@/types";
 
 type TArguments = {
   disabledExtensions: TExtensions[];
   enableHistory: boolean;
   fileHandler: TFileHandler;
-  mentionConfig: {
-    mentionSuggestions?: () => Promise<IMentionSuggestion[]>;
-    mentionHighlights?: () => Promise<IMentionHighlight[]>;
-  };
+  fileHandler2: FileHandler;
+  mentionHandler: TMentionHandler;
   placeholder?: string | ((isFocused: boolean, value: string) => string);
   tabIndex?: number;
+  editable: boolean;
 };
 
 export const CoreEditorExtensions = (args: TArguments): Extensions => {
-  const { disabledExtensions, enableHistory, fileHandler, mentionConfig, placeholder, tabIndex } = args;
+  const { disabledExtensions, enableHistory, fileHandler, fileHandler2, mentionHandler, placeholder, tabIndex } = args;
 
   return [
+    // @ts-expect-error tiptap types are incorrect
     StarterKit.configure({
       bulletList: {
         HTMLAttributes: {
@@ -85,12 +86,13 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
         },
       },
       dropcursor: {
-        class: "text-custom-text-300",
+        class:
+          "text-custom-text-300 transition-all motion-reduce:transition-none motion-reduce:hover:transform-none duration-200 ease-[cubic-bezier(0.165, 0.84, 0.44, 1)]",
       },
       ...(enableHistory ? {} : { history: false }),
     }),
     CustomQuoteExtension,
-    DropHandlerExtension(),
+    DropHandlerExtension,
     CustomHorizontalRule.configure({
       HTMLAttributes: {
         class: "py-4 border-custom-border-400",
@@ -116,7 +118,7 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       },
     }),
     CustomImageExtension(fileHandler),
-    CustomFileExtension(fileHandler, "", ""),
+    CustomFileExtension(fileHandler2, "", ""),
     TiptapUnderline,
     TextStyle,
     TaskList.configure({
@@ -139,6 +141,7 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
     CustomCodeInlineExtension,
     Markdown.configure({
       html: true,
+      transformCopiedText: true,
       transformPastedText: true,
       breaks: true,
     }),
@@ -146,13 +149,11 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
     TableHeader,
     TableCell,
     TableRow,
-    CustomMention({
-      mentionSuggestions: mentionConfig.mentionSuggestions,
-      mentionHighlights: mentionConfig.mentionHighlights,
-      readonly: false,
-    }),
+    CustomMentionExtension(mentionHandler),
     Placeholder.configure({
       placeholder: ({ editor, node }) => {
+        if (!editor.isEditable) return "";
+
         if (node.type.name === "heading") return `Heading ${node.attrs.level}`;
 
         if (editor.storage.imageComponent.uploadInProgress) return "";

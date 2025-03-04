@@ -180,3 +180,16 @@ class S3Storage(S3Boto3Storage):
         except ClientError as e:
             log_exception(e)
             return False
+    def copy_object(self, object_name, new_object_name):
+        """Copy an S3 object to a new location"""
+        try:
+            response = self.s3_client.copy_object(
+                Bucket=self.aws_storage_bucket_name,
+                CopySource={"Bucket": self.aws_storage_bucket_name, "Key": object_name},
+                Key=new_object_name,
+            )
+        except ClientError as e:
+            log_exception(e)
+            return None
+
+        return response

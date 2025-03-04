@@ -1,3 +1,4 @@
+import { AxiosRequestConfig } from "axios";
 // plane types
 import { TFileEntityInfo, TFileSignedURLResponse, IUser } from "@plane/types";
 // helpers
@@ -80,7 +81,8 @@ export class FileService extends APIService {
   async uploadWorkspaceAsset(
     workspaceSlug: string,
     data: TFileEntityInfo,
-    file: File
+    file: File,
+    uploadProgressHandler?: AxiosRequestConfig["onUploadProgress"]
   ): Promise<TFileSignedURLResponse> {
     const fileMetaData = getFileMetaDataForUpload(file);
     return this.post(`/api/assets/v2/workspaces/${workspaceSlug}/`, {
@@ -90,7 +92,11 @@ export class FileService extends APIService {
       .then(async (response) => {
         const signedURLResponse: TFileSignedURLResponse = response?.data;
         const fileUploadPayload = generateFileUploadPayload(signedURLResponse, file);
-        await this.fileUploadService.uploadFile(signedURLResponse.upload_data.url, fileUploadPayload);
+        await this.fileUploadService.uploadFile(
+          signedURLResponse.upload_data.url,
+          fileUploadPayload,
+          uploadProgressHandler
+        );
         await this.updateWorkspaceAssetUploadStatus(workspaceSlug.toString(), signedURLResponse.asset_id);
         return signedURLResponse;
       })
@@ -138,7 +144,8 @@ export class FileService extends APIService {
     workspaceSlug: string,
     projectId: string,
     data: TFileEntityInfo,
-    file: File
+    file: File,
+    uploadProgressHandler?: AxiosRequestConfig["onUploadProgress"]
   ): Promise<TFileSignedURLResponse> {
     const fileMetaData = getFileMetaDataForUpload(file);
     return this.post(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/`, {
@@ -148,7 +155,11 @@ export class FileService extends APIService {
       .then(async (response) => {
         const signedURLResponse: TFileSignedURLResponse = response?.data;
         const fileUploadPayload = generateFileUploadPayload(signedURLResponse, file);
-        await this.fileUploadService.uploadFile(signedURLResponse.upload_data.url, fileUploadPayload);
+        await this.fileUploadService.uploadFile(
+          signedURLResponse.upload_data.url,
+          fileUploadPayload,
+          uploadProgressHandler
+        );
         await this.updateProjectAssetUploadStatus(workspaceSlug, projectId, signedURLResponse.asset_id);
         return signedURLResponse;
       })

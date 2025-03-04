@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FileIcon, Download, Trash2 } from "lucide-react";
-import { cn } from "../../../helpers/common";
+import { cn } from "@plane/utils";
 import { formatBytes } from "../../../helpers/file";
 import { CustomBaseFileNodeViewProps } from "../custom-file";
 import { getFileIconByExtension } from "../../../helpers/file-icon";

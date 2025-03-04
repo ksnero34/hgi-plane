@@ -5,10 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Image, BrainCog, Cog, Lock, Mail, Users, FileText } from "lucide-react";
 import { Tooltip, WorkspaceIcon } from "@plane/ui";
+import { cn } from "@plane/utils";
 // hooks
-import { cn } from "@/helpers/common.helper";
 import { useTheme } from "@/hooks/store";
-// helpers
 
 const INSTANCE_ADMIN_LINKS = [
   {

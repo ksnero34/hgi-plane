@@ -1,4 +1,5 @@
 import { observer } from "mobx-react";
+import { useTranslation } from "@plane/i18n";
 import { TIssue, TPaginationData } from "@plane/types";
 // components
 import { CalendarQuickAddIssueActions, CalendarIssueBlockRoot } from "@/components/issues";
@@ -23,6 +24,8 @@ type Props = {
   addIssuesToView?: (issueIds: string[]) => Promise<any>;
   readOnly?: boolean;
   isMobileView?: boolean;
+  canEditProperties: (projectId: string | undefined) => boolean;
+  isEpic?: boolean;
 };
 
 export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
@@ -40,9 +43,12 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     isMobileView = false,
     getPaginationData,
     getGroupIssueCount,
+    canEditProperties,
+    isEpic = false,
   } = props;
-
   const formattedDatePayload = renderFormattedPayloadDate(date);
+  const { t } = useTranslation();
+
   const storeType = useIssueStoreType() as CalendarStoreType;
   const { issues } = useIssues(storeType);
   const { issue: { getIssueById } } = useIssueDetail();
@@ -118,6 +124,8 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
             quickActions={quickActions}
             isDragDisabled={isDragDisabled || isMobileView}
             date={date}
+            canEditProperties={canEditProperties}
+            isEpic={isEpic}
           />
         </div>
       ))}
@@ -136,6 +144,7 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
             }}
             quickAddCallback={quickAddCallback}
             addIssuesToView={addIssuesToView}
+            isEpic={isEpic}
           />
         </div>
       )}
@@ -147,7 +156,7 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
             className="w-min whitespace-nowrap rounded text-xs px-1.5 py-1 font-medium  hover:bg-custom-background-80 text-custom-primary-100 hover:text-custom-primary-200"
             onClick={() => loadMoreIssues(formattedDatePayload)}
           >
-            Load More
+            {t("common.load_more")}
           </button>
         </div>
       )}

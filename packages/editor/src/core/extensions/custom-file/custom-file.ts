@@ -227,7 +227,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
           (fileId: string) =>
           async () => {
             try {
-              let fileNode = null;
+              let fileNode: ProseMirrorNode | null = null;
               this.editor.state.doc.descendants((node) => {
                 if (node.type.name === "fileComponent" && node.attrs.id === fileId) {
                   fileNode = node;
