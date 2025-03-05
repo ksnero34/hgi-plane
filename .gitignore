@@ -49,7 +49,7 @@ venv
 *.pyc
 staticfiles
 mediafiles
-.env
+#.env
 .DS_Store
 logs/
 
