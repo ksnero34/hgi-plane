@@ -1,1264 +1,1264 @@
 {
   "sidebar": {
-    "projects": "プロジェクト",
-    "pages": "ページ",
-    "new_work_item": "新規作業項目",
-    "home": "ホーム",
-    "your_work": "あなたの作業",
-    "inbox": "受信トレイ",
-    "workspace": "ワークスペース",
-    "views": "ビュー",
-    "analytics": "アナリティクス",
-    "work_items": "作業項目",
-    "cycles": "サイクル",
-    "modules": "モジュール",
-    "intake": "インテーク",
-    "drafts": "下書き",
-    "favorites": "お気に入り",
-    "pro": "プロ",
-    "upgrade": "アップグレード"
+    "projects": "프로젝트",
+    "pages": "페이지",
+    "new_work_item": "새 작업 항목",
+    "home": "홈",
+    "your_work": "내 작업",
+    "inbox": "inbox",
+    "workspace": "워크스페이스",
+    "views": "views",
+    "analytics": "분석",
+    "work_items": "작업 항목",
+    "cycles": "사이클",
+    "modules": "모듈",
+    "intake": "접수",
+    "drafts": "초안",
+    "favorites": "즐겨찾기",
+    "pro": "프로",
+    "upgrade": "업그레이드"
   },
 
   "auth": {
     "common": {
       "email": {
-        "label": "メールアドレス",
+        "label": "이메일 주소",
         "placeholder": "name@company.com",
         "errors": {
-          "required": "メールアドレスは必須です",
-          "invalid": "メールアドレスが無効です"
+          "required": "이메일 주소는 필수입니다",
+          "invalid": "이메일 주소가 유효하지 않습니다"
         }
       },
       "password": {
-        "label": "パスワード",
-        "set_password": "パスワードを設定",
-        "placeholder": "パスワードを入力",
+        "label": "비밀번호",
+        "set_password": "비밀번호 설정",
+        "placeholder": "비밀번호 입력",
         "confirm_password": {
-          "label": "パスワードの確認",
-          "placeholder": "パスワードを確認"
+          "label": "비밀번호 확인",
+          "placeholder": "비밀번호 확인"
         },
         "current_password": {
-          "label": "現在のパスワード"
+          "label": "현재 비밀번호"
         },
         "new_password": {
-          "label": "新しいパスワード",
-          "placeholder": "新しいパスワードを入力"
+          "label": "새 비밀번호",
+          "placeholder": "새 비밀번호 입력"
         },
         "change_password": {
           "label": {
-            "default": "パスワードを変更",
-            "submitting": "パスワードを変更中"
+            "default": "비밀번호 변경",
+            "submitting": "비밀번호 변경 중"
           }
         },
         "errors": {
-          "match": "パスワードが一致しません",
-          "empty": "パスワードを入力してください",
-          "length": "パスワードは8文字以上である必要があります",
+          "match": "비밀번호가 일치하지 않습니다",
+          "empty": "비밀번호를 입력해주세요",
+          "length": "비밀번호는 8자 이상이어야 합니다",
           "strength": {
-            "weak": "パスワードが弱すぎます",
-            "strong": "パスワードは十分な強度です"
+            "weak": "비밀번호가 너무 쉽습니다",
+            "strong": "비밀번호 복잡도가 충분합니다"
           }
         },
-        "submit": "パスワードを設定",
+        "submit": "비밀번호 설정",
         "toast": {
           "change_password": {
             "success": {
-              "title": "成功！",
-              "message": "パスワードが正常に変更されました。"
+              "title": "성공!",
+              "message": "비밀번호가 성공적으로 변경되었습니다."
             },
             "error": {
-              "title": "エラー！",
-              "message": "問題が発生しました。もう一度お試しください。"
+              "title": "오류!",
+              "message": "문제가 발생했습니다. 다시 시도해주세요."
             }
           }
         }
       },
       "unique_code": {
-        "label": "ユニークコード",
+        "label": "OPT 코드",
         "placeholder": "gets-sets-flys",
-        "paste_code": "メールで送信されたコードを貼り付けてください",
-        "requesting_new_code": "新しいコードをリクエスト中",
-        "sending_code": "コードを送信中"
+        "paste_code": "이메일로 전송된 코드를 붙여넣으세요",
+        "requesting_new_code": "새 코드 요청 중",
+        "sending_code": "코드 전송 중"
       },
-      "already_have_an_account": "すでにアカウントをお持ちですか？",
-      "login": "ログイン",
-      "create_account": "アカウントを作成",
-      "new_to_plane": "Planeは初めてですか？",
-      "back_to_sign_in": "サインインに戻る",
-      "resend_in": "{seconds}秒後に再送信",
-      "sign_in_with_unique_code": "ユニークコードでサインイン",
-      "forgot_password": "パスワードをお忘れですか？"
+      "already_have_an_account": "이미 계정이 있으신가요?",
+      "login": "로그인",
+      "create_account": "계정 만들기",
+      "new_to_plane": "Plane이 처음이신가요?",
+      "back_to_sign_in": "로그인으로 돌아가기",
+      "resend_in": "{seconds}초 후 재전송",
+      "sign_in_with_unique_code": "OPT 코드로 로그인",
+      "forgot_password": "비밀번호를 잊으셨나요?"
     },
     "sign_up": {
       "header": {
-        "label": "チームと作業を管理するためのアカウントを作成してください。",
+        "label": "팀과 작업을 관리하기 위한 계정을 만드세요.",
         "step": {
           "email": {
-            "header": "サインアップ",
+            "header": "회원가입",
             "sub_header": ""
           },
           "password": {
-            "header": "サインアップ",
-            "sub_header": "メールアドレスとパスワードの組み合わせでサインアップ。"
+            "header": "회원가입",
+            "sub_header": "이메일과 비밀번호 조합으로 회원가입."
           },
           "unique_code": {
-            "header": "サインアップ",
-            "sub_header": "上記のメールアドレスに送信されたユニークコードでサインアップ。"
+            "header": "회원가입",
+            "sub_header": "위 이메일 주소로 전송된 OTP 코드로 회원가입."
           }
         }
       },
       "errors": {
         "password": {
-          "strength": "強力なパスワードを設定して続行してください"
+          "strength": "강력한 비밀번호를 설정하고 계속하세요"
         }
       }
     },
     "sign_in": {
       "header": {
-        "label": "チームと作業を管理するためにログインしてください。",
+        "label": "팀과 작업을 관리하기 위해 로그인하세요.",
         "step": {
           "email": {
-            "header": "ログインまたはサインアップ",
+            "header": "로그인 또는 회원가입",
             "sub_header": ""
           },
           "password": {
-            "header": "ログインまたはサインアップ",
-            "sub_header": "メールアドレスとパスワードの組み合わせでログイン。"
+            "header": "로그인 또는 회원가입",
+            "sub_header": "이메일과 비밀번호 조합으로 로그인."
           },
           "unique_code": {
-            "header": "ログインまたはサインアップ",
-            "sub_header": "上記のメールアドレスに送信されたユニークコードでログイン。"
+            "header": "로그인 또는 회원가입",
+            "sub_header": "위 이메일 주소로 전송된 고유 코드로 로그인."
           }
         }
       }
     },
     "forgot_password": {
-      "title": "パスワードをリセット",
-      "description": "確認済みのユーザーアカウントのメールアドレスを入力してください。パスワードリセットリンクを送信します。",
-      "email_sent": "リセットリンクをメールアドレスに送信しました",
-      "send_reset_link": "リセットリンクを送信",
+      "title": "비밀번호 재설정",
+      "description": "확인된 사용자 계정의 이메일 주소를 입력하세요. 비밀번호 재설정 링크를 보내드립니다.",
+      "email_sent": "재설정 링크를 이메일 주소로 보냈습니다",
+      "send_reset_link": "재설정 링크 보내기",
       "errors": {
-        "smtp_not_enabled": "管理者がSMTPを有効にしていないため、パスワードリセットリンクを送信できません"
+        "smtp_not_enabled": "관리자가 SMTP를 활성화하지 않아 비밀번호 재설정 링크를 보낼 수 없습니다"
       },
       "toast": {
         "success": {
-          "title": "メール送信完了",
-          "message": "パスワードをリセットするためのリンクを受信トレイで確認してください。数分以内に表示されない場合は、迷惑メールフォルダを確認してください。"
+          "title": "이메일 전송 완료",
+          "message": "비밀번호 재설정 링크를 받은편지함에서 확인하세요. 몇 분 내에 표시되지 않으면 스팸 폴더를 확인하세요."
         },
         "error": {
-          "title": "エラー！",
-          "message": "問題が発生しました。もう一度お試しください。"
+          "title": "오류!",
+          "message": "문제가 발생했습니다. 다시 시도해주세요."
         }
       }
     },
     "reset_password": {
-      "title": "新しいパスワードを設定",
-      "description": "強力なパスワードでアカウントを保護"
+      "title": "새 비밀번호 설정",
+      "description": "강력한 비밀번호로 계정 보호"
     },
     "set_password": {
-      "title": "アカウントを保護",
-      "description": "パスワードを設定して安全にログイン"
+      "title": "계정 보호",
+      "description": "비밀번호를 설정하여 안전하게 로그인"
     },
     "sign_out": {
       "toast": {
         "error": {
-          "title": "エラー！",
-          "message": "サインアウトに失敗しました。もう一度お試しください。"
+          "title": "오류!",
+          "message": "로그아웃에 실패했습니다. 다시 시도해주세요."
         }
       }
     }
   },
 
-  "submit": "送信",
-  "cancel": "キャンセル",
-  "loading": "読み込み中",
-  "error": "エラー",
-  "success": "成功",
-  "warning": "警告",
-  "info": "情報",
-  "close": "閉じる",
-  "yes": "はい",
-  "no": "いいえ",
-  "ok": "OK",
-  "name": "名前",
-  "description": "説明",
-  "search": "検索",
-  "add_member": "メンバーを追加",
-  "adding_members": "メンバーを追加中",
-  "remove_member": "メンバーを削除",
-  "add_members": "メンバーを追加",
-  "adding_member": "メンバーを追加中",
-  "remove_members": "メンバーを削除",
-  "add": "追加",
-  "adding": "追加中",
-  "remove": "削除",
-  "add_new": "新規追加",
-  "remove_selected": "選択項目を削除",
-  "first_name": "名",
-  "last_name": "姓",
-  "email": "メールアドレス",
-  "display_name": "表示名",
-  "role": "役割",
-  "timezone": "タイムゾーン",
-  "avatar": "アバター",
-  "cover_image": "カバー画像",
-  "password": "パスワード",
-  "change_cover": "カバーを変更",
-  "language": "言語",
-  "saving": "保存中",
-  "save_changes": "変更を保存",
-  "deactivate_account": "アカウントを無効化",
-  "deactivate_account_description": "アカウントを無効化すると、そのアカウント内のすべてのデータとリソースが完全に削除され、復元できなくなります。",
-  "profile_settings": "プロフィール設定",
-  "your_account": "あなたのアカウント",
-  "security": "セキュリティ",
-  "activity": "アクティビティ",
-  "appearance": "外観",
-  "notifications": "通知",
-  "workspaces": "ワークスペース",
-  "create_workspace": "ワークスペースを作成",
-  "invitations": "招待",
-  "summary": "概要",
-  "assigned": "割り当て済み",
-  "created": "作成済み",
-  "subscribed": "購読中",
-  "you_do_not_have_the_permission_to_access_this_page": "このページにアクセスする権限がありません。",
-  "something_went_wrong_please_try_again": "問題が発生しました。もう一度お試しください。",
-  "load_more": "もっと読み込む",
-  "select_or_customize_your_interface_color_scheme": "インターフェースの配色を選択またはカスタマイズしてください。",
-  "theme": "テーマ",
-  "system_preference": "システム設定に従う",
-  "light": "ライト",
-  "dark": "ダーク",
-  "light_contrast": "ライトハイコントラスト",
-  "dark_contrast": "ダークハイコントラスト",
-  "custom": "カスタムテーマ",
-  "select_your_theme": "テーマを選択",
-  "customize_your_theme": "テーマをカスタマイズ",
-  "background_color": "背景色",
-  "text_color": "文字色",
-  "primary_color": "プライマリ（テーマ）カラー",
-  "sidebar_background_color": "サイドバーの背景色",
-  "sidebar_text_color": "サイドバーの文字色",
-  "set_theme": "テーマを設定",
-  "enter_a_valid_hex_code_of_6_characters": "6文字の有効な16進コードを入力してください",
-  "background_color_is_required": "背景色は必須です",
-  "text_color_is_required": "文字色は必須です",
-  "primary_color_is_required": "プライマリカラーは必須です",
-  "sidebar_background_color_is_required": "サイドバーの背景色は必須です",
-  "sidebar_text_color_is_required": "サイドバーの文字色は必須です",
-  "updating_theme": "テーマを更新中",
-  "theme_updated_successfully": "テーマが正常に更新されました",
-  "failed_to_update_the_theme": "テーマの更新に失敗しました",
-  "email_notifications": "メール通知",
-  "stay_in_the_loop_on_issues_you_are_subscribed_to_enable_this_to_get_notified": "購読している作業項目の最新情報を受け取ります。通知を受け取るには有効にしてください。",
-  "email_notification_setting_updated_successfully": "メール通知設定が正常に更新されました",
-  "failed_to_update_email_notification_setting": "メール通知設定の更新に失敗しました",
-  "notify_me_when": "通知を受け取るタイミング",
-  "property_changes": "プロパティの変更",
-  "property_changes_description": "作業項目の担当者、優先度、見積もりなどのプロパティが変更されたときに通知します。",
-  "state_change": "状態の変更",
-  "state_change_description": "作業項目が異なる状態に移動したときに通知します",
-  "issue_completed": "作業項目の完了",
-  "issue_completed_description": "作業項目が完了したときのみ通知します",
-  "comments": "コメント",
-  "comments_description": "誰かが作業項目にコメントを残したときに通知します",
-  "mentions": "メンション",
-  "mentions_description": "誰かがコメントや説明で自分をメンションしたときのみ通知します",
-  "old_password": "現在のパスワード",
-  "general_settings": "一般設定",
-  "sign_out": "サインアウト",
-  "signing_out": "サインアウト中",
-  "active_cycles": "アクティブサイクル",
-  "active_cycles_description": "プロジェクト全体のサイクルを監視し、優先度の高い作業項目を追跡し、注意が必要なサイクルにズームインします。",
-  "on_demand_snapshots_of_all_your_cycles": "すべてのサイクルのオンデマンドスナップショット",
-  "upgrade": "アップグレード",
-  "10000_feet_view": "すべてのアクティブサイクルの俯瞰図",
-  "10000_feet_view_description": "各プロジェクトのサイクル間を移動する代わりに、すべてのプロジェクトの実行中のサイクルを一度に確認できます。",
-  "get_snapshot_of_each_active_cycle": "各アクティブサイクルのスナップショットを取得",
-  "get_snapshot_of_each_active_cycle_description": "すべてのアクティブサイクルの主要な指標を追跡し、進捗状況を確認し、期限に対する範囲を把握します。",
-  "compare_burndowns": "バーンダウンを比較",
-  "compare_burndowns_description": "各サイクルのバーンダウンレポートを確認して、各チームのパフォーマンスを監視します。",
-  "quickly_see_make_or_break_issues": "重要な作業項目をすぐに確認",
-  "quickly_see_make_or_break_issues_description": "期限に対する各サイクルの優先度の高い作業項目をプレビューします。ワンクリックでサイクルごとにすべての項目を確認できます。",
-  "zoom_into_cycles_that_need_attention": "注意が必要なサイクルにズームイン",
-  "zoom_into_cycles_that_need_attention_description": "期待に沿わないサイクルの状態をワンクリックで調査します。",
-  "stay_ahead_of_blockers": "ブロッカーに先手を打つ",
-  "stay_ahead_of_blockers_description": "プロジェクト間の課題を特定し、他のビューでは明らかでないサイクル間の依存関係を確認します。",
-  "analytics": "アナリティクス",
-  "workspace_invites": "ワークスペースの招待",
-  "enter_god_mode": "ゴッドモードに入る",
-  "workspace_logo": "ワークスペースのロゴ",
-  "new_issue": "新規作業項目",
-  "your_work": "あなたの作業",
-  "drafts": "下書き",
-  "projects": "プロジェクト",
-  "views": "ビュー",
-  "workspace": "ワークスペース",
-  "archives": "アーカイブ",
-  "settings": "設定",
-  "failed_to_move_favorite": "お気に入りの移動に失敗しました",
-  "favorites": "お気に入り",
-  "no_favorites_yet": "まだお気に入りがありません",
-  "create_folder": "フォルダを作成",
-  "new_folder": "新規フォルダ",
-  "favorite_updated_successfully": "お気に入りが正常に更新されました",
-  "favorite_created_successfully": "お気に入りが正常に作成されました",
-  "folder_already_exists": "フォルダは既に存在します",
-  "folder_name_cannot_be_empty": "フォルダ名を空にすることはできません",
-  "something_went_wrong": "問題が発生しました",
-  "failed_to_reorder_favorite": "お気に入りの並び替えに失敗しました",
-  "favorite_removed_successfully": "お気に入りが正常に削除されました",
-  "failed_to_create_favorite": "お気に入りの作成に失敗しました",
-  "failed_to_rename_favorite": "お気に入りの名前変更に失敗しました",
-  "project_link_copied_to_clipboard": "プロジェクトリンクがクリップボードにコピーされました",
-  "link_copied": "リンクがコピーされました",
-  "add_project": "プロジェクトを追加",
-  "create_project": "プロジェクトを作成",
-  "failed_to_remove_project_from_favorites": "プロジェクトをお気に入りから削除できませんでした。もう一度お試しください。",
-  "project_created_successfully": "プロジェクトが正常に作成されました",
-  "project_created_successfully_description": "プロジェクトが正常に作成されました。作業項目を追加できるようになりました。",
-  "project_cover_image_alt": "プロジェクトのカバー画像",
-  "name_is_required": "名前は必須です",
-  "title_should_be_less_than_255_characters": "タイトルは255文字未満である必要があります",
-  "project_name": "プロジェクト名",
-  "project_id_must_be_at_least_1_character": "プロジェクトIDは最低1文字必要です",
-  "project_id_must_be_at_most_5_characters": "プロジェクトIDは最大5文字までです",
-  "project_id": "プロジェクトID",
-  "project_id_tooltip_content": "プロジェクト内の作業項目を一意に識別するのに役立ちます。最大5文字。",
-  "description_placeholder": "説明",
-  "only_alphanumeric_non_latin_characters_allowed": "英数字と非ラテン文字のみ使用できます。",
-  "project_id_is_required": "プロジェクトIDは必須です",
-  "project_id_allowed_char": "英数字と非ラテン文字のみ使用できます。",
-  "project_id_min_char": "プロジェクトIDは最低1文字必要です",
-  "project_id_max_char": "プロジェクトIDは最大5文字までです",
-  "project_description_placeholder": "プロジェクトの説明を入力",
-  "select_network": "ネットワークを選択",
-  "lead": "リード",
-  "date_range": "日付範囲",
-  "private": "プライベート",
-  "public": "パブリック",
-  "accessible_only_by_invite": "招待のみアクセス可能",
-  "anyone_in_the_workspace_except_guests_can_join": "ゲスト以外のワークスペースのメンバーが参加可能",
-  "creating": "作成中",
-  "creating_project": "プロジェクトを作成中",
-  "adding_project_to_favorites": "プロジェクトをお気に入りに追加中",
-  "project_added_to_favorites": "プロジェクトがお気に入りに追加されました",
-  "couldnt_add_the_project_to_favorites": "プロジェクトをお気に入りに追加できませんでした。もう一度お試しください。",
-  "removing_project_from_favorites": "プロジェクトをお気に入りから削除中",
-  "project_removed_from_favorites": "プロジェクトがお気に入りから削除されました",
-  "couldnt_remove_the_project_from_favorites": "プロジェクトをお気に入りから削除できませんでした。もう一度お試しください。",
-  "add_to_favorites": "お気に入りに追加",
-  "remove_from_favorites": "お気に入りから削除",
-  "publish_settings": "公開設定",
-  "publish": "公開",
-  "copy_link": "リンクをコピー",
-  "leave_project": "プロジェクトを退出",
-  "join_the_project_to_rearrange": "並び替えるにはプロジェクトに参加してください",
-  "drag_to_rearrange": "ドラッグして並び替え",
-  "congrats": "おめでとうございます！",
-  "open_project": "プロジェクトを開く",
-  "issues": "作業項目",
-  "cycles": "Cycles",
-  "modules": "Modules",
-  "pages": "Pages",
-  "intake": "Intake",
-  "time_tracking": "時間トラッキング",
-  "work_management": "作業管理",
-  "projects_and_issues": "プロジェクトと作業項目",
-  "projects_and_issues_description": "このプロジェクトでオン/オフを切り替えます。",
-  "cycles_description": "プロジェクトごとに作業を時間枠で区切り、期間を次の期間に変更します。",
-  "modules_description": "サブプロジェクトのような設定で、独自のリーダーと担当者を持つグループ作業を行います。",
-  "views_description": "並び替え、フィルター、表示オプションを後で使用するために保存するか、共有します。",
-  "pages_description": "何でも書けるように何でも書きます。",
-  "intake_description": "購読している作業項目の最新情報を受け取ります。通知を受け取るには有効にしてください。",
-  "time_tracking_description": "作業項目とプロジェクトの作業時間を追跡します。",
-  "work_management_description": "作業とプロジェクトを簡単に管理します。",
-  "documentation": "ドキュメント",
-  "message_support": "サポートにメッセージ",
-  "contact_sales": "営業に問い合わせ",
-  "hyper_mode": "Hyper Mode",
-  "keyboard_shortcuts": "キーボードショートカット",
-  "whats_new": "新機能",
-  "version": "バージョン",
-  "we_are_having_trouble_fetching_the_updates": "更新情報の取得に問題が発生しています。",
-  "our_changelogs": "変更履歴",
-  "for_the_latest_updates": "最新の更新情報については",
-  "please_visit": "をご覧ください",
-  "docs": "ドキュメント",
-  "full_changelog": "完全な変更履歴",
-  "support": "サポート",
+  "submit": "제출",
+  "cancel": "취소",
+  "loading": "로딩 중",
+  "error": "오류",
+  "success": "성공",
+  "warning": "경고",
+  "info": "정보",
+  "close": "닫기",
+  "yes": "예",
+  "no": "아니오",
+  "ok": "확인",
+  "name": "이름",
+  "description": "설명",
+  "search": "검색",
+  "add_member": "멤버 추가",
+  "adding_members": "멤버 추가 중",
+  "remove_member": "멤버 삭제",
+  "add_members": "멤버 추가",
+  "adding_member": "멤버 추가 중",
+  "remove_members": "멤버 삭제",
+  "add": "추가",
+  "adding": "추가 중",
+  "remove": "삭제",
+  "add_new": "새로 추가",
+  "remove_selected": "선택 항목 삭제",
+  "first_name": "이름",
+  "last_name": "성",
+  "email": "이메일 주소",
+  "display_name": "표시 이름",
+  "role": "역할",
+  "timezone": "시간대",
+  "avatar": "아바타",
+  "cover_image": "커버 이미지",
+  "password": "비밀번호",
+  "change_cover": "커버 변경",
+  "language": "언어",
+  "saving": "저장 중",
+  "save_changes": "변경 사항 저장",
+  "deactivate_account": "계정 비활성화",
+  "deactivate_account_description": "계정을 비활성화하면 해당 계정의 모든 데이터와 리소스가 완전히 삭제되며 복구할 수 없습니다.",
+  "profile_settings": "프로필 설정",
+  "your_account": "내 계정",
+  "security": "보안",
+  "activity": "활동",
+  "appearance": "외관",
+  "notifications": "알림",
+  "workspaces": "워크스페이스",
+  "create_workspace": "워크스페이스 생성",
+  "invitations": "초대",
+  "summary": "요약",
+  "assigned": "할당됨",
+  "created": "생성됨",
+  "subscribed": "구독 중",
+  "you_do_not_have_the_permission_to_access_this_page": "이 페이지에 접근할 권한이 없습니다.",
+  "something_went_wrong_please_try_again": "문제가 발생했습니다. 다시 시도해 주세요.",
+  "load_more": "더 불러오기",
+  "select_or_customize_your_interface_color_scheme": "인터페이스 색상 구성표를 선택하거나 사용자 지정하세요.",
+  "theme": "테마",
+  "system_preference": "시스템 설정에 따름",
+  "light": "라이트",
+  "dark": "다크",
+  "light_contrast": "라이트 고대비",
+  "dark_contrast": "다크 고대비",
+  "custom": "사용자 정의 테마",
+  "select_your_theme": "테마 선택",
+  "customize_your_theme": "테마 사용자 정의",
+  "background_color": "배경색",
+  "text_color": "텍스트 색상",
+  "primary_color": "기본(테마) 색상",
+  "sidebar_background_color": "사이드바 배경색",
+  "sidebar_text_color": "사이드바 텍스트 색상",
+  "set_theme": "테마 설정",
+  "enter_a_valid_hex_code_of_6_characters": "유효한 6자리 16진수 코드를 입력하세요",
+  "background_color_is_required": "배경색은 필수입니다",
+  "text_color_is_required": "텍스트 색상은 필수입니다",
+  "primary_color_is_required": "기본 색상은 필수입니다",
+  "sidebar_background_color_is_required": "사이드바 배경색은 필수입니다",
+  "sidebar_text_color_is_required": "사이드바 텍스트 색상은 필수입니다",
+  "updating_theme": "테마 업데이트 중",
+  "theme_updated_successfully": "테마가 성공적으로 업데이트되었습니다",
+  "failed_to_update_the_theme": "테마 업데이트에 실패했습니다",
+  "email_notifications": "이메일 알림",
+  "stay_in_the_loop_on_issues_you_are_subscribed_to_enable_this_to_get_notified": "구독 중인 작업 항목의 최신 정보를 받습니다. 알림을 받으려면 활성화하세요.",
+  "email_notification_setting_updated_successfully": "이메일 알림 설정이 성공적으로 업데이트되었습니다",
+  "failed_to_update_email_notification_setting": "이메일 알림 설정 업데이트에 실패했습니다",
+  "notify_me_when": "알림 받을 시기",
+  "property_changes": "속성 변경",
+  "property_changes_description": "작업 항목의 담당자, 우선순위, 예상치 등의 속성이 변경되었을 때 알립니다.",
+  "state_change": "상태 변경",
+  "state_change_description": "작업 항목이 다른 상태로 이동했을 때 알립니다",
+  "issue_completed": "작업 항목 완료",
+  "issue_completed_description": "작업 항목이 완료되었을 때만 알립니다",
+  "comments": "댓글",
+  "comments_description": "누군가 작업 항목에 댓글을 남겼을 때 알립니다",
+  "mentions": "멘션",
+  "mentions_description": "누군가 댓글이나 설명에서 나를 멘션했을 때만 알립니다",
+  "old_password": "현재 비밀번호",
+  "general_settings": "일반 설정",
+  "sign_out": "로그아웃",
+  "signing_out": "로그아웃 중",
+  "active_cycles": "활성 사이클",
+  "active_cycles_description": "프로젝트 전체의 사이클을 모니터링하고, 우선순위가 높은 작업 항목을 추적하고, 주의가 필요한 사이클을 확대합니다.",
+  "on_demand_snapshots_of_all_your_cycles": "모든 사이클의 온디맨드 스냅샷",
+  "upgrade": "업그레이드",
+  "10000_feet_view": "모든 활성 사이클의 전체 보기",
+  "10000_feet_view_description": "각 프로젝트의 사이클 간을 이동하는 대신, 모든 프로젝트의 실행 중인 사이클을 한 번에 확인할 수 있습니다.",
+  "get_snapshot_of_each_active_cycle": "각 활성 사이클의 스냅샷 가져오기",
+  "get_snapshot_of_each_active_cycle_description": "모든 활성 사이클의 주요 지표를 추적하고, 진행 상황을 확인하고, 기한에 대한 범위를 파악합니다.",
+  "compare_burndowns": "번다운 비교",
+  "compare_burndowns_description": "각 사이클의 번다운 보고서를 확인하여 각 팀의 성과를 모니터링합니다.",
+  "quickly_see_make_or_break_issues": "중요한 작업 항목 빠르게 확인",
+  "quickly_see_make_or_break_issues_description": "기한에 대한 각 사이클의 우선순위가 높은 작업 항목을 미리 봅니다. 원클릭으로 사이클별로 모든 항목을 확인할 수 있습니다.",
+  "zoom_into_cycles_that_need_attention": "주의가 필요한 사이클 확대",
+  "zoom_into_cycles_that_need_attention_description": "기대에 부응하지 않는 사이클의 상태를 원클릭으로 조사합니다.",
+  "stay_ahead_of_blockers": "블로커에 선제적 대응",
+  "stay_ahead_of_blockers_description": "프로젝트 간의 문제를 식별하고, 다른 뷰에서는 명확하지 않은 사이클 간의 종속성을 확인합니다.",
+  "analytics": "분석",
+  "workspace_invites": "워크스페이스 초대",
+  "enter_god_mode": "갓 모드 진입",
+  "workspace_logo": "워크스페이스 로고",
+  "new_issue": "새 작업 항목",
+  "your_work": "내 작업",
+  "drafts": "초안",
+  "projects": "프로젝트",
+  "views": "뷰",
+  "workspace": "워크스페이스",
+  "archives": "아카이브",
+  "settings": "설정",
+  "failed_to_move_favorite": "즐겨찾기 이동에 실패했습니다",
+  "favorites": "즐겨찾기",
+  "no_favorites_yet": "아직 즐겨찾기가 없습니다",
+  "create_folder": "폴더 생성",
+  "new_folder": "새 폴더",
+  "favorite_updated_successfully": "즐겨찾기가 성공적으로 업데이트되었습니다",
+  "favorite_created_successfully": "즐겨찾기가 성공적으로 생성되었습니다",
+  "folder_already_exists": "폴더가 이미 존재합니다",
+  "folder_name_cannot_be_empty": "폴더 이름은 비워둘 수 없습니다",
+  "something_went_wrong": "문제가 발생했습니다",
+  "failed_to_reorder_favorite": "즐겨찾기 재정렬에 실패했습니다",
+  "favorite_removed_successfully": "즐겨찾기가 성공적으로 제거되었습니다",
+  "failed_to_create_favorite": "즐겨찾기 생성에 실패했습니다",
+  "failed_to_rename_favorite": "즐겨찾기 이름 변경에 실패했습니다",
+  "project_link_copied_to_clipboard": "프로젝트 링크가 클립보드에 복사되었습니다",
+  "link_copied": "링크가 복사되었습니다",
+  "add_project": "프로젝트 추가",
+  "create_project": "프로젝트 생성",
+  "failed_to_remove_project_from_favorites": "프로젝트를 즐겨찾기에서 제거하지 못했습니다. 다시 시도해 주세요.",
+  "project_created_successfully": "프로젝트가 성공적으로 생성되었습니다",
+  "project_created_successfully_description": "프로젝트가 성공적으로 생성되었습니다. 이제 작업 항목을 추가할 수 있습니다.",
+  "project_cover_image_alt": "프로젝트 커버 이미지",
+  "name_is_required": "이름은 필수입니다",
+  "title_should_be_less_than_255_characters": "제목은 255자 미만이어야 합니다",
+  "project_name": "프로젝트 이름",
+  "project_id_must_be_at_least_1_character": "프로젝트 ID는 최소 1자 이상이어야 합니다",
+  "project_id_must_be_at_most_5_characters": "프로젝트 ID는 최대 5자까지 가능합니다",
+  "project_id": "프로젝트 ID",
+  "project_id_tooltip_content": "프로젝트 내 작업 항목을 고유하게 식별하는 데 도움이 됩니다. 최대 5자.",
+  "description_placeholder": "설명",
+  "only_alphanumeric_non_latin_characters_allowed": "영숫자와 비라틴 문자만 사용할 수 있습니다.",
+  "project_id_is_required": "프로젝트 ID는 필수입니다",
+  "project_id_allowed_char": "영숫자와 비라틴 문자만 사용할 수 있습니다.",
+  "project_id_min_char": "프로젝트 ID는 최소 1자 이상이어야 합니다",
+  "project_id_max_char": "프로젝트 ID는 최대 5자까지 가능합니다",
+  "project_description_placeholder": "프로젝트 설명 입력",
+  "select_network": "네트워크 선택",
+  "lead": "리드",
+  "date_range": "날짜 범위",
+  "private": "비공개",
+  "public": "공개",
+  "accessible_only_by_invite": "초대로만 접근 가능",
+  "anyone_in_the_workspace_except_guests_can_join": "게스트를 제외한 워크스페이스의 모든 멤버가 참여 가능",
+  "creating": "생성 중",
+  "creating_project": "프로젝트 생성 중",
+  "adding_project_to_favorites": "프로젝트를 즐겨찾기에 추가 중",
+  "project_added_to_favorites": "프로젝트가 즐겨찾기에 추가되었습니다",
+  "couldnt_add_the_project_to_favorites": "프로젝트를 즐겨찾기에 추가할 수 없었습니다. 다시 시도해 주세요.",
+  "removing_project_from_favorites": "프로젝트를 즐겨찾기에서 제거 중",
+  "project_removed_from_favorites": "프로젝트가 즐겨찾기에서 제거되었습니다",
+  "couldnt_remove_the_project_from_favorites": "프로젝트를 즐겨찾기에서 제거할 수 없었습니다. 다시 시도해 주세요.",
+  "add_to_favorites": "즐겨찾기에 추가",
+  "remove_from_favorites": "즐겨찾기에서 제거",
+  "publish_settings": "게시 설정",
+  "publish": "게시",
+  "copy_link": "링크 복사",
+  "leave_project": "프로젝트 나가기",
+  "join_the_project_to_rearrange": "재정렬하려면 프로젝트에 참여하세요",
+  "drag_to_rearrange": "드래그하여 재정렬",
+  "congrats": "축하합니다!",
+  "open_project": "프로젝트 열기",
+  "issues": "작업 항목",
+  "cycles": "사이클",
+  "modules": "모듈",
+  "pages": "페이지",
+  "intake": "인테이크",
+  "time_tracking": "시간 추적",
+  "work_management": "작업 관리",
+  "projects_and_issues": "프로젝트와 작업 항목",
+  "projects_and_issues_description": "이 프로젝트에서 켜기/끄기를 전환합니다.",
+  "cycles_description": "프로젝트별로 작업을 시간 프레임으로 구분하고, 기간을 다음 기간으로 변경합니다.",
+  "modules_description": "서브프로젝트와 같은 설정으로, 자체 리더와 담당자를 가진 그룹 작업을 수행합니다.",
+  "views_description": "정렬, 필터, 표시 옵션을 나중에 사용하기 위해 저장하거나 공유합니다.",
+  "pages_description": "무엇이든 작성할 수 있는 공간입니다.",
+  "intake_description": "구독 중인 작업 항목의 최신 정보를 받습니다. 알림을 받으려면 활성화하세요.",
+  "time_tracking_description": "작업 항목과 프로젝트의 작업 시간을 추적합니다.",
+  "work_management_description": "작업과 프로젝트를 쉽게 관리합니다.",
+  "documentation": "문서",
+  "message_support": "지원팀에 메시지",
+  "contact_sales": "영업팀에 문의",
+  "hyper_mode": "하이퍼 모드",
+  "keyboard_shortcuts": "키보드 단축키",
+  "whats_new": "새로운 기능",
+  "version": "버전",
+  "we_are_having_trouble_fetching_the_updates": "업데이트 정보를 가져오는 데 문제가 발생했습니다.",
+  "our_changelogs": "변경 로그",
+  "for_the_latest_updates": "최신 업데이트는",
+  "please_visit": "을 방문하세요",
+  "docs": "문서",
+  "full_changelog": "전체 변경 로그",
+  "support": "지원",
   "discord": "Discord",
-  "powered_by_plane_pages": "Powered by Plane Pages",
-  "please_select_at_least_one_invitation": "少なくとも1つの招待を選択してください。",
-  "please_select_at_least_one_invitation_description": "ワークスペースに参加するには少なくとも1つの招待を選択してください。",
-  "we_see_that_someone_has_invited_you_to_join_a_workspace": "誰かがあなたをワークスペースに招待しています",
-  "join_a_workspace": "ワークスペースに参加",
-  "we_see_that_someone_has_invited_you_to_join_a_workspace_description": "誰かがあなたをワークスペースに招待しています",
-  "join_a_workspace_description": "ワークスペースに参加",
-  "accept_and_join": "承諾して参加",
-  "go_home": "ホームへ",
-  "no_pending_invites": "保留中の招待はありません",
-  "you_can_see_here_if_someone_invites_you_to_a_workspace": "誰かがワークスペースに招待した場合、ここで確認できます",
-  "back_to_home": "ホームに戻る",
-  "workspace_name": "ワークスペース名",
-  "deactivate_your_account": "アカウントを無効化",
-  "deactivate_your_account_description": "無効化すると、作業項目を割り当てられなくなり、ワークスペースの請求対象外となります。アカウントを再有効化するには、このメールアドレスでワークスペースへの招待が必要です。",
-  "deactivating": "無効化中",
-  "confirm": "確認",
-  "confirming": "確認中",
-  "draft_created": "下書きが作成されました",
-  "issue_created_successfully": "作業項目が正常に作成されました",
-  "draft_creation_failed": "下書きの作成に失敗しました",
-  "issue_creation_failed": "作業項目の作成に失敗しました",
-  "draft_issue": "作業項目の下書き",
-  "issue_updated_successfully": "作業項目が正常に更新されました",
-  "issue_could_not_be_updated": "作業項目を更新できませんでした",
-  "create_a_draft": "下書きを作成",
-  "save_to_drafts": "下書きに保存",
-  "save": "保存",
-  "update": "更新",
-  "updating": "更新中",
-  "create_new_issue": "新規作業項目を作成",
-  "editor_is_not_ready_to_discard_changes": "エディターは変更を破棄する準備ができていません",
-  "failed_to_move_issue_to_project": "作業項目をプロジェクトに移動できませんでした",
-  "create_more": "さらに作成",
-  "add_to_project": "プロジェクトに追加",
-  "discard": "破棄",
-  "duplicate_issue_found": "重複する作業項目が見つかりました",
-  "duplicate_issues_found": "重複する作業項目が見つかりました",
-  "no_matching_results": "一致する結果がありません",
-  "title_is_required": "タイトルは必須です",
-  "title": "タイトル",
-  "state": "状態",
-  "priority": "優先度",
-  "none": "なし",
-  "urgent": "緊急",
-  "high": "高",
-  "medium": "中",
-  "low": "低",
-  "members": "メンバー",
-  "assignee": "担当者",
-  "assignees": "担当者",
-  "you": "あなた",
-  "labels": "ラベル",
-  "create_new_label": "新規ラベルを作成",
-  "start_date": "開始日",
-  "end_date": "終了日",
-  "due_date": "期限",
-  "estimate": "見積もり",
-  "change_parent_issue": "親作業項目を変更",
-  "remove_parent_issue": "親作業項目を削除",
-  "add_parent": "親を追加",
-  "loading_members": "メンバーを読み込み中",
-  "view_link_copied_to_clipboard": "ビューリンクがクリップボードにコピーされました。",
-  "required": "必須",
-  "optional": "任意",
-  "Cancel": "キャンセル",
-  "edit": "編集",
-  "archive": "アーカイブ",
-  "restore": "復元",
-  "open_in_new_tab": "新しいタブで開く",
-  "delete": "削除",
-  "deleting": "削除中",
-  "make_a_copy": "コピーを作成",
-  "move_to_project": "プロジェクトに移動",
-  "good": "おはよう",
-  "morning": "ございます",
-  "afternoon": "こんにちは",
-  "evening": "こんばんは",
-  "show_all": "すべて表示",
-  "show_less": "表示を減らす",
-  "no_data_yet": "まだデータがありません",
-  "syncing": "同期中",
-  "add_work_item": "作業項目を追加",
-  "advanced_description_placeholder": "コマンドには '/' を押してください",
-  "create_work_item": "作業項目を作成",
-  "attachments": "添付ファイル",
-  "declining": "辞退中",
-  "declined": "辞退済み",
-  "decline": "辞退",
-  "unassigned": "未割り当て",
-  "work_items": "作業項目",
-  "add_link": "リンクを追加",
-  "points": "ポイント",
-  "no_assignee": "担当者なし",
-  "no_assignees_yet": "まだ担当者がいません",
-  "no_labels_yet": "まだラベルがありません",
-  "ideal": "理想",
-  "current": "現在",
-  "no_matching_members": "一致するメンバーがいません",
-  "leaving": "退出中",
-  "removing": "削除中",
-  "leave": "退出",
-  "refresh": "更新",
-  "refreshing": "更新中",
-  "refresh_status": "状態を更新",
-  "prev": "前へ",
-  "next": "次へ",
-  "re_generating": "再生成中",
-  "re_generate": "再生成",
-  "re_generate_key": "キーを再生成",
-  "export": "エクスポート",
-  "member": "{count, plural, other{# メンバー}}",
+  "powered_by_plane_pages": "Plane Pages 제공",
+  "please_select_at_least_one_invitation": "최소 하나의 초대를 선택해 주세요.",
+  "please_select_at_least_one_invitation_description": "워크스페이스에 참여하려면 최소 하나의 초대를 선택해야 합니다.",
+  "we_see_that_someone_has_invited_you_to_join_a_workspace": "누군가가 당신을 워크스페이스에 초대했습니다",
+  "join_a_workspace": "워크스페이스 참여",
+  "we_see_that_someone_has_invited_you_to_join_a_workspace_description": "누군가가 당신을 워크스페이스에 초대했습니다",
+  "join_a_workspace_description": "워크스페이스 참여",
+  "accept_and_join": "수락하고 참여",
+  "go_home": "홈으로",
+  "no_pending_invites": "대기 중인 초대가 없습니다",
+  "you_can_see_here_if_someone_invites_you_to_a_workspace": "누군가가 워크스페이스에 초대하면 여기서 확인할 수 있습니다",
+  "back_to_home": "홈으로 돌아가기",
+  "workspace_name": "워크스페이스 이름",
+  "deactivate_your_account": "계정 비활성화",
+  "deactivate_your_account_description": "비활성화하면 작업 항목을 할당받을 수 없고 워크스페이스 청구 대상에서 제외됩니다. 계정을 다시 활성화하려면 이 이메일 주소로 워크스페이스 초대가 필요합니다.",
+  "deactivating": "비활성화 중",
+  "confirm": "확인",
+  "confirming": "확인 중",
+  "draft_created": "초안이 생성되었습니다",
+  "issue_created_successfully": "작업 항목이 성공적으로 생성되었습니다",
+  "draft_creation_failed": "초안 생성에 실패했습니다",
+  "issue_creation_failed": "작업 항목 생성에 실패했습니다",
+  "draft_issue": "작업 항목 초안",
+  "issue_updated_successfully": "작업 항목이 성공적으로 업데이트되었습니다",
+  "issue_could_not_be_updated": "작업 항목을 업데이트할 수 없었습니다",
+  "create_a_draft": "초안 생성",
+  "save_to_drafts": "초안에 저장",
+  "save": "저장",
+  "update": "업데이트",
+  "updating": "업데이트 중",
+  "create_new_issue": "새 작업 항목 생성",
+  "editor_is_not_ready_to_discard_changes": "편집기가 변경 사항을 취소할 준비가 되지 않았습니다",
+  "failed_to_move_issue_to_project": "작업 항목을 프로젝트로 이동할 수 없었습니다",
+  "create_more": "더 생성",
+  "add_to_project": "프로젝트에 추가",
+  "discard": "취소",
+  "duplicate_issue_found": "중복 작업 항목이 발견되었습니다",
+  "duplicate_issues_found": "중복 작업 항목이 발견되었습니다",
+  "no_matching_results": "일치하는 결과가 없습니다",
+  "title_is_required": "제목은 필수입니다",
+  "title": "제목",
+  "state": "상태",
+  "priority": "우선순위",
+  "none": "없음",
+  "urgent": "긴급",
+  "high": "높음",
+  "medium": "중간",
+  "low": "낮음",
+  "members": "멤버",
+  "assignee": "담당자",
+  "assignees": "담당자",
+  "you": "나",
+  "labels": "라벨",
+  "create_new_label": "새 라벨 생성",
+  "start_date": "시작일",
+  "end_date": "종료일",
+  "due_date": "마감일",
+  "estimate": "예상치",
+  "change_parent_issue": "상위 작업 항목 변경",
+  "remove_parent_issue": "상위 작업 항목 제거",
+  "add_parent": "상위 항목 추가",
+  "loading_members": "멤버 로딩 중",
+  "view_link_copied_to_clipboard": "뷰 링크가 클립보드에 복사되었습니다.",
+  "required": "필수",
+  "optional": "선택 사항",
+  "Cancel": "취소",
+  "edit": "편집",
+  "archive": "아카이브",
+  "restore": "복원",
+  "open_in_new_tab": "새 탭에서 열기",
+  "delete": "삭제",
+  "deleting": "삭제 중",
+  "make_a_copy": "복사본 만들기",
+  "move_to_project": "프로젝트로 이동",
+  "good": "안녕하세요",
+  "morning": "좋은 아침입니다",
+  "afternoon": "안녕하세요",
+  "evening": "안녕하세요",
+  "show_all": "모두 보기",
+  "show_less": "줄여서 보기",
+  "no_data_yet": "아직 데이터가 없습니다",
+  "syncing": "동기화 중",
+  "add_work_item": "작업 항목 추가",
+  "advanced_description_placeholder": "명령어는 '/'를 누르세요",
+  "create_work_item": "작업 항목 생성",
+  "attachments": "첨부 파일",
+  "declining": "거절 중",
+  "declined": "거절됨",
+  "decline": "거절",
+  "unassigned": "할당되지 않음",
+  "work_items": "작업 항목",
+  "add_link": "링크 추가",
+  "points": "포인트",
+  "no_assignee": "담당자 없음",
+  "no_assignees_yet": "아직 담당자가 없습니다",
+  "no_labels_yet": "아직 라벨이 없습니다",
+  "ideal": "이상적",
+  "current": "현재",
+  "no_matching_members": "일치하는 멤버가 없습니다",
+  "leaving": "나가는 중",
+  "removing": "제거 중",
+  "leave": "나가기",
+  "refresh": "새로고침",
+  "refreshing": "새로고침 중",
+  "refresh_status": "상태 새로고침",
+  "prev": "이전",
+  "next": "다음",
+  "re_generating": "재생성 중",
+  "re_generate": "재생성",
+  "re_generate_key": "키 재생성",
+  "export": "내보내기",
+  "member": "{count, plural, other{# 멤버}}",
 
   "project_view": {
     "sort_by": {
-      "created_at": "作成日時",
-      "updated_at": "更新日時",
-      "name": "名前"
+      "created_at": "작성일",
+      "updated_at": "수정일",
+      "name": "이름"
     }
   },
 
   "toast": {
-    "success": "成功！",
-    "error": "エラー！"
+    "success": "성공!",
+    "error": "오류!"
   },
 
   "links": {
     "toasts": {
       "created": {
-        "title": "リンクが作成されました",
-        "message": "リンクが正常に作成されました"
+        "title": "링크가 생성되었습니다",
+        "message": "링크가 정상적으로 생성되었습니다"
       },
       "not_created": {
-        "title": "リンクが作成されませんでした",
-        "message": "リンクを作成できませんでした"
+        "title": "링크가 생성되지 않았습니다",
+        "message": "링크를 생성할 수 없었습니다"
       },
       "updated": {
-        "title": "リンクが更新されました",
-        "message": "リンクが正常に更新されました"
+        "title": "링크가 업데이트되었습니다",
+        "message": "링크가 정상적으로 업데이트되었습니다"
       },
       "not_updated": {
-        "title": "リンクが更新されませんでした",
-        "message": "リンクを更新できませんでした"
+        "title": "링크가 업데이트되지 않았습니다",
+        "message": "링크를 업데이트할 수 없었습니다"
       },
       "removed": {
-        "title": "リンクが削除されました",
-        "message": "リンクが正常に削除されました"
+        "title": "링크가 삭제되었습니다",
+        "message": "링크가 정상적으로 삭제되었습니다"
       },
       "not_removed": {
-        "title": "リンクが削除されませんでした",
-        "message": "リンクを削除できませんでした"
+        "title": "링크가 삭제되지 않았습니다",
+        "message": "링크를 삭제할 수 없었습니다"
       }
     }
   },
 
   "home": {
     "empty": {
-      "quickstart_guide": "クイックスタートガイド",
-      "not_right_now": "今はしない",
+      "quickstart_guide": "퀵스타트 가이드",
+      "not_right_now": "지금은 넘어가기",
       "create_project": {
-        "title": "プロジェクトを作成",
-        "description": "Planeのほとんどはプロジェクトから始まります。",
-        "cta": "始める"
+        "title": "프로젝트 생성",
+        "description": "Plane의 대부분은 프로젝트 생성부터시작됩니다.",
+        "cta": "시작하기"
       },
       "invite_team": {
-        "title": "チームを招待",
-        "description": "同僚と一緒に構築、デプロイ、管理しましょう。",
-        "cta": "招待する"
+        "title": "팀 초대",
+        "description": "동료와 함께 구축, 배포, 관리하세요.",
+        "cta": "초대하기"
       },
       "configure_workspace": {
-        "title": "ワークスペースを設定する。",
-        "description": "機能のオン/オフを切り替えたり、さらに詳細な設定を行ったりできます。",
-        "cta": "このワークスペースを設定"
+        "title": "워크스페이스 설정",
+        "description": "기능의 켜고 끄기를 전환하여 더 자세한 설정을 할 수 있습니다.",
+        "cta": "이 워크스페이스 설정"
       },
       "personalize_account": {
-        "title": "Planeをあなた好みにカスタマイズ。",
-        "description": "プロフィール画像、カラー、その他の設定を選択してください。",
-        "cta": "今すぐパーソナライズ"
+        "title": "Plane을 내 취향에 맞게 커스터마이즈",
+        "description": "프로필 이미지, 색상, 기타 설정을 선택하세요.",
+        "cta": "지금 커스터마이징"
       },
       "widgets": {
-        "title": "ウィジェットがないと静かですね、オンにしましょう",
-        "description": "すべてのウィジェットがオフになっているようです。体験を向上させるために\n今すぐ有効にしましょう！",
+        "title": "위젯이 없으니 조용하네요, 켜볼까요",
+        "description": "모든 위젯이 꺼져 있는 것 같습니다. 경험을 향상시키기 위해\n지금 바로 활성화해 보세요!",
         "primary_button": {
-          "text": "ウィジェットを管理"
+          "text": "위젯 관리"
         }
       }
     },
     "quick_links": {
-      "empty": "手元に置いておきたい作業関連のリンクを保存してください。",
-      "add": "クイックリンクを追加",
-      "title": "クイックリンク",
-      "title_plural": "クイックリンク"
+      "empty": "작업 관련 퀵 링크를 저장하여 손쉽게 접근하세요.",
+      "add": "퀵 링크 추가",
+      "title": "퀵 링크",
+      "title_plural": "퀵 링크"
     },
     "recents": {
-      "title": "最近",
+      "title": "최근",
       "empty": {
-        "project": "プロジェクトを訪問すると、最近のプロジェクトがここに表示されます。",
-        "page": "ページを訪問すると、最近のページがここに表示されます。",
-        "issue": "作業項目を訪問すると、最近の作業項目がここに表示されます。",
-        "default": "まだ最近の項目がありません。"
+        "project": "프로젝트를 방문하면 최근 프로젝트가 여기에 표시됩니다.",
+        "page": "페이지를 방문하면 최근 페이지가 여기에 표시됩니다.",
+        "issue": "작업 항목을 방문하면 최근 작업 항목이 여기에 표시됩니다.",
+        "default": "아직 최근 항목이 없습니다."
       },
       "filters": {
-        "all": "すべての項目",
-        "projects": "プロジェクト",
-        "pages": "ページ",
-        "issues": "作業項目"
+        "all": "모든 항목",
+        "projects": "프로젝트",
+        "pages": "페이지",
+        "issues": "작업 항목"
       }
     },
     "new_at_plane": {
-      "title": "Planeの新機能"
+      "title": "Plane의 새로운 기능"
     },
     "quick_tutorial": {
-      "title": "クイックチュートリアル"
+      "title": "빠른 튜토리얼"
     },
     "widget": {
-      "reordered_successfully": "ウィジェットの並び替えが完了しました。",
-      "reordering_failed": "ウィジェットの並び替え中にエラーが発生しました。"
+      "reordered_successfully": "위젯 재정렬이 완료되었습니다.",
+      "reordering_failed": "위젯 재정렬 중 오류가 발생했습니다."
     },
-    "manage_widgets": "ウィジェットを管理",
-    "title": "ホーム",
-    "star_us_on_github": "GitHubでスターをつける"
+    "manage_widgets": "위젯 관리",
+    "title": "홈",
+    "star_us_on_github": "GitHub에서 스타 주기"
   },
 
   "link": {
     "modal": {
       "url": {
         "text": "URL",
-        "required": "URLが無効です",
-        "placeholder": "URLを入力または貼り付け"
+        "required": "URL이 유효하지 않습니다",
+        "placeholder": "URL 입력 또는 붙여넣기"
       },
       "title": {
-        "text": "表示タイトル",
-        "placeholder": "このリンクをどのように表示したいか"
+        "text": "표시 제목",
+        "placeholder": "이 링크를 어떻게 표시할지 입력하세요"
       }
     }
   },
 
   "common": {
-    "all": "すべて",
-    "states": "ステータス",
-    "state": "ステータス",
-    "state_groups": "ステータスグループ",
-    "priority": "優先度",
-    "team_project": "チームプロジェクト",
-    "project": "プロジェクト",
-    "cycle": "サイクル",
-    "cycles": "サイクル",
-    "module": "モジュール",
-    "modules": "モジュール",
-    "labels": "ラベル",
-    "assignees": "担当者",
-    "assignee": "担当者",
-    "created_by": "作成者",
-    "none": "なし",
-    "link": "リンク",
-    "estimate": "見積もり",
-    "layout": "レイアウト",
-    "filters": "フィルター",
-    "display": "表示",
-    "load_more": "もっと読み込む",
-    "activity": "アクティビティ",
-    "analytics": "アナリティクス",
-    "dates": "日付",
-    "success": "成功！",
-    "something_went_wrong": "問題が発生しました",
+    "all": "모두",
+    "states": "상태",
+    "state": "상태",
+    "state_groups": "상태 그룹",
+    "priority": "우선순위",
+    "team_project": "팀 프로젝트",
+    "project": "프로젝트",
+    "cycle": "사이클",
+    "cycles": "사이클",
+    "module": "모듈",
+    "modules": "모듈",
+    "labels": "라벨",
+    "assignees": "담당자",
+    "assignee": "담당자",
+    "created_by": "생성자",
+    "none": "없음",
+    "link": "링크",
+    "estimate": "예상치",
+    "layout": "레이아웃",
+    "filters": "필터",
+    "display": "표시",
+    "load_more": "더 불러오기",
+    "activity": "활동",
+    "analytics": "분석",
+    "dates": "날짜",
+    "success": "성공!",
+    "something_went_wrong": "문제가 발생했습니다",
     "error": {
-      "label": "エラー！",
-      "message": "エラーが発生しました。もう一度お試しください。"
+      "label": "오류!",
+      "message": "오류가 발생했습니다. 다시 시도해 주세요."
     },
-    "group_by": "グループ化",
-    "epic": "エピック",
-    "epics": "エピック",
-    "work_item": "作業項目",
-    "work_items": "作業項目",
-    "sub_work_item": "サブ作業項目",
-    "add": "追加",
-    "warning": "警告",
-    "updating": "更新中",
-    "adding": "追加中",
-    "update": "更新",
-    "creating": "作成中",
-    "create": "作成",
-    "cancel": "キャンセル",
-    "description": "説明",
-    "title": "タイトル",
-    "attachment": "添付ファイル",
-    "general": "一般",
-    "features": "機能",
-    "automation": "自動化",
-    "project_name": "プロジェクト名",
-    "project_id": "プロジェクトID",
-    "project_timezone": "プロジェクトのタイムゾーン",
-    "created_on": "作成日",
-    "update_project": "プロジェクトを更新",
-    "identifier_already_exists": "識別子は既に存在します",
-    "add_more": "さらに追加",
-    "defaults": "デフォルト",
-    "add_label": "ラベルを追加",
-    "estimates": "見積もり",
-    "customize_time_range": "期間をカスタマイズ",
-    "loading": "読み込み中",
-    "attachments": "添付ファイル",
-    "property": "プロパティ",
-    "properties": "プロパティ",
-    "parent": "親",
-    "remove": "削除",
-    "archiving": "アーカイブ中",
-    "archive": "アーカイブ",
+    "group_by": "그룹화",
+    "epic": "에픽",
+    "epics": "에픽",
+    "work_item": "작업 항목",
+    "work_items": "작업 항목",
+    "sub_work_item": "하위 작업 항목",
+    "add": "추가",
+    "warning": "경고",
+    "updating": "업데이트 중",
+    "adding": "추가 중",
+    "update": "업데이트",
+    "creating": "생성 중",
+    "create": "생성",
+    "cancel": "취소",
+    "description": "설명",
+    "title": "제목",
+    "attachment": "첨부 파일",
+    "general": "일반",
+    "features": "기능",
+    "automation": "자동화",
+    "project_name": "프로젝트 이름",
+    "project_id": "프로젝트 ID",
+    "project_timezone": "프로젝트 시간대",
+    "created_on": "생성일",
+    "update_project": "프로젝트 업데이트",
+    "identifier_already_exists": "식별자가 이미 존재합니다",
+    "add_more": "더 추가",
+    "defaults": "기본값",
+    "add_label": "라벨 추가",
+    "estimates": "예상치",
+    "customize_time_range": "시간 범위 사용자 지정",
+    "loading": "로딩 중",
+    "attachments": "첨부 파일",
+    "property": "속성",
+    "properties": "속성",
+    "parent": "상위",
+    "remove": "제거",
+    "archiving": "아카이브 중",
+    "archive": "아카이브",
     "access": {
-      "public": "公開",
-      "private": "非公開"
+      "public": "공개",
+      "private": "비공개"
     },
-    "done": "完了",
-    "sub_work_items": "サブ作業項目",
-    "comment": "コメント",
-    "workspace_level": "ワークスペースレベル",
+    "done": "완료",
+    "sub_work_items": "하위 작업 항목",
+    "comment": "댓글",
+    "workspace_level": "워크스페이스 수준",
     "order_by": {
-      "label": "並び順",
-      "manual": "手動",
-      "last_created": "最終作成日",
-      "last_updated": "最終更新日",
-      "start_date": "開始日",
-      "due_date": "期限日",
-      "asc": "昇順",
-      "desc": "降順",
-      "updated_on": "更新日"
+      "label": "정렬 기준",
+      "manual": "수동",
+      "last_created": "최근 생성일",
+      "last_updated": "최근 업데이트일",
+      "start_date": "시작일",
+      "due_date": "마감일",
+      "asc": "오름차순",
+      "desc": "내림차순",
+      "updated_on": "업데이트일"
     },
     "sort": {
-      "asc": "昇順",
-      "desc": "降順",
-      "created_on": "作成日",
-      "updated_on": "更新日"
+      "asc": "오름차순",
+      "desc": "내림차순",
+      "created_on": "생성일",
+      "updated_on": "업데이트일"
     },
-    "comments": "コメント",
-    "updates": "更新",
-    "clear_all": "すべてクリア",
-    "copied": "コピーしました！",
-    "link_copied": "リンクをコピーしました！",
-    "link_copied_to_clipboard": "リンクをクリップボードにコピーしました",
-    "copied_to_clipboard": "作業項目のリンクをクリップボードにコピーしました",
-    "is_copied_to_clipboard": "作業項目をクリップボードにコピーしました",
-    "no_links_added_yet": "リンクはまだ追加されていません",
-    "add_link": "リンクを追加",
-    "links": "リンク",
-    "go_to_workspace": "ワークスペースへ移動",
-    "progress": "進捗",
-    "optional": "任意",
-    "join": "参加",
-    "go_back": "戻る",
-    "continue": "続ける",
-    "resend": "再送信",
-    "relations": "関連",
+    "comments": "댓글",
+    "updates": "업데이트",
+    "clear_all": "모두 지우기",
+    "copied": "복사됨!",
+    "link_copied": "링크 복사됨!",
+    "link_copied_to_clipboard": "링크가 클립보드에 복사되었습니다",
+    "copied_to_clipboard": "작업 항목 링크가 클립보드에 복사되었습니다",
+    "is_copied_to_clipboard": "작업 항목이 클립보드에 복사되었습니다",
+    "no_links_added_yet": "아직 추가된 링크가 없습니다",
+    "add_link": "링크 추가",
+    "links": "링크",
+    "go_to_workspace": "워크스페이스로 이동",
+    "progress": "진행 상황",
+    "optional": "선택 사항",
+    "join": "참여",
+    "go_back": "뒤로 가기",
+    "continue": "계속",
+    "resend": "재전송",
+    "relations": "관계",
     "errors": {
       "default": {
-        "title": "エラー！",
-        "message": "問題が発生しました。もう一度お試しください。"
+        "title": "오류!",
+        "message": "문제가 발생했습니다. 다시 시도해 주세요."
       },
-      "required": "この項目は必須です",
-      "entity_required": "{entity}は必須です"
+      "required": "이 항목은 필수입니다",
+      "entity_required": "{entity}는 필수입니다"
     },
-    "update_link": "リンクを更新",
-    "attach": "添付",
-    "create_new": "新規作成",
-    "add_existing": "既存を追加",
-    "type_or_paste_a_url": "URLを入力または貼り付け",
-    "url_is_invalid": "URLが無効です",
-    "display_title": "表示タイトル",
-    "link_title_placeholder": "このリンクをどのように表示したいか",
+    "update_link": "링크 업데이트",
+    "attach": "첨부",
+    "create_new": "새로 만들기",
+    "add_existing": "기존 항목 추가",
+    "type_or_paste_a_url": "URL 입력 또는 붙여넣기",
+    "url_is_invalid": "URL이 유효하지 않습니다",
+    "display_title": "표시 제목",
+    "link_title_placeholder": "이 링크를 어떻게 표시할지 입력하세요",
     "url": "URL",
-    "side_peek": "サイドピーク",
-    "modal": "モーダル",
-    "full_screen": "全画面",
-    "close_peek_view": "ピークビューを閉じる",
-    "toggle_peek_view_layout": "ピークビューのレイアウトを切り替え",
-    "options": "オプション",
-    "duration": "期間",
-    "today": "今日",
-    "week": "週",
-    "month": "月",
-    "quarter": "四半期",
-    "press_for_commands": "コマンドは「/」を押してください",
-    "click_to_add_description": "クリックして説明を追加",
+    "side_peek": "사이드 미리보기",
+    "modal": "모달",
+    "full_screen": "전체 화면",
+    "close_peek_view": "미리보기 닫기",
+    "toggle_peek_view_layout": "미리보기 레이아웃 전환",
+    "options": "옵션",
+    "duration": "기간",
+    "today": "오늘",
+    "week": "주",
+    "month": "월",
+    "quarter": "분기",
+    "press_for_commands": "명령어는 '/'를 누르세요",
+    "click_to_add_description": "클릭하여 설명 추가",
     "search": {
-      "label": "検索",
-      "placeholder": "検索するキーワードを入力",
-      "no_matches_found": "一致する結果が見つかりません",
-      "no_matching_results": "一致する結果がありません"
+      "label": "검색",
+      "placeholder": "검색할 키워드 입력",
+      "no_matches_found": "일치하는 결과가 없습니다",
+      "no_matching_results": "일치하는 결과가 없습니다"
     },
     "actions": {
-      "edit": "編集",
-      "make_a_copy": "コピーを作成",
-      "open_in_new_tab": "新しいタブで開く",
-      "copy_link": "リンクをコピー",
-      "archive": "アーカイブ",
-      "delete": "削除",
-      "remove_relation": "関連を削除",
-      "subscribe": "購読",
-      "unsubscribe": "購読解除",
-      "clear_sorting": "並び替えをクリア",
-      "show_weekends": "週末を表示",
-      "enable": "有効化",
-      "disable": "無効化"
+      "edit": "편집",
+      "make_a_copy": "복사본 만들기",
+      "open_in_new_tab": "새 탭에서 열기",
+      "copy_link": "링크 복사",
+      "archive": "아카이브",
+      "delete": "삭제",
+      "remove_relation": "관계 삭제",
+      "subscribe": "구독",
+      "unsubscribe": "구독 취소",
+      "clear_sorting": "정렬 초기화",
+      "show_weekends": "주말 표시",
+      "enable": "활성화",
+      "disable": "비활성화"
     },
-    "name": "名前",
-    "discard": "破棄",
-    "confirm": "確認",
-    "confirming": "確認中",
-    "read_the_docs": "ドキュメントを読む",
-    "default": "デフォルト",
-    "active": "アクティブ",
-    "enabled": "有効",
-    "disabled": "無効",
-    "mandate": "必須",
-    "mandatory": "必須",
-    "yes": "はい",
-    "no": "いいえ",
-    "please_wait": "お待ちください",
-    "enabling": "有効化中",
-    "disabling": "無効化中",
-    "beta": "ベータ",
-    "or": "または",
-    "next": "次へ",
-    "back": "戻る",
-    "cancelling": "キャンセル中",
-    "configuring": "設定中",
-    "clear": "クリア",
-    "import": "インポート",
-    "connect": "接続",
-    "authorizing": "認証中",
-    "processing": "処理中",
-    "no_data_available": "データがありません",
-    "from": "{name}から",
-    "authenticated": "認証済み",
-    "select": "選択",
-    "upgrade": "アップグレード",
-    "add_seats": "シートを追加",
-    "label": "ラベル",
-    "priorities": "優先度",
-    "projects": "プロジェクト",
-    "workspace": "ワークスペース",
-    "workspaces": "ワークスペース",
-    "team": "チーム",
-    "teams": "チーム",
-    "entity": "エンティティ",
-    "entities": "エンティティ",
-    "task": "タスク",
-    "tasks": "タスク",
-    "section": "セクション",
-    "sections": "セクション",
-    "edit": "編集",
-    "connecting": "接続中",
-    "connected": "接続済み",
-    "disconnect": "切断",
-    "disconnecting": "切断中",
-    "installing": "インストール中",
-    "install": "インストール",
-    "reset": "リセット",
-    "live": "ライブ",
-    "change_history": "変更履歴",
-    "coming_soon": "近日公開",
-    "members": "メンバー",
-    "you": "あなた",
+    "name": "이름",
+    "discard": "취소",
+    "confirm": "확인",
+    "confirming": "확인 중",
+    "read_the_docs": "문서 읽기",
+    "default": "기본값",
+    "active": "활성",
+    "enabled": "활성화됨",
+    "disabled": "비활성화됨",
+    "mandate": "필수",
+    "mandatory": "필수",
+    "yes": "예",
+    "no": "아니오",
+    "please_wait": "잠시만 기다려주세요",
+    "enabling": "활성화 중",
+    "disabling": "비활성화 중",
+    "beta": "베타",
+    "or": "또는",
+    "next": "다음",
+    "back": "뒤로",
+    "cancelling": "취소 중",
+    "configuring": "구성 중",
+    "clear": "지우기",
+    "import": "가져오기",
+    "connect": "연결",
+    "authorizing": "인증 중",
+    "processing": "처리 중",
+    "no_data_available": "데이터가 없습니다",
+    "from": "{name}에서",
+    "authenticated": "인증됨",
+    "select": "선택",
+    "upgrade": "업그레이드",
+    "add_seats": "시트 추가",
+    "label": "라벨",
+    "priorities": "우선순위",
+    "projects": "프로젝트",
+    "workspace": "워크스페이스",
+    "workspaces": "워크스페이스",
+    "team": "팀",
+    "teams": "팀",
+    "entity": "엔티티",
+    "entities": "엔티티",
+    "task": "태스크",
+    "tasks": "태스크",
+    "section": "섹션",
+    "sections": "섹션",
+    "edit": "편집",
+    "connecting": "연결 중",
+    "connected": "연결됨",
+    "disconnect": "연결 해제",
+    "disconnecting": "연결 해제 중",
+    "installing": "설치 중",
+    "install": "설치",
+    "reset": "초기화",
+    "live": "라이브",
+    "change_history": "변경 이력",
+    "coming_soon": "출시 예정",
+    "members": "멤버",
+    "you": "나",
     "upgrade_cta": {
-      "higher_subscription": "高いサブスクリプションにアップグレード",
-      "talk_to_sales": "セールスに連絡"
+      "higher_subscription": "상위 구독으로 업그레이드",
+      "talk_to_sales": "영업팀에 문의"
     },
-    "category": "カテゴリー",
-    "categories": "カテゴリーズ",
-    "saving": "セービング",
-    "save_changes": "セーブ チェンジズ",
-    "delete": "デリート",
-    "deleting": "デリーティング",
-    "pending": "保留中",
-    "invite": "招待"
+    "category": "카테고리",
+    "categories": "카테고리",
+    "saving": "저장 중",
+    "save_changes": "변경 사항 저장",
+    "delete": "삭제",
+    "deleting": "삭제 중",
+    "pending": "대기 중",
+    "invite": "초대"
   },
 
   "chart": {
-    "x_axis": "エックス アクシス",
-    "y_axis": "ワイ アクシス",
-    "metric": "メトリック"
+    "x_axis": "X축",
+    "y_axis": "Y축",
+    "metric": "지표"
   },
 
   "form": {
     "title": {
-      "required": "タイトルは必須です",
-      "max_length": "タイトルは{length}文字未満である必要があります"
+      "required": "제목은 필수입니다",
+      "max_length": "제목은 {length}자 미만이어야 합니다"
     }
   },
 
   "entity": {
-    "grouping_title": "{entity}のグループ化",
-    "priority": "{entity}の優先度",
-    "all": "すべての{entity}",
-    "drop_here_to_move": "ここにドロップして{entity}を移動",
+    "grouping_title": "{entity}의 그룹화",
+    "priority": "{entity}의 우선순위",
+    "all": "모든 {entity}",
+    "drop_here_to_move": "여기에 드롭하여 {entity} 이동",
     "delete": {
-      "label": "{entity}を削除",
-      "success": "{entity}を削除しました",
-      "failed": "{entity}の削除に失敗しました"
+      "label": "{entity} 삭제",
+      "success": "{entity}가 삭제되었습니다",
+      "failed": "{entity} 삭제에 실패했습니다"
     },
     "update": {
-      "failed": "{entity}の更新に失敗しました",
-      "success": "{entity}を更新しました"
+      "failed": "{entity} 업데이트에 실패했습니다",
+      "success": "{entity}가 업데이트되었습니다"
     },
-    "link_copied_to_clipboard": "{entity}のリンクをクリップボードにコピーしました",
+    "link_copied_to_clipboard": "{entity} 링크가 클립보드에 복사되었습니다",
     "fetch": {
-      "failed": "{entity}の取得中にエラーが発生しました"
+      "failed": "{entity} 가져오기 중 오류가 발생했습니다"
     },
     "add": {
-      "success": "{entity}を追加しました",
-      "failed": "{entity}の追加中にエラーが発生しました"
+      "success": "{entity}가 추가되었습니다",
+      "failed": "{entity} 추가 중 오류가 발생했습니다"
     }
   },
 
   "epic": {
-    "all": "すべてのエピック",
-    "label": "{count, plural, one {エピック} other {エピック}}",
-    "new": "新規エピック",
-    "adding": "エピックを追加中",
+    "all": "모든 에픽",
+    "label": "{count, plural, one {에픽} other {에픽}}",
+    "new": "새 에픽",
+    "adding": "에픽 추가 중",
     "create": {
-      "success": "エピックを作成しました"
+      "success": "에픽이 생성되었습니다"
     },
     "add": {
-      "press_enter": "Enterを押して別のエピックを追加",
-      "label": "エピックを追加"
+      "press_enter": "Enter를 눌러 다른 에픽 추가",
+      "label": "에픽 추가"
     },
     "title": {
-      "label": "エピックのタイトル",
-      "required": "エピックのタイトルは必須です。"
+      "label": "에픽 제목",
+      "required": "에픽 제목은 필수입니다."
     }
   },
 
   "issue": {
-    "label": "{count, plural, one {作業項目} other {作業項目}}",
-    "all": "すべての作業項目",
-    "edit": "作業項目を編集",
+    "label": "{count, plural, one {작업 항목} other {작업 항목}}",
+    "all": "모든 작업 항목",
+    "edit": "작업 항목 편집",
     "title": {
-      "label": "作業項目のタイトル",
-      "required": "作業項目のタイトルは必須です。"
+      "label": "작업 항목 제목",
+      "required": "작업 항목 제목은 필수입니다."
     },
     "add": {
-      "press_enter": "Enterを押して別の作業項目を追加",
-      "label": "作業項目を追加",
+      "press_enter": "Enter를 눌러 다른 작업 항목 추가",
+      "label": "작업 항목 추가",
       "cycle": {
-        "failed": "作業項目をサイクルに追加できませんでした。もう一度お試しください。",
-        "success": "{count, plural, one {作業項目} other {作業項目}}をサイクルに追加しました。",
-        "loading": "{count, plural, one {作業項目} other {作業項目}}をサイクルに追加中"
+        "failed": "작업 항목을 사이클에 추가할 수 없습니다. 다시 시도해 주세요.",
+        "success": "{count, plural, one {작업 항목} other {작업 항목}}을(를) 사이클에 추가했습니다.",
+        "loading": "{count, plural, one {작업 항목} other {작업 항목}}을(를) 사이클에 추가 중"
       },
-      "assignee": "担当者を追加",
-      "start_date": "開始日を追加",
-      "due_date": "期限日を追加",
-      "parent": "親作業項目を追加",
-      "sub_issue": "サブ作業項目を追加",
-      "relation": "関連を追加",
-      "link": "リンクを追加",
-      "existing": "既存の作業項目を追加"
+      "assignee": "담당자 추가",
+      "start_date": "시작일 추가",
+      "due_date": "마감일 추가",
+      "parent": "상위 작업 항목 추가",
+      "sub_issue": "하위 작업 항목 추가",
+      "relation": "관계 추가",
+      "link": "링크 추가",
+      "existing": "기존 작업 항목 추가"
     },
     "remove": {
-      "label": "作業項目を削除",
+      "label": "작업 항목 삭제",
       "cycle": {
-        "loading": "サイクルから作業項目を削除中",
-        "success": "作業項目をサイクルから削除しました。",
-        "failed": "作業項目をサイクルから削除できませんでした。もう一度お試しください。"
+        "loading": "사이클에서 작업 항목 제거 중",
+        "success": "작업 항목을 사이클에서 제거했습니다.",
+        "failed": "작업 항목을 사이클에서 제거할 수 없습니다. 다시 시도해 주세요."
       },
       "module": {
-        "loading": "モジュールから作業項目を削除中",
-        "success": "作業項目をモジュールから削除しました。",
-        "failed": "作業項目をモジュールから削除できませんでした。もう一度お試しください。"
+        "loading": "모듈에서 작업 항목 제거 중",
+        "success": "작업 항목을 모듈에서 제거했습니다.",
+        "failed": "작업 항목을 모듈에서 제거할 수 없습니다. 다시 시도해 주세요."
       },
       "parent": {
-        "label": "親作業項目を削除"
+        "label": "상위 작업 항목 제거"
       }
     },
-    "new": "新規作業項目",
-    "adding": "作業項目を追加中",
+    "new": "새 작업 항목",
+    "adding": "작업 항목 추가 중",
     "create": {
-      "success": "作業項目を作成しました"
+      "success": "작업 항목이 생성되었습니다"
     },
     "priority": {
-      "urgent": "緊急",
-      "high": "高",
-      "medium": "中",
-      "low": "低"
+      "urgent": "긴급",
+      "high": "높음",
+      "medium": "중간",
+      "low": "낮음"
     },
     "display": {
       "properties": {
-        "label": "表示プロパティ",
+        "label": "표시 속성",
         "id": "ID",
-        "issue_type": "作業項目タイプ",
-        "sub_issue_count": "サブ作業項目数",
-        "attachment_count": "添付ファイル数",
-        "created_on": "作成日",
-        "sub_issue": "サブ作業項目"
+        "issue_type": "작업 항목 유형",
+        "sub_issue_count": "하위 작업 항목 수",
+        "attachment_count": "첨부 파일 수",
+        "created_on": "생성일",
+        "sub_issue": "하위 작업 항목"
       },
       "extra": {
-        "show_sub_issues": "サブ作業項目を表示",
-        "show_empty_groups": "空のグループを表示"
+        "show_sub_issues": "하위 작업 항목 표시",
+        "show_empty_groups": "빈 그룹 표시"
       }
     },
     "layouts": {
-      "ordered_by_label": "このレイアウトは次の順序で並べ替えられています：",
-      "list": "リスト",
-      "kanban": "ボード",
-      "calendar": "カレンダー",
-      "spreadsheet": "テーブル",
-      "gantt": "タイムライン",
+      "ordered_by_label": "이 레이아웃은 다음 순서로 정렬되어 있습니다:",
+      "list": "리스트",
+      "kanban": "보드",
+      "calendar": "캘린더",
+      "spreadsheet": "테이블",
+      "gantt": "타임라인",
       "title": {
-        "list": "リストレイアウト",
-        "kanban": "ボードレイアウト",
-        "calendar": "カレンダーレイアウト",
-        "spreadsheet": "テーブルレイアウト",
-        "gantt": "タイムラインレイアウト"
+        "list": "리스트 레이아웃",
+        "kanban": "보드 레이아웃",
+        "calendar": "캘린더 레이아웃",
+        "spreadsheet": "테이블 레이아웃",
+        "gantt": "타임라인 레이아웃"
       }
     },
     "states": {
-      "active": "アクティブ",
-      "backlog": "バックログ"
+      "active": "활성",
+      "backlog": "백로그"
     },
     "comments": {
-      "placeholder": "コメントを追加",
+      "placeholder": "댓글 추가",
       "switch": {
-        "private": "プライベートコメントに切り替え",
-        "public": "公開コメントに切り替え"
+        "private": "비공개 댓글로 전환",
+        "public": "공개 댓글로 전환"
       },
       "create": {
-        "success": "コメントを作成しました",
-        "error": "コメントの作成に失敗しました。後でもう一度お試しください。"
+        "success": "댓글이 생성되었습니다",
+        "error": "댓글 생성에 실패했습니다. 나중에 다시 시도해 주세요."
       },
       "update": {
-        "success": "コメントを更新しました",
-        "error": "コメントの更新に失敗しました。後でもう一度お試しください。"
+        "success": "댓글이 업데이트되었습니다",
+        "error": "댓글 업데이트에 실패했습니다. 나중에 다시 시도해 주세요."
       },
       "remove": {
-        "success": "コメントを削除しました",
-        "error": "コメントの削除に失敗しました。後でもう一度お試しください。"
+        "success": "댓글이 삭제되었습니다",
+        "error": "댓글 삭제에 실패했습니다. 나중에 다시 시도해 주세요."
       },
       "upload": {
-        "error": "アセットのアップロードに失敗しました。後でもう一度お試しください。"
+        "error": "자산 업로드에 실패했습니다. 나중에 다시 시도해 주세요."
       }
     },
     "empty_state": {
       "issue_detail": {
-        "title": "作業項目が存在しません",
-        "description": "お探しの作業項目は存在しないか、アーカイブされているか、削除されています。",
+        "title": "작업 항목이 존재하지 않습니다",
+        "description": "찾으시는 작업 항목이 존재하지 않거나, 아카이브되었거나, 삭제되었습니다.",
         "primary_button": {
-          "text": "他の作業項目を表示"
+          "text": "다른 작업 항목 보기"
         }
       }
     },
     "sibling": {
-      "label": "兄弟作業項目"
+      "label": "형제 작업 항목"
     },
     "archive": {
-      "description": "完了またはキャンセルされた\n作業項目のみアーカイブできます",
-      "label": "作業項目をアーカイブ",
-      "confirm_message": "作業項目をアーカイブしてもよろしいですか？アーカイブされた作業項目は後で復元できます。",
+      "description": "완료되었거나 취소된\n작업 항목만 아카이브할 수 있습니다",
+      "label": "작업 항목 아카이브",
+      "confirm_message": "작업 항목을 아카이브하시겠습니까? 아카이브된 작업 항목은 나중에 복원할 수 있습니다.",
       "success": {
-        "label": "アーカイブ成功",
-        "message": "アーカイブはプロジェクトのアーカイブで確認できます。"
+        "label": "아카이브 성공",
+        "message": "아카이브는 프로젝트의 아카이브에서 확인할 수 있습니다."
       },
       "failed": {
-        "message": "作業項目をアーカイブできませんでした。もう一度お試しください。"
+        "message": "작업 항목을 아카이브할 수 없습니다. 다시 시도해 주세요."
       }
     },
     "restore": {
       "success": {
-        "title": "復元成功",
-        "message": "作業項目はプロジェクトの作業項目で確認できます。"
+        "title": "복원 성공",
+        "message": "작업 항목은 프로젝트의 작업 항목에서 확인할 수 있습니다."
       },
       "failed": {
-        "message": "作業項目を復元できませんでした。もう一度お試しください。"
+        "message": "작업 항목을 복원할 수 없습니다. 다시 시도해 주세요."
       }
     },
     "relation": {
-      "relates_to": "関連する",
-      "duplicate": "重複する",
-      "blocked_by": "ブロックされている",
-      "blocking": "ブロックしている"
+      "relates_to": "관련됨",
+      "duplicate": "중복됨",
+      "blocked_by": "차단됨",
+      "blocking": "차단 중"
     },
-    "copy_link": "作業項目のリンクをコピー",
+    "copy_link": "작업 항목 링크 복사",
     "delete": {
-      "label": "作業項目を削除",
-      "error": "作業項目の削除中にエラーが発生しました"
+      "label": "작업 항목 삭제",
+      "error": "작업 항목 삭제 중 오류가 발생했습니다"
     },
     "subscription": {
       "actions": {
-        "subscribed": "作業項目を購読しました",
-        "unsubscribed": "作業項目の購読を解除しました"
+        "subscribed": "작업 항목을 구독했습니다",
+        "unsubscribed": "작업 항목 구독을 취소했습니다"
       }
     },
     "select": {
-      "error": "少なくとも1つの作業項目を選択してください",
-      "empty": "作業項目が選択されていません",
-      "add_selected": "選択した作業項目を追加"
+      "error": "최소 하나의 작업 항목을 선택해 주세요",
+      "empty": "선택된 작업 항목이 없습니다",
+      "add_selected": "선택한 작업 항목 추가"
     },
-    "open_in_full_screen": "作業項目をフルスクリーンで開く"
+    "open_in_full_screen": "작업 항목을 전체 화면으로 열기"
   },
 
   "attachment": {
-    "error": "ファイルを添付できませんでした。もう一度アップロードしてください。",
-    "only_one_file_allowed": "一度にアップロードできるファイルは1つだけです。",
-    "file_size_limit": "ファイルサイズは{size}MB以下である必要があります。",
-    "drag_and_drop": "どこにでもドラッグ＆ドロップでアップロード",
-    "delete": "添付ファイルを削除"
+    "error": "파일을 첨부할 수 없습니다. 다시 시도해 주세요.",
+    "only_one_file_allowed": "한 번에 첨부할 수 있는 파일은 하나뿐입니다.",
+    "file_size_limit": "파일 크기는 {size}MB 이하여야 합니다.",
+    "drag_and_drop": "어디든 드래그&드롭으로 첨부",
+    "delete": "첨부 파일 삭제"
   },
 
   "label": {
-    "select": "ラベルを選択",
+    "select": "라벨 선택",
     "create": {
-      "success": "ラベルを作成しました",
-      "failed": "ラベルの作成に失敗しました",
-      "already_exists": "ラベルは既に存在します",
-      "type": "新しいラベルを追加するには入力してください"
+      "success": "라벨이 성공적으로 생성되었습니다",
+      "failed": "라벨 생성에 실패했습니다",
+      "already_exists": "라벨이 이미 존재합니다",
+      "type": "새로운 라벨을 추가하려면 입력해 주세요"
     }
   },
 
   "sub_work_item": {
     "update": {
-      "success": "サブ作業項目を更新しました",
-      "error": "サブ作業項目の更新中にエラーが発生しました"
+      "success": "하위 작업 항목이 성공적으로 업데이트되었습니다",
+      "error": "하위 작업 항목 업데이트 중 오류가 발생했습니다"
     },
     "remove": {
-      "success": "サブ作業項目を削除しました",
-      "error": "サブ作業項目の削除中にエラーが発生しました"
+      "success": "하위 작업 항목이 성공적으로 삭제되었습니다",
+      "error": "하위 작업 항목 삭제 중 오류가 발생했습니다"
     }
   },
 
   "view": {
-    "label": "{count, plural, one {ビュー} other {ビュー}}",
+    "label": "{count, plural, one {뷰} other {뷰}}",
     "create": {
-      "label": "ビューを作成"
+      "label": "뷰 생성"
     },
     "update": {
-      "label": "ビューを更新"
+      "label": "뷰 업데이트"
     }
   },
 
   "inbox_issue": {
     "status": {
       "pending": {
-        "title": "保留中",
-        "description": "保留中"
+        "title": "보류 중",
+        "description": "보류 중"
       },
       "declined": {
-        "title": "却下",
-        "description": "却下"
+        "title": "거절",
+        "description": "거절"
       },
       "snoozed": {
-        "title": "スヌーズ",
-        "description": "残り{days, plural, one{# 日} other{# 日}}"
+        "title": "스누즈",
+        "description": "남은 {days, plural, one{# 일} other{# 일}}"
       },
       "accepted": {
-        "title": "承認済み",
-        "description": "承認済み"
+        "title": "승인됨",
+        "description": "승인됨"
       },
       "duplicate": {
-        "title": "重複",
-        "description": "重複"
+        "title": "중복",
+        "description": "중복"
       }
     },
     "modals": {
       "decline": {
-        "title": "作業項目を却下",
-        "content": "作業項目{value}を却下してもよろしいですか？"
+        "title": "작업 항목 거절",
+        "content": "작업 항목{value}을(를) 거절하시겠습니까?"
       },
       "delete": {
-        "title": "作業項目を削除",
-        "content": "作業項目{value}を削除してもよろしいですか？",
-        "success": "作業項目を削除しました"
+        "title": "작업 항목 삭제",
+        "content": "작업 항목{value}을(를) 삭제하시겠습니까?",
+        "success": "작업 항목이 삭제되었습니다"
       }
     },
     "errors": {
-      "snooze_permission": "プロジェクト管理者のみが作業項目をスヌーズ/スヌーズ解除できます",
-      "accept_permission": "プロジェクト管理者のみが作業項目を承認できます",
-      "decline_permission": "プロジェクト管理者のみが作業項目を却下できます"
+      "snooze_permission": "프로젝트 관리자만이 작업 항목을 스누즈/스누즈 해제할 수 있습니다",
+      "accept_permission": "프로젝트 관리자만이 작업 항목을 승인할 수 있습니다",
+      "decline_permission": "프로젝트 관리자만이 작업 항목을 거절할 수 있습니다"
     },
     "actions": {
-      "accept": "承認",
-      "decline": "却下",
-      "snooze": "スヌーズ",
-      "unsnooze": "スヌーズ解除",
-      "copy": "作業項目のリンクをコピー",
-      "delete": "削除",
-      "open": "作業項目を開く",
-      "mark_as_duplicate": "重複としてマーク",
-      "move": "{value}をプロジェクトの作業項目に移動"
+      "accept": "승인",
+      "decline": "거절",
+      "snooze": "스누즈",
+      "unsnooze": "스누즈 해제",
+      "copy": "작업 항목 링크 복사",
+      "delete": "삭제",
+      "open": "작업 항목 열기",
+      "mark_as_duplicate": "중복으로 표시",
+      "move": "{value}을(를) 프로젝트의 작업 항목으로 이동"
     },
     "source": {
-      "in-app": "アプリ内"
+      "in-app": "앱 내"
     },
     "order_by": {
-      "created_at": "作成日",
-      "updated_at": "更新日",
+      "created_at": "생성일",
+      "updated_at": "업데이트일",
       "id": "ID"
     },
-    "label": "インテーク",
-    "page_label": "{workspace} - インテーク",
+    "label": "인테이크",
+    "page_label": "{workspace} - 인테이크",
     "modal": {
-      "title": "インテーク作業項目を作成"
+      "title": "인테이크 작업 항목 생성"
     },
     "tabs": {
-      "open": "オープン",
-      "closed": "クローズ"
+      "open": "오픈",
+      "closed": "클로즈"
     },
     "empty_state": {
       "sidebar_open_tab": {
-        "title": "オープンな作業項目がありません",
-        "description": "オープンな作業項目はここで見つかります。新しい作業項目を作成してください。"
+        "title": "오픈된 작업 항목이 없습니다",
+        "description": "오픈된 작업 항목은 여기에서 찾을 수 있습니다. 새로운 작업 항목을 생성해 주세요."
       },
       "sidebar_closed_tab": {
-        "title": "クローズされた作業項目がありません",
-        "description": "承認または却下されたすべての作業項目はここで見つかります。"
+        "title": "클로즈된 작업 항목이 없습니다",
+        "description": "승인되었거나 거절된 모든 작업 항목은 여기에서 찾을 수 있습니다."
       },
       "sidebar_filter": {
-        "title": "一致する作業項目がありません",
-        "description": "インテークに適用されたフィルターに一致する作業項目がありません。新しい作業項目を作成してください。"
+        "title": "일치하는 작업 항목이 없습니다",
+        "description": "인테이크에 적용된 필터와 일치하는 작업 항목이 없습니다. 새로운 작업 항목을 생성해 주세요."
       },
       "detail": {
-        "title": "詳細を表示する作業項目を選択してください。"
+        "title": "자세한 정보를 보려면 작업 항목을 선택해 주세요."
       }
     }
   },
 
   "workspace_creation": {
-    "heading": "ワークスペースを作成",
-    "subheading": "Planeを使用するには、ワークスペースを作成するか参加する必要があります。",
+    "heading": "워크스페이스 생성",
+    "subheading": "Plane을 사용하려면 워크스페이스를 생성하거나 참여해야 합니다.",
     "form": {
       "name": {
-        "label": "ワークスペース名を設定",
-        "placeholder": "馴染みがあり認識しやすい名前が最適です。"
+        "label": "워크스페이스 이름 설정",
+        "placeholder": "익숙한 이름이 가장 적합합니다."
       },
       "url": {
-        "label": "ワークスペースのURLを設定",
-        "placeholder": "URLを入力または貼り付け",
-        "edit_slug": "URLのスラッグのみ編集可能です"
+        "label": "워크스페이스 URL 설정",
+        "placeholder": "URL 입력 또는 붙여넣기",
+        "edit_slug": "URL의 슬러그만 편집 가능"
       },
       "organization_size": {
-        "label": "このワークスペースを何人で使用しますか？",
-        "placeholder": "範囲を選択"
+        "label": "이 워크스페이스를 몇 명이 사용하실건가요?",
+        "placeholder": "범위 선택"
       }
     },
     "errors": {
       "creation_disabled": {
-        "title": "インスタンス管理者のみがワークスペースを作成できます",
-        "description": "インスタンス管理者のメールアドレスをご存知の場合は、下のボタンをクリックして連絡を取ってください。",
-        "request_button": "インスタンス管理者にリクエスト"
+        "title": "인스턴스 관리자만이 워크스페이스를 생성할 수 있습니다",
+        "description": "인스턴스 관리자의 이메일 주소를 알고 계신 경우 아래 버튼을 클릭하여 연락을 취하세요.",
+        "request_button": "인스턴스 관리자에게 요청"
       },
       "validation": {
-        "name_alphanumeric": "ワークスペース名には (' '), ('-'), ('_') と英数字のみ使用できます。",
-        "name_length": "名前は80文字以内にしてください。",
-        "url_alphanumeric": "URLには ('-') と英数字のみ使用できます。",
-        "url_length": "URLは48文字以内にしてください。",
-        "url_already_taken": "ワークスペースのURLは既に使用されています！"
+        "name_alphanumeric": "워크스페이스 이름에는 (' '), ('-'), ('_') 와 영숫자만 사용할 수 있습니다.",
+        "name_length": "이름은 80자 이내로 해 주세요.",
+        "url_alphanumeric": "URL에는 ('-') 와 영숫자만 사용할 수 있습니다.",
+        "url_length": "URL은 48자 이내로 해 주세요.",
+        "url_already_taken": "워크스페이스 URL이 이미 사용 중입니다!"
       }
     },
     "request_email": {
-      "subject": "新規ワークスペースのリクエスト",
-      "body": "インスタンス管理者様\n\n[ワークスペース作成の目的]のために、URL [/workspace-name] の新規ワークスペースを作成していただけますでしょうか。\n\nよろしくお願いいたします。\n{firstName} {lastName}\n{email}"
+      "subject": "새로운 워크스페이스 요청",
+      "body": "인스턴스 관리자 감사합니다\n\n[워크스페이스 생성 목적]을 위해 URL [/workspace-name]에서 새로운 워크스페이스를 생성해 드릴 수 있을까요.\n\n감사합니다.\n{firstName} {lastName}\n{email}"
     },
     "button": {
-      "default": "ワークスペースを作成",
-      "loading": "ワークスペースを作成中"
+      "default": "워크스페이스 생성",
+      "loading": "워크스페이스 생성 중"
     },
     "toast": {
       "success": {
-        "title": "成功",
-        "message": "ワークスペースが正常に作成されました"
+        "title": "성공",
+        "message": "워크스페이스가 정상적으로 생성되었습니다"
       },
       "error": {
-        "title": "エラー",
-        "message": "ワークスペースを作成できませんでした。もう一度お試しください。"
+        "title": "오류",
+        "message": "워크스페이스를 생성할 수 없습니다. 다시 한 번 시도해 주세요."
       }
     }
   },
@@ -1266,13 +1266,13 @@
   "workspace_dashboard": {
     "empty_state": {
       "general": {
-        "title": "プロジェクト、アクティビティ、メトリクスの概要",
-        "description": "Planeへようこそ。ご利用いただき嬉しく思います。最初のプロジェクトを作成して作業項目を追跡すると、このページは進捗を把握するのに役立つスペースに変わります。管理者はチームの進捗に役立つ項目も表示されます。",
+        "title": "프로젝트, 활동, 메트릭스 개요",
+        "description": "Plane에 오신 것을 환영합니다. 첫 번째 프로젝트를 생성하고 작업 항목을 추적하면 이 페이지는 진척을 파악하는 데 도움이 되는 공간으로 바뀝니다. 관리자는 팀의 진척을 돕는 항목도 표시됩니다.",
         "primary_button": {
-          "text": "最初のプロジェクトを作成",
+          "text": "첫 번째 프로젝트 생성",
           "comic": {
-            "title": "Planeではすべてがプロジェクトから始まります",
-            "description": "プロジェクトは製品のロードマップ、マーケティングキャンペーン、新車の発売などになります。"
+            "title": "Plane에서는 모든 것이 프로젝트에서 시작됩니다",
+            "description": "프로젝트는 제품의 로드맵, 마케팅 캠페인, 신차 출시 등에서 시작됩니다."
           }
         }
       }
@@ -1280,44 +1280,44 @@
   },
 
   "workspace_analytics": {
-    "label": "アナリティクス",
-    "page_label": "{workspace} - アナリティクス",
-    "open_tasks": "オープンタスクの合計",
-    "error": "データの取得中にエラーが発生しました。",
-    "work_items_closed_in": "クローズされた作業項目",
-    "selected_projects": "選択されたプロジェクト",
-    "total_members": "メンバー総数",
-    "total_cycles": "サイクル総数",
-    "total_modules": "モジュール総数",
+    "label": "분석",
+    "page_label": "{workspace} - 분석",
+    "open_tasks": "오픈 태스크 합계",
+    "error": "데이터 로드 중 오류가 발생했습니다.",
+    "work_items_closed_in": "클로즈된 작업 항목",
+    "selected_projects": "선택된 프로젝트",
+    "total_members": "멤버 총수",
+    "total_cycles": "사이클 총수",
+    "total_modules": "모듈 총수",
     "pending_work_items": {
-      "title": "保留中の作業項目",
-      "empty_state": "同僚による保留中の作業項目の分析がここに表示されます。"
+      "title": "보류 중인 작업 항목",
+      "empty_state": "동료에 의해 보류 중인 작업 항목의 분석이 여기에 표시됩니다."
     },
     "work_items_closed_in_a_year": {
-      "title": "1年間でクローズされた作業項目",
-      "empty_state": "作業項目をクローズすると、グラフ形式で分析が表示されます。"
+      "title": "1년 동안 클로즈된 작업 항목",
+      "empty_state": "작업 항목을 클로즈하면 차트 형식으로 분석이 표시됩니다."
     },
     "most_work_items_created": {
-      "title": "作成された作業項目が最も多い",
-      "empty_state": "同僚と作成した作業項目の数がここに表示されます。"
+      "title": "생성된 작업 항목이 가장 많습니다",
+      "empty_state": "동료와 함께 생성된 작업 항목의 수가 여기에 표시됩니다."
     },
     "most_work_items_closed": {
-      "title": "クローズされた作業項目が最も多い",
-      "empty_state": "同僚とクローズした作業項目の数がここに表示されます。"
+      "title": "클로즈된 작업 항목이 가장 많습니다",
+      "empty_state": "동료와 함께 클로즈된 작업 항목의 수가 여기에 표시됩니다."
     },
     "tabs": {
-      "scope_and_demand": "スコープと需要",
-      "custom": "カスタムアナリティクス"
+      "scope_and_demand": "범위와 수요",
+      "custom": "사용자 정의 분석"
     },
     "empty_state": {
       "general": {
-        "title": "進捗、ワークロード、割り当てを追跡。傾向を把握し、ブロッカーを解消して、作業をより速く進めましょう",
-        "description": "スコープと需要、見積もり、スコープクリープを確認できます。チームメンバーとチームのパフォーマンスを把握し、プロジェクトが予定通りに進むようにします。",
+        "title": "진척, 작업 로드, 할당 추적. 경향을 파악하고 블로커를 해결하고 작업을 더 빠르게 진행하세요",
+        "description": "범위와 수요, 추정, 범위 크리프를 확인할 수 있습니다. 팀 멤버와 팀의 성과를 파악하고 프로젝트가 예정대로 진행되도록 합니다.",
         "primary_button": {
-          "text": "最初のプロジェクトを開始",
+          "text": "첫 번째 프로젝트 시작",
           "comic": {
-            "title": "アナリティクスはサイクル + モジュールで最も効果を発揮",
-            "description": "まず、作業項目をサイクルでタイムボックス化し、可能であれば、複数のサイクルにまたがる作業項目をモジュールにグループ化します。左のナビゲーションで両方を確認してください。"
+            "title": "분석은 사이클 + 모듈로 가장 효과적입니다",
+            "description": "먼저 작업 항목을 사이클로 타임 박스화하고 가능하다면 여러 사이클에 걸쳐 작업 항목을 모듈로 그룹화합니다. 왼쪽 네비게이션에서 둘 다 확인해 주세요."
           }
         }
       }
@@ -1325,554 +1325,566 @@
   },
 
   "workspace_projects": {
-    "label": "{count, plural, one {プロジェクト} other {プロジェクト}}",
+    "label": "{count, plural, one {프로젝트} other {프로젝트}}",
     "create": {
-      "label": "プロジェクトを追加"
+      "label": "프로젝트 추가"
     },
     "network": {
       "private": {
-        "title": "非公開",
-        "description": "招待された人のみアクセス可能"
+        "title": "비공개",
+        "description": "초대된 사람만 액세스 가능"
       },
       "public": {
-        "title": "公開",
-        "description": "ゲスト以外のワークスペースの全員が参加可能"
+        "title": "공개",
+        "description": "게스트를 제외한 워크스페이스의 모든 멤버가 참여 가능"
       }
     },
     "error": {
-      "permission": "この操作を実行する権限がありません。",
-      "cycle_delete": "サイクルの削除に失敗しました",
-      "module_delete": "モジュールの削除に失敗しました",
-      "issue_delete": "作業項目の削除に失敗しました"
+      "permission": "이 작업을 수행할 수 있는 권한이 없습니다.",
+      "cycle_delete": "사이클 삭제에 실패했습니다",
+      "module_delete": "모듈 삭제에 실패했습니다",
+      "issue_delete": "작업 항목 삭제에 실패했습니다"
     },
     "state": {
-      "backlog": "バックログ",
-      "unstarted": "未開始",
-      "started": "開始済み",
-      "completed": "完了",
-      "cancelled": "キャンセル"
+      "backlog": "백로그",
+      "unstarted": "미시작",
+      "started": "시작됨",
+      "completed": "완료",
+      "cancelled": "취소"
     },
     "sort": {
-      "manual": "手動",
-      "name": "名前",
-      "created_at": "作成日",
-      "members_length": "メンバー数"
+      "manual": "수동",
+      "name": "이름",
+      "created_at": "생성일",
+      "members_length": "멤버 수"
     },
     "scope": {
-      "my_projects": "自分のプロジェクト",
-      "archived_projects": "アーカイブ済み"
+      "my_projects": "내 프로젝트",
+      "archived_projects": "아카이브됨"
     },
     "common": {
-      "months_count": "{months, plural, one{# ヶ月} other{# ヶ月}}"
+      "months_count": "{months, plural, one{# 개월} other{# 개월}}"
     },
     "empty_state": {
       "general": {
-        "title": "アクティブなプロジェクトがありません",
-        "description": "各プロジェクトは目標指向の作業の親として考えてください。プロジェクトには作業、サイクル、モジュールが含まれ、同僚と共にその目標の達成を支援します。新しいプロジェクトを作成するか、アーカイブされたプロジェクトをフィルタリングしてください。",
+        "title": "활성 프로젝트가 없습니다",
+        "description": "각 프로젝트는 목표를 가지는 작업의 부모로 생각해 주세요. 프로젝트에는 작업, 사이클, 모듈이 포함되고 동료와 함께 그 목표를 지원합니다. 새로운 프로젝트를 생성하거나 아카이브된 프로젝트를 필터링하여 주세요.",
         "primary_button": {
-          "text": "最初のプロジェクトを開始",
+          "text": "첫 번째 프로젝트 시작",
           "comic": {
-            "title": "Planeではすべてがプロジェクトから始まります",
-            "description": "プロジェクトは製品のロードマップ、マーケティングキャンペーン、新車の発売などになります。"
+            "title": "Plane에서는 모든 것이 프로젝트에서 시작됩니다",
+            "description": "프로젝트는 제품의 로드맵, 마케팅 캠페인, 신차 출시 등에서 시작됩니다."
           }
         }
       },
       "no_projects": {
-        "title": "プロジェクトがありません",
-        "description": "作業項目を作成したり作業を管理したりするには、プロジェクトを作成するか、プロジェクトのメンバーになる必要があります。",
+        "title": "프로젝트가 없습니다",
+        "description": "작업 항목을 생성하거나 관리하려면 프로젝트를 생성하거나 프로젝트의 멤버가 되어야 합니다.",
         "primary_button": {
-          "text": "最初のプロジェクトを開始",
+          "text": "첫 번째 프로젝트 시작",
           "comic": {
-            "title": "Planeではすべてがプロジェクトから始まります",
-            "description": "プロジェクトは製品のロードマップ、マーケティングキャンペーン、新車の発売などになります。"
+            "title": "Plane에서는 모든 것이 프로젝트에서 시작됩니다",
+            "description": "프로젝트는 제품의 로드맵, 마케팅 캠페인, 신차 출시 등에서 시작됩니다."
           }
         }
       },
       "filter": {
-        "title": "一致するプロジェクトがありません",
-        "description": "条件に一致するプロジェクトが見つかりません。\n代わりに新しいプロジェクトを作成してください。"
+        "title": "일치하는 프로젝트가 없습니다",
+        "description": "조건에 일치하는 프로젝트가 없습니다.\n대신 새로운 프로젝트를 생성해 주세요."
       },
       "search": {
-        "description": "条件に一致するプロジェクトが見つかりません。\n代わりに新しいプロジェクトを作成してください。"
+        "description": "조건에 일치하는 프로젝트가 없습니다.\n대신 새로운 프로젝트를 생성해 주세요."
       }
     }
   },
 
   "workspace_views": {
-    "add_view": "ビューを追加",
+    "add_view": "뷰 추가",
     "empty_state": {
       "all-issues": {
-        "title": "プロジェクトに作業項目がありません",
-        "description": "最初のプロジェクトが完了しました！次は、作業を追跡可能な作業項目に分割しましょう。始めましょう！",
+        "title": "프로젝트에 작업 항목이 없습니다",
+        "description": "첫 번째 프로젝트가 완료되었습니다! 다음은 추적 가능한 작업 항목으로 나누어 봅시다. 시작해 봅시다!",
         "primary_button": {
-          "text": "新しい作業項目を作成"
+          "text": "새로운 작업 항목 생성"
         }
       },
       "assigned": {
-        "title": "作業項目がまだありません",
-        "description": "あなたに割り当てられた作業項目をここで追跡できます。",
+        "title": "작업 항목이 없습니다",
+        "description": "여러분에게 할당된 작업 항목을 여기에서 추적할 수 있습니다.",
         "primary_button": {
-          "text": "新しい作業項目を作成"
+          "text": "새로운 작업 항목 생성"
         }
       },
       "created": {
-        "title": "作業項目がまだありません",
-        "description": "あなたが作成したすべての作業項目がここに表示され、直接追跡できます。",
+        "title": "작업 항목이 없습니다",
+        "description": "여러분이 생성한 모든 작업 항목이 여기에 표시되고 직접 추적할 수 있습니다.",
         "primary_button": {
-          "text": "新しい作業項目を作成"
+          "text": "새로운 작업 항목 생성"
         }
       },
       "subscribed": {
-        "title": "作業項目がまだありません",
-        "description": "興味のある作業項目を購読して、ここですべてを追跡できます。"
+        "title": "작업 항목이 없습니다",
+        "description": "흥미로운 작업 항목을 구독하고 여기에서 모든 것을 추적할 수 있습니다."
       },
       "custom-view": {
-        "title": "作業項目がまだありません",
-        "description": "フィルターに該当する作業項目をここで追跡できます。"
+        "title": "작업 항목이 없습니다",
+        "description": "필터에 해당하는 작업 항목을 여기에서 추적할 수 있습니다."
       }
     }
   },
 
   "workspace_settings": {
-    "label": "ワークスペース設定",
-    "page_label": "{workspace} - 一般設定",
-    "key_created": "キーが作成されました",
-    "copy_key": "このシークレットキーをコピーしてPlaneページに保存してください。閉じた後はこのキーを見ることができません。キーを含むCSVファイルがダウンロードされました。",
-    "token_copied": "トークンがクリップボードにコピーされました。",
+    "label": "워크스페이스 설정",
+    "page_label": "{workspace} - 일반 설정",
+    "key_created": "키가 성공적으로 생성되었습니다",
+    "copy_key": "이 시크릿 키를 복사하여 Plane 페이지에 저장해 주세요. 닫은 후에는 이 키를 볼 수 없습니다. 키를 포함한 CSV 파일이 다운로드되었습니다.",
+    "token_copied": "토큰이 클립보드에 복사되었습니다.",
     "settings": {
       "general": {
-        "title": "一般",
-        "upload_logo": "ロゴをアップロード",
-        "edit_logo": "ロゴを編集",
-        "name": "ワークスペース名",
-        "company_size": "会社の規模",
-        "url": "ワークスペースURL",
-        "update_workspace": "ワークスペースを更新",
-        "delete_workspace": "このワークスペースを削除",
-        "delete_workspace_description": "ワークスペースを削除すると、そのワークスペース内のすべてのデータとリソースが完全に削除され、復元することはできません。",
-        "delete_btn": "このワークスペースを削除",
+        "title": "일반",
+        "upload_logo": "로고 업로드",
+        "edit_logo": "로고 편집",
+        "name": "워크스페이스 이름",
+        "company_size": "회사 규모",
+        "url": "워크스페이스 URL",
+        "update_workspace": "워크스페이스 업데이트",
+        "delete_workspace": "이 워크스페이스 삭제",
+        "delete_workspace_description": "워크스페이스를 삭제하면 해당 워크스페이스의 모든 데이터와 리소스가 완전히 삭제되고 복원할 수 없습니다.",
+        "delete_btn": "이 워크스페이스 삭제",
         "delete_modal": {
-          "title": "このワークスペースを削除してもよろしいですか？",
-          "description": "有料プランの無料トライアルが有効です。続行するには、まずトライアルをキャンセルしてください。",
-          "dismiss": "閉じる",
-          "cancel": "トライアルをキャンセル",
-          "success_title": "ワークスペースが削除されました。",
-          "success_message": "まもなくプロフィールページに移動します。",
-          "error_title": "操作に失敗しました。",
-          "error_message": "もう一度お試しください。"
+          "title": "이 워크스페이스를 삭제하시겠습니까?",
+          "description": "유료 플랜의 무료 트라이얼이 유효합니다. 계속하려면 먼저 트라이얼을 취소해 주세요.",
+          "dismiss": "닫기",
+          "cancel": "트라이얼 취소",
+          "success_title": "워크스페이스가 삭제되었습니다.",
+          "success_message": "곧 프로필 페이지로 이동합니다.",
+          "error_title": "작업에 실패했습니다.",
+          "error_message": "다시 시도해 주세요."
         },
         "errors": {
           "name": {
-            "required": "名前は必須です",
-            "max_length": "ワークスペース名は80文字を超えることはできません"
+            "required": "이름은 필수입니다",
+            "max_length": "워크스페이스 이름은 80자를 초과할 수 없습니다"
           },
           "company_size": {
-            "required": "会社の規模は必須です"
+            "required": "회사 규모는 필수입니다"
           }
         }
       },
       "members": {
-        "title": "メンバー",
-        "add_member": "メンバーを追加",
-        "pending_invites": "保留中の招待",
-        "invitations_sent_successfully": "招待が正常に送信されました",
-        "leave_confirmation": "ワークスペースから退出してもよろしいですか？このワークスペースにアクセスできなくなります。この操作は取り消せません。",
+        "title": "멤버",
+        "add_member": "멤버 추가",
+        "pending_invites": "保留中의 초대",
+        "invitations_sent_successfully": "초대가 정상적으로 전송되었습니다",
+        "leave_confirmation": "워크스페이스에서 탈퇴하시겠습니까? 이 작업은 취소할 수 없습니다.",
         "details": {
-          "full_name": "フルネーム",
-          "display_name": "表示名",
-          "email_address": "メールアドレス",
-          "account_type": "アカウントタイプ",
-          "authentication": "認証",
-          "joining_date": "参加日"
+          "full_name": "전체 이름",
+          "display_name": "표시 이름",
+          "email_address": "이메일 주소",
+          "account_type": "계정 유형",
+          "authentication": "인증",
+          "joining_date": "참여 날짜"
         },
         "modal": {
-          "title": "共同作業者を招待",
-          "description": "ワークスペースに共同作業者を招待します。",
-          "button": "招待を送信",
-          "button_loading": "招待を送信中",
+          "title": "공동 작업자 초대",
+          "description": "워크스페이스에 공동 작업자를 초대합니다.",
+          "button": "초대 보내기",
+          "button_loading": "초대 보내는 중",
           "placeholder": "name@company.com",
           "errors": {
-            "required": "招待するにはメールアドレスが必要です。",
-            "invalid": "メールアドレスが無効です"
+            "required": "초대하려면 이메일 주소가 필요합니다.",
+            "invalid": "이메일 주소가 무효합니다"
           }
         }
       },
       "billing_and_plans": {
-        "title": "請求とプラン",
-        "current_plan": "現在のプラン",
-        "free_plan": "現在フリープランを使用中です",
-        "view_plans": "プランを表示"
+        "title": "청구와 플랜",
+        "current_plan": "현재 플랜",
+        "free_plan": "현재 무료 플랜을 사용 중입니다",
+        "view_plans": "플랜 보기"
       },
       "exports": {
-        "title": "エクスポート",
-        "exporting": "エクスポート中",
-        "previous_exports": "過去のエクスポート",
-        "export_separate_files": "データを個別のファイルにエクスポート",
+        "title": "출력",
+        "exporting": "출력 중",
+        "previous_exports": "과거의 출력",
+        "export_separate_files": "데이터를 개별 파일로 출력",
         "modal": {
-          "title": "エクスポート先",
+          "title": "출력 대상",
           "toasts": {
             "success": {
-              "title": "エクスポート成功",
-              "message": "エクスポートした{entity}は過去のエクスポートからダウンロードできます。"
+              "title": "출력 성공",
+              "message": "출력한 {entity}는 과거의 출력에서 다운로드할 수 있습니다."
             },
             "error": {
-              "title": "エクスポート失敗",
-              "message": "エクスポートに失敗しました。もう一度お試しください。"
+              "title": "출력 실패",
+              "message": "출력에 실패했습니다. 다시 한 번 시도해 주세요."
             }
           }
         }
       },
       "webhooks": {
-        "title": "Webhook",
-        "add_webhook": "Webhookを追加",
+        "title": "웹훅",
+        "add_webhook": "웹훅 추가",
         "modal": {
-          "title": "Webhookを作成",
-          "details": "Webhook詳細",
-          "payload": "ペイロードURL",
-          "question": "このWebhookをトリガーするイベントを選択してください",
-          "error": "URLは必須です"
+          "title": "웹훅 만들기",
+          "details": "웹훅 세부 정보",
+          "payload": "페이로드 URL",
+          "question": "이 웹훅을 트리거할 이벤트를 선택하세요",
+          "error": "URL은 필수입니다"
         },
         "secret_key": {
-          "title": "シークレットキー",
-          "message": "Webhookペイロードにサインインするためのトークンを生成"
+          "title": "시크릿 키",
+          "message": "웹훅 페이로드에 로그인하기 위한 토큰 생성"
         },
         "options": {
-          "all": "すべてを送信",
-          "individual": "個別のイベントを選択"
+          "all": "모두 보내기",
+          "individual": "개별 이벤트 선택"
         },
         "toasts": {
           "created": {
-            "title": "Webhook作成完了",
-            "message": "Webhookが正常に作成されました"
+            "title": "웹훅 만들기 완료",
+            "message": "웹훅이 정상적으로 만들어졌습니다"
           },
           "not_created": {
-            "title": "Webhook作成失敗",
-            "message": "Webhookを作成できませんでした"
+            "title": "웹훅 만들기 실패",
+            "message": "웹훅을 만들 수 없습니다"
           },
           "updated": {
-            "title": "Webhook更新完了",
-            "message": "Webhookが正常に更新されました"
+            "title": "웹훅 업데이트 완료",
+            "message": "웹훅이 정상적으로 업데이트되었습니다"
           },
           "not_updated": {
-            "title": "Webhook更新失敗",
-            "message": "Webhookを更新できませんでした"
+            "title": "웹훅 업데이트 실패",
+            "message": "웹훅을 업데이트할 수 없습니다"
           },
           "removed": {
-            "title": "Webhook削除完了",
-            "message": "Webhookが正常に削除されました"
+            "title": "웹훅 삭제 완료",
+            "message": "웹훅이 정상적으로 삭제되었습니다"
           },
           "not_removed": {
-            "title": "Webhook削除失敗",
-            "message": "Webhookを削除できませんでした"
+            "title": "웹훅 삭제 실패",
+            "message": "웹훅을 삭제할 수 없습니다"
           },
           "secret_key_copied": {
-            "message": "シークレットキーがクリップボードにコピーされました。"
+            "message": "시크릿 키가 클립보드에 복사되었습니다."
           },
           "secret_key_not_copied": {
-            "message": "シークレットキーのコピー中にエラーが発生しました。"
+            "message": "시크릿 키의 복사 중에 오류가 발생했습니다."
           }
         }
       },
       "api_tokens": {
-        "title": "APIトークン",
-        "add_token": "APIトークンを追加",
-        "create_token": "トークンを作成",
-        "never_expires": "無期限",
-        "generate_token": "トークンを生成",
-        "generating": "生成中",
+        "title": "API 토큰",
+        "add_token": "API 토큰 추가",
+        "create_token": "토큰 만들기",
+        "never_expires": "무기한",
+        "generate_token": "토큰 생성",
+        "generating": "생성 중",
         "delete": {
-          "title": "APIトークンを削除",
-          "description": "このトークンを使用しているアプリケーションはPlaneのデータにアクセスできなくなります。この操作は取り消せません。",
+          "title": "API 토큰 삭제",
+          "description": "이 토큰을 사용하는 애플리케이션은 Plane의 데이터에 액세스할 수 없습니다. 이 작업은 취소할 수 없습니다.",
           "success": {
-            "title": "成功！",
-            "message": "APIトークンが正常に削除されました"
+            "title": "성공!",
+            "message": "API 토큰이 정상적으로 삭제되었습니다"
           },
           "error": {
-            "title": "エラー！",
-            "message": "APIトークンを削除できませんでした"
+            "title": "오류!",
+            "message": "API 토큰을 삭제할 수 없습니다"
           }
         }
       }
     },
     "empty_state": {
       "api_tokens": {
-        "title": "APIトークンがまだ作成されていません",
-        "description": "PlaneのAPIを使用して、Planeのデータを外部システムと統合できます。トークンを作成して始めましょう。"
+        "title": "API 토큰이 아직 만들어지지 않았습니다",
+        "description": "Plane의 API를 사용하여 Plane의 데이터를 외부 시스템과 통합할 수 있습니다. 토큰을 만들고 시작하세요."
       },
       "webhooks": {
-        "title": "Webhookが追加されていません",
-        "description": "Webhookを作成してリアルタイムの更新を受け取り、アクションを自動化します。"
+        "title": "웹훅이 추가되지 않았습니다",
+        "description": "웹훅을 만들어 실시간 업데이트를 받고, 작업을 자동화하세요."
       },
       "exports": {
-        "title": "エクスポートがまだありません",
-        "description": "エクスポートすると、参照用のコピーがここに保存されます。"
+        "title": "출력이 아직 없습니다",
+        "description": "출력하면 참조용 복사본이 여기에 저장됩니다."
       },
       "imports": {
-        "title": "インポートがまだありません",
-        "description": "過去のインポートをここで確認し、ダウンロードできます。"
+        "title": "수입이 아직 없습니다",
+        "description": "과거의 수입을 여기에서 확인하고 다운로드할 수 있습니다."
       }
     }
   },
 
   "profile": {
-    "label": "プロフィール",
-    "page_label": "あなたの作業",
-    "work": "作業",
+    "label": "프로필",
+    "page_label": "작업",
+    "work": "작업",
     "details": {
-      "joined_on": "参加日",
-      "time_zone": "タイムゾーン"
+      "joined_on": "참여 날짜",
+      "time_zone": "타임존"
     },
     "stats": {
-      "workload": "作業負荷",
-      "overview": "概要",
-      "created": "作成した作業項目",
-      "assigned": "割り当てられた作業項目",
-      "subscribed": "購読中の作業項目",
+      "workload": "작업 부하",
+      "overview": "개요",
+      "created": "만든 작업 항목",
+      "assigned": "배정된 작업 항목",
+      "subscribed": "구독 중인 작업 항목",
       "state_distribution": {
-        "title": "状態別作業項目",
-        "empty": "より良い分析のために、作業項目を作成してグラフで状態別に表示します。"
+        "title": "상태별 작업 항목",
+        "empty": "더 나은 분석을 위해 작업 항목을 만들고 그래프로 상태별로 표시합니다."
       },
       "priority_distribution": {
-        "title": "優先度別作業項目",
-        "empty": "より良い分析のために、作業項目を作成してグラフで優先度別に表示します。"
+        "title": "우선순위별 작업 항목",
+        "empty": "더 나은 분석을 위해 작업 항목을 만들고 그래프로 우선순위별로 표시합니다."
       },
       "recent_activity": {
-        "title": "最近のアクティビティ",
-        "empty": "データが見つかりませんでした。入力内容を確認してください",
-        "button": "今日のアクティビティをダウンロード",
-        "button_loading": "ダウンロード中"
+        "title": "최근 활동",
+        "empty": "데이터를 찾을 수 없습니다. 입력 내용을 확인하세요",
+        "button": "오늘의 활동을 다운로드",
+        "button_loading": "다운로드 중"
       }
     },
     "actions": {
-      "profile": "プロフィール",
-      "security": "セキュリティ",
-      "activity": "アクティビティ",
-      "appearance": "外観",
-      "notifications": "通知"
+      "profile": "프로필",
+      "security": "보안",
+      "activity": "활동",
+      "appearance": "외관",
+      "notifications": "알림"
     },
     "tabs": {
-      "summary": "サマリー",
-      "assigned": "割り当て済み",
-      "created": "作成済み",
-      "subscribed": "購読中",
-      "activity": "アクティビティ"
+      "summary": "요약",
+      "assigned": "배정됨",
+      "created": "만든",
+      "subscribed": "구독 중",
+      "activity": "활동"
     },
     "empty_state": {
       "activity": {
-        "title": "アクティビティがまだありません",
-        "description": "新しい作業項目を作成して始めましょう！詳細とプロパティを追加してください。Planeをさらに探索してアクティビティを確認しましょう。"
+        "title": "활동이 아직 없습니다",
+        "description": "새 작업 항목을 만들어 시작하세요! 세부 정보와 속성을 추가하세요. Plane을 더 탐색하여 활동을 확인하세요.",
+        "primary_button": {
+          "text": "새 작업 항목 생성"
+        }
       },
       "assigned": {
-        "title": "割り当てられた作業項目がありません",
-        "description": "あなたに割り当てられた作業項目をここで追跡できます。"
+        "title": "배정된 작업 항목이 없습니다",
+        "description": "당신에게 배정된 작업 항목을 여기서 추적할 수 있습니다.",
+        "primary_button": {
+          "text": "새 작업 항목 생성"
+        }
       },
       "created": {
-        "title": "作業項目がまだありません",
-        "description": "あなたが作成したすべての作業項目がここに表示され、直接追跡できます。"
+        "title": "작업 항목이 아직 없습니다",
+        "description": "당신이 만든 모든 작업 항목이 여기에 표시되고 직접 추적할 수 있습니다.",
+        "primary_button": {
+          "text": "새 작업 항목 생성"
+        }
       },
       "subscribed": {
-        "title": "作業項目がまだありません",
-        "description": "興味のある作業項目を購読して、ここですべてを追跡できます。"
+        "title": "작업 항목이 아직 없습니다",
+        "description": "관심 있는 작업 항목을 구독하고 여기서 모든 것을 추적할 수 있습니다.",
+        "primary_button": {
+          "text": "새 작업 항목 생성"
+        }
       }
     }
   },
 
   "project_settings": {
     "general": {
-      "enter_project_id": "プロジェクトIDを入力",
-      "please_select_a_timezone": "タイムゾーンを選択してください",
+      "enter_project_id": "프로젝트 ID 입력",
+      "please_select_a_timezone": "시간대를 선택해 주세요",
       "archive_project": {
-        "title": "プロジェクトをアーカイブ",
-        "description": "プロジェクトをアーカイブすると、サイドナビゲーションから非表示になりますが、プロジェクトページからアクセスすることはできます。プロジェクトを復元または削除することもできます。",
-        "button": "プロジェクトをアーカイブ"
+        "title": "프로젝트 보관",
+        "description": "프로젝트를 보관하면 사이드 네비게이션에서 숨겨지지만, 프로젝트 페이지에서 접근할 수 있습니다. 프로젝트를 복원하거나 삭제할 수도 있습니다.",
+        "button": "프로젝트 보관"
       },
       "delete_project": {
-        "title": "プロジェクトを削除",
-        "description": "プロジェクトを削除すると、そのプロジェクト内のすべてのデータとリソースが永久に削除され、復元できなくなります。",
-        "button": "プロジェクトを削除"
+        "title": "프로젝트 삭제",
+        "description": "프로젝트를 삭제하면 해당 프로젝트 내의 모든 데이터와 리소스가 영구적으로 삭제되며, 복원할 수 없게 됩니다.",
+        "button": "프로젝트 삭제"
       },
       "toast": {
-        "success": "プロジェクトが正常に更新されました",
-        "error": "プロジェクトを更新できませんでした。もう一度お試しください。"
+        "success": "프로젝트가 성공적으로 업데이트되었습니다",
+        "error": "프로젝트를 업데이트할 수 없습니다. 다시 시도해 주세요."
       }
     },
     "members": {
-      "label": "メンバー",
-      "project_lead": "プロジェクトリーダー",
-      "default_assignee": "デフォルトの担当者",
+      "label": "멤버",
+      "project_lead": "프로젝트 리더",
+      "default_assignee": "기본 담당자",
       "guest_super_permissions": {
-        "title": "ゲストユーザーにすべての作業項目の閲覧権限を付与:",
-        "sub_heading": "これにより、ゲストはプロジェクトのすべての作業項目を閲覧できるようになります。"
+        "title": "게스트 사용자에게 모든 작업 항목 보기 권한 부여:",
+        "sub_heading": "이렇게 하면 게스트가 프로젝트의 모든 작업 항목을 볼 수 있게 됩니다."
       },
       "invite_members": {
-        "title": "メンバーを招待",
-        "sub_heading": "プロジェクトに参加するメンバーを招待します。",
-        "select_co_worker": "共同作業者を選択"
+        "title": "멤버 초대",
+        "sub_heading": "프로젝트에 참여할 멤버를 초대합니다.",
+        "select_co_worker": "공동 작업자 선택"
       }
     },
     "states": {
-      "describe_this_state_for_your_members": "このステータスについてメンバーに説明してください。",
+      "describe_this_state_for_your_members": "이 상태에 대해 멤버들에게 설명해 주세요.",
       "empty_state": {
-        "title": "{groupKey}グループのステータスがありません",
-        "description": "新しいステータスを作成してください"
+        "title": "{groupKey} 그룹의 상태가 없습니다",
+        "description": "새 상태를 생성해 주세요"
       }
     },
     "labels": {
-      "label_title": "ラベルタイトル",
-      "label_title_is_required": "ラベルタイトルは必須です",
-      "label_max_char": "ラベル名は255文字を超えることはできません",
+      "label_title": "라벨 제목",
+      "label_title_is_required": "라벨 제목은 필수입니다",
+      "label_max_char": "라벨 이름은 255자를 초과할 수 없습니다",
       "toast": {
-        "error": "ラベルの更新中にエラーが発生しました"
+        "error": "라벨 업데이트 중 오류가 발생했습니다"
       }
     },
     "estimates": {
-      "title": "プロジェクトの見積もりを有効にする",
-      "description": "チームの複雑さと作業負荷を伝えるのに役立ちます。"
+      "title": "프로젝트 추정치 활성화",
+      "description": "팀의 복잡성과 작업 부하를 전달하는 데 도움이 됩니다."
     },
     "automations": {
-      "label": "自動化",
+      "label": "자동화",
       "auto-archive": {
-        "title": "完了した作業項目を自動アーカイブ",
-        "description": "Planeは完了またはキャンセルされた作業項目を自動的にアーカイブします。",
-        "duration": "次の期間完了している作業項目を自動アーカイブ"
+        "title": "완료된 작업 항목 자동 보관",
+        "description": "Plane은 완료되거나 취소된 작업 항목을 자동으로 보관합니다.",
+        "duration": "다음 기간 동안 완료된 작업 항목 자동 보관"
       },
       "auto-close": {
-        "title": "作業項目を自動クローズ",
-        "description": "Planeは完了またはキャンセルされていない作業項目を自動的にクローズします。",
-        "duration": "次の期間非アクティブな作業項目を自動クローズ",
-        "auto_close_status": "自動クローズステータス"
+        "title": "작업 항목 자동 닫기",
+        "description": "Plane은 완료되거나 취소되지 않은 작업 항목을 자동으로 닫습니다.",
+        "duration": "다음 기간 동안 비활성 작업 항목 자동 닫기",
+        "auto_close_status": "자동 닫기 상태"
       }
     },
 
     "empty_state": {
       "labels": {
-        "title": "ラベルがまだありません",
-        "description": "プロジェクトの作業項目を整理してフィルタリングするためのラベルを作成します。"
+        "title": "라벨이 아직 없습니다",
+        "description": "프로젝트의 작업 항목을 정리하고 필터링하기 위한 라벨을 생성합니다."
       },
       "estimates": {
-        "title": "見積もりシステムがまだありません",
-        "description": "作業項目ごとの作業量を伝えるための見積もりセットを作成します。",
-        "primary_button": "見積もりシステムを追加"
+        "title": "추정 시스템이 아직 없습니다",
+        "description": "작업 항목별 작업량을 전달하기 위한 추정 세트를 생성합니다.",
+        "primary_button": "추정 시스템 추가"
       }
     }
   },
 
   "project_cycles": {
-    "add_cycle": "サイクルを追加",
-    "more_details": "詳細情報",
-    "cycle": "サイクル",
-    "update_cycle": "サイクルを更新",
-    "create_cycle": "サイクルを作成",
-    "no_matching_cycles": "一致するサイクルがありません",
-    "remove_filters_to_see_all_cycles": "すべてのサイクルを表示するにはフィルターを解除してください",
-    "remove_search_criteria_to_see_all_cycles": "すべてのサイクルを表示するには検索条件を解除してください",
-    "only_completed_cycles_can_be_archived": "完了したサイクルのみアーカイブできます",
+    "add_cycle": "사이클 추가",
+    "more_details": "더 자세한 정보",
+    "cycle": "사이클",
+    "update_cycle": "사이클 업데이트",
+    "create_cycle": "사이클 생성",
+    "no_matching_cycles": "일치하는 사이클이 없습니다",
+    "remove_filters_to_see_all_cycles": "모든 사이클을 보려면 필터를 제거하세요",
+    "remove_search_criteria_to_see_all_cycles": "모든 사이클을 보려면 검색 조건을 제거하세요",
+    "only_completed_cycles_can_be_archived": "완료된 사이클만 보관할 수 있습니다",
     "active_cycle": {
-      "label": "アクティブなサイクル",
-      "progress": "進捗",
-      "chart": "バーンダウンチャート",
-      "priority_issue": "優先作業項目",
-      "assignees": "担当者",
-      "issue_burndown": "作業項目バーンダウン",
-      "ideal": "理想",
-      "current": "現在",
-      "labels": "ラベル"
+      "label": "활성 사이클",
+      "progress": "진행 상황",
+      "chart": "번다운 차트",
+      "priority_issue": "우선순위 작업 항목",
+      "assignees": "담당자",
+      "issue_burndown": "작업 항목 번다운",
+      "ideal": "이상적",
+      "current": "현재",
+      "labels": "라벨"
     },
     "upcoming_cycle": {
-      "label": "今後のサイクル"
+      "label": "예정된 사이클"
     },
     "completed_cycle": {
-      "label": "完了したサイクル"
+      "label": "완료된 사이클"
     },
     "status": {
-      "days_left": "残り日数",
-      "completed": "完了",
-      "yet_to_start": "開始前",
-      "in_progress": "進行中",
-      "draft": "下書き"
+      "days_left": "남은 일수",
+      "completed": "완료됨",
+      "yet_to_start": "시작 전",
+      "in_progress": "진행 중",
+      "draft": "초안"
     },
     "action": {
       "restore": {
-        "title": "サイクルを復元",
+        "title": "사이클 복원",
         "success": {
-          "title": "サイクルが復元されました",
-          "description": "サイクルが復元されました。"
+          "title": "사이클이 복원되었습니다",
+          "description": "사이클이 복원되었습니다."
         },
         "failed": {
-          "title": "サイクルの復元に失敗",
-          "description": "サイクルを復元できませんでした。もう一度お試しください。"
+          "title": "사이클 복원 실패",
+          "description": "사이클을 복원할 수 없습니다. 다시 시도해 주세요."
         }
       },
       "favorite": {
-        "loading": "お気に入りにサイクルを追加中",
+        "loading": "사이클을 즐겨찾기에 추가 중",
         "success": {
-          "description": "サイクルがお気に入りに追加されました。",
-          "title": "成功！"
+          "description": "사이클이 즐겨찾기에 추가되었습니다.",
+          "title": "성공!"
         },
         "failed": {
-          "description": "サイクルをお気に入りに追加できませんでした。もう一度お試しください。",
-          "title": "エラー！"
+          "description": "사이클을 즐겨찾기에 추가할 수 없습니다. 다시 시도해 주세요.",
+          "title": "오류!"
         }
       },
       "unfavorite": {
-        "loading": "お気に入りからサイクルを削除中",
+        "loading": "사이클을 즐겨찾기에서 제거 중",
         "success": {
-          "description": "サイクルがお気に入りから削除されました。",
-          "title": "成功！"
+          "description": "사이클이 즐겨찾기에서 제거되었습니다.",
+          "title": "성공!"
         },
         "failed": {
-          "description": "サイクルをお気に入りから削除できませんでした。もう一度お試しください。",
-          "title": "エラー！"
+          "description": "사이클을 즐겨찾기에서 제거할 수 없습니다. 다시 시도해 주세요.",
+          "title": "오류!"
         }
       },
       "update": {
-        "loading": "サイクルを更新中",
+        "loading": "사이클 업데이트 중",
         "success": {
-          "description": "サイクルが正常に更新されました。",
-          "title": "成功！"
+          "description": "사이클이 성공적으로 업데이트되었습니다.",
+          "title": "성공!"
         },
         "failed": {
-          "description": "サイクルの更新中にエラーが発生しました。もう一度お試しください。",
-          "title": "エラー！"
+          "description": "사이클 업데이트 중 오류가 발생했습니다. 다시 시도해 주세요.",
+          "title": "오류!"
         },
         "error": {
-          "already_exists": "指定した日付のサイクルは既に存在します。下書きサイクルを作成する場合は、両方の日付を削除してください。"
+          "already_exists": "지정한 날짜의 사이클이 이미 존재합니다. 초안 사이클을 만들려면 두 날짜를 모두 제거하세요."
         }
       }
     },
     "empty_state": {
       "general": {
-        "title": "サイクルで作業をグループ化してタイムボックス化します。",
-        "description": "作業をタイムボックス化された単位に分割し、プロジェクトの期限から逆算して日付を設定し、チームとして具体的な進捗を作ります。",
+        "title": "사이클로 작업을 그룹화하고 시간 제한을 설정하세요.",
+        "description": "작업을 시간 제한이 있는 단위로 나누고, 프로젝트 마감일로부터 역산하여 날짜를 설정하고, 팀으로서 구체적인 진행 상황을 만드세요.",
         "primary_button": {
-          "text": "最初のサイクルを設定",
+          "text": "첫 번째 사이클 설정",
           "comic": {
-            "title": "サイクルは繰り返されるタイムボックスです。",
-            "description": "スプリント、イテレーション、または週次や隔週の作業追跡に使用するその他の用語がサイクルです。"
+            "title": "사이클은 반복되는 시간 제한 단위입니다.",
+            "description": "스프린트, 이터레이션 또는 주간/격주간 작업 추적에 사용하는 다른 용어가 사이클입니다."
           }
         }
       },
       "no_issues": {
-        "title": "サイクルに作業項目が追加されていません",
-        "description": "このサイクル内でタイムボックス化して提供したい作業項目を追加または作成します",
+        "title": "사이클에 작업 항목이 추가되지 않았습니다",
+        "description": "이 사이클 내에서 시간 제한을 두고 제공하고 싶은 작업 항목을 추가하거나 생성하세요",
         "primary_button": {
-          "text": "新しい作業項目を作成"
+          "text": "새 작업 항목 생성"
         },
         "secondary_button": {
-          "text": "既存の作業項目を追加"
+          "text": "기존 작업 항목 추가"
         }
       },
       "completed_no_issues": {
-        "title": "サイクルに作業項目がありません",
-        "description": "サイクルに作業項目がありません。作業項目は転送されたか非表示になっています。非表示の作業項目がある場合は、表示プロパティを更新して確認してください。"
+        "title": "사이클에 작업 항목이 없습니다",
+        "description": "사이클에 작업 항목이 없습니다. 작업 항목이 이동되었거나 숨겨져 있습니다. 숨겨진 작업 항목이 있는 경우 표시 속성을 업데이트하여 확인하세요."
       },
       "active": {
-        "title": "アクティブなサイクルがありません",
-        "description": "アクティブなサイクルには、その期間内に今日の日付が含まれるものが該当します。アクティブなサイクルの進捗と詳細をここで確認できます。"
+        "title": "활성 사이클이 없습니다",
+        "description": "활성 사이클은 기간 내에 오늘 날짜가 포함된 사이클입니다. 활성 사이클의 진행 상황과 세부 정보를 여기서 확인할 수 있습니다."
       },
       "archived": {
-        "title": "アーカイブされたサイクルがまだありません",
-        "description": "プロジェクトを整理するために、完了したサイクルをアーカイブします。アーカイブ後はここで確認できます。"
+        "title": "보관된 사이클이 아직 없습니다",
+        "description": "프로젝트를 정리하기 위해 완료된 사이클을 보관하세요. 보관 후에는 여기서 확인할 수 있습니다."
       }
     }
   },
@@ -1880,82 +1892,82 @@
   "project_issues": {
     "empty_state": {
       "no_issues": {
-        "title": "作業項目を作成して誰かに割り当てましょう。自分自身でも構いません",
-        "description": "作業項目は、仕事、タスク、作業、またはJTBD（私たちが好む用語）と考えてください。作業項目とそのサブ作業項目は通常、チームメンバーに割り当てられる時間ベースのアクションアイテムです。チームは作業項目を作成、割り当て、完了することでプロジェクトの目標に向かって進みます。",
+        "title": "작업 항목을 생성하고 누군가에게 할당하세요. 자신에게도 할당할 수 있습니다",
+        "description": "작업 항목은 일, 태스크, 작업 또는 JTBD(우리가 선호하는 용어)로 생각하세요. 작업 항목과 그 하위 작업 항목은 일반적으로 팀원에게 할당되는 시간 기반 액션 아이템입니다. 팀은 작업 항목을 생성, 할당, 완료함으로써 프로젝트 목표를 향해 나아갑니다.",
         "primary_button": {
-          "text": "最初の作業項目を作成",
+          "text": "첫 번째 작업 항목 생성",
           "comic": {
-            "title": "作業項目はPlaneの構成要素です。",
-            "description": "PlaneのUIの再設計、会社のリブランド、新しい燃料噴射システムの立ち上げなどは、サブ作業項目を持つ可能性が高い作業項目の例です。"
+            "title": "작업 항목은 Plane의 기본 구성 요소입니다.",
+            "description": "Plane UI 재설계, 회사 리브랜딩, 새로운 연료 분사 시스템 출시 등은 하위 작업 항목을 가질 가능성이 높은 작업 항목의 예입니다."
           }
         }
       },
       "no_archived_issues": {
-        "title": "アーカイブされた作業項目がまだありません",
-        "description": "手動または自動化を通じて、完了またはキャンセルされた作業項目をアーカイブできます。アーカイブ後はここで確認できます。",
+        "title": "보관된 작업 항목이 아직 없습니다",
+        "description": "수동으로 또는 자동화를 통해 완료되거나 취소된 작업 항목을 보관할 수 있습니다. 보관 후에는 여기서 확인할 수 있습니다.",
         "primary_button": {
-          "text": "自動化を設定"
+          "text": "자동화 설정"
         }
       },
       "issues_empty_filter": {
-        "title": "適用されたフィルターに一致する作業項目が見つかりません",
+        "title": "적용된 필터와 일치하는 작업 항목이 없습니다",
         "secondary_button": {
-          "text": "すべてのフィルターをクリア"
+          "text": "모든 필터 지우기"
         }
       }
     }
   },
 
   "project_module": {
-    "add_module": "モジュールを追加",
-    "update_module": "モジュールを更新",
-    "create_module": "モジュールを作成",
-    "archive_module": "モジュールをアーカイブ",
-    "restore_module": "モジュールを復元",
-    "delete_module": "モジュールを削除",
+    "add_module": "모듈 추가",
+    "update_module": "모듈 업데이트",
+    "create_module": "모듈 생성",
+    "archive_module": "모듈 보관",
+    "restore_module": "모듈 복원",
+    "delete_module": "모듈 삭제",
     "empty_state": {
       "general": {
-        "title": "プロジェクトのマイルストーンをモジュールにマッピングし、集計された作業を簡単に追跡できます。",
-        "description": "論理的で階層的な親に属する作業項目のグループがモジュールを形成します。プロジェクトのマイルストーンで作業を追跡する方法として考えてください。期間や期限があり、マイルストーンまでの進捗状況を確認できる分析機能も備えています。",
+        "title": "프로젝트 마일스톤을 모듈에 매핑하여 집계된 작업을 쉽게 추적하세요.",
+        "description": "논리적이고 계층적인 상위 항목에 속하는 작업 항목 그룹이 모듈을 형성합니다. 프로젝트 마일스톤에서 작업을 추적하는 방법으로 생각하세요. 기간이나 마감일이 있으며, 마일스톤까지의 진행 상황을 확인할 수 있는 분석 기능도 있습니다.",
         "primary_button": {
-          "text": "最初のモジュールを作成",
+          "text": "첫 번째 모듈 생성",
           "comic": {
-            "title": "モジュールは階層的に作業をグループ化するのに役立ちます。",
-            "description": "カートモジュール、シャーシモジュール、倉庫モジュールは、このグループ化の良い例です。"
+            "title": "모듈은 계층적으로 작업을 그룹화하는 데 도움이 됩니다.",
+            "description": "카트 모듈, 섀시 모듈, 창고 모듈은 이러한 그룹화의 좋은 예입니다."
           }
         }
       },
       "no_issues": {
-        "title": "モジュールに作業項目がありません",
-        "description": "このモジュールの一部として達成したい作業項目を作成または追加してください",
+        "title": "모듈에 작업 항목이 없습니다",
+        "description": "이 모듈의 일부로 달성하고 싶은 작업 항목을 생성하거나 추가하세요",
         "primary_button": {
-          "text": "新しい作業項目を作成"
+          "text": "새 작업 항목 생성"
         },
         "secondary_button": {
-          "text": "既存の作業項目を追加"
+          "text": "기존 작업 항목 추가"
         }
       },
       "archived": {
-        "title": "アーカイブされたモジュールがまだありません",
-        "description": "プロジェクトを整理するために、完了またはキャンセルされたモジュールをアーカイブします。アーカイブ後はここで確認できます。"
+        "title": "보관된 모듈이 아직 없습니다",
+        "description": "프로젝트를 정리하기 위해 완료되거나 취소된 모듈을 보관하세요. 보관 후에는 여기서 확인할 수 있습니다."
       },
       "sidebar": {
-        "in_active": "このモジュールはまだアクティブではありません。",
-        "invalid_date": "無効な日付です。有効な日付を入力してください。"
+        "in_active": "이 모듈은 아직 활성화되지 않았습니다.",
+        "invalid_date": "유효하지 않은 날짜입니다. 유효한 날짜를 입력해 주세요."
       }
     },
     "quick_actions": {
-      "archive_module": "モジュールをアーカイブ",
-      "archive_module_description": "完了またはキャンセルされた\nモジュールのみアーカイブできます。",
-      "delete_module": "モジュールを削除"
+      "archive_module": "모듈 보관하기",
+      "archive_module_description": "완료되었거나 취소된\n모듈만 보관할 수 있습니다.",
+      "delete_module": "모듈 삭제하기"
     },
     "toast": {
       "copy": {
-        "success": "モジュールのリンクがクリップボードにコピーされました"
+        "success": "모듈 링크가 클립보드에 복사되었습니다"
       },
       "delete": {
-        "success": "モジュールが正常に削除されました",
-        "error": "モジュールを削除できませんでした"
+        "success": "모듈이 성공적으로 삭제되었습니다",
+        "error": "모듈을 삭제하지 못했습니다"
       }
     }
   },
@@ -1963,19 +1975,19 @@
   "project_views": {
     "empty_state": {
       "general": {
-        "title": "プロジェクトのフィルター付きビューを保存します。必要な数だけ作成できます",
-        "description": "ビューは、頻繁に使用するフィルターや簡単にアクセスしたいフィルターの集合です。プロジェクト内のすべての同僚が全員のビューを確認でき、自分のニーズに最も合うものを選択できます。",
+        "title": "프로젝트의 필터링된 뷰를 저장하세요. 원하는 만큼 만들 수 있습니다",
+        "description": "뷰는 자주 사용하거나 쉽게 접근하고 싶은 필터 모음입니다. 프로젝트의 모든 동료가 모든 사람의 뷰를 볼 수 있으며, 자신의 필요에 가장 적합한 것을 선택할 수 있습니다.",
         "primary_button": {
-          "text": "最初のビューを作成",
+          "text": "첫 번째 뷰 만들기",
           "comic": {
-            "title": "ビューは作業項目のプロパティの上で機能します。",
-            "description": "ここから、必要に応じて多くのプロパティやフィルターを使用してビューを作成できます。"
+            "title": "뷰는 작업 항목의 속성을 기반으로 작동합니다.",
+            "description": "여기에서 필요에 따라 많은 속성과 필터를 사용하여 뷰를 만들 수 있습니다."
           }
         }
       },
       "filter": {
-        "title": "一致するビューがありません",
-        "description": "検索条件に一致するビューがありません。\n代わりに新しいビューを作成してください。"
+        "title": "일치하는 뷰가 없습니다",
+        "description": "검색 조건과 일치하는 뷰가 없습니다.\n대신 새 뷰를 만드세요."
       }
     }
   },
@@ -1983,29 +1995,29 @@
   "project_page": {
     "empty_state": {
       "general": {
-        "title": "メモ、ドキュメント、または完全なナレッジベースを作成しましょう。PlaneのAIアシスタントGalileoが開始をサポートします",
-        "description": "ページはPlaneの思考整理スペースです。会議のメモを取り、簡単に整形し、作業項目を埋め込み、コンポーネントライブラリを使用してレイアウトし、すべてをプロジェクトのコンテキストに保存できます。ドキュメントを素早く作成するには、ショートカットまたはボタンのクリックでPlaneのAI、Galileoを呼び出してください。",
+        "title": "메모, 문서, 또는 완전한 네이티브 노트 베이스를 만들어 보세요. Plane의 AI 어시스턴트 Galileo이 시작을 지원합니다",
+        "description": "페이지는 Plane의 사고 정리 스페이스입니다. 회의 메모를 취하고, 간단하게 정리하고, 작업 항목을 삽입하고, 컴포넌트 라이브러리를 사용하여 레이아웃을 만들고, 모든 것을 프로젝트의 컨텍스트에 저장할 수 있습니다. 문서를 빠르게 만들기 위해 쇼트컷이나 버튼을 클릭하여 Plane의 AI, Galileo을 호출하세요.",
         "primary_button": {
-          "text": "最初のページを作成"
+          "text": "첫 번째 페이지 만들기"
         }
       },
       "private": {
-        "title": "プライベートページがまだありません",
-        "description": "プライベートな考えをここに保存しましょう。共有する準備ができたら、チームはクリック一つで共有できます。",
+        "title": "프라이버트 페이지가 아직 없습니다",
+        "description": "프라이버트 생각을 여기에 저장하세요. 공유할 준비가 되면 팀은 클릭 한 번으로 공유할 수 있습니다.",
         "primary_button": {
-          "text": "最初のページを作成"
+          "text": "첫 번째 페이지 만들기"
         }
       },
       "public": {
-        "title": "公開ページがまだありません",
-        "description": "プロジェクト内の全員と共有されているページをここで確認できます。",
+        "title": "공개 페이지가 아직 없습니다",
+        "description": "프로젝트 내의 모든 사람과 공유되는 페이지를 여기에서 확인할 수 있습니다.",
         "primary_button": {
-          "text": "最初のページを作成"
+          "text": "첫 번째 페이지 만들기"
         }
       },
       "archived": {
-        "title": "アーカイブされたページがまだありません",
-        "description": "注目していないページをアーカイブします。必要な時にここでアクセスできます。"
+        "title": "보관된 페이지가 아직 없습니다",
+        "description": "주목하는 페이지를 보관하세요. 필요할 때 여기에서 액세스할 수 있습니다."
       }
     }
   },
@@ -2013,7 +2025,7 @@
   "command_k": {
     "empty_state": {
       "search": {
-        "title": "結果が見つかりません"
+        "title": "결과가 없습니다"
       }
     }
   },
@@ -2021,10 +2033,10 @@
   "issue_relation": {
     "empty_state": {
       "search": {
-        "title": "一致する作業項目が見つかりません"
+        "title": "일치하는 작업 항목이 없습니다"
       },
       "no_issues": {
-        "title": "作業項目が見つかりません"
+        "title": "작업 항목이 없습니다"
       }
     }
   },
@@ -2032,85 +2044,85 @@
   "issue_comment": {
     "empty_state": {
       "general": {
-        "title": "コメントがまだありません",
-        "description": "コメントは作業項目のディスカッションとフォローアップのスペースとして使用できます"
+        "title": "코멘트가 아직 없습니다",
+        "description": "코멘트는 작업 항목의 디스커션과 포로아프의 스페이스로 사용할 수 있습니다"
       }
     }
   },
 
   "notification": {
-    "label": "受信トレイ",
-    "page_label": "{workspace} - 受信トレイ",
+    "label": "받은 트레이",
+    "page_label": "{workspace} - 받은 트레이",
     "options": {
-      "mark_all_as_read": "すべて既読にする",
-      "mark_read": "既読にする",
-      "mark_unread": "未読にする",
-      "refresh": "更新",
-      "filters": "受信トレイフィルター",
-      "show_unread": "未読を表示",
-      "show_snoozed": "スヌーズを表示",
-      "show_archived": "アーカイブを表示",
-      "mark_archive": "アーカイブ",
-      "mark_unarchive": "アーカイブ解除",
-      "mark_snooze": "スヌーズ",
-      "mark_unsnooze": "スヌーズ解除"
+      "mark_all_as_read": "모두 읽음으로 표시",
+      "mark_read": "읽음으로 표시",
+      "mark_unread": "읽지 않음으로 표시",
+      "refresh": "새로고침",
+      "filters": "받은 트레이 필터",
+      "show_unread": "읽지 않은 것 표시",
+      "show_snoozed": "스누즈 표시",
+      "show_archived": "보관된 것 표시",
+      "mark_archive": "보관",
+      "mark_unarchive": "보관 해제",
+      "mark_snooze": "스누즈",
+      "mark_unsnooze": "스누즈 해제"
     },
     "toasts": {
-      "read": "通知を既読にしました",
-      "unread": "通知を未読にしました",
-      "archived": "通知をアーカイブしました",
-      "unarchived": "通知をアーカイブ解除しました",
-      "snoozed": "通知をスヌーズしました",
-      "unsnoozed": "通知のスヌーズを解除しました"
+      "read": "알림을 읽음으로 표시했습니다",
+      "unread": "알림을 읽지 않음으로 표시했습니다",
+      "archived": "알림을 보관으로 표시했습니다",
+      "unarchived": "알림을 보관 해제로 표시했습니다",
+      "snoozed": "알림을 스누즈로 표시했습니다",
+      "unsnoozed": "알림의 스누즈를 해제했습니다"
     },
     "empty_state": {
       "detail": {
-        "title": "詳細を表示するには選択してください。"
+        "title": "자세한 정보를 보려면 선택해 주세요."
       },
       "all": {
-        "title": "割り当てられた作業項目がありません",
-        "description": "あなたに割り当てられた作業項目の更新が\nここに表示されます"
+        "title": "배정된 작업 항목이 없습니다",
+        "description": "배정된 작업 항목의 업데이트가\n여기에 표시됩니다"
       },
       "mentions": {
-        "title": "割り当てられた作業項目がありません",
-        "description": "あなたに割り当てられた作業項目の更新が\nここに表示されます"
+        "title": "배정된 작업 항목이 없습니다",
+        "description": "배정된 작업 항목의 업데이트가\n여기에 표시됩니다"
       }
     },
     "tabs": {
-      "all": "すべて",
-      "mentions": "メンション"
+      "all": "모두",
+      "mentions": "멘션"
     },
     "filter": {
-      "assigned": "自分に割り当て",
-      "created": "自分が作成",
-      "subscribed": "自分が購読"
+      "assigned": "자신에게 배정",
+      "created": "자신이 만듦",
+      "subscribed": "자신이 구독"
     },
     "snooze": {
-      "1_day": "1日",
-      "3_days": "3日",
-      "5_days": "5日",
-      "1_week": "1週間",
-      "2_weeks": "2週間",
-      "custom": "カスタム"
+      "1_day": "1일",
+      "3_days": "3일",
+      "5_days": "5일",
+      "1_week": "1주",
+      "2_weeks": "2주",
+      "custom": "커스텀"
     }
   },
 
   "active_cycle": {
     "empty_state": {
       "progress": {
-        "title": "サイクルの進捗を表示するには作業項目を追加してください"
+        "title": "추가하여 추적할 작업 항목을 표시하세요"
       },
       "chart": {
-        "title": "バーンダウンチャートを表示するには作業項目を追加してください。"
+        "title": "추적할 작업 항목을 표시하세요."
       },
       "priority_issue": {
-        "title": "サイクルで取り組まれている優先度の高い作業項目を一目で確認できます。"
+        "title": "추적된 우선순위가 높은 작업 항목을 한 눈에 확인할 수 있습니다."
       },
       "assignee": {
-        "title": "担当者別の作業の内訳を確認するには、作業項目に担当者を追加してください。"
+        "title": "작업 항목에 담당자를 추가하여 확인하세요."
       },
       "label": {
-        "title": "ラベル別の作業の内訳を確認するには、作業項目にラベルを追加してください。"
+        "title": "작업 항목에 라벨을 추가하여 확인하세요."
       }
     }
   },
@@ -2118,245 +2130,245 @@
   "disabled_project": {
     "empty_state": {
       "inbox": {
-        "title": "インテークがプロジェクトで有効になっていません。",
-        "description": "インテークは、プロジェクトへの受信リクエストを管理し、ワークフローに作業項目として追加するのに役立ちます。リクエストを管理するには、プロジェクト設定でインテークを有効にしてください。",
+        "title": "인테이크가 프로젝트에서 활성화되지 않았습니다.",
+        "description": "인테이크는 프로젝트에 대한 수신 요청을 관리하고, 워크플로우에 작업 항목으로 추가하는 데 도움이 됩니다. 수신 요청을 관리하려면 프로젝트 설정에서 인테이크를 활성화해야 합니다.",
         "primary_button": {
-          "text": "機能を管理"
+          "text": "기능 관리"
         }
       },
       "cycle": {
-        "title": "サイクルがこのプロジェクトで有効になっていません。",
-        "description": "時間枠で作業を分割し、プロジェクトの期限から逆算して日付を設定し、チームとして具体的な進捗を作ります。サイクルを使用するには、プロジェクトでサイクル機能を有効にしてください。",
+        "title": "추적이 이 프로젝트에서 활성화되지 않았습니다.",
+        "description": "시간 프레임에서 작업을 분할하고, 프로젝트 마감일로부터 역산하여 날짜를 설정하고, 팀으로서 구체적인 진행 상황을 만드세요. 추적을 사용하려면 프로젝트에서 추적 기능을 활성화해야 합니다.",
         "primary_button": {
-          "text": "機能を管理"
+          "text": "기능 관리"
         }
       },
       "module": {
-        "title": "モジュールがプロジェクトで有効になっていません。",
-        "description": "モジュールはプロジェクトの構成要素です。モジュールを使用するには、プロジェクト設定でモジュールを有効にしてください。",
+        "title": "모듈이 프로젝트에서 활성화되지 않았습니다.",
+        "description": "모듈은 프로젝트의 구성 요소입니다. 모듈을 사용하려면 프로젝트 설정에서 모듈을 활성화해야 합니다.",
         "primary_button": {
-          "text": "機能を管理"
+          "text": "기능 관리"
         }
       },
       "page": {
-        "title": "ページがプロジェクトで有効になっていません。",
-        "description": "ページはプロジェクトの構成要素です。ページを使用するには、プロジェクト設定でページを有効にしてください。",
+        "title": "페이지가 프로젝트에서 활성화되지 않았습니다.",
+        "description": "페이지는 프로젝트의 구성 요소입니다. 페이지를 사용하려면 프로젝트 설정에서 페이지를 활성화해야 합니다.",
         "primary_button": {
-          "text": "機能を管理"
+          "text": "기능 관리"
         }
       },
       "view": {
-        "title": "ビューがプロジェクトで有効になっていません。",
-        "description": "ビューはプロジェクトの構成要素です。ビューを使用するには、プロジェクト設定でビューを有効にしてください。",
+        "title": "뷰가 프로젝트에서 활성화되지 않았습니다.",
+        "description": "뷰는 프로젝트의 구성 요소입니다. 뷰를 사용하려면 프로젝트 설정에서 뷰를 활성화해야 합니다.",
         "primary_button": {
-          "text": "機能を管理"
+          "text": "기능 관리"
         }
       }
     }
   },
   "workspace_draft_issues": {
-    "draft_an_issue": "作業項目の下書き",
+    "draft_an_issue": "작업 항목의 초안",
     "empty_state": {
-      "title": "書きかけの作業項目、そしてまもなくコメントがここに表示されます。",
-      "description": "試してみるには、作業項目の追加を開始して途中で中断するか、以下で最初の下書きを作成してください。😉",
+      "title": "초안이 작성되었고, 곧 코멘트가 여기에 표시됩니다.",
+      "description": "시도해 보려면 작업 항목을 추가하고 중간에서 중단하거나, 아래에서 첫 번째 초안을 작성하세요.😉",
       "primary_button": {
-        "text": "最初の下書きを作成"
+        "text": "첫 번째 초안 작성"
       }
     },
     "delete_modal": {
-      "title": "下書きを削除",
-      "description": "この下書きを削除してもよろしいですか？この操作は取り消せません。"
+      "title": "초안 삭제",
+      "description": "이 초안을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
     },
     "toasts": {
       "created": {
-        "success": "下書きを作成しました",
-        "error": "作業項目を作成できませんでした。もう一度お試しください。"
+        "success": "초안을 작성했습니다",
+        "error": "작업 항목을 작성할 수 없습니다. 다시 한 번 시도해 주세요."
       },
       "deleted": {
-        "success": "下書きを削除しました"
+        "success": "초안을 삭제했습니다"
       }
     }
   },
 
   "stickies": {
-    "title": "あなたの付箋",
-    "placeholder": "ここをクリックして入力",
-    "all": "すべての付箋",
-    "no-data": "アイデアをメモしたり、ひらめきをキャプチャしたり、閃きを記録したりしましょう。付箋を追加して始めましょう。",
-    "add": "付箋を追加",
-    "search_placeholder": "タイトルで検索",
-    "delete": "付箋を削除",
-    "delete_confirmation": "この付箋を削除してもよろしいですか？",
+    "title": "당신의 스티커",
+    "placeholder": "여기를 클릭하여 입력",
+    "all": "모든 스티커",
+    "no-data": "아이디어를 메모하거나, 창의력을 캡처하거나, 충격을 기록하세요. 스티커를 추가하여 시작하세요.",
+    "add": "스티커 추가",
+    "search_placeholder": "제목으로 검색",
+    "delete": "스티커 삭제",
+    "delete_confirmation": "이 스티커를 삭제하시겠습니까?",
     "empty_state": {
-      "simple": "アイデアをメモしたり、ひらめきをキャプチャしたり、閃きを記録したりしましょう。付箋を追加して始めましょう。",
+      "simple": "아이디어를 메모하거나, 창의력을 캡처하거나, 충격을 기록하세요. 스티커를 추가하여 시작하세요.",
       "general": {
-        "title": "付箋は、その場で素早く取るメモやToDoです。",
-        "description": "いつでもどこからでもアクセスできる付箋を作成して、思考やアイデアを簡単にキャプチャできます。",
+        "title": "스티커는 그 장소에서 빠르게 메모하거나 ToDo입니다.",
+        "description": "언제든지 어디서든 접근할 수 있는 스티커를 만들고, 생각이나 아이디어를 쉽게 캡처할 수 있습니다.",
         "primary_button": {
-          "text": "付箋を追加"
+          "text": "스티커 추가"
         }
       },
       "search": {
-        "title": "付箋に一致するものがありません。",
-        "description": "別の用語を試すか、検索が正しいと\n確信がある場合はお知らせください。",
+        "title": "일치하는 것이 없습니다.",
+        "description": "다른 용어를 시도하거나, 검색이 맞는 것을 확신하는 경우 알려주세요.",
         "primary_button": {
-          "text": "付箋を追加"
+          "text": "스티커 추가"
         }
       }
     },
     "toasts": {
       "errors": {
-        "wrong_name": "付箋の名前は100文字を超えることはできません。",
-        "already_exists": "説明のない付箋がすでに存在します"
+        "wrong_name": "스티커의 이름은 100자를 초과할 수 없습니다.",
+        "already_exists": "설명이 없는 스티커가 이미 존재합니다"
       },
       "created": {
-        "title": "付箋を作成しました",
-        "message": "付箋が正常に作成されました"
+        "title": "스티커를 작성했습니다",
+        "message": "스티커가 정상적으로 작성되었습니다"
       },
       "not_created": {
-        "title": "付箋を作成できませんでした",
-        "message": "付箋を作成できませんでした"
+        "title": "스티커를 작성할 수 없습니다",
+        "message": "스티커를 작성할 수 없습니다"
       },
       "updated": {
-        "title": "付箋を更新しました",
-        "message": "付箋が正常に更新されました"
+        "title": "스티커를 업데이트했습니다",
+        "message": "스티커가 정상적으로 업데이트되었습니다"
       },
       "not_updated": {
-        "title": "付箋を更新できませんでした",
-        "message": "付箋を更新できませんでした"
+        "title": "스티커를 업데이트할 수 없습니다",
+        "message": "스티커를 업데이트할 수 없습니다"
       },
       "removed": {
-        "title": "付箋を削除しました",
-        "message": "付箋が正常に削除されました"
+        "title": "스티커를 삭제했습니다",
+        "message": "스티커가 정상적으로 삭제되었습니다"
       },
       "not_removed": {
-        "title": "付箋を削除できませんでした",
-        "message": "付箋を削除できませんでした"
+        "title": "스티커를 삭제할 수 없습니다",
+        "message": "스티커를 삭제할 수 없습니다"
       }
     }
   },
 
   "role_details": {
     "guest": {
-      "title": "ゲスト",
-      "description": "組織の外部メンバーをゲストとして招待できます。"
+      "title": "게스트",
+      "description": "조직의 외부 멤버를 게스트로 초대할 수 있습니다."
     },
     "member": {
-      "title": "メンバー",
-      "description": "プロジェクト、サイクル、モジュール内のエンティティの読み取り、書き込み、編集、削除が可能"
+      "title": "멤버",
+      "description": "프로젝트, 사이클, 모듈 내의 엔티티 읽기, 쓰기, 편집, 삭제가 가능"
     },
     "admin": {
-      "title": "管理者",
-      "description": "ワークスペース内のすべての権限が有効。"
+      "title": "관리자",
+      "description": "워크스페이스 내의 모든 권한이 유효."
     }
   },
 
   "user_roles": {
-    "product_or_project_manager": "プロダクト/プロジェクトマネージャー",
-    "development_or_engineering": "開発/エンジニアリング",
-    "founder_or_executive": "創業者/エグゼクティブ",
-    "freelancer_or_consultant": "フリーランス/コンサルタント",
-    "marketing_or_growth": "マーケティング/グロース",
-    "sales_or_business_development": "営業/ビジネス開発",
-    "support_or_operations": "サポート/オペレーション",
-    "student_or_professor": "学生/教授",
-    "human_resources": "人事",
-    "other": "その他"
+    "product_or_project_manager": "프로덕트/프로젝트 매니저",
+    "development_or_engineering": "개발/엔지니어링",
+    "founder_or_executive": "창업자/이엑스큐티브",
+    "freelancer_or_consultant": "프리랜서/컨설턴트",
+    "marketing_or_growth": "마케팅/그로스",
+    "sales_or_business_development": "영업/비즈니스 개발",
+    "support_or_operations": "지원/운영",
+    "student_or_professor": "학생/교수",
+    "human_resources": "인사",
+    "other": "기타"
   },
 
   "importer": {
     "github": {
       "title": "GitHub",
-      "description": "GitHubリポジトリから作業項目をインポートして同期します。"
+      "description": "GitHub 저장소에서 작업 항목을 가져오고 동기화합니다."
     },
     "jira": {
       "title": "Jira",
-      "description": "Jiraプロジェクトとエピックから作業項目とエピックをインポートします。"
+      "description": "Jira 프로젝트와 에픽에서 작업 항목과 에픽을 가져옵니다."
     }
   },
 
   "exporter": {
     "csv": {
       "title": "CSV",
-      "description": "作業項目をCSVファイルにエクスポートします。",
-      "short_description": "CSVとしてエクスポート"
+      "description": "작업 항목을 CSV 파일로 내보냅니다.",
+      "short_description": "CSV로 내보내기"
     },
     "excel": {
       "title": "Excel",
-      "description": "作業項目をExcelファイルにエクスポートします。",
-      "short_description": "Excelとしてエクスポート"
+      "description": "작업 항목을 Excel 파일로 내보냅니다.",
+      "short_description": "Excel로 내보내기"
     },
     "xlsx": {
       "title": "Excel",
-      "description": "作業項目をExcelファイルにエクスポートします。",
-      "short_description": "Excelとしてエクスポート"
+      "description": "작업 항목을 Excel 파일로 내보냅니다.",
+      "short_description": "Excel로 내보내기"
     },
     "json": {
       "title": "JSON",
-      "description": "作業項目をJSONファイルにエクスポートします。",
-      "short_description": "JSONとしてエクスポート"
+      "description": "작업 항목을 JSON 파일로 내보냅니다.",
+      "short_description": "JSON으로 내보내기"
     }
   },
   "default_global_view": {
-    "all_issues": "すべての作業項目",
-    "assigned": "割り当て済み",
-    "created": "作成済み",
-    "subscribed": "購読中"
+    "all_issues": "모든 작업 항목",
+    "assigned": "할당됨",
+    "created": "생성됨",
+    "subscribed": "구독 중"
   },
 
   "themes": {
     "theme_options": {
       "system_preference": {
-        "label": "システム設定"
+        "label": "시스템 설정"
       },
       "light": {
-        "label": "ライト"
+        "label": "라이트"
       },
       "dark": {
-        "label": "ダーク"
+        "label": "다크"
       },
       "light_contrast": {
-        "label": "ライトハイコントラスト"
+        "label": "라이트 고대비"
       },
       "dark_contrast": {
-        "label": "ダークハイコントラスト"
+        "label": "다크 고대비"
       },
       "custom": {
-        "label": "カスタムテーマ"
+        "label": "커스텀 테마"
       }
     }
   },
   "project_modules": {
     "status": {
-      "backlog": "バックログ",
-      "planned": "計画済み",
-      "in_progress": "進行中",
-      "paused": "一時停止",
-      "completed": "完了",
-      "cancelled": "キャンセル"
+      "backlog": "백로그",
+      "planned": "계획됨",
+      "in_progress": "진행 중",
+      "paused": "일시 중지됨",
+      "completed": "완료됨",
+      "cancelled": "취소됨"
     },
     "layout": {
-      "list": "リスト表示",
-      "board": "ギャラリー表示",
-      "timeline": "タイムライン表示"
+      "list": "리스트 보기",
+      "board": "갤러리 보기",
+      "timeline": "타임라인 보기"
     },
     "order_by": {
-      "name": "名前",
-      "progress": "進捗",
-      "issues": "作業項目数",
-      "due_date": "期限",
-      "created_at": "作成日",
-      "manual": "手動"
+      "name": "이름",
+      "progress": "진행 상황",
+      "issues": "작업 항목 수",
+      "due_date": "마감일",
+      "created_at": "생성일",
+      "manual": "수동"
     }
   },
 
   "cycle": {
-    "label": "{count, plural, one {サイクル} other {サイクル}}",
-    "no_cycle": "サイクルなし"
+    "label": "{count, plural, one {사이클} other {사이클}}",
+    "no_cycle": "사이클 없음"
   },
 
   "module": {
-    "label": "{count, plural, one {モジュール} other {モジュール}}",
-    "no_module": "モジュールなし"
+    "label": "{count, plural, one {모듈} other {모듈}}",
+    "no_module": "모듈 없음"
   }
 }
