@@ -17,7 +17,7 @@ import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // types
 import { IQuickActionProps } from "../list/list-view-types";
-import { handleDragDrop } from "./utils";
+import { handleDragAndDrop as utilsHandleDragAndDrop } from "./utils";
 
 export type CalendarStoreType =
   | EIssuesStoreType.PROJECT
@@ -118,29 +118,100 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
     issueId: string | undefined,
     issueProjectId: string | undefined,
     sourceDate: string | undefined,
-    destinationDate: string | undefined
+    destinationDate: string | undefined,
+    isStartDate?: boolean,
+    issueObject?: TIssue
   ) => {
     if (!issueId || !destinationDate || !sourceDate || !issueProjectId) return;
+
+    console.log("[중요] base-calendar-root - 함수 호출 시 전달된 isStartDate:", isStartDate);
 
     const wrappedUpdateIssue = updateIssue 
       ? (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => 
           updateIssue(projectId, issueId, data)
       : undefined;
-
-    await handleDragDrop(
-      issueId,
-      sourceDate,
-      destinationDate,
-      workspaceSlug?.toString(),
-      issueProjectId,
-      wrappedUpdateIssue,
-    ).catch((err) => {
-      setToast({
-        title: "Error!",
-        type: TOAST_TYPE.ERROR,
-        message: err?.detail ?? "Failed to perform this action",
+    
+    // 이슈 객체 가져오기 - 직접 전달받은 객체가 있으면 사용, 없으면 스토어에서 조회
+    const issueDetail = issueObject || issues?.getIssueById?.(issueId);
+    
+    // 시작일과 종료일이 같은 경우에만 로그 출력
+    const hasBothDates = !!(issueDetail?.start_date && issueDetail?.target_date);
+    const datesAreEqual = hasBothDates && 
+      new Date(issueDetail.start_date).toDateString() === new Date(issueDetail.target_date).toDateString();
+    
+    if (datesAreEqual) {
+      console.log("[중요] base-calendar-root - 드래그 정보:", {
+        issueId,
+        sourceDate,
+        destinationDate,
+        isStartDate,
+        start_date: issueDetail?.start_date,
+        target_date: issueDetail?.target_date
       });
-    });
+    }
+
+    try {
+      // 직접 handleDragDrop 유틸리티 함수 사용
+      if (workspaceSlug && issueDetail && wrappedUpdateIssue) {
+        // 원본 이슈 객체 복사 (API 호출 전에 변경되지 않도록)
+        const originalIssue = { ...issueDetail };
+        console.log("[중요] base-calendar-root - 원본 이슈 객체:", originalIssue);
+        
+        // 업데이트할 데이터 결정
+        let updateData: Partial<TIssue> = {};
+        
+        // isStartDate 값에 따라 업데이트할 필드 결정
+        if (isStartDate === null) {
+          // 두 날짜 모두 업데이트 (시작일과 종료일이 같은 경우)
+          updateData = { start_date: destinationDate, target_date: destinationDate };
+          console.log("[중요] base-calendar-root - 두 날짜 모두 업데이트:", updateData);
+        } else if (isStartDate === true) {
+          // 시작일만 업데이트
+          updateData = { start_date: destinationDate };
+          console.log("[중요] base-calendar-root - 시작일만 업데이트:", updateData);
+        } else {
+          // 종료일만 업데이트
+          updateData = { target_date: destinationDate };
+          console.log("[중요] base-calendar-root - 종료일만 업데이트:", updateData);
+        }
+        
+        // API 호출
+        await wrappedUpdateIssue(workspaceSlug, issueProjectId, issueId, updateData);
+        
+        // 성공 메시지 표시
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: "이슈 업데이트 성공",
+          message: "이슈 날짜가 성공적으로 업데이트되었습니다."
+        });
+
+        // 업데이트된 이슈 객체 생성
+        const updatedIssue = {
+          ...issueDetail,
+          ...updateData
+        };
+
+        // 이슈 업데이트 이벤트 발생 (다른 컴포넌트에 알림)
+        const event = new CustomEvent("calendar-issue-updated", {
+          detail: {
+            issueId,
+            updatedIssue,
+            forceRender: true
+          }
+        });
+        window.dispatchEvent(event);
+        
+        return updatedIssue;
+      }
+    } catch (error) {
+      console.error("[중요] base-calendar-root - 이슈 업데이트 오류:", error);
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "이슈 업데이트 실패",
+        message: "이슈 날짜 업데이트 중 오류가 발생했습니다."
+      });
+      throw error;
+    }
   };
 
   const loadMoreIssues = useCallback(

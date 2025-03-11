@@ -32,7 +32,6 @@ export interface CustomEditorProps {
   disabledExtensions: TExtensions[];
   extensions?: Extensions;
   fileHandler: TFileHandler;
-  fileHandler2: FileHandler;
   forwardedRef?: MutableRefObject<EditorRefApi | null>;
   handleEditorReady?: (value: boolean) => void;
   id?: string;
@@ -58,7 +57,6 @@ export const useEditor = (props: CustomEditorProps) => {
     enableHistory,
     extensions = [],
     fileHandler,
-    fileHandler2,
     forwardedRef,
     handleEditorReady,
     id = "",
@@ -93,7 +91,6 @@ export const useEditor = (props: CustomEditorProps) => {
           disabledExtensions,
           enableHistory,
           fileHandler,
-          fileHandler2,
           mentionHandler,
           placeholder,
           tabIndex,

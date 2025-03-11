@@ -43,7 +43,6 @@ type TArguments = {
   disabledExtensions: TExtensions[];
   enableHistory: boolean;
   fileHandler: TFileHandler;
-  fileHandler2: FileHandler;
   mentionHandler: TMentionHandler;
   placeholder?: string | ((isFocused: boolean, value: string) => string);
   tabIndex?: number;
@@ -51,7 +50,7 @@ type TArguments = {
 };
 
 export const CoreEditorExtensions = (args: TArguments): Extensions => {
-  const { disabledExtensions, enableHistory, fileHandler, fileHandler2, mentionHandler, placeholder, tabIndex } = args;
+  const { disabledExtensions, enableHistory, fileHandler, mentionHandler, placeholder, tabIndex } = args;
 
   return [
     // @ts-expect-error tiptap types are incorrect
@@ -118,7 +117,6 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       },
     }),
     CustomImageExtension(fileHandler),
-    CustomFileExtension(fileHandler2, "", ""),
     TiptapUnderline,
     TextStyle,
     TaskList.configure({

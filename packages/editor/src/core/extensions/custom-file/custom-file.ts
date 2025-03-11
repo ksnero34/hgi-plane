@@ -177,8 +177,8 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
           serialize: () => {},
         },
         fileHandler,
-        workspaceSlug: workspaceSlug || (fileHandler as any).workspaceSlug || "",
-        projectId: projectId || (fileHandler as any).projectId || "",
+        workspaceSlug: workspaceSlug || (fileHandler as any)?.workspaceSlug || "",
+        projectId: projectId || (fileHandler as any)?.projectId || "",
       };
     },
 

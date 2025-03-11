@@ -26,6 +26,11 @@ type Props = {
   isMobileView?: boolean;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;
+  issueInfo?: Map<string, {
+    isStartDate: boolean;
+    isEndDate: boolean;
+    isContinuous: boolean;
+  }>;
 };
 
 export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
@@ -45,6 +50,7 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     getGroupIssueCount,
     canEditProperties,
     isEpic = false,
+    issueInfo,
   } = props;
   const formattedDatePayload = renderFormattedPayloadDate(date);
   const { t } = useTranslation();
@@ -126,6 +132,7 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
             date={date}
             canEditProperties={canEditProperties}
             isEpic={isEpic}
+            issueInfo={issueInfo?.get(issueId)}
           />
         </div>
       ))}

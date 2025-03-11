@@ -123,7 +123,6 @@ export interface IEditorProps {
   disabledExtensions: TExtensions[];
   editorClassName?: string;
   fileHandler: TFileHandler;
-  fileHandler2: FileHandler;
   forwardedRef?: React.MutableRefObject<EditorRefApi | null>;
   id: string;
   initialValue: string;
@@ -167,7 +166,6 @@ export interface IReadOnlyEditorProps {
   displayConfig?: TDisplayConfig;
   editorClassName?: string;
   fileHandler: TReadOnlyFileHandler;
-  fileHandler2: FileHandler;
   forwardedRef?: React.MutableRefObject<EditorReadOnlyRefApi | null>;
   id: string;
   initialValue: string;
