@@ -7,6 +7,11 @@ interface FileUploaderProps extends CustomBaseFileNodeViewProps {
   setFailedToLoadFile: (failed: boolean) => void;
 }
 
+interface FileSettings {
+  allowed_extensions: string[];
+  max_file_size: number;
+}
+
 export const FileUploader = (props: FileUploaderProps) => {
   const { editor, node, updateAttributes, setIsUploaded, setFailedToLoadFile } = props;
   const { id: fileId } = node.attrs;
@@ -14,6 +19,33 @@ export const FileUploader = (props: FileUploaderProps) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [fileSettings, setFileSettings] = useState<FileSettings | null>(null);
+
+  // 파일 설정 가져오기
+  useEffect(() => {
+    const fetchFileSettings = async () => {
+      try {
+        const response = await fetch('/api/instances/file-settings/');
+        if (!response.ok) {
+          throw new Error('파일 설정을 가져오는데 실패했습니다.');
+        }
+        const data = await response.json();
+        setFileSettings({
+          allowed_extensions: data.allowed_extensions || ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"],
+          max_file_size: data.max_file_size || 52428800 // 기본값 50MB
+        });
+      } catch (error) {
+        console.error('파일 설정 가져오기 오류:', error);
+        // 기본값 설정
+        setFileSettings({
+          allowed_extensions: ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"],
+          max_file_size: 52428800 // 50MB
+        });
+      }
+    };
+
+    fetchFileSettings();
+  }, []);
 
   useEffect(() => {
     const fileMap = editor.storage.customFile.fileMap;
@@ -29,19 +61,21 @@ export const FileUploader = (props: FileUploaderProps) => {
       setUploadProgress(0);
       try {
         const fileHandler = editor.storage.customFile.fileHandler;
-        if (fileHandler.validateFile) {
-          const fileExtension = file.name.split('.').pop()?.toLowerCase();
-          const allowedExtensions = fileHandler.validation.allowedExtensions;
-          const maxFileSize = fileHandler.validation.maxFileSize;
-          const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
+        
+        // 파일 유효성 검사
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
+        
+        // API에서 가져온 설정 또는 기본값 사용
+        const allowedExtensions = fileSettings?.allowed_extensions || ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"];
+        const maxFileSize = fileSettings?.max_file_size || 52428800; // 50MB
+        const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
-          if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-            throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')} , 선택한 파일 확장자: ${fileExtension}`);
-          }
+        if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')} , 선택한 파일 확장자: ${fileExtension}`);
+        }
 
-          if (file.size > maxFileSize) {
-            throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
-          }
+        if (file.size > maxFileSize) {
+          throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
         }
 
         // 업로드 진행 상태를 시뮬레이션
@@ -90,7 +124,7 @@ export const FileUploader = (props: FileUploaderProps) => {
       fileInputRef.current?.click();
       fileMap.set(fileId, { ...fileEntity, hasOpenedFileInputOnce: true });
     }
-  }, [fileId]);
+  }, [fileId, fileSettings]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -104,19 +138,21 @@ export const FileUploader = (props: FileUploaderProps) => {
 
     try {
       const fileHandler = editor.storage.customFile.fileHandler;
-      if (fileHandler.validateFile) {
-        const fileExtension = file.name.split('.').pop()?.toLowerCase();
-        const allowedExtensions = fileHandler.validation.allowedExtensions;
-        const maxFileSize = fileHandler.validation.maxFileSize;
-        const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
+      
+      // 파일 유효성 검사
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      
+      // API에서 가져온 설정 또는 기본값 사용
+      const allowedExtensions = fileSettings?.allowed_extensions || ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"];
+      const maxFileSize = fileSettings?.max_file_size || 52428800; // 50MB
+      const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
-        if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${fileExtension}`);
-        }
+      if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+        throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${fileExtension}`);
+      }
 
-        if (file.size > maxFileSize) {
-          throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
-        }
+      if (file.size > maxFileSize) {
+        throw new Error(`파일 크기가 너무 큽니다. 최대 파일 크기: ${maxFileSizeMB}MB`);
       }
 
       // 업로드 진행 상태를 시뮬레이션

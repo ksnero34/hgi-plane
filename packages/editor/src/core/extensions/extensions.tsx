@@ -117,6 +117,19 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       },
     }),
     CustomImageExtension(fileHandler),
+    CustomFileExtension({
+      upload: (file: File) => fileHandler.upload("", file),
+      delete: fileHandler.delete,
+      restore: fileHandler.restore,
+      validateFile: async (file: File) => {
+        // 파일 크기 검사
+        if (fileHandler.validation?.maxFileSize && file.size > fileHandler.validation.maxFileSize) {
+          return false;
+        }
+        return true;
+      },
+      getAssetSrc: fileHandler.getAssetSrc
+    }, "", ""),
     TiptapUnderline,
     TextStyle,
     TaskList.configure({
