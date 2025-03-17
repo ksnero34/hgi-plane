@@ -52,8 +52,7 @@ type TArguments = {
 export const CoreEditorExtensions = (args: TArguments): Extensions => {
   const { disabledExtensions, enableHistory, fileHandler, mentionHandler, placeholder, tabIndex } = args;
 
-  return [
-    // @ts-expect-error tiptap types are incorrect
+  const extensions = [
     StarterKit.configure({
       bulletList: {
         HTMLAttributes: {
@@ -111,12 +110,12 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       },
     }),
     CustomTypographyExtension,
-    ImageExtension(fileHandler).configure({
-      HTMLAttributes: {
-        class: "rounded-md",
-      },
-    }),
-    CustomImageExtension(fileHandler),
+    // ImageExtension(fileHandler).configure({
+    //   HTMLAttributes: {
+    //     class: "rounded-md",
+    //   },
+    // }),
+    // CustomImageExtension(fileHandler),
     CustomFileExtension({
       upload: (file: File) => fileHandler.upload("", file),
       delete: fileHandler.delete,
@@ -167,7 +166,7 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
 
         if (node.type.name === "heading") return `Heading ${node.attrs.level}`;
 
-        if (editor.storage.imageComponent.uploadInProgress) return "";
+        if (editor.storage.imageComponent?.uploadInProgress) return "";
 
         const shouldHidePlaceholder =
           editor.isActive("table") ||
@@ -194,4 +193,18 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       disabledExtensions,
     }),
   ];
+
+  if (!disabledExtensions.includes("image")) {
+    extensions.push(
+      ImageExtension(fileHandler).configure({
+        HTMLAttributes: {
+          class: "rounded-md",
+        },
+      }),
+      CustomImageExtension(fileHandler)
+    );
+  }
+
+  // @ts-expect-error tiptap types are incorrect
+  return extensions;
 };

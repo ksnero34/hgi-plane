@@ -45,7 +45,7 @@ import { CommandProps, ISlashCommandItem, TSlashCommandSectionKeys } from "@/typ
 // plane editor extensions
 import { coreEditorAdditionalSlashCommandOptions } from "@/plane-editor/extensions";
 // local types
-import { TExtensionProps } from "./root";
+import { TExtensionProps, TSlashCommandAdditionalOption } from "./root";
 
 export type TSlashCommandSection = {
   key: TSlashCommandSectionKeys;
@@ -56,7 +56,7 @@ export type TSlashCommandSection = {
 export const getSlashCommandFilteredSections =
   (args: TExtensionProps) =>
   ({ query }: { query: string }): TSlashCommandSection[] => {
-    const { additionalOptions, disabledExtensions } = args;
+    const { additionalOptions: externalAdditionalOptions, disabledExtensions } = args;
     const SLASH_COMMAND_SECTIONS: TSlashCommandSection[] = [
       {
         key: "general",
@@ -178,15 +178,15 @@ export const getSlashCommandFilteredSections =
             icon: <Code2 className="size-3.5" />,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run(),
           },
-          {
-            commandKey: "image",
-            key: "image",
-            title: "Image",
-            icon: <ImageIcon className="size-3.5" />,
-            description: "Insert an image",
-            searchTerms: ["img", "photo", "picture", "media", "upload"],
-            command: ({ editor, range }: CommandProps) => insertImage({ editor, event: "insert", range }),
-          },
+          // {
+          //   commandKey: "image",
+          //   key: "image",
+          //   title: "Image",
+          //   icon: <ImageIcon className="size-3.5" />,
+          //   description: "Insert an image",
+          //   searchTerms: ["img", "photo", "picture", "media", "upload"],
+          //   command: ({ editor, range }: CommandProps) => insertImage({ editor, event: "insert", range }),
+          // },
           {
             commandKey: "file",
             key: "file",
@@ -295,8 +295,24 @@ export const getSlashCommandFilteredSections =
       },
     ];
 
+    const internalAdditionalOptions: TSlashCommandAdditionalOption[] = [];
+    if (!disabledExtensions?.includes("image")) {
+      internalAdditionalOptions.push({
+        commandKey: "image",
+        key: "image",
+        title: "Image",
+        icon: <ImageIcon className="size-3.5" />,
+        description: "Insert an image",
+        searchTerms: ["img", "photo", "picture", "media", "upload"],
+        command: ({ editor, range }: CommandProps) => insertImage({ editor, event: "insert", range }),
+        section: "general",
+        pushAfter: "code",
+      });
+    }
+
     [
-      ...(additionalOptions ?? []),
+      ...internalAdditionalOptions,
+      ...(externalAdditionalOptions ?? []),
       ...coreEditorAdditionalSlashCommandOptions({
         disabledExtensions,
       }),

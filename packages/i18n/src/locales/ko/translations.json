@@ -696,6 +696,7 @@
     "property": "속성",
     "properties": "속성",
     "parent": "상위",
+    "page": "페이지",
     "remove": "제거",
     "archiving": "아카이브 중",
     "archive": "아카이브",
@@ -862,7 +863,8 @@
     "delete": "삭제",
     "deleting": "삭제 중",
     "pending": "대기 중",
-    "invite": "초대"
+    "invite": "초대",
+    "view": "보기"
   },
 
   "chart": {

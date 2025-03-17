@@ -111,14 +111,23 @@ class IssueCreateSerializer(BaseSerializer):
         data["label_ids"] = label_ids if label_ids else []
         return data
 
-    def validate(self, data):
+    def validate(self, attrs):
         if (
-            data.get("start_date", None) is not None
-            and data.get("target_date", None) is not None
-            and data.get("start_date", None) > data.get("target_date", None)
+            attrs.get("start_date", None) is not None
+            and attrs.get("target_date", None) is not None
+            and attrs.get("start_date", None) > attrs.get("target_date", None)
         ):
             raise serializers.ValidationError("Start date cannot exceed target date")
-        return data
+
+        if attrs.get("assignee_ids", []):
+            attrs["assignee_ids"] = ProjectMember.objects.filter(
+                project_id=self.context["project_id"],
+                role__gte=15,
+                is_active=True,
+                member_id__in=attrs["assignee_ids"],
+            ).values_list("member_id", flat=True)
+
+        return attrs
 
     def get_valid_assignees(self, assignees, project_id):
         if not assignees:
@@ -152,14 +161,14 @@ class IssueCreateSerializer(BaseSerializer):
                 IssueAssignee.objects.bulk_create(
                     [
                         IssueAssignee(
-                            assignee_id=user_id,
+                            assignee_id=assignee_id,
                             issue=issue,
                             project_id=project_id,
                             workspace_id=workspace_id,
                             created_by_id=created_by_id,
                             updated_by_id=updated_by_id,
                         )
-                        for user_id in valid_assignee_ids
+                        for assignee_id in assignees
                     ],
                     batch_size=10,
                 )
@@ -167,12 +176,15 @@ class IssueCreateSerializer(BaseSerializer):
                 pass
         else:
             # Then assign it to default assignee, if it is a valid assignee
-            if default_assignee_id is not None and ProjectMember.objects.filter(
-                member_id=default_assignee_id,
-                project_id=project_id,
-                role__gte=15,
-                is_active=True
-            ).exists():
+            if (
+                default_assignee_id is not None
+                and ProjectMember.objects.filter(
+                    member_id=default_assignee_id,
+                    project_id=project_id,
+                    role__gte=15,
+                    is_active=True,
+                ).exists()
+            ):
                 try:
                     IssueAssignee.objects.create(
                         assignee_id=default_assignee_id,
@@ -223,14 +235,14 @@ class IssueCreateSerializer(BaseSerializer):
                 IssueAssignee.objects.bulk_create(
                     [
                         IssueAssignee(
-                            assignee_id=user_id,
+                            assignee_id=assignee_id,
                             issue=instance,
                             project_id=project_id,
                             workspace_id=workspace_id,
                             created_by_id=created_by_id,
                             updated_by_id=updated_by_id,
                         )
-                        for user_id in valid_assignee_ids
+                        for assignee_id in assignees
                     ],
                     batch_size=10,
                     ignore_conflicts=True,
