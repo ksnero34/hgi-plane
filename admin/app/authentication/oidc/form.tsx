@@ -2,10 +2,13 @@ import { FC, useState } from "react";
 import isEmpty from "lodash/isEmpty";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+// constants
+import { API_BASE_URL } from "@plane/constants";
 // types
 import { IFormattedInstanceConfiguration } from "@plane/types";
 // ui
 import { Button, TOAST_TYPE, getButtonStyling, setToast } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import {
   ConfirmDiscardModal,
@@ -16,9 +19,6 @@ import {
 } from "@/components/common";
 // helpers
 // import { API_BASE_URL, cn } from "@/helpers/common.helper";
-// constants
-import { API_BASE_URL } from "@plane/constants";
-import { cn } from "@plane/utils";
 // hooks
 import { useInstance } from "@/hooks/store";
 

@@ -101,6 +101,7 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
             handleDragAndDrop={handleDragAndDrop}
             canEditProperties={canEditProperties}
             isEpic={isEpic}
+            issueInfo={new Map()}
           />
         );
       })}

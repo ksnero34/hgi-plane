@@ -68,6 +68,13 @@ type Props = {
   isEpic?: boolean;
 };
 
+// 커스텀 이벤트 인터페이스 정의
+interface CalendarIssueUpdatedEvent {
+  issueId: string;
+  updatedIssue: TIssue | undefined;
+  forceRender: boolean;
+}
+
 export const CalendarDayTile: React.FC<Props> = observer((props) => {
   const {
     issuesFilterStore,
@@ -109,16 +116,17 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
   // 다른 날짜 타일에서 발생한 이슈 업데이트 이벤트 수신
   useEffect(() => {
     // 이슈 업데이트 이벤트 리스너 등록
-    window.addEventListener('calendar-issue-updated', handleIssueUpdated);
+    const handleEvent = (e: Event) => handleIssueUpdated(e as CustomEvent);
+    window.addEventListener('calendar-issue-updated', handleEvent);
     
     return () => {
-      window.removeEventListener('calendar-issue-updated', handleIssueUpdated);
+      window.removeEventListener('calendar-issue-updated', handleEvent);
     };
   }, []);
 
   // 이슈 업데이트 이벤트 핸들러
   const handleIssueUpdated = (event: CustomEvent) => {
-    const { issueId, updatedIssue, forceRender } = event.detail;
+    const { issueId, updatedIssue, forceRender } = event.detail as CalendarIssueUpdatedEvent;
     
     // 이미 처리된 이벤트인지 확인 (중복 이벤트 방지)
     const eventId = `${issueId}-${updatedIssue?.start_date}-${updatedIssue?.target_date}`;
@@ -137,14 +145,14 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       const startDate = new Date(updatedIssue.start_date).toDateString();
       const targetDate = new Date(updatedIssue.target_date).toDateString();
       
-      if (startDate === targetDate) {
-        console.log("[중요] day-tile - 이슈 업데이트 이벤트:", {
-          issueId,
-          start_date: updatedIssue.start_date,
-          target_date: updatedIssue.target_date,
-          forceRender
-        });
-      }
+      // if (startDate === targetDate) {
+      //   console.log("[중요] day-tile - 이슈 업데이트 이벤트:", {
+      //     issueId,
+      //     start_date: updatedIssue.start_date,
+      //     target_date: updatedIssue.target_date,
+      //     forceRender
+      //   });
+      // }
     }
     
     // 로컬 이슈 객체 업데이트
@@ -157,10 +165,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           ...updatedIssue
         };
         
-        // 이슈 스토어에 업데이트된 이슈 객체 저장
-        if (issueStore && issueStore.addIssueToStore) {
-          issueStore.addIssueToStore(updatedIssueObj);
-        }
+        // 로컬 issues 객체 직접 업데이트
+        issues[issueId] = updatedIssueObj;
       });
     }
     
@@ -207,34 +213,34 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
           const newDate = new Date(destinationData.date);
 
-          console.log("Drop Event:", {
-            sourceData,
-            destinationData,
-            issueDetails: {
-              id: issueDetails.id,
-              name: issueDetails.name,
-              start_date: issueDetails.start_date,
-              target_date: issueDetails.target_date
-            }
-          });
+          // console.log("Drop Event:", {
+          //   sourceData,
+          //   destinationData,
+          //   issueDetails: {
+          //     id: issueDetails.id,
+          //     name: issueDetails.name,
+          //     start_date: issueDetails.start_date,
+          //     target_date: issueDetails.target_date
+          //   }
+          // });
 
           // 시작일과 종료일이 같은 경우 특별 처리
           const hasBothDates = !!(issueDetails.start_date && issueDetails.target_date);
           const datesAreEqual = hasBothDates && 
-            new Date(issueDetails.start_date).toDateString() === new Date(issueDetails.target_date).toDateString();
+            new Date(issueDetails.start_date!).toDateString() === new Date(issueDetails.target_date!).toDateString();
 
-          console.log("Date equality check:", {
-            hasBothDates,
-            datesAreEqual,
-            start_date: issueDetails.start_date ? new Date(issueDetails.start_date).toDateString() : null,
-            target_date: issueDetails.target_date ? new Date(issueDetails.target_date).toDateString() : null,
-            isStartDate: sourceData.isStartDate,
-            isEqualDatesCase: sourceData.isEqualDatesCase
-          });
+          // console.log("Date equality check:", {
+          //   hasBothDates,
+          //   datesAreEqual,
+          //   start_date: issueDetails.start_date ? new Date(issueDetails.start_date).toDateString() : null,
+          //   target_date: issueDetails.target_date ? new Date(issueDetails.target_date).toDateString() : null,
+          //   isStartDate: sourceData.isStartDate,
+          //   isEqualDatesCase: sourceData.isEqualDatesCase
+          // });
 
           // 시작일과 종료일이 같은 경우 특별 처리
           if ((sourceData.isEqualDatesCase === true) || (datesAreEqual && sourceData.isStartDate === null)) {
-            console.log("[중요] 시작일과 종료일이 같은 경우 처리");
+            // console.log("[중요] 시작일과 종료일이 같은 경우 처리");
             
             // 날짜 비교를 위해 Date 객체로 변환
             const sourceDateObj = new Date(sourceData.date);
@@ -248,17 +254,17 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             if (destinationDateObj < sourceDateObj) {
               updateData = { start_date: destinationData.date };
               isStartDateFlag = true;
-              console.log("[중요] 날짜가 같음, 목적지가 소스보다 이전 - 시작일 업데이트:", destinationData.date);
+              // console.log("[중요] 날짜가 같음, 목적지가 소스보다 이전 - 시작일 업데이트:", destinationData.date);
             } 
             // 드롭 위치가 소스 날짜보다 이후이면 종료일 업데이트
             else if (destinationDateObj > sourceDateObj) {
               updateData = { target_date: destinationData.date };
               isStartDateFlag = false;
-              console.log("[중요] 날짜가 같음, 목적지가 소스보다 이후 - 종료일 업데이트:", destinationData.date);
+              // console.log("[중요] 날짜가 같음, 목적지가 소스보다 이후 - 종료일 업데이트:", destinationData.date);
             }
             // 같은 날짜로 드롭한 경우는 아무것도 하지 않음
             else {
-              console.log("[중요] 날짜가 같음, 소스와 목적지가 동일 - 업데이트 불필요");
+              // console.log("[중요] 날짜가 같음, 소스와 목적지가 동일 - 업데이트 불필요");
               return;
             }
             
@@ -281,7 +287,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                     issueId: sourceData.id,
                     updatedIssue: issues?.[sourceData.id],
                     forceRender: true
-                  } 
+                  } as CalendarIssueUpdatedEvent
                 }));
                 
                 // 강제 재렌더링 트리거
@@ -292,15 +298,14 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             // API 호출로 서버에 반영 - 명확한 isStartDate 플래그 전달
             handleDragAndDrop(
               sourceData.id,
-              issueDetails?.project_id,
+              issueDetails?.project_id ?? undefined,
               sourceData.date,
               destinationData.date,
-              isStartDateFlag, // 명확한 플래그 전달
-              issueDetails // 이슈 객체 직접 전달
+              isStartDateFlag // 명확한 플래그 전달
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
-              console.log("[중요] API 호출 완료 - 날짜 업데이트 성공");
+              // console.log("[중요] API 호출 완료 - 날짜 업데이트 성공");
               
               // API 호출 성공 후 최종 상태 업데이트
               if (Object.keys(updateData).length > 0) {
@@ -311,7 +316,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                       issueId: sourceData.id,
                       updatedIssue: issues?.[sourceData.id],
                       forceRender: true
-                    } 
+                    } as CalendarIssueUpdatedEvent
                   }));
                   
                   // 강제 재렌더링 트리거
@@ -332,11 +337,11 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
           // start_date를 변경하는 경우
           if (sourceData.isStartDate) {
-            console.log("[중요] 시작일 업데이트", {
-              from: issueDetails.start_date,
-              to: destinationData.date,
-              isStartDate: sourceData.isStartDate
-            });
+            // console.log("[중요] 시작일 업데이트", {
+            //   from: issueDetails.start_date,
+            //   to: destinationData.date,
+            //   isStartDate: sourceData.isStartDate
+            // });
             
             const targetDate = issueDetails.target_date ? new Date(issueDetails.target_date) : null;
 
@@ -355,7 +360,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               try {
                 // 명시적으로 start_date만 업데이트
                 const updateData = { start_date: destinationData.date };
-                console.log("[중요] 시작일 업데이트 데이터:", updateData);
+                // console.log("[중요] 시작일 업데이트 데이터:", updateData);
                 
                 // 로컬 상태 업데이트 전에 이슈 객체 복사
                 const updatedIssue = { ...issueDetails, start_date: destinationData.date };
@@ -371,7 +376,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                   }
                 });
                 
-                console.log("[중요] 로컬 상태 업데이트 완료 - 시작일");
+                // console.log("[중요] 로컬 상태 업데이트 완료 - 시작일");
                 
                 // 모든 날짜 타일에 대해 issueInfoMap 재계산을 위한 트리거
                 window.dispatchEvent(new CustomEvent('calendar-issue-updated', { 
@@ -379,28 +384,27 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                     issueId: sourceData.id,
                     updatedIssue: updatedIssue,
                     forceRender: true
-                  } 
+                  } as CalendarIssueUpdatedEvent
                 }));
                 
                 // 강제 재렌더링 트리거
                 setUpdateTrigger(Date.now());
               } catch (error) {
-                console.error("[중요] 로컬 상태 업데이트 오류 - 시작일:", error);
+                // console.error("[중요] 로컬 상태 업데이트 오류 - 시작일:", error);
               }
             });
 
             // API 호출로 서버에 반영 - 명시적으로 start_date만 업데이트
             handleDragAndDrop(
               sourceData.id,
-              issueDetails?.project_id,
+              issueDetails?.project_id ?? undefined,
               sourceData.date,
               destinationData.date,
-              true, // 시작일 플래그 명확하게 전달
-              issueDetails // 이슈 객체 직접 전달
+              true // 시작일 플래그 명확하게 전달
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
-              console.log("[중요] API 호출 완료 - 시작일 업데이트 성공");
+              // console.log("[중요] API 호출 완료 - 시작일 업데이트 성공");
               
               // API 호출 성공 후 최종 상태 업데이트
               transaction(() => {
@@ -417,7 +421,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                     issueId: sourceData.id,
                     updatedIssue: issues?.[sourceData.id],
                     forceRender: true
-                  } 
+                  } as CalendarIssueUpdatedEvent
                 }));
                 
                 // 강제 재렌더링 트리거
@@ -438,11 +442,11 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           } 
           // target_date(due date)를 변경하는 경우
           else {
-            console.log("[중요] 종료일 업데이트", {
-              from: issueDetails.target_date,
-              to: destinationData.date,
-              isStartDate: sourceData.isStartDate
-            });
+            // console.log("[중요] 종료일 업데이트", {
+            //   from: issueDetails.target_date,
+            //   to: destinationData.date,
+            //   isStartDate: sourceData.isStartDate
+            // });
             
             const startDate = issueDetails.start_date ? new Date(issueDetails.start_date) : null;
 
@@ -461,7 +465,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               try {
                 // 명시적으로 target_date만 업데이트
                 const updateData = { target_date: destinationData.date };
-                console.log("[중요] 종료일 업데이트 데이터:", updateData);
+                // console.log("[중요] 종료일 업데이트 데이터:", updateData);
                 
                 // 로컬 상태 업데이트 전에 이슈 객체 복사
                 const updatedIssue = { ...issueDetails, target_date: destinationData.date };
@@ -477,7 +481,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                   }
                 });
                 
-                console.log("[중요] 로컬 상태 업데이트 완료 - 종료일");
+                // console.log("[중요] 로컬 상태 업데이트 완료 - 종료일");
                 
                 // 모든 날짜 타일에 대해 issueInfoMap 재계산을 위한 트리거
                 window.dispatchEvent(new CustomEvent('calendar-issue-updated', { 
@@ -485,7 +489,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                     issueId: sourceData.id,
                     updatedIssue: updatedIssue,
                     forceRender: true
-                  } 
+                  } as CalendarIssueUpdatedEvent
                 }));
                 
                 // 강제 재렌더링 트리거
@@ -498,15 +502,14 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             // API 호출로 서버에 반영 - 명시적으로 target_date만 업데이트
             handleDragAndDrop(
               sourceData.id,
-              issueDetails?.project_id,
+              issueDetails?.project_id ?? undefined,
               sourceData.date,
               destinationData.date,
-              false, // 종료일 플래그 명확하게 전달
-              issueDetails // 이슈 객체 직접 전달
+              false // 종료일 플래그 명확하게 전달
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
-              console.log("[중요] API 호출 완료 - 종료일 업데이트 성공");
+              // console.log("[중요] API 호출 완료 - 종료일 업데이트 성공");
               
               // API 호출 성공 후 최종 상태 업데이트
               transaction(() => {
@@ -523,7 +526,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                     issueId: sourceData.id,
                     updatedIssue: issues?.[sourceData.id],
                     forceRender: true
-                  } 
+                  } as CalendarIssueUpdatedEvent
                 }));
                 
                 // 강제 재렌더링 트리거
@@ -800,11 +803,11 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     const destinationDate = destinationData.date;
     if (sourceDate === destinationDate) return;
 
-    console.log("Drop Event:", {
-      sourceData,
-      destinationData,
-      issueDetails
-    });
+    // console.log("Drop Event:", {
+    //   sourceData,
+    //   destinationData,
+    //   issueDetails
+    // });
 
     // 이슈 ID와 프로젝트 ID 가져오기
     const issueId = sourceData.id;
@@ -813,16 +816,16 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     // 시작일과 종료일이 같은지 확인
     const hasBothDates = !!(issueDetails?.start_date && issueDetails?.target_date);
     const datesAreEqual = hasBothDates && 
-      new Date(issueDetails.start_date).toDateString() === new Date(issueDetails.target_date).toDateString();
+      new Date(issueDetails.start_date!).toDateString() === new Date(issueDetails.target_date!).toDateString();
     
-    console.log("Date equality check:", {
-      hasBothDates,
-      datesAreEqual,
-      start_date: issueDetails?.start_date ? new Date(issueDetails.start_date).toDateString() : null,
-      target_date: issueDetails?.target_date ? new Date(issueDetails.target_date).toDateString() : null,
-      isStartDate: sourceData.isStartDate,
-      isEqualDatesCase: sourceData.isEqualDatesCase
-    });
+    // console.log("Date equality check:", {
+    //   hasBothDates,
+    //   datesAreEqual,
+    //   start_date: issueDetails?.start_date ? new Date(issueDetails.start_date).toDateString() : null,
+    //   target_date: issueDetails?.target_date ? new Date(issueDetails.target_date).toDateString() : null,
+    //   isStartDate: sourceData.isStartDate,
+    //   isEqualDatesCase: sourceData.isEqualDatesCase
+    // });
 
     // 소스 날짜와 목적지 날짜를 Date 객체로 변환하여 비교
     const sourceDateTime = new Date(sourceDate);
@@ -833,55 +836,36 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     
     // 시작일과 종료일이 같은 경우 (isEqualDatesCase가 true인 경우)
     if (datesAreEqual || sourceData.isEqualDatesCase) {
-      console.log("Updating both start_date and target_date (dates were equal)");
+      // console.log("Updating both start_date and target_date (dates were equal)");
       
       // 두 날짜가 같은 경우 null로 설정하여 두 날짜 모두 업데이트
       isStartDate = null;
-      console.log("Dates are equal - setting isStartDate to null to update both dates to:", destinationDate);
+      // console.log("Dates are equal - setting isStartDate to null to update both dates to:", destinationDate);
     } else {
       // 시작일과 종료일이 다른 경우 소스 날짜로 판단
       const isSourceStartDate = issueDetails?.start_date && 
-        new Date(issueDetails.start_date).toDateString() === new Date(sourceDate).toDateString();
+        new Date(issueDetails.start_date!).toDateString() === new Date(sourceDate).toDateString();
       
       isStartDate = isSourceStartDate;
     }
 
-    console.log("[중요] handleIssueDrop - 최종 isStartDate 값:", isStartDate);
+    // console.log("[중요] handleIssueDrop - 최종 isStartDate 값:", isStartDate);
 
     // 로컬 변수를 명시적으로 전달하기 위해 변수 선언
     const finalIsStartDate = isStartDate;
-    console.log("[중요] handleIssueDrop - finalIsStartDate 값:", finalIsStartDate);
+    // console.log("[중요] handleIssueDrop - finalIsStartDate 값:", finalIsStartDate);
 
     // 원본 이슈 객체 복사 (API 호출 전에 변경되지 않도록)
     const originalIssue = { ...issueDetails };
-    console.log("[중요] handleIssueDrop - 원본 이슈 객체:", originalIssue);
 
-    // 드래그앤드롭 처리 함수 호출
+    // API 호출로 서버에 반영
     handleDragAndDrop(
       issueId,
-      projectId,
+      projectId ?? undefined,
       sourceDate,
       destinationDate,
-      finalIsStartDate, // 명시적으로 선언한 변수 사용
-      originalIssue // 원본 이슈 객체 전달
-    ).then(() => {
-      // 드래그앤드롭 후 UI 업데이트 트리거
-      setUpdateTrigger(Date.now());
-      
-      // 이슈 하이라이트 제거
-      if (sourceData.element) {
-        sourceData.element.classList.remove("highlight-issue");
-      }
-      
-      console.log("[중요] API 호출 완료 - 날짜 업데이트 성공");
-    }).catch(error => {
-      console.error("Error updating issue dates:", error);
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "날짜 업데이트 실패",
-        message: "이슈 날짜 업데이트 중 오류가 발생했습니다."
-      });
-    });
+      finalIsStartDate // 명시적으로 선언한 변수 사용
+    );
   };
 
   return (

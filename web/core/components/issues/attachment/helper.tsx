@@ -28,14 +28,14 @@ export const validateFileBeforeUpload = async (
 };
 
 export const handleUploadError = (error: any) => {
-  console.log("🔍 Upload Error Details:", {
-    error: error,
-    response: error.response,
-    data: error.response?.data,
-    status: error.response?.status,
-    statusText: error.response?.statusText,
-    message: error.message,
-  });
+  // console.log("🔍 Upload Error Details:", {
+  //   error: error,
+  //   response: error.response,
+  //   data: error.response?.data,
+  //   status: error.response?.status,
+  //   statusText: error.response?.statusText,
+  //   message: error.message,
+  // });
 
   if (error.error) {
     console.log("📝 Server Error Message:", error.error);

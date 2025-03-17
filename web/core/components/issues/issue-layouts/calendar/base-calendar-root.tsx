@@ -124,7 +124,7 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
   ) => {
     if (!issueId || !destinationDate || !sourceDate || !issueProjectId) return;
 
-    console.log("[중요] base-calendar-root - 함수 호출 시 전달된 isStartDate:", isStartDate);
+    // console.log("[중요] base-calendar-root - 함수 호출 시 전달된 isStartDate:", isStartDate);
 
     const wrappedUpdateIssue = updateIssue 
       ? (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => 
@@ -132,30 +132,35 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
       : undefined;
     
     // 이슈 객체 가져오기 - 직접 전달받은 객체가 있으면 사용, 없으면 스토어에서 조회
-    const issueDetail = issueObject || issues?.getIssueById?.(issueId);
+    const issueDetail = issueObject || (issueId ? issueMap[issueId] : undefined);
     
     // 시작일과 종료일이 같은 경우에만 로그 출력
     const hasBothDates = !!(issueDetail?.start_date && issueDetail?.target_date);
     const datesAreEqual = hasBothDates && 
-      new Date(issueDetail.start_date).toDateString() === new Date(issueDetail.target_date).toDateString();
+      (issueDetail.start_date && issueDetail.target_date) ? 
+      new Date(issueDetail.start_date).toDateString() === new Date(issueDetail.target_date).toDateString() : 
+      false;
     
-    if (datesAreEqual) {
-      console.log("[중요] base-calendar-root - 드래그 정보:", {
-        issueId,
-        sourceDate,
-        destinationDate,
-        isStartDate,
-        start_date: issueDetail?.start_date,
-        target_date: issueDetail?.target_date
-      });
-    }
+    // if (datesAreEqual) {
+    //   console.log("[중요] base-calendar-root - 드래그 정보:", {
+    //     issueId,
+    //     sourceDate,
+    //     destinationDate,
+    //     isStartDate,
+    //     start_date: issueDetail?.start_date,
+    //     target_date: issueDetail?.target_date
+    //   });
+    // }
 
     try {
       // 직접 handleDragDrop 유틸리티 함수 사용
       if (workspaceSlug && issueDetail && wrappedUpdateIssue) {
+        // workspaceSlug가 배열인 경우 첫 번째 요소를 사용
+        const workspaceSlugStr = Array.isArray(workspaceSlug) ? workspaceSlug[0] : workspaceSlug;
+        
         // 원본 이슈 객체 복사 (API 호출 전에 변경되지 않도록)
         const originalIssue = { ...issueDetail };
-        console.log("[중요] base-calendar-root - 원본 이슈 객체:", originalIssue);
+        // console.log("[중요] base-calendar-root - 원본 이슈 객체:", originalIssue);
         
         // 업데이트할 데이터 결정
         let updateData: Partial<TIssue> = {};
@@ -164,19 +169,19 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
         if (isStartDate === null) {
           // 두 날짜 모두 업데이트 (시작일과 종료일이 같은 경우)
           updateData = { start_date: destinationDate, target_date: destinationDate };
-          console.log("[중요] base-calendar-root - 두 날짜 모두 업데이트:", updateData);
+          // console.log("[중요] base-calendar-root - 두 날짜 모두 업데이트:", updateData);
         } else if (isStartDate === true) {
           // 시작일만 업데이트
           updateData = { start_date: destinationDate };
-          console.log("[중요] base-calendar-root - 시작일만 업데이트:", updateData);
+          // console.log("[중요] base-calendar-root - 시작일만 업데이트:", updateData);
         } else {
           // 종료일만 업데이트
           updateData = { target_date: destinationDate };
-          console.log("[중요] base-calendar-root - 종료일만 업데이트:", updateData);
+          // console.log("[중요] base-calendar-root - 종료일만 업데이트:", updateData);
         }
         
         // API 호출
-        await wrappedUpdateIssue(workspaceSlug, issueProjectId, issueId, updateData);
+        await wrappedUpdateIssue(workspaceSlugStr, issueProjectId, issueId, updateData);
         
         // 성공 메시지 표시
         setToast({
@@ -201,7 +206,7 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
         });
         window.dispatchEvent(event);
         
-        return updatedIssue;
+        // 반환값 제거 (void 반환)
       }
     } catch (error) {
       console.error("[중요] base-calendar-root - 이슈 업데이트 오류:", error);

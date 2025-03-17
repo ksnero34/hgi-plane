@@ -38,10 +38,10 @@ export function replaceCodeWithText(editor: Editor): void {
     });
 
     if (!replaced) {
-      console.log("No code block to replace.");
+      // console.log("No code block to replace.");
     }
   } catch (error) {
-    console.error("An error occurred while replacing code block content:", error);
+    // console.error("An error occurred while replacing code block content:", error);
   }
 }
 

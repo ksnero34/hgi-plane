@@ -274,41 +274,41 @@ export const CalendarIssueBlock = observer(
             // 시작일과 종료일이 같은 경우 특별 처리를 위한 플래그
             const isEqualDatesCase = datesAreEqual && (isStartDate || isTargetDate);
 
-            console.log("[중요] Issue Block - Drag Initial Data:", {
-              issue: {
-                id: issue.id,
-                name: issue.name,
-                originalStartDate: issue.start_date,
-                originalTargetDate: issue.target_date
-              },
-              dates: {
-                currentDate: {
-                  raw: date,
-                  formatted: currentDateStr
-                },
-                startDate: {
-                  raw: issue.start_date,
-                  formatted: startDateStr
-                },
-                targetDate: {
-                  raw: issue.target_date,
-                  formatted: targetDateStr
-                }
-              },
-              checks: {
-                isStartDate,
-                isTargetDate,
-                issueInfoStartDate: issueInfo?.isStartDate,
-                datesAreEqual,
-                isEqualDatesCase,
-                finalIsStartDate,
-                isCurrentDateStartDate: isStartDate,
-                isCurrentDateTargetDate: isTargetDate,
-                hasBothDates: !!(startDateStr && targetDateStr),
-                datesAreDifferent: startDateStr !== targetDateStr,
-                issueInfo: issueInfo
-              }
-            });
+            // console.log("[중요] Issue Block - Drag Initial Data:", {
+            //   issue: {
+            //     id: issue.id,
+            //     name: issue.name,
+            //     originalStartDate: issue.start_date,
+            //     originalTargetDate: issue.target_date
+            //   },
+            //   dates: {
+            //     currentDate: {
+            //       raw: date,
+            //       formatted: currentDateStr
+            //     },
+            //     startDate: {
+            //       raw: issue.start_date,
+            //       formatted: startDateStr
+            //     },
+            //     targetDate: {
+            //       raw: issue.target_date,
+            //       formatted: targetDateStr
+            //     }
+            //   },
+            //   checks: {
+            //     isStartDate,
+            //     isTargetDate,
+            //     issueInfoStartDate: issueInfo?.isStartDate,
+            //     datesAreEqual,
+            //     isEqualDatesCase,
+            //     finalIsStartDate,
+            //     isCurrentDateStartDate: isStartDate,
+            //     isCurrentDateTargetDate: isTargetDate,
+            //     hasBothDates: !!(startDateStr && targetDateStr),
+            //     datesAreDifferent: startDateStr !== targetDateStr,
+            //     issueInfo: issueInfo
+            //   }
+            // });
 
             // 시작일과 종료일이 같은 경우에는 isStartDate 플래그를 전달하지 않음
             // 이렇게 하면 base-calendar-root.tsx에서 드롭 위치에 따라 처리할 수 있음
@@ -327,14 +327,14 @@ export const CalendarIssueBlock = observer(
               // isStartDate와 isTargetDate를 모두 고려하여 정확한 플래그 설정
               const finalIsStartDateFixed = isStartDate && !isTargetDate;
               
-              console.log("[중요] Issue Block - 최종 isStartDate 결정:", {
-                isStartDate,
-                isTargetDate,
-                finalIsStartDateFixed,
-                currentDate: currentDateStr,
-                startDate: startDateStr,
-                targetDate: targetDateStr
-              });
+              // console.log("[중요] Issue Block - 최종 isStartDate 결정:", {
+              //   isStartDate,
+              //   isTargetDate,
+              //   finalIsStartDateFixed,
+              //   currentDate: currentDateStr,
+              //   startDate: startDateStr,
+              //   targetDate: targetDateStr
+              // });
               
               return { 
                 id: issue.id, 

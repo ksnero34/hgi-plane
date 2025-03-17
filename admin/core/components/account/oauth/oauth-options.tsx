@@ -8,12 +8,12 @@ export const OAuthOptions: React.FC = observer(() => {
   // hooks
   const { config } = useInstance();
 
-  console.log("OAuth config:", config);
+  // console.log("OAuth config:", config);
 
   const isOAuthEnabled = (config && (config?.is_google_enabled || config?.is_github_enabled || config?.is_gitlab_enabled || config?.is_oidc_enabled)) || false;
 
-  console.log("isOAuthEnabled:", isOAuthEnabled);
-  console.log("is_oidc_enabled:", config?.is_oidc_enabled);
+  // console.log("isOAuthEnabled:", isOAuthEnabled);
+  // console.log("is_oidc_enabled:", config?.is_oidc_enabled);
 
   if (!isOAuthEnabled) return null;
 

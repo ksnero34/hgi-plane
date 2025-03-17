@@ -96,28 +96,28 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
           // 시작일과 종료일이 같은 경우 특별 처리를 위한 플래그
           const isEqualDatesCase = datesAreEqual && isStartDate;
 
-          console.log("Issue Block Root - Drag Initial Data:", {
-            issue: {
-              id: issue.id,
-              name: issue.name,
-              startDate: issue.start_date,
-              targetDate: issue.target_date
-            },
-            dates: {
-              currentDate: currentDateStr,
-              startDate: startDateStr,
-              targetDate: targetDateStr,
-              datesAreEqual
-            },
-            checks: {
-              isStartDate,
-              isTargetDate,
-              issueInfoStartDate: issueInfo?.isStartDate,
-              isEqualDatesCase,
-              finalIsStartDate
-            },
-            issueInfo
-          });
+          // console.log("Issue Block Root - Drag Initial Data:", {
+          //   issue: {
+          //     id: issue.id,
+          //     name: issue.name,
+          //     startDate: issue.start_date,
+          //     targetDate: issue.target_date
+          //   },
+          //   dates: {
+          //     currentDate: currentDateStr,
+          //     startDate: startDateStr,
+          //     targetDate: targetDateStr,
+          //     datesAreEqual
+          //   },
+          //   checks: {
+          //     isStartDate,
+          //     isTargetDate,
+          //     issueInfoStartDate: issueInfo?.isStartDate,
+          //     isEqualDatesCase,
+          //     finalIsStartDate
+          //   },
+          //   issueInfo
+          // });
 
           // 시작일과 종료일이 같은 경우에는 isStartDate 플래그를 전달하지 않음
           // 이렇게 하면 base-calendar-root.tsx에서 드롭 위치에 따라 처리할 수 있음
