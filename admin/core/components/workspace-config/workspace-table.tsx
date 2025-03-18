@@ -1,14 +1,12 @@
 import { FC } from "react";
 import { observer } from "mobx-react";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, MoreVertical } from "lucide-react";
 
 // components
 import {
   Button,
   CustomMenu,
-  CustomCommand,
   Tooltip,
-  TotpIcon,
 } from "@plane/ui";
 
 interface IWorkspaceConfig {
@@ -86,7 +84,7 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
                   buttonClassName="justify-center"
                   width="auto"
                   menu={
-                    <CustomCommand className="py-1 px-3">
+                    <div className="py-1 px-3">
                       <button
                         type="button"
                         className="flex items-center gap-2 text-custom-text-200 hover:text-custom-text-100 px-2 py-1"
@@ -103,11 +101,11 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
                         <Trash2 className="h-3.5 w-3.5" />
                         <span>삭제</span>
                       </button>
-                    </CustomCommand>
+                    </div>
                   }
                 >
                   <div className="px-1.5 py-1 text-xs text-custom-text-200 hover:text-custom-text-100">
-                    <TotpIcon size={14} />
+                    <MoreVertical className="h-4 w-4" />
                   </div>
                 </CustomMenu>
               </td>

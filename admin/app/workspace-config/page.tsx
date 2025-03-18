@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, X } from "lucide-react";
 
 // components
 import {
   Button,
   Loader,
-  Modal,
-  ConfirmModal,
 } from "@plane/ui";
 import { WorkspaceTable } from "@/components/workspace-config/workspace-table";
 import { WorkspaceForm } from "@/components/workspace-config/workspace-form";
@@ -54,6 +52,7 @@ const WorkspaceConfigPage = observer(() => {
     } else {
       await createWorkspaceConfig(values);
     }
+    setIsAddModalOpen(false);
   };
 
   const handleEditWorkspace = (workspaceConfig: any) => {
@@ -103,29 +102,70 @@ const WorkspaceConfigPage = observer(() => {
         />
       )}
 
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title={selectedWorkspaceConfig ? "워크스페이스 구성 수정" : "새 워크스페이스 구성 추가"}
-      >
-        <div className="my-4">
-          <WorkspaceForm
-            handleFormSubmit={handleFormSubmit}
-            handleClose={() => setIsAddModalOpen(false)}
-            selectedWorkspaceConfig={selectedWorkspaceConfig}
-            workspaces={workspaces}
-          />
+      {/* 추가/수정 모달 */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-custom-background-100 rounded-lg shadow-lg w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-custom-border-200">
+              <h3 className="text-lg font-medium">
+                {selectedWorkspaceConfig ? "워크스페이스 구성 수정" : "새 워크스페이스 구성 추가"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-custom-text-300 hover:text-custom-text-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <WorkspaceForm
+                handleFormSubmit={handleFormSubmit}
+                handleClose={() => setIsAddModalOpen(false)}
+                selectedWorkspaceConfig={selectedWorkspaceConfig}
+                workspaces={workspaces}
+              />
+            </div>
+          </div>
         </div>
-      </Modal>
+      )}
 
-      <ConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="워크스페이스 구성 삭제"
-        description="이 워크스페이스 구성을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-        confirmButtonText="삭제"
-        onConfirm={handleDeleteConfirm}
-      />
+      {/* 삭제 확인 모달 */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-custom-background-100 rounded-lg shadow-lg w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-custom-border-200">
+              <h3 className="text-lg font-medium">워크스페이스 구성 삭제</h3>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-custom-text-300 hover:text-custom-text-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-custom-text-300">
+                이 워크스페이스 구성을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="neutral-primary" 
+                  onClick={() => setIsDeleteModalOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button 
+                  variant="danger" 
+                  onClick={handleDeleteConfirm}
+                >
+                  삭제
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });
