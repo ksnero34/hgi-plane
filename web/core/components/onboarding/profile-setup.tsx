@@ -63,10 +63,15 @@ enum EProfileSetupSteps {
   USER_PERSONALIZATION = "USER_PERSONALIZATION",
 }
 
-const USER_ROLE = ["Individual contributor", "Senior Leader", "Manager", "Executive", "Freelancer", "Student"];
+const USER_ROLE = ["한화손해보험 현업 PM", "한화손해보험 IT PM", "한화손해보험 IT", "한화손해보험 ITO", "한화손해보험 현업", "프로젝트 수행사 PM", "프로젝트 수행사 직원", "Product / Project Manager", "Development / Engineering", "Founder / Executive", "Freelancer / Consultant", "Marketing / Growth", "Sales / Business Development", "Support / Operations", "Student / Professor", "Human Resources", "Other"];
 
 const USER_DOMAIN = [
-  "Engineering",
+  "보험 비즈니스",
+  "보험 상품",
+  "보험 IT",
+  "보험 영업",
+  "보험 지원",
+  "보험 기타",
   "Product",
   "Marketing",
   "Sales",
