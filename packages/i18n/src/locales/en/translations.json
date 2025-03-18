@@ -2090,6 +2090,13 @@
   },
 
   "user_roles": {
+    "hgi_pm": "한화손해보험 현업 PM",
+    "hgi_itpm": "한화손해보험 IT PM",
+    "hgi_it": "한화손해보험 IT",
+    "hgi_ito": "한화손해보험 ITO",
+    "hgi_business_stakeholder": "한화손해보험 현업",
+    "hgi_vendor_pm": "프로젝트 수행사 PM",
+    "hgi_vendor_worker": "프로젝트 수행사 직원",
     "product_or_project_manager": "Product / Project Manager",
     "development_or_engineering": "Development / Engineering",
     "founder_or_executive": "Founder / Executive",

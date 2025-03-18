@@ -170,6 +170,13 @@ export const ROLE_DETAILS = {
 };
 
 export const USER_ROLES = [
+  { value: "한화손해보험 현업 PM", i18n_label: "user_roles.hgi_pm" },
+  { value: "한화손해보험 IT PM", i18n_label: "user_roles.hgi_itpm" },
+  { value: "한화손해보험 IT", i18n_label: "user_roles.hgi_it" },
+  { value: "한화손해보험 ITO", i18n_label: "user_roles.hgi_ito" },
+  { value: "한화손해보험 현업", i18n_label: "user_roles.hgi_business_stakeholder" },
+  { value: "프로젝트 수행사 PM", i18n_label: "user_roles.hgi_vendor_pm" },
+  { value: "프로젝트 수행사 직원", i18n_label: "user_roles.hgi_vendor_worker" },
   {
     value: "Product / Project Manager",
     i18n_label: "user_roles.product_or_project_manager",
