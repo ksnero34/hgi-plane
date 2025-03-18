@@ -75,6 +75,7 @@ http {
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
             proxy_pass http://api:8000/storage/${BUCKET_NAME};
+            proxy_redirect off;
         }
     }
 }

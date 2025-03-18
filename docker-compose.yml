@@ -211,7 +211,7 @@ services:
       - api
       - space
       - admin
-    # image: hgi-plane-prod/proxy:0.0.3
+    image: hgi-plane-prod/proxy:0.0.1
 
 volumes:
   pgdata:

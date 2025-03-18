@@ -59,6 +59,12 @@ class MinioUploadView(BaseAPIView):
             
             print(f"File Info - Key: {key}, Content-Type: {content_type}, Size: {file.size}")
             
+            # 파일 업로드 처리 전 로그 추가 (올바른 방식)
+            print(f"S3 클라이언트 엔드포인트: {storage.s3_client._endpoint}")
+            print(f"Storage 객체 엔드포인트 URL: {storage.aws_s3_endpoint_url}")
+            print(f"USE_MINIO 환경변수: {os.environ.get('USE_MINIO')}")
+            print(f"AWS_S3_ENDPOINT_URL 환경변수: {os.environ.get('AWS_S3_ENDPOINT_URL')}")
+            
             # 파일 업로드 처리
             response = storage.s3_client.put_object(
                 Bucket=settings.AWS_STORAGE_BUCKET_NAME,
