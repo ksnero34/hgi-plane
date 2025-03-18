@@ -1476,7 +1476,7 @@
       "members": {
         "title": "멤버",
         "add_member": "멤버 추가",
-        "pending_invites": "保留中의 초대",
+        "pending_invites": "대기중인 초대",
         "invitations_sent_successfully": "초대가 정상적으로 전송되었습니다",
         "leave_confirmation": "워크스페이스에서 탈퇴하시겠습니까? 이 작업은 취소할 수 없습니다.",
         "details": {

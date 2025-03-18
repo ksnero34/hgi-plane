@@ -80,7 +80,7 @@ class IssueSerializer(BaseSerializer):
             data["assignees"] = ProjectMember.objects.filter(
                 project_id=self.context.get("project_id"),
                 is_active=True,
-                role__gte=15,
+                role__gte=8,
                 member_id__in=data["assignees"],
             ).values_list("member_id", flat=True)
 
