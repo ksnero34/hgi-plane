@@ -71,6 +71,8 @@ from .workspace import (
     WorkspaceUserLink,
     WorkspaceHomePreference,
     WorkspaceUserPreference,
+    Team,
+    DefaultWorkspaceConfig
 )
 
 from .favorite import UserFavorite

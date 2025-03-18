@@ -3,3 +3,4 @@ export * from "./use-instance";
 export * from "./use-user";
 export * from "./use-file-settings";
 export * from "./use-workspace";
+export * from "./use-workspace-config";

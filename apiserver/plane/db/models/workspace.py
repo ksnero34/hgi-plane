@@ -432,3 +432,31 @@ class WorkspaceUserPreference(BaseModel):
         verbose_name_plural = "Workspace User Preferences"
         db_table = "workspace_user_preferences"
         ordering = ("-created_at",)
+
+
+class DefaultWorkspaceConfig(BaseModel):
+    """사용자 가입 시 자동으로 추가될 기본 워크스페이스 설정"""
+    
+    workspace = models.ForeignKey(
+        Workspace, 
+        on_delete=models.CASCADE, 
+        related_name="default_workspace_configs"
+    )
+    role = models.PositiveSmallIntegerField(
+        choices=ROLE_CHOICES, 
+        default=15,  # Member 역할을 기본값으로 설정
+        help_text="자동 추가될 사용자에게 부여할 권한"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="이 설정이 활성화되어 있는지 여부"
+    )
+    
+    def __str__(self):
+        return f"{self.workspace.name} (역할: {self.get_role_display()})"
+    
+    class Meta:
+        verbose_name = "Default Workspace Configuration"
+        verbose_name_plural = "Default Workspace Configurations"
+        db_table = "default_workspace_configs"
+        ordering = ("-created_at",)

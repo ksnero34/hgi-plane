@@ -4,6 +4,7 @@ import { IInstanceStore, InstanceStore } from "./instance.store";
 import { IThemeStore, ThemeStore } from "./theme.store";
 import { IUserStore, UserStore } from "./user.store";
 import { IWorkspaceStore, WorkspaceStore } from "./workspace.store";
+import { IWorkspaceConfigStore, WorkspaceConfigStore } from "./workspace-config.store";
 
 enableStaticRendering(typeof window === "undefined");
 
@@ -12,12 +13,14 @@ export abstract class CoreRootStore {
   instance: IInstanceStore;
   user: IUserStore;
   workspace: IWorkspaceStore;
+  workspaceConfig: IWorkspaceConfigStore;
 
   constructor() {
     this.theme = new ThemeStore(this);
     this.instance = new InstanceStore(this);
     this.user = new UserStore(this);
     this.workspace = new WorkspaceStore(this);
+    this.workspaceConfig = new WorkspaceConfigStore(this);
   }
 
   hydrate(initialData: any) {
@@ -33,5 +36,6 @@ export abstract class CoreRootStore {
     this.user = new UserStore(this);
     this.theme = new ThemeStore(this);
     this.workspace = new WorkspaceStore(this);
+    this.workspaceConfig = new WorkspaceConfigStore(this);
   }
 }
