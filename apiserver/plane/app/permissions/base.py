@@ -18,6 +18,10 @@ def allow_permission(allowed_roles, level="PROJECT", creator=False, model=None):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(instance, request, *args, **kwargs):
+            # 인스턴스 API 경로인 경우 권한 검사 건너뛰기
+            if request.path.startswith('/api/instances/'):
+                return view_func(instance, request, *args, **kwargs)
+                
             # Check for creator if required
             if creator and model:
                 obj = model.objects.filter(

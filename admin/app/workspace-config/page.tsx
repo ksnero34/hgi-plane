@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
-import { PlusIcon, X } from "lucide-react";
+import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // components
 import {
@@ -10,54 +11,67 @@ import {
   Loader,
 } from "@plane/ui";
 import { WorkspaceTable } from "@/components/workspace-config/workspace-table";
-import { WorkspaceForm } from "@/components/workspace-config/workspace-form";
 
 // hooks
 import { useWorkspaceConfig } from "@/hooks/store/use-workspace-config";
+import { useAuth } from "@/hooks/store/use-user";
 
 const WorkspaceConfigPage = observer(() => {
   // states
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedWorkspaceConfig, setSelectedWorkspaceConfig] = useState<any>(null);
-
+  const [dataInitialized, setDataInitialized] = useState(false);
+  const router = useRouter();
+  
+  // hooks
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const {
-    workspaceConfigs,
     workspaces,
     createWorkspaceConfig,
     updateWorkspaceConfig,
     deleteWorkspaceConfig,
     fetchWorkspaceConfigs,
-    fetchWorkspaces,
-    isLoading,
+    isLoading: isConfigLoading,
   } = useWorkspaceConfig();
 
-  // fetch workspaces and configs on load
+  // 권한 체크
   useEffect(() => {
-    fetchWorkspaceConfigs();
-    fetchWorkspaces();
-  }, [fetchWorkspaceConfigs, fetchWorkspaces]);
-
-  const handleAddButtonClick = () => {
-    setSelectedWorkspaceConfig(null);
-    setIsAddModalOpen(true);
-  };
-
-  const handleFormSubmit = async (values: {
-    workspace_id: string;
-    role: number;
-  }) => {
-    if (selectedWorkspaceConfig) {
-      await updateWorkspaceConfig(selectedWorkspaceConfig.id, values);
-    } else {
-      await createWorkspaceConfig(values);
+    // 로딩이 끝나고 관리자가 아니면 로그인 페이지로 리다이렉션
+    if (!authLoading && isAdmin === false) {
+      console.log("사용자가 관리자가 아닙니다. 로그인 페이지로 리다이렉션합니다.");
+      router.push("/");
     }
-    setIsAddModalOpen(false);
-  };
+  }, [authLoading, isAdmin, router]);
+
+  // 한 번만 데이터 로드
+  useEffect(() => {
+    // 관리자일 때만 데이터를 가져옴
+    const loadData = async () => {
+      if (!authLoading && isAdmin === true && !dataInitialized) {
+        console.log("워크스페이스 설정 데이터를 불러옵니다.");
+        try {
+          await fetchWorkspaceConfigs();
+          setDataInitialized(true);
+        } catch (error) {
+          console.error("데이터 로딩 중 오류 발생:", error);
+          setDataInitialized(true); // 오류가 발생해도 초기화 상태로 설정
+        }
+      }
+    };
+    loadData();
+  }, [authLoading, isAdmin, dataInitialized, fetchWorkspaceConfigs]);
+
+  // 로딩 중이거나 관리자가 아니면 로딩 표시
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Loader className="w-10 h-10" />
+      </div>
+    );
+  }
 
   const handleEditWorkspace = (workspaceConfig: any) => {
     setSelectedWorkspaceConfig(workspaceConfig);
-    setIsAddModalOpen(true);
   };
 
   const handleDeleteWorkspace = (workspaceConfig: any) => {
@@ -81,53 +95,19 @@ const WorkspaceConfigPage = observer(() => {
             사용자가 가입할 때 자동으로 추가될 워크스페이스를 구성하세요.
           </p>
         </div>
-        <Button
-          variant="primary"
-          prependIcon={<PlusIcon className="h-3.5 w-3.5" />}
-          onClick={handleAddButtonClick}
-        >
-          새 구성 추가
-        </Button>
       </div>
 
-      {isLoading ? (
+      {isConfigLoading ? (
         <div className="flex h-full w-full items-center justify-center">
           <Loader className="w-10 h-10" />
         </div>
       ) : (
         <WorkspaceTable
-          workspaceConfigs={workspaceConfigs}
+          workspaces={workspaces}
           handleEditWorkspace={handleEditWorkspace}
           handleDeleteWorkspace={handleDeleteWorkspace}
+          handleCreateWorkspaceConfig={createWorkspaceConfig}
         />
-      )}
-
-      {/* 추가/수정 모달 */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-custom-background-100 rounded-lg shadow-lg w-full max-w-lg overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-custom-border-200">
-              <h3 className="text-lg font-medium">
-                {selectedWorkspaceConfig ? "워크스페이스 구성 수정" : "새 워크스페이스 구성 추가"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-custom-text-300 hover:text-custom-text-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-5">
-              <WorkspaceForm
-                handleFormSubmit={handleFormSubmit}
-                handleClose={() => setIsAddModalOpen(false)}
-                selectedWorkspaceConfig={selectedWorkspaceConfig}
-                workspaces={workspaces}
-              />
-            </div>
-          </div>
-        </div>
       )}
 
       {/* 삭제 확인 모달 */}

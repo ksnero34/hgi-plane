@@ -77,11 +77,17 @@ class WorkSpaceViewSet(BaseViewSet):
 
     def create(self, request):
         try:
+            # 인스턴스 워크스페이스 생성 경로인지 확인
+            is_instance_path = request.path.startswith('/api/instances/workspaces/')
+            
             # 디버깅 로그 추가
-            # print("=== User Debug Info ===")
-            # print(f"User ID: {request.user.id}")
-            # print(f"User Email: {request.user.email}")
-            # print("=====================")
+            print("=== Workspace Create Debug Info ===")
+            print(f"User ID: {request.user.id}")
+            print(f"User Email: {request.user.email}")
+            print(f"Path: {request.path}")
+            print(f"Is instance path: {is_instance_path}")
+            print(f"Request data: {request.data}")
+            print("=====================")
 
             # 인스턴스 관리자 권한 확인
             instance = Instance.objects.first()
@@ -90,6 +96,8 @@ class WorkSpaceViewSet(BaseViewSet):
                 user=request.user,
                 role__gte=15
             ).exists()
+            
+            print(f"Is instance admin: {is_instance_admin}")
 
             (DISABLE_WORKSPACE_CREATION,) = get_configuration_value(
                 [
@@ -100,16 +108,21 @@ class WorkSpaceViewSet(BaseViewSet):
                 ]
             )
 
-            if not is_instance_admin:
+            # 인스턴스 경로로 접근했을 때는 인스턴스 관리자만 생성 가능
+            if is_instance_path and not is_instance_admin:
+                print("Permission denied: Not an instance admin")
                 return Response(
                     {"error": "Only instance administrators can create workspaces"},
                     status=status.HTTP_403_FORBIDDEN
                 )
-            elif DISABLE_WORKSPACE_CREATION == "1":
-                return Response(
-                    {"error": "Workspace creation is not allowed"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+            # 일반 경로로 접근했을 때는 관리자이거나 DISABLE_WORKSPACE_CREATION=0일 때만 생성 가능
+            elif not is_instance_path:
+                if not is_instance_admin and DISABLE_WORKSPACE_CREATION == "1":
+                    print("Permission denied: Workspace creation disabled")
+                    return Response(
+                        {"error": "Workspace creation is not allowed"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
 
             serializer = WorkSpaceSerializer(data=request.data)
 
@@ -117,12 +130,14 @@ class WorkSpaceViewSet(BaseViewSet):
             name = request.data.get("name", False)
 
             if not name or not slug:
+                print("Validation error: Missing name or slug")
                 return Response(
                     {"error": "Both name and slug are required"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             if len(name) > 80 or len(slug) > 48:
+                print("Validation error: Name or slug too long")
                 return Response(
                     {"error": "The maximum length for name is 80 and for slug is 48"},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -144,6 +159,7 @@ class WorkSpaceViewSet(BaseViewSet):
                 data["total_members"] = total_members
                 data["role"] = 20
 
+                print(f"Workspace created successfully: {data}")
                 return Response(data, status=status.HTTP_201_CREATED)
             return Response(
                 [serializer.errors[error][0] for error in serializer.errors],
@@ -151,11 +167,18 @@ class WorkSpaceViewSet(BaseViewSet):
             )
 
         except IntegrityError as e:
+            print(f"Integrity error: {str(e)}")
             if "already exists" in str(e):
                 return Response(
                     {"slug": "The workspace with the slug already exists"},
                     status=status.HTTP_410_GONE,
                 )
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            return Response(
+                {"error": "An unexpected error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @cache_response(60 * 60 * 2)
     @allow_permission(
@@ -169,6 +192,46 @@ class WorkSpaceViewSet(BaseViewSet):
         level="WORKSPACE",
     )
     def list(self, request, *args, **kwargs):
+        # 인스턴스 워크스페이스 목록 접근 경로인지 확인
+        if request.path.startswith('/api/instances/workspaces/'):
+            # 인스턴스 관리자 권한 체크
+            from plane.app.permissions import InstanceAdminPermission
+            if not InstanceAdminPermission().has_permission(request, self):
+                return Response(
+                    {"error": "You don't have the required permissions."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            
+            # 멤버 수 정보를 가져오기 위한 쿼리
+            member_count = (
+                WorkspaceMember.objects.filter(
+                    workspace=OuterRef("id"), member__is_bot=False, is_active=True
+                )
+                .order_by()
+                .annotate(count=Func(F("id"), function="Count"))
+                .values("count")
+            )
+            
+            # 데이터 쿼리 및 멤버 수 어노테이션 추가
+            queryset = Workspace.objects.order_by("name").annotate(total_members=member_count)
+            serializer = self.get_serializer(queryset, many=True)
+            
+            # 응답 데이터 준비 - 페이지네이션 형식으로
+            workspace_data = serializer.data
+            print(f"Returning {len(workspace_data)} workspaces")
+            
+            response_data = {
+                "results": workspace_data,
+                "next_cursor": None,
+                "next_page_results": False,
+                "prev_cursor": None,
+            }
+            
+            print(f"Response format: {response_data.keys()}")
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        # 일반적인 워크스페이스 목록 접근
         return super().list(request, *args, **kwargs)
 
     @allow_permission([ROLE.ADMIN], level="WORKSPACE")
