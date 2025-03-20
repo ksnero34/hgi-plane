@@ -1,6 +1,7 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, ChangeEvent } from "react";
 import { observer } from "mobx-react";
 import { Edit2, Trash2, MoreVertical, UserIcon } from "lucide-react";
+import { IWorkspaceConfig } from "@/store/workspace-config.store";
 
 // components
 import {
@@ -12,50 +13,76 @@ import {
   Avatar
 } from "@plane/ui";
 
-interface IWorkspace {
-  id: string;
-  name: string;
-  slug: string;
-  logo_url?: string;
-  total_members?: number;
-  is_default?: boolean;
-  role?: number;
-}
-
 interface IWorkspaceTableProps {
-  workspaces: IWorkspace[];
-  handleEditWorkspace: (workspace: IWorkspace) => void;
-  handleDeleteWorkspace: (workspace: IWorkspace) => void;
+  workspaces: { results: IWorkspaceConfig[] } | IWorkspaceConfig[];
+  handleEditWorkspace: (workspace: IWorkspaceConfig) => void;
+  handleDeleteWorkspace: (configId: string) => void;
   handleCreateWorkspaceConfig: (values: {
     workspace_id: string;
     role: number;
   }) => Promise<void>;
 }
 
+// 워크스페이스 목록을 일관된 배열 형식으로 변환하는 헬퍼 함수
+const getWorkspaceList = (workspaces: IWorkspaceTableProps['workspaces']): IWorkspaceConfig[] => {
+  if (Array.isArray(workspaces)) return workspaces;
+  return workspaces.results || [];
+};
+
 export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
-  const { workspaces = [], handleEditWorkspace, handleDeleteWorkspace, handleCreateWorkspaceConfig } = props;
+  const { workspaces = { results: [] }, handleEditWorkspace, handleDeleteWorkspace, handleCreateWorkspaceConfig } = props;
+  
+  // 워크스페이스 목록을 한 번만 계산하여 재사용
+  const workspaceList = getWorkspaceList(workspaces);
+  
+  // 선택된 기본 워크스페이스 ID 상태 관리
+  const [selectedDefault, setSelectedDefault] = useState<string>("");
   
   // 각 워크스페이스의 역할 상태 관리 (워크스페이스 ID를 키로 사용)
   const [workspaceRoles, setWorkspaceRoles] = useState<{[key: string]: number}>(() => {
-    // 초기값으로 현재 역할 설정
-    if (!Array.isArray(workspaces)) return {};
-    
-    return workspaces.reduce((acc, workspace) => {
-      acc[workspace.id] = workspace.role || 15;
+    return workspaceList.reduce((acc, workspace) => {
+      if ((workspace as any)?.id) {
+        acc[(workspace as any).id] = workspace.role || 15;
+      }
       return acc;
     }, {} as {[key: string]: number});
   });
   
   // 기본 워크스페이스로 설정할지 여부 (워크스페이스 ID를 키로 사용)
   const [defaultWorkspaces, setDefaultWorkspaces] = useState<{[key: string]: boolean}>(() => {
-    // 초기값으로 현재 기본 워크스페이스 설정
-    if (!Array.isArray(workspaces)) return {};
-    
-    return workspaces.reduce((acc, workspace) => {
-      acc[workspace.id] = workspace.is_default || false;
+    return workspaceList.reduce((acc, workspace) => {
+      if ((workspace as any)?.id) {
+        acc[(workspace as any).id] = workspace.is_default || false;
+      }
       return acc;
     }, {} as {[key: string]: boolean});
   });
+
+  // 워크스페이스 설정 변경 처리 함수
+  const handleWorkspaceChange = async (workspace: IWorkspaceConfig) => {
+    try {
+      // 역할 상태 확인
+      const role = workspaceRoles[(workspace as any).id || ""] || 15;
+      
+      // 워크스페이스 설정 생성 요청
+      await handleCreateWorkspaceConfig({
+        workspace_id: (workspace as any).id || "",
+        role
+      });
+      
+      // 상태 업데이트
+      if ((workspace as any).id) {
+        setDefaultWorkspaces(prev => ({
+          ...prev,
+          [(workspace as any).id || ""]: true
+        }));
+      }
+    } catch (error) {
+      console.error("워크스페이스 설정 변경 실패:", error);
+      // 실패 시 상태 원복
+      setSelectedDefault("");
+    }
+  };
 
   const getRoleName = (role: number): string => {
     switch (role) {
@@ -76,7 +103,7 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
   
   // 워크스페이스 역할 변경 처리
   const handleRoleChange = async (workspaceId: string, role: number) => {
-    const workspace = workspaces.find(w => w.id === workspaceId);
+    const workspace = workspaceList.find(w => (w as any).id === workspaceId);
     if (!workspace) return;
 
     try {
@@ -102,38 +129,43 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
   };
 
   // 기본 워크스페이스 설정 변경 처리
-  const handleDefaultChange = async (workspaceId: string, checked: boolean) => {
-    const workspace = workspaces.find(w => w.id === workspaceId);
-    if (!workspace) return;
+  const handleDefaultChange = async (checked: boolean, workspace: IWorkspaceConfig) => {
+    console.log("기본 워크스페이스 설정 변경:", checked, workspace);
     
     try {
+      setSelectedDefault((workspace as any).id || "");
+      
       if (checked) {
-        // 추가
-        const role = workspaceRoles[workspaceId] || 15; // 기본값은 member
-        await handleCreateWorkspaceConfig({
-          workspace_id: workspaceId,
-          role
-        });
-        
-        // API 호출 성공 후 상태 업데이트
-        setDefaultWorkspaces((prev) => ({ ...prev, [workspaceId]: checked }));
+        // 기본 워크스페이스로 추가
+        await handleWorkspaceChange(workspace);
       } else {
-        // 삭제
-        await handleDeleteWorkspace(workspace);
+        // 기본 워크스페이스에서 제거 (삭제)
+        console.log("워크스페이스 삭제 시도:", workspace);
         
-        // API 호출 성공 후 상태 업데이트
-        setDefaultWorkspaces((prev) => ({ ...prev, [workspaceId]: checked }));
-        
-        // 삭제 후 상태 초기화
-        setWorkspaceRoles((prev) => {
-          const newState = { ...prev };
-          newState[workspaceId] = 15; // 기본값으로 초기화
-          return newState;
-        });
+        if (workspace.config_id) {
+          console.log("삭제할 config_id:", workspace.config_id);
+          try {
+            await handleDeleteWorkspace(workspace.config_id);
+            console.log("워크스페이스 설정 삭제 성공");
+          } catch (error) {
+            console.error("워크스페이스 설정 삭제 실패:", error);
+            alert("설정 삭제 중 오류가 발생했습니다. 다시 시도해주세요.");
+            
+            // 삭제 실패 시 토글 상태 원복
+            setSelectedDefault("");
+          }
+        } else {
+          console.error("config_id가 없습니다:", workspace);
+          alert("설정을 삭제할 수 없습니다. config_id가 없습니다.");
+          
+          // 토글 상태 원복
+          setSelectedDefault("");
+        }
       }
     } catch (error) {
-      console.error("Error updating workspace default status:", error);
-      // 에러 발생 시에는 상태 변경 없음 (이미 API에서 롤백됨)
+      console.error("설정 변경 중 오류 발생:", error);
+      // 오류 발생 시 토글 상태 원복
+      setSelectedDefault("");
     }
   };
   
@@ -153,16 +185,18 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
 
   // 워크스페이스별 기본 설정 상태 초기화
   useEffect(() => {
-    if (!Array.isArray(workspaces)) return;
-    
     // 워크스페이스 ID별로 기본 설정 상태 초기화
-    const initialDefaultState = workspaces.reduce((acc, workspace) => {
-      acc[workspace.id] = Boolean(workspace.is_default);
+    const initialDefaultState = workspaceList.reduce((acc, workspace) => {
+      if ((workspace as any)?.id) {
+        acc[(workspace as any).id] = Boolean(workspace.is_default);
+      }
       return acc;
     }, {} as Record<string, boolean>);
     
-    const initialRoleState = workspaces.reduce((acc, workspace) => {
-      acc[workspace.id] = workspace.role || 15;
+    const initialRoleState = workspaceList.reduce((acc, workspace) => {
+      if ((workspace as any)?.id) {
+        acc[(workspace as any).id] = workspace.role || 15;
+      }
       return acc;
     }, {} as Record<string, number>);
     
@@ -178,40 +212,40 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 gap-4">
-        {!Array.isArray(workspaces) ? (
+        {!workspaces ? (
           <div className="text-center text-custom-text-300">
             워크스페이스 데이터를 불러올 수 없습니다.
           </div>
-        ) : workspaces.length === 0 ? (
+        ) : workspaceList.length === 0 ? (
           <div className="text-center text-custom-text-300">
             워크스페이스가 없습니다.
           </div>
         ) : (
-          workspaces.map((workspace) => {
-            if (!workspace?.id) return null;
+          workspaceList.map((workspace) => {
+            if (!(workspace as any)?.id) return null;
             
-            const isDefault = defaultWorkspaces[workspace.id] || false;
-            const role = workspaceRoles[workspace.id] || 15; // 기본값은 member
+            const isDefault = defaultWorkspaces[(workspace as any).id] || false;
+            const role = workspaceRoles[(workspace as any).id] || 15; // 기본값은 member
             
             return (
               <div
-                key={workspace.id}
+                key={(workspace as any).id}
                 className="bg-custom-background-100 border border-custom-border-200 rounded-md p-4"
               >
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* 워크스페이스 정보 */}
                   <div className="flex-1 flex items-center gap-3">
                     <Avatar 
-                      name={workspace.name}
-                      src={workspace.logo_url}
+                      name={(workspace as any).name}
+                      src={(workspace as any).logo_url || undefined}
                       size={56}
                       shape="square"
                     />
                     <div>
-                      <h3 className="text-base font-medium">{workspace.name}</h3>
+                      <h3 className="text-base font-medium">{(workspace as any).name}</h3>
                       <div className="flex items-center text-xs text-custom-text-300 mt-1">
                         <UserIcon className="h-3.5 w-3.5 mr-1" />
-                        <span>{workspace.total_members || 0} 멤버</span>
+                        <span>{(workspace as any).total_members || 0} 멤버</span>
                       </div>
                     </div>
                   </div>
@@ -222,7 +256,7 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
                       <h4 className="text-sm font-medium">기본 워크스페이스로 추가:</h4>
                       <ToggleSwitch
                         value={isDefault}
-                        onChange={(value) => handleDefaultChange(workspace.id, value)}
+                        onChange={(value) => handleDefaultChange(value, workspace)}
                         size="sm"
                       />
                     </div>
@@ -233,35 +267,35 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
                       <div className="flex flex-wrap items-center gap-2">
                         <RadioButton
                           checked={role === 20}
-                          onChange={() => handleRoleChange(workspace.id, 20)}
+                          onChange={() => handleRoleChange((workspace as any).id, 20)}
                           disabled={!isDefault}
                           label="Admin"
                         />
                         
                         <RadioButton
                           checked={role === 15}
-                          onChange={() => handleRoleChange(workspace.id, 15)}
+                          onChange={() => handleRoleChange((workspace as any).id, 15)}
                           disabled={!isDefault}
                           label="Member"
                         />
                         
                         <RadioButton
                           checked={role === 10}
-                          onChange={() => handleRoleChange(workspace.id, 10)}
+                          onChange={() => handleRoleChange((workspace as any).id, 10)}
                           disabled={!isDefault}
                           label="Viewer"
                         />
 
                         <RadioButton
                           checked={role === 8}
-                          onChange={() => handleRoleChange(workspace.id, 8)}
+                          onChange={() => handleRoleChange((workspace as any).id, 8)}
                           disabled={!isDefault}
                           label="Restricted"
                         />
                         
                         <RadioButton
                           checked={role === 5}
-                          onChange={() => handleRoleChange(workspace.id, 5)}
+                          onChange={() => handleRoleChange((workspace as any).id, 5)}
                           disabled={!isDefault}
                           label="Guest"
                         />
@@ -281,4 +315,4 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
       </div>
     </div>
   );
-}); 
+});

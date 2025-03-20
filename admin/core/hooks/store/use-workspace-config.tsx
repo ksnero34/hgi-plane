@@ -6,17 +6,15 @@ export const useWorkspaceConfig = () => {
   const { workspaceConfig } = useContext(StoreContext);
 
   useEffect(() => {
-    if (!workspaceConfig.isLoading && (!Array.isArray(workspaceConfig.workspaces?.results) || workspaceConfig.workspaces.results.length === 0)) {
-      console.log("워크스페이스 설정 초기 로딩 시작");
-      workspaceConfig.fetchConfigs()
-        .then(() => {
-          console.log("초기 워크스페이스 설정 로드 성공");
-        })
-        .catch((error) => {
-          console.error("초기 워크스페이스 설정 로드 실패:", error);
-        });
-    }
-  }, [workspaceConfig]);
+    console.log("워크스페이스 설정 초기 로딩 시작");
+    workspaceConfig.fetchConfigs()
+      .then(() => {
+        console.log("초기 워크스페이스 설정 로드 성공");
+      })
+      .catch((error) => {
+        console.error("초기 워크스페이스 설정 로드 실패:", error);
+      });
+  }, []); // 컴포넌트 마운트 시에만 실행
 
   const fetchWorkspaceConfigs = async () => {
     try {
@@ -95,7 +93,7 @@ export const useWorkspaceConfig = () => {
   };
 
   return {
-    workspaces: workspaceConfig.workspaces?.results || [],
+    workspaces: workspaceConfig.workspaces || { results: [] },
     isLoading: workspaceConfig.isLoading,
     error: workspaceConfig.error,
     fetchWorkspaceConfigs,

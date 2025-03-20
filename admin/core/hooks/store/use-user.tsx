@@ -49,12 +49,12 @@ export const useAuth = () => {
     instance.instanceAdmins && 
     Array.isArray(instance.instanceAdmins) && 
     instance.instanceAdmins.some(
-      (admin) => admin.user === user.currentUser?.id && admin.role >= 15
+      (admin) => admin.user === user.currentUser?.id && Number(admin.role) >= 15
     )
   );
   
   // 관리자 확인
-  const userIsAdmin = Boolean(user.currentUser?.is_admin);
+  const userIsAdmin = Boolean(user.currentUser?.is_instance_admin);
   
   // 최종 관리자 상태
   const isAdmin = userIsAdmin || isInstanceAdmin;
@@ -65,7 +65,7 @@ export const useAuth = () => {
       console.log("Final auth status:", {
         id: user.currentUser.id,
         email: user.currentUser.email,
-        is_admin: user.currentUser?.is_admin,
+        is_admin: user.currentUser?.is_instance_admin,
         userIsAdmin: userIsAdmin,
         isInstanceAdmin: isInstanceAdmin,
         finalIsAdmin: isAdmin,

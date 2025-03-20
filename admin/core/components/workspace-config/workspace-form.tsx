@@ -88,23 +88,25 @@ export const WorkspaceForm: FC<IWorkspaceFormProps> = observer((props) => {
             rules={{ required: "워크스페이스는 필수입니다" }}
             render={({ field: { value, onChange } }) => (
               <CustomSelect
-                label="워크스페이스"
+                label={
+                  <div className={`${errors.workspace_id ? "text-red-500" : ""}`}>
+                    워크스페이스
+                  </div>
+                }
                 value={value}
                 onChange={onChange}
-                options={workspaces.map((workspace) => ({
-                  value: workspace.id,
-                  label: workspace.name,
-                  content: (
+              >
+                {workspaces.map((workspace) => (
+                  <CustomSelect.Option key={workspace.id} value={workspace.id}>
                     <div className="flex items-center gap-2">
                       <span>{workspace.name}</span>
                       <span className="text-xs text-custom-text-300">
                         ({workspace.slug})
                       </span>
                     </div>
-                  ),
-                }))}
-                error={errors.workspace_id?.message}
-              />
+                  </CustomSelect.Option>
+                ))}
+              </CustomSelect>
             )}
           />
         </div>
@@ -116,12 +118,20 @@ export const WorkspaceForm: FC<IWorkspaceFormProps> = observer((props) => {
             rules={{ required: "역할은 필수입니다" }}
             render={({ field: { value, onChange } }) => (
               <CustomSelect
-                label="역할"
+                label={
+                  <div className={`${errors.role ? "text-red-500" : ""}`}>
+                    역할
+                  </div>
+                }
                 value={value}
                 onChange={onChange}
-                options={roleOptions}
-                error={errors.role?.message}
-              />
+              >
+                {roleOptions.map((option) => (
+                  <CustomSelect.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </CustomSelect.Option>
+                ))}
+              </CustomSelect>
             )}
           />
         </div>

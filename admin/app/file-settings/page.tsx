@@ -13,6 +13,12 @@ interface IFileSettings {
   max_file_size: number;
 }
 
+interface ApiError {
+  response?: {
+    status: number;
+  };
+}
+
 function FileSettingsPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -52,7 +58,8 @@ function FileSettingsPage() {
       console.error("Error updating settings:", error);
 
       // 인증 오류(401) 확인하기
-      if (error?.response?.status === 401) {
+      const apiError = error as ApiError;
+      if (apiError?.response?.status === 401) {
         handleAuthError();
         throw error;
       }

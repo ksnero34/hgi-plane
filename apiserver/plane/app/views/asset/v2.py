@@ -1,7 +1,7 @@
 # Python imports
 import uuid
 import magic
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 # Django imports
 from django.conf import settings
@@ -551,46 +551,86 @@ class StaticFileAssetEndpoint(BaseAPIView):
         print("\n=== StaticFileAssetEndpoint GET ===")
         print(f"asset_id: {asset_id}")
         
-        # get the asset id
-        asset = FileAsset.objects.get(id=asset_id)
-        print(f"asset found: {asset}")
-        print(f"asset.is_uploaded: {asset.is_uploaded}")
-        print(f"asset.entity_type: {asset.entity_type}")
-        print(f"asset.asset.name: {asset.asset.name}")
+        try:
+            # get the asset id
+            asset = FileAsset.objects.get(id=asset_id)
+            print(f"asset found: {asset.asset}")
+            print(f"asset.is_uploaded: {asset.is_uploaded}")
+            print(f"asset.entity_type: {asset.entity_type}")
+            print(f"asset.asset.name: {asset.asset.name}")
 
-        # Check if the asset is uploaded
-        if not asset.is_uploaded:
-            print("Asset not uploaded")
+            # Check if the asset is uploaded
+            if not asset.is_uploaded:
+                print("Asset not uploaded")
+                return Response(
+                    {"error": "The requested asset could not be found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Check if the entity type is allowed
+            if asset.entity_type not in [
+                FileAsset.EntityTypeContext.USER_AVATAR,
+                FileAsset.EntityTypeContext.USER_COVER,
+                FileAsset.EntityTypeContext.WORKSPACE_LOGO,
+                FileAsset.EntityTypeContext.PROJECT_COVER,
+            ]:
+                print(f"Invalid entity type: {asset.entity_type}")
+                return Response(
+                    {"error": "Invalid entity type.", "status": False},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the presigned URL
+            storage = S3Storage(request=request)
+            # Generate a presigned URL to share an S3 object
+            signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
+            print(f"Generated signed URL: {signed_url}")
+            
+            # URL의 도메인을 요청 도메인으로 변경
+            modified_url = replace_domain_in_url(request, signed_url)
+            
+            # 공개 에셋이 아니고 인증이 필요한 경우, 접근 토큰 생성
+            if asset.entity_type not in [
+                FileAsset.EntityTypeContext.USER_AVATAR,
+                FileAsset.EntityTypeContext.USER_COVER,
+                FileAsset.EntityTypeContext.WORKSPACE_LOGO,
+                FileAsset.EntityTypeContext.PROJECT_COVER,
+            ] and request.user.is_authenticated:
+                # StorageObjectView의 토큰 생성 메서드 사용
+                from plane.api.views.storage import StorageObjectView
+                
+                user_id = str(request.user.id) if request.user.is_authenticated else None
+                access_token = StorageObjectView.generate_access_token(
+                    file_path=asset.asset.name,
+                    user_id=user_id
+                )
+                
+                # URL에 액세스 토큰 추가
+                url_parts = list(urlparse(modified_url))
+                query = dict(parse_qsl(url_parts[4]))
+                query.update({'access_token': access_token})
+                url_parts[4] = urlencode(query)
+                modified_url = urlunparse(url_parts)
+                
+                print(f"인증 토큰이 포함된 URL로 변경: {modified_url}")
+            
+            print(f"Modified URL: {modified_url}")
+            
+            # Redirect to the modified signed URL
+            return HttpResponseRedirect(modified_url)
+            
+        except FileAsset.DoesNotExist:
+            print(f"Asset not found: {asset_id}")
             return Response(
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        # Check if the entity type is allowed
-        if asset.entity_type not in [
-            FileAsset.EntityTypeContext.USER_AVATAR,
-            FileAsset.EntityTypeContext.USER_COVER,
-            FileAsset.EntityTypeContext.WORKSPACE_LOGO,
-            FileAsset.EntityTypeContext.PROJECT_COVER,
-        ]:
-            print(f"Invalid entity type: {asset.entity_type}")
+        except Exception as e:
+            print(f"Error accessing asset: {str(e)}")
             return Response(
-                {"error": "Invalid entity type.", "status": False},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        # Get the presigned URL
-        storage = S3Storage(request=request)
-        # Generate a presigned URL to share an S3 object
-        signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
-        print(f"Generated signed URL: {signed_url}")
-        
-        # URL의 도메인을 요청 도메인으로 변경
-        modified_url = replace_domain_in_url(request, signed_url)
-        print(f"Modified URL: {modified_url}")
-        
-        # Redirect to the modified signed URL
-        return HttpResponseRedirect(modified_url)
 
 
 class AssetRestoreEndpoint(BaseAPIView):

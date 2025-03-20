@@ -44,6 +44,8 @@ from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
 from plane.license.models import Instance, InstanceAdmin
 from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.cache import cache_response
+from django.core.cache import cache
+from django.contrib.auth import get_user_model
 
 class WorkSpaceViewSet(BaseViewSet):
     model = Workspace
@@ -160,6 +162,9 @@ class WorkSpaceViewSet(BaseViewSet):
                 data["role"] = 20
 
                 print(f"Workspace created successfully: {data}")
+                
+                cache.delete_pattern("/api/instances/workspaces/*")
+                
                 return Response(data, status=status.HTTP_201_CREATED)
             return Response(
                 [serializer.errors[error][0] for error in serializer.errors],
@@ -213,12 +218,18 @@ class WorkSpaceViewSet(BaseViewSet):
             )
             
             # 데이터 쿼리 및 멤버 수 어노테이션 추가
-            queryset = Workspace.objects.order_by("name").annotate(total_members=member_count)
-            serializer = self.get_serializer(queryset, many=True)
+            queryset = (
+                Workspace.objects.filter(deleted_at__isnull=True)
+                .order_by("name")
+                .annotate(total_members=member_count)
+            )
+            print(f"Query SQL: {queryset.query}")
+            print(f"Total workspaces found: {queryset.count()}")
             
-            # 응답 데이터 준비 - 페이지네이션 형식으로
+            serializer = self.get_serializer(queryset, many=True)
             workspace_data = serializer.data
-            print(f"Returning {len(workspace_data)} workspaces")
+            print(f"Serialized {len(workspace_data)} workspaces")
+            print(f"Sample workspace data: {workspace_data[0] if workspace_data else 'No workspaces found'}")
             
             response_data = {
                 "results": workspace_data,

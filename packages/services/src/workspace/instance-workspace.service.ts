@@ -28,25 +28,8 @@ export class InstanceWorkspaceService extends APIService {
         cursor: nextPageCursor,
       },
     })
-      .then((response) => {
-        const data = response?.data;
-        
-        // API 응답이 배열인 경우 페이지네이션 형식으로 변환
-        if (Array.isArray(data)) {
-          console.log("Converting array response to pagination format", data);
-          return {
-            results: data,
-            next_cursor: null,
-            next_page_results: false,
-            prev_cursor: null,
-          };
-        }
-        
-        // 이미 페이지네이션 형식이면 그대로 반환
-        return data;
-      })
+      .then((response) => response?.data)
       .catch((error) => {
-        console.error("Failed to fetch workspaces", error);
         throw error?.response?.data;
       });
   }

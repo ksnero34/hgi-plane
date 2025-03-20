@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@plane/constants";
 export const useFileSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<IFileSettings | undefined>(undefined);
-  const instanceService = new InstanceService(API_BASE_URL);
+  const instanceService = new InstanceService();
 
   const fetchSettings = useCallback(async () => {
     try {

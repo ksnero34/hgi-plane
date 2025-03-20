@@ -16,7 +16,13 @@ const WorkspaceConfigPage = observer(() => {
   const router = useRouter();
   const pathname = usePathname();
   const { isAdmin, isLoading: authLoading } = useAuth();
-  const { workspaces, isLoading: isConfigLoading, fetchWorkspaceConfigs, createWorkspaceConfig } = useWorkspaceConfig();
+  const {
+    workspaces,
+    isLoading: isConfigLoading,
+    fetchWorkspaceConfigs,
+    createWorkspaceConfig,
+    deleteWorkspaceConfig
+  } = useWorkspaceConfig();
   const [dataInitialized, setDataInitialized] = useState(false);
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
@@ -112,21 +118,62 @@ const WorkspaceConfigPage = observer(() => {
 
   const handleEditWorkspace = (workspaceConfig: any) => {
     // 워크스페이스 역할 변경 처리
-    createWorkspaceConfig(workspaceConfig.id, { role: workspaceConfig.role })
+    createWorkspaceConfig({
+      workspace_id: workspaceConfig.id,
+      role: workspaceConfig.role
+    })
       .catch(error => {
         // 401 에러 확인 및 처리
         checkAndLogError(error, "워크스페이스 설정 업데이트");
       });
   };
 
-  const handleDeleteWorkspace = (workspace: any) => {
-    // 토글 버튼으로 직접 삭제 처리
-    console.log("워크스페이스 설정 삭제:", workspace.id);
-    createWorkspaceConfig(workspace.id, { role: workspace.role })
-      .catch(error => {
-        // 401 에러 확인 및 처리
-        checkAndLogError(error, "워크스페이스 설정 삭제");
-      });
+  const handleDeleteWorkspace = async (configId: string) => {
+    console.log("삭제 요청 받음, config_id:", configId);
+
+    try {
+      // 삭제 요청 전 로딩 상태 표시 (필요한 경우)
+      // setIsDeleting(true);
+
+      await deleteWorkspaceConfig(configId);
+      console.log("워크스페이스 설정 삭제 성공:", configId);
+
+      // 목록 갱신
+      console.log("설정 목록 갱신 시작");
+      try {
+        await fetchWorkspaceConfigs();
+        console.log("설정 목록 갱신 성공");
+      } catch (refreshError) {
+        console.error("워크스페이스 설정 삭제 후 목록 갱신 실패:", refreshError);
+        checkAndLogError(refreshError, "워크스페이스 설정 삭제 후 목록 갱신");
+        // 목록 갱신 실패는 삭제 자체의 실패는 아니므로 사용자에게 별도 알림 없이 계속 진행
+      }
+    } catch (error) {
+      console.error("워크스페이스 설정 삭제 실패:", error);
+
+      // 상세 오류 정보 로깅
+      if (error instanceof Error) {
+        console.error("오류 이름:", error.name);
+        console.error("오류 메시지:", error.message);
+        console.error("오류 스택:", error.stack);
+      }
+
+      const errorResponse = (error as any)?.response;
+      if (errorResponse) {
+        console.error("서버 응답 상태:", errorResponse.status);
+        console.error("서버 응답 데이터:", errorResponse.data);
+      }
+
+      // 401 오류 확인 및 처리
+      const is401 = checkAndLogError(error, "워크스페이스 설정 삭제");
+      if (!is401) {
+        // 401이 아닌 경우에만 알림 (401은 별도로 handleAuthError에서 처리)
+        alert("워크스페이스 설정 삭제에 실패했습니다. 다시 시도해 주세요.");
+      }
+    } finally {
+      // 삭제 작업 완료 후 로딩 상태 해제 (필요한 경우)
+      // setIsDeleting(false);
+    }
   };
 
   return (
@@ -142,15 +189,15 @@ const WorkspaceConfigPage = observer(() => {
 
       {isConfigLoading ? (
         <div className="flex h-full w-full items-center justify-center">
-          <Loader className="w-10 h-10" />
+          <Loader className="w-10 h-10">로딩 중...</Loader>
         </div>
       ) : (
         <WorkspaceTable
           workspaces={workspaces}
           handleEditWorkspace={handleEditWorkspace}
           handleDeleteWorkspace={handleDeleteWorkspace}
-          handleCreateWorkspaceConfig={(...args) =>
-            createWorkspaceConfig(...args).catch(error => {
+          handleCreateWorkspaceConfig={(config) =>
+            createWorkspaceConfig(config).catch(error => {
               checkAndLogError(error, "워크스페이스 설정 생성");
               throw error;
             })

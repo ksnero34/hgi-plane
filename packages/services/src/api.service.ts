@@ -107,7 +107,17 @@ export abstract class APIService {
    * @returns {Promise} Axios response promise
    */
   delete(url: string, data?: any, config: AxiosRequestConfig = {}) {
-    return this.axiosInstance.delete(url, { data, ...config });
+    // 설정 객체에 데이터와 다른 설정을 올바르게 병합
+    const mergedConfig = {
+      ...config,
+      data: data
+    };
+    console.log('Delete 요청 설정:', JSON.stringify({
+      url,
+      config: mergedConfig,
+      headers: mergedConfig.headers
+    }));
+    return this.axiosInstance.delete(url, mergedConfig);
   }
 
   /**

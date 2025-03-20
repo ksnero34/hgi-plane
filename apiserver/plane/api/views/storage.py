@@ -7,6 +7,10 @@ from minio import Minio
 from rest_framework.permissions import IsAuthenticated
 import os
 import logging
+import hashlib
+import time
+from django.core.cache import cache
+from hashlib import md5
 
 from plane.db.models import ProjectMember, Project, WorkspaceMember, FileAsset
 from plane.app.permissions import ProjectEntityPermission
@@ -104,9 +108,80 @@ class StorageObjectView(BaseAPIView):
     """
     Minio 파일 접근을 위한 프록시 뷰
     인증된 사용자 또는 인스턴스 관리자의 접근을 허용
+    사용자 아바타나 공개 자원의 경우 인증 없이도 접근 가능
     """
-    permission_classes = []  # 인증 요구사항 제거
-    authentication_classes = []  # 인증 클래스 제거
+    # 기본적으로 인증이 필요하지만 특정 경우 예외 처리
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [BaseSessionAuthentication]
+    
+    # 공개적으로 접근 가능한 에셋 타입 목록
+    PUBLIC_ASSET_TYPES = [
+        FileAsset.EntityTypeContext.USER_AVATAR,
+        FileAsset.EntityTypeContext.USER_COVER,
+        FileAsset.EntityTypeContext.WORKSPACE_LOGO,
+        FileAsset.EntityTypeContext.PROJECT_COVER
+    ]
+    
+    @staticmethod
+    def validate_access_token(file_path, token):
+        """
+        파일 접근 토큰을 검증합니다.
+        """
+        if not token:
+            return False
+            
+        # 캐시에서 토큰 조회
+        cache_key = f"file_access:{file_path}"
+        valid_token = cache.get(cache_key)
+        
+        if not valid_token or valid_token != token:
+            return False
+            
+        return True
+    
+    def check_permissions(self, request):
+        """
+        공개 에셋에 대한 접근인 경우 권한 체크를 건너뜁니다.
+        또는 유효한 액세스 토큰이 있는 경우에도 권한 체크를 건너뜁니다.
+        """
+        # 파일 경로를 쿼리 파라미터에서 추출
+        file_path = self.kwargs.get('file_path')
+        if not file_path:
+            # 파일 경로가 없으면 일반 권한 체크 진행
+            print("파일 경로 없음, 일반 권한 체크 진행")
+            return super().check_permissions(request)
+            
+        # 액세스 토큰 확인
+        access_token = request.GET.get('access_token')
+        if access_token and self.validate_access_token(file_path, access_token):
+            print(f"유효한 접근 토큰으로 접근: {file_path}")
+            return None
+        
+        # 파일명 추출
+        file_name = file_path.split('/')[-1]
+        
+        print(f"권한 체크 중: 파일 '{file_name}', 인증 상태: {request.user.is_authenticated}")
+        
+        # 파일이 공개 에셋인지 확인
+        asset = FileAsset.objects.filter(
+            asset__icontains=file_name,
+            is_deleted=False
+        ).first()
+        
+        if not asset:
+            print(f"에셋을 찾을 수 없음: {file_name}, 일반 권한 체크 진행")
+            return super().check_permissions(request)
+        
+        print(f"에셋 정보 - 타입: {asset.entity_type}, 업로드 여부: {asset.is_uploaded}")
+        
+        # 공개 에셋이면 권한 체크 건너뜀
+        if asset.entity_type in self.PUBLIC_ASSET_TYPES:
+            print(f"공개 에셋 타입({asset.entity_type})이므로 권한 체크 생략")
+            return None
+        
+        print(f"비공개 에셋 타입({asset.entity_type})이므로 일반 권한 체크 진행")
+        # 그 외의 경우 일반 권한 체크 진행
+        return super().check_permissions(request)
     
     def is_instance_admin(self, user):
         if not user or not user.is_authenticated:
@@ -154,12 +229,8 @@ class StorageObjectView(BaseAPIView):
 
             # 인스턴스 관리자가 아닌 경우에만 권한 체크
             if not is_admin:
-                # 인증되지 않은 사용자인 경우
-                if not request.user.is_authenticated:
-                    return Response(
-                        {"error": "Authentication required"},
-                        status=status.HTTP_401_UNAUTHORIZED
-                    )
+                # 사용자가 이미 인증되어 있음 (권한 클래스에서 체크됨)
+                # 이전에 인증 체크를 수행하던 코드 대신 프로젝트/워크스페이스 접근 권한만 확인
 
                 # 프로젝트 관련 파일인 경우 프로젝트 멤버십 확인
                 if asset.project_id and not ProjectMember.objects.filter(
@@ -247,4 +318,21 @@ class StorageObjectView(BaseAPIView):
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            ) 
+            )
+
+    @staticmethod
+    def generate_access_token(file_path, user_id=None, expire_seconds=3600):
+        """
+        파일 접근을 위한 임시 토큰을 생성합니다.
+        """
+        # 현재 시간과 파일 경로, 임의의 솔트로 토큰 생성
+        timestamp = int(time.time())
+        salt = settings.SECRET_KEY[:10]
+        token_base = f"{file_path}:{timestamp}:{salt}:{user_id or 'anonymous'}"
+        token = md5(token_base.encode()).hexdigest()
+        
+        # 토큰을 캐시에 저장 (1시간 유효)
+        cache_key = f"file_access:{file_path}"
+        cache.set(cache_key, token, expire_seconds)
+        
+        return token 

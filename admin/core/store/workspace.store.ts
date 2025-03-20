@@ -139,6 +139,10 @@ export class WorkspaceStore implements IWorkspaceStore {
       runInAction(() => {
         set(this.workspaces, [workspace.id], workspace);
       });
+      
+      // 워크스페이스 생성 후 목록 갱신
+      await this.fetchWorkspaces();
+      
       return workspace;
     } catch (error) {
       console.error("Error creating workspace", error);
