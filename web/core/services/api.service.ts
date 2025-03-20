@@ -21,7 +21,7 @@ export abstract class APIService {
       (error) => {
         if (error.response?.status === 401) {
           const currentPath = window.location.pathname;
-          window.location.replace(`/god-mode/?next_path=${currentPath}`);
+          window.location.replace(`/?next_path=${currentPath}`);
         }
         return Promise.reject(error);
       }
