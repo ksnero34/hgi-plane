@@ -20,9 +20,7 @@ function FileSettingsPage() {
   const { settings, fetchSettings, updateSettings, isLoading } = useFileSettings();
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
-  const getNormalizedPath = (path: string) => {
-    return path.replace(/^\/god-mode/, '');
-  };
+  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, '');
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
@@ -36,7 +34,7 @@ function FileSettingsPage() {
     if (!authLoading && isAdmin) {
       // 관리자일 때만 데이터를 가져옴
       fetchSettings().catch((error) => {
-        checkAndLogError(error, "파일 설정 불러오기");
+        // checkAndLogError(error, "파일 설정 불러오기");
       });
     }
   }, [authLoading, isAdmin]);
@@ -52,13 +50,13 @@ function FileSettingsPage() {
       return result;
     } catch (error) {
       console.error("Error updating settings:", error);
-      
+
       // 인증 오류(401) 확인하기
       if (error?.response?.status === 401) {
         handleAuthError();
         throw error;
       }
-      
+
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "설정 저장 실패",

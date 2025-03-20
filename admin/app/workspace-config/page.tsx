@@ -9,8 +9,8 @@ import { Loader } from "@plane/ui";
 import { WorkspaceTable } from "@/components/workspace-config/workspace-table";
 
 // hooks
-import { useWorkspaceConfig } from "@/hooks/store/use-workspace-config";
 import { useAuth } from "@/hooks/store/use-user";
+import { useWorkspaceConfig } from "@/hooks/store/use-workspace-config";
 
 const WorkspaceConfigPage = observer(() => {
   const router = useRouter();
@@ -20,9 +20,7 @@ const WorkspaceConfigPage = observer(() => {
   const [dataInitialized, setDataInitialized] = useState(false);
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
-  const getNormalizedPath = (path: string) => {
-    return path.replace(/^\/god-mode/, '');
-  };
+  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, '');
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
@@ -36,13 +34,13 @@ const WorkspaceConfigPage = observer(() => {
     // 에러 디버깅을 위해 상세 정보 출력
     console.error(`${context} 중 에러 발생:`, error);
     console.log("에러 타입:", typeof error);
-    
+
     try {
       console.log("에러 객체 구조:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     } catch (e) {
       console.log("에러 객체를 JSON으로 변환할 수 없음");
     }
-    
+
     // 모든 속성 출력
     console.log("에러 속성들:");
     for (const prop in error) {
@@ -52,20 +50,20 @@ const WorkspaceConfigPage = observer(() => {
         console.log(`${prop}: [접근 불가능]`);
       }
     }
-    
+
     // 401 상태 확인
-    const status401 = 
-      error?.response?.status === 401 || 
-      error?.status === 401 || 
+    const status401 =
+      error?.response?.status === 401 ||
+      error?.status === 401 ||
       (error?.message && error.message.includes("401"));
-    
+
     console.log("401 에러 여부:", status401);
-    
+
     if (status401) {
       console.log("401 에러 감지, 리다이렉션 수행");
       handleAuthError();
     }
-    
+
     return status401;
   };
 
@@ -151,18 +149,16 @@ const WorkspaceConfigPage = observer(() => {
           workspaces={workspaces}
           handleEditWorkspace={handleEditWorkspace}
           handleDeleteWorkspace={handleDeleteWorkspace}
-          handleCreateWorkspaceConfig={(...args) => {
-            return createWorkspaceConfig(...args)
-              .catch(error => {
-                // 401 에러 확인 및 처리
-                checkAndLogError(error, "워크스페이스 설정 생성");
-                throw error;
-              });
-          }}
+          handleCreateWorkspaceConfig={(...args) =>
+            createWorkspaceConfig(...args).catch(error => {
+              checkAndLogError(error, "워크스페이스 설정 생성");
+              throw error;
+            })
+          }
         />
       )}
     </div>
   );
 });
 
-export default WorkspaceConfigPage; 
+export default WorkspaceConfigPage;

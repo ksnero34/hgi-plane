@@ -33,21 +33,19 @@ export abstract class APIService {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response && error.response.status === 401) {
+        if (error.response?.status === 401) {
           const currentPath = window.location.pathname;
-          let prefix = "/";
-          let updatedPath = currentPath;
-
-          // Check for special path prefixes
-          if (currentPath.startsWith("/god-mode")) {
-            prefix = "/god-mode";
-            updatedPath = currentPath.replace("/god-mode", "");
-          } else if (currentPath.startsWith("/spaces")) {
-            prefix = "/spaces";
-            updatedPath = currentPath.replace("/spaces", "");
-          }
-
-          window.location.replace(`${prefix}${updatedPath ? `?next_path=${updatedPath}` : ""}`);
+          // 경로 정규화 - 중복 슬래시 제거 및 마지막 슬래시 처리
+          const normalizedPath = currentPath
+            .replace(/\/+/g, '/') // 중복 슬래시를 단일 슬래시로
+            .replace(/\/+$/, ''); // 끝의 슬래시 제거
+            
+          // god-mode 페이지인 경우 next_path를 /god-mode/general로 설정
+          const nextPath = normalizedPath === '/god-mode' 
+            ? '/god-mode/general' 
+            : normalizedPath;
+            
+          window.location.replace(`/god-mode?next_path=${nextPath}`);
         }
         return Promise.reject(error);
       }
