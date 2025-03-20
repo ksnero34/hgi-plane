@@ -1,15 +1,18 @@
 import { useCallback, useState } from "react";
-import { useInstance } from "./use-instance";
+import { InstanceService } from "@plane/services";
 import { IFileSettings } from "@plane/types";
+import { API_BASE_URL } from "@plane/constants";
 
 export const useFileSettings = () => {
-  const instanceStore = useInstance();
   const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState<IFileSettings | undefined>(undefined);
+  const instanceService = new InstanceService(API_BASE_URL);
 
   const fetchSettings = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await instanceStore.fetchFileSettings();
+      const result = await instanceService.getFileSettings();
+      setSettings(result);
       return result;
     } catch (error) {
       console.error("Error fetching file settings:", error);
@@ -17,12 +20,13 @@ export const useFileSettings = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [instanceStore]);
+  }, [instanceService]);
 
   const updateSettings = useCallback(async (data: Partial<IFileSettings>) => {
     try {
       setIsLoading(true);
-      const updatedSettings = await instanceStore.updateFileSettings(data);
+      const updatedSettings = await instanceService.updateFileSettings(data);
+      setSettings(updatedSettings);
       return updatedSettings;
     } catch (error) {
       console.error("Error updating file settings:", error);
@@ -30,10 +34,10 @@ export const useFileSettings = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [instanceStore]);
+  }, [instanceService]);
 
   return {
-    settings: instanceStore.fileSettings,
+    settings,
     isLoading,
     fetchSettings,
     updateSettings,

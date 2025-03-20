@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { API_BASE_URL } from "@plane/constants";
+import { InstanceService } from "@plane/services";
 import { CoreRootStore } from "@/store/root.store";
 
 export interface IWorkspace {
@@ -14,221 +15,144 @@ export interface IWorkspace {
 }
 
 export interface IWorkspaceConfigStore {
-  workspaces: IWorkspace[];
+  workspaces: { results: IWorkspace[] };
   isLoading: boolean;
   error: Error | null;
-  fetchConfigs: () => Promise<IWorkspace[]>;
+  fetchConfigs: () => Promise<{ results: IWorkspace[] }>;
   createConfig: (config: { workspace_id: string; role: number }) => Promise<void>;
   updateConfig: (workspaceId: string, config: { role: number }) => Promise<void>;
   deleteConfig: (workspaceId: string) => Promise<void>;
 }
 
 export class WorkspaceConfigStore implements IWorkspaceConfigStore {
-  workspaces: IWorkspace[] = [];
+  workspaces: { results: IWorkspace[] } = { results: [] };
   isLoading: boolean = false;
   error: Error | null = null;
-  
-  // 진행 중인 요청을 캐싱하기 위한 프로미스 저장
-  private configsPromise: Promise<any> | null = null;
+  private instanceService: InstanceService;
   
   constructor(private store: CoreRootStore) {
-    makeAutoObservable(this, {
-      configsPromise: false
-    });
+    makeAutoObservable(this);
+    this.instanceService = new InstanceService();
+  }
+  
+  private handle401Error() {
+    window.location.replace(`/god-mode/?next_path=${window.location.pathname}`);
   }
   
   async fetchConfigs() {
-    // 이미 진행 중인 요청이 있다면 그것을 재사용
-    if (this.configsPromise) {
-      console.log("Reusing existing configs promise");
-      return this.configsPromise;
-    }
+    try {
+      this.isLoading = true;
+      this.error = null;
+      console.log("API 호출 시작: fetchConfigs");
+      
+      const response = await this.instanceService.getDefaultWorkspaces();
+      console.log("API 응답 받음:", response);
 
-    // 이미 데이터가 있고 로딩 중이 아니면 현재 데이터 반환
-    if (this.workspaces.length > 0 && !this.isLoading) {
-      console.log("Using cached workspace data");
+      runInAction(() => {
+        this.workspaces = {
+          results: Array.isArray(response.results) ? response.results : []
+        };
+        this.isLoading = false;
+      });
+
       return this.workspaces;
-    }
-    
-    this.isLoading = true;
-    this.error = null;
-    
-    // 새 요청 생성 및 저장
-    this.configsPromise = (async () => {
-      try {
-        console.log("Fetching workspace configs from API");
-        const response = await fetch(`${API_BASE_URL}/api/instances/default-workspaces/`, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store"
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Failed to fetch workspace configs:", response.status, errorText);
-          throw new Error(`Failed to fetch workspace configs: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Fetched workspace configs:", data);
-        
-        // API 응답 데이터를 그대로 사용
-        runInAction(() => {
-          this.workspaces = data.results;
-          this.isLoading = false;
-        });
-        
-        return data.results;
-      } catch (error) {
-        runInAction(() => {
-          this.error = error as Error;
-          this.isLoading = false;
-        });
-        throw error;
-      } finally {
-        // 요청이 완료되면 프로미스 초기화
-        this.configsPromise = null;
+    } catch (error: any) {
+      console.error("API 에러 발생:", error);
+      runInAction(() => {
+        this.error = error;
+        this.isLoading = false;
+        this.workspaces = { results: [] }; // 에러 발생 시 빈 배열로 초기화
+      });
+
+      if (error?.response?.status === 401) {
+        this.handle401Error();
       }
-    })();
-    
-    return this.configsPromise;
+
+      throw error;
+    }
   }
   
   async createConfig(config: { workspace_id: string; role: number }) {
     try {
-      // CSRF 토큰 가져오기
-      const csrfResponse = await fetch(`${API_BASE_URL}/auth/get-csrf-token/`, {
-        method: "GET",
-        credentials: "include"
+      this.isLoading = true;
+      this.error = null;
+      console.log("API 호출 시작: createConfig", config);
+
+      const response = await this.instanceService.createDefaultWorkspace(config);
+      console.log("API 응답 받음:", response);
+
+      runInAction(() => {
+        this.workspaces = [...this.workspaces, response];
+        this.isLoading = false;
       });
-      
-      const csrfData = await csrfResponse.json();
-      const csrfToken = csrfData.csrf_token;
-      
-      console.log("Creating workspace config:", config);
-      
-      const response = await fetch(`${API_BASE_URL}/api/instances/default-workspaces/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken
-        },
-        credentials: "include",
-        body: JSON.stringify(config),
+    } catch (error: any) {
+      console.error("API 에러 발생:", error);
+      runInAction(() => {
+        this.error = error;
+        this.isLoading = false;
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error("Failed to create workspace config:", errorData);
-        throw new Error("Failed to create workspace config");
+
+      if (error?.response?.status === 401) {
+        this.handle401Error();
       }
-      
-      // 설정 목록 다시 불러오기
-      await this.fetchConfigs();
-    } catch (error) {
-      console.error("Error creating workspace config:", error);
+
       throw error;
     }
   }
   
   async updateConfig(workspaceId: string, config: { role: number }) {
     try {
-      // 워크스페이스 찾기
-      const workspace = this.workspaces.find(w => w.id === workspaceId);
+      const workspace = this.workspaces.results.find(w => w.id === workspaceId);
       if (!workspace) {
         throw new Error("Workspace not found");
       }
-      
+
       if (!workspace.config_id) {
         throw new Error("Workspace config not found");
       }
 
-      // CSRF 토큰 가져오기
-      const csrfResponse = await fetch(`${API_BASE_URL}/auth/get-csrf-token/`, {
-        method: "GET",
-        credentials: "include"
+      const response = await this.instanceService.updateDefaultWorkspace(workspace.config_id, config);
+      
+      runInAction(() => {
+        const index = this.workspaces.results.findIndex(w => w.id === workspaceId);
+        if (index !== -1) {
+          this.workspaces.results[index] = { ...this.workspaces.results[index], ...response };
+        }
       });
+    } catch (error: any) {
+      console.error("워크스페이스 설정 업데이트 실패:", error);
       
-      const csrfData = await csrfResponse.json();
-      const csrfToken = csrfData.csrf_token;
-      
-      console.log("Updating workspace config:", { workspaceId, configId: workspace.config_id, config });
-      
-      // 설정 업데이트
-      const response = await fetch(`${API_BASE_URL}/api/instances/default-workspaces/${workspace.config_id}/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken
-        },
-        credentials: "include",
-        body: JSON.stringify(config),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to update workspace config");
+      if (error?.response?.status === 401) {
+        this.handle401Error();
       }
       
-      // 설정 목록 다시 불러오기
-      await this.fetchConfigs();
-    } catch (error) {
-      console.error("Error updating workspace config:", error);
       throw error;
     }
   }
   
   async deleteConfig(workspaceId: string) {
     try {
-      // 워크스페이스와 설정 ID 찾기
-      const workspace = this.workspaces.find(w => w.id === workspaceId);
+      const workspace = this.workspaces.results.find(w => w.id === workspaceId);
       if (!workspace) {
         throw new Error("Workspace not found");
       }
-      
+
       if (!workspace.config_id) {
         throw new Error("Workspace config not found");
       }
 
-      // CSRF 토큰 가져오기
-      const csrfResponse = await fetch(`${API_BASE_URL}/auth/get-csrf-token/`, {
-        method: "GET",
-        credentials: "include"
+      await this.instanceService.deleteDefaultWorkspace(workspace.config_id);
+      
+      runInAction(() => {
+        this.workspaces.results = this.workspaces.results.filter(w => w.id !== workspaceId);
       });
+    } catch (error: any) {
+      console.error("워크스페이스 설정 삭제 실패:", error);
       
-      const csrfData = await csrfResponse.json();
-      const csrfToken = csrfData.csrf_token;
-      
-      console.log("Deleting workspace config:", { workspaceId, configId: workspace.config_id });
-      
-      const response = await fetch(`${API_BASE_URL}/api/instances/default-workspaces/${workspace.config_id}/`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken
-        },
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to delete workspace config");
+      if (error?.response?.status === 401) {
+        this.handle401Error();
       }
       
-      // 삭제 후 상태 초기화
-      runInAction(() => {
-        this.workspaces = this.workspaces.map(w => {
-          if (w.id === workspaceId) {
-            return {
-              ...w,
-              is_default: false,
-              role: 15,
-              config_id: undefined
-            };
-          }
-          return w;
-        });
-      });
-    } catch (error) {
-      console.error("Error deleting workspace config:", error);
       throw error;
     }
   }

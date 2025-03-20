@@ -9,6 +9,7 @@ import type {
   TPage,
   IUser,
   IFileSettings,
+  IWorkspace,
 } from "@plane/types";
 // api service
 import { APIService } from "../api.service";
@@ -169,26 +170,82 @@ export class InstanceService extends APIService {
       });
   }
 
+  /**
+   * 파일 설정을 가져옵니다
+   * @returns {Promise<IFileSettings>} 파일 설정 정보
+   * @throws {Error} API 요청 실패 시
+   */
   async getFileSettings(): Promise<IFileSettings> {
     return this.get("/api/instances/file-settings/")
-      .then((response) => response.data)
+      .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
       });
   }
 
+  /**
+   * 파일 설정을 업데이트합니다
+   * @param {Partial<IFileSettings>} data - 업데이트할 파일 설정 데이터
+   * @returns {Promise<IFileSettings>} 업데이트된 파일 설정 정보
+   * @throws {Error} API 요청 실패 시
+   */
   async updateFileSettings(data: Partial<IFileSettings>): Promise<IFileSettings> {
-    const csrfToken = await this.requestCSRFToken();
-    
-    return this.patch(
-      "/api/instances/file-settings/",
-      data,
-      {
-        headers: {
-          'X-CSRFToken': csrfToken.csrf_token,
-        }
-      }
-    )
+    return this.patch("/api/instances/file-settings/", data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * 기본 워크스페이스 설정 목록을 가져옵니다
+   * @returns {Promise<IWorkspace[]>} 기본 워크스페이스 설정 목록
+   */
+  async getDefaultWorkspaces(): Promise<IWorkspace[]> {
+    return this.get("/api/instances/default-workspaces/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * 기본 워크스페이스 설정을 생성합니다
+   * @param {Object} data - 기본 워크스페이스 설정 데이터
+   * @param {string} data.workspace_id - 워크스페이스 ID
+   * @param {number} data.role - 역할 레벨
+   * @returns {Promise<IWorkspace>} 생성된 기본 워크스페이스 설정
+   */
+  async createDefaultWorkspace(data: { workspace_id: string; role: number }): Promise<IWorkspace> {
+    return this.post("/api/instances/default-workspaces/", data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * 기본 워크스페이스 설정을 업데이트합니다
+   * @param {string} configId - 설정 ID
+   * @param {Object} data - 업데이트할 데이터
+   * @param {number} data.role - 역할 레벨
+   * @returns {Promise<IWorkspace>} 업데이트된 기본 워크스페이스 설정
+   */
+  async updateDefaultWorkspace(configId: string, data: { role: number }): Promise<IWorkspace> {
+    return this.patch(`/api/instances/default-workspaces/${configId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * 기본 워크스페이스 설정을 삭제합니다
+   * @param {string} configId - 설정 ID
+   * @returns {Promise<void>}
+   */
+  async deleteDefaultWorkspace(configId: string): Promise<void> {
+    return this.delete(`/api/instances/default-workspaces/${configId}/`)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

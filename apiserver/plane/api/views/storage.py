@@ -13,6 +13,7 @@ from plane.app.permissions import ProjectEntityPermission
 from .base import BaseAPIView
 from plane.settings.storage import S3Storage
 from plane.authentication.session import BaseSessionAuthentication
+from plane.license.models import Instance, InstanceAdmin
 
 logger = logging.getLogger(__name__)
 
@@ -59,12 +60,6 @@ class MinioUploadView(BaseAPIView):
             
             print(f"File Info - Key: {key}, Content-Type: {content_type}, Size: {file.size}")
             
-            # 파일 업로드 처리 전 로그 추가 (올바른 방식)
-            print(f"S3 클라이언트 엔드포인트: {storage.s3_client._endpoint}")
-            print(f"Storage 객체 엔드포인트 URL: {storage.aws_s3_endpoint_url}")
-            print(f"USE_MINIO 환경변수: {os.environ.get('USE_MINIO')}")
-            print(f"AWS_S3_ENDPOINT_URL 환경변수: {os.environ.get('AWS_S3_ENDPOINT_URL')}")
-            
             # 파일 업로드 처리
             response = storage.s3_client.put_object(
                 Bucket=settings.AWS_STORAGE_BUCKET_NAME,
@@ -72,6 +67,28 @@ class MinioUploadView(BaseAPIView):
                 Body=file,
                 ContentType=content_type
             )
+            
+            # 파일 업로드 성공 시 FileAsset 업데이트
+            try:
+                asset = FileAsset.objects.get(asset=key)
+                asset.is_uploaded = True
+                
+                # User avatar/cover 업데이트
+                if asset.entity_type in [FileAsset.EntityTypeContext.USER_AVATAR, FileAsset.EntityTypeContext.USER_COVER]:
+                    user = asset.user
+                    if asset.entity_type == FileAsset.EntityTypeContext.USER_AVATAR:
+                        user.avatar = f"/api/assets/v2/static/{asset.id}/"
+                        user.avatar_asset = asset
+                        user.save(update_fields=["avatar", "avatar_asset"])
+                    else:
+                        user.cover_image = f"/api/assets/v2/static/{asset.id}/"
+                        user.cover_image_asset = asset
+                        user.save(update_fields=["cover_image", "cover_image_asset"])
+                
+                asset.save(update_fields=["is_uploaded"])
+                print(f"FileAsset updated - Key: {key}, is_uploaded: True")
+            except FileAsset.DoesNotExist:
+                print(f"FileAsset not found for key: {key}")
             
             print("File upload successful")
             return Response(status=status.HTTP_200_OK)
@@ -86,10 +103,24 @@ class MinioUploadView(BaseAPIView):
 class StorageObjectView(BaseAPIView):
     """
     Minio 파일 접근을 위한 프록시 뷰
-    인증된 사용자만 파일에 접근할 수 있도록 처리
+    인증된 사용자 또는 인스턴스 관리자의 접근을 허용
     """
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [BaseSessionAuthentication]
+    permission_classes = []  # 인증 요구사항 제거
+    authentication_classes = []  # 인증 클래스 제거
+    
+    def is_instance_admin(self, user):
+        if not user or not user.is_authenticated:
+            return False
+            
+        instance = Instance.objects.first()
+        if not instance:
+            return False
+            
+        return InstanceAdmin.objects.filter(
+            instance=instance,
+            user=user,
+            role__gte=15  # 관리자 권한 체크
+        ).exists()
     
     def get(self, request, file_path):
         try:
@@ -101,6 +132,10 @@ class StorageObjectView(BaseAPIView):
             # 파일명 추출 (경로의 마지막 부분)
             file_name = file_path.split('/')[-1]
             print(f"검색할 파일명: {file_name}")
+            
+            # 인스턴스 관리자 여부 확인
+            is_admin = self.is_instance_admin(request.user)
+            print(f"Is instance admin: {is_admin}")
             
             # 파일 검색
             asset = FileAsset.objects.filter(
@@ -117,9 +152,17 @@ class StorageObjectView(BaseAPIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            # 프로젝트 관련 파일인 경우 프로젝트 멤버십 확인
-            if asset.project_id:
-                if not ProjectMember.objects.filter(
+            # 인스턴스 관리자가 아닌 경우에만 권한 체크
+            if not is_admin:
+                # 인증되지 않은 사용자인 경우
+                if not request.user.is_authenticated:
+                    return Response(
+                        {"error": "Authentication required"},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+
+                # 프로젝트 관련 파일인 경우 프로젝트 멤버십 확인
+                if asset.project_id and not ProjectMember.objects.filter(
                     project_id=asset.project_id,
                     member=request.user,
                     is_active=True
@@ -130,9 +173,8 @@ class StorageObjectView(BaseAPIView):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
-            # 워크스페이스 관련 파일인 경우 워크스페이스 멤버십 확인
-            if asset.workspace_id:
-                if not WorkspaceMember.objects.filter(
+                # 워크스페이스 관련 파일인 경우 워크스페이스 멤버십 확인
+                if asset.workspace_id and not WorkspaceMember.objects.filter(
                     workspace_id=asset.workspace_id,
                     member=request.user,
                     is_active=True

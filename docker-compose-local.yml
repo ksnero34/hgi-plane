@@ -137,6 +137,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
+      - plane-mq
 
   worker:
     container_name: dev-worker
@@ -158,7 +159,7 @@ services:
       - api
       - plane-db
       - plane-redis
-
+      - plane-mq
   beat-worker:
     container_name: dev-beat-worker
     build:
@@ -179,6 +180,7 @@ services:
       - api
       - plane-db
       - plane-redis
+      - plane-mq
 
   migrator:
     container_name: dev-migrator

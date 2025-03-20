@@ -62,6 +62,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
+      - plane-mq
     # image: hgi-plane-prod/api:0.0.59
 
   worker:
@@ -81,6 +82,7 @@ services:
       - api
       - plane-db
       - plane-redis
+      - plane-mq
     # image: hgi-plane-prod/worker:0.0.18
 
   beat-worker:
@@ -100,6 +102,7 @@ services:
       - api
       - plane-db
       - plane-redis
+      - plane-mq
     # image: hgi-plane-prod/beat-worker:0.0.18
 
   migrator:

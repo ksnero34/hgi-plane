@@ -31,7 +31,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
         """파일의 실제 MIME 타입을 확인"""
         mime = magic.Magic(mime=True)
         file.seek(0)  # 파일 포인터를 처음으로
-        mime_type = mime.from_buffer(file.read(1024))  # 처음 1024바���트만 읽어서 확인
+        mime_type = mime.from_buffer(file.read(1024))  # 처음 1024바이트만 읽어서 확인
         file.seek(0)  # 파일 포인터를 다시 처음으로
         return mime_type
 
@@ -135,7 +135,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             if not self.is_valid_mime_type(file_extension, mime_type):
                 return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
 
-        elif file_info:  # 파일 정��만 있는 경우
+        elif file_info:  # 파일 정보만 있는 경우
             # 파일 크기 검증
             if file_info.get('size', 0) > file_settings.max_file_size:
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
@@ -172,7 +172,10 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
         entity_type = request.data.get("entity_type", False)
 
         # Check if the entity type is allowed
-        if not entity_type or entity_type not in ["USER_AVATAR", "USER_COVER"]:
+        if not entity_type or entity_type not in [
+            FileAsset.EntityTypeContext.USER_AVATAR,
+            FileAsset.EntityTypeContext.USER_COVER
+        ]:
             return Response(
                 {"error": "Invalid entity type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -226,6 +229,74 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
             },
             status=status.HTTP_200_OK,
         )
+
+    def patch(self, request, asset_id):
+        """Update user profile image asset."""
+        asset = FileAsset.objects.filter(id=asset_id).first()
+        
+        # Check if the asset exists
+        if asset is None:
+            return Response(
+                {"error": "Asset not found", "status": False},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if the user has permission
+        if asset.user != request.user:
+            return Response(
+                {"error": "You don't have permission to update this asset", "status": False},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Update the asset
+        if request.data.get("is_uploaded", False):
+            # 먼저 is_uploaded 플래그를 True로 설정하고 저장
+            asset.is_uploaded = True
+            asset.save(update_fields=["is_uploaded"])
+            
+            # Update user profile based on entity type
+            user = request.user
+            if asset.entity_type == FileAsset.EntityTypeContext.USER_AVATAR:
+                # Delete previous avatar asset if exists
+                if user.avatar_asset:
+                    user.avatar_asset.is_deleted = True
+                    user.avatar_asset.deleted_at = timezone.now()
+                    user.avatar_asset.save(update_fields=["is_deleted", "deleted_at"])
+                
+                user.avatar = asset.asset_url
+                user.avatar_asset = asset
+                user.save(update_fields=["avatar", "avatar_asset"])
+            
+            elif asset.entity_type == FileAsset.EntityTypeContext.USER_COVER:
+                # Delete previous cover image asset if exists
+                if user.cover_image_asset:
+                    user.cover_image_asset.is_deleted = True
+                    user.cover_image_asset.deleted_at = timezone.now()
+                    user.cover_image_asset.save(update_fields=["is_deleted", "deleted_at"])
+                
+                user.cover_image = asset.asset_url
+                user.cover_image_asset = asset
+                user.save(update_fields=["cover_image", "cover_image_asset"])
+
+            # Invalidate user profile cache
+            invalidate_cache_directly(
+                path="/api/users/me/",
+                url_params=False,
+                user=True,
+                request=request,
+            )
+            invalidate_cache_directly(
+                path="/api/users/me/profile/",
+                url_params=False,
+                user=True,
+                request=request,
+            )
+
+            # Update storage metadata if needed
+            if not asset.storage_metadata:
+                get_asset_object_metadata.delay(asset_id=str(asset_id))
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
@@ -477,11 +548,19 @@ class StaticFileAssetEndpoint(BaseAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request, asset_id):
+        print("\n=== StaticFileAssetEndpoint GET ===")
+        print(f"asset_id: {asset_id}")
+        
         # get the asset id
         asset = FileAsset.objects.get(id=asset_id)
+        print(f"asset found: {asset}")
+        print(f"asset.is_uploaded: {asset.is_uploaded}")
+        print(f"asset.entity_type: {asset.entity_type}")
+        print(f"asset.asset.name: {asset.asset.name}")
 
         # Check if the asset is uploaded
         if not asset.is_uploaded:
+            print("Asset not uploaded")
             return Response(
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -494,6 +573,7 @@ class StaticFileAssetEndpoint(BaseAPIView):
             FileAsset.EntityTypeContext.WORKSPACE_LOGO,
             FileAsset.EntityTypeContext.PROJECT_COVER,
         ]:
+            print(f"Invalid entity type: {asset.entity_type}")
             return Response(
                 {"error": "Invalid entity type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -503,8 +583,12 @@ class StaticFileAssetEndpoint(BaseAPIView):
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
+        print(f"Generated signed URL: {signed_url}")
+        
         # URL의 도메인을 요청 도메인으로 변경
         modified_url = replace_domain_in_url(request, signed_url)
+        print(f"Modified URL: {modified_url}")
+        
         # Redirect to the modified signed URL
         return HttpResponseRedirect(modified_url)
 

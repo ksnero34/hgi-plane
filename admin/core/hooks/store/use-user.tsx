@@ -38,7 +38,7 @@ export const useAuth = () => {
   useEffect(() => {
     if (instance.instanceAdmins && user.currentUser) {
       console.log("Instance admins loaded:", {
-        adminCount: instance.instanceAdmins.length,
+        adminCount: Array.isArray(instance.instanceAdmins) ? instance.instanceAdmins.length : '배열이 아님',
         currentUserId: user.currentUser.id
       });
     }
@@ -46,7 +46,9 @@ export const useAuth = () => {
   
   // 인스턴스 관리자 확인
   const isInstanceAdmin = Boolean(
-    instance.instanceAdmins?.some(
+    instance.instanceAdmins && 
+    Array.isArray(instance.instanceAdmins) && 
+    instance.instanceAdmins.some(
       (admin) => admin.user === user.currentUser?.id && admin.role >= 15
     )
   );
@@ -71,6 +73,16 @@ export const useAuth = () => {
       });
     }
   }, [user.currentUser, user.isLoading, isInitialized, userIsAdmin, isInstanceAdmin, isAdmin, instance.instanceAdmins]);
+  
+  // 권한이 없는 경우 자동 리다이렉션
+  useEffect(() => {
+    if (!user.isLoading && isInitialized && user.currentUser && !isAdmin) {
+      console.log("권한이 없는 사용자 감지. 리다이렉션 수행...");
+      const currentPath = window.location.pathname;
+      const normalizedPath = currentPath.replace(/^\/god-mode/, '');
+      window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
+    }
+  }, [user.isLoading, isInitialized, user.currentUser, isAdmin]);
   
   return {
     isLoading: user.isLoading || !isInitialized,
