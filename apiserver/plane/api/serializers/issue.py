@@ -405,14 +405,45 @@ class IssueCommentSerializer(BaseSerializer):
         exclude = ["comment_stripped", "comment_json"]
 
     def validate(self, data):
-        try:
-            if data.get("comment_html", None) is not None:
-                parsed = html.fromstring(data["comment_html"])
-                parsed_str = html.tostring(parsed, encoding="unicode")
-                data["comment_html"] = parsed_str
-
-        except Exception:
-            raise serializers.ValidationError("Invalid HTML passed")
+        if data.get("comment_html", None) is not None:
+            try:
+                parser = html.HTMLParser(remove_blank_text=True)
+                tree = html.fromstring(data["comment_html"], parser=parser)
+                
+                # Find all file-component elements
+                file_components = tree.xpath("//file-component")
+                
+                for component in file_components:
+                    # Create a new element with camelCase attributes
+                    new_element = html.Element("file-component")
+                    
+                    # Map attributes to camelCase
+                    attr_mapping = {
+                        "id": "id",
+                        "filename": "fileName",
+                        "filesize": "fileSize",
+                        "filetype": "fileType",
+                        "uploadstatus": "uploadStatus"
+                    }
+                    
+                    # Copy attributes with camelCase names
+                    for old_attr, new_attr in attr_mapping.items():
+                        if component.get(old_attr):
+                            new_element.set(new_attr, component.get(old_attr))
+                        elif component.get(new_attr):  # Also check for existing camelCase
+                            new_element.set(new_attr, component.get(new_attr))
+                    
+                    # Set default uploadStatus if not present
+                    if not new_element.get("uploadStatus"):
+                        new_element.set("uploadStatus", "success")
+                    
+                    # Replace old element with new one
+                    component.getparent().replace(component, new_element)
+                
+                data["comment_html"] = html.tostring(tree, encoding="unicode")
+            except Exception as e:
+                raise ValidationError(f"HTML 파싱 오류: {str(e)}")
+        
         return data
 
 

@@ -5,10 +5,29 @@ import { FileBlock } from "./file-block";
 import { FileUploader } from "./file-uploader";
 
 export const FileNode = (props: CustomBaseFileNodeViewProps) => {
+  console.log("[FileNode] Rendering with props:", {
+    node: props.node,
+    attrs: props.node?.attrs,
+    editor: {
+      isEditable: props.editor?.isEditable,
+      storage: props.editor?.storage
+    }
+  });
+
+  if (!props.node || !props.node.attrs) {
+    console.error("[FileNode] Missing required props:", { props });
+    return null;
+  }
+
   const { node, editor, getPos, updateAttributes } = props;
   const { id: fileId, uploadStatus, fileName } = node.attrs;
 
-  const [isUploaded, setIsUploaded] = useState(uploadStatus === "success");
+  if (!fileId) {
+    console.error("[FileNode] Missing fileId:", { attrs: node.attrs });
+    return null;
+  }
+
+  const [isUploaded, setIsUploaded] = useState(uploadStatus === "success" || uploadStatus === undefined);
   const [failedToLoadFile, setFailedToLoadFile] = useState(uploadStatus === "error");
   const [editorContainer, setEditorContainer] = useState<HTMLDivElement | null>(null);
   const fileComponentRef = useRef<HTMLDivElement>(null);
@@ -21,7 +40,7 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   }, []);
 
   useEffect(() => {
-    setIsUploaded(uploadStatus === "success");
+    setIsUploaded(uploadStatus === "success" || uploadStatus === undefined);
     setFailedToLoadFile(uploadStatus === "error");
   }, [uploadStatus]);
 

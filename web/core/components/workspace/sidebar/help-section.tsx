@@ -78,7 +78,8 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
             maxHeight="lg"
             closeOnSelect
           >
-            <CustomMenu.MenuItem>
+            {/* Documentation menu item */}
+            {/* <CustomMenu.MenuItem>
               <a
                 href="https://go.plane.so/p-docs"
                 target="_blank"
@@ -87,7 +88,7 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
                 <FileText className="h-3.5 w-3.5 text-custom-text-200" size={14} />
                 <span className="text-xs">{t("documentation")}</span>
               </a>
-            </CustomMenu.MenuItem>
+            </CustomMenu.MenuItem> */}
             {config?.intercom_app_id && config?.is_intercom_enabled && (
               <CustomMenu.MenuItem>
                 <button
@@ -100,7 +101,8 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
                 </button>
               </CustomMenu.MenuItem>
             )}
-            <CustomMenu.MenuItem>
+            {/* Contact sales menu item */}
+            {/* <CustomMenu.MenuItem>
               <a
                 href="mailto:sales@plane.so"
                 target="_blank"
@@ -109,7 +111,7 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
                 <User className="h-3.5 w-3.5 text-custom-text-200" size={14} />
                 <span className="text-xs">{t("contact_sales")}</span>
               </a>
-            </CustomMenu.MenuItem>
+            </CustomMenu.MenuItem> */}
             <div className="my-1 border-t border-custom-border-200" />
             <CustomMenu.MenuItem>
               <div
@@ -135,7 +137,8 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
                 <span className="text-xs">{t("keyboard_shortcuts")}</span>
               </button>
             </CustomMenu.MenuItem>
-            <CustomMenu.MenuItem>
+            {/* What's new menu item */}
+            {/* <CustomMenu.MenuItem>
               <button
                 type="button"
                 onClick={() => setProductUpdatesModalOpen(true)}
@@ -143,8 +146,9 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
               >
                 <span className="text-xs">{t("whats_new")}</span>
               </button>
-            </CustomMenu.MenuItem>
-            <CustomMenu.MenuItem>
+            </CustomMenu.MenuItem> */}
+            {/* Discord menu item */}
+            {/* <CustomMenu.MenuItem>
               <a
                 href="https://go.plane.so/p-discord"
                 target="_blank"
@@ -152,7 +156,7 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
               >
                 <span className="text-xs">Discord</span>
               </a>
-            </CustomMenu.MenuItem>
+            </CustomMenu.MenuItem> */}
             <div className="px-1 pt-2 mt-1 text-xs text-custom-text-200 border-t border-custom-border-200">
               <PlaneVersionNumber />
             </div>
@@ -163,7 +167,10 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
             hidden: isCollapsed,
           })}
         >
-          <WorkspaceEditionBadge />
+          {/* <WorkspaceEditionBadge /> */}
+          <div className="bg-custom-background-80 text-custom-text-200 hover:bg-custom-background-90 hover:text-custom-text-100 flex items-center gap-1.5 whitespace-nowrap transition-all justify-center w-fit min-w-24 cursor-pointer rounded-2xl px-2 py-1 text-center text-sm font-medium">
+            HGI Issue Tracker
+          </div>
         </div>
         <div
           className={`flex flex-shrink-0 items-center gap-1 ${isCollapsed ? "flex-col justify-center" : "justify-evenly"}`}

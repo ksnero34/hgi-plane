@@ -31,7 +31,7 @@ export const CommandPaletteHelpActions: React.FC<Props> = observer((props) => {
           Open keyboard shortcuts
         </div>
       </Command.Item>
-      <Command.Item
+      {/* <Command.Item
         onSelect={() => {
           closePalette();
           window.open("https://docs.plane.so/", "_blank");
@@ -78,7 +78,7 @@ export const CommandPaletteHelpActions: React.FC<Props> = observer((props) => {
           <MessageSquare className="h-3.5 w-3.5" />
           Chat with us
         </div>
-      </Command.Item>
+      </Command.Item> */}
     </Command.Group>
   );
 });

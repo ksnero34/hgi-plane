@@ -189,7 +189,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
           ({ commands }) => {
             const id = uuid();
             
-            this.editor.storage.customFile.fileMap.set(id, {
+            this.storage.fileMap.set(id, {
               event: props.event,
               file: props.file,
               hasOpenedFileInputOnce: false,

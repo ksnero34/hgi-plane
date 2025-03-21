@@ -13,10 +13,30 @@ interface FileBlockProps extends CustomBaseFileNodeViewProps {
 }
 
 export const FileBlock = (props: FileBlockProps) => {
+  console.log("[FileBlock] Rendering with props:", {
+    node: props.node,
+    attrs: props.node?.attrs,
+    editorContainer: props.editorContainer,
+    onDelete: !!props.onDelete,
+    onDownload: !!props.onDownload,
+    editor: {
+      isEditable: props.editor?.isEditable
+    }
+  });
+
   const { node, editorContainer, onDelete, onDownload } = props;
   const { fileName, fileSize, fileType } = node.attrs;
+  const isReadOnly = props.editor.isEditable === false;
 
   const extension = fileName?.split(".").pop()?.toLowerCase() || "";
+  console.log("[FileBlock] File info:", {
+    fileName,
+    fileSize,
+    fileType,
+    extension,
+    isReadOnly
+  });
+
   const FileTypeIcon = getFileIconByExtension(extension);
   const formattedSize = fileSize ? (
     fileSize >= 1024 * 1024 
@@ -45,13 +65,15 @@ export const FileBlock = (props: FileBlockProps) => {
         >
           <Download className="w-4 h-4" />
         </button>
-        <button
-          onClick={onDelete}
-          className="p-1.5 text-custom-text-200 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-          title="Delete file"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={onDelete}
+            className="p-1.5 text-custom-text-200 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+            title="Delete file"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );

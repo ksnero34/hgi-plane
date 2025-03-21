@@ -600,19 +600,20 @@ class StaticFileAssetEndpoint(BaseAPIView):
                 from plane.api.views.storage import StorageObjectView
                 
                 user_id = str(request.user.id) if request.user.is_authenticated else None
-                access_token = StorageObjectView.generate_access_token(
-                    file_path=asset.asset.name,
-                    user_id=user_id
-                )
-                
-                # URL에 액세스 토큰 추가
-                url_parts = list(urlparse(modified_url))
-                query = dict(parse_qsl(url_parts[4]))
-                query.update({'access_token': access_token})
-                url_parts[4] = urlencode(query)
-                modified_url = urlunparse(url_parts)
-                
-                print(f"인증 토큰이 포함된 URL로 변경: {modified_url}")
+                if user_id:  # 인증된 사용자인 경우에만 토큰 생성
+                    access_token = StorageObjectView.generate_access_token(
+                        file_path=asset.asset.name,
+                        user_id=user_id
+                    )
+                    
+                    # URL에 액세스 토큰 추가
+                    url_parts = list(urlparse(modified_url))
+                    query = dict(parse_qsl(url_parts[4]))
+                    query.update({'access_token': access_token})
+                    url_parts[4] = urlencode(query)
+                    modified_url = urlunparse(url_parts)
+                    
+                    print(f"인증 토큰이 포함된 URL로 변경: {modified_url}")
             
             print(f"Modified URL: {modified_url}")
             

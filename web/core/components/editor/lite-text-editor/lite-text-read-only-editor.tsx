@@ -27,23 +27,46 @@ export const LiteTextReadOnlyEditor = React.forwardRef<EditorReadOnlyRefApi, Lit
     // editor config
     const { getReadOnlyEditorFileHandlers } = useEditorConfig();
 
-    return (
-      <LiteTextReadOnlyEditorWithRef
-        ref={ref}
-        disabledExtensions={[...disabledExtensions, ...(additionalDisabledExtensions ?? [])]}
-        fileHandler={getReadOnlyEditorFileHandlers({
-          projectId,
-          workspaceId,
-          workspaceSlug,
-        })}
-        mentionHandler={{
-          renderComponent: (props) => <EditorMentionsRoot {...props} />,
-        }}
-        {...props}
-        // overriding the containerClassName to add relative class passed
-        containerClassName={cn(props.containerClassName, "relative p-2")}
-      />
-    );
+    // console.log("[LiteTextReadOnlyEditor] Initializing with:", {
+    //   workspaceId,
+    //   workspaceSlug,
+    //   projectId,
+    //   props
+    // });
+
+    const fileHandler = React.useMemo(() => {
+      // console.log("[LiteTextReadOnlyEditor] Creating file handler");
+      const handler = getReadOnlyEditorFileHandlers({
+        projectId,
+        workspaceId,
+        workspaceSlug,
+      });
+      // console.log("[LiteTextReadOnlyEditor] Created file handler:", handler);
+      return handler;
+    }, [getReadOnlyEditorFileHandlers, projectId, workspaceId, workspaceSlug]);
+
+    if (!fileHandler) {
+      // console.error("[LiteTextReadOnlyEditor] Failed to create file handler");
+      return null;
+    }
+
+    try {
+      return (
+        <LiteTextReadOnlyEditorWithRef
+          ref={ref}
+          disabledExtensions={[...disabledExtensions, ...(additionalDisabledExtensions ?? [])]}
+          fileHandler={fileHandler}
+          mentionHandler={{
+            renderComponent: (props) => <EditorMentionsRoot {...props} />,
+          }}
+          {...props}
+          containerClassName={cn(props.containerClassName, "relative p-2")}
+        />
+      );
+    } catch (error) {
+      console.error("[LiteTextReadOnlyEditor] Error rendering editor:", error);
+      return null;
+    }
   }
 );
 
