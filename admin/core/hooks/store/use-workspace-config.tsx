@@ -58,13 +58,20 @@ export const useWorkspaceConfig = () => {
 
   const updateWorkspaceConfig = async (id: string, data: { role: number }) => {
     try {
+      console.log("워크스페이스 설정 업데이트 시작:", { id, role: data.role });
       await workspaceConfig.updateConfig(id, data);
+      console.log("워크스페이스 설정 업데이트 성공:", { id, role: data.role });
+      
+      // 업데이트 성공 후 목록 갱신
+      await fetchWorkspaceConfigs();
+      
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "워크스페이스 설정 업데이트 완료",
         message: "워크스페이스 설정이 성공적으로 업데이트되었습니다."
       });
     } catch (error) {
+      console.error("워크스페이스 설정 업데이트 실패:", error);
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "워크스페이스 설정 업데이트 실패",

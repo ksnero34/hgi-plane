@@ -109,15 +109,22 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
     try {
       // 기본 워크스페이스인 경우에만 API 호출
       if (defaultWorkspaces[workspaceId]) {
-        console.log("Updating workspace role:", { workspaceId, role });
-        await handleEditWorkspace({
+        console.log("역할 변경 시도:", { workspaceId, role, workspace });
+        
+        // API 호출을 위한 워크스페이스 객체 준비
+        const workspaceToUpdate = {
           ...workspace,
-          id: workspaceId,  // 워크스페이스 ID 전달
-          role
-        });
+          id: workspaceId,
+          role: role // 명시적으로 선택된 역할 값 설정
+        };
+        
+        console.log("업데이트할 데이터:", workspaceToUpdate);
+        
+        await handleEditWorkspace(workspaceToUpdate);
         
         // API 호출 성공 후 상태 업데이트
         setWorkspaceRoles((prev) => ({ ...prev, [workspaceId]: role }));
+        console.log("역할 변경 성공:", { workspaceId, newRole: role });
       } else {
         // 기본 워크스페이스가 아닌 경우 로컬 상태만 업데이트
         setWorkspaceRoles((prev) => ({ ...prev, [workspaceId]: role }));

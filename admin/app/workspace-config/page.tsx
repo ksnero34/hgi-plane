@@ -21,7 +21,8 @@ const WorkspaceConfigPage = observer(() => {
     isLoading: isConfigLoading,
     fetchWorkspaceConfigs,
     createWorkspaceConfig,
-    deleteWorkspaceConfig
+    deleteWorkspaceConfig,
+    updateWorkspaceConfig
   } = useWorkspaceConfig();
   const [dataInitialized, setDataInitialized] = useState(false);
 
@@ -118,10 +119,10 @@ const WorkspaceConfigPage = observer(() => {
 
   const handleEditWorkspace = (workspaceConfig: any) => {
     // 워크스페이스 역할 변경 처리
-    createWorkspaceConfig({
-      workspace_id: workspaceConfig.id,
-      role: workspaceConfig.role
-    })
+    updateWorkspaceConfig(
+      workspaceConfig.id,
+      { role: workspaceConfig.role }
+    )
       .catch(error => {
         // 401 에러 확인 및 처리
         checkAndLogError(error, "워크스페이스 설정 업데이트");
