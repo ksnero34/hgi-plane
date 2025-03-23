@@ -45,7 +45,7 @@ Meet [Plane](https://dub.sh/plane-website-readme), an open-source project manage
 
 ## Customized Plane for HGI
 
-일정 관리 용도로 사용하기 위해 기존 Plane 코드를 커스터마이징 하였습니다.
+프로젝트 일정, 이슈 관리 용도로 사용하기 위해 기존 Plane 코드를 커스터마이징 하였습니다.
 
 #### 추가된 기능
 
@@ -62,6 +62,8 @@ Meet [Plane](https://dub.sh/plane-website-readme), an open-source project manage
 - page 본문에 파일 노드 추가 및 업로드 기능 구현(이슈에서도 동일기능 사용 가능)
 - 중복로그인 방지 기능 추가 (로그인 시 유저의 다른 활성 세션 삭제)
 - 워크스페이스 명에 한글 입력 가능하도록 수정
+- 신규 사용자가 기본적으로 들어갈 워크스페이스 설정 가능 + 권한 설정 가능
+- apiserver 통해서 버킷통신하도록 수정(권한체크용)
 - 이 외 계속 추가중...
 
 
