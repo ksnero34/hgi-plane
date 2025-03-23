@@ -13,7 +13,7 @@ interface FileBlockProps extends CustomBaseFileNodeViewProps {
 }
 
 export const FileBlock = (props: FileBlockProps) => {
-  const { node, editorContainer, onDelete, onDownload } = props;
+  const { node, editor, editorContainer, onDelete, onDownload } = props;
   const { fileName, fileSize, fileType } = node.attrs;
 
   const extension = fileName?.split(".").pop()?.toLowerCase() || "";
@@ -45,13 +45,15 @@ export const FileBlock = (props: FileBlockProps) => {
         >
           <Download className="w-4 h-4" />
         </button>
-        <button
-          onClick={onDelete}
-          className="p-1.5 text-custom-text-200 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-          title="Delete file"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {editor.isEditable && (
+          <button
+            onClick={onDelete}
+            className="p-1.5 text-custom-text-200 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+            title="Delete file"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );

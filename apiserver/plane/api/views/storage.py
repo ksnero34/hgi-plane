@@ -30,10 +30,10 @@ class MinioUploadView(BaseAPIView):
     
     def post(self, request, *args, **kwargs):
         try:
-            print("\n=== MinioUploadView POST ===")
-            print(f"Request Headers: {request.headers}")
-            print(f"Request POST data: {request.POST}")
-            print(f"Request FILES: {request.FILES}")
+            # print("\n=== MinioUploadView POST ===")
+            # print(f"Request Headers: {request.headers}")
+            # print(f"Request POST data: {request.POST}")
+            # print(f"Request FILES: {request.FILES}")
             
             # S3Storage를 사용하여 파일 업로드
             storage = S3Storage(request=request)
@@ -41,7 +41,7 @@ class MinioUploadView(BaseAPIView):
             # 파일 데이터 가져오기 (multipart/form-data에서 file 필드)
             files = request.FILES
             if not files:
-                print("Error: No file provided")
+                # print("Error: No file provided")
                 return Response(
                     {"error": "No file provided"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -56,13 +56,13 @@ class MinioUploadView(BaseAPIView):
             # Key 파라미터 확인 (POST 데이터에서)
             key = request.POST.get('key')
             if not key:
-                print("Error: No key parameter provided in POST data")
+                # print("Error: No key parameter provided in POST data")
                 return Response(
                     {"error": "No key parameter provided"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            print(f"File Info - Key: {key}, Content-Type: {content_type}, Size: {file.size}")
+            # print(f"File Info - Key: {key}, Content-Type: {content_type}, Size: {file.size}")
             
             # 파일 업로드 처리
             response = storage.s3_client.put_object(
@@ -90,15 +90,16 @@ class MinioUploadView(BaseAPIView):
                         user.save(update_fields=["cover_image", "cover_image_asset"])
                 
                 asset.save(update_fields=["is_uploaded"])
-                print(f"FileAsset updated - Key: {key}, is_uploaded: True")
+                # print(f"FileAsset updated - Key: {key}, is_uploaded: True")
             except FileAsset.DoesNotExist:
-                print(f"FileAsset not found for key: {key}")
+                # print(f"FileAsset not found for key: {key}")
+                pass
             
-            print("File upload successful")
+            # print("File upload successful")
             return Response(status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error during file upload: {str(e)}")
+            # print(f"Error during file upload: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -148,19 +149,19 @@ class StorageObjectView(BaseAPIView):
         file_path = self.kwargs.get('file_path')
         if not file_path:
             # 파일 경로가 없으면 일반 권한 체크 진행
-            print("파일 경로 없음, 일반 권한 체크 진행")
+            # print("파일 경로 없음, 일반 권한 체크 진행")
             return super().check_permissions(request)
             
         # 액세스 토큰 확인
         access_token = request.GET.get('access_token')
         if access_token and self.validate_access_token(file_path, access_token):
-            print(f"유효한 접근 토큰으로 접근: {file_path}")
+            # print(f"유효한 접근 토큰으로 접근: {file_path}")
             return None
         
         # 파일명 추출
         file_name = file_path.split('/')[-1]
         
-        print(f"권한 체크 중: 파일 '{file_name}', 인증 상태: {request.user.is_authenticated}")
+        # print(f"권한 체크 중: 파일 '{file_name}', 인증 상태: {request.user.is_authenticated}")
         
         # 파일이 공개 에셋인지 확인
         asset = FileAsset.objects.filter(
@@ -169,17 +170,17 @@ class StorageObjectView(BaseAPIView):
         ).first()
         
         if not asset:
-            print(f"에셋을 찾을 수 없음: {file_name}, 일반 권한 체크 진행")
+            # print(f"에셋을 찾을 수 없음: {file_name}, 일반 권한 체크 진행")
             return super().check_permissions(request)
         
-        print(f"에셋 정보 - 타입: {asset.entity_type}, 업로드 여부: {asset.is_uploaded}")
+        # print(f"에셋 정보 - 타입: {asset.entity_type}, 업로드 여부: {asset.is_uploaded}")
         
         # 공개 에셋이면 권한 체크 건너뜀
         if asset.entity_type in self.PUBLIC_ASSET_TYPES:
-            print(f"공개 에셋 타입({asset.entity_type})이므로 권한 체크 생략")
+            # print(f"공개 에셋 타입({asset.entity_type})이므로 권한 체크 생략")
             return None
         
-        print(f"비공개 에셋 타입({asset.entity_type})이므로 일반 권한 체크 진행")
+        # print(f"비공개 에셋 타입({asset.entity_type})이므로 일반 권한 체크 진행")
         # 그 외의 경우 일반 권한 체크 진행
         return super().check_permissions(request)
     
@@ -199,122 +200,177 @@ class StorageObjectView(BaseAPIView):
     
     def get(self, request, file_path):
         try:
-            # URL 쿼리 파라미터 처리
-            query_params = request.GET.dict()
-            
-            print(f"요청된 file_path: {file_path}")
-            
-            # 파일명 추출 (경로의 마지막 부분)
+            # 파일명 추출
             file_name = file_path.split('/')[-1]
-            print(f"검색할 파일명: {file_name}")
+            # print(f"검색할 파일명: {file_name}")
             
-            # 인스턴스 관리자 여부 확인
-            is_admin = self.is_instance_admin(request.user)
-            print(f"Is instance admin: {is_admin}")
-            
-            # 파일 검색
+            # 에셋 검색
             asset = FileAsset.objects.filter(
-                asset__icontains=file_name,  # 파일명으로 검색
+                asset__icontains=file_name,
                 is_deleted=False
             ).first()
             
-            if asset:
-                print(f"파일 찾음 - asset.asset: {asset.asset}")
-            else:
-                print(f"파일을 찾을 수 없음: {file_path}")
+            if not asset:
                 return Response(
-                    {"error": f"File not found: {file_path}"},
+                    {"error": "File not found"},
                     status=status.HTTP_404_NOT_FOUND
                 )
-
-            # 인스턴스 관리자가 아닌 경우에만 권한 체크
-            if not is_admin:
-                # 사용자가 이미 인증되어 있음 (권한 클래스에서 체크됨)
-                # 이전에 인증 체크를 수행하던 코드 대신 프로젝트/워크스페이스 접근 권한만 확인
-
-                # 프로젝트 관련 파일인 경우 프로젝트 멤버십 확인
-                if asset.project_id and not ProjectMember.objects.filter(
-                    project_id=asset.project_id,
-                    member=request.user,
-                    is_active=True
-                ).exists():
-                    print(f"프로젝트 접근 권한 없음: {request.user}")
-                    return Response(
-                        {"error": "You don't have permission to access this file."},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-
-                # 워크스페이스 관련 파일인 경우 워크스페이스 멤버십 확인
-                if asset.workspace_id and not WorkspaceMember.objects.filter(
-                    workspace_id=asset.workspace_id,
-                    member=request.user,
-                    is_active=True
-                ).exists():
-                    print(f"워크스페이스 접근 권한 없음: {request.user}")
-                    return Response(
-                        {"error": "You don't have permission to access this file."},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-
-            # S3Storage를 사용하여 파일 스트리밍
-            storage = S3Storage(request=request)
-            s3_response = storage.s3_client.get_object(
-                Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                Key=str(asset.asset)
-            )
             
-            if not s3_response:
-                print(f"파일 스트리밍 실패: {asset.asset}")
-                return Response(
-                    {"error": "File streaming failed"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            # 공개 에셋인 경우 토큰 생성 없이 바로 스트리밍
+            if asset.entity_type in self.PUBLIC_ASSET_TYPES:
+                storage = S3Storage(request=request)
+                s3_response = storage.s3_client.get_object(
+                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                    Key=str(asset.asset)
                 )
                 
-            print(f"파일 스트리밍 시작: {asset.asset}")
+                # 청크 크기 설정 (8MB)
+                chunk_size = 8 * 1024 * 1024
+                
+                def file_streamer():
+                    try:
+                        while True:
+                            chunk = s3_response['Body'].read(chunk_size)
+                            if not chunk:
+                                break
+                            yield chunk
+                    finally:
+                        s3_response['Body'].close()
+                
+                content_type = s3_response.get('ContentType', 'application/octet-stream')
+                response = StreamingHttpResponse(
+                    file_streamer(),
+                    content_type=content_type
+                )
+                
+                # Content-Disposition 헤더 설정
+                disposition = request.GET.get('response-content-disposition', 'inline')
+                response['Content-Disposition'] = disposition
+                
+                return response
             
-            # 파일 확장자에 따른 content-type 설정
-            content_type = s3_response.get('ContentType', 'application/octet-stream')
-            print(f"Content-Type from S3: {content_type}")
-            
-            # S3에서 받은 content-type이 없거나 기본값인 경우 파일 확장자로 판단
-            if content_type == 'application/octet-stream':
-                asset_path = str(asset.asset)
-                if asset_path.lower().endswith('.pdf'):
-                    content_type = 'application/pdf'
-                elif asset_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
-                    content_type = 'image/' + asset_path.lower().split('.')[-1]
-                print(f"Content-Type from extension: {content_type}")
-            
-            # 청크 크기 설정 (8MB)
-            chunk_size = 8 * 1024 * 1024
-            
-            def file_streamer():
-                try:
-                    while True:
-                        chunk = s3_response['Body'].read(chunk_size)
-                        if not chunk:
-                            break
-                        yield chunk
-                finally:
-                    s3_response['Body'].close()
-            
-            response = StreamingHttpResponse(
-                file_streamer(),
-                content_type=content_type
-            )
-            
-            # Content-Disposition 헤더 설정
-            disposition = query_params.get('response-content-disposition', 'inline')
-            response['Content-Disposition'] = disposition
-            
-            # Content-Length 헤더 설정 (있는 경우)
-            if 'ContentLength' in s3_response:
-                response['Content-Length'] = str(s3_response['ContentLength'])
-            
-            return response
+            # 비공개 에셋인 경우 기존 로직대로 처리
+            else:
+                if not request.user.is_authenticated:
+                    return Response(
+                        {"error": "Authentication required"},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+                
+                user_id = str(request.user.id)
+                access_token = self.generate_access_token(
+                    file_path=asset.asset.name,
+                    user_id=user_id
+                )
+                
+                # 인스턴스 관리자 여부 확인
+                is_admin = self.is_instance_admin(request.user)
+                # print(f"Is instance admin: {is_admin}")
+                
+                # 파일 검색
+                asset = FileAsset.objects.filter(
+                    asset__icontains=file_name,  # 파일명으로 검색
+                    is_deleted=False
+                ).first()
+                
+                if asset:
+                    # print(f"파일 찾음 - asset.asset: {asset.asset}")
+                    pass
+                else:
+                    # print(f"파일을 찾을 수 없음: {file_path}")
+                    return Response(
+                        {"error": f"File not found: {file_path}"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                # 인스턴스 관리자가 아닌 경우에만 권한 체크
+                if not is_admin:
+                    # 사용자가 이미 인증되어 있음 (권한 클래스에서 체크됨)
+                    # 이전에 인증 체크를 수행하던 코드 대신 프로젝트/워크스페이스 접근 권한만 확인
+
+                    # 프로젝트 관련 파일인 경우 프로젝트 멤버십 확인
+                    if asset.project_id and not ProjectMember.objects.filter(
+                        project_id=asset.project_id,
+                        member=request.user,
+                        is_active=True
+                    ).exists():
+                        # print(f"프로젝트 접근 권한 없음: {request.user}")
+                        return Response(
+                            {"error": "You don't have permission to access this file."},
+                            status=status.HTTP_403_FORBIDDEN
+                        )
+
+                    # 워크스페이스 관련 파일인 경우 워크스페이스 멤버십 확인
+                    if asset.workspace_id and not WorkspaceMember.objects.filter(
+                        workspace_id=asset.workspace_id,
+                        member=request.user,
+                        is_active=True
+                    ).exists():
+                        # print(f"워크스페이스 접근 권한 없음: {request.user}")
+                        return Response(
+                            {"error": "You don't have permission to access this file."},
+                            status=status.HTTP_403_FORBIDDEN
+                        )
+
+                # S3Storage를 사용하여 파일 스트리밍
+                storage = S3Storage(request=request)
+                s3_response = storage.s3_client.get_object(
+                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                    Key=str(asset.asset)
+                )
+                
+                if not s3_response:
+                    # print(f"파일 스트리밍 실패: {asset.asset}")
+                    return Response(
+                        {"error": "File streaming failed"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                
+                # print(f"파일 스트리밍 시작: {asset.asset}")
+                
+                # 파일 확장자에 따른 content-type 설정
+                content_type = s3_response.get('ContentType', 'application/octet-stream')
+                # print(f"Content-Type from S3: {content_type}")
+                
+                # S3에서 받은 content-type이 없거나 기본값인 경우 파일 확장자로 판단
+                if content_type == 'application/octet-stream':
+                    asset_path = str(asset.asset)
+                    if asset_path.lower().endswith('.pdf'):
+                        content_type = 'application/pdf'
+                    elif asset_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                        content_type = 'image/' + asset_path.lower().split('.')[-1]
+                    # print(f"Content-Type from extension: {content_type}")
+                
+                # 청크 크기 설정 (8MB)
+                chunk_size = 8 * 1024 * 1024
+                
+                def file_streamer():
+                    try:
+                        while True:
+                            chunk = s3_response['Body'].read(chunk_size)
+                            if not chunk:
+                                break
+                            yield chunk
+                    finally:
+                        s3_response['Body'].close()
+                
+                response = StreamingHttpResponse(
+                    file_streamer(),
+                    content_type=content_type
+                )
+                
+                # Content-Disposition 헤더 설정
+                disposition = request.GET.get('response-content-disposition', 'inline')
+                response['Content-Disposition'] = disposition
+                
+                # Content-Length 헤더 설정 (있는 경우)
+                if 'ContentLength' in s3_response:
+                    response['Content-Length'] = str(s3_response['ContentLength'])
+                
+                return response
                 
         except Exception as e:
-            print(f"파일 스트리밍 중 에러 발생: {str(e)}")
+            # print(f"파일 스트리밍 중 에러 발생: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

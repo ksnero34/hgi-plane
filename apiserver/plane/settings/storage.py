@@ -58,10 +58,10 @@ class S3Storage(S3Boto3Storage):
         self, object_name, file_type, file_size, expiration=3600
     ):
         """Generate a presigned URL to upload an S3 object"""
-        print(f"\n=== Generate Presigned Post ===")
-        print(f"object_name: {object_name}")
-        print(f"file_type: {file_type}")
-        print(f"file_size: {file_size}")
+        # print(f"\n=== Generate Presigned Post ===")
+        # print(f"object_name: {object_name}")
+        # print(f"file_type: {file_type}")
+        # print(f"file_size: {file_size}")
 
         fields = {
             "Content-Type": file_type,
@@ -75,8 +75,8 @@ class S3Storage(S3Boto3Storage):
             {"key": object_name},
         ]
 
-        print(f"\nFields: {fields}")
-        print(f"Conditions: {conditions}")
+        # print(f"\nFields: {fields}")
+        # print(f"Conditions: {conditions}")
 
         try:
             # Generate a presigned URL for the S3 object

@@ -25,6 +25,8 @@ import {
   CustomCalloutReadOnlyExtension,
   CustomColorExtension,
 } from "@/extensions";
+// CustomReadOnlyFileExtension 직접 임포트
+import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
 // helpers
 import { isValidHttpUrl } from "@/helpers/common";
 // plane editor extensions
@@ -140,6 +142,11 @@ export const CoreReadOnlyEditorExtensions = (props: Props): Extensions => {
       CustomReadOnlyImageExtension(fileHandler)
     );
   }
+
+  // 파일 노드는 항상 필요하기 때문에 조건 없이 추가
+  extensions.push(
+    CustomReadOnlyFileExtension({ getAssetSrc: fileHandler.getAssetSrc })
+  );
 
   // @ts-expect-error tiptap types are incorrect
   return extensions;

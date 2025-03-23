@@ -30,7 +30,7 @@ const WorkspaceConfigPage = observer(() => {
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
-    console.log("인증 오류가 발생했습니다. 로그인 페이지로 리다이렉션합니다.");
+    // console.log("인증 오류가 발생했습니다. 로그인 페이지로 리다이렉션합니다.");
     const normalizedPath = getNormalizedPath(pathname);
     window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
   };
@@ -38,8 +38,8 @@ const WorkspaceConfigPage = observer(() => {
   // 에러 확인 유틸리티
   const checkAndLogError = (error: any, context: string): boolean => {
     // 에러 디버깅을 위해 상세 정보 출력
-    console.error(`${context} 중 에러 발생:`, error);
-    console.log("에러 타입:", typeof error);
+      console.error(`${context} 중 에러 발생:`, error);
+      console.log("에러 타입:", typeof error);
 
     try {
       console.log("에러 객체 구조:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
@@ -63,10 +63,10 @@ const WorkspaceConfigPage = observer(() => {
       error?.status === 401 ||
       (error?.message && error.message.includes("401"));
 
-    console.log("401 에러 여부:", status401);
+    // console.log("401 에러 여부:", status401);
 
     if (status401) {
-      console.log("401 에러 감지, 리다이렉션 수행");
+      // console.log("401 에러 감지, 리다이렉션 수행");
       handleAuthError();
     }
 
@@ -76,7 +76,7 @@ const WorkspaceConfigPage = observer(() => {
   // 인증 상태가 변경될 때마다 데이터 초기화 여부 확인
   useEffect(() => {
     if (!authLoading && isAdmin === true && !dataInitialized) {
-      console.log("워크스페이스 설정 데이터 초기화 시작");
+      // console.log("워크스페이스 설정 데이터 초기화 시작");
       loadData();
     }
   }, [authLoading, isAdmin, dataInitialized]);
@@ -84,7 +84,7 @@ const WorkspaceConfigPage = observer(() => {
   const loadData = async () => {
     try {
       await fetchWorkspaceConfigs();
-      console.log("데이터 로드 완료");
+      // console.log("데이터 로드 완료");
       setDataInitialized(true);
     } catch (error) {
       console.error("데이터 로드 실패:", error);
@@ -97,7 +97,7 @@ const WorkspaceConfigPage = observer(() => {
     if (!authLoading) {
       if (!isAdmin) {
         // 관리자가 아닌 경우 즉시 리다이렉션
-        console.log("관리자 권한이 없습니다. 리다이렉션을 수행합니다.");
+          // console.log("관리자 권한이 없습니다. 리다이렉션을 수행합니다.");
         const normalizedPath = getNormalizedPath(pathname);
         window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
         return;
@@ -129,39 +129,39 @@ const WorkspaceConfigPage = observer(() => {
   };
 
   const handleDeleteWorkspace = async (configId: string) => {
-    console.log("삭제 요청 받음, config_id:", configId);
+    // console.log("삭제 요청 받음, config_id:", configId);
 
     try {
       // 삭제 요청 전 로딩 상태 표시 (필요한 경우)
       // setIsDeleting(true);
 
       await deleteWorkspaceConfig(configId);
-      console.log("워크스페이스 설정 삭제 성공:", configId);
+      // console.log("워크스페이스 설정 삭제 성공:", configId);
 
       // 목록 갱신
-      console.log("설정 목록 갱신 시작");
+      // console.log("설정 목록 갱신 시작");
       try {
         await fetchWorkspaceConfigs();
-        console.log("설정 목록 갱신 성공");
+        // console.log("설정 목록 갱신 성공");
       } catch (refreshError) {
-        console.error("워크스페이스 설정 삭제 후 목록 갱신 실패:", refreshError);
+        // console.error("워크스페이스 설정 삭제 후 목록 갱신 실패:", refreshError);
         checkAndLogError(refreshError, "워크스페이스 설정 삭제 후 목록 갱신");
         // 목록 갱신 실패는 삭제 자체의 실패는 아니므로 사용자에게 별도 알림 없이 계속 진행
       }
     } catch (error) {
-      console.error("워크스페이스 설정 삭제 실패:", error);
+      // console.error("워크스페이스 설정 삭제 실패:", error);
 
       // 상세 오류 정보 로깅
       if (error instanceof Error) {
-        console.error("오류 이름:", error.name);
-        console.error("오류 메시지:", error.message);
-        console.error("오류 스택:", error.stack);
+        // console.error("오류 이름:", error.name);
+        // console.error("오류 메시지:", error.message);
+        // console.error("오류 스택:", error.stack);
       }
 
       const errorResponse = (error as any)?.response;
       if (errorResponse) {
-        console.error("서버 응답 상태:", errorResponse.status);
-        console.error("서버 응답 데이터:", errorResponse.data);
+        // console.error("서버 응답 상태:", errorResponse.status);
+        // console.error("서버 응답 데이터:", errorResponse.data);
       }
 
       // 401 오류 확인 및 처리

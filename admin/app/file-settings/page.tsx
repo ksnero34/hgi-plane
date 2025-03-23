@@ -30,7 +30,7 @@ function FileSettingsPage() {
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
-    console.log("인증 오류가 발생했습니다. 로그인 페이지로 리다이렉션합니다.");
+    // console.log("인증 오류가 발생했습니다. 로그인 페이지로 리다이렉션합니다.");
     const normalizedPath = getNormalizedPath(pathname);
     window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
   };

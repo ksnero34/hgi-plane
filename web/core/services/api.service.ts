@@ -19,8 +19,12 @@ export abstract class APIService {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response && error.response.status === 401) {
-          window.location.reload();
+        if (
+          error.response?.status === 401 && 
+          !error.config.url.includes('/api/instances/file-settings/')
+        ) {
+          const currentPath = window.location.pathname;
+          window.location.replace(`/${currentPath ? `?next_path=${currentPath}` : ``}`);
         }
         return Promise.reject(error);
       }

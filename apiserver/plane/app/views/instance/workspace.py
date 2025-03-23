@@ -283,7 +283,7 @@ class DefaultWorkspaceConfigViewSet(viewsets.ModelViewSet):
                 "prev_cursor": None
             }
             
-            print(f"Available workspaces response format: {response_data}")
+            # print(f"Available workspaces response format: {response_data}")
             
             # 명시적으로 JSON 직렬화가 가능한 형식으로 반환
             return Response(
@@ -292,7 +292,7 @@ class DefaultWorkspaceConfigViewSet(viewsets.ModelViewSet):
                 content_type="application/json"
             )
         except Exception as e:
-            print(f"Error in available_workspaces: {str(e)}")
+            # print(f"Error in available_workspaces: {str(e)}")
             # 오류 발생 시에도 페이지네이션 형식으로 빈 리스트 반환
             response_data = {
                 "results": [],

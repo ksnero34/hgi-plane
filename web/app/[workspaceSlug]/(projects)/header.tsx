@@ -38,7 +38,9 @@ export const WorkspaceDashboardHeader = () => {
           </div>
         </Header.LeftItem>
         <Header.RightItem>
-          <a
+          <div />
+          {/* GitHub Star 버튼 */}
+          {/* <a
             onClick={() =>
               captureEvent(GITHUB_REDIRECTED, {
                 element: "navbar",
@@ -56,7 +58,7 @@ export const WorkspaceDashboardHeader = () => {
               alt="GitHub Logo"
             />
             <span className="hidden text-xs font-medium sm:hidden md:block">{t("home.star_us_on_github")}</span>
-          </a>
+          </a> */}
         </Header.RightItem>
       </Header>
     </>

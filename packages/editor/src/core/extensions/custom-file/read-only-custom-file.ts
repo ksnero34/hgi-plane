@@ -1,5 +1,4 @@
-import { mergeAttributes } from "@tiptap/core";
-import { Node } from "@tiptap/core";
+import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 // components
 import { FileNode } from "./components/file-node";
@@ -18,6 +17,9 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
 
     addAttributes() {
       return {
+        id: {
+          default: null,
+        },
         fileId: {
           default: null,
         },
@@ -28,6 +30,12 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
           default: null,
         },
         fileType: {
+          default: null,
+        },
+        uploadStatus: {
+          default: "success",
+        },
+        errorMessage: {
           default: null,
         },
       };
@@ -51,12 +59,16 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
         markdown: {
           serialize() {},
         },
-      };
-    },
-
-    addCommands() {
-      return {
-        getFileSource: (path: string) => async () => await getAssetSrc(path),
+        fileHandler: {
+          getAssetSrc: async (path: string) => {
+            try {
+              return await getAssetSrc(path);
+            } catch (error) {
+              console.error("Error getting file URL:", error);
+              return "";
+            }
+          }
+        }
       };
     },
 

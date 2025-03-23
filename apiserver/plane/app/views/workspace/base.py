@@ -83,13 +83,13 @@ class WorkSpaceViewSet(BaseViewSet):
             is_instance_path = request.path.startswith('/api/instances/workspaces/')
             
             # 디버깅 로그 추가
-            print("=== Workspace Create Debug Info ===")
-            print(f"User ID: {request.user.id}")
-            print(f"User Email: {request.user.email}")
-            print(f"Path: {request.path}")
-            print(f"Is instance path: {is_instance_path}")
-            print(f"Request data: {request.data}")
-            print("=====================")
+            # print("=== Workspace Create Debug Info ===")
+            # print(f"User ID: {request.user.id}")
+            # print(f"User Email: {request.user.email}")
+            # print(f"Path: {request.path}")
+            # print(f"Is instance path: {is_instance_path}")
+            # print(f"Request data: {request.data}")
+            # print("=====================")
 
             # 인스턴스 관리자 권한 확인
             instance = Instance.objects.first()
@@ -99,7 +99,7 @@ class WorkSpaceViewSet(BaseViewSet):
                 role__gte=15
             ).exists()
             
-            print(f"Is instance admin: {is_instance_admin}")
+            # print(f"Is instance admin: {is_instance_admin}")
 
             (DISABLE_WORKSPACE_CREATION,) = get_configuration_value(
                 [
@@ -161,7 +161,7 @@ class WorkSpaceViewSet(BaseViewSet):
                 data["total_members"] = total_members
                 data["role"] = 20
 
-                print(f"Workspace created successfully: {data}")
+                # print(f"Workspace created successfully: {data}")
                 
                 cache.delete_pattern("/api/instances/workspaces/*")
                 
@@ -172,14 +172,14 @@ class WorkSpaceViewSet(BaseViewSet):
             )
 
         except IntegrityError as e:
-            print(f"Integrity error: {str(e)}")
+            # print(f"Integrity error: {str(e)}")
             if "already exists" in str(e):
                 return Response(
                     {"slug": "The workspace with the slug already exists"},
                     status=status.HTTP_410_GONE,
                 )
         except Exception as e:
-            print(f"Unexpected error: {str(e)}")
+            # print(f"Unexpected error: {str(e)}")
             return Response(
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -223,13 +223,13 @@ class WorkSpaceViewSet(BaseViewSet):
                 .order_by("name")
                 .annotate(total_members=member_count)
             )
-            print(f"Query SQL: {queryset.query}")
-            print(f"Total workspaces found: {queryset.count()}")
+            # print(f"Query SQL: {queryset.query}")
+            # print(f"Total workspaces found: {queryset.count()}")
             
             serializer = self.get_serializer(queryset, many=True)
             workspace_data = serializer.data
-            print(f"Serialized {len(workspace_data)} workspaces")
-            print(f"Sample workspace data: {workspace_data[0] if workspace_data else 'No workspaces found'}")
+            # print(f"Serialized {len(workspace_data)} workspaces")
+            # print(f"Sample workspace data: {workspace_data[0] if workspace_data else 'No workspaces found'}")
             
             response_data = {
                 "results": workspace_data,
@@ -238,7 +238,7 @@ class WorkSpaceViewSet(BaseViewSet):
                 "prev_cursor": None,
             }
             
-            print(f"Response format: {response_data.keys()}")
+            # print(f"Response format: {response_data.keys()}")
             
             return Response(response_data, status=status.HTTP_200_OK)
         

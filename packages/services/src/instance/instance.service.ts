@@ -271,8 +271,8 @@ export class InstanceService extends APIService {
     // CSRF 토큰 요청
     const csrfToken = await this.requestCSRFToken();
     
-    console.log(`CSRF 토큰 received: ${csrfToken.csrf_token}`);
-    console.log(`DELETE 요청 경로: /api/instances/default-workspaces/${configId}/`);
+    // console.log(`CSRF 토큰 received: ${csrfToken.csrf_token}`);
+    // console.log(`DELETE 요청 경로: /api/instances/default-workspaces/${configId}/`);
     
     // CSRF 토큰을 헤더에 올바르게 포함
     return this.delete(
@@ -285,7 +285,7 @@ export class InstanceService extends APIService {
       }
     )
       .then((response) => {
-        console.log("삭제 요청 성공:", response?.status);
+        // console.log("삭제 요청 성공:", response?.status);
         return response?.data;
       })
       .catch((error) => {

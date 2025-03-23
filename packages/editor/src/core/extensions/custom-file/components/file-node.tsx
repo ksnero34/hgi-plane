@@ -6,7 +6,11 @@ import { FileUploader } from "./file-uploader";
 
 export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   const { node, editor, getPos, updateAttributes } = props;
-  const { id: fileId, uploadStatus, fileName } = node.attrs;
+  
+  // 속성을 안전하게 추출 (id와 fileId 둘 다 지원)
+  const fileId = node.attrs.id || node.attrs.fileId;
+  const fileName = node.attrs.fileName;
+  const uploadStatus = node.attrs.uploadStatus || "success";
 
   const [isUploaded, setIsUploaded] = useState(uploadStatus === "success");
   const [failedToLoadFile, setFailedToLoadFile] = useState(uploadStatus === "error");
@@ -26,6 +30,9 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   }, [uploadStatus]);
 
   const handleDelete = async () => {
+    // 편집 모드가 아니면 삭제 불가능
+    if (!editor.isEditable) return;
+    
     try {
       const pos = getPos();
       await editor.commands.deleteFile(fileId);
@@ -44,18 +51,35 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   const handleDownload = async () => {
     if (!fileId || !fileName) return;
     try {
-      const fileHandler = editor.storage.customFile.fileHandler;
-      if (!fileHandler.getAssetSrc) {
-        throw new Error("getAssetSrc not available");
+      let url = "";
+
+      // 각 모드에 맞는 fileHandler 찾기
+      let fileHandler;
+      
+      try {
+        // 1. 읽기 모드(fileComponent)에서 시도
+        if (editor.storage.fileComponent?.fileHandler?.getAssetSrc) {
+          fileHandler = editor.storage.fileComponent.fileHandler;
+          url = await fileHandler.getAssetSrc(`${fileId}/`);
+        }
+        // 2. 실패하면 편집 모드(customFile)에서 시도
+        else if (editor.storage.customFile?.fileHandler?.getAssetSrc) {
+          fileHandler = editor.storage.customFile.fileHandler;
+          url = await fileHandler.getAssetSrc(`${fileId}/`);
+        }
+      } catch (fetchError) {
+        console.error("Error fetching file URL:", fetchError);
       }
 
-      const url = await fileHandler.getAssetSrc(`${fileId}/`);
-      if (!url) throw new Error("Failed to get file URL");
+      // URL을 가져오지 못한 경우
+      if (!url) {
+        throw new Error("파일 URL을 가져오지 못했습니다");
+      }
 
       // 파일 다운로드를 위한 임시 링크 생성
       const link = document.createElement('a');
       link.href = url;
-      link.download = fileName;  // 원본 파일명 사용
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -81,12 +105,19 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
             onDownload={handleDownload}
             setFailedToLoadFile={setFailedToLoadFile}
           />
-        ) : (
+        ) : editor.isEditable ? (
           <FileUploader
             {...props}
             setIsUploaded={setIsUploaded}
             setFailedToLoadFile={setFailedToLoadFile}
           />
+        ) : (
+          // 읽기 모드에서 업로드 실패/진행 중인 경우 간단한 메시지 표시
+          <div className="p-3 border rounded-md bg-custom-background-100">
+            <div className="text-sm text-custom-text-200">
+              {failedToLoadFile ? "파일을 불러올 수 없습니다." : "파일 업로드 중..."}
+            </div>
+          </div>
         )}
       </div>
     </NodeViewWrapper>
