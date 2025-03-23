@@ -108,8 +108,8 @@ export class IssueService extends APIService {
           ...queries,
           layout: "calendar",
           target_date: undefined,
-          start_target_date: queries.start_date_from,
-          end_target_date: queries.start_date_to
+          start_target_date: (queries as any).start_date_from,
+          end_target_date: (queries as any).start_date_to
         };
 
         const res = await this.getIssuesFromServer(workspaceSlug, projectId, modifiedQueries, config);

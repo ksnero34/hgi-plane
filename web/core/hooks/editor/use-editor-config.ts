@@ -35,7 +35,7 @@ export const useEditorConfig = () => {
       // });
 
       const handler = {
-        getAssetSrc: async (path) => {
+        getAssetSrc: async (path: any) => {
           // console.log("[getReadOnlyEditorFileHandlers] getAssetSrc called with:", path);
           if (!path) return "";
           if (path?.startsWith("http")) {
