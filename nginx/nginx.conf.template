@@ -58,7 +58,7 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
-            proxy_pass http://live:3000/live/;
+            proxy_pass http://live:3100/live/;
         }
 
         location /spaces/ {

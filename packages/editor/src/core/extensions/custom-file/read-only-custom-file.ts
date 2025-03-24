@@ -67,7 +67,11 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
               console.error("Error getting file URL:", error);
               return "";
             }
-          }
+          },
+          upload: async () => "",
+          delete: async () => {},
+          restore: async () => {},
+          validateFile: async () => true,
         }
       };
     },

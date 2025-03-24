@@ -19,6 +19,7 @@ import { TableHeader, TableCell, TableRow, Table } from "./table";
 import { CustomTextAlignExtension } from "./text-align";
 import { CustomCalloutExtensionConfig } from "./callout/extension-config";
 import { CustomColorExtension } from "./custom-color";
+import { CustomReadOnlyFileExtension } from "./custom-file/read-only-custom-file";
 // plane editor extensions
 import { CoreEditorAdditionalExtensionsWithoutProps } from "@/plane-editor/extensions/core/without-props";
 
@@ -104,4 +105,9 @@ export const CoreEditorExtensionsWithoutProps = [
   ...CoreEditorAdditionalExtensionsWithoutProps,
 ];
 
-export const DocumentEditorExtensionsWithoutProps = [IssueWidgetWithoutProps()];
+export const DocumentEditorExtensionsWithoutProps = [
+  IssueWidgetWithoutProps(),
+  CustomReadOnlyFileExtension({ 
+    getAssetSrc: async () => Promise.resolve("") 
+  }),
+];
