@@ -764,6 +764,14 @@
       "label": "Work item title",
       "required": "Work item title is required."
     },
+    "upload": {
+      "label": "Upload CSV",
+      "title": "Upload Issues",
+      "description": "Upload issues from a CSV file. The file should match the format of exported issues.",
+      "select_file": "Select CSV File",
+      "success": "Issues uploaded successfully",
+      "error": "Failed to upload issues"
+    },
     "add": {
       "press_enter": "Press 'Enter' to add another work item",
       "label": "Add work item",

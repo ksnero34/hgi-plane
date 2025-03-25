@@ -119,6 +119,7 @@ from .issue.base import (
     IssueBulkUpdateDateEndpoint,
     IssueMetaEndpoint,
     IssueDetailIdentifierEndpoint,
+    ImportIssuesEndpoint,
 )
 
 from .issue.activity import IssueActivityEndpoint

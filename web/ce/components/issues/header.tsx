@@ -2,13 +2,15 @@
 
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import axios from "axios";
 // icons
-import { Circle, ExternalLink } from "lucide-react";
+import { Circle, ExternalLink, Upload } from "lucide-react";
 // plane constants
 import { EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui
-import { Breadcrumbs, Button, LayersIcon, Tooltip, Header } from "@plane/ui";
+import { Breadcrumbs, Button, LayersIcon, Tooltip, Header, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { BreadcrumbLink, CountChip } from "@/components/common";
 // constants
@@ -22,6 +24,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { IssueUploadModal } from "./issue-uploader/issue-upload-modal";
 
 export const IssuesHeader = observer(() => {
   // router
@@ -49,6 +52,35 @@ export const IssuesHeader = observer(() => {
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
     EUserPermissionsLevel.PROJECT
   );
+
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const handleUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      await axios.post(
+        `/api/v1/workspaces/${workspaceSlug}/projects/${projectId}/import-issues/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("issue.upload.success"),
+      });
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("issue.upload.error"),
+      });
+    }
+  };
 
   return (
     <Header>
@@ -101,21 +133,35 @@ export const IssuesHeader = observer(() => {
             canUserCreateIssue={canUserCreateIssue}
           />
         </div>
-        {canUserCreateIssue ? (
-          <Button
-            onClick={() => {
-              setTrackElement("Project work items page");
-              toggleCreateIssueModal(true, EIssuesStoreType.PROJECT);
-            }}
-            size="sm"
-          >
-            <div className="block sm:hidden">{t("issue.label", { count: 1 })}</div>
-            <div className="hidden sm:block">{t("issue.add.label")}</div>
-          </Button>
-        ) : (
-          <></>
+        {canUserCreateIssue && (
+          <>
+            <Button
+              onClick={() => setIsUploadModalOpen(true)}
+              size="sm"
+              variant="primary"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {t("issue.upload.label")}
+            </Button>
+            <Button
+              onClick={() => {
+                setTrackElement("Project work items page");
+                toggleCreateIssueModal(true, EIssuesStoreType.PROJECT);
+              }}
+              size="sm"
+            >
+              <div className="block sm:hidden">{t("issue.label", { count: 1 })}</div>
+              <div className="hidden sm:block">{t("issue.add.label")}</div>
+            </Button>
+          </>
         )}
       </Header.RightItem>
+      
+      <IssueUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={handleUpload}
+      />
     </Header>
   );
 });

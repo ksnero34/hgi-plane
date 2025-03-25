@@ -26,7 +26,10 @@ from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
-from plane.app.permissions import allow_permission, ROLE
+from plane.app.permissions import (
+    allow_permission, 
+    ROLE,
+)
 from plane.app.serializers import (
     IssueCreateSerializer,
     IssueDetailSerializer,
@@ -60,6 +63,7 @@ from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.utils.global_paginator import paginate
 from plane.bgtasks.webhook_task import model_activity
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
+from plane.bgtasks.import_task import issue_import_task
 
 
 class IssueListEndpoint(BaseAPIView):
@@ -1412,3 +1416,47 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
         # Serialize the issue
         serializer = IssueDetailSerializer(issue, expand=self.expand)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ImportIssuesEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def post(self, request, slug, project_id):
+        try:
+            if 'file' not in request.FILES:
+                return Response({
+                    'error': 'No file uploaded'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            file: UploadedFile = request.FILES['file']
+            
+            if not file.name.endswith('.csv'):
+                return Response({
+                    'error': 'Only CSV files are supported'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 파일 크기 제한 체크 (예: 100MB)
+            if file.size > 100 * 1024 * 1024:
+                return Response({
+                    'error': 'File size too large. Maximum size is 100MB'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 파일 내용 읽기
+            file_content = file.read().decode('utf-8')
+            
+            # Celery 태스크로 임포트 작업 시작
+            task = issue_import_task.delay(
+                workspace_id=request.workspace.id,
+                project_id=project_id,
+                file_content=file_content,
+                user_id=request.user.id
+            )
+            
+            return Response({
+                'message': 'Import started',
+                'task_id': task.id
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
