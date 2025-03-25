@@ -94,7 +94,7 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
 
     @method_decorator(gzip_page)
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE"
     )
     def list(self, request, slug):
         filters = issue_filters(request.query_params, "GET")
@@ -111,7 +111,7 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
         )
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE"
     )
     def create(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)

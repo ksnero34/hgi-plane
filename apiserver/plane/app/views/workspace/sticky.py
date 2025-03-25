@@ -24,7 +24,7 @@ class WorkspaceStickyViewSet(BaseViewSet):
         )
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE"
     )
     def create(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
@@ -35,7 +35,7 @@ class WorkspaceStickyViewSet(BaseViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE"
     )
     def list(self, request, slug):
         query = request.query_params.get("query", False)

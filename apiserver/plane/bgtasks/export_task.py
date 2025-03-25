@@ -16,8 +16,9 @@ from django.utils import timezone
 from openpyxl import Workbook
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue
+from plane.db.models import ExporterHistory, Issue, FileAsset
 from plane.utils.exception_logger import log_exception
+from plane.settings.storage import S3Storage
 
 
 def dateTimeConverter(time):
@@ -70,9 +71,20 @@ def create_zip_file(files):
 
 def upload_to_s3(zip_file, workspace_id, token_id, slug):
     file_name = (
-        f"{workspace_id}/export-{slug}-{token_id[:6]}-{str(timezone.now().date())}.zip"
+        f"export-{slug}-{token_id[:6]}-{str(timezone.now().date())}.zip"
     )
+    object_key = f"{workspace_id}/{file_name}"
     expires_in = 7 * 24 * 60 * 60
+
+    # FileAsset 생성
+    asset = FileAsset.objects.create(
+        attributes={"name": file_name, "type": "application/zip", "size": zip_file.tell()},
+        asset=object_key,
+        size=zip_file.tell(),
+        workspace_id=workspace_id,
+        created_by=None,  # 백그라운드 작업이므로 created_by는 None
+        entity_type="ISSUE_EXPORT",  # 새로운 entity_type 추가
+    )
 
     if settings.USE_MINIO:
         upload_s3 = boto3.client(
@@ -82,27 +94,28 @@ def upload_to_s3(zip_file, workspace_id, token_id, slug):
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             config=Config(signature_version="s3v4"),
         )
-        upload_s3.upload_fileobj(
-            zip_file,
-            settings.AWS_STORAGE_BUCKET_NAME,
-            file_name,
-            ExtraArgs={"ACL": "public-read", "ContentType": "application/zip"},
+        
+        # 파일 데이터를 메모리에 읽기
+        zip_file.seek(0)
+        file_data = zip_file.read()
+        
+        # put_object를 사용하여 직접 업로드
+        upload_s3.put_object(
+            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+            Key=object_key,
+            Body=file_data,
+            ContentType="application/zip",
+            ACL="public-read"
         )
 
-        # Generate presigned url for the uploaded file with different base
-        presign_s3 = boto3.client(
-            "s3",
-            endpoint_url=f"{settings.AWS_S3_URL_PROTOCOL}//{str(settings.AWS_S3_CUSTOM_DOMAIN).replace('/uploads', '')}/",
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            config=Config(signature_version="s3v4"),
+        # S3Storage를 사용하여 URL 생성
+        storage = S3Storage()
+        presigned_url = storage.generate_presigned_url(
+            object_name=object_key,
+            disposition="attachment",
+            filename=file_name
         )
 
-        presigned_url = presign_s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": file_name},
-            ExpiresIn=expires_in,
-        )
     else:
         # If endpoint url is present, use it
         if settings.AWS_S3_ENDPOINT_URL:
@@ -126,14 +139,14 @@ def upload_to_s3(zip_file, workspace_id, token_id, slug):
         s3.upload_fileobj(
             zip_file,
             settings.AWS_STORAGE_BUCKET_NAME,
-            file_name,
+            object_key,
             ExtraArgs={"ContentType": "application/zip"},
         )
 
         # Generate presigned url for the uploaded file
         presigned_url = s3.generate_presigned_url(
             "get_object",
-            Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": file_name},
+            Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": object_key},
             ExpiresIn=expires_in,
         )
 
@@ -143,17 +156,31 @@ def upload_to_s3(zip_file, workspace_id, token_id, slug):
     if presigned_url:
         exporter_instance.url = presigned_url
         exporter_instance.status = "completed"
-        exporter_instance.key = file_name
+        exporter_instance.key = object_key
+        # FileAsset 업데이트
+        asset.is_uploaded = True
+        asset.save()
     else:
         exporter_instance.status = "failed"
+        # FileAsset 삭제
+        asset.delete()
 
     exporter_instance.save(update_fields=["status", "url", "key"])
 
 
 def generate_table_row(issue):
+    # parent 정보를 가져오기 위해 쿼리 수정
+    parent_issue = None
+    if issue.get("parent_id"):
+        parent_issue = Issue.objects.filter(id=issue["parent_id"]).values(
+            "project__identifier", "sequence_id"
+        ).first()
+
     return [
         f"""{issue["project__identifier"]}-{issue["sequence_id"]}""",
         issue["project__name"],
+        # 부모 이슈 ID 추가
+        f"""{parent_issue["project__identifier"]}-{parent_issue["sequence_id"]}""" if parent_issue else "",
         issue["name"],
         issue["description_stripped"],
         issue["state__name"],
@@ -185,9 +212,17 @@ def generate_table_row(issue):
 
 
 def generate_json_row(issue):
+    # parent 정보를 가져오기 위해 쿼리 수정
+    parent_issue = None
+    if issue.get("parent_id"):
+        parent_issue = Issue.objects.filter(id=issue["parent_id"]).values(
+            "project__identifier", "sequence_id"
+        ).first()
+
     return {
         "ID": f"""{issue["project__identifier"]}-{issue["sequence_id"]}""",
         "Project": issue["project__name"],
+        "Parent Issue": f"""{parent_issue["project__identifier"]}-{parent_issue["sequence_id"]}""" if parent_issue else "",
         "Name": issue["name"],
         "Description": issue["description_stripped"],
         "State": issue["state__name"],
@@ -307,54 +342,54 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
         exporter_instance.save(update_fields=["status"])
 
         workspace_issues = (
-            (
-                Issue.objects.filter(
-                    workspace__id=workspace_id,
-                    project_id__in=project_ids,
-                    project__project_projectmember__member=exporter_instance.initiated_by_id,
-                    project__project_projectmember__is_active=True,
-                    project__archived_at__isnull=True,
-                )
-                .select_related("project", "workspace", "state", "parent", "created_by")
-                .prefetch_related(
-                    "assignees", "labels", "issue_cycle__cycle", "issue_module__module"
-                )
-                .values(
-                    "id",
-                    "project__identifier",
-                    "project__name",
-                    "project__id",
-                    "sequence_id",
-                    "name",
-                    "description_stripped",
-                    "priority",
-                    "start_date",
-                    "target_date",
-                    "state__name",
-                    "created_at",
-                    "updated_at",
-                    "completed_at",
-                    "archived_at",
-                    "issue_cycle__cycle__name",
-                    "issue_cycle__cycle__start_date",
-                    "issue_cycle__cycle__end_date",
-                    "issue_module__module__name",
-                    "issue_module__module__start_date",
-                    "issue_module__module__target_date",
-                    "created_by__first_name",
-                    "created_by__last_name",
-                    "assignees__first_name",
-                    "assignees__last_name",
-                    "labels__name",
-                )
+            Issue.objects.filter(
+                workspace__id=workspace_id,
+                project_id__in=project_ids,
+                project__project_projectmember__member=exporter_instance.initiated_by_id,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+            )
+            .select_related("project", "workspace", "state", "parent", "created_by")
+            .prefetch_related(
+                "assignees", "labels", "issue_cycle__cycle", "issue_module__module"
+            )
+            .values(
+                "id",
+                "project__identifier",
+                "project__name",
+                "project__id",
+                "sequence_id",
+                "parent_id",  # parent_id 추가
+                "name",
+                "description_stripped",
+                "priority",
+                "start_date",
+                "target_date",
+                "state__name",
+                "created_at",
+                "updated_at",
+                "completed_at",
+                "archived_at",
+                "issue_cycle__cycle__name",
+                "issue_cycle__cycle__start_date",
+                "issue_cycle__cycle__end_date",
+                "issue_module__module__name",
+                "issue_module__module__start_date",
+                "issue_module__module__target_date",
+                "created_by__first_name",
+                "created_by__last_name",
+                "assignees__first_name",
+                "assignees__last_name",
+                "labels__name",
             )
             .order_by("project__identifier", "sequence_id")
             .distinct()
         )
-        # CSV header
+        # CSV header 수정
         header = [
             "ID",
             "Project",
+            "Parent Issue",  # Parent Issue 컬럼 추가
             "Name",
             "Description",
             "State",

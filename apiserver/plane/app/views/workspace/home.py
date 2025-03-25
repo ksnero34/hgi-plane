@@ -16,7 +16,7 @@ class WorkspaceHomePreferenceViewSet(BaseAPIView):
     def get_serializer_class(self):
         return WorkspaceHomePreferenceSerializer
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
@@ -64,7 +64,7 @@ class WorkspaceHomePreferenceViewSet(BaseAPIView):
             status=status.HTTP_200_OK,
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def patch(self, request, slug, key):
         preference = WorkspaceHomePreference.objects.filter(
             key=key, workspace__slug=slug, user=request.user

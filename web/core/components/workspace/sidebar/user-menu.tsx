@@ -25,7 +25,7 @@ export const SidebarUserMenu = observer(() => {
       key: "home",
       labelTranslationKey: "sidebar.home",
       href: `/${workspaceSlug.toString()}/`,
-      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
       Icon: Home,
     },
     {
@@ -39,7 +39,7 @@ export const SidebarUserMenu = observer(() => {
       key: "notifications",
       labelTranslationKey: "sidebar.inbox",
       href: `/${workspaceSlug.toString()}/notifications/`,
-      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
       Icon: Inbox,
     },
     {

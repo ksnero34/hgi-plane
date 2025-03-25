@@ -50,7 +50,7 @@ export const StickiesList = observer((props: TProps) => {
   const totalRows = Math.ceil(workspaceStickyIds.length / columnCount);
   const isStickiesPage = pathname?.includes("stickies");
   const hasGuestLevelPermissions = allowPermissions(
-    [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+    [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
     EUserPermissionsLevel.WORKSPACE
   );
   const stickiesResolvedPath = useResolvedAssetPath({ basePath: "/empty-state/stickies/stickies" });

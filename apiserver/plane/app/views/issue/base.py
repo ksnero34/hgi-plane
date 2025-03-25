@@ -1060,7 +1060,7 @@ class IssuePaginatedViewSet(BaseViewSet):
 
 
 class IssueDetailEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id):
         filters = issue_filters(request.query_params, "GET")
         issue = (
@@ -1230,7 +1230,7 @@ class IssueBulkUpdateDateEndpoint(BaseAPIView):
 
 
 class IssueMetaEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="PROJECT")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="PROJECT")
     def get(self, request, slug, project_id, issue_id):
         issue = Issue.issue_objects.only("sequence_id", "project__identifier").get(
             id=issue_id, project_id=project_id, workspace__slug=slug

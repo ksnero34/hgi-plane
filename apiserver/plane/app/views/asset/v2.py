@@ -637,7 +637,7 @@ class StaticFileAssetEndpoint(BaseAPIView):
 class AssetRestoreEndpoint(BaseAPIView):
     """Endpoint to restore a deleted assets."""
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def post(self, request, slug, asset_id):
         asset = FileAsset.all_objects.get(id=asset_id, workspace__slug=slug)
         asset.is_deleted = False
@@ -678,7 +678,7 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
             return {"draft_issue_id": entity_id}
         return {}
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def post(self, request, slug, project_id):
         name = request.data.get("name")
         type = request.data.get("type", "image/jpeg")
@@ -747,7 +747,7 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
             status=status.HTTP_200_OK,
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def patch(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(id=pk)
@@ -763,7 +763,7 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
         asset.save(update_fields=["is_uploaded", "attributes"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def delete(self, request, slug, project_id, pk):
         # Get the asset
         asset = FileAsset.objects.get(
@@ -776,7 +776,7 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
         asset.save(update_fields=["is_deleted", "deleted_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(
@@ -806,7 +806,7 @@ class ProjectBulkAssetEndpoint(BaseAPIView):
         project.cover_image_asset_id = asset.id
         project.save()
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def post(self, request, slug, project_id, entity_id):
         asset_ids = request.data.get("asset_ids", [])
 
@@ -866,7 +866,7 @@ class ProjectBulkAssetEndpoint(BaseAPIView):
 class PageFileAssetEndpoint(BaseFileAssetEndpoint):
     """This endpoint is used to upload files for pages."""
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def post(self, request, slug, project_id):
         name = request.data.get("name")
         type = request.data.get("type", "application/octet-stream")
@@ -935,7 +935,7 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
             status=status.HTTP_200_OK,
         )
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def patch(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(id=pk)
@@ -951,7 +951,7 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
         asset.save(update_fields=["is_uploaded", "attributes"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def delete(self, request, slug, project_id, pk):
         # Get the asset
         asset = FileAsset.objects.get(
@@ -964,7 +964,7 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
         asset.save(update_fields=["is_deleted", "deleted_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id):
         page_id = request.GET.get("page_id")
         if not page_id:

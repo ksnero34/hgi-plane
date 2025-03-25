@@ -463,7 +463,7 @@ class DefaultAnalyticsEndpoint(BaseAPIView):
 
 
 class ProjectStatsEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug):
         fields = request.GET.get("fields", "").split(",")
         project_ids = request.GET.get("project_ids", "")

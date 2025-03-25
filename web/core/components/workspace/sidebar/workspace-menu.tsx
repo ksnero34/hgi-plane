@@ -35,14 +35,14 @@ export const SidebarWorkspaceMenu = observer(() => {
       key: "projects",
       labelTranslationKey: "sidebar.projects",
       href: `/${workspaceSlug}/projects/`,
-      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
       Icon: Briefcase,
     },
     {
       key: "views",
       labelTranslationKey: "sidebar.views",
       href: `/${workspaceSlug}/workspace-views/all-issues/`,
-      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+      access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
       Icon: Layers,
     },
     {

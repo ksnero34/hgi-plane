@@ -104,6 +104,8 @@ class ProjectViewSet(BaseViewSet):
     def list_detail(self, request, slug):
         fields = [field for field in request.GET.get("fields", "").split(",") if field]
         projects = self.get_queryset().order_by("sort_order", "name")
+        
+        # For guest users, only show projects they are members of
         if WorkspaceMember.objects.filter(
             member=request.user, workspace__slug=slug, is_active=True, role=5
         ).exists():
@@ -111,20 +113,23 @@ class ProjectViewSet(BaseViewSet):
                 project_projectmember__member=self.request.user,
                 project_projectmember__is_active=True,
             )
-
-        if WorkspaceMember.objects.filter(
-            member=request.user,
-            workspace__slug=slug,
-            is_active=True,
-            role=8,
-        ).exists():
-            projects = projects.filter(
-                Q(
-                    project_projectmember__member=self.request.user,
-                    project_projectmember__is_active=True,
+        else:
+            # For admin users, show all projects
+            if WorkspaceMember.objects.filter(
+                member=request.user, workspace__slug=slug, is_active=True, role=20
+            ).exists():
+                # No additional filtering needed - admin can see all projects
+                pass
+            else:
+                # For other users (member, viewer, restricted)
+                # Show public projects and private projects where they are members
+                projects = projects.filter(
+                    Q(network=2) |  # Public projects
+                    Q(
+                        project_projectmember__member=self.request.user,
+                        project_projectmember__is_active=True,
+                    )
                 )
-                | Q(network=2)
-            )
 
         if request.GET.get("per_page", False) and request.GET.get("cursor", False):
             return self.paginate(
@@ -188,8 +193,10 @@ class ProjectViewSet(BaseViewSet):
             "updated_at",
             "created_by",
             "updated_by",
+            "network"
         )
 
+        # For guest users, only show projects they are members of
         if WorkspaceMember.objects.filter(
             member=request.user, workspace__slug=slug, is_active=True, role=5
         ).exists():
@@ -197,21 +204,28 @@ class ProjectViewSet(BaseViewSet):
                 project_projectmember__member=self.request.user,
                 project_projectmember__is_active=True,
             )
-
-        if WorkspaceMember.objects.filter(
-            member=request.user, workspace__slug=slug, is_active=True, role=15
-        ).exists():
-            projects = projects.filter(
-                Q(
-                    project_projectmember__member=self.request.user,
-                    project_projectmember__is_active=True,
+        else:
+            # For admin users, show all projects
+            if WorkspaceMember.objects.filter(
+                member=request.user, workspace__slug=slug, is_active=True, role=20
+            ).exists():
+                # No additional filtering needed - admin can see all projects
+                pass
+            else:
+                # For other users (member, viewer, restricted)
+                # Show public projects and private projects where they are members
+                projects = projects.filter(
+                    Q(network=2) |  # Public projects
+                    Q(
+                        project_projectmember__member=self.request.user,
+                        project_projectmember__is_active=True,
+                    )
                 )
-                | Q(network=2)
-            )
+
         return Response(projects, status=status.HTTP_200_OK)
 
     @allow_permission(
-        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE"
+        allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE"
     )
     def retrieve(self, request, slug, pk):
         project = (

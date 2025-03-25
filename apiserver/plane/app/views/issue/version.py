@@ -25,7 +25,7 @@ class IssueVersionEndpoint(BaseAPIView):
 
         return paginated_data
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id, issue_id, pk=None):
         if pk:
             issue_version = IssueVersion.objects.get(
@@ -77,7 +77,7 @@ class IssueDescriptionVersionEndpoint(BaseAPIView):
 
         return paginated_data
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id, issue_id, pk=None):
         if pk:
             issue_description_version = IssueDescriptionVersion.objects.get(

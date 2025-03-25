@@ -286,7 +286,7 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
     key: "views",
     labelTranslationKey: "views",
     href: `/workspace-views/all-issues/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
   },
   analytics: {
     key: "analytics",
@@ -320,19 +320,19 @@ export const WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS: Record<string, IWorkspac
     key: "home",
     labelTranslationKey: "home.title",
     href: `/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
   },
   inbox: {
     key: "inbox",
     labelTranslationKey: "notification.label",
     href: `/notifications/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
   },
   projects: {
     key: "projects",
     labelTranslationKey: "projects",
     href: `/projects/`,
-    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.GUEST],
+    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER, EUserWorkspaceRoles.VIEWER, EUserWorkspaceRoles.RESTRICTED, EUserWorkspaceRoles.GUEST],
   },
 };
 

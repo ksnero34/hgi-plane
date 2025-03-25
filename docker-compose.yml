@@ -12,7 +12,7 @@ services:
     command: node web/server.js web
     depends_on:
       - api
-    # image: hgi-plane-prod/web:0.0.11
+    image: harbor.hwgeneralins.com/plane/web:0.0.1
 
   admin:
     container_name: admin
@@ -28,7 +28,7 @@ services:
     depends_on:
       - api
       - web
-    # image: hgi-plane-prod/admin:0.0.18
+    image: harbor.hwgeneralins.com/plane/admin:0.0.1
 
   space:
     container_name: space
@@ -44,7 +44,7 @@ services:
     depends_on:
       - api
       - web
-    # image: hgi-plane-prod/space:0.0.6
+    image: harbor.hwgeneralins.com/plane/space:0.0.1
 
   api:
     container_name: api
@@ -63,7 +63,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    # image: hgi-plane-prod/api:0.0.59
+    image: harbor.hwgeneralins.com/plane/api:0.0.1
 
   worker:
     container_name: bgworker
@@ -83,7 +83,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    # image: hgi-plane-prod/worker:0.0.18
+    image: harbor.hwgeneralins.com/plane/worker:0.0.1
 
   beat-worker:
     container_name: beatworker
@@ -103,7 +103,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    # image: hgi-plane-prod/beat-worker:0.0.18
+    image: harbor.hwgeneralins.com/plane/beat-worker:0.0.1
 
   migrator:
     container_name: plane-migrator
@@ -121,7 +121,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    # image: hgi-plane-prod/migrator:0.0.18
+    image: harbor.hwgeneralins.com/plane/migrator:0.0.1
 
   live:
     container_name: plane-live
@@ -134,7 +134,7 @@ services:
     networks:
       - dev_env
     command: node live/dist/server.js
-    # image: hgi-plane-prod/live:0.0.27
+    image: harbor.hwgeneralins.com/plane/live:0.0.1
     environment:
       - API_BASE_URL=http://api:8000
 
@@ -214,7 +214,7 @@ services:
       - api
       - space
       - admin
-    image: hgi-plane-prod/proxy:0.0.1
+    image: harbor.hwgeneralins.com/plane/proxy:0.0.1
 
 volumes:
   pgdata:

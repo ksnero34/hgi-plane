@@ -591,7 +591,7 @@ class PagesDescriptionViewSet(BaseViewSet):
 
 
 class PageDuplicateEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def post(self, request, slug, project_id, page_id):
         page = Page.objects.filter(
             pk=page_id, workspace__slug=slug, projects__id=project_id

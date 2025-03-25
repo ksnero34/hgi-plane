@@ -356,7 +356,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
 
         return True, None
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def post(self, request, slug, project_id, issue_id):
         name = request.data.get("name")
         type = request.data.get("type", False)
@@ -443,7 +443,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id, issue_id, pk=None):
         if pk:
             # Get the asset
@@ -478,7 +478,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         serializer = IssueAttachmentSerializer(issue_attachments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def patch(self, request, slug, project_id, issue_id, pk):
         try:
             issue_attachment = FileAsset.objects.get(

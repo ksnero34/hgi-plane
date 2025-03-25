@@ -298,6 +298,58 @@ class StickySerializer(BaseSerializer):
         read_only_fields = ["workspace", "owner"]
         extra_kwargs = {"name": {"required": False}}
 
+    def mask_private_information(self, text):
+        import re
+
+        # 개인정보 패턴 정의
+        PRIVACY_PATTERNS = {
+            # 주민등록번호 (예: 123456-1234567)
+            'koreanSSN': r'\d{6}[-]\d{7}',
+            # 이메일 주소
+            'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+            # 전화번호 (예: 010-1234-5678)
+            'phoneNumber': r'\d{2,3}[-]\d{3,4}[-]\d{4}',
+            # 신용카드 번호
+            'creditCard': r'\d{4}[-]\d{4}[-]\d{4}[-]\d{4}'
+        }
+
+        masked_text = text
+
+        # 전화번호 마스킹 (가운데 부분)
+        masked_text = re.sub(
+            PRIVACY_PATTERNS['phoneNumber'],
+            lambda m: re.sub(r'(?<=[-])\d{3,4}(?=[-])', '****', m.group()),
+            masked_text
+        )
+
+        # 주민등록번호 마스킹 (뒷자리 전체)
+        masked_text = re.sub(
+            PRIVACY_PATTERNS['koreanSSN'],
+            lambda m: m.group().split('-')[0] + '-*******',
+            masked_text
+        )
+
+        # 이메일 마스킹 (@ 앞부분 일부)
+        masked_text = re.sub(
+            PRIVACY_PATTERNS['email'],
+            lambda m: m.group().split('@')[0][:3] + '*' * (len(m.group().split('@')[0]) - 3) + '@' + m.group().split('@')[1],
+            masked_text
+        )
+
+        # 신용카드 번호 마스킹 (가운데 8자리)
+        masked_text = re.sub(
+            PRIVACY_PATTERNS['creditCard'],
+            lambda m: m.group().split('-')[0] + '-****-****-' + m.group().split('-')[3],
+            masked_text
+        )
+
+        return masked_text
+
+    def validate(self, data):
+        if 'description_html' in data:
+            data['description_html'] = self.mask_private_information(data['description_html'])
+        return data
+
 
 class WorkspaceUserPreferenceSerializer(BaseSerializer):
     class Meta:
