@@ -48,6 +48,7 @@ from plane.db.models import (
     ProjectMember,
     CycleIssue,
     UserRecentVisit,
+    Workspace,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -1429,9 +1430,10 @@ class ImportIssuesEndpoint(BaseAPIView):
             
             file: UploadedFile = request.FILES['file']
             
-            if not file.name.endswith('.csv'):
+            # 지원하는 파일 형식 체크
+            if not (file.name.endswith('.csv') or file.name.endswith('.xlsx')):
                 return Response({
-                    'error': 'Only CSV files are supported'
+                    'error': 'Only CSV and XLSX files are supported'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # 파일 크기 제한 체크 (예: 100MB)
@@ -1440,14 +1442,23 @@ class ImportIssuesEndpoint(BaseAPIView):
                     'error': 'File size too large. Maximum size is 100MB'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # workspace 조회
+            workspace = Workspace.objects.get(slug=slug)
+            
             # 파일 내용 읽기
-            file_content = file.read().decode('utf-8')
+            if file.name.endswith('.csv'):
+                file_content = file.read().decode('utf-8')
+                file_type = 'csv'
+            else:  # xlsx
+                file_content = file.read()
+                file_type = 'xlsx'
             
             # Celery 태스크로 임포트 작업 시작
             task = issue_import_task.delay(
-                workspace_id=request.workspace.id,
+                workspace_id=workspace.id,
                 project_id=project_id,
                 file_content=file_content,
+                file_type=file_type,
                 user_id=request.user.id
             )
             

@@ -32,7 +32,10 @@ def dateConverter(time):
 
 
 def create_csv_file(data):
+    # UTF-8 with BOM 인코딩을 사용하여 한글이 깨지지 않도록 함
     csv_buffer = io.StringIO()
+    # BOM 추가
+    csv_buffer.write('\ufeff')
     csv_writer = csv.writer(csv_buffer, delimiter=",", quoting=csv.QUOTE_ALL)
 
     for row in data:

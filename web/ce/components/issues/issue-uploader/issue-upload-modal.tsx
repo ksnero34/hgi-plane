@@ -23,27 +23,27 @@ export const IssueUploadModal: FC<TIssueUploadModalProps> = observer((props) => 
     <ModalCore
       isOpen={isOpen}
       handleClose={onClose}
-      position={EModalPosition.CENTER}
+      position={EModalPosition.TOP}
       width={EModalWidth.MD}
     >
       <div className="p-4">
         <div className="mb-4">
           <p className="text-sm text-custom-text-300">
-            Upload a CSV file containing your issues. The file should have the following columns: ID, Project, Parent Issue, Name, Description, State, Start Date, Target Date, Priority, Created By, Assignee, Labels, Cycle Name, Cycle Start Date, Cycle End Date, Module Name, Module Start Date, Module Target Date, Created At, Updated At, Completed At, Archived At.
+            CSV 혹은 xlsx 파일로 이슈를 업로드 할 수 있습니다.
           </p>
         </div>
         <div className="flex items-center justify-center">
           <div className="relative">
             <input
               type="file"
-              accept=".csv"
+              accept=".csv, .xlsx"
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               id="file-upload"
             />
             <label htmlFor="file-upload">
               <Button variant="primary" className="cursor-pointer">
-                Select File
+                파일 선택
               </Button>
             </label>
           </div>

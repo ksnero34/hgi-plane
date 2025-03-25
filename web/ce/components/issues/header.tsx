@@ -20,6 +20,7 @@ import { SPACE_BASE_PATH, SPACE_BASE_URL } from "@/helpers/common.helper";
 // hooks
 import { useEventTracker, useProject, useCommandPalette, useUserPermissions } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
+import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
@@ -29,11 +30,12 @@ import { IssueUploadModal } from "./issue-uploader/issue-upload-modal";
 export const IssuesHeader = observer(() => {
   // router
   const router = useAppRouter();
-  const { workspaceSlug, projectId } = useParams() as { workspaceSlug: string; projectId: string };
+  const { workspaceSlug, projectId, viewId } = useParams() as { workspaceSlug: string; projectId: string; viewId: string };
   // store hooks
   const {
     issues: { getGroupIssueCount },
   } = useIssues(EIssuesStoreType.PROJECT);
+  const { fetchIssues } = useIssuesActions(EIssuesStoreType.PROJECT);
   // i18n
   const { t } = useTranslation();
 
@@ -61,7 +63,7 @@ export const IssuesHeader = observer(() => {
       formData.append("file", file);
       
       await axios.post(
-        `/api/v1/workspaces/${workspaceSlug}/projects/${projectId}/import-issues/`,
+        `/api/workspaces/${workspaceSlug}/projects/${projectId}/import-issues/`,
         formData,
         {
           headers: {
@@ -74,6 +76,16 @@ export const IssuesHeader = observer(() => {
         type: TOAST_TYPE.SUCCESS,
         title: t("issue.upload.success"),
       });
+
+      // 이슈 목록 새로고침
+      await fetchIssues(
+        "mutation",
+        {
+          canGroup: true,
+          perPageCount: 100
+        }
+      );
+      
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
