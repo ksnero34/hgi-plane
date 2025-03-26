@@ -7,6 +7,7 @@ from celery import shared_task
 from django.utils import timezone
 from django.db import transaction
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Max
 from plane.db.models import (
     Issue, State, Project, Label, 
     IssueAssignee, IssueLabel, CycleIssue, ModuleIssue,
@@ -107,36 +108,46 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
             project = Project.objects.get(id=project_id)
             default_state = State.objects.filter(project=project, default=True).first()
             
-            # 모든 이슈 ID를 먼저 수집
-            issue_ids = set()
+            # 기존 이슈들을 한 번에 조회 (sequence_id로 검색)
+            existing_issues = {}
+            id_mapping = {}  # id_mapping 초기화
+            
+            # 엑셀 파일의 모든 ID 수집
+            all_sequence_ids = set()
             for row in reader:
                 issue_id = clean_id_field(row.get("ID", ""))
                 if issue_id:
-                    issue_ids.add(issue_id)
+                    try:
+                        sequence_id = int(issue_id.split('-')[1])
+                        all_sequence_ids.add(sequence_id)
+                    except (IndexError, ValueError):
+                        print(f"Warning: Invalid issue ID format: {issue_id}")
+                        continue
+                
+                # 부모 이슈 ID도 수집
+                parent_id = clean_id_field(row.get("Parent Issue", ""))
+                if parent_id:
+                    try:
+                        parent_sequence_id = int(parent_id.split('-')[1])
+                        all_sequence_ids.add(parent_sequence_id)
+                    except (IndexError, ValueError):
+                        print(f"Warning: Invalid parent issue ID format: {parent_id}")
+                        continue
             
-            print(f"Found {len(issue_ids)} unique issue IDs in the file")
-            print(f"Issue IDs found: {list(issue_ids)}")
+            print(f"Found {len(all_sequence_ids)} unique sequence IDs in the file")
+            print(f"Sequence IDs found: {list(all_sequence_ids)}")
             
-            # 기존 이슈들을 한 번에 조회 (external_id 또는 sequence_id로 검색)
-            existing_issues = {}
+            # 모든 관련 이슈 조회 (엑셀 파일의 ID와 부모 ID 모두 포함)
             for issue in Issue.objects.filter(
-                Q(external_id__in=list(issue_ids)) | 
-                Q(sequence_id__in=[id.split('-')[-1] for id in issue_ids if '-' in id]),
+                sequence_id__in=list(all_sequence_ids),
                 project=project
             ):
-                # external_id가 있으면 그걸 키로 사용
-                if issue.external_id:
-                    existing_issues[issue.external_id] = issue
-                # 없으면 project_identifier-sequence_id 형식으로 키 생성
-                else:
-                    key = f"{project.identifier}-{issue.sequence_id}"
-                    existing_issues[key] = issue
+                existing_issues[issue.sequence_id] = issue
+                id_mapping[issue.sequence_id] = issue
+                print(f"Found existing issue - ID: {issue.id}, Sequence ID: {issue.sequence_id}, Name: {issue.name}")
             
             print(f"Found {len(existing_issues)} existing issues with matching IDs")
-            for ext_id, issue in existing_issues.items():
-                print(f"Existing issue found - ID: {issue.id}, External ID: {ext_id}, Name: {issue.name}")
             
-            id_mapping = {}
             parent_relations = []
             imported_count = 0
             updated_count = 0
@@ -147,6 +158,22 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     issue_id = clean_id_field(row.get("ID", ""))
                     print(f"Processing issue with ID: {issue_id}")
                     print(f"Issue data from file: {row}")
+                    
+                    # sequence_id 추출 (ID가 없는 경우 자동 생성)
+                    sequence_id = None
+                    if issue_id:
+                        try:
+                            sequence_id = int(issue_id.split('-')[1])
+                        except (IndexError, ValueError):
+                            print(f"Warning: Invalid issue ID format: {issue_id}")
+                            continue
+                    else:
+                        # ID가 없는 경우, 현재 프로젝트의 최대 sequence_id + 1을 사용
+                        max_sequence = Issue.objects.filter(project=project).aggregate(max_sequence=Max('sequence_id'))['max_sequence']
+                        sequence_id = (max_sequence or 0) + 1
+                        print(f"Generated new sequence_id: {sequence_id}")
+                    
+                    print(f"Looking for existing issue with sequence_id: {sequence_id}")
                     
                     # 날짜 필드 처리
                     start_date = parse_date(safe_str(row.get("Start Date")))
@@ -163,20 +190,20 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     issue_data = {
                         "name": safe_str(row.get("Name", "")),
                         "description_stripped": safe_str(row.get("Description", "")),
-                        "priority": safe_str(row.get("Priority", "none")),
+                        "priority": safe_str(row.get("Priority", "none")).split(',')[0].strip(),  # 첫 번째 값만 사용
                         "state_id": state.id if state else default_state.id,
                         "updated_by_id": user_id,
-                        "external_id": issue_id,
+                        "sequence_id": sequence_id,
                         "start_date": start_date,
                         "target_date": target_date
                     }
                     
                     # 이슈 ID가 있는 경우 기존 이슈 찾기
-                    existing_issue = existing_issues.get(issue_id)
+                    existing_issue = existing_issues.get(sequence_id)
                     if existing_issue:
                         print(f"Found existing issue to update - ID: {existing_issue.id}, Name: {existing_issue.name}")
                     else:
-                        print(f"No existing issue found for ID: {issue_id}")
+                        print(f"No existing issue found for sequence_id: {sequence_id}")
                     
                     if existing_issue:
                         # 기존 이슈의 현재 상태 저장 (활동 로그용)
@@ -185,29 +212,19 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                             cls=DjangoJSONEncoder
                         )
                         
-                        # IssueCreateSerializer를 사용하여 업데이트
-                        serializer = IssueCreateSerializer(
-                            existing_issue,
-                            data=issue_data,
-                            partial=True,
-                            context={"project_id": project_id}
-                        )
+                        # 직접 모델 업데이트
+                        for key, value in issue_data.items():
+                            setattr(existing_issue, key, value)
+                        existing_issue.save()
+                        issue = existing_issue
+                        updated_count += 1
+                        print(f"Updated existing issue - ID: {issue.id}, Name: {issue.name}")
                         
-                        if serializer.is_valid():
-                            serializer.save()
-                            issue = existing_issue
-                            updated_count += 1
-                            print(f"Updated existing issue - ID: {issue.id}, Name: {issue.name}")
-                            
-                            # 관계 데이터만 삭제 후 재생성
-                            IssueLabel.objects.filter(issue=issue).delete()
-                            IssueAssignee.objects.filter(issue=issue).delete()
-                            ModuleIssue.objects.filter(issue=issue).delete()
-                            CycleIssue.objects.filter(issue=issue).delete()
-                        else:
-                            print(f"Error updating issue {issue_id}: {serializer.errors}")
-                            continue
-                        
+                        # 관계 데이터만 삭제 후 재생성
+                        IssueLabel.objects.filter(issue=issue).delete()
+                        IssueAssignee.objects.filter(issue=issue).delete()
+                        ModuleIssue.objects.filter(issue=issue).delete()
+                        CycleIssue.objects.filter(issue=issue).delete()
                     else:
                         # 새 이슈 생성
                         issue_data.update({
@@ -220,16 +237,21 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         imported_count += 1
                         print(f"Created new issue - ID: {issue.id}, Name: {issue.name}")
                     
-                    id_mapping[issue_id or str(issue.id)] = issue
+                    id_mapping[sequence_id] = issue
                     
                     # 부모 이슈 관계 저장
                     parent_id = clean_id_field(row.get("Parent Issue", ""))
                     if parent_id:
-                        parent_relations.append((issue, parent_id))
-                        print(f"Added parent relation - Issue: {issue.name}, Parent ID: {parent_id}")
+                        try:
+                            parent_sequence_id = int(parent_id.split('-')[1])
+                            parent_relations.append((issue, parent_sequence_id))
+                            print(f"Added parent relation - Issue: {issue.name}, Parent ID: {parent_id}")
+                        except (IndexError, ValueError):
+                            print(f"Warning: Invalid parent issue ID format: {parent_id}")
+                            continue
                     
                     # 관련 데이터 처리 (라벨, 담당자, 모듈, 사이클)
-                    process_related_data(issue, row, project)
+                    process_related_data(issue, row, project, workspace_id)
                     
                     # 이슈 활동 로그 생성
                     requested_data = json.dumps(row, cls=DjangoJSONEncoder)
@@ -245,7 +267,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     )
                     
                 except Exception as e:
-                    print(f"Error processing issue {issue_id}: {str(e)}")
+                    print(f"Error processing issue {sequence_id}: {str(e)}")
                     log_exception(e)
                     continue
             
@@ -256,6 +278,18 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     issue.parent = parent_issue
                     issue.save()
                     print(f"Set parent relationship - Issue: {issue.name}, Parent: {parent_issue.name}")
+                else:
+                    # 서버에서 부모 이슈 찾기
+                    parent_issue = Issue.objects.filter(
+                        sequence_id=parent_id,
+                        project=project
+                    ).first()
+                    if parent_issue:
+                        issue.parent = parent_issue
+                        issue.save()
+                        print(f"Set parent relationship with existing issue - Issue: {issue.name}, Parent: {parent_issue.name}")
+                    else:
+                        print(f"Warning: Parent issue with sequence_id {parent_id} not found in server")
             
             print(f"Import completed - Imported: {imported_count}, Updated: {updated_count}")
             return {
@@ -272,7 +306,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
             "error": str(e)
         }
 
-def process_related_data(issue, row, project):
+def process_related_data(issue, row, project, workspace_id):
     # 라벨 처리
     if not pd.isna(row.get("Labels")):
         for label_name in str(row["Labels"]).split(","):
@@ -280,7 +314,14 @@ def process_related_data(issue, row, project):
             if label_name:
                 label = Label.objects.filter(project=project, name=label_name).first()
                 if label:
-                    IssueLabel.objects.create(issue=issue, label=label)
+                    IssueLabel.objects.create(
+                        issue=issue, 
+                        label=label,
+                        project_id=project.id,
+                        workspace_id=workspace_id,
+                        created_by_id=issue.created_by_id,
+                        updated_by_id=issue.updated_by_id
+                    )
                     print(f"Added label to issue {issue.name}: {label_name}")
     
     # 담당자 처리
@@ -296,7 +337,11 @@ def process_related_data(issue, row, project):
                 if member:
                     IssueAssignee.objects.create(
                         issue=issue,
-                        assignee=member.member
+                        assignee=member.member,
+                        project_id=project.id,
+                        workspace_id=workspace_id,
+                        created_by_id=issue.created_by_id,
+                        updated_by_id=issue.updated_by_id
                     )
                     print(f"Assigned issue {issue.name} to: {assignee_name}")
     
@@ -305,7 +350,14 @@ def process_related_data(issue, row, project):
     if module_name:
         module = project.modules.filter(name=module_name).first()
         if module:
-            ModuleIssue.objects.create(issue=issue, module=module)
+            ModuleIssue.objects.create(
+                issue=issue, 
+                module=module,
+                project_id=project.id,
+                workspace_id=workspace_id,
+                created_by_id=issue.created_by_id,
+                updated_by_id=issue.updated_by_id
+            )
             print(f"Added issue {issue.name} to module: {module_name}")
     
     # 사이클 처리
@@ -313,5 +365,12 @@ def process_related_data(issue, row, project):
     if cycle_name:
         cycle = project.cycles.filter(name=cycle_name).first()
         if cycle:
-            CycleIssue.objects.create(issue=issue, cycle=cycle)
+            CycleIssue.objects.create(
+                issue=issue, 
+                cycle=cycle,
+                project_id=project.id,
+                workspace_id=workspace_id,
+                created_by_id=issue.created_by_id,
+                updated_by_id=issue.updated_by_id
+            )
             print(f"Added issue {issue.name} to cycle: {cycle_name}")
