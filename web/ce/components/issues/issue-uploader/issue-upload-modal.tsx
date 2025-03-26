@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { observer } from "mobx-react";
 import { Button, ModalCore, EModalWidth, EModalPosition } from "@plane/ui";
+import { useTranslation } from "@plane/i18n";
 
 type TIssueUploadModalProps = {
   isOpen: boolean;
@@ -10,6 +11,7 @@ type TIssueUploadModalProps = {
 
 export const IssueUploadModal: FC<TIssueUploadModalProps> = observer((props) => {
   const { isOpen, onClose, onUpload } = props;
+  const { t } = useTranslation();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -25,11 +27,12 @@ export const IssueUploadModal: FC<TIssueUploadModalProps> = observer((props) => 
       handleClose={onClose}
       position={EModalPosition.TOP}
       width={EModalWidth.MD}
+      title={t("issue.upload.title")}
     >
       <div className="p-4">
         <div className="mb-4">
           <p className="text-sm text-custom-text-300">
-            CSV 혹은 xlsx 파일로 이슈를 업로드 할 수 있습니다.
+            {t("issue.upload.description")}
           </p>
         </div>
         <div className="flex items-center justify-center">
@@ -43,7 +46,7 @@ export const IssueUploadModal: FC<TIssueUploadModalProps> = observer((props) => 
             />
             <label htmlFor="file-upload">
               <Button variant="primary" className="cursor-pointer">
-                파일 선택
+                {t("issue.upload.select_file")}
               </Button>
             </label>
           </div>
