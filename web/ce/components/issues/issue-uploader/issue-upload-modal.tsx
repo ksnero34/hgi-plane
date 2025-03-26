@@ -27,10 +27,10 @@ export const IssueUploadModal: FC<TIssueUploadModalProps> = observer((props) => 
       handleClose={onClose}
       position={EModalPosition.TOP}
       width={EModalWidth.MD}
-      title={t("issue.upload.title")}
     >
       <div className="p-4">
         <div className="mb-4">
+          <h2 className="text-xl font-medium mb-2">{t("issue.upload.title")}</h2>
           <p className="text-sm text-custom-text-300">
             {t("issue.upload.description")}
           </p>

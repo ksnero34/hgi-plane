@@ -59,6 +59,8 @@ services:
     command: ./bin/docker-entrypoint-api.sh
     env_file:
       - ./apiserver/.env
+    environment:
+      - DISABLE_TELEMETRY=true
     depends_on:
       - plane-db
       - plane-redis
@@ -144,7 +146,7 @@ services:
     restart: always
     command: postgres -c 'max_connections=1000'
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     networks:
       - dev_env
     env_file:
@@ -185,7 +187,7 @@ services:
     restart: always
     command: server /export --console-address ":9090"
     volumes:
-      - uploads:/export
+      - ./data/uploads:/export
     networks:
       - dev_env
     environment:
@@ -217,9 +219,7 @@ services:
     image: harbor.hwgeneralins.com/plane/proxy:0.0.1
 
 volumes:
-  pgdata:
   redisdata:
-  uploads:
   rabbitmq_data:
 
 networks:

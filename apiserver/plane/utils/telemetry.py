@@ -22,6 +22,10 @@ def init_tracer():
     if _TRACER_PROVIDER is not None:
         return _TRACER_PROVIDER
 
+    # Check if telemetry is disabled
+    if os.environ.get("DISABLE_TELEMETRY", "").lower() == "true":
+        return None
+
     # Configure the tracer provider
     service_name = os.environ.get("SERVICE_NAME", "plane-ce-api")
     resource = Resource.create({"service.name": service_name})
@@ -31,7 +35,10 @@ def init_tracer():
     trace.set_tracer_provider(tracer_provider)
 
     # Configure the OTLP exporter
-    otel_endpoint = os.environ.get("OTLP_ENDPOINT", "https://telemetry.plane.so")
+    otel_endpoint = os.environ.get("OTLP_ENDPOINT")
+    if not otel_endpoint:
+        return None
+        
     otlp_exporter = OTLPSpanExporter(endpoint=otel_endpoint)
     span_processor = BatchSpanProcessor(otlp_exporter)
     tracer_provider.add_span_processor(span_processor)
