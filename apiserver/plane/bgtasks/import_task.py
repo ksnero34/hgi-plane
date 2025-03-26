@@ -41,7 +41,7 @@ def parse_date(date_str):
                 # "04 Mar 2025" 형식 처리
                 return datetime.strptime(date_str, "%d %b %Y").date()
             except ValueError:
-                print(f"Warning: Could not parse date '{date_str}'. Skipping date field.")
+                #print(f"Warning: Could not parse date '{date_str}'. Skipping date field.")
                 return None
 
 def get_or_create_state(project, state_name, default_state):
@@ -64,7 +64,7 @@ def get_or_create_state(project, state_name, default_state):
             group="backlog"  # 기본 그룹
         )
     except Exception as e:
-        print(f"Error creating state: {str(e)}")
+        #print(f"Error creating state: {str(e)}")
         return default_state
 
 def clean_id_field(id_str):
@@ -85,7 +85,7 @@ def safe_str(value):
 def issue_import_task(workspace_id, project_id, file_content, file_type, user_id):
     try:
         with transaction.atomic():
-            print(f"Starting issue import for project {project_id}")
+            #print(f"Starting issue import for project {project_id}")
             
             # 파일 타입에 따라 데이터 읽기
             if file_type == 'csv':
@@ -121,7 +121,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         sequence_id = int(issue_id.split('-')[1])
                         all_sequence_ids.add(sequence_id)
                     except (IndexError, ValueError):
-                        print(f"Warning: Invalid issue ID format: {issue_id}")
+                        #print(f"Warning: Invalid issue ID format: {issue_id}")
                         continue
                 
                 # 부모 이슈 ID도 수집
@@ -131,11 +131,11 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         parent_sequence_id = int(parent_id.split('-')[1])
                         all_sequence_ids.add(parent_sequence_id)
                     except (IndexError, ValueError):
-                        print(f"Warning: Invalid parent issue ID format: {parent_id}")
+                        #print(f"Warning: Invalid parent issue ID format: {parent_id}")
                         continue
             
-            print(f"Found {len(all_sequence_ids)} unique sequence IDs in the file")
-            print(f"Sequence IDs found: {list(all_sequence_ids)}")
+            #print(f"Found {len(all_sequence_ids)} unique sequence IDs in the file")
+            #print(f"Sequence IDs found: {list(all_sequence_ids)}")
             
             # 모든 관련 이슈 조회 (엑셀 파일의 ID와 부모 ID 모두 포함)
             for issue in Issue.objects.filter(
@@ -144,9 +144,9 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
             ):
                 existing_issues[issue.sequence_id] = issue
                 id_mapping[issue.sequence_id] = issue
-                print(f"Found existing issue - ID: {issue.id}, Sequence ID: {issue.sequence_id}, Name: {issue.name}")
+                #print(f"Found existing issue - ID: {issue.id}, Sequence ID: {issue.sequence_id}, Name: {issue.name}")
             
-            print(f"Found {len(existing_issues)} existing issues with matching IDs")
+            #print(f"Found {len(existing_issues)} existing issues with matching IDs")
             
             parent_relations = []
             imported_count = 0
@@ -156,8 +156,8 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                 try:
                     # ID 필드에서 BOM 제거
                     issue_id = clean_id_field(row.get("ID", ""))
-                    print(f"Processing issue with ID: {issue_id}")
-                    print(f"Issue data from file: {row}")
+                    #print(f"Processing issue with ID: {issue_id}")
+                    #print(f"Issue data from file: {row}")
                     
                     # sequence_id 추출 (ID가 없는 경우 자동 생성)
                     sequence_id = None
@@ -165,15 +165,15 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         try:
                             sequence_id = int(issue_id.split('-')[1])
                         except (IndexError, ValueError):
-                            print(f"Warning: Invalid issue ID format: {issue_id}")
+                            #print(f"Warning: Invalid issue ID format: {issue_id}")
                             continue
                     else:
                         # ID가 없는 경우, 현재 프로젝트의 최대 sequence_id + 1을 사용
                         max_sequence = Issue.objects.filter(project=project).aggregate(max_sequence=Max('sequence_id'))['max_sequence']
                         sequence_id = (max_sequence or 0) + 1
-                        print(f"Generated new sequence_id: {sequence_id}")
+                        #print(f"Generated new sequence_id: {sequence_id}")
                     
-                    print(f"Looking for existing issue with sequence_id: {sequence_id}")
+                    #print(f"Looking for existing issue with sequence_id: {sequence_id}")
                     
                     # 날짜 필드 처리
                     start_date = parse_date(safe_str(row.get("Start Date")))
@@ -200,10 +200,10 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     
                     # 이슈 ID가 있는 경우 기존 이슈 찾기
                     existing_issue = existing_issues.get(sequence_id)
-                    if existing_issue:
-                        print(f"Found existing issue to update - ID: {existing_issue.id}, Name: {existing_issue.name}")
-                    else:
-                        print(f"No existing issue found for sequence_id: {sequence_id}")
+                    # if existing_issue:
+                    #     #print(f"Found existing issue to update - ID: {existing_issue.id}, Name: {existing_issue.name}")
+                    # else:
+                    #     #print(f"No existing issue found for sequence_id: {sequence_id}")
                     
                     if existing_issue:
                         # 기존 이슈의 현재 상태 저장 (활동 로그용)
@@ -218,7 +218,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         existing_issue.save()
                         issue = existing_issue
                         updated_count += 1
-                        print(f"Updated existing issue - ID: {issue.id}, Name: {issue.name}")
+                        #print(f"Updated existing issue - ID: {issue.id}, Name: {issue.name}")
                         
                         # 관계 데이터만 삭제 후 재생성
                         IssueLabel.objects.filter(issue=issue).delete()
@@ -235,7 +235,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         issue = Issue.objects.create(**issue_data)
                         current_instance = None
                         imported_count += 1
-                        print(f"Created new issue - ID: {issue.id}, Name: {issue.name}")
+                        #print(f"Created new issue - ID: {issue.id}, Name: {issue.name}")
                     
                     id_mapping[sequence_id] = issue
                     
@@ -245,9 +245,9 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         try:
                             parent_sequence_id = int(parent_id.split('-')[1])
                             parent_relations.append((issue, parent_sequence_id))
-                            print(f"Added parent relation - Issue: {issue.name}, Parent ID: {parent_id}")
+                            #print(f"Added parent relation - Issue: {issue.name}, Parent ID: {parent_id}")
                         except (IndexError, ValueError):
-                            print(f"Warning: Invalid parent issue ID format: {parent_id}")
+                            #print(f"Warning: Invalid parent issue ID format: {parent_id}")
                             continue
                     
                     # 관련 데이터 처리 (라벨, 담당자, 모듈, 사이클)
@@ -267,7 +267,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     )
                     
                 except Exception as e:
-                    print(f"Error processing issue {sequence_id}: {str(e)}")
+                    #print(f"Error processing issue {sequence_id}: {str(e)}")
                     log_exception(e)
                     continue
             
@@ -277,7 +277,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     parent_issue = id_mapping[parent_id]
                     issue.parent = parent_issue
                     issue.save()
-                    print(f"Set parent relationship - Issue: {issue.name}, Parent: {parent_issue.name}")
+                    #print(f"Set parent relationship - Issue: {issue.name}, Parent: {parent_issue.name}")
                 else:
                     # 서버에서 부모 이슈 찾기
                     parent_issue = Issue.objects.filter(
@@ -287,11 +287,12 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     if parent_issue:
                         issue.parent = parent_issue
                         issue.save()
-                        print(f"Set parent relationship with existing issue - Issue: {issue.name}, Parent: {parent_issue.name}")
-                    else:
-                        print(f"Warning: Parent issue with sequence_id {parent_id} not found in server")
+                        #print(f"Set parent relationship with existing issue - Issue: {issue.name}, Parent: {parent_issue.name}")
+                    # else:
+                        #print(f"Warning: Parent issue with sequence_id {parent_id} not found in server")
             
-            print(f"Import completed - Imported: {imported_count}, Updated: {updated_count}")
+            #print(f"Import completed - Imported: {imported_count}, Updated: {updated_count}")
+
             return {
                 "success": True,
                 "imported_count": imported_count,
@@ -299,7 +300,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
             }
             
     except Exception as e:
-        print(f"Import task failed: {str(e)}")
+        #print(f"Import task failed: {str(e)}")
         log_exception(e)
         return {
             "success": False,
@@ -322,7 +323,7 @@ def process_related_data(issue, row, project, workspace_id):
                         created_by_id=issue.created_by_id,
                         updated_by_id=issue.updated_by_id
                     )
-                    print(f"Added label to issue {issue.name}: {label_name}")
+                    #print(f"Added label to issue {issue.name}: {label_name}")
     
     # 담당자 처리
     if not pd.isna(row.get("Assignee")):
@@ -343,7 +344,7 @@ def process_related_data(issue, row, project, workspace_id):
                         created_by_id=issue.created_by_id,
                         updated_by_id=issue.updated_by_id
                     )
-                    print(f"Assigned issue {issue.name} to: {assignee_name}")
+                    #print(f"Assigned issue {issue.name} to: {assignee_name}")
     
     # 모듈 처리
     module_name = safe_str(row.get("Module Name"))
@@ -358,7 +359,7 @@ def process_related_data(issue, row, project, workspace_id):
                 created_by_id=issue.created_by_id,
                 updated_by_id=issue.updated_by_id
             )
-            print(f"Added issue {issue.name} to module: {module_name}")
+            #print(f"Added issue {issue.name} to module: {module_name}")
     
     # 사이클 처리
     cycle_name = safe_str(row.get("Cycle Name"))
@@ -373,4 +374,4 @@ def process_related_data(issue, row, project, workspace_id):
                 created_by_id=issue.created_by_id,
                 updated_by_id=issue.updated_by_id
             )
-            print(f"Added issue {issue.name} to cycle: {cycle_name}")
+            #print(f"Added issue {issue.name} to cycle: {cycle_name}")
