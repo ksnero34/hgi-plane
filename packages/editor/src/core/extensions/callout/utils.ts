@@ -12,11 +12,11 @@ import {
 
 export const DEFAULT_CALLOUT_BLOCK_ATTRIBUTES: TCalloutBlockAttributes = {
   "data-logo-in-use": "emoji",
-  "data-icon-color": null,
-  "data-icon-name": null,
+  "data-icon-color": undefined,
+  "data-icon-name": undefined,
   "data-emoji-unicode": "128161",
-  "data-emoji-url": "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4a1.png",
-  "data-background": null,
+  // "data-emoji-url": "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4a1.png",
+  "data-background": "",
   "data-block-type": "callout-component",
 };
 
@@ -24,48 +24,32 @@ type TStoredLogoValue = Pick<TCalloutBlockAttributes, EAttributeNames.LOGO_IN_US
   (TCalloutBlockEmojiAttributes | TCalloutBlockIconAttributes);
 
 // function to get the stored logo from local storage
-export const getStoredLogo = (): TStoredLogoValue => {
-  const fallBackValues: TStoredLogoValue = {
-    "data-logo-in-use": "emoji",
-    "data-emoji-unicode": DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-unicode"],
-    "data-emoji-url": DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-url"],
-  };
+export const getStoredLogo = (): TEmojiLogoProps => {
+  const storedLogo = localStorage.getItem("stored-logo");
+  if (!storedLogo) return DEFAULT_CALLOUT_BLOCK_ATTRIBUTES;
 
-  if (typeof window !== "undefined") {
-    const storedData = sanitizeHTML(localStorage.getItem("editor-calloutComponent-logo"));
-    if (storedData) {
-      let parsedData: TEmojiLogoProps;
-      try {
-        parsedData = JSON.parse(storedData);
-      } catch (error) {
-        console.error(`Error parsing stored callout logo, stored value- ${storedData}`, error);
-        localStorage.removeItem("editor-calloutComponent-logo");
-        return fallBackValues;
-      }
-      if (parsedData.in_use === "emoji" && parsedData.emoji?.value) {
-        return {
-          "data-logo-in-use": "emoji",
-          "data-emoji-unicode": parsedData.emoji.value || DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-unicode"],
-          "data-emoji-url": parsedData.emoji.url || DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-url"],
-        };
-      }
-      if (parsedData.in_use === "icon" && parsedData.icon?.name) {
-        return {
-          "data-logo-in-use": "icon",
-          "data-icon-name": parsedData.icon.name || DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-icon-name"],
-          "data-icon-color": parsedData.icon.color || DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-icon-color"],
-        };
-      }
-    }
+  try {
+    const parsedData = JSON.parse(storedLogo);
+    return {
+      in_use: parsedData.in_use || DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-logo-in-use"],
+      emoji: {
+        value: parsedData.emoji?.value || DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-unicode"],
+      },
+      icon: parsedData.icon || {
+        name: undefined,
+        color: undefined,
+      },
+    };
+  } catch (error) {
+    return DEFAULT_CALLOUT_BLOCK_ATTRIBUTES;
   }
-  // fallback values
-  return fallBackValues;
 };
+
 // function to update the stored logo on local storage
-export const updateStoredLogo = (value: TEmojiLogoProps): void => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("editor-calloutComponent-logo", JSON.stringify(value));
+export const updateStoredLogo = (logo: TEmojiLogoProps) => {
+  localStorage.setItem("stored-logo", JSON.stringify(logo));
 };
+
 // function to get the stored background color from local storage
 export const getStoredBackgroundColor = (): string | null => {
   if (typeof window !== "undefined") {
@@ -73,6 +57,7 @@ export const getStoredBackgroundColor = (): string | null => {
   }
   return null;
 };
+
 // function to update the stored background color on local storage
 export const updateStoredBackgroundColor = (value: string | null): void => {
   if (typeof window === "undefined") return;

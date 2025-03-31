@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { usePopper } from "react-popper";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import { Popover, Tab } from "@headlessui/react";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
@@ -110,6 +110,7 @@ export const CustomEmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
                       theme={theme}
                       searchDisabled={searchDisabled}
                       searchPlaceholder={searchPlaceholder}
+                      emojiStyle={EmojiStyle.NATIVE}
                       previewConfig={{
                         showPreview: false,
                       }}

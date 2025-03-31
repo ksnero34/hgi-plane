@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Emoji } from "emoji-picker-react";
+import { Emoji, EmojiStyle } from "emoji-picker-react";
 import useFontFaceObserver from "use-font-face-observer";
 // icons
 import { LUCIDE_ICONS_LIST } from "./icons";
@@ -60,7 +60,14 @@ export const Logo: FC<Props> = (props) => {
 
   // emoji
   if (in_use === "emoji") {
-    return <Emoji unified={emojiCodeToUnicode(value)} size={size} />;
+    return (
+      <Emoji 
+        unified={emojiCodeToUnicode(value)} 
+        size={size} 
+        emojiStyle={emoji?.url ? undefined : EmojiStyle.NATIVE}
+        lazyLoad
+      />
+    );
   }
 
   // icon

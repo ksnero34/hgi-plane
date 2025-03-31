@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { usePopper } from "react-popper";
 import { Popover, Tab } from "@headlessui/react";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // helpers
@@ -113,6 +113,7 @@ export const EmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
                       previewConfig={{
                         showPreview: false,
                       }}
+                      emojiStyle={EmojiStyle.NATIVE}
                       lazyLoadEmojis
                     />
                   </Tab.Panel>

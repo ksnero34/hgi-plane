@@ -28,7 +28,7 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
     },
     emoji: {
       value: blockAttributes["data-emoji-unicode"]?.toString(),
-      url: blockAttributes["data-emoji-url"],
+      // url: blockAttributes["data-emoji-url"],
     },
   };
 
@@ -50,19 +50,19 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
             in_use: "emoji",
             emoji: {
               value: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-unicode"],
-              url: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-url"],
+              // url: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-url"],
             },
           };
           if (val.type === "emoji") {
             newLogoValue = {
               "data-emoji-unicode": convertHexEmojiToDecimal(val.value.unified),
-              "data-emoji-url": val.value.imageUrl,
+              // "data-emoji-url": val.value.imageUrl,
             };
             newLogoValueToStoreInLocalStorage = {
               in_use: "emoji",
               emoji: {
                 value: convertHexEmojiToDecimal(val.value.unified),
-                url: val.value.imageUrl,
+                // url: val.value.imageUrl,
               },
             };
           } else if (val.type === "icon") {

@@ -80,7 +80,7 @@ const ProjectCreateHeader: React.FC<Props> = (props) => {
                 if (val?.type === "emoji")
                   logoValue = {
                     value: convertHexEmojiToDecimal(val.value.unified),
-                    url: val.value.imageUrl,
+                    // url: val.value.imageUrl,
                   };
                 else if (val?.type === "icon") logoValue = val.value;
 

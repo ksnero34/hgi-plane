@@ -2,7 +2,7 @@ export enum EAttributeNames {
   ICON_COLOR = "data-icon-color",
   ICON_NAME = "data-icon-name",
   EMOJI_UNICODE = "data-emoji-unicode",
-  EMOJI_URL = "data-emoji-url",
+  // EMOJI_URL = "data-emoji-url",
   LOGO_IN_USE = "data-logo-in-use",
   BACKGROUND = "data-background",
   BLOCK_TYPE = "data-block-type",
@@ -15,7 +15,7 @@ export type TCalloutBlockIconAttributes = {
 
 export type TCalloutBlockEmojiAttributes = {
   [EAttributeNames.EMOJI_UNICODE]: string | undefined;
-  [EAttributeNames.EMOJI_URL]: string | undefined;
+  // [EAttributeNames.EMOJI_URL]: string | undefined;
 };
 
 export type TCalloutBlockAttributes = {

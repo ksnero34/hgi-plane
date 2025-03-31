@@ -42,7 +42,7 @@ export const CustomCalloutExtensionConfig = Node.create({
           // add callout logo
           if (logoInUse === "emoji") {
             state.write(
-              `> <img src="${attrs["data-emoji-url"]}" alt="${attrs["data-emoji-unicode"]}" width="30px" />\n`
+              `> <span class="emoji" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';">${attrs["data-emoji-unicode"]}</span>\n`
             );
           } else {
             state.write(`> <icon>${attrs["data-icon-name"]} icon</icon>\n`);
@@ -70,3 +70,10 @@ export const CustomCalloutExtensionConfig = Node.create({
     return ["div", mergeAttributes(HTMLAttributes), 0];
   },
 });
+
+export const getCalloutBlockHTML = (attrs: TCalloutBlockAttributes) => {
+  if (attrs["data-logo-in-use"] === "emoji") {
+    return `> <span class="emoji" style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';">${attrs["data-emoji-unicode"]}</span>\n`;
+  }
+  return `> <span class="material-symbols-rounded" style="color: ${attrs["data-icon-color"]}">${attrs["data-icon-name"]}</span>\n`;
+};
