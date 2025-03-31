@@ -67,7 +67,10 @@ class OIDCOAuthProvider(OauthAdapter):
         self.is_admin = request.session.get('is_admin_login', False)
         
         # 적절한 콜백 URL 설정 - 하나의 URL만 설정
-        base_url = f"""{"https" if request.is_secure() else "http"}://{request.get_host()}"""
+        # X-Forwarded-Proto 헤더 확인
+        forwarded_proto = request.META.get('HTTP_X_FORWARDED_PROTO', '')
+        is_secure = request.is_secure() or forwarded_proto == 'https'
+        base_url = f"""{"https" if is_secure else "http"}://{request.get_host()}"""
         if self.is_admin:
             redirect_uri = f"{base_url}/api/instances/admins/oidc/callback/"
         else:
