@@ -50,3 +50,23 @@ button.epr-btn-clear-search:hover {
   background-color: rgba(var(--color-background-100)) !important;
   border-color: rgba(var(--color-border-200)) !important;
 }
+
+/* Native emoji styles */
+.epr-emoji-native {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: inherit !important;
+  line-height: 1 !important;
+}
+
+/* Container styles for emoji */
+.emoji-container {
+  display: grid !important;
+  place-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
+}

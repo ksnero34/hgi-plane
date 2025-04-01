@@ -76,7 +76,7 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
     formData.identifier = formData.identifier?.toUpperCase();
     const coverImage = formData.cover_image_url;
     // if unsplash or a pre-defined image is uploaded, delete the old uploaded asset
-    if (coverImage?.startsWith("http")) {
+    if (coverImage) {
       formData.cover_image = coverImage;
       formData.cover_image_asset = null;
     }
@@ -105,11 +105,26 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
         handleNextStep(res.id);
       })
       .catch((err) => {
-        Object.keys(err.data).map((key) => {
+        if (err?.data) {
+          Object.keys(err.data).map((key) => {
+            setToast({
+              type: TOAST_TYPE.ERROR,
+              title: t("error"),
+              message: err.data[key],
+            });
+            captureProjectEvent({
+              eventName: PROJECT_CREATED,
+              payload: {
+                ...formData,
+                state: "FAILED",
+              },
+            });
+          });
+        } else {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("error"),
-            message: err.data[key],
+            message: t("something_went_wrong"),
           });
           captureProjectEvent({
             eventName: PROJECT_CREATED,
@@ -118,7 +133,7 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
               state: "FAILED",
             },
           });
-        });
+        }
       });
   };
 

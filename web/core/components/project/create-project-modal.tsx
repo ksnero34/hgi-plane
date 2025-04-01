@@ -46,7 +46,7 @@ export const CreateProjectModal: FC<Props> = (props) => {
   };
 
   const handleCoverImageStatusUpdate = async (projectId: string, coverImage: string) => {
-    if (!checkURLValidity(coverImage)) {
+    if (coverImage?.startsWith("http")||coverImage?.startsWith("https")) {
       await fileService.updateBulkProjectAssetsUploadStatus(workspaceSlug, projectId, projectId, {
         asset_ids: [getAssetIdFromUrl(coverImage)],
       });

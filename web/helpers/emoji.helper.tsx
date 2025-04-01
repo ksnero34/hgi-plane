@@ -1,5 +1,6 @@
 // ui
 import { LUCIDE_ICONS_LIST } from "@plane/ui";
+import { Emoji, EmojiStyle } from "emoji-picker-react";
 
 export const getRandomEmoji = () => {
   const emojis = [
@@ -38,7 +39,14 @@ export const renderEmoji = (
         {emoji.name}
       </span>
     );
-  else return isNaN(parseInt(emoji)) ? emoji : String.fromCodePoint(parseInt(emoji));
+  else {
+    if (isNaN(parseInt(emoji))) return emoji;
+    return (
+      <div className="emoji-container">
+        <Emoji unified={emojiCodeToUnicode(emoji)} size={16} emojiStyle={EmojiStyle.NATIVE} />
+      </div>
+    );
+  }
 };
 
 export const groupReactions: (reactions: any[], key: string) => { [key: string]: any[] } = (
@@ -81,3 +89,4 @@ export const emojiCodeToUnicode = (emoji: string) => {
 
   return uniCodeEmoji;
 };
+

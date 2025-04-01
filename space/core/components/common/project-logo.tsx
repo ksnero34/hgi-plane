@@ -1,7 +1,9 @@
 // types
 import { TLogoProps } from "@plane/types";
+import { Emoji, EmojiStyle } from "emoji-picker-react";
 // helpers
 import { cn } from "@/helpers/common.helper";
+import { emojiCodeToUnicode } from "@plane/utils";
 
 type Props = {
   className?: string;
@@ -25,9 +27,13 @@ export const ProjectLogo: React.FC<Props> = (props) => {
 
   if (logo.in_use === "emoji" && logo.emoji)
     return (
-      <span className={cn("text-base", className)}>
-        {logo.emoji.value?.split("-").map((emoji) => String.fromCodePoint(parseInt(emoji, 10)))}
-      </span>
+      <div className={cn("emoji-container", className)}>
+        <Emoji 
+          unified={emojiCodeToUnicode(logo.emoji.value || "")} 
+          size={16} 
+          emojiStyle={EmojiStyle.NATIVE} 
+        />
+      </div>
     );
 
   return <span />;

@@ -40,7 +40,22 @@ export const CustomEmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
       {
         name: "preventOverflow",
         options: {
-          padding: 20,
+          padding: 8,
+          altAxis: true,
+          tether: false,
+        },
+      },
+      {
+        name: "flip",
+        options: {
+          padding: 8,
+          fallbackPlacements: ["top-start", "bottom-start"],
+        },
+      },
+      {
+        name: "offset",
+        options: {
+          offset: [0, 8],
         },
       },
     ],

@@ -1,7 +1,7 @@
 "use client";
 
 import { FC } from "react";
-import { Emoji } from "emoji-picker-react";
+import { Emoji, EmojiStyle } from "emoji-picker-react";
 // Due to some weird issue with the import order, the import of useFontFaceObserver
 // should be after the imported here rather than some below helper functions as it is in the original file
 // eslint-disable-next-line import/order
@@ -55,7 +55,11 @@ export const Logo: FC<Props> = (props) => {
 
   // emoji
   if (in_use === "emoji") {
-    return <Emoji unified={emojiCodeToUnicode(value)} size={size} />;
+    return (
+      <div className="emoji-container" style={{ width: size, height: size }}>
+        <Emoji unified={emojiCodeToUnicode(value)} size={size} emojiStyle={EmojiStyle.NATIVE} />
+      </div>
+    );
   }
 
   // icon

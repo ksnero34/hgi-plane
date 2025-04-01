@@ -43,7 +43,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
         """파일 확장자와 MIME 타입이 일치하는지 확인"""
         mime_extension_map = {
             # 텍스트 문서
-            'txt': ['text/plain'],
+            'txt': ['text/plain', 'application/octet-stream'],
             'css': ['text/css'],
             'js': ['text/javascript'],
             'json': ['application/json'],
@@ -62,15 +62,16 @@ class IssueAttachmentEndpoint(BaseAPIView):
             'bmp': ['image/bmp'],
             
             # 문서
-            'pdf': ['application/pdf'],
-            'doc': ['application/msword'],
-            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-            'xls': ['application/vnd.ms-excel'],
-            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-            'ppt': ['application/vnd.ms-powerpoint'],
+            'pdf': ['application/pdf', 'application/octet-stream'],
+            'doc': ['application/msword', 'application/octet-stream'],
+            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream'],
+            'xls': ['application/vnd.ms-excel', 'application/octet-stream'],
+            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'],
+            'ppt': ['application/vnd.ms-powerpoint', 'application/octet-stream'],
             'pptx': [
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'application/vnd.ms-powerpoint.presentation.macroenabled.12'
+                'application/vnd.ms-powerpoint.presentation.macroenabled.12',
+                'application/octet-stream'
             ],
             
             # 오디오
@@ -243,7 +244,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         """파일 확장자와 MIME 타입이 일치하는지 확인"""
         mime_extension_map = {
             # 텍스트 문서
-            'txt': ['text/plain'],
+            'txt': ['text/plain', 'application/octet-stream'],
             'css': ['text/css'],
             'js': ['text/javascript'],
             'json': ['application/json'],
@@ -262,15 +263,16 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'bmp': ['image/bmp'],
             
             # 문서
-            'pdf': ['application/pdf'],
-            'doc': ['application/msword'],
-            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-            'xls': ['application/vnd.ms-excel'],
-            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-            'ppt': ['application/vnd.ms-powerpoint'],
+            'pdf': ['application/pdf', 'application/octet-stream'],
+            'doc': ['application/msword', 'application/octet-stream'],
+            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream'],
+            'xls': ['application/vnd.ms-excel', 'application/octet-stream'],
+            'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'],
+            'ppt': ['application/vnd.ms-powerpoint', 'application/octet-stream'],
             'pptx': [
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'application/vnd.ms-powerpoint.presentation.macroenabled.12'
+                'application/vnd.ms-powerpoint.presentation.macroenabled.12',
+                'application/octet-stream'
             ],
             
             # 오디오

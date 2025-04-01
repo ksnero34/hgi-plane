@@ -1,3 +1,7 @@
+import { Emoji, EmojiStyle } from "emoji-picker-react";
+// helpers
+import { emojiCodeToUnicode } from "@plane/utils";
+
 export const renderEmoji = (
   emoji:
     | string
@@ -14,7 +18,14 @@ export const renderEmoji = (
         {emoji.name}
       </span>
     );
-  else return isNaN(parseInt(emoji)) ? emoji : String.fromCodePoint(parseInt(emoji));
+  else {
+    if (isNaN(parseInt(emoji))) return emoji;
+    return (
+      <div className="emoji-container">
+        <Emoji unified={emojiCodeToUnicode(emoji)} size={16} emojiStyle={EmojiStyle.NATIVE} />
+      </div>
+    );
+  }
 };
 
 export const groupReactions = <T extends { reaction: string }>(reactions: T[], key: string) => {
