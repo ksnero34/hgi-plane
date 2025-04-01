@@ -122,6 +122,7 @@ class Issue(ProjectBaseModel):
         null=True,
         blank=True,
         related_name="state_issue",
+        db_index=True
     )
     point = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(12)], null=True, blank=True
@@ -133,7 +134,7 @@ class Issue(ProjectBaseModel):
         null=True,
         blank=True,
     )
-    name = models.CharField(max_length=255, verbose_name="Issue Name")
+    name = models.CharField(max_length=255, verbose_name="Issue Name", db_index=True)
     description = models.JSONField(blank=True, default=dict)
     description_html = models.TextField(blank=True, default="<p></p>")
     description_stripped = models.TextField(blank=True, null=True)
@@ -143,9 +144,10 @@ class Issue(ProjectBaseModel):
         choices=PRIORITY_CHOICES,
         verbose_name="Issue Priority",
         default="none",
+        db_index=True
     )
-    start_date = models.DateField(null=True, blank=True)
-    target_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True, db_index=True)
+    target_date = models.DateField(null=True, blank=True, db_index=True)
     assignees = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         blank=True,
@@ -153,14 +155,14 @@ class Issue(ProjectBaseModel):
         through="IssueAssignee",
         through_fields=("issue", "assignee"),
     )
-    sequence_id = models.IntegerField(default=1, verbose_name="Issue Sequence ID")
+    sequence_id = models.IntegerField(default=1, verbose_name="Issue Sequence ID", db_index=True)
     labels = models.ManyToManyField(
         "db.Label", blank=True, related_name="labels", through="IssueLabel"
     )
-    sort_order = models.FloatField(default=65535)
-    completed_at = models.DateTimeField(null=True)
-    archived_at = models.DateField(null=True)
-    is_draft = models.BooleanField(default=False)
+    sort_order = models.FloatField(default=65535, db_index=True)
+    completed_at = models.DateTimeField(null=True, db_index=True)
+    archived_at = models.DateField(null=True, db_index=True)
+    is_draft = models.BooleanField(default=False, db_index=True)
     external_source = models.CharField(max_length=255, null=True, blank=True)
     external_id = models.CharField(max_length=255, blank=True, null=True)
     type = models.ForeignKey(
@@ -169,6 +171,7 @@ class Issue(ProjectBaseModel):
         related_name="issue_type",
         null=True,
         blank=True,
+        db_index=True
     )
 
     issue_objects = IssueManager()
@@ -178,6 +181,19 @@ class Issue(ProjectBaseModel):
         verbose_name_plural = "Issues"
         db_table = "issues"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=['project', 'state'], name='idx_issue_proj_state'),
+            models.Index(fields=['project', 'created_at'], name='idx_issue_proj_created'),
+            models.Index(fields=['project', 'priority'], name='idx_issue_proj_priority'),
+            models.Index(fields=['project', 'is_draft'], name='idx_issue_proj_draft'),
+            models.Index(fields=['project', 'completed_at'], name='idx_issue_proj_completed'),
+            models.Index(fields=['project', 'archived_at'], name='idx_issue_proj_archived'),
+            models.Index(fields=['project', 'sequence_id'], name='idx_issue_proj_sequence'),
+            models.Index(fields=['project', 'sort_order'], name='idx_issue_proj_sort'),
+            models.Index(fields=['parent', 'deleted_at'], name='idx_issue_parent_deleted'),
+            models.Index(fields=['project', 'state', 'sort_order'], name='idx_issue_proj_state_sort'),
+            models.Index(fields=['project', 'created_at'], name='idx_issue_proj_created_2'),
+        ]
 
     def save(self, *args, **kwargs):
         if self.state is None:
@@ -240,6 +256,22 @@ class Issue(ProjectBaseModel):
                 else strip_tags(self.description_html)
             )
             super(Issue, self).save(*args, **kwargs)
+
+    def get_queryset(self):
+        return (
+            Issue.issue_objects.annotate(
+                sub_issues_count=models.Count('parent_issue', filter=models.Q(deleted_at__isnull=True))
+            )
+            .filter(project_id=self.kwargs.get("project_id"))
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .select_related("project")
+            .select_related("workspace")
+            .select_related("state")
+            .select_related("parent")
+            .prefetch_related("assignees")
+            .prefetch_related("labels")
+            .order_by(self.kwargs.get("order_by", "-created_at"))
+        ).distinct()
 
     def __str__(self):
         """Return name of the issue"""
@@ -332,12 +364,13 @@ class IssueMention(ProjectBaseModel):
 
 class IssueAssignee(ProjectBaseModel):
     issue = models.ForeignKey(
-        Issue, on_delete=models.CASCADE, related_name="issue_assignee"
+        Issue, on_delete=models.CASCADE, related_name="issue_assignee", db_index=True
     )
     assignee = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="issue_assignee",
+        db_index=True
     )
 
     class Meta:
@@ -353,6 +386,10 @@ class IssueAssignee(ProjectBaseModel):
         verbose_name_plural = "Issue Assignees"
         db_table = "issue_assignees"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=['issue', 'deleted_at']),
+            models.Index(fields=['assignee', 'deleted_at']),
+        ]
 
     def __str__(self):
         return f"{self.issue.name} {self.assignee.email}"
@@ -371,6 +408,9 @@ class IssueLink(ProjectBaseModel):
         verbose_name_plural = "Issue Links"
         db_table = "issue_links"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=['issue_id', 'deleted_at']),
+        ]
 
     def __str__(self):
         return f"{self.issue.name} {self.url}"
@@ -451,23 +491,24 @@ class IssueComment(ProjectBaseModel):
     comment_html = models.TextField(blank=True, default="<p></p>")
     attachments = ArrayField(models.URLField(), size=10, blank=True, default=list)
     issue = models.ForeignKey(
-        Issue, on_delete=models.CASCADE, related_name="issue_comments"
+        Issue, on_delete=models.CASCADE, related_name="issue_comments", db_index=True
     )
-    # System can also create comment
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="comments",
         null=True,
+        db_index=True
     )
     access = models.CharField(
         choices=(("INTERNAL", "INTERNAL"), ("EXTERNAL", "EXTERNAL")),
         default="INTERNAL",
         max_length=100,
+        db_index=True
     )
     external_source = models.CharField(max_length=255, null=True, blank=True)
     external_id = models.CharField(max_length=255, blank=True, null=True)
-    edited_at = models.DateTimeField(null=True, blank=True)
+    edited_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     def save(self, *args, **kwargs):
         self.comment_stripped = (
@@ -480,6 +521,12 @@ class IssueComment(ProjectBaseModel):
         verbose_name_plural = "Issue Comments"
         db_table = "issue_comments"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=['issue', 'created_at']),
+            models.Index(fields=['actor', 'created_at']),
+            models.Index(fields=['access', 'created_at']),
+            models.Index(fields=['edited_at', 'created_at']),
+        ]
 
     def __str__(self):
         """Return issue of the comment"""
@@ -517,10 +564,10 @@ class IssueUserProperty(ProjectBaseModel):
 
 class IssueLabel(ProjectBaseModel):
     issue = models.ForeignKey(
-        "db.Issue", on_delete=models.CASCADE, related_name="label_issue"
+        "db.Issue", on_delete=models.CASCADE, related_name="label_issue", db_index=True
     )
     label = models.ForeignKey(
-        "db.Label", on_delete=models.CASCADE, related_name="label_issue"
+        "db.Label", on_delete=models.CASCADE, related_name="label_issue", db_index=True
     )
 
     class Meta:
@@ -528,6 +575,10 @@ class IssueLabel(ProjectBaseModel):
         verbose_name_plural = "Issue Labels"
         db_table = "issue_labels"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=['issue', 'deleted_at']),
+            models.Index(fields=['label', 'deleted_at']),
+        ]
 
     def __str__(self):
         return f"{self.issue.name} {self.label.name}"

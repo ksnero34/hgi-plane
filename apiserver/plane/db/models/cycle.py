@@ -101,7 +101,6 @@ class CycleIssue(ProjectBaseModel):
     """
     Cycle Issues
     """
-
     issue = models.ForeignKey(
         "db.Issue", on_delete=models.CASCADE, related_name="issue_cycle"
     )
@@ -122,6 +121,10 @@ class CycleIssue(ProjectBaseModel):
         verbose_name_plural = "Cycle Issues"
         db_table = "cycle_issues"
         ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=['issue_id', 'deleted_at']),
+            models.Index(fields=['cycle_id', 'deleted_at']),
+        ]
 
     def __str__(self):
         return f"{self.cycle}"
