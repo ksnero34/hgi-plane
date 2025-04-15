@@ -14,6 +14,7 @@ from plane.authentication.adapter.error import (
     AuthenticationException,
     AUTHENTICATION_ERROR_CODES,
 )
+from plane.utils.audit_logger import log_audit
 
 class OIDCOauthInitiateEndpoint(View):
     def get(self, request):
@@ -101,6 +102,21 @@ class OIDCCallbackEndpoint(View):
             )
             # print("provider", provider)
             user = provider.authenticate()
+            
+            # 감사 로그 남기기
+            log_audit(
+                action="login",
+                user_id=str(user.id),
+                user_email=user.email,
+                resource_type="user",
+                resource_id=str(user.id),
+                details={
+                    "provider": "oidc",
+                    "is_admin": request.session.get("is_admin_login", False)
+                },
+                ip_address=request.META.get("REMOTE_ADDR")
+            )
+            
             # Login the user and record his device info
             user_login(request=request, user=user, is_app=True)
             # Get the redirection path

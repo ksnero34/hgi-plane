@@ -65,6 +65,7 @@ from plane.utils.global_paginator import paginate
 from plane.bgtasks.webhook_task import model_activity
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.import_task import issue_import_task
+from plane.utils.audit_logger import log_audit
 
 
 class IssueListEndpoint(BaseAPIView):
@@ -451,6 +452,25 @@ class IssueViewSet(BaseViewSet):
         if serializer.is_valid():
             serializer.save()
 
+            # 감사 로그 추가
+            log_audit(
+                action="create_issue",
+                user_id=str(request.user.id),
+                user_email=request.user.email,
+                resource_type="issue",
+                resource_id=str(serializer.data.get("id", None)),
+                details={
+                    "project_id": str(project_id),
+                    "title": request.data.get("name"),
+                    "description_html": request.data.get("description_html"),
+                    "priority": request.data.get("priority"),
+                    "state": request.data.get("state"),
+                    "assignees": request.data.get("assignee_ids", []),
+                    "labels": request.data.get("label_ids", []),
+                },
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+
             # Track the issue
             issue_activity.delay(
                 type="issue.activity.created",
@@ -767,6 +787,42 @@ class IssueViewSet(BaseViewSet):
         )
         if serializer.is_valid():
             serializer.save()
+            
+            # JSON 문자열을 딕셔너리로 파싱
+            current_instance_dict = json.loads(current_instance)
+            
+            # 변경된 필드만 추출
+            changes = {}
+            for field, value in request.data.items():
+                if field in current_instance_dict:
+                    old_value = current_instance_dict[field]
+                    # 문자열 비교 시 유니코드 정규화
+                    if isinstance(old_value, str) and isinstance(value, str):
+                        old_value = old_value.encode('utf-8').decode('utf-8')
+                        value = value.encode('utf-8').decode('utf-8')
+                    if str(old_value) != str(value):
+                        changes[field] = {
+                            "old": old_value,
+                            "new": value
+                        }
+            
+            # 내용의 경우 worker에서 수행됨
+            
+            # 감사 로그 추가
+            if changes:  # 변경사항이 있을 때만 로그 기록
+                log_audit(
+                    action="update_issue",
+                    user_id=str(request.user.id),
+                    user_email=request.user.email,
+                    resource_type="issue",
+                    resource_id=str(pk),
+                    details={
+                        "project_id": str(project_id),
+                        "changes": changes
+                    },
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                )
+
             issue_activity.delay(
                 type="issue.activity.updated",
                 requested_data=requested_data,
@@ -799,6 +855,20 @@ class IssueViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN], creator=True, model=Issue)
     def destroy(self, request, slug, project_id, pk=None):
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+
+        # 감사 로그 추가
+        log_audit(
+            action="delete_issue",
+            user_id=str(request.user.id),
+            user_email=request.user.email,
+            resource_type="issue",
+            resource_id=str(pk),
+            details={
+                "project_id": str(project_id),
+                "issue_data": json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder),
+            },
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
 
         issue.delete()
         # delete the issue from recent visits

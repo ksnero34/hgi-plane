@@ -36,6 +36,9 @@ LOGGING = {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "fmt": "%(levelname)s %(asctime)s %(module)s %(name)s %(message)s",
         },
+        "audit": {
+            "format": "%(message)s",
+        },
     },
     "handlers": {
         "console": {
@@ -57,6 +60,16 @@ LOGGING = {
             "formatter": "json",
             "level": "DEBUG" if DEBUG else "ERROR",
         },
+        "audit_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "audit.log"),
+            "when": "midnight",
+            "interval": 1,
+            "backupCount": 30,
+            "formatter": "audit",
+            "encoding": "utf-8",
+        },
     },
     "loggers": {
         "django": {"handlers": ["console", "file"], "level": "INFO", "propagate": True},
@@ -69,6 +82,11 @@ LOGGING = {
             "level": "DEBUG" if DEBUG else "ERROR",
             "handlers": ["console", "file"],
             "propagate": False,
+        },
+        "audit": {
+            "handlers": ["audit_file"],
+            "level": "INFO",
+            "propagate": True,
         },
     },
 }

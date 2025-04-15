@@ -20,6 +20,7 @@ from plane.db.models import Project, ProjectMember, IssueUserProperty, Workspace
 from plane.bgtasks.project_add_user_email_task import project_add_user_email
 from plane.utils.host import base_host
 from plane.app.permissions.base import allow_permission, ROLE
+from plane.utils.audit_logger import log_audit
 
 
 class ProjectMemberViewSet(BaseViewSet):
@@ -158,6 +159,23 @@ class ProjectMemberViewSet(BaseViewSet):
             project_id=project_id,
             member_id__in=[member.get("member_id") for member in members],
         )
+        
+        # 감사 로그 추가
+        for project_member in project_members:
+            log_audit(
+                action="add_project_member",
+                user_id=str(request.user.id),
+                user_email=request.user.email,
+                resource_type="project",
+                resource_id=str(project_id),
+                details={
+                    "member_id": str(project_member.member_id),
+                    "member_email": project_member.member.email,
+                    "role": project_member.role,
+                },
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+            
         # Send emails to notify the users
         [
             project_add_user_email.delay(
@@ -228,12 +246,30 @@ class ProjectMemberViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        old_role = project_member.role
         serializer = ProjectMemberSerializer(
             project_member, data=request.data, partial=True
         )
 
         if serializer.is_valid():
             serializer.save()
+            
+            # 감사 로그 추가
+            log_audit(
+                action="update_project_member_role",
+                user_id=str(request.user.id),
+                user_email=request.user.email,
+                resource_type="project",
+                resource_id=str(project_id),
+                details={
+                    "member_id": str(project_member.member_id),
+                    "member_email": project_member.member.email,
+                    "old_role": old_role,
+                    "new_role": request.data.get("role", old_role),
+                },
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -267,6 +303,21 @@ class ProjectMemberViewSet(BaseViewSet):
                 {"error": "You cannot remove a user having role higher than you"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # 감사 로그 추가
+        log_audit(
+            action="remove_project_member",
+            user_id=str(request.user.id),
+            user_email=request.user.email,
+            resource_type="project",
+            resource_id=str(project_id),
+            details={
+                "member_id": str(project_member.member_id),
+                "member_email": project_member.member.email,
+                "role": project_member.role,
+            },
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
 
         project_member.is_active = False
         project_member.save()

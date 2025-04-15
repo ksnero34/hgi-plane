@@ -18,6 +18,7 @@ from plane.app.serializers import (
 from plane.app.views.base import BaseAPIView
 from plane.db.models import Project, ProjectMember, WorkspaceMember, DraftIssue
 from plane.utils.cache import invalidate_cache
+from plane.utils.audit_logger import log_audit
 
 from .. import BaseViewSet
 
@@ -68,6 +69,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        old_role = workspace_member.role
         if workspace_member.role > int(request.data.get("role")):
             _ = ProjectMember.objects.filter(
                 workspace__slug=slug, member_id=workspace_member.member_id
@@ -79,6 +81,23 @@ class WorkSpaceMemberViewSet(BaseViewSet):
 
         if serializer.is_valid():
             serializer.save()
+            
+            # 감사 로그 추가
+            log_audit(
+                action="update_workspace_member_role",
+                user_id=str(request.user.id),
+                user_email=request.user.email,
+                resource_type="workspace",
+                resource_id=str(workspace_member.workspace_id),
+                details={
+                    "member_id": str(workspace_member.member_id),
+                    "member_email": workspace_member.member.email,
+                    "old_role": old_role,
+                    "new_role": request.data.get("role"),
+                },
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -133,6 +152,21 @@ class WorkSpaceMemberViewSet(BaseViewSet):
         _ = ProjectMember.objects.filter(
             workspace__slug=slug, member_id=workspace_member.member_id, is_active=True
         ).update(is_active=False)
+
+        # 감사 로그 추가
+        log_audit(
+            action="remove_workspace_member",
+            user_id=str(request.user.id),
+            user_email=request.user.email,
+            resource_type="workspace",
+            resource_id=str(workspace_member.workspace_id),
+            details={
+                "member_id": str(workspace_member.member_id),
+                "member_email": workspace_member.member.email,
+                "role": workspace_member.role,
+            },
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
 
         workspace_member.is_active = False
         workspace_member.save()

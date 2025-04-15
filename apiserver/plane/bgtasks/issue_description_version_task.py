@@ -6,6 +6,7 @@ import json
 
 from plane.db.models import Issue, IssueDescriptionVersion
 from plane.utils.exception_logger import log_exception
+from plane.utils.audit_logger import log_audit
 
 
 def should_update_existing_version(
@@ -70,6 +71,24 @@ def issue_description_version_task(
                 update_existing_version(latest_version, issue)
             else:
                 IssueDescriptionVersion.log_issue_description_version(issue, user_id)
+
+            # 내용이 변경된 경우 감사 로그 추가
+            # if not is_creating and current_issue.get("description_html") != issue.description_html:
+            #     log_audit(
+            #         action="update_issue_description",
+            #         user_id=str(user_id),
+            #         resource_type="issue",
+            #         resource_id=str(issue_id),
+            #         details={
+            #             "project_id": str(issue.project_id),
+            #             "changes": {
+            #                 "description_html": {
+            #                     "old": current_issue.get("description_html", ""),
+            #                     "new": issue.description_html
+            #                 }
+            #             }
+            #         }
+            #     )
 
             return
 

@@ -5,6 +5,7 @@ from django.db import transaction
 
 # Module imports
 from plane.db.models import User, DefaultWorkspaceConfig, WorkspaceMember
+from plane.utils.audit_logger import log_audit
 
 @receiver(post_save, sender=User)
 def add_user_to_default_workspaces(sender, instance, created, **kwargs):
@@ -23,7 +24,7 @@ def add_user_to_default_workspaces(sender, instance, created, **kwargs):
                     member=instance
                 ).exists():
                     # 워크스페이스 멤버로 추가
-                    WorkspaceMember.objects.create(
+                    workspace_member = WorkspaceMember.objects.create(
                         workspace=config.workspace,
                         member=instance,
                         role=config.role,
@@ -31,4 +32,20 @@ def add_user_to_default_workspaces(sender, instance, created, **kwargs):
                         updated_by=instance,
                         is_active=True
                     )
+                    
+                    # 감사 로그 추가
+                    log_audit(
+                        action="auto_add_workspace_member",
+                        user_id=str(instance.id),
+                        user_email=instance.email,
+                        resource_type="workspace",
+                        resource_id=str(config.workspace_id),
+                        details={
+                            "member_id": str(instance.id),
+                            "member_email": instance.email,
+                            "role": config.role,
+                        },
+                        ip_address=None,  # 자동 추가이므로 IP 주소 없음
+                    )
+                    
                     print(f"사용자 {instance.email}가 워크스페이스 {config.workspace.name}에 자동으로 추가되었습니다.")

@@ -42,14 +42,27 @@ LOGGING = {
         "verbose": {
             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
             "style": "{",
-        }
+        },
+        "audit": {
+            "format": "%(message)s",
+        },
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
-        }
+        },
+        "audit_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "audit.log"),
+            "when": "midnight",
+            "interval": 1,
+            "backupCount": 30,
+            "formatter": "audit",
+            "encoding": "utf-8",
+        },
     },
     "loggers": {
         "django.request": {
@@ -57,6 +70,15 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        "plane": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
+        "plane": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "audit": {
+            "handlers": ["audit_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
     },
 }

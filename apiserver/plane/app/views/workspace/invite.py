@@ -26,6 +26,7 @@ from plane.bgtasks.event_tracking_task import workspace_invite_event
 from plane.bgtasks.workspace_invitation_task import workspace_invitation
 from plane.db.models import User, Workspace, WorkspaceMember, WorkspaceMemberInvite
 from plane.utils.cache import invalidate_cache, invalidate_cache_directly
+from plane.utils.audit_logger import log_audit
 
 from .. import BaseViewSet
 
@@ -133,6 +134,22 @@ class WorkspaceInvitationsViewset(BaseViewSet):
                 current_site,
                 request.user.email,
             )
+            
+            # 감사 로그 남기기
+            log_audit(
+                action="invite_member",
+                user_id=str(request.user.id),
+                user_email=request.user.email,
+                resource_type="workspace",
+                resource_id=str(workspace.id),
+                details={
+                    "invited_email": invitation.email,
+                    "role": invitation.role,
+                    "workspace_slug": workspace.slug,
+                    "workspace_name": workspace.name
+                },
+                ip_address=request.META.get("REMOTE_ADDR")
+            )
 
         return Response(
             {"message": "Emails sent successfully"}, status=status.HTTP_200_OK
@@ -142,6 +159,23 @@ class WorkspaceInvitationsViewset(BaseViewSet):
         workspace_member_invite = WorkspaceMemberInvite.objects.get(
             pk=pk, workspace__slug=slug
         )
+        
+        # 감사 로그 남기기
+        log_audit(
+            action="delete_invitation",
+            user_id=str(request.user.id),
+            user_email=request.user.email,
+            resource_type="workspace",
+            resource_id=str(workspace_member_invite.workspace.id),
+            details={
+                "invited_email": workspace_member_invite.email,
+                "role": workspace_member_invite.role,
+                "workspace_slug": workspace_member_invite.workspace.slug,
+                "workspace_name": workspace_member_invite.workspace.name
+            },
+            ip_address=request.META.get("REMOTE_ADDR")
+        )
+        
         workspace_member_invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -205,6 +239,22 @@ class WorkspaceJoinEndpoint(BaseAPIView):
                     user.last_workspace_id = workspace_invite.workspace.id
                     user.save()
 
+                    # 감사 로그 남기기
+                    log_audit(
+                        action="accept_invitation",
+                        user_id=str(user.id),
+                        user_email=user.email,
+                        resource_type="workspace",
+                        resource_id=str(workspace_invite.workspace.id),
+                        details={
+                            "workspace_slug": workspace_invite.workspace.slug,
+                            "workspace_name": workspace_invite.workspace.name,
+                            "role": workspace_invite.role,
+                            "invited_by": workspace_invite.created_by.email if workspace_invite.created_by else None
+                        },
+                        ip_address=request.META.get("REMOTE_ADDR")
+                    )
+
                     # Delete the invitation
                     workspace_invite.delete()
 
@@ -224,6 +274,22 @@ class WorkspaceJoinEndpoint(BaseAPIView):
                 )
 
             # Workspace invitation rejected
+            # 감사 로그 남기기
+            log_audit(
+                action="reject_invitation",
+                user_id=str(user.id) if user else None,
+                user_email=email,
+                resource_type="workspace",
+                resource_id=str(workspace_invite.workspace.id),
+                details={
+                    "workspace_slug": workspace_invite.workspace.slug,
+                    "workspace_name": workspace_invite.workspace.name,
+                    "role": workspace_invite.role,
+                    "invited_by": workspace_invite.created_by.email if workspace_invite.created_by else None
+                },
+                ip_address=request.META.get("REMOTE_ADDR")
+            )
+            
             return Response(
                 {"message": "Workspace Invitation was not accepted"},
                 status=status.HTTP_200_OK,

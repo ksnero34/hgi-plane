@@ -16,6 +16,7 @@ from plane.api.serializers import UserLiteSerializer
 from plane.db.models import User, Workspace, Project, WorkspaceMember, ProjectMember
 
 from plane.app.permissions import ProjectMemberPermission
+from plane.utils.audit_logger import log_audit
 
 
 # API endpoint to get and insert users inside the workspace
@@ -126,7 +127,21 @@ class ProjectMemberAPIEndpoint(BaseAPIView):
             )
             project_member.save()
 
+        # Add audit log
+        log_audit(
+            action="add_member",
+            user_id=str(request.user.id),
+            user_email=request.user.email,
+            resource_type="project",
+            resource_id=str(project_id),
+            details={
+                "member_id": str(user.id),
+                "member_email": user.email,
+                "role": request.data.get("role", 5),
+            },
+            ip_address=request.META.get('REMOTE_ADDR'),
+        )
+
         # Serialize the user and return the response
         user_data = UserLiteSerializer(user).data
-
         return Response(user_data, status=status.HTTP_201_CREATED)
