@@ -173,7 +173,7 @@ class ProjectMemberViewSet(BaseViewSet):
                     "member_email": project_member.member.email,
                     "role": project_member.role,
                 },
-                ip_address=request.META.get('REMOTE_ADDR'),
+                request=request,
             )
             
         # Send emails to notify the users
@@ -267,7 +267,7 @@ class ProjectMemberViewSet(BaseViewSet):
                     "old_role": old_role,
                     "new_role": request.data.get("role", old_role),
                 },
-                ip_address=request.META.get('REMOTE_ADDR'),
+                request=request,
             )
             
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -316,7 +316,7 @@ class ProjectMemberViewSet(BaseViewSet):
                 "member_email": project_member.member.email,
                 "role": project_member.role,
             },
-            ip_address=request.META.get('REMOTE_ADDR'),
+            request=request,
         )
 
         project_member.is_active = False

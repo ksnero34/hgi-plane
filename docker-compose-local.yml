@@ -36,7 +36,7 @@ services:
       - dev_env
     command: server /export --console-address ":9090"
     volumes:
-      - uploads:/export
+      - ./data/uploads:/export
     env_file:
       - .env.dev
     environment:

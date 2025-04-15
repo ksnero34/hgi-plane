@@ -23,6 +23,19 @@ def get_role_name(role_id):
             return role_id
     return ROLE_CHOICES.get(role_id, str(role_id))
 
+def get_client_ip(request):
+    """
+    실제 클라이언트 IP 주소를 가져오는 함수
+    nginx 프록시 뒤에서 동작할 때는 X-Forwarded-For 또는 X-Real-IP 헤더에서 IP를 가져옴
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        # X-Forwarded-For 형식: client, proxy1, proxy2, ...
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('HTTP_X_REAL_IP') or request.META.get('REMOTE_ADDR')
+    return ip
+
 def log_audit(
     action: str,
     user_id: Optional[str] = None,
@@ -32,6 +45,7 @@ def log_audit(
     details: Optional[Dict[str, Any]] = None,
     status: str = "success",
     ip_address: Optional[str] = None,
+    request = None,
 ) -> None:
     """
     감사 로그를 생성하는 함수
@@ -45,6 +59,7 @@ def log_audit(
         details: 추가 상세 정보
         status: 작업 상태 (success/failure)
         ip_address: 사용자 IP 주소
+        request: HttpRequest 객체 (ip_address가 없을 경우 request에서 IP 주소 추출)
     """
     # 역할을 문자열로 변환
     if details:
@@ -54,6 +69,10 @@ def log_audit(
             details["old_role"] = get_role_name(details["old_role"])
         if "new_role" in details:
             details["new_role"] = get_role_name(details["new_role"])
+    
+    # 요청 객체가 전달되었고 IP 주소가 없는 경우, 요청에서 IP 주소 추출
+    if request and not ip_address:
+        ip_address = get_client_ip(request)
 
     log_data = {
         "timestamp": datetime.utcnow().isoformat(),

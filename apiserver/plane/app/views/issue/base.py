@@ -820,7 +820,7 @@ class IssueViewSet(BaseViewSet):
                         "project_id": str(project_id),
                         "changes": changes
                     },
-                    ip_address=request.META.get('REMOTE_ADDR'),
+                    request=request,
                 )
 
             issue_activity.delay(
@@ -867,7 +867,7 @@ class IssueViewSet(BaseViewSet):
                 "project_id": str(project_id),
                 "issue_data": json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder),
             },
-            ip_address=request.META.get('REMOTE_ADDR'),
+            request=request,
         )
 
         issue.delete()

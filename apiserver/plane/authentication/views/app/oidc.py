@@ -114,7 +114,7 @@ class OIDCCallbackEndpoint(View):
                     "provider": "oidc",
                     "is_admin": request.session.get("is_admin_login", False)
                 },
-                ip_address=request.META.get("REMOTE_ADDR")
+                request=request
             )
             
             # Login the user and record his device info

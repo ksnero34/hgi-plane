@@ -30,6 +30,7 @@ from plane.authentication.adapter.error import (
     AuthenticationException,
     AUTHENTICATION_ERROR_CODES,
 )
+from plane.utils.audit_logger import log_audit
 
 
 class InstanceEndpoint(BaseAPIView):
@@ -228,20 +229,21 @@ class SignUpScreenVisitedEndpoint(BaseAPIView):
 
 class OIDCOauthInitiateAdminEndpoint(View):
     def get(self, request):
-        print("[OIDC Admin] Initiating OIDC login")
         # Get host and next path
         request.session["host"] = base_host(request=request, is_admin=True)
         request.session["is_admin_login"] = True
+        # print(f"[OIDC Admin] Host: {request.session['host']}")
+
+        # next path support
         next_path = request.GET.get("next_path")
         if next_path:
             request.session["next_path"] = str(next_path)
-        
-        print(f"[OIDC Admin] Host: {request.session['host']}, Next path: {next_path}")
+        # print(f"[OIDC Admin] Next path: {next_path}")
 
         # Check instance configuration
         instance = Instance.objects.first()
         if instance is None or not instance.is_setup_done:
-            print("[OIDC Admin] Instance not configured")
+            # print("[OIDC Admin] Instance not configured")
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["INSTANCE_NOT_CONFIGURED"],
                 error_message="INSTANCE_NOT_CONFIGURED",
@@ -257,10 +259,25 @@ class OIDCOauthInitiateAdminEndpoint(View):
             provider = OIDCOAuthProvider(request=request, state=state)
             request.session["state"] = state
             auth_url = provider.get_auth_url()
-            print(f"[OIDC Admin] Redirecting to auth URL: {auth_url}")
+            
+            # 감사 로그 추가 (로그인 시도)
+            ip_address = request.META.get("REMOTE_ADDR", "")
+            log_audit(
+                action="admin_login_attempt",
+                resource_type="admin",
+                resource_id="admin_login",
+                details={
+                    "login_method": "oidc",
+                    "ip_address": ip_address,
+                    "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                },
+                request=request,
+            )
+            
+            # print(f"[OIDC Admin] Redirecting to auth URL: {auth_url}")
             return HttpResponseRedirect(auth_url)
         except AuthenticationException as e:
-            print(f"[OIDC Admin] Authentication error: {str(e)}")
+            # print(f"[OIDC Admin] Authentication error: {str(e)}")
             params = e.get_error_dict()
             if next_path:
                 params["next_path"] = str(next_path)
@@ -270,22 +287,36 @@ class OIDCOauthInitiateAdminEndpoint(View):
 
 class OIDCCallbackAdminEndpoint(View):
     def get(self, request):
-        print("[OIDC Admin Callback] Received callback request")
+        # print("[OIDC Admin Callback] Received callback request")
         # Get state and code from request
         state = request.GET.get("state")
         code = request.GET.get("code")
         next_path = request.session.get("next_path")
         base_host = request.session.get("host", "")
 
-        print(f"[OIDC Admin Callback] State: {state}")
-        print(f"[OIDC Admin Callback] Code: {code}")
-        print(f"[OIDC Admin Callback] Next path: {next_path}")
-        print(f"[OIDC Admin Callback] Base host: {base_host}")
+        # print(f"[OIDC Admin Callback] State: {state}")
+        # print(f"[OIDC Admin Callback] Code: {code}")
+        # print(f"[OIDC Admin Callback] Next path: {next_path}")
+        # print(f"[OIDC Admin Callback] Base host: {base_host}")
 
         # Validate state
         session_state = request.session.get("state")
         if not state or not session_state or state != session_state:
-            print("[OIDC Admin Callback] Invalid state")
+            # print("[OIDC Admin Callback] Invalid state")
+            
+            # 감사 로그 추가 (인증 실패)
+            log_audit(
+                action="admin_login_failed",
+                resource_type="admin",
+                resource_id="admin_login",
+                details={
+                    "reason": "invalid_state",
+                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                },
+                request=request,
+            )
+            
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["INVALID_STATE"],
                 error_message="INVALID_STATE",
@@ -301,7 +332,21 @@ class OIDCCallbackAdminEndpoint(View):
 
         # Validate code
         if not code:
-            print("[OIDC Admin Callback] Invalid code")
+            # print("[OIDC Admin Callback] Invalid code")
+            
+            # 감사 로그 추가 (인증 실패)
+            log_audit(
+                action="admin_login_failed",
+                resource_type="admin",
+                resource_id="admin_login",
+                details={
+                    "reason": "invalid_code",
+                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                },
+                request=request,
+            )
+            
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["INVALID_CODE"],
                 error_message="INVALID_CODE",
@@ -313,17 +358,32 @@ class OIDCCallbackAdminEndpoint(View):
             return HttpResponseRedirect(url)
 
         try:
-            print("[OIDC Admin Callback] Authenticating with provider")
+            # print("[OIDC Admin Callback] Authenticating with provider")
             provider = OIDCOAuthProvider(
                 request=request,
                 code=code,
             )
             user = provider.authenticate()
-            print(f"[OIDC Admin Callback] User authenticated: {user.email}")
+            # print(f"[OIDC Admin Callback] User authenticated: {user.email}")
+            
+            # 감사 로그 추가
+            log_audit(
+                action="admin_login",
+                user_id=str(user.id),
+                user_email=user.email,
+                resource_type="admin",
+                resource_id="admin_login",
+                details={
+                    "login_method": "oidc",
+                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                },
+                request=request,
+            )
             
             # admin 세션 로그인 처리 (is_admin=True로 설정)
             user_login(request=request, user=user, is_admin=True)
-            print("[OIDC Admin Callback] Admin login successful")
+            # print("[OIDC Admin Callback] Admin login successful")
             
             # admin 대시보드로 리다이렉트
             if next_path:
@@ -332,10 +392,25 @@ class OIDCCallbackAdminEndpoint(View):
                 # 기본 admin 대시보드 URL로 리다이렉트
                 url = f"{base_host}/general"
             
-            print(f"[OIDC Admin Callback] Redirecting to: {url}")
+            # print(f"[OIDC Admin Callback] Redirecting to: {url}")
             return HttpResponseRedirect(url)
         except AuthenticationException as e:
-            print(f"[OIDC Admin Callback] Authentication error: {str(e)}")
+            # print(f"[OIDC Admin Callback] Authentication error: {str(e)}")
+            
+            # 감사 로그 추가 (인증 실패)
+            log_audit(
+                action="admin_login_failed",
+                resource_type="admin",
+                resource_id="admin_login",
+                details={
+                    "reason": str(e),
+                    "error_code": e.error_code if hasattr(e, 'error_code') else "unknown",
+                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+                },
+                request=request,
+            )
+            
             params = e.get_error_dict()
             if next_path:
                 params["next_path"] = str(next_path)

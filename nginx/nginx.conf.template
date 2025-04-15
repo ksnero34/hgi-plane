@@ -40,6 +40,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://api:8000/api/;
         }
 
@@ -48,6 +51,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://api:8000/auth/;
         }
 
@@ -56,6 +62,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://admin:3000/god-mode/;
         }
 

@@ -148,7 +148,7 @@ class WorkspaceInvitationsViewset(BaseViewSet):
                     "workspace_slug": workspace.slug,
                     "workspace_name": workspace.name
                 },
-                ip_address=request.META.get("REMOTE_ADDR")
+                request=request
             )
 
         return Response(
@@ -173,7 +173,7 @@ class WorkspaceInvitationsViewset(BaseViewSet):
                 "workspace_slug": workspace_member_invite.workspace.slug,
                 "workspace_name": workspace_member_invite.workspace.name
             },
-            ip_address=request.META.get("REMOTE_ADDR")
+            request=request
         )
         
         workspace_member_invite.delete()
@@ -252,7 +252,7 @@ class WorkspaceJoinEndpoint(BaseAPIView):
                             "role": workspace_invite.role,
                             "invited_by": workspace_invite.created_by.email if workspace_invite.created_by else None
                         },
-                        ip_address=request.META.get("REMOTE_ADDR")
+                        request=request
                     )
 
                     # Delete the invitation
@@ -287,7 +287,7 @@ class WorkspaceJoinEndpoint(BaseAPIView):
                     "role": workspace_invite.role,
                     "invited_by": workspace_invite.created_by.email if workspace_invite.created_by else None
                 },
-                ip_address=request.META.get("REMOTE_ADDR")
+                request=request
             )
             
             return Response(

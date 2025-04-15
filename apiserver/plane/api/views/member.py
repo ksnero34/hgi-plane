@@ -139,7 +139,7 @@ class ProjectMemberAPIEndpoint(BaseAPIView):
                 "member_email": user.email,
                 "role": request.data.get("role", 5),
             },
-            ip_address=request.META.get('REMOTE_ADDR'),
+            request=request,
         )
 
         # Serialize the user and return the response

@@ -95,7 +95,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
                     "old_role": old_role,
                     "new_role": request.data.get("role"),
                 },
-                ip_address=request.META.get('REMOTE_ADDR'),
+                request=request
             )
             
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -165,7 +165,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
                 "member_email": workspace_member.member.email,
                 "role": workspace_member.role,
             },
-            ip_address=request.META.get('REMOTE_ADDR'),
+            request=request
         )
 
         workspace_member.is_active = False
