@@ -1,5 +1,5 @@
 from django.urls import path
-from plane.app.views.instance.base import InstanceMemberViewSet
+from plane.app.views.instance.base import InstanceMemberViewSet, InstanceMemberPublicViewSet
 from plane.app.views.instance.file_settings import FileSettingsViewSet
 from plane.app.views.instance.workspace import DefaultWorkspaceConfigViewSet
 from plane.app.views import WorkSpaceViewSet
@@ -47,6 +47,12 @@ urlpatterns = [
         "instances/workspaces/",
         WorkSpaceViewSet.as_view({"get": "list", "post": "create"}),
         name="instance-workspaces",
+    ),
+    # public 멤버 목록 조회 URL
+    path(
+        "instances/public/members/",
+        InstanceMemberPublicViewSet.as_view({"get": "list"}),
+        name="instance-public-members",
     ),
 ]
 

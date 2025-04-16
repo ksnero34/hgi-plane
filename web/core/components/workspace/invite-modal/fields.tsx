@@ -6,11 +6,14 @@ import { X } from "lucide-react";
 // plane imports
 import { ROLE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { CustomSelect, Input } from "@plane/ui";
+import { Avatar, CustomSelect, CustomSearchSelect } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
-import { useUserPermissions } from "@/hooks/store";
+import { useUserPermissions, useMember } from "@/hooks/store";
 import { InvitationFormValues } from "@/hooks/use-workspace-invitation";
+// helpers
+import { getFileURL } from "@/helpers/file.helper";
+import { useEffect } from "react";
 
 type TInvitationFieldsProps = {
   workspaceSlug: string;
@@ -34,14 +37,76 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
   const { t } = useTranslation();
   // store hooks
   const { workspaceInfoBySlug } = useUserPermissions();
+  const { 
+    workspace: { workspaceMemberIds, getWorkspaceMemberDetails },
+    instance: { instanceMemberIds, getInstanceMemberDetails, fetchInstanceMembers }
+  } = useMember();
+
+  // 인스턴스 멤버 조회
+  useEffect(() => {
+    fetchInstanceMembers();
+  }, [fetchInstanceMembers]);
+
   // derived values
   const currentWorkspaceRole = workspaceInfoBySlug(workspaceSlug.toString())?.role;
+
+  // 워크스페이스에 등록되지 않은 인스턴스 멤버만 필터링
+  const uninvitedMembers = instanceMemberIds?.filter((userId) => {
+    const isInvited = workspaceMemberIds?.find((u) => u === userId);
+    return !isInvited;
+  });
+
+  // 멤버 선택 옵션 생성
+  const memberOptions = uninvitedMembers?.map((userId) => {
+    const memberDetails = getInstanceMemberDetails(userId);
+    if (!memberDetails) return null;
+    return {
+      value: memberDetails.email,
+      query: `${memberDetails.first_name} ${memberDetails.last_name} ${memberDetails.display_name.toLowerCase()}`,
+      content: (
+        <div className="flex w-full items-center gap-2">
+          <div className="flex-shrink-0 pt-0.5">
+            <Avatar name={memberDetails.display_name} src={getFileURL(memberDetails.avatar)} />
+          </div>
+          <div className="truncate">
+            {memberDetails.display_name} ({memberDetails.email})
+          </div>
+        </div>
+      ),
+    };
+  }).filter(Boolean) || [];
+
+  const options = [
+    ...memberOptions,
+    {
+      value: "manual_input",
+      query: "manual_input",
+      content: (
+        <div className="flex flex-col w-full gap-2 p-2 border-t border-custom-border-200">
+          <div className="text-sm text-custom-text-200">
+            {t("workspace_settings.settings.members.modal.manual_input")}
+          </div>
+          <input
+            type="email"
+            className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-custom-primary"
+            placeholder="name@company.com"
+            onChange={(e) => {
+              const email = e.target.value;
+              if (email && email.match(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i)) {
+                onChange(email);
+              }
+            }}
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className={cn("mb-3 space-y-4", className)}>
       {fields.map((field, index) => (
         <div key={field.id} className="relative group mb-1 flex items-start justify-between gap-x-4 text-sm w-full">
-          <div className="w-full">
+          <div className="flex flex-col gap-1 flex-grow w-full">
             <Controller
               control={control}
               name={`emails.${index}.email`}
@@ -52,27 +117,33 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                   message: t("workspace_settings.settings.members.modal.errors.invalid"),
                 },
               }}
-              render={({ field: { value, onChange, ref } }) => (
-                <>
-                  <Input
-                    id={`emails.${index}.email`}
-                    name={`emails.${index}.email`}
-                    type="text"
+              render={({ field: { value, onChange } }) => {
+                // 현재 선택된 멤버 찾기
+                const selectedMember = memberOptions?.find(option => option.value === value);
+                return (
+                  <CustomSearchSelect
                     value={value}
-                    onChange={onChange}
-                    ref={ref}
-                    hasError={Boolean(errors.emails?.[index]?.email)}
-                    placeholder={t("workspace_settings.settings.members.modal.placeholder")}
-                    className="w-full text-xs sm:text-sm"
+                    onChange={(val: string) => {
+                      if (val !== "manual_input") {
+                        onChange(val);
+                      }
+                    }}
+                    options={options}
+                    label={selectedMember ? selectedMember.content : t("workspace_settings.settings.members.modal.placeholder")}
+                    width="w-full"
+                    input
+                    position="right"
+                    enablePortal
+                    showSearch
                   />
-                  {errors.emails?.[index]?.email && (
-                    <span className="ml-1 text-xs text-red-500">{errors.emails?.[index]?.email?.message}</span>
-                  )}
-                </>
-              )}
+                );
+              }}
             />
+            {errors.emails?.[index]?.email && (
+              <span className="ml-1 text-xs text-red-500">{errors.emails?.[index]?.email?.message}</span>
+            )}
           </div>
-          <div className="flex items-center justify-between gap-2 flex-shrink-0 ">
+          <div className="flex items-center justify-between gap-2 flex-shrink-0">
             <div className="flex flex-col gap-1">
               <Controller
                 control={control}
@@ -100,11 +171,13 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
               />
             </div>
             {fields.length > 1 && (
-              <div className="flex-item flex w-6">
-                <button type="button" className="place-items-center self-center rounded" onClick={() => remove(index)}>
-                  <X className="h-4 w-4 text-custom-text-200" />
-                </button>
-              </div>
+              <button
+                type="button"
+                className="flex-shrink-0"
+                onClick={() => remove(index)}
+              >
+                <X className="h-4 w-4 text-custom-text-200" />
+              </button>
             )}
           </div>
         </div>

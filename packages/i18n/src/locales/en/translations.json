@@ -1338,6 +1338,7 @@
           "button": "Send invitations",
           "button_loading": "Sending invitations",
           "placeholder": "name@company.com",
+          "manual_input": "Manual input",
           "errors": {
             "required": "We need an email address to invite them.",
             "invalid": "Email is invalid"

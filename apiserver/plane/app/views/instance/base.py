@@ -2,11 +2,11 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-
-from plane.app.serializers import UserSerializer
+from plane.app.serializers import UserSerializer, InstanceMemberPublicSerializer
 from plane.app.permissions import InstanceAdminPermission
 from plane.db.models import User
 from plane.license.models import Instance, InstanceAdmin
+from plane.authentication.session import BaseSessionAuthentication
 
 class InstanceMemberViewSet(ViewSet):
     """인스턴스 멤버 관리를 위한 ViewSet"""
@@ -56,3 +56,15 @@ class InstanceMemberViewSet(ViewSet):
                 {"error": "User not found"}, 
                 status=status.HTTP_404_NOT_FOUND
             )
+
+class InstanceMemberPublicViewSet(ViewSet):
+    """일반 사용자를 위한 인스턴스 멤버 ViewSet"""
+    authentication_classes = [BaseSessionAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = InstanceMemberPublicSerializer
+
+    def list(self, request):
+        """기본 정보만 포함한 멤버 목록 조회"""
+        users = User.objects.filter(is_active=True).order_by("-date_joined")
+        serializer = self.serializer_class(users, many=True)
+        return Response(serializer.data)

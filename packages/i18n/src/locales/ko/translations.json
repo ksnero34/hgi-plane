@@ -1508,6 +1508,7 @@
           "button": "초대 전송",
           "button_loading": "초대 전송 중",
           "placeholder": "name@company.com",
+          "manual_input": "수동 입력",
           "errors": {
             "required": "초대하려면 이메일 주소가 필요합니다.",
             "invalid": "이메일이 유효하지 않습니다"

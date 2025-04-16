@@ -6,6 +6,7 @@ import { IUserLite } from "@plane/types";
 import { CoreRootStore } from "../root.store";
 import { IProjectMemberStore, ProjectMemberStore } from "./project-member.store";
 import { IWorkspaceMemberStore, WorkspaceMemberStore } from "./workspace-member.store";
+import { IInstanceMemberStore, InstanceMemberStore } from "./instance-member.store";
 
 export interface IMemberRootStore {
   // observables
@@ -16,6 +17,7 @@ export interface IMemberRootStore {
   // sub-stores
   workspace: IWorkspaceMemberStore;
   project: IProjectMemberStore;
+  instance: IInstanceMemberStore;
 }
 
 export class MemberRootStore implements IMemberRootStore {
@@ -24,6 +26,7 @@ export class MemberRootStore implements IMemberRootStore {
   // sub-stores
   workspace: IWorkspaceMemberStore;
   project: IProjectMemberStore;
+  instance: IInstanceMemberStore;
 
   constructor(_rootStore: CoreRootStore) {
     makeObservable(this, {
@@ -33,6 +36,7 @@ export class MemberRootStore implements IMemberRootStore {
     // sub-stores
     this.workspace = new WorkspaceMemberStore(this, _rootStore);
     this.project = new ProjectMemberStore(this, _rootStore);
+    this.instance = new InstanceMemberStore(this, _rootStore);
   }
 
   /**

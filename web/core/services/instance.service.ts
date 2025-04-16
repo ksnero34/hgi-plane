@@ -1,5 +1,5 @@
 // types
-import type { IInstanceInfo, IInstance, IInstanceConfig, IFileSettings, ICsrfTokenData,TPage } from "@plane/types";
+import type { IInstanceInfo, IInstance, IInstanceConfig, IFileSettings, ICsrfTokenData, TPage, IInstanceMember } from "@plane/types";
 // helpers
 import { API_BASE_URL } from "@/helpers/common.helper";
 // services
@@ -94,5 +94,27 @@ export class InstanceService extends APIService {
       .catch((error) => {
         throw error;
       });
+  }
+
+  /**
+   * @description 인스턴스 멤버 목록을 가져옵니다
+   * @returns Promise<IInstanceMember[]>
+   */
+  async getInstanceMembers(): Promise<IInstanceMember[]> {
+    try {
+      const { csrf_token } = await this.requestCSRFToken();
+      
+      const response = await this.get("/api/instances/public/members/", {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf_token
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch instance members:", error);
+      throw error;
+    }
   }
 }

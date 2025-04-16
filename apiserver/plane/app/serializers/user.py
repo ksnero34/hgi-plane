@@ -162,6 +162,22 @@ class UserLiteSerializer(BaseSerializer):
         read_only_fields = ["id", "is_bot"]
 
 
+class InstanceMemberPublicSerializer(BaseSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "display_name",
+            "avatar",
+            "avatar_url",
+            "first_name",
+            "last_name",
+            "is_bot"
+        ]
+        read_only_fields = fields
+
+
 class UserAdminLiteSerializer(BaseSerializer):
     class Meta:
         model = User
