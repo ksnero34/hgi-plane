@@ -13,7 +13,7 @@ import { useUserPermissions, useMember } from "@/hooks/store";
 import { InvitationFormValues } from "@/hooks/use-workspace-invitation";
 // helpers
 import { getFileURL } from "@/helpers/file.helper";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type TInvitationFieldsProps = {
   workspaceSlug: string;
@@ -81,24 +81,59 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
     {
       value: "manual_input",
       query: "manual_input",
-      content: (
-        <div className="flex flex-col w-full gap-2 p-2 border-t border-custom-border-200">
-          <div className="text-sm text-custom-text-200">
-            {t("workspace_settings.settings.members.modal.manual_input")}
+      isManualInput: true,
+      content: (onChange: (value: string) => void) => {
+        const [error, setError] = useState<string | null>(null);
+        return (
+          <div className="flex flex-col w-full gap-2 p-2 border-t border-custom-border-200">
+            <div className="text-sm text-custom-text-200">
+              {t("workspace_settings.settings.members.modal.manual_input")}
+            </div>
+            <input
+              type="email"
+              className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-custom-primary"
+              placeholder="name@company.com"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const email = e.currentTarget.value;
+                  if (!email) {
+                    setError(t("workspace_settings.settings.members.modal.errors.required"));
+                    return;
+                  }
+                  if (!email.match(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i)) {
+                    setError(t("workspace_settings.settings.members.modal.errors.invalid"));
+                    return;
+                  }
+                  setError(null);
+                  onChange(email);
+                  e.currentTarget.value = ''; // 입력 필드 초기화
+                  
+                  // 드롭다운 버튼 클릭하여 닫기
+                  const button = document.querySelector('[id^="headlessui-combobox-button-"]');
+                  if (button) {
+                    button.setAttribute('aria-expanded', 'false');
+                    button.setAttribute('data-headlessui-state', '');
+                    button.click();
+                  }
+                  
+                  // 포커스 해제
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+            {error && (
+              <div className="text-xs text-red-500">
+                {error}
+              </div>
+            )}
           </div>
-          <input
-            type="email"
-            className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-custom-primary"
-            placeholder="name@company.com"
-            onChange={(e) => {
-              const email = e.target.value;
-              if (email && email.match(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i)) {
-                onChange(email);
-              }
-            }}
-          />
-        </div>
-      ),
+        );
+      },
     },
   ];
 
@@ -124,17 +159,24 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                   <CustomSearchSelect
                     value={value}
                     onChange={(val: string) => {
-                      if (val !== "manual_input") {
-                        onChange(val);
-                      }
+                      onChange(val);
                     }}
-                    options={options}
-                    label={selectedMember ? selectedMember.content : t("workspace_settings.settings.members.modal.placeholder")}
+                    options={options.map(option => ({
+                      ...option,
+                      content: option.isManualInput ? option.content(onChange) : option.content
+                    }))}
+                    label={selectedMember ? selectedMember.content : value || t("workspace_settings.settings.members.modal.placeholder")}
                     width="w-full"
                     input
                     position="right"
                     enablePortal
                     showSearch
+                    onOptionClick={(option) => {
+                      if (option.value === "manual_input") {
+                        return false; // 수동 입력 옵션 클릭 시 드롭다운이 닫히지 않도록 함
+                      }
+                      return true;
+                    }}
                   />
                 );
               }}
