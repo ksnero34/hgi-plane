@@ -108,3 +108,14 @@ export interface IFileSettings {
   id?: string;
   instance?: string;
 }
+
+export interface IInstanceMember {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  display_name: string;
+  avatar?: string;
+  created_at?: string;
+  updated_at?: string;
+}

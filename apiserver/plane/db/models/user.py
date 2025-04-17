@@ -103,7 +103,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # timezone
     USER_TIMEZONE_CHOICES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
     user_timezone = models.CharField(
-        max_length=255, default="UTC", choices=USER_TIMEZONE_CHOICES
+        max_length=255, default="Asia/Seoul", choices=USER_TIMEZONE_CHOICES
     )
 
     USERNAME_FIELD = "email"
@@ -182,7 +182,7 @@ class Profile(TimeAuditModel):
     # Last visited workspace
     last_workspace_id = models.UUIDField(null=True)
     # address data
-    billing_address_country = models.CharField(max_length=255, default="INDIA")
+    billing_address_country = models.CharField(max_length=255, default="KOREA")
     billing_address = models.JSONField(null=True)
     has_billing_address = models.BooleanField(default=False)
     company_name = models.CharField(max_length=255, blank=True)
@@ -193,7 +193,7 @@ class Profile(TimeAuditModel):
     mobile_onboarding_step = models.JSONField(default=get_mobile_default_onboarding)
     mobile_timezone_auto_set = models.BooleanField(default=False)
     # language
-    language = models.CharField(max_length=255, default="en")
+    language = models.CharField(max_length=255, default="ko")
 
     class Meta:
         verbose_name = "Profile"

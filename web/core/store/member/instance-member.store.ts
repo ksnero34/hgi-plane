@@ -1,5 +1,5 @@
 import { makeAutoObservable } from "mobx";
-import { IInstanceMember } from "@/types/instance-member";
+import { IInstanceMember } from "@plane/types";
 import { IMemberRootStore } from ".";
 import { CoreRootStore } from "../root.store";
 import { InstanceService } from "@/services/instance.service";

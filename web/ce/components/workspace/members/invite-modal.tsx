@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
@@ -17,18 +17,20 @@ import { useWorkspaceInvitationActions } from "@/hooks/use-workspace-invitation"
 export type TSendWorkspaceInvitationModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: IWorkspaceBulkInviteFormData) => Promise<void> | undefined;
+  onSubmit: (data: IWorkspaceBulkInviteFormData, autoAccept?: boolean) => Promise<void> | undefined;
 };
 
 export const SendWorkspaceInvitationModal: React.FC<TSendWorkspaceInvitationModalProps> = observer((props) => {
   const { isOpen, onClose, onSubmit } = props;
+  // states
+  const [autoAccept, setAutoAccept] = useState(false);
   // store hooks
   const { t } = useTranslation();
   // router
   const { workspaceSlug } = useParams();
   // derived values
   const { control, fields, formState, remove, onFormSubmit, handleClose, appendField } = useWorkspaceInvitationActions({
-    onSubmit,
+    onSubmit: (data) => onSubmit(data, autoAccept),
     onClose,
   });
 
@@ -54,6 +56,18 @@ export const SendWorkspaceInvitationModal: React.FC<TSendWorkspaceInvitationModa
           formState={formState}
           remove={remove}
         />
+        <div className="flex items-center mt-3">
+          <input
+            type="checkbox"
+            id="autoAccept"
+            checked={autoAccept}
+            onChange={(e) => setAutoAccept(e.target.checked)}
+            className="h-4 w-4 cursor-pointer rounded border-custom-border-200 text-custom-primary focus:ring-custom-primary"
+          />
+          <label htmlFor="autoAccept" className="ml-2 text-sm cursor-pointer">
+            자동으로 초대 수락하기 (기존 사용자만 적용)
+          </label>
+        </div>
       </InvitationForm>
     </ModalCore>
   );

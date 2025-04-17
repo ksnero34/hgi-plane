@@ -66,7 +66,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
       content: (
         <div className="flex w-full items-center gap-2">
           <div className="flex-shrink-0 pt-0.5">
-            <Avatar name={memberDetails.display_name} src={getFileURL(memberDetails.avatar)} />
+            <Avatar name={memberDetails.display_name} src={memberDetails.avatar ? getFileURL(memberDetails.avatar) : undefined} />
           </div>
           <div className="truncate">
             {memberDetails.display_name} ({memberDetails.email})
@@ -118,7 +118,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                   if (button) {
                     button.setAttribute('aria-expanded', 'false');
                     button.setAttribute('data-headlessui-state', '');
-                    button.click();
+                    (button as HTMLElement).click();
                   }
                   
                   // 포커스 해제
@@ -154,29 +154,29 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
               }}
               render={({ field: { value, onChange } }) => {
                 // 현재 선택된 멤버 찾기
-                const selectedMember = memberOptions?.find(option => option.value === value);
+                const selectedMember = memberOptions?.filter(Boolean).find(option => (option as any).value === value);
                 return (
                   <CustomSearchSelect
                     value={value}
                     onChange={(val: string) => {
-                      onChange(val);
-                    }}
-                    options={options.map(option => ({
-                      ...option,
-                      content: option.isManualInput ? option.content(onChange) : option.content
-                    }))}
-                    label={selectedMember ? selectedMember.content : value || t("workspace_settings.settings.members.modal.placeholder")}
-                    width="w-full"
-                    input
-                    position="right"
-                    enablePortal
-                    showSearch
-                    onOptionClick={(option) => {
-                      if (option.value === "manual_input") {
-                        return false; // 수동 입력 옵션 클릭 시 드롭다운이 닫히지 않도록 함
+                      // 수동 입력 옵션 처리
+                      if (val !== "manual_input") {
+                        onChange(val);
                       }
-                      return true;
                     }}
+                    options={options.filter(Boolean).map(option => {
+                      const opt = option as any;
+                      return {
+                        value: opt.value,
+                        query: opt.query || "",
+                        content: opt.isManualInput ? opt.content(onChange) : opt.content,
+                        disabled: opt.disabled || false,
+                        tooltip: opt.tooltip || undefined
+                      };
+                    })}
+                    label={selectedMember ? selectedMember.content : value || t("workspace_settings.settings.members.modal.placeholder")}
+                    className="w-full"
+                    input
                   />
                 );
               }}

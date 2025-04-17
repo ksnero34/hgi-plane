@@ -46,10 +46,10 @@ const WorkspaceMembersSettingsPage = observer(() => {
     EUserPermissionsLevel.WORKSPACE
   );
 
-  const handleWorkspaceInvite = (data: IWorkspaceBulkInviteFormData) => {
+  const handleWorkspaceInvite = (data: IWorkspaceBulkInviteFormData, autoAccept: boolean = false) => {
     if (!workspaceSlug) return;
 
-    return inviteMembersToWorkspace(workspaceSlug.toString(), data)
+    return inviteMembersToWorkspace(workspaceSlug.toString(), data, autoAccept)
       .then(() => {
         setInviteModal(false);
         captureEvent(MEMBER_INVITED, {

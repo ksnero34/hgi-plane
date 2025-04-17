@@ -41,7 +41,7 @@ export interface IWorkspaceMemberStore {
   updateMember: (workspaceSlug: string, userId: string, data: { role: EUserPermissions }) => Promise<void>;
   removeMemberFromWorkspace: (workspaceSlug: string, userId: string) => Promise<void>;
   // invite actions
-  inviteMembersToWorkspace: (workspaceSlug: string, data: IWorkspaceBulkInviteFormData) => Promise<void>;
+  inviteMembersToWorkspace: (workspaceSlug: string, data: IWorkspaceBulkInviteFormData, autoAccept?: boolean) => Promise<void>;
   updateMemberInvitation: (
     workspaceSlug: string,
     invitationId: string,
@@ -264,9 +264,10 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
    * @description bulk invite members to a workspace
    * @param workspaceSlug
    * @param data
+   * @param autoAccept
    */
-  inviteMembersToWorkspace = async (workspaceSlug: string, data: IWorkspaceBulkInviteFormData) => {
-    const response = await this.workspaceService.inviteWorkspace(workspaceSlug, data);
+  inviteMembersToWorkspace = async (workspaceSlug: string, data: IWorkspaceBulkInviteFormData, autoAccept: boolean = false) => {
+    const response = await this.workspaceService.inviteWorkspace(workspaceSlug, data, autoAccept);
     await this.fetchWorkspaceMemberInvitations(workspaceSlug);
     return response;
   };

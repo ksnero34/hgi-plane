@@ -189,7 +189,8 @@ class OIDCOAuthProvider(OauthAdapter):
             {
                 "email": email,
                 "user": {
-                    "provider_id": user_info_response.get("sub"),
+                    # "provider_id": user_info_response.get("sub"), 이름으로 표시명 수정
+                    "provider_id": user_info_response.get("given_name"),
                     "email": email,
                     "avatar": user_info_response.get("picture"),
                     "first_name": user_info_response.get("given_name"),
