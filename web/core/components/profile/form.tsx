@@ -222,6 +222,35 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4">
               <div className="flex flex-col gap-1">
                 <h4 className="text-sm font-medium text-custom-text-200">
+                  {t("last_name")}&nbsp;
+                  <span className="text-red-500">*</span>
+                </h4>
+                <Controller
+                  control={control}
+                  name="last_name"
+                  rules={{
+                    required: "Please enter last name",
+                  }}
+                  render={({ field: { value, onChange, ref } }) => (
+                    <Input
+                      id="last_name"
+                      name="last_name"
+                      type="text"
+                      value={value}
+                      onChange={onChange}
+                      ref={ref}
+                      hasError={Boolean(errors.last_name)}
+                      placeholder="Enter your last name"
+                      className={`w-full rounded-md ${errors.last_name ? "border-red-500" : ""}`}
+                      maxLength={24}
+                      autoComplete="on"
+                    />
+                  )}
+                />
+                {errors.last_name && <span className="text-xs text-red-500">{errors.last_name.message}</span>}
+              </div>
+              <div className="flex flex-col gap-1">
+                <h4 className="text-sm font-medium text-custom-text-200">
                   {t("first_name")}&nbsp;
                   <span className="text-red-500">*</span>
                 </h4>
@@ -248,28 +277,6 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
                   )}
                 />
                 {errors.first_name && <span className="text-xs text-red-500">{errors.first_name.message}</span>}
-              </div>
-              <div className="flex flex-col gap-1">
-                <h4 className="text-sm font-medium text-custom-text-200">{t("last_name")}</h4>
-                <Controller
-                  control={control}
-                  name="last_name"
-                  render={({ field: { value, onChange, ref } }) => (
-                    <Input
-                      id="last_name"
-                      name="last_name"
-                      type="text"
-                      value={value}
-                      onChange={onChange}
-                      ref={ref}
-                      hasError={Boolean(errors.last_name)}
-                      placeholder="Enter your last name"
-                      className="w-full rounded-md"
-                      maxLength={24}
-                      autoComplete="on"
-                    />
-                  )}
-                />
               </div>
               <div className="flex flex-col gap-1">
                 <h4 className="text-sm font-medium text-custom-text-200">

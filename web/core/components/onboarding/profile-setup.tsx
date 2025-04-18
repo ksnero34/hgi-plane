@@ -253,6 +253,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
 
   // derived values
   const isPasswordAlreadySetup = !user?.is_password_autoset;
+  const isOidcLogin = user?.last_login_medium === "oidc";
   const currentPassword = watch("password") || undefined;
   const currentConfirmPassword = watch("confirm_password") || undefined;
 
@@ -284,7 +285,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         <div className="flex items-center justify-between">
           <OnboardingHeader currentStep={isCurrentStepUserPersonalization ? 2 : 1} totalSteps={totalSteps} />
           <div className="shrink-0 lg:hidden">
-            <SwitchAccountDropdown fullName={`${watch("first_name")} ${watch("last_name")}`} />
+            <SwitchAccountDropdown fullName={`${watch("last_name")} ${watch("first_name")}`} />
           </div>
         </div>
         <div className="flex flex-col w-full items-center justify-center p-8 mt-6">
@@ -296,8 +297,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
             </h3>
             <p className="font-medium text-onboarding-text-400">
               {isCurrentStepUserPersonalization
-                ? "Let’s personalize Plane for you."
-                : "Let’s setup your profile, tell us a bit about yourself."}
+                ? "Let's personalize Plane for you."
+                : "Let's setup your profile, tell us a bit about yourself."}
             </p>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="w-full mx-auto mt-2 space-y-4 sm:w-96">
@@ -348,44 +349,9 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                   <div className="space-y-1">
                     <label
                       className="text-sm text-onboarding-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
-                      htmlFor="first_name"
-                    >
-                      First name
-                    </label>
-                    <Controller
-                      control={control}
-                      name="first_name"
-                      rules={{
-                        required: "First name is required",
-                        maxLength: {
-                          value: 24,
-                          message: "First name must be within 24 characters.",
-                        },
-                      }}
-                      render={({ field: { value, onChange, ref } }) => (
-                        <Input
-                          id="first_name"
-                          name="first_name"
-                          type="text"
-                          value={value}
-                          autoFocus
-                          onChange={onChange}
-                          ref={ref}
-                          hasError={Boolean(errors.first_name)}
-                          placeholder="Wilbur"
-                          className="w-full border-onboarding-border-100"
-                          autoComplete="on"
-                        />
-                      )}
-                    />
-                    {errors.first_name && <span className="text-sm text-red-500">{errors.first_name.message}</span>}
-                  </div>
-                  <div className="space-y-1">
-                    <label
-                      className="text-sm text-onboarding-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
                       htmlFor="last_name"
                     >
-                      Last name
+                      성
                     </label>
                     <Controller
                       control={control}
@@ -403,6 +369,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                           name="last_name"
                           type="text"
                           value={value}
+                          autoFocus
                           onChange={onChange}
                           ref={ref}
                           hasError={Boolean(errors.last_name)}
@@ -414,10 +381,44 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                     />
                     {errors.last_name && <span className="text-sm text-red-500">{errors.last_name.message}</span>}
                   </div>
+                  <div className="space-y-1">
+                    <label
+                      className="text-sm text-onboarding-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
+                      htmlFor="first_name"
+                    >
+                      이름
+                    </label>
+                    <Controller
+                      control={control}
+                      name="first_name"
+                      rules={{
+                        required: "First name is required",
+                        maxLength: {
+                          value: 24,
+                          message: "First name must be within 24 characters.",
+                        },
+                      }}
+                      render={({ field: { value, onChange, ref } }) => (
+                        <Input
+                          id="first_name"
+                          name="first_name"
+                          type="text"
+                          value={value}
+                          onChange={onChange}
+                          ref={ref}
+                          hasError={Boolean(errors.first_name)}
+                          placeholder="Wilbur"
+                          className="w-full border-onboarding-border-100"
+                          autoComplete="on"
+                        />
+                      )}
+                    />
+                    {errors.first_name && <span className="text-sm text-red-500">{errors.first_name.message}</span>}
+                  </div>
                 </div>
 
                 {/* setting up password for the first time */}
-                {!isPasswordAlreadySetup && (
+                {!isPasswordAlreadySetup && !isOidcLogin && (
                   <>
                     <div className="space-y-1">
                       <label className="text-sm text-onboarding-text-300 font-medium" htmlFor="password">
@@ -581,7 +582,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         </div>
       </div>
       <div className="hidden lg:block relative w-2/5 h-screen overflow-hidden px-6 py-10 sm:px-7 sm:py-14 md:px-14 lg:px-28">
-        <SwitchAccountDropdown fullName={`${watch("first_name")} ${watch("last_name")}`} />
+        <SwitchAccountDropdown fullName={`${watch("last_name")} ${watch("first_name")}`} />
         <div className="absolute inset-0 z-0">
           {profileSetupStep === EProfileSetupSteps.USER_PERSONALIZATION ? (
             <Image

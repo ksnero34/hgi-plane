@@ -120,22 +120,43 @@ class OIDCOAuthProvider(OauthAdapter):
 
     def set_user_data(self):
         user_info_response = self.get_user_response()
-        print("[OIDC] User info response:", user_info_response)  # 디버깅용 로그
+        # print("[OIDC] User info response:", user_info_response)  # 디버깅용 로그
         
+        # ID 토큰에서 클레임 가져오기
+        id_token_claims = self.get_id_token_claims()
+        # print("[OIDC] ID token claims:", id_token_claims)  # 디버깅용 로그
+        
+        # 이메일 가져오기
         email = user_info_response.get("email")
+        if not email and id_token_claims:
+            email = id_token_claims.get("email")
+            
+        # 표시 이름 가져오기 - 우선 순위: userinfo의 name -> id_token의 name -> sub
+        display_name = None
+        
+        # 로그에서 확인한 바로는 user_info_response에 'name'이 있음
+        if "name" in user_info_response:
+            display_name = user_info_response.get("name")
+            # print(f"[OIDC] userinfo에서 name 찾음: {display_name}")
+        # id_token에서도 확인
+        elif id_token_claims and "name" in id_token_claims:
+            display_name = id_token_claims.get("name")
+            # print(f"[OIDC] id_token에서 name 찾음: {display_name}")
+        # 없으면 sub 사용
+        else:
+            display_name = user_info_response.get("sub")
+            # print(f"[OIDC] name 없음, sub 사용: {display_name}")
+            
+        # print(f"[OIDC] 최종 display_name: {display_name}")
 
         # admin 로그인인 경우 roles 확인
         if self.is_admin:
-            # ID 토큰에서 roles 확인
-            id_token_claims = self.get_id_token_claims()
-            print("[OIDC] ID token claims:", id_token_claims)  # 디버깅용 로그
-            
             # ID 토큰이나 userinfo에서 roles 확인
             roles = id_token_claims.get("roles", []) or user_info_response.get("roles", [])
             if not isinstance(roles, list):
                 roles = [roles]
             
-            print("[OIDC] User roles:", roles)  # 디버깅용 로그
+            # print("[OIDC] User roles:", roles)  # 디버깅용 로그
             
             # 관리자 권한 확인
             if "ROLE_CLIENT_ADMIN" not in roles:
@@ -183,22 +204,24 @@ class OIDCOAuthProvider(OauthAdapter):
                     }
                 )
                 
-                print(f"[OIDC] Instance admin {'created' if created else 'updated'} for user: {email}")
+                # print(f"[OIDC] Instance admin {'created' if created else 'updated'} for user: {email}")
 
-        super().set_user_data(
-            {
+        # 사용자 데이터 설정
+        user_data = {
+            "email": email,
+            "user": {
+                "provider_id": user_info_response.get("sub"),
                 "email": email,
-                "user": {
-                    # "provider_id": user_info_response.get("sub"), 이름으로 표시명 수정
-                    "provider_id": user_info_response.get("given_name"),
-                    "email": email,
-                    "avatar": user_info_response.get("picture"),
-                    "first_name": user_info_response.get("given_name"),
-                    "last_name": user_info_response.get("family_name"),
-                    "is_password_autoset": True,
-                },
-            }
-        )
+                "avatar": user_info_response.get("picture"),
+                "first_name": user_info_response.get("given_name", ""),
+                "last_name": user_info_response.get("family_name", ""),
+                "is_password_autoset": True,
+                "display_name": display_name,  # display_name 추가
+            },
+        }
+        
+        # print(f"[OIDC] 사용자 데이터 설정 완료: display_name={user_data['user']['display_name']}")
+        super().set_user_data(user_data)
 
     def get_id_token_claims(self):
         """ID 토큰의 claims를 가져옵니다."""

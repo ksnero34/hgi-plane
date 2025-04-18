@@ -26,7 +26,7 @@ export const SwitchAccountDropdown: FC<TSwitchAccountDropdownProps> = observer((
   const { data: user } = useUser();
 
   const displayName = user?.first_name
-    ? `${user?.first_name} ${user?.last_name ?? ""}`
+    ? `${user?.last_name ?? ""} ${user?.first_name}`
     : fullName && fullName.trim().length > 0
       ? fullName
       : user?.email;

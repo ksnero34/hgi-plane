@@ -48,13 +48,13 @@ class UserEndpoint(BaseViewSet):
     def get_object(self):
         return self.request.user
 
-    @method_decorator(cache_control(private=True, max_age=12))
+    @method_decorator(cache_control(private=True, max_age=0, no_cache=True))
     @method_decorator(vary_on_cookie)
     def retrieve(self, request):
         serialized_data = UserMeSerializer(request.user).data
         return Response(serialized_data, status=status.HTTP_200_OK)
 
-    @method_decorator(cache_control(private=True, max_age=12))
+    @method_decorator(cache_control(private=True, max_age=0, no_cache=True))
     @method_decorator(vary_on_cookie)
     def retrieve_user_settings(self, request):
         serialized_data = UserMeSettingsSerializer(request.user).data

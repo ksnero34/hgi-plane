@@ -34,7 +34,7 @@ export const ProjectMemberList: React.FC = observer(() => {
 
     if (!memberDetails?.member) return false;
 
-    const fullName = `${memberDetails?.member.first_name} ${memberDetails?.member.last_name}`.toLowerCase();
+    const fullName = `${memberDetails?.member.last_name} ${memberDetails?.member.first_name}`.toLowerCase();
     const displayName = memberDetails?.member.display_name.toLowerCase();
 
     return displayName?.includes(searchQuery.toLowerCase()) || fullName.includes(searchQuery.toLowerCase());

@@ -130,6 +130,8 @@ class Adapter:
         user = User.objects.filter(email=email).first()
         # Check if sign up case or login
         is_signup = bool(user)
+        # print(f"[인증] 사용자 {email} 인증 - 기존사용자여부: {is_signup}")
+        
         # If user is not present, create a new user
         if not user:
             # New user
@@ -156,13 +158,55 @@ class Adapter:
             avatar = self.user_data.get("user", {}).get("avatar", "")
             first_name = self.user_data.get("user", {}).get("first_name", "")
             last_name = self.user_data.get("user", {}).get("last_name", "")
+            display_name = self.user_data.get("user", {}).get("display_name", "")
+            
             user.avatar = avatar if avatar else ""
             user.first_name = first_name if first_name else ""
             user.last_name = last_name if last_name else ""
+            
+            if display_name:
+                user.display_name = display_name
+                # print(f"[신규가입] 사용자 {email}의 display_name을 '{display_name}'으로 설정")
+                
             user.save()
 
             # Create profile
             Profile.objects.create(user=user)
+        else:
+            # 기존 사용자의 경우, OAuth 로그인 시 정보 업데이트
+            if self.provider in ["google", "github", "gitlab", "oidc"]:
+                # print(f"[로그인] 사용자 {email} OAuth/OIDC 로그인")
+                
+                # 사용자 프로필 정보 업데이트
+                avatar = self.user_data.get("user", {}).get("avatar", "")
+                first_name = self.user_data.get("user", {}).get("first_name", "")
+                last_name = self.user_data.get("user", {}).get("last_name", "")
+                display_name = self.user_data.get("user", {}).get("display_name", "")
+                
+                update_needed = False
+                
+                # 값이 있는 경우에만 업데이트
+                if avatar:
+                    user.avatar = avatar
+                    update_needed = True
+                if first_name:
+                    user.first_name = first_name
+                    update_needed = True
+                if last_name:
+                    user.last_name = last_name
+                    update_needed = True
+                
+                # display_name 업데이트 (항상 업데이트)
+                if display_name:
+                    # print(f"[로그인] 사용자 {email}의 현재 display_name: '{user.display_name}'")
+                    # print(f"[로그인] 사용자 {email}의 display_name을 '{display_name}'으로 업데이트")
+                    user.display_name = display_name
+                    update_needed = True
+                
+                if update_needed:
+                    # print(f"[로그인] 사용자 {email} 정보 업데이트 중...")
+                    user.save()
+                    # print(f"[로그인] 사용자 {email} 정보 업데이트 완료")
 
         # Save user data
         user = self.save_user_data(user=user)

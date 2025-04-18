@@ -47,7 +47,7 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
     <div className="flex justify-between">
       <div>
         <h3 className="text-xl font-semibold text-center">
-          {t("good")} {t(greeting)}, {user?.first_name} {user?.last_name}
+          {t("good")} {t(greeting)}, {user?.first_name}님
         </h3>
         <h6 className="flex items-center gap-2 font-medium text-custom-text-400">
           <div>{greeting === "morning" ? "🌤️" : greeting === "afternoon" ? "🌥️" : "🌙️"}</div>
