@@ -22,16 +22,17 @@ export const FileNodeRenderer = ({
   ) : "";
 
   return (
-    <file-component>
+    <div className="file-node-component" data-file-component="true" data-file-name={fileName} data-file-size={fileSize} data-file-type={fileType}>
       <div className="file-icon-container">
         <div className="file-icon">{extension.charAt(0)}</div>
       </div>
       <div className="file-info">
         <div className="file-name">{fileName}</div>
         <div className="file-meta">
-          {extension} {formattedSize && `• ${formattedSize}`}
+          <span className="file-extension">{extension}</span>
+          {formattedSize && <span className="file-size">{formattedSize}</span>}
         </div>
       </div>
-    </file-component>
+    </div>
   );
 }; 

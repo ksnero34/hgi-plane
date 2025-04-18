@@ -229,12 +229,12 @@ export const useParseEditorContent = () => {
       const issueEmbedComponents = doc.querySelectorAll("issue-embed-component");
       issueEmbedComponents.forEach((component) => component.remove());
       // 파일 컴포넌트 처리
-      const fileComponents = doc.querySelectorAll("file-component");
+      const fileComponents = doc.querySelectorAll("file-component, div[data-file-component='true']");
       fileComponents.forEach((component) => {
         // 파일 정보 추출
-        const fileName = component.getAttribute("fileName") || "Unknown file";
-        const fileSize = Number(component.getAttribute("fileSize") || "0");
-        const fileType = component.getAttribute("fileType") || "";
+        const fileName = component.getAttribute("fileName") || component.getAttribute("data-file-name") || "Unknown file";
+        const fileSize = Number(component.getAttribute("fileSize") || component.getAttribute("data-file-size") || "0");
+        const fileType = component.getAttribute("fileType") || component.getAttribute("data-file-type") || "";
         
         // 파일 확장자 추출
         const extension = fileName?.split(".").pop()?.toUpperCase() || "";
@@ -502,9 +502,16 @@ export const useParseEditorContent = () => {
         img.removeAttribute('style'); // 기존 스타일 모두 제거
         
         // 새 스타일 직접 적용 - 크기 강제 제한
-        if(img.hasAttribute('width') && img.getAttribute('width').includes('%')) {
-          const width = Math.min(parseInt(img.getAttribute('width')), 50);
+        if(img.hasAttribute('width') && img.getAttribute('width')?.includes('%')) {
+          // width 속성이 있고 %가 포함된 경우
+          const widthValue = img.getAttribute('width') || '';
+          const width = Math.min(parseInt(widthValue), 50);
           img.style.width = `${width}%`;
+        } else if(img.hasAttribute('width') && img.getAttribute('width')?.includes('px')) {
+          // width 속성이 있고 px가 포함된 경우
+          const widthValue = img.getAttribute('width') || '';
+          const width = Math.min(parseInt(widthValue), 500);
+          img.style.width = `${width}px`;
         } else {
           img.style.width = '90%';
           img.style.maxWidth = '500px';
@@ -518,11 +525,15 @@ export const useParseEditorContent = () => {
       
       // 워드랩 적용
       doc.querySelectorAll('div, p, span, td').forEach(el => {
-        el.style.wordWrap = 'break-word';
-        el.style.overflowWrap = 'break-word';
-        el.style.wordBreak = 'break-word';
-        el.style.maxWidth = '100%';
-        el.style.overflow = 'visible';
+        // HTMLElement로 타입 캐스팅
+        const element = el as HTMLElement;
+        if (element.style) {
+          element.style.wordWrap = 'break-word';
+          element.style.overflowWrap = 'break-word';
+          element.style.wordBreak = 'break-word';
+          element.style.maxWidth = '100%';
+          element.style.overflow = 'visible';
+        }
       });
       doc.head.appendChild(bodyStyle);
       return serializedDoc;
@@ -582,16 +593,20 @@ export const useParseEditorContent = () => {
       parsedMarkdownContent = parsedMarkdownContent.replace(issueEmbedRegex, "");
 
       // 파일 컴포넌트를 마크다운 형식으로 변환
-      const fileComponentRegex = /<file-component[^>]*fileName="([^"]+)"[^>]*fileSize="([^"]+)"[^>]*fileType="([^"]+)"[^>]*>[^]*<\/file-component>/g;
+      const fileComponentRegex = /<file-component[^>]*fileName="([^"]+)"[^>]*fileSize="([^"]+)"[^>]*fileType="([^"]+)"[^>]*>[^]*<\/file-component>|<div[^>]*data-file-component="true"[^>]*data-file-name="([^"]+)"[^>]*data-file-size="([^"]+)"[^>]*data-file-type="([^"]+)"[^>]*>[^]*<\/div>/g;
       parsedMarkdownContent = parsedMarkdownContent.replace(
         fileComponentRegex,
-        (_match, fileName, fileSize, fileType) => {
+        (_match, fileName1, fileSize1, fileType1, fileName2, fileSize2, fileType2) => {
+          // 첫 번째 캡처 그룹(file-component) 또는 두 번째 캡처 그룹(div) 중 존재하는 값 사용
+          const fileName = fileName1 || fileName2 || "Unknown file";
+          const fileSize = Number(fileSize1 || fileSize2 || "0");
+          const fileType = fileType1 || fileType2 || "";
+          
           const extension = fileName?.split(".").pop()?.toUpperCase() || "";
-          const size = Number(fileSize);
-          const formattedSize = size ? (
-            size >= 1024 * 1024 
-              ? `${(size / (1024 * 1024)).toFixed(1)}MB`
-              : `${Math.round(size / 1024)}KB`
+          const formattedSize = fileSize ? (
+            fileSize >= 1024 * 1024 
+              ? `${(fileSize / (1024 * 1024)).toFixed(1)}MB`
+              : `${Math.round(fileSize / 1024)}KB`
           ) : "";
           
           // 파일 유형에 따른 이모티콘 선택

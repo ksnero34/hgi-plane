@@ -395,7 +395,6 @@ const EDITOR_PDF_FILE_STYLES: Styles = {
     fontSize: convertRemToPixel(0.75),
     fontWeight: "normal",
     color: "#333333",
-    whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
     marginBottom: convertRemToPixel(0.125),

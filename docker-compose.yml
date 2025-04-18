@@ -12,7 +12,7 @@ services:
     command: node web/server.js web
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:0.0.3
+    image: harbor.hwgeneralins.com/plane/web:0.0.4
 
   admin:
     container_name: admin
