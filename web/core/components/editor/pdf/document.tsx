@@ -5,29 +5,23 @@ import { Html } from "react-pdf-html";
 // constants
 import { EDITOR_PDF_DOCUMENT_STYLESHEET } from "@/constants/editor";
 
+// 로컬 한글 폰트 등록
 Font.register({
-  family: "Inter",
+  family: 'Noto Sans KR',
   fonts: [
-    { src: "/fonts/inter/thin.ttf", fontWeight: "thin" },
-    { src: "/fonts/inter/thin.ttf", fontWeight: "thin", fontStyle: "italic" },
-    { src: "/fonts/inter/ultralight.ttf", fontWeight: "ultralight" },
-    { src: "/fonts/inter/ultralight.ttf", fontWeight: "ultralight", fontStyle: "italic" },
-    { src: "/fonts/inter/light.ttf", fontWeight: "light" },
-    { src: "/fonts/inter/light.ttf", fontWeight: "light", fontStyle: "italic" },
-    { src: "/fonts/inter/regular.ttf", fontWeight: "normal" },
-    { src: "/fonts/inter/regular.ttf", fontWeight: "normal", fontStyle: "italic" },
-    { src: "/fonts/inter/medium.ttf", fontWeight: "medium" },
-    { src: "/fonts/inter/medium.ttf", fontWeight: "medium", fontStyle: "italic" },
-    { src: "/fonts/inter/semibold.ttf", fontWeight: "semibold" },
-    { src: "/fonts/inter/semibold.ttf", fontWeight: "semibold", fontStyle: "italic" },
-    { src: "/fonts/inter/bold.ttf", fontWeight: "bold" },
-    { src: "/fonts/inter/bold.ttf", fontWeight: "bold", fontStyle: "italic" },
-    { src: "/fonts/inter/extrabold.ttf", fontWeight: "ultrabold" },
-    { src: "/fonts/inter/extrabold.ttf", fontWeight: "ultrabold", fontStyle: "italic" },
-    { src: "/fonts/inter/heavy.ttf", fontWeight: "heavy" },
-    { src: "/fonts/inter/heavy.ttf", fontWeight: "heavy", fontStyle: "italic" },
-  ],
+    { src: '/fonts/noto-sans-kr/NotoSansKR-Regular.ttf', fontWeight: 'normal' },
+    { src: '/fonts/noto-sans-kr/NotoSansKR-Bold.ttf', fontWeight: 'bold' },
+    { src: '/fonts/noto-sans-kr/NotoSansKR-Medium.ttf', fontWeight: 'medium' },
+    { src: '/fonts/noto-sans-kr/NotoSansKR-Light.ttf', fontWeight: 'light' },
+  ]
 });
+
+// 줄바꿈 처리 
+Font.registerHyphenationCallback(word => [word]);
+
+// 내장 Courier 폰트 사용 (코드 블록용)
+// PDF에 내장된 표준 폰트 사용 - 오프라인에서도 작동
+// Helvetica, Times, Courier는 기본 내장 폰트
 
 type Props = {
   content: string;
@@ -44,6 +38,7 @@ export const PDFDocument: React.FC<Props> = (props) => {
         style={{
           backgroundColor: "#ffffff",
           padding: 64,
+          fontFamily: "Noto Sans KR"
         }}
       >
         <Html stylesheet={EDITOR_PDF_DOCUMENT_STYLESHEET}>{content}</Html>

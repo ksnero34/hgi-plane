@@ -26,15 +26,15 @@ export const FileBlock = (props: FileBlockProps) => {
 
   return (
     <div className="flex items-center gap-3 p-3 border rounded-md bg-custom-background-100 hover:bg-custom-background-90">
-      <div className="flex items-center justify-center w-10 h-10 bg-custom-background-80 rounded-md">
-        <FileTypeIcon className="w-5 h-5 text-custom-text-200" />
+      <div className="flex items-center justify-center w-12 h-12 bg-custom-background-80 rounded-md flex-shrink-0">
+        <FileTypeIcon className="w-6 h-6 text-custom-text-200" />
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
         <div className="font-medium text-sm text-custom-text-100 truncate">
           {fileName}
         </div>
         <div className="text-xs text-custom-text-200">
-          {extension.toUpperCase()} {formattedSize && `• ${formattedSize}`}
+          {extension.toUpperCase()} • {formattedSize}
         </div>
       </div>
       <div className="flex items-center gap-2">

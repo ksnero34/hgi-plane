@@ -216,13 +216,14 @@ export const EDITOR_FONT_STYLES: {
 
 const EDITOR_PDF_FONT_FAMILY_STYLES: Styles = {
   "*:not(.courier, .courier-bold)": {
-    fontFamily: "Inter",
+    fontFamily: "Noto Sans KR",
   },
   ".courier": {
     fontFamily: "Courier",
   },
   ".courier-bold": {
-    fontFamily: "Courier-Bold",
+    fontFamily: "Courier",
+    fontWeight: "bold",
   },
 };
 
@@ -343,11 +344,75 @@ const EDITOR_PDF_CODE_STYLES: Styles = {
   },
 };
 
+// 파일 노드 스타일
+const EDITOR_PDF_FILE_STYLES: Styles = {
+  // 파일 컴포넌트 스타일
+  "file-component": {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: convertRemToPixel(0.5),
+    marginVertical: convertRemToPixel(0.25),
+    borderRadius: convertRemToPixel(0.25),
+    border: "1px solid #e5e5e5",
+    backgroundColor: "#fafafa",
+    width: "100%",
+  },
+  // 파일 아이콘 컨테이너
+  ".file-icon-container": {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginRight: convertRemToPixel(0.625),
+    width: convertRemToPixel(1.5),
+    flexShrink: 0,
+  },
+  // 파일 아이콘
+  ".file-icon": {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: convertRemToPixel(1.25),
+    height: convertRemToPixel(1.25),
+    borderRadius: convertRemToPixel(0.188),
+    fontSize: convertRemToPixel(0.625),
+    fontWeight: "bold",
+    color: "#3b82f6",
+    marginBottom: convertRemToPixel(0.25),
+    textAlign: "center",
+    border: "1px solid #d1e0ff",
+    backgroundColor: "#e6efff"
+  },
+  // 파일 정보 컨테이너
+  ".file-info": {
+    display: "flex",
+    flexDirection: "column",
+    flexGrow: 1,
+    overflow: "hidden",
+  },
+  // 파일 이름
+  ".file-name": {
+    fontSize: convertRemToPixel(0.75),
+    fontWeight: "normal",
+    color: "#333333",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    marginBottom: convertRemToPixel(0.125),
+  },
+  // 파일 메타데이터
+  ".file-meta": {
+    fontSize: convertRemToPixel(0.625),
+    color: "#888888",
+  },
+};
+
 export const EDITOR_PDF_DOCUMENT_STYLESHEET = StyleSheet.create({
   ...EDITOR_PDF_FONT_FAMILY_STYLES,
   ...EDITOR_PDF_TYPOGRAPHY_STYLES,
   ...EDITOR_PDF_LIST_STYLES,
   ...EDITOR_PDF_CODE_STYLES,
+  ...EDITOR_PDF_FILE_STYLES,
   // quote block
   blockquote: {
     borderLeft: "3px solid gray",
