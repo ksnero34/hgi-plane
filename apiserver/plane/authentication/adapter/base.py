@@ -181,7 +181,6 @@ class Adapter:
                 avatar = self.user_data.get("user", {}).get("avatar", "")
                 first_name = self.user_data.get("user", {}).get("first_name", "")
                 last_name = self.user_data.get("user", {}).get("last_name", "")
-                display_name = self.user_data.get("user", {}).get("display_name", "")
                 
                 update_needed = False
                 
@@ -196,12 +195,7 @@ class Adapter:
                     user.last_name = last_name
                     update_needed = True
                 
-                # display_name 업데이트 (항상 업데이트)
-                if display_name:
-                    # print(f"[로그인] 사용자 {email}의 현재 display_name: '{user.display_name}'")
-                    # print(f"[로그인] 사용자 {email}의 display_name을 '{display_name}'으로 업데이트")
-                    user.display_name = display_name
-                    update_needed = True
+                # display_name 업데이트하지 않음 (신규 사용자만 설정)
                 
                 if update_needed:
                     # print(f"[로그인] 사용자 {email} 정보 업데이트 중...")
