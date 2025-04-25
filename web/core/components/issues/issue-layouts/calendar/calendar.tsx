@@ -241,9 +241,7 @@ export const CalendarChart: React.FC<Props> = observer((props) => {
             {/* mobile view */}
             <div className="md:hidden">
               <p className="p-4 text-xl font-semibold">
-                {`${selectedDate.getDate()} ${
-                  MONTHS_LIST[selectedDate.getMonth() + 1].title
-                }, ${selectedDate.getFullYear()}`}
+                {`${selectedDate.getFullYear()}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${selectedDate.getDate().toString().padStart(2, '0')}`}
               </p>
               <CalendarIssueBlocks
                 date={selectedDate}
@@ -269,9 +267,7 @@ export const CalendarChart: React.FC<Props> = observer((props) => {
         {/* mobile view */}
         <div className="md:hidden">
           <p className="p-4 text-xl font-semibold">
-            {`${selectedDate.getDate()} ${
-              MONTHS_LIST[selectedDate.getMonth() + 1].title
-            }, ${selectedDate.getFullYear()}`}
+            {`${selectedDate.getFullYear()}-${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}-${selectedDate.getDate().toString().padStart(2, '0')}`}
           </p>
           <CalendarIssueBlocks
             date={selectedDate}

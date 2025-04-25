@@ -43,16 +43,16 @@ export const isDateInRange = (date: string | Date | undefined | null, startDate:
 
 // Format Date Helpers
 /**
- * @returns {string | null} formatted date in the desired format or platform default format (MMM dd, yyyy)
+ * @returns {string | null} formatted date in the desired format or platform default format (yyyy-MM-dd)
  * @description Returns date in the formatted format
  * @param {Date | string} date
- * @param {string} formatToken (optional) // default MMM dd, yyyy
- * @example renderFormattedDate("2024-01-01", "MM-DD-YYYY") // Jan 01, 2024
- * @example renderFormattedDate("2024-01-01") // Jan 01, 2024
+ * @param {string} formatToken (optional) // default yyyy-MM-dd
+ * @example renderFormattedDate("2024-01-01", "MM-DD-YYYY") // 2024-01-01
+ * @example renderFormattedDate("2024-01-01") // 2024-01-01
  */
 export const renderFormattedDate = (
   date: string | Date | undefined | null,
-  formatToken: string = "MMM dd, yyyy"
+  formatToken: string = "yyyy-MM-dd"
 ): string | undefined => {
   // Parse the date to check if it is valid
   const parsedDate = getDate(date);
@@ -62,12 +62,12 @@ export const renderFormattedDate = (
   if (!isValid(parsedDate)) return; // Return undefined for invalid dates
   let formattedDate;
   try {
-    // Format the date in the format provided or default format (MMM dd, yyyy)
+    // Format the date in the format provided or default format (yyyy-MM-dd)
     return format(parsedDate, formatToken);
   } catch (e) {
-    // Format the date in format (MMM dd, yyyy) in case of any error
+    // Format the date in format (yyyy-MM-dd) in case of any error
     try {
-      return format(parsedDate, "MMM dd, yyyy");
+      return format(parsedDate, "yyyy-MM-dd");
     } catch (error) {
       console.error("Error formatting date:", error);
       return undefined;

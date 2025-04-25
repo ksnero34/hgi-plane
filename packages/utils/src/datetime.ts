@@ -34,15 +34,15 @@ export const getDate = (date: string | Date | undefined | null): Date | undefine
 /**
  * @description Returns date in the formatted format
  * @param {Date | string} date Date to format
- * @param {string} formatToken Format token (optional, default: MMM dd, yyyy)
+ * @param {string} formatToken Format token (optional, default: yyyy-MM-dd)
  * @returns {string | undefined} Formatted date in the desired format
  * @example
- * renderFormattedDate("2024-01-01") // returns "Jan 01, 2024"
+ * renderFormattedDate("2024-01-01") // returns "2024-01-01"
  * renderFormattedDate("2024-01-01", "MM-DD-YYYY") // returns "01-01-2024"
  */
 export const renderFormattedDate = (
   date: string | Date | undefined | null,
-  formatToken: string = "MMM dd, yyyy"
+  formatToken: string = "yyyy-MM-dd"
 ): string | undefined => {
   // Parse the date to check if it is valid
   const parsedDate = getDate(date);
@@ -52,11 +52,11 @@ export const renderFormattedDate = (
   if (!isValid(parsedDate)) return; // Return undefined for invalid dates
   let formattedDate;
   try {
-    // Format the date in the format provided or default format (MMM dd, yyyy)
+    // Format the date in the format provided or default format (yyyy-MM-dd)
     formattedDate = format(parsedDate, formatToken);
   } catch (e) {
-    // Format the date in format (MMM dd, yyyy) in case of any error
-    formattedDate = format(parsedDate, "MMM dd, yyyy");
+    // Format the date in format (yyyy-MM-dd) in case of any error
+    formattedDate = format(parsedDate, "yyyy-MM-dd");
   }
   return formattedDate;
 };
