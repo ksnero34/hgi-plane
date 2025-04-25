@@ -51,26 +51,26 @@ export const CalendarMonthsDropdown: React.FC<Props> = observer((props: Props) =
   const getWeekLayoutHeader = (): string => {
     const allDaysOfActiveWeek = issueCalendarView.allDaysOfActiveWeek;
 
-    if (!allDaysOfActiveWeek) return "Week view";
+    if (!allDaysOfActiveWeek) return "주 보기";
 
     const daysList = Object.keys(allDaysOfActiveWeek);
 
     const firstDay = getDate(daysList[0]);
     const lastDay = getDate(daysList[daysList.length - 1]);
 
-    if (!firstDay || !lastDay) return "Week view";
+    if (!firstDay || !lastDay) return "주 보기";
 
     if (firstDay.getMonth() === lastDay.getMonth() && firstDay.getFullYear() === lastDay.getFullYear())
-      return `${MONTHS_LIST[firstDay.getMonth() + 1].title} ${firstDay.getFullYear()}`;
+      return `${firstDay.getFullYear()}년 ${MONTHS_LIST[firstDay.getMonth() + 1].title}`;
 
     if (firstDay.getFullYear() !== lastDay.getFullYear()) {
-      return `${MONTHS_LIST[firstDay.getMonth() + 1].shortTitle} ${firstDay.getFullYear()} - ${
-        MONTHS_LIST[lastDay.getMonth() + 1].shortTitle
-      } ${lastDay.getFullYear()}`;
+      return `${firstDay.getFullYear()}년 ${MONTHS_LIST[firstDay.getMonth() + 1].shortTitle} - ${
+        lastDay.getFullYear()}년 ${MONTHS_LIST[lastDay.getMonth() + 1].shortTitle
+      }`;
     } else
-      return `${MONTHS_LIST[firstDay.getMonth() + 1].shortTitle} - ${
+      return `${firstDay.getFullYear()}년 ${MONTHS_LIST[firstDay.getMonth() + 1].shortTitle} - ${
         MONTHS_LIST[lastDay.getMonth() + 1].shortTitle
-      } ${lastDay.getFullYear()}`;
+      }`;
   };
 
   const handleDateChange = (date: Date) => {
@@ -89,7 +89,7 @@ export const CalendarMonthsDropdown: React.FC<Props> = observer((props: Props) =
           disabled={calendarLayout === "week"}
         >
           {calendarLayout === "month"
-            ? `${MONTHS_LIST[activeMonthDate.getMonth() + 1].title} ${activeMonthDate.getFullYear()}`
+            ? `${activeMonthDate.getFullYear()}년 ${MONTHS_LIST[activeMonthDate.getMonth() + 1].title}`
             : getWeekLayoutHeader()}
         </button>
       </Popover.Button>
@@ -120,7 +120,7 @@ export const CalendarMonthsDropdown: React.FC<Props> = observer((props: Props) =
               >
                 <ChevronLeft size={14} />
               </button>
-              <span className="text-xs">{activeMonthDate.getFullYear()}</span>
+              <span className="text-xs">{activeMonthDate.getFullYear()}년</span>
               <button
                 type="button"
                 className="grid place-items-center"

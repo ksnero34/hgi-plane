@@ -884,10 +884,10 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           {date.date.getDate() === 1 && MONTHS_LIST[date.date.getMonth() + 1].shortTitle + " "}
           {isToday ? (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-custom-primary-100 text-white">
-              {date.date.getDate()}
+              {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
             </span>
           ) : (
-            <>{date.date.getDate()}</>
+            <>{date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}</>
           )}
         </div>
 
@@ -937,8 +937,31 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               "bg-custom-primary-100/10 text-custom-primary-100 ": isToday && !isSelectedDate,
             })}
           >
-            {date.date.getDate()}
+            {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
           </div>
+        </div>
+
+        {/* mobile view */}
+        <div
+          className={`flex md:hidden items-center justify-between p-1.5 ${
+            isMonthLayout // if month layout, highlight current month days
+              ? date.is_current_month
+                ? "font-medium"
+                : "text-custom-text-300"
+              : "font-medium" // if week layout, highlight all days
+          } ${isWeekend ? "bg-custom-background-90" : "bg-custom-background-100"}`}
+        >
+          <div className="flex h-6 w-6 items-center justify-center rounded-full">
+            {date.date.getDate() === 1 && MONTHS_LIST[date.date.getMonth() + 1].shortTitle + " "}
+            {isToday ? (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-custom-primary-100 text-white">
+                {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
+              </span>
+            ) : (
+              <>{date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}</>
+            )}
+          </div>
+          {/* ... */}
         </div>
       </div>
     </>

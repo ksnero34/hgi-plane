@@ -7,52 +7,52 @@ export const MONTHS_LIST: {
   };
 } = {
   1: {
-    shortTitle: "Jan",
-    title: "January",
+    shortTitle: "1월",
+    title: "1월",
   },
   2: {
-    shortTitle: "Feb",
-    title: "February",
+    shortTitle: "2월",
+    title: "2월",
   },
   3: {
-    shortTitle: "Mar",
-    title: "March",
+    shortTitle: "3월",
+    title: "3월",
   },
   4: {
-    shortTitle: "Apr",
-    title: "April",
+    shortTitle: "4월",
+    title: "4월",
   },
   5: {
-    shortTitle: "May",
-    title: "May",
+    shortTitle: "5월",
+    title: "5월",
   },
   6: {
-    shortTitle: "Jun",
-    title: "June",
+    shortTitle: "6월",
+    title: "6월",
   },
   7: {
-    shortTitle: "Jul",
-    title: "July",
+    shortTitle: "7월",
+    title: "7월",
   },
   8: {
-    shortTitle: "Aug",
-    title: "August",
+    shortTitle: "8월",
+    title: "8월",
   },
   9: {
-    shortTitle: "Sep",
-    title: "September",
+    shortTitle: "9월",
+    title: "9월",
   },
   10: {
-    shortTitle: "Oct",
-    title: "October",
+    shortTitle: "10월",
+    title: "10월",
   },
   11: {
-    shortTitle: "Nov",
-    title: "November",
+    shortTitle: "11월",
+    title: "11월",
   },
   12: {
-    shortTitle: "Dec",
-    title: "December",
+    shortTitle: "12월",
+    title: "12월",
   },
 };
 
@@ -63,32 +63,32 @@ export const DAYS_LIST: {
   };
 } = {
   1: {
-    shortTitle: "Sun",
-    title: "Sunday",
+    shortTitle: "일",
+    title: "일요일",
   },
   2: {
-    shortTitle: "Mon",
-    title: "Monday",
+    shortTitle: "월",
+    title: "월요일",
   },
   3: {
-    shortTitle: "Tue",
-    title: "Tuesday",
+    shortTitle: "화",
+    title: "화요일",
   },
   4: {
-    shortTitle: "Wed",
-    title: "Wednesday",
+    shortTitle: "수",
+    title: "수요일",
   },
   5: {
-    shortTitle: "Thu",
-    title: "Thursday",
+    shortTitle: "목",
+    title: "목요일",
   },
   6: {
-    shortTitle: "Fri",
-    title: "Friday",
+    shortTitle: "금",
+    title: "금요일",
   },
   7: {
-    shortTitle: "Sat",
-    title: "Saturday",
+    shortTitle: "토",
+    title: "토요일",
   },
 };
 
@@ -100,10 +100,10 @@ export const CALENDAR_LAYOUTS: {
 } = {
   month: {
     key: "month",
-    title: "Month layout",
+    title: "월 레이아웃",
   },
   week: {
     key: "week",
-    title: "Week layout",
+    title: "주 레이아웃",
   },
 };

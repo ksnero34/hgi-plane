@@ -150,7 +150,7 @@ export const CalendarOptionsDropdown: React.FC<ICalendarHeader> = observer((prop
                       className="flex w-full items-center justify-between gap-2 rounded px-1 py-1.5 text-left text-xs hover:bg-custom-background-80"
                       onClick={() => handleLayoutChange(layoutDetails.key, closePopover)}
                     >
-                      {layoutDetails.title}
+                      {layout === "month" ? t("common.month") + " 레이아웃" : t("common.week") + " 레이아웃"}
                       {calendarLayout === layout && <Check size={12} strokeWidth={2} />}
                     </button>
                   ))}
