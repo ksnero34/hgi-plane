@@ -54,6 +54,7 @@ type Props = {
     isContinuous: boolean;
   };
   isEpic?: boolean;
+  className?: string;
 };
 
 export const CalendarIssueBlock = observer(
@@ -65,7 +66,8 @@ export const CalendarIssueBlock = observer(
       isDragDisabled = false, 
       date, 
       issueInfo,
-      isEpic = false
+      isEpic = false,
+      className = ""
     } = props;
     // states
     const [isMenuActive, setIsMenuActive] = useState(false);
@@ -114,7 +116,10 @@ export const CalendarIssueBlock = observer(
         borderBottomRightRadius: "0.375rem",
         // 연속성을 위한 마진 조정
         marginLeft: "0px",
-        marginRight: "0px"
+        marginRight: "0px",
+        boxShadow: "rgba(0, 0, 0, 0.1) 0px 1px 3px",
+        position: "relative",
+        zIndex: 1,
       };
 
       // 시작일과 종료일이 있는 경우 그라데이션 효과 추가
@@ -381,7 +386,8 @@ export const CalendarIssueBlock = observer(
             "relative after:absolute after:inset-0 after:bg-custom-background-100/10 after:pointer-events-none after:z-[1]": isSelected,
             "overflow-hidden": issueInfo?.isContinuous || issueInfo?.isStartDate || issueInfo?.isEndDate,
             "hover:z-10": issue.start_date && issue.target_date && issue.start_date !== issue.target_date,
-          }
+          },
+          className
         )}
         style={getBlockStyles()}
         disabled={!!issue?.tempId || isMobile}
@@ -390,7 +396,7 @@ export const CalendarIssueBlock = observer(
         <div
           ref={blockRef}
           className={cn(
-            "group/calendar-block flex h-10 md:h-8 w-full items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-sm transition-all duration-200",
+            "group/calendar-block flex h-12 md:h-10 w-full items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-sm transition-all duration-200",
             {
               "bg-custom-background-90/50 backdrop-blur-sm": isDraggingState,
               "hover:bg-custom-background-90/30": !isDraggingState && !isSelected,
@@ -405,7 +411,7 @@ export const CalendarIssueBlock = observer(
         >
           <div className="flex h-full items-center gap-2 truncate">
             <span
-              className={cn("h-full w-1 flex-shrink-0 rounded-full transition-all duration-200", {
+              className={cn("h-full w-1 flex-shrink-0 rounded-full transition-all duration-200 mt-[-8px]", {
                 "w-1.5": isSelected,
                 // 연속된 블록의 상태 표시줄 스타일
                 "opacity-70": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,

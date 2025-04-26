@@ -957,7 +957,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       <div ref={dayTileRef} className="group relative flex h-full w-full flex-col bg-custom-background-90">
         {/* header */}
         <div
-          className={`hidden flex-shrink-0 items-center justify-end px-2 py-1.5 text-right text-xs md:flex ${
+          className={`hidden flex-shrink-0 items-center justify-end px-2 py-1.5 text-right text-xs md:flex h-[28px] ${
             isMonthLayout // if month layout, highlight current month days
               ? date.is_current_month
                 ? "font-medium"
@@ -992,7 +992,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 // ID가 "empty-"로 시작하면 빈 공간으로 처리
                 if (typeof id === 'string' && id.startsWith('empty-')) {
                   return (
-                    <div key={id} className="h-10 md:h-8 w-full p-1 px-2 opacity-0">
+                    <div key={id} className="h-11 md:h-10.5 w-full p-1 px-2 opacity-0">
                       <div className="w-full h-full rounded border border-transparent"></div>
                     </div>
                   );
@@ -1000,7 +1000,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 
                 // 실제 이슈 블록 렌더링
                 return (
-                  <div key={id} className="relative cursor-pointer p-1 px-2">
+                  <div key={id} className="h-11 md:h-10.5 w-full relative p-1 px-2">
                     <CalendarIssueBlockRoot
                       issueId={id}
                       quickActions={quickActions}
