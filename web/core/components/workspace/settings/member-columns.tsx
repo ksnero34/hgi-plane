@@ -61,7 +61,7 @@ export const NameColumn: React.FC<NameProps> = (props) => {
                   </span>
                 </Link>
               )}
-              {first_name} {last_name}
+              {last_name} {first_name}
             </div>
 
             {(isAdmin || id === currentUser?.id) && (

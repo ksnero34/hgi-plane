@@ -127,7 +127,7 @@ export const ProfileSidebar: FC<TProfileSidebar> = observer((props) => {
           <div className="px-5">
             <div className="mt-[38px]">
               <h4 className="text-lg font-semibold">
-                {userData?.first_name} {userData?.last_name}
+                {userData?.last_name} {userData?.first_name}
               </h4>
               <h6 className="text-sm text-custom-text-200">({userData?.display_name})</h6>
             </div>

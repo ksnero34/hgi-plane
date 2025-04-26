@@ -66,7 +66,7 @@ export const NameColumn: React.FC<NameProps> = (props) => {
                   </span>
                 </Link>
               )}
-              {first_name} {last_name}
+              {last_name} {first_name}
             </div>
 
             {(isAdmin || id === currentUser?.id) && (
@@ -163,7 +163,7 @@ export const AccountTypeColumn: React.FC<AccountTypeProps> = observer((props) =>
 
                   setToast({
                     type: TOAST_TYPE.ERROR,
-                    title: "You can’t change this role yet.",
+                    title: "You can't change this role yet.",
                     message: errorString ?? "An error occurred while updating member role. Please try again.",
                   });
                 });
