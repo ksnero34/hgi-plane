@@ -1000,7 +1000,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 
                 // 실제 이슈 블록 렌더링
                 return (
-                  <div key={id} className="h-11 md:h-10.5 w-full relative p-1 px-2">
+                  <div key={id} className="h-11 md:h-11 w-full relative p-1 px-2">
                     <CalendarIssueBlockRoot
                       issueId={id}
                       quickActions={quickActions}

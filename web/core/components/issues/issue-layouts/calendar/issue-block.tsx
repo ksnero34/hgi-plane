@@ -28,7 +28,7 @@ import { CalendarStoreType } from "./base-calendar-root";
 import { HIGHLIGHT_CLASS } from "./utils";
 
 // 배경색 생성을 위한 해시 함수 개선
-const stringToColor = (str: string, opacity: number = 0.1) => {
+const stringToColor = (str: string, opacity: number = 0.15) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -37,7 +37,7 @@ const stringToColor = (str: string, opacity: number = 0.1) => {
   // 더 부드러운 색상을 위해 채도와 명도 조정
   const h = hash % 360;
   const s = 65 + (hash % 15); // 65-80% 채도
-  const l = 88 + (hash % 7); // 88-95% 명도
+  const l = 92 + (hash % 4); // 92-96% 명도
   
   return `hsla(${h}, ${s}%, ${l}%, ${opacity})`;
 };
@@ -110,21 +110,22 @@ export const CalendarIssueBlock = observer(
         borderBottomWidth: "1px",
         borderLeftWidth: "1px",
         borderRightWidth: "1px",
-        borderTopLeftRadius: "0.375rem",
-        borderTopRightRadius: "0.375rem",
-        borderBottomLeftRadius: "0.375rem",
-        borderBottomRightRadius: "0.375rem",
+        borderTopLeftRadius: "0.5rem",
+        borderTopRightRadius: "0.5rem",
+        borderBottomLeftRadius: "0.5rem",
+        borderBottomRightRadius: "0.5rem",
         // 연속성을 위한 마진 조정
         marginLeft: "0px",
         marginRight: "0px",
-        boxShadow: "rgba(0, 0, 0, 0.1) 0px 1px 3px",
+        boxShadow: "rgba(0, 0, 0, 0.08) 0px 2px 4px, rgba(0, 0, 0, 0.03) 0px 0px 2px",
         position: "relative",
         zIndex: 1,
+        transition: "all 0.2s ease-in-out",
       };
 
       // 시작일과 종료일이 있는 경우 그라데이션 효과 추가
       if (issue.start_date && issue.target_date) {
-        baseStyles.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+        baseStyles.boxShadow = "rgba(0, 0, 0, 0.08) 0px 2px 4px, rgba(0, 0, 0, 0.03) 0px 0px 2px";
       }
 
       // 연속된 날짜 표시를 위한 스타일
@@ -151,7 +152,7 @@ export const CalendarIssueBlock = observer(
         
         // 연속된 블록의 배경색 약간 강조
         if (bgColor !== "transparent") {
-          const opacity = 0.15; // 약간 더 진한 배경색
+          const opacity = 0.2; // 약간 더 진한 배경색
           baseStyles.backgroundColor = stringToColor(issue.id, opacity);
         }
       }
@@ -159,8 +160,8 @@ export const CalendarIssueBlock = observer(
       // 시작일 표시를 위한 스타일
       if (issueInfo?.isStartDate) {
         baseStyles.borderLeftWidth = "3px";
-        baseStyles.borderTopLeftRadius = "0.375rem";
-        baseStyles.borderBottomLeftRadius = "0.375rem";
+        baseStyles.borderTopLeftRadius = "0.5rem";
+        baseStyles.borderBottomLeftRadius = "0.5rem";
         baseStyles.marginLeft = "0px"; // 시작 블록은 마진 없음
         // 시작 블록의 z-index 높임
         baseStyles.position = "relative";
@@ -177,8 +178,8 @@ export const CalendarIssueBlock = observer(
       // 종료일 표시를 위한 스타일
       if (issueInfo?.isEndDate) {
         baseStyles.borderRightWidth = "3px";
-        baseStyles.borderTopRightRadius = "0.375rem";
-        baseStyles.borderBottomRightRadius = "0.375rem";
+        baseStyles.borderTopRightRadius = "0.5rem";
+        baseStyles.borderBottomRightRadius = "0.5rem";
         baseStyles.marginRight = "0px"; // 종료 블록은 마진 없음
         // 종료 블록의 z-index 높임
         baseStyles.position = "relative";
@@ -194,7 +195,7 @@ export const CalendarIssueBlock = observer(
 
       // 선택된 이슈에 대한 스타일 추가
       if (isSelected) {
-        baseStyles.boxShadow = "0 0 0 2px rgba(var(--color-primary-500), 0.4)";
+        baseStyles.boxShadow = "0 0 0 2px rgba(var(--color-primary-500), 0.5), rgba(0, 0, 0, 0.1) 0px 3px 6px";
         baseStyles.transform = "scale(1.02)";
         baseStyles.zIndex = 10;
         // 선택된 이슈의 테두리 색상 변경
@@ -396,7 +397,7 @@ export const CalendarIssueBlock = observer(
         <div
           ref={blockRef}
           className={cn(
-            "group/calendar-block flex h-12 md:h-10 w-full items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-sm transition-all duration-200",
+            "group/calendar-block flex h-12 md:h-11 w-full items-start justify-between gap-1.5 px-2.5 py-1.5 rounded-sm transition-all duration-200",
             {
               "bg-custom-background-90/50 backdrop-blur-sm": isDraggingState,
               "hover:bg-custom-background-90/30": !isDraggingState && !isSelected,
@@ -409,12 +410,12 @@ export const CalendarIssueBlock = observer(
             }
           )}
         >
-          <div className="flex h-full items-center gap-2 truncate">
+          <div className="flex h-full items-start gap-2 truncate pt-1.5">
             <span
-              className={cn("h-full w-1 flex-shrink-0 rounded-full transition-all duration-200 mt-[-8px]", {
+              className={cn("h-full w-1 flex-shrink-0 rounded-full transition-all duration-200 mt-[-9px]", {
                 "w-1.5": isSelected,
                 // 연속된 블록의 상태 표시줄 스타일
-                "opacity-70": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
+                "opacity-80": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
                 "opacity-100": issueInfo?.isStartDate || issueInfo?.isEndDate,
                 // 시작일과 종료일 블록의 상태 표시줄 스타일
                 "rounded-l-full": issueInfo?.isStartDate,
@@ -423,6 +424,7 @@ export const CalendarIssueBlock = observer(
               })}
               style={{
                 backgroundColor: stateColor,
+                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
               }}
             />
             <div className="flex items-center gap-1 truncate">
@@ -433,7 +435,7 @@ export const CalendarIssueBlock = observer(
                     {
                       "text-custom-text-200": isSelected,
                       // 연속된 블록의 프로젝트 식별자 스타일
-                      "opacity-90": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
+                      "opacity-95": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
                     }
                   )}
                 >
@@ -446,7 +448,7 @@ export const CalendarIssueBlock = observer(
                     "text-custom-text-200": !isSelected,
                     "text-custom-text-100": isSelected,
                     // 연속된 블록의 텍스트 스타일
-                    "opacity-90": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
+                    "opacity-95": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
                     // 시작일과 종료일 블록의 텍스트 스타일
                     "font-semibold": issueInfo?.isStartDate || issueInfo?.isEndDate,
                   })}
@@ -457,7 +459,7 @@ export const CalendarIssueBlock = observer(
             </div>
           </div>
           <div
-            className={cn("flex-shrink-0 size-5 transition-all duration-200", {
+            className={cn("flex-shrink-0 size-5 transition-all duration-200 pt-1", {
               "opacity-0 group-hover/calendar-block:opacity-100": !isMobile && !isSelected,
               "opacity-100": isMenuActive || isSelected,
             })}
