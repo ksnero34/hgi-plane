@@ -21,6 +21,8 @@ import { MONTHS_LIST } from "@/constants/calendar";
 // helpers
 import { cn } from "@/helpers/common.helper";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+// 추가 import
+import { CalendarIssueBlockRoot, CalendarQuickAddIssueActions } from "@/components/issues";
 // types
 import { IProjectEpicsFilter } from "@/plane-web/store/issue/epic";
 import { ICycleIssuesFilter } from "@/store/issue/cycle";
@@ -643,10 +645,95 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       });
     }
 
+    // 결과: 현재 날짜에 표시되는 이슈 ID 배열
     return sortedIssueIds;
   };
 
+  // 표시할 실제 이슈 ID 목록
   const issueIds = getIssuesForDate();
+  
+  // 빈 공간을 포함한 전체 아이템 배열 생성
+  const getDisplayItemsWithEmptySpaces = () => {
+    // 현재 날짜에 표시할 이슈가 없고, 전역 순서도 없는 경우 빈 배열 반환
+    if (!issueIds.length && (!globalIssueOrder || !globalIssueOrder.length)) {
+      return [];
+    }
+    
+    // 전역 순서가 없는 경우 현재 이슈만 표시
+    if (!globalIssueOrder || !globalIssueOrder.length) {
+      return issueIds.map(id => ({ type: 'issue', id }));
+    }
+    
+    // 결과 배열 (이슈와 빈 공간을 모두 포함)
+    const result = [];
+    
+    // 전역 이슈 순서 기준으로 아이템 생성
+    for (const id of globalIssueOrder) {
+      // 현재 날짜에 표시되어야 하는 이슈인지 확인
+      if (issueIds.includes(id)) {
+        // 이슈 아이템 추가
+        result.push({ type: 'issue', id });
+      } else {
+        // 다른 날짜에 표시되는 이슈 확인
+        const issue = issues?.[id];
+        
+        // 해당 이슈가 존재하고 날짜 정보가 있는 경우만 빈 공간 추가
+        if (issue && (issue.start_date || issue.target_date)) {
+          // 빈 공간 아이템 추가
+          result.push({ type: 'empty', id });
+        }
+      }
+    }
+    
+    return result;
+  };
+
+  // 빈 공간을 포함한 표시 아이템
+  const displayItems = getDisplayItemsWithEmptySpaces();
+
+  // 빈 공간 포함된 이슈 ID 배열 생성
+  // 실제 이슈는 원래 ID를 가지고, 빈 공간은 "empty-id" 형태로 ID를 가짐
+  const getEmptySpaceAwareIssueIds = () => {
+    if (!globalIssueOrder || !globalIssueOrder.length) {
+      return issueIds; // 전역 순서가 없으면 기존 이슈만 반환
+    }
+    
+    // 실제 이슈 ID 맵 (빠른 조회용)
+    const actualIssueIdMap = issueIds.reduce((map, id) => {
+      map[id] = true;
+      return map;
+    }, {});
+    
+    // 결과 배열 (빈 공간 포함)
+    const result = [];
+    
+    // 빈 공간 인덱스 추적 (고유한 키를 위해)
+    let emptyIndex = 0;
+    
+    // 전역 이슈 순서 기준으로 아이템 추가
+    for (const id of globalIssueOrder) {
+      // 현재 날짜에 표시될 이슈인지 확인
+      if (actualIssueIdMap[id]) {
+        // 실제 이슈 ID 추가
+        result.push(id);
+      } else {
+        // 해당 이슈가 존재하는지 확인
+        const issue = issues?.[id];
+        
+        // 해당 이슈가 존재하고 날짜 정보가 있는 경우만 빈 공간 추가
+        if (issue && (issue.start_date || issue.target_date)) {
+          // 빈 공간을 위한 특수 ID 추가 (빈 공간에는 이슈가 없으므로 issueIds에는 아무것도 추가하지 않음)
+          // 이 ID는 실제 이슈와 구분하기 위해 "empty-" 접두사를 붙임
+          result.push(`empty-${id}-${emptyIndex++}`);
+        }
+      }
+    }
+    
+    return result;
+  };
+  
+  // 빈 공간 포함된 이슈 ID 배열
+  const emptySpaceAwareIssueIds = getEmptySpaceAwareIssueIds();
 
   // 이슈 정보 맵 생성 (시작일, 종료일, 연속성 여부)
   // updateTrigger가 변경될 때마다 issueInfoMap을 다시 계산
@@ -898,23 +985,49 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               }
             )}
           >
-            <CalendarIssueBlocks
-              date={date.date}
-              issueIdList={issueIds}
-              issueInfo={issueInfoMap}
-              quickActions={quickActions}
-              loadMoreIssues={loadMoreIssues}
-              getPaginationData={getPaginationData}
-              getGroupIssueCount={getGroupIssueCount}
-              isDragDisabled={readOnly}
-              addIssuesToView={addIssuesToView}
-              disableIssueCreation={disableIssueCreation}
-              enableQuickIssueCreate={enableQuickIssueCreate}
-              quickAddCallback={quickAddCallback}
-              readOnly={readOnly}
-              canEditProperties={canEditProperties}
-              isEpic={isEpic}
-            />
+            {/* 빈 공간을 포함한 이슈 블록 렌더링 */}
+            <div className="h-full w-full flex flex-col">
+              {/* 각 이슈 또는 빈 공간 렌더링 */}
+              {emptySpaceAwareIssueIds.map(id => {
+                // ID가 "empty-"로 시작하면 빈 공간으로 처리
+                if (typeof id === 'string' && id.startsWith('empty-')) {
+                  return (
+                    <div key={id} className="h-10 md:h-8 w-full p-1 px-2 opacity-0">
+                      <div className="w-full h-full rounded border border-transparent"></div>
+                    </div>
+                  );
+                }
+                
+                // 실제 이슈 블록 렌더링
+                return (
+                  <div key={id} className="relative cursor-pointer p-1 px-2">
+                    <CalendarIssueBlockRoot
+                      issueId={id}
+                      quickActions={quickActions}
+                      isDragDisabled={readOnly}
+                      date={date.date}
+                      canEditProperties={canEditProperties}
+                      isEpic={isEpic}
+                      issueInfo={issueInfoMap.get(id)}
+                    />
+                  </div>
+                );
+              })}
+              
+              {/* 작업 항목 추가 버튼 */}
+              {enableQuickIssueCreate && !disableIssueCreation && !readOnly && (
+                <div className="border-b border-custom-border-200 px-1 py-1 md:border-none md:px-2">
+                  <CalendarQuickAddIssueActions
+                    prePopulatedData={{
+                      target_date: formattedDatePayload,
+                    }}
+                    quickAddCallback={quickAddCallback}
+                    addIssuesToView={addIssuesToView}
+                    isEpic={isEpic}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

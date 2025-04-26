@@ -69,15 +69,14 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
   const calendarLayout = issuesFilterStore.issueFilters?.displayFilters?.calendar?.layout ?? "month";
   const showWeekends = issuesFilterStore.issueFilters?.displayFilters?.calendar?.show_weekends ?? false;
   
-  // 모든 이슈에 대한 전역 순서 계산
   const getGlobalIssueOrder = () => {
     // 실제 이슈 객체 배열
     const allIssuesArray = Object.values(issues || {}).filter(Boolean);
     
     // 정렬 로직:
     // 1. 시작일이 빠른 순
-    // 2. 시작일이 같으면 종료일이 긴 순 (범위가 넓은 이슈가 위에 오도록)
-    // 3. 시작일과 종료일이 모두 같으면 이슈 ID로 정렬 (일관성 유지)
+    // 2. 기간이 넓은 순 (종료일-시작일)
+    // 3. ID 기준
     return allIssuesArray.sort((a, b) => {
       // 시작일 기준으로 정렬
       const startDateA = a.start_date ? new Date(a.start_date).getTime() : Number.MAX_SAFE_INTEGER;
@@ -85,18 +84,21 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
       
       if (startDateA !== startDateB) return startDateA - startDateB;
       
-      // 시작일이 같으면 종료일 기준으로 정렬 (기간이 긴 것이 우선)
-      const targetDateA = a.target_date ? new Date(a.target_date).getTime() : 0;
-      const targetDateB = b.target_date ? new Date(b.target_date).getTime() : 0;
+      // 시작일이 같으면 기간으로 정렬 (더 넓은 범위가 위에)
+      const endDateA = a.target_date ? new Date(a.target_date).getTime() : startDateA;
+      const endDateB = b.target_date ? new Date(b.target_date).getTime() : startDateB;
       
-      if (targetDateA !== targetDateB) return targetDateB - targetDateA; // 역순 - 종료일이 늦을수록 위에 배치
+      const durationA = endDateA - startDateA;
+      const durationB = endDateB - startDateB;
       
-      // 시작일과 종료일이 모두 같으면 이슈 ID 기준으로 정렬
+      if (durationA !== durationB) return durationB - durationA; // 내림차순 (더 긴 기간이 위에)
+      
+      // 마지막으로 ID로 정렬
       return a.id.localeCompare(b.id);
     }).map(issue => issue.id);
   };
   
-  // 전역 이슈 순서 계산
+  // 전체 이슈 순서를 계산
   const globalIssueOrder = getGlobalIssueOrder();
 
   if (!week) return null;
