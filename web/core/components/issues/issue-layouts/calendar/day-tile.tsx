@@ -66,6 +66,7 @@ type Props = {
   }>;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;
+  globalIssueOrder?: string[];
 };
 
 // 커스텀 이벤트 인터페이스 정의
@@ -96,6 +97,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     issueInfo: propIssueInfo,
     canEditProperties,
     isEpic = false,
+    globalIssueOrder,
   } = props;
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -556,18 +558,15 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
   if (!formattedDatePayload) return null;
 
   const getIssuesForDate = () => {
-    const issueIds = new Set<string>();
-
-    if (groupedIssueIds?.[formattedDatePayload]) {
-      groupedIssueIds[formattedDatePayload].forEach(id => issueIds.add(id));
-    }
-
-    // 현재 날짜 설정 (시간 정보 제거)
+    // 현재 날짜 준비 (시간 정보 제거)
     const currentDate = new Date(date.date);
     currentDate.setHours(0, 0, 0, 0);
     const currentTime = currentDate.getTime();
-
-    // 날짜 범위에 있는 이슈들 수집
+    
+    // 이슈 ID 수집
+    const issueIds = new Set<string>();
+    
+    // 이슈 맵에서 날짜에 해당하는 이슈 찾기
     Object.values(issues || {}).forEach(issue => {
       if (!issue) return;
       
@@ -586,20 +585,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
         
         if (currentTime >= startTime && currentTime <= targetTime) {
           issueIds.add(issue.id);
-          
-          // console.log(`Issue ${issue.id} date range check:`, {
-          //   currentDate: currentDate.toISOString(),
-          //   startDate: startDate.toISOString(),
-          //   targetDate: targetDate.toISOString(),
-          //   isInRange: true,
-          //   timeComparison: {
-          //     currentTime,
-          //     startTime,
-          //     targetTime,
-          //     isAfterOrEqualStart: currentTime >= startTime,
-          //     isBeforeOrEqualTarget: currentTime <= targetTime
-          //   }
-          // });
         }
       } 
       // 시작일만 있는 경우
@@ -618,33 +603,45 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       }
     });
 
-    // 수집된 이슈 ID들을 정렬
-    const sortedIssueIds = Array.from(issueIds).sort((a, b) => {
-      const issueA = issues?.[a];
-      const issueB = issues?.[b];
-      
-      if (!issueA || !issueB) return 0;
-      
-      // 시작일 기준으로 정렬
-      const startDateA = issueA.start_date ? new Date(issueA.start_date).getTime() : 0;
-      const startDateB = issueB.start_date ? new Date(issueB.start_date).getTime() : 0;
-      
-      if (startDateA !== startDateB) return startDateA - startDateB;
-      
-      // 시작일이 같으면 종료일 기준으로 정렬
-      const targetDateA = issueA.target_date ? new Date(issueA.target_date).getTime() : 0;
-      const targetDateB = issueB.target_date ? new Date(issueB.target_date).getTime() : 0;
-      
-      if (targetDateA !== targetDateB) return targetDateA - targetDateB;
-      
-      // 시작일과 종료일이 모두 같으면 이슈 ID 기준으로 정렬
-      return a.localeCompare(b);
-    });
-
-    // console.log(`getIssuesForDate for ${date.date.toISOString()}:`, {
-    //   issueIds: sortedIssueIds,
-    //   updateTrigger
-    // });
+    // 수집된 이슈 ID 정렬
+    const sortedIssueIds = Array.from(issueIds);
+    
+    // 전역 이슈 순서가 제공된 경우 그 순서에 따라 정렬
+    if (globalIssueOrder && globalIssueOrder.length > 0) {
+      sortedIssueIds.sort((a, b) => {
+        const indexA = globalIssueOrder.indexOf(a);
+        const indexB = globalIssueOrder.indexOf(b);
+        
+        // 전역 순서에 없는 경우 마지막으로 정렬
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        
+        return indexA - indexB;
+      });
+    } else {
+      // 전역 순서가 없는 경우 기존 정렬 방식 사용
+      sortedIssueIds.sort((a, b) => {
+        const issueA = issues?.[a];
+        const issueB = issues?.[b];
+        
+        if (!issueA || !issueB) return 0;
+        
+        // 시작일 기준으로 정렬
+        const startDateA = issueA.start_date ? new Date(issueA.start_date).getTime() : 0;
+        const startDateB = issueB.start_date ? new Date(issueB.start_date).getTime() : 0;
+        
+        if (startDateA !== startDateB) return startDateA - startDateB;
+        
+        // 시작일이 같으면 종료일 기준으로 정렬
+        const targetDateA = issueA.target_date ? new Date(issueA.target_date).getTime() : 0;
+        const targetDateB = issueB.target_date ? new Date(issueB.target_date).getTime() : 0;
+        
+        if (targetDateA !== targetDateB) return targetDateA - targetDateB;
+        
+        // 시작일과 종료일이 모두 같으면 이슈 ID 기준으로 정렬
+        return a.localeCompare(b);
+      });
+    }
 
     return sortedIssueIds;
   };
