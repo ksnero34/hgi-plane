@@ -18,14 +18,12 @@ def send_java_notification(notification_data):
     """
     자바 알림 API를 호출하는 Celery 태스크
     
-    notification_data: 알림 데이터 (딕셔너리)
+    notification_data: 알림 데이터 (딕셔너리) - 간소화된 버전
     {
         "user_id": "사용자 ID",
         "title": "알림 제목",
         "message": "알림 내용",
-        "notification_type": "알림 유형", 
-        "entity_id": "관련 엔티티 ID",
-        "entity_type": "관련 엔티티 유형"
+        "url": "바로가기 URL"
     }
     """
     try:

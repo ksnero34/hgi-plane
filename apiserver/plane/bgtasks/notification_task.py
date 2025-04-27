@@ -2,6 +2,8 @@
 import json
 import uuid
 from uuid import UUID
+import logging
+import os
 
 
 # Module imports
@@ -19,6 +21,7 @@ from plane.db.models import (
     IssueActivity,
     UserNotificationPreference,
     ProjectMember,
+    Workspace,
 )
 from django.db.models import Subquery
 from django.conf import settings
@@ -217,14 +220,36 @@ def process_notification(notification):
     
     # Java 알림 API가 활성화되어 있는 경우 Java 알림 서비스 호출
     if settings.JAVA_NOTIFICATION_API_ENABLED:
-        # Java 알림 API에 전달할 데이터 구성
+        # 바로가기 URL 생성
+        url = ""
+        entity_type = notification.entity_name
+        entity_id = notification.entity_identifier
+        
+        # WEB_URL 환경 변수에서 기본 URL 가져오기
+        base_url = os.environ.get("WEB_URL", "http://localhost:3000")
+        
+        try:
+            if entity_type == "issue":
+                # 이슈 관련 알림 URL
+                issue = Issue.objects.get(pk=entity_id)
+                url = f"{base_url}/{issue.project.workspace.slug}/projects/{issue.project_id}/issues/{issue.id}"
+            elif entity_type == "workspace":
+                # 워크스페이스 관련 알림 URL
+                workspace = Workspace.objects.get(pk=entity_id)
+                url = f"{base_url}/{workspace.slug}"
+            elif entity_type == "project":
+                # 프로젝트 관련 알림 URL
+                project = Project.objects.get(pk=entity_id)
+                url = f"{base_url}/{project.workspace.slug}/projects/{project.id}"
+        except Exception as e:
+            logging.getLogger("plane").warning(f"Error generating URL for notification: {str(e)}")
+
+        # Java 알림 API에 전달할 데이터 구성 (간소화된 버전)
         java_notification_data = {
             "user_id": str(notification.receiver_id),
-            "title": "Plane 알림",
+            "title": "이슈트래커(Plane) 알림",
             "message": notification.message,
-            "notification_type": notification.sender,
-            "entity_id": notification.entity_identifier,
-            "entity_type": notification.entity_name
+            "url": url
         }
         
         # 비동기로 Java 알림 API 호출
