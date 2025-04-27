@@ -48,6 +48,7 @@ type Props = {
   isDragging?: boolean;
   isDragDisabled?: boolean;
   date: Date;
+  elementRef?: React.RefObject<HTMLDivElement>;
   issueInfo?: {
     isStartDate: boolean;
     isEndDate: boolean;
@@ -65,6 +66,7 @@ export const CalendarIssueBlock = observer(
       isDragging = false, 
       isDragDisabled = false, 
       date, 
+      elementRef,
       issueInfo,
       isEpic = false,
       className = ""
@@ -234,7 +236,7 @@ export const CalendarIssueBlock = observer(
     const placement = isMenuActionRefAboveScreenBottom ? "bottom-end" : "top-end";
 
     useEffect(() => {
-      const element = blockRef.current;
+      const element = elementRef?.current || blockRef.current;
 
       if (!element || !issue) return;
 
@@ -363,7 +365,7 @@ export const CalendarIssueBlock = observer(
           },
         })
       );
-    }, [blockRef?.current, issue, isDragDisabled, date]);
+    }, [elementRef?.current, blockRef?.current, issue, isDragDisabled, date]);
     const workItemLink = generateWorkItemLink({
       workspaceSlug: workspaceSlug?.toString(),
       projectId: issue?.project_id,

@@ -699,7 +699,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     }
     
     // 실제 이슈 ID 맵 (빠른 조회용)
-    const actualIssueIdMap = issueIds.reduce((map, id) => {
+    const actualIssueIdMap = issueIds.reduce<Record<string, boolean>>((map, id) => {
       map[id] = true;
       return map;
     }, {});
@@ -1004,7 +1004,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                     <CalendarIssueBlockRoot
                       issueId={id}
                       quickActions={quickActions}
-                      isDragDisabled={readOnly}
+                      isDragDisabled={readOnly ?? false}
                       date={date.date}
                       canEditProperties={canEditProperties}
                       isEpic={isEpic}

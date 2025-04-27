@@ -111,7 +111,7 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     const visibleIssueIds = issueIdList.filter(id => isIssueVisibleOnDate(id, date));
     
     // 2. 전체 이슈 정보 가져오기 (정렬을 위한 데이터)
-    const issuesWithData = visibleIssueIds.map(id => getIssueById(id)).filter(Boolean);
+    const issuesWithData = visibleIssueIds.map(id => getIssueById(id)).filter((issue): issue is TIssue => Boolean(issue));
     
     // 3. 중요도에 따른 이슈 정렬
     const sortedIssues = [...issuesWithData].sort((a, b) => {
@@ -144,14 +144,14 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
   const calculateEmptySpaces = () => {
     // 먼저 전체 캘린더에서 사용되는 모든 이슈 ID 수집
     // 이슈 ID 맵 - 각 이슈의 글로벌 위치를 저장
-    const globalPositions = {};
+    const globalPositions: Record<string, number> = {};
     
     // 이슈들의 전역 순서 가져오기 (간단한 방식)
-    const allIssueIds = Object.keys(issues.issueMap || {})
-      .filter(id => {
-        const issue = issues.issueMap?.[id];
-        return issue && (issue.start_date || issue.target_date);
-      });
+    // issues.issueMap에 직접 접근하지 않고 getIssueById 함수를 사용
+    const allIssueIds = issueIdList.filter(id => {
+      const issue = getIssueById(id);
+      return issue && (issue.start_date || issue.target_date);
+    });
     
     // 이슈 ID에 인덱스 할당 (순서 부여)
     allIssueIds.forEach((id, index) => {
@@ -159,7 +159,8 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     });
     
     // 실제 표시할 이슈와 빈 공간을 포함한 배열 생성
-    const result = [];
+    type RenderItem = { type: 'empty'; position: number } | { type: 'issue'; issueId: string; position: number };
+    const result: RenderItem[] = [];
     
     // 우리가 보여줄 이슈의 위치 추적
     for (let i = 0; i < sortedIssueIds.length; i++) {

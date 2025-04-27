@@ -122,7 +122,7 @@ export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
       isDragging={isDragging} 
       issue={issue} 
       quickActions={quickActions} 
-      ref={issueRef} 
+      elementRef={issueRef} 
       date={date}
       isEpic={isEpic}
       issueInfo={issueInfo}
