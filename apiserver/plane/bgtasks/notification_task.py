@@ -21,10 +21,14 @@ from plane.db.models import (
     ProjectMember,
 )
 from django.db.models import Subquery
+from django.conf import settings
 
 # Third Party imports
 from celery import shared_task
 from bs4 import BeautifulSoup
+
+# Import Java notification service
+from plane.bgtasks.java_notification_task import send_java_notification
 
 
 # =========== Issue Description Html Parsing and notification Functions ======================
@@ -205,6 +209,28 @@ def create_mention_notification(
             },
         },
     )
+
+
+# 알림 처리 함수 수정
+def process_notification(notification):
+    # 기존 알림 처리 로직
+    
+    # Java 알림 API가 활성화되어 있는 경우 Java 알림 서비스 호출
+    if settings.JAVA_NOTIFICATION_API_ENABLED:
+        # Java 알림 API에 전달할 데이터 구성
+        java_notification_data = {
+            "user_id": str(notification.receiver_id),
+            "title": "Plane 알림",
+            "message": notification.message,
+            "notification_type": notification.sender,
+            "entity_id": notification.entity_identifier,
+            "entity_type": notification.entity_name
+        }
+        
+        # 비동기로 Java 알림 API 호출
+        send_java_notification.delay(java_notification_data)
+    
+    return notification
 
 
 @shared_task
@@ -402,51 +428,51 @@ def notifications(
                     )
 
                     # Create in app notification
-                    bulk_notifications.append(
-                        Notification(
-                            workspace=project.workspace,
-                            sender=sender,
-                            triggered_by_id=actor_id,
-                            receiver_id=subscriber,
-                            entity_identifier=issue_id,
-                            entity_name="issue",
-                            project=project,
-                            title=issue_activity.get("comment"),
-                            data={
-                                "issue": {
-                                    "id": str(issue_id),
-                                    "name": str(issue.name),
-                                    "identifier": str(issue.project.identifier),
-                                    "sequence_id": issue.sequence_id,
-                                    "state_name": issue.state.name,
-                                    "state_group": issue.state.group,
-                                },
-                                "issue_activity": {
-                                    "id": str(issue_activity.get("id")),
-                                    "verb": str(issue_activity.get("verb")),
-                                    "field": str(issue_activity.get("field")),
-                                    "actor": str(issue_activity.get("actor_id")),
-                                    "new_value": str(issue_activity.get("new_value")),
-                                    "old_value": str(issue_activity.get("old_value")),
-                                    "issue_comment": str(
-                                        issue_comment.comment_stripped
-                                        if issue_comment is not None
-                                        else ""
-                                    ),
-                                    "old_identifier": (
-                                        str(issue_activity.get("old_identifier"))
-                                        if issue_activity.get("old_identifier")
-                                        else None
-                                    ),
-                                    "new_identifier": (
-                                        str(issue_activity.get("new_identifier"))
-                                        if issue_activity.get("new_identifier")
-                                        else None
-                                    ),
-                                },
+                    notification = Notification(
+                        workspace=project.workspace,
+                        sender=sender,
+                        triggered_by_id=actor_id,
+                        receiver_id=subscriber,
+                        entity_identifier=issue_id,
+                        entity_name="issue",
+                        project=project,
+                        title=issue_activity.get("comment"),
+                        data={
+                            "issue": {
+                                "id": str(issue_id),
+                                "name": str(issue.name),
+                                "identifier": str(issue.project.identifier),
+                                "sequence_id": issue.sequence_id,
+                                "state_name": issue.state.name,
+                                "state_group": issue.state.group,
                             },
-                        )
+                            "issue_activity": {
+                                "id": str(issue_activity.get("id")),
+                                "verb": str(issue_activity.get("verb")),
+                                "field": str(issue_activity.get("field")),
+                                "actor": str(issue_activity.get("actor_id")),
+                                "new_value": str(issue_activity.get("new_value")),
+                                "old_value": str(issue_activity.get("old_value")),
+                                "issue_comment": str(
+                                    issue_comment.comment_stripped
+                                    if issue_comment is not None
+                                    else ""
+                                ),
+                                "old_identifier": (
+                                    str(issue_activity.get("old_identifier"))
+                                    if issue_activity.get("old_identifier")
+                                    else None
+                                ),
+                                "new_identifier": (
+                                    str(issue_activity.get("new_identifier"))
+                                    if issue_activity.get("new_identifier")
+                                    else None
+                                ),
+                            },
+                        },
                     )
+                    # 알림 처리 함수 호출
+                    process_notification(notification)
                     # Create email notification
                     if send_email:
                         bulk_email_logs.append(
@@ -535,62 +561,8 @@ def notifications(
                             activity=issue_activity,
                         )
 
-                        # check for email notifications
-                        if preference.mention:
-                            bulk_email_logs.append(
-                                EmailNotificationLog(
-                                    triggered_by_id=actor_id,
-                                    receiver_id=mention_id,
-                                    entity_identifier=issue_id,
-                                    entity_name="issue",
-                                    data={
-                                        "issue": {
-                                            "id": str(issue_id),
-                                            "name": str(issue.name),
-                                            "identifier": str(issue.project.identifier),
-                                            "sequence_id": issue.sequence_id,
-                                            "state_name": issue.state.name,
-                                            "state_group": issue.state.group,
-                                            "project_id": str(issue.project.id),
-                                            "workspace_slug": str(
-                                                issue.project.workspace.slug
-                                            ),
-                                        },
-                                        "issue_activity": {
-                                            "id": str(issue_activity.get("id")),
-                                            "verb": str(issue_activity.get("verb")),
-                                            "field": str("mention"),
-                                            "actor": str(
-                                                issue_activity.get("actor_id")
-                                            ),
-                                            "new_value": str(
-                                                issue_activity.get("new_value")
-                                            ),
-                                            "old_value": str(
-                                                issue_activity.get("old_value")
-                                            ),
-                                            "old_identifier": (
-                                                str(
-                                                    issue_activity.get("old_identifier")
-                                                )
-                                                if issue_activity.get("old_identifier")
-                                                else None
-                                            ),
-                                            "new_identifier": (
-                                                str(
-                                                    issue_activity.get("new_identifier")
-                                                )
-                                                if issue_activity.get("new_identifier")
-                                                else None
-                                            ),
-                                            "activity_time": issue_activity.get(
-                                                "created_at"
-                                            ),
-                                        },
-                                    },
-                                )
-                            )
-                        bulk_notifications.append(notification)
+                        # 알림 처리 함수 호출
+                        process_notification(notification)
 
             for mention_id in new_mentions:
                 if mention_id != actor_id:
@@ -602,94 +574,17 @@ def notifications(
                         and last_activity.field == "description"
                         and actor_id == str(last_activity.actor_id)
                     ):
-                        bulk_notifications.append(
-                            Notification(
-                                workspace=project.workspace,
-                                sender="in_app:issue_activities:mentioned",
-                                triggered_by_id=actor_id,
-                                receiver_id=mention_id,
-                                entity_identifier=issue_id,
-                                entity_name="issue",
-                                project=project,
-                                message=f"You have been mentioned in the issue {issue.name}",
-                                data={
-                                    "issue": {
-                                        "id": str(issue_id),
-                                        "name": str(issue.name),
-                                        "identifier": str(issue.project.identifier),
-                                        "sequence_id": issue.sequence_id,
-                                        "state_name": issue.state.name,
-                                        "state_group": issue.state.group,
-                                        "project_id": str(issue.project.id),
-                                        "workspace_slug": str(
-                                            issue.project.workspace.slug
-                                        ),
-                                    },
-                                    "issue_activity": {
-                                        "id": str(last_activity.id),
-                                        "verb": str(last_activity.verb),
-                                        "field": str(last_activity.field),
-                                        "actor": str(last_activity.actor_id),
-                                        "new_value": str(last_activity.new_value),
-                                        "old_value": str(last_activity.old_value),
-                                        "old_identifier": (
-                                            str(issue_activity.get("old_identifier"))
-                                            if issue_activity.get("old_identifier")
-                                            else None
-                                        ),
-                                        "new_identifier": (
-                                            str(issue_activity.get("new_identifier"))
-                                            if issue_activity.get("new_identifier")
-                                            else None
-                                        ),
-                                    },
-                                },
-                            )
+                        notification = create_mention_notification(
+                            project=project,
+                            issue=issue,
+                            notification_comment=f"You have been mentioned in the issue {issue.name}",
+                            actor_id=actor_id,
+                            mention_id=mention_id,
+                            issue_id=issue_id,
+                            activity=last_activity,
                         )
-                        if preference.mention:
-                            bulk_email_logs.append(
-                                EmailNotificationLog(
-                                    triggered_by_id=actor_id,
-                                    receiver_id=subscriber,
-                                    entity_identifier=issue_id,
-                                    entity_name="issue",
-                                    data={
-                                        "issue": {
-                                            "id": str(issue_id),
-                                            "name": str(issue.name),
-                                            "identifier": str(issue.project.identifier),
-                                            "sequence_id": issue.sequence_id,
-                                            "state_name": issue.state.name,
-                                            "state_group": issue.state.group,
-                                        },
-                                        "issue_activity": {
-                                            "id": str(last_activity.id),
-                                            "verb": str(last_activity.verb),
-                                            "field": "mention",
-                                            "actor": str(last_activity.actor_id),
-                                            "new_value": str(last_activity.new_value),
-                                            "old_value": str(last_activity.old_value),
-                                            "old_identifier": (
-                                                str(
-                                                    issue_activity.get("old_identifier")
-                                                )
-                                                if issue_activity.get("old_identifier")
-                                                else None
-                                            ),
-                                            "new_identifier": (
-                                                str(
-                                                    issue_activity.get("new_identifier")
-                                                )
-                                                if issue_activity.get("new_identifier")
-                                                else None
-                                            ),
-                                            "activity_time": str(
-                                                last_activity.created_at
-                                            ),
-                                        },
-                                    },
-                                )
-                            )
+                        # 알림 처리 함수 호출
+                        process_notification(notification)
                     else:
                         for issue_activity in issue_activities_created:
                             notification = create_mention_notification(
@@ -701,67 +596,8 @@ def notifications(
                                 issue_id=issue_id,
                                 activity=issue_activity,
                             )
-                            if preference.mention:
-                                bulk_email_logs.append(
-                                    EmailNotificationLog(
-                                        triggered_by_id=actor_id,
-                                        receiver_id=subscriber,
-                                        entity_identifier=issue_id,
-                                        entity_name="issue",
-                                        data={
-                                            "issue": {
-                                                "id": str(issue_id),
-                                                "name": str(issue.name),
-                                                "identifier": str(
-                                                    issue.project.identifier
-                                                ),
-                                                "sequence_id": issue.sequence_id,
-                                                "state_name": issue.state.name,
-                                                "state_group": issue.state.group,
-                                            },
-                                            "issue_activity": {
-                                                "id": str(issue_activity.get("id")),
-                                                "verb": str(issue_activity.get("verb")),
-                                                "field": str("mention"),
-                                                "actor": str(
-                                                    issue_activity.get("actor_id")
-                                                ),
-                                                "new_value": str(
-                                                    issue_activity.get("new_value")
-                                                ),
-                                                "old_value": str(
-                                                    issue_activity.get("old_value")
-                                                ),
-                                                "old_identifier": (
-                                                    str(
-                                                        issue_activity.get(
-                                                            "old_identifier"
-                                                        )
-                                                    )
-                                                    if issue_activity.get(
-                                                        "old_identifier"
-                                                    )
-                                                    else None
-                                                ),
-                                                "new_identifier": (
-                                                    str(
-                                                        issue_activity.get(
-                                                            "new_identifier"
-                                                        )
-                                                    )
-                                                    if issue_activity.get(
-                                                        "new_identifier"
-                                                    )
-                                                    else None
-                                                ),
-                                                "activity_time": issue_activity.get(
-                                                    "created_at"
-                                                ),
-                                            },
-                                        },
-                                    )
-                                )
-                            bulk_notifications.append(notification)
+                            # 알림 처리 함수 호출
+                            process_notification(notification)
 
             # save new mentions for the particular issue and remove the mentions that has been deleted from the description
             update_mentions_for_issue(

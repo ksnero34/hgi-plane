@@ -414,3 +414,7 @@ ATTACHMENT_MIME_TYPES = [
     "text/csv",
     "application/xml",
 ]
+
+# Java Notification API Settings
+JAVA_NOTIFICATION_API_PATH = os.environ.get("JAVA_NOTIFICATION_API_PATH", "/opt/notification/notification-service.jar")
+JAVA_NOTIFICATION_API_ENABLED = os.environ.get("JAVA_NOTIFICATION_API_ENABLED", "0") == "1"
