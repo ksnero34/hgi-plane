@@ -13,7 +13,8 @@ RUN apk add --no-cache \
     "libxslt" \
     "nodejs-current" \
     "xmlsec" \
-    "file"
+    "file" \
+    "openjdk21-jre"
 
 COPY requirements.txt ./
 COPY requirements ./requirements

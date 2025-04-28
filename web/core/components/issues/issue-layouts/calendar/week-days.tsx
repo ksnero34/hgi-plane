@@ -12,6 +12,8 @@ import { IProjectIssuesFilter } from "@/store/issue/project";
 import { IProjectViewIssuesFilter } from "@/store/issue/project-views";
 import { TRenderQuickActions } from "../list/list-view-types";
 import { ICalendarDate, ICalendarWeek } from "./types";
+// hooks
+import { useCalendarView } from "@/hooks/store/use-calendar-view";
 
 type Props = {
   issuesFilterStore:
@@ -69,15 +71,54 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
   const calendarLayout = issuesFilterStore.issueFilters?.displayFilters?.calendar?.layout ?? "month";
   const showWeekends = issuesFilterStore.issueFilters?.displayFilters?.calendar?.show_weekends ?? false;
   
+  // 캘린더 뷰 훅 사용
+  const issueCalendarView = useCalendarView();
+  
   const getGlobalIssueOrder = () => {
-    // 실제 이슈 객체 배열
-    const allIssuesArray = Object.values(issues || {}).filter(Boolean);
+    if (!week || !issues) return [];
+    
+    // 현재 레이아웃(월/주)에 따라 startDate와 endDate 가져오기
+    const dateRange = issueCalendarView.getStartAndEndDate(calendarLayout);
+    if (!dateRange) return [];
+    
+    const { startDate, endDate } = dateRange;
+    
+    // 문자열 날짜를 Date 객체로 변환
+    const firstDate = new Date(startDate);
+    const lastDate = new Date(endDate);
+    
+    // 날짜의 시간 정보 제거
+    firstDate.setHours(0, 0, 0, 0);
+    lastDate.setHours(23, 59, 59, 999);
+    
+    // 현재 표시 범위에 해당하는 이슈만 필터링
+    const visibleIssues = Object.values(issues).filter(issue => {
+      if (!issue) return false;
+      
+      const startDate = issue.start_date ? new Date(issue.start_date) : null;
+      const targetDate = issue.target_date ? new Date(issue.target_date) : null;
+      
+      // 날짜의 범위 검사
+      if (startDate && targetDate) {
+        // 시작일과 종료일이 모두 있는 경우
+        // 이슈의 기간이 현재 표시 범위와 겹치는지 확인
+        return !(targetDate < firstDate || startDate > lastDate);
+      } else if (startDate) {
+        // 시작일만 있는 경우
+        return startDate >= firstDate && startDate <= lastDate;
+      } else if (targetDate) {
+        // 종료일만 있는 경우
+        return targetDate >= firstDate && targetDate <= lastDate;
+      }
+      
+      return false;
+    });
     
     // 정렬 로직:
     // 1. 시작일이 빠른 순
     // 2. 기간이 넓은 순 (종료일-시작일)
     // 3. ID 기준
-    return allIssuesArray.sort((a, b) => {
+    return visibleIssues.sort((a, b) => {
       // 시작일 기준으로 정렬
       const startDateA = a.start_date ? new Date(a.start_date).getTime() : Number.MAX_SAFE_INTEGER;
       const startDateB = b.start_date ? new Date(b.start_date).getTime() : Number.MAX_SAFE_INTEGER;
