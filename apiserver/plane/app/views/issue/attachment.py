@@ -134,8 +134,8 @@ class IssueAttachmentEndpoint(BaseAPIView):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
             
             # 파일명 안전성 검사 (특수문자 제한)
-            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
-                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+            # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+            #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
 
             # 파일 크기 검증
             if file.size > file_settings.max_file_size:
@@ -159,8 +159,8 @@ class IssueAttachmentEndpoint(BaseAPIView):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
             
             # 파일명 안전성 검사 (특수문자 제한)
-            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
-                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+            # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+            #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
 
             # 파일 크기 검증
             if file_info.get('size', 0) > file_settings.max_file_size:
@@ -355,8 +355,8 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
             
             # 파일명 안전성 검사 (특수문자 제한)
-            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
-                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+            # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+            #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
 
             # 파일 크기 검증
             if file.size > file_settings.max_file_size:
@@ -380,8 +380,8 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
             
             # 파일명 안전성 검사 (특수문자 제한)
-            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
-                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+            # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+            #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
 
             # 파일 크기 검증
             if file_info.get('size', 0) > file_settings.max_file_size:

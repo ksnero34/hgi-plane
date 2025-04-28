@@ -46,6 +46,10 @@ LOGGING = {
         "audit": {
             "format": "%(message)s",
         },
+        "security": {
+            "format": "%(asctime)s - %(levelname)s - %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
     },
     "handlers": {
         "console": {
@@ -63,6 +67,16 @@ LOGGING = {
             "formatter": "audit",
             "encoding": "utf-8",
         },
+        "security_file": {
+            "level": "WARNING",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "security.log"),
+            "when": "midnight",
+            "interval": 1,
+            "backupCount": 30,
+            "formatter": "security",
+            "encoding": "utf-8",
+        },
     },
     "loggers": {
         "django.request": {
@@ -78,6 +92,11 @@ LOGGING = {
         "audit": {
             "handlers": ["audit_file"],
             "level": "INFO",
+            "propagate": True,
+        },
+        "security": {
+            "handlers": ["security_file", "console"],
+            "level": "WARNING",
             "propagate": True,
         },
     },

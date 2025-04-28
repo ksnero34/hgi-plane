@@ -1,4 +1,5 @@
 import time
+import logging
 from importlib import import_module
 
 from django.conf import settings
@@ -8,6 +9,13 @@ from django.utils.cache import patch_vary_headers
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.http import http_date
 
+from plane.utils.ip_address import get_client_ip
+
+# 보안 로거 설정
+security_logger = logging.getLogger('security')
+
+# 세션 보안 설정 (settings.py에 정의되지 않은 경우 기본값)
+SESSION_IP_CHECK = getattr(settings, 'SESSION_IP_CHECK', True)
 
 class SessionMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
@@ -22,7 +30,27 @@ class SessionMiddleware(MiddlewareMixin):
             session_key = request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME)
         else:
             session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
+        
         request.session = self.SessionStore(session_key)
+        
+        # IP 검증 로직 단순화
+        if SESSION_IP_CHECK and session_key and not request.session.is_empty():
+            stored_ip = request.session.get('ip_address')
+            current_ip = get_client_ip(request)
+            user_id = request.session.get('_auth_user_id')
+            
+            # IP가 다르면 세션 무효화
+            if stored_ip and current_ip and stored_ip != current_ip:
+                security_logger.warning(
+                    f"IP mismatch - Session: {session_key[:8]}... | "
+                    f"User ID: {user_id or 'unknown'} | "
+                    f"Stored IP: {stored_ip} | Current IP: {current_ip}"
+                )
+                
+                # 세션 초기화
+                request.session.flush()
+                # 새로운 세션 생성
+                request.session = self.SessionStore()
 
     def process_response(self, request, response):
         """

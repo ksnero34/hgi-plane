@@ -1,7 +1,3 @@
 def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(",")[0]
-    else:
-        ip = request.META.get("REMOTE_ADDR")
-    return ip
+    # proxy 환경에서 IP를 처리하는 로직이 이미 있으므로 REMOTE_ADDR만 사용
+    return request.META.get("REMOTE_ADDR", "")

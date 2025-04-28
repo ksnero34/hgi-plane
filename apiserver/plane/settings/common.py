@@ -321,6 +321,9 @@ SESSION_COOKIE_NAME = os.environ.get("SESSION_COOKIE_NAME", "session-id")
 SESSION_COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", None)
 SESSION_SAVE_EVERY_REQUEST = os.environ.get("SESSION_SAVE_EVERY_REQUEST", "1") == "1"
 
+# 세션 보안 설정
+SESSION_IP_CHECK = os.environ.get("SESSION_IP_CHECK", "1") == "1"
+
 # Admin Cookie
 ADMIN_SESSION_COOKIE_NAME = "admin-session-id"
 ADMIN_SESSION_COOKIE_AGE = os.environ.get("ADMIN_SESSION_COOKIE_AGE", 1800)
