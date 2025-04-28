@@ -2,6 +2,7 @@
 import json
 import magic  # 파일 타입 감지를 위한 라이브러리 추가
 import uuid
+import re
 
 # Django imports
 from django.utils import timezone
@@ -126,6 +127,16 @@ class IssueAttachmentEndpoint(BaseAPIView):
             return False, "File settings not found"
 
         if file:  # 실제 파일이 있는 경우
+            # 파일명 검증 (널 바이트 및 변조 검사)
+            file_name = file.name
+            # 널 바이트 검사 (%00, \x00, 0x00 등)
+            if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
+                return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
+            
+            # 파일명 안전성 검사 (특수문자 제한)
+            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+
             # 파일 크기 검증
             if file.size > file_settings.max_file_size:
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
@@ -141,12 +152,22 @@ class IssueAttachmentEndpoint(BaseAPIView):
                 return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
 
         elif file_info:  # 파일 정보만 있는 경우
+            # 파일명 검증 (널 바이트 및 변조 검사)
+            file_name = file_info.get('name', '')
+            # 널 바이트 검사 (%00, \x00, 0x00 등)
+            if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
+                return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
+            
+            # 파일명 안전성 검사 (특수문자 제한)
+            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+
             # 파일 크기 검증
             if file_info.get('size', 0) > file_settings.max_file_size:
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
 
             # 파일 확장자 검증
-            file_extension = file_info.get('name', '').split('.')[-1].lower()
+            file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
             if file_extension not in file_settings.allowed_extensions:
                 return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
 
@@ -253,10 +274,10 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'rtf': ['application/rtf'],
             
             # 이미지
-            'jpg': ['image/jpeg'],
-            'jpeg': ['image/jpeg'],
-            'png': ['image/png'],
-            'gif': ['image/gif'],
+            'jpg': ['image/jpeg', 'image/png' ,'image/gif'],
+            'jpeg': ['image/jpeg', 'image/png' ,'image/gif'],
+            'png': ['image/jpeg', 'image/png' ,'image/gif'],
+            'gif': ['image/jpeg', 'image/png' ,'image/gif'],
             'svg': ['image/svg+xml'],
             'webp': ['image/webp'],
             'tiff': ['image/tiff'],
@@ -327,6 +348,16 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             return False, "File settings not found"
 
         if file:  # 실제 파일이 있는 경우
+            # 파일명 검증 (널 바이트 및 변조 검사)
+            file_name = file.name
+            # 널 바이트 검사 (%00, \x00, 0x00 등)
+            if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
+                return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
+            
+            # 파일명 안전성 검사 (특수문자 제한)
+            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+
             # 파일 크기 검증
             if file.size > file_settings.max_file_size:
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
@@ -342,12 +373,22 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 return False, f"파일 내용이 확장자와 일치하지 않습니다. 감지된 형식: {mime_type}"
 
         elif file_info:  # 파일 정보만 있는 경우
+            # 파일명 검증 (널 바이트 및 변조 검사)
+            file_name = file_info.get('name', '')
+            # 널 바이트 검사 (%00, \x00, 0x00 등)
+            if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
+                return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
+            
+            # 파일명 안전성 검사 (특수문자 제한)
+            if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
+                return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
+
             # 파일 크기 검증
             if file_info.get('size', 0) > file_settings.max_file_size:
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
 
             # 파일 확장자 검증
-            file_extension = file_info.get('name', '').split('.')[-1].lower()
+            file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
             if file_extension not in file_settings.allowed_extensions:
                 return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
 
