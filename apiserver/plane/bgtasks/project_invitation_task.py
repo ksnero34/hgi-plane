@@ -14,6 +14,7 @@ from django.utils.html import strip_tags
 from plane.db.models import Project, ProjectMemberInvite, User
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.exception_logger import log_exception
+from plane.bgtasks.java_notification_task import send_java_notification
 
 
 @shared_task
@@ -24,6 +25,15 @@ def project_invitation(email, project_id, token, current_site, invitor):
         project_member_invite = ProjectMemberInvite.objects.get(
             token=token, email=email
         )
+
+        # Java 알림 API 호출
+        java_notification_data = {
+            "user_id": email.split('@')[0],  # 이메일에서 도메인을 제외한 사용자 아이디
+            "title": "이슈트래커 - Plane 프로젝트 초대",
+            "message": f"{user.first_name or user.display_name or user.email}님이 {project.name} 프로젝트로 초대했습니다.",
+            "url": f"{current_site}/project-invitations/?invitation_id={project_member_invite.id}&email={email}&slug={project.workspace.slug}&project_id={str(project_id)}"
+        }
+        send_java_notification.delay(java_notification_data)
 
         relativelink = f"/project-invitations/?invitation_id={project_member_invite.id}&email={email}&slug={project.workspace.slug}&project_id={str(project_id)}"
         abs_url = current_site + relativelink

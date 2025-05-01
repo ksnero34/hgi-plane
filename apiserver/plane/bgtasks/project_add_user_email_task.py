@@ -15,6 +15,7 @@ from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.exception_logger import log_exception
 from plane.db.models import ProjectMember
 from plane.db.models import User
+from plane.bgtasks.java_notification_task import send_java_notification
 
 
 @shared_task
@@ -30,6 +31,16 @@ def project_add_user_email(current_site, project_member_id, invitor_id):
         workspace_name = project_member.workspace.name
         member_email = project_member.member.email
         project_url = f"{current_site}/{project_member.workspace.slug}/projects/{project_member.project_id}/issues"
+
+        # Java 알림 API 호출
+        java_notification_data = {
+            "user_id": member_email.split('@')[0],  # 이메일에서 도메인을 제외한 사용자 아이디
+            "title": "이슈트래커 - Plane 프로젝트 멤버 추가",
+            "message": f"{inviter_first_name}님이 {project_name} 프로젝트에 추가했습니다.",
+            "url": project_url
+        }
+        send_java_notification.delay(java_notification_data)
+
         # set the context
         context = {
             "project_name": project_name,

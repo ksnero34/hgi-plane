@@ -23,10 +23,11 @@ from plane.app.serializers import (
 )
 from plane.app.views.base import BaseAPIView
 from plane.bgtasks.event_tracking_task import workspace_invite_event
-from plane.bgtasks.workspace_invitation_task import workspace_invitation
+from plane.bgtasks.workspace_invitation_task import workspace_invitation, process_auto_accept_invitation
 from plane.db.models import User, Workspace, WorkspaceMember, WorkspaceMemberInvite
 from plane.utils.cache import invalidate_cache, invalidate_cache_directly
 from plane.utils.audit_logger import log_audit
+from plane.bgtasks.java_notification_task import send_java_notification
 
 from .. import BaseViewSet
 
@@ -101,40 +102,13 @@ class WorkspaceInvitationsViewset(BaseViewSet):
                 validate_email(email.get("email"))
                 # 자동 수락 옵션이 활성화된 경우
                 if auto_accept:
-                    # 해당 이메일을 가진 사용자가 있는지 확인
-                    user = User.objects.filter(email=email.get("email").strip().lower()).first()
-                    if user is not None:
-                        # 이미 워크스페이스 멤버인지 확인
-                        workspace_member = WorkspaceMember.objects.filter(
-                            workspace_id=workspace.id, member=user
-                        ).first()
-                        
-                        if not workspace_member:
-                            # 멤버가 아닌 경우 바로 추가
-                            WorkspaceMember.objects.create(
-                                workspace_id=workspace.id,
-                                member=user,
-                                role=email.get("role", 5),
-                                created_by=request.user,
-                            )
-                            
-                            # 감사 로그 남기기
-                            log_audit(
-                                action="auto_accept_invitation",
-                                user_id=str(request.user.id),
-                                user_email=request.user.email,
-                                resource_type="workspace",
-                                resource_id=str(workspace.id),
-                                details={
-                                    "invited_email": email.get("email").strip().lower(),
-                                    "role": email.get("role", 5),
-                                    "workspace_slug": workspace.slug,
-                                    "workspace_name": workspace.name,
-                                    "auto_accepted": True
-                                },
-                                request=request
-                            )
-                            continue
+                    # worker에서 처리하도록 task 호출
+                    process_auto_accept_invitation.delay(
+                        email_data=email,
+                        workspace_id=workspace.id,
+                        inviter_id=request.user.id
+                    )
+                    continue
                 
                 # 자동 수락이 아니거나 해당 사용자가 없는 경우 초대장 생성
                 workspace_invitations.append(
