@@ -104,7 +104,7 @@ class BaseAPIView(TimezoneMixin, APIView, BasePaginator):
 
         except Exception as exc:
             response = self.handle_exception(exc)
-            return exc
+            return response
 
     @property
     def fields(self):

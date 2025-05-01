@@ -653,3 +653,9 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 {"error": "파일 처리 중 오류가 발생했습니다."}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+        # 기본 반환값 추가
+        return Response(
+            IssueAttachmentSerializer(issue_attachment).data,
+            status=status.HTTP_200_OK
+        )

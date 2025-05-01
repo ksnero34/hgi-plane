@@ -20,6 +20,7 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
+from django.core.files.uploadedfile import UploadedFile
 
 # Third Party imports
 from rest_framework import status
@@ -37,6 +38,7 @@ from plane.app.serializers import (
     IssueSerializer,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.bgtasks.import_task import issue_import_task
 from plane.db.models import (
     Issue,
     FileAsset,
@@ -48,6 +50,8 @@ from plane.db.models import (
     ProjectMember,
     CycleIssue,
     UserRecentVisit,
+    ModuleIssue,
+    Workspace,
 )
 from plane.utils.grouper import (
     issue_group_values,
