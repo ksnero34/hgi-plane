@@ -24,6 +24,7 @@ import {
   CustomTextAlignExtension,
   CustomCalloutReadOnlyExtension,
   CustomColorExtension,
+  MarkdownClipboard,
 } from "@/extensions";
 // CustomReadOnlyFileExtension 직접 임포트
 import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
@@ -88,7 +89,7 @@ export const CoreReadOnlyEditorExtensions = (props: Props): Extensions => {
       autolink: true,
       linkOnPaste: true,
       protocols: ["http", "https"],
-      validate: (url: string) => isValidHttpUrl(url),
+      validate: (url: string) => isValidHttpUrl(url).isValid,
       HTMLAttributes: {
         class:
           "text-custom-primary-300 underline underline-offset-[3px] hover:text-custom-primary-500 transition-colors cursor-pointer",
@@ -116,8 +117,9 @@ export const CoreReadOnlyEditorExtensions = (props: Props): Extensions => {
     CustomCodeInlineExtension,
     Markdown.configure({
       html: true,
-      transformCopiedText: true,
+      transformCopiedText: false,
     }),
+    MarkdownClipboard,
     Table,
     TableHeader,
     TableCell,

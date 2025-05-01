@@ -13,6 +13,12 @@ export type TUserPermissions =
   | EUserPermissions.RESTRICTED
   | EUserPermissions.GUEST;
 
+// project network
+export enum EProjectNetwork {
+  PRIVATE = 0,
+  PUBLIC = 2,
+}
+
 // project pages
 export enum EPageAccess {
   PUBLIC = 0,

@@ -22,7 +22,8 @@ export type TInstanceGoogleAuthenticationConfigurationKeys =
 
 export type TInstanceGithubAuthenticationConfigurationKeys =
   | "GITHUB_CLIENT_ID"
-  | "GITHUB_CLIENT_SECRET";
+  | "GITHUB_CLIENT_SECRET"
+  | "GITHUB_ORGANIZATION_ID";
 
 export type TInstanceGitlabAuthenticationConfigurationKeys =
   | "GITLAB_HOST"

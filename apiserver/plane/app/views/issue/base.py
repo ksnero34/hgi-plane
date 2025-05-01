@@ -48,7 +48,6 @@ from plane.db.models import (
     ProjectMember,
     CycleIssue,
     UserRecentVisit,
-    Workspace,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -64,9 +63,8 @@ from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.utils.global_paginator import paginate
 from plane.bgtasks.webhook_task import model_activity
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
-from plane.bgtasks.import_task import issue_import_task
 from plane.utils.audit_logger import log_audit
-
+from plane.utils.host import base_host
 
 class IssueListEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
@@ -481,7 +479,7 @@ class IssueViewSet(BaseViewSet):
                 current_instance=None,
                 epoch=int(timezone.now().timestamp()),
                 notification=True,
-                origin=request.META.get("HTTP_ORIGIN"),
+                origin=base_host(request=request, is_app=True),
             )
             issue = (
                 issue_queryset_grouper(
@@ -531,7 +529,7 @@ class IssueViewSet(BaseViewSet):
                 current_instance=None,
                 actor_id=request.user.id,
                 slug=slug,
-                origin=request.META.get("HTTP_ORIGIN"),
+                origin=base_host(request=request, is_app=True),
             )
             # updated issue description version
             issue_description_version_task.delay(
@@ -693,7 +691,7 @@ class IssueViewSet(BaseViewSet):
         ):
             return Response(
                 {"error": "You are not allowed to view this issue"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         recent_visited_task.delay(
@@ -778,7 +776,7 @@ class IssueViewSet(BaseViewSet):
                 )
 
         current_instance = json.dumps(
-            IssueSerializer(issue).data, cls=DjangoJSONEncoder
+            IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder
         )
 
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
@@ -832,7 +830,7 @@ class IssueViewSet(BaseViewSet):
                 current_instance=current_instance,
                 epoch=int(timezone.now().timestamp()),
                 notification=True,
-                origin=request.META.get("HTTP_ORIGIN"),
+                origin=base_host(request=request, is_app=True),
             )
             model_activity.delay(
                 model_name="issue",
@@ -841,7 +839,7 @@ class IssueViewSet(BaseViewSet):
                 current_instance=current_instance,
                 actor_id=request.user.id,
                 slug=slug,
-                origin=request.META.get("HTTP_ORIGIN"),
+                origin=base_host(request=request, is_app=True),
             )
             # updated issue description version
             issue_description_version_task.delay(
@@ -887,7 +885,8 @@ class IssueViewSet(BaseViewSet):
             current_instance={},
             epoch=int(timezone.now().timestamp()),
             notification=True,
-            origin=request.META.get("HTTP_ORIGIN"),
+            origin=base_host(request=request, is_app=True),
+            subscriber=False,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -942,6 +941,7 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
         )
 
         total_issues = len(issues)
+
         issues.delete()
 
         return Response(
@@ -1229,8 +1229,16 @@ class IssueBulkUpdateDateEndpoint(BaseAPIView):
         """
         Validate that start date is before target date.
         """
+        from datetime import datetime
+
         start = new_start or current_start
         target = new_target or current_target
+
+        # Convert string dates to datetime objects if they're strings
+        if isinstance(start, str):
+            start = datetime.strptime(start, "%Y-%m-%d").date()
+        if isinstance(target, str):
+            target = datetime.strptime(target, "%Y-%m-%d").date()
 
         if start and target and start > target:
             return False
@@ -1473,7 +1481,7 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
         ):
             return Response(
                 {"error": "You are not allowed to view this issue"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         recent_visited_task.delay(

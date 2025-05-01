@@ -3,7 +3,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-logger = logging.getLogger('audit')
+# API 요청 로거
+api_logger = logging.getLogger("plane.api.request")
+# 감사 로거
+audit_logger = logging.getLogger("audit")
 
 # 프로젝트 멤버 역할 정의
 ROLE_CHOICES = {
@@ -96,4 +99,4 @@ def log_audit(
     log_data["resource"] = {k: v for k, v in log_data["resource"].items() if v is not None}
     
     # JSON 직렬화 시 ensure_ascii=False로 설정하여 한글이 유니코드로 변환되지 않도록 함
-    logger.info(json.dumps(log_data, ensure_ascii=False)) 
+    audit_logger.info(json.dumps(log_data, ensure_ascii=False)) 

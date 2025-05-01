@@ -1,11 +1,10 @@
 import { Editor, Range } from "@tiptap/core";
+// types
+import { InsertImageComponentProps, InsertFileComponentProps} from "@/extensions";
 // extensions
 import { replaceCodeWithText } from "@/extensions/code/utils/replace-code-block-with-text";
 // helpers
 import { findTableAncestor } from "@/helpers/common";
-// types
-import { InsertFileComponentProps } from "@/extensions/custom-file";
-import { InsertImageComponentProps } from "@/extensions/custom-image";
 
 export const setText = (editor: Editor, range?: Range) => {
   if (range) editor.chain().focus().deleteRange(range).setNode("paragraph").run();

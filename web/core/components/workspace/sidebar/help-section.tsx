@@ -168,7 +168,10 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
           })}
         >
           {/* <WorkspaceEditionBadge /> */}
-          <div className="bg-custom-background-80 text-custom-text-200 hover:bg-custom-background-90 hover:text-custom-text-100 flex items-center gap-1.5 whitespace-nowrap transition-all justify-center w-fit min-w-24 cursor-pointer rounded-2xl px-2 py-1 text-center text-sm font-medium">
+          <div 
+            onClick={() => window.open('https://github.com/ksnero34/hgi-plane', '_blank', 'noopener,noreferrer')}
+            className="bg-custom-background-80 text-custom-text-200 hover:bg-custom-background-90 hover:text-custom-text-100 flex items-center gap-1.5 whitespace-nowrap transition-all justify-center w-fit min-w-24 cursor-pointer rounded-2xl px-2 py-1 text-center text-sm font-medium"
+          >
             HGI Issue Tracker
           </div>
         </div>

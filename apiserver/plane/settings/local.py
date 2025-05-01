@@ -37,25 +37,25 @@ if not os.path.exists(LOG_DIR):
 
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": False,
+    "disable_existing_loggers": True,
     "formatters": {
         "verbose": {
             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
             "style": "{",
         },
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": "%(levelname)s %(asctime)s %(module)s %(name)s %(message)s",
+        },
         "audit": {
             "format": "%(message)s",
-        },
-        "security": {
-            "format": "%(asctime)s - %(levelname)s - %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "formatter": "json",
         },
         "audit_file": {
             "level": "INFO",
@@ -66,37 +66,29 @@ LOGGING = {
             "backupCount": 30,
             "formatter": "audit",
             "encoding": "utf-8",
-        },
-        "security_file": {
-            "level": "WARNING",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": os.path.join(LOG_DIR, "security.log"),
-            "when": "midnight",
-            "interval": 1,
-            "backupCount": 30,
-            "formatter": "security",
-            "encoding": "utf-8",
-        },
+        }
     },
     "loggers": {
-        "django.request": {
+        "plane.api.request": {
+            "level": "INFO",
             "handlers": ["console"],
-            "level": "DEBUG",
             "propagate": False,
         },
-        "plane": {
+        "plane.api": {"level": "INFO", "handlers": ["console"], "propagate": False},
+        "plane.worker": {"level": "INFO", "handlers": ["console"], "propagate": False},
+        "plane.exception": {
+            "level": "ERROR",
             "handlers": ["console"],
-            "level": "DEBUG",
+            "propagate": False,
+        },
+        "plane.external": {
+            "level": "INFO",
+            "handlers": ["console"],
             "propagate": False,
         },
         "audit": {
             "handlers": ["audit_file"],
             "level": "INFO",
-            "propagate": True,
-        },
-        "security": {
-            "handlers": ["security_file", "console"],
-            "level": "WARNING",
             "propagate": True,
         },
     },

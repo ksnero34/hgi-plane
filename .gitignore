@@ -78,12 +78,18 @@ pnpm-workspace.yaml
 .npmrc
 .secrets
 tmp/
+
 ## packages
 dist
 .temp/
 deploy/selfhost/plane-app/
+
 ## Storybook
 *storybook.log
 output.css
 
 data
+dev-editor
+# Redis
+*.rdb
+*.rdb.gz

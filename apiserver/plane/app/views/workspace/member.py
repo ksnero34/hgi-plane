@@ -70,10 +70,11 @@ class WorkSpaceMemberViewSet(BaseViewSet):
             )
 
         old_role = workspace_member.role
-        if workspace_member.role > int(request.data.get("role")):
-            _ = ProjectMember.objects.filter(
+        # If a user is moved to a guest role he can't have any other role in projects
+        if "role" in request.data and int(request.data.get("role")) == 5:
+            ProjectMember.objects.filter(
                 workspace__slug=slug, member_id=workspace_member.member_id
-            ).update(role=int(request.data.get("role")))
+            ).update(role=5)
 
         serializer = WorkSpaceMemberSerializer(
             workspace_member, data=request.data, partial=True

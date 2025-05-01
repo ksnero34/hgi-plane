@@ -4,12 +4,11 @@ import { FC, useCallback, useEffect, useState } from "react";
 import debounce from "lodash/debounce";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
-// i18n
+// plane imports
+import { EditorReadOnlyRefApi, EditorRefApi } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
-// types
 import { TIssue, TNameDescriptionLoader } from "@plane/types";
 import { EFileAssetType } from "@plane/types/src/enums";
-// ui
 import { Loader } from "@plane/ui";
 // components
 import { RichTextEditor, RichTextReadOnlyEditor } from "@/components/editor";
@@ -25,6 +24,8 @@ const workspaceService = new WorkspaceService();
 
 export type IssueDescriptionInputProps = {
   containerClassName?: string;
+  editorReadOnlyRef?: React.RefObject<EditorReadOnlyRefApi>;
+  editorRef?: React.RefObject<EditorRefApi>;
   workspaceSlug: string;
   projectId: string;
   issueId: string;
@@ -39,6 +40,8 @@ export type IssueDescriptionInputProps = {
 export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((props) => {
   const {
     containerClassName,
+    editorReadOnlyRef,
+    editorRef,
     workspaceSlug,
     projectId,
     issueId,
@@ -56,16 +59,17 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
   });
   // store hooks
   const { uploadEditorAsset } = useEditorAsset();
+  const { getWorkspaceBySlug } = useWorkspace();
+  // derived values
+  const workspaceId = getWorkspaceBySlug(workspaceSlug)?.id?.toString();
   // form info
-
-  // i18n
-  const { t } = useTranslation();
-
   const { handleSubmit, reset, control } = useForm<TIssue>({
     defaultValues: {
       description_html: initialValue,
     },
   });
+  // i18n
+  const { t } = useTranslation();
 
   const handleDescriptionFormSubmit = useCallback(
     async (formData: Partial<TIssue>) => {
@@ -76,10 +80,6 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
     },
     [workspaceSlug, projectId, issueId, issueOperations]
   );
-
-  const { getWorkspaceBySlug } = useWorkspace();
-  // computed values
-  const workspaceId = getWorkspaceBySlug(workspaceSlug)?.id as string;
 
   // reset form values
   useEffect(() => {
@@ -103,6 +103,8 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
     }, 1500),
     [handleSubmit, issueId]
   );
+
+  if (!workspaceId) return null;
 
   return (
     <>
@@ -161,6 +163,7 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                   // 모든 텍스트에 대해 개인정보 마스킹 적용
                   return maskPrivateInformation(content);
                 }}
+                ref={editorRef}
               />
             ) : (
               <RichTextReadOnlyEditor
@@ -170,6 +173,7 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                 workspaceId={workspaceId}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
+                ref={editorReadOnlyRef}
               />
             )
           }
