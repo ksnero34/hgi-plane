@@ -2,6 +2,7 @@
 import logging
 import subprocess
 import json
+import os
 
 # Third party imports
 from celery import shared_task
@@ -48,7 +49,9 @@ def send_java_notification(notification_data):
             logging.getLogger("plane").warning(f"Error extracting email username: {str(e)}")
             
         # 알림 데이터를 JSON 형식으로 변환
-        notification_json = json.dumps(notification_data)
+        notification_json = json.dumps(notification_data, ensure_ascii=False)
+        
+        logging.getLogger("plane").info(f"Sending notification data: {notification_json}")
         
         # 자바 프로그램 실행 명령어 구성
         java_command = [
@@ -56,15 +59,23 @@ def send_java_notification(notification_data):
             "-jar",
             java_api_path,
             "--notification",
-            notification_json
+            notification_json  # 따옴표 없이 전달
         ]
+        
+        logging.getLogger("plane").info(f"Executing command: {' '.join(java_command)}")
+        print(f"Executing command: {' '.join(java_command)}")
+        
+        # 현재 환경 변수 가져오기
+        env = os.environ.copy()
         
         # 자바 명령어 실행
         process = subprocess.Popen(
             java_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            shell=False,  # shell=False로 설정하여 쉘 해석을 방지
+            env=env  # 환경 변수 설정
         )
         
         # 결과 및 오류 획득
