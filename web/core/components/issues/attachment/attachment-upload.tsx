@@ -9,6 +9,8 @@ import { generateFileName } from "@/helpers/attachment.helper";
 import { useInstance, useFileValidation, ValidationResult } from "@/hooks/store";
 // icons
 import { Plus } from "lucide-react";
+// ui
+import { TOAST_TYPE, setToast } from "@plane/ui";
 // types
 import { TAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
 
@@ -54,6 +56,13 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
         setIsLoading(true);
         await attachmentOperations.create(currentFile);
         setValidationError(null);
+        
+        // 업로드 성공 토스트 메시지 표시
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: "업로드 성공",
+          message: `${currentFile.name} 파일이 성공적으로 업로드되었습니다.`
+        });
       } catch (error) {
         console.error("❌ Upload failed:", error);
         setValidationError("파일 업로드에 실패했습니다.");

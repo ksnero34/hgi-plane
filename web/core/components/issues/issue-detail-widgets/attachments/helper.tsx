@@ -42,6 +42,12 @@ export const useAttachmentOperations = (
           const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, file);
 
           const res = await attachmentUploadPromise;
+          setToast({
+            type: TOAST_TYPE.SUCCESS,
+            title: "파일 업로드 성공",
+            message: `${file.name} 파일이 성공적으로 업로드되었습니다.`
+          });
+          
           captureIssueEvent({
             eventName: "Issue attachment added",
             payload: { id: issueId, state: "SUCCESS", element: "Issue detail page" },
