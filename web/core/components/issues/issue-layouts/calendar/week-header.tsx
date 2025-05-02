@@ -20,18 +20,20 @@ export const CalendarWeekHeader: React.FC<Props> = observer((props) => {
       {isLoading && (
         <div className="absolute h-[1.5px] w-3/4 animate-[bar-loader_2s_linear_infinite] bg-custom-primary-100" />
       )}
-      {Object.values(DAYS_LIST).map((day) => {
-        if (!showWeekends && (day.shortTitle === "Sat" || day.shortTitle === "Sun")) return null;
+      {Object.entries(DAYS_LIST)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([key, day]) => {
+          if (!showWeekends && (key === "1" || key === "7")) return null;
 
-        return (
-          <div
-            key={day.shortTitle}
-            className="flex h-11 items-center justify-center md:justify-end bg-custom-background-90 px-4"
-          >
-            {day.shortTitle}
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={day.shortTitle}
+              className="flex h-11 items-center justify-center md:justify-end bg-custom-background-90 px-4"
+            >
+              {day.shortTitle}
+            </div>
+          );
+        })}
     </div>
   );
 });
