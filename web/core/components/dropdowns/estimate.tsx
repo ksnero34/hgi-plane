@@ -94,6 +94,9 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
   const { estimatePointIds, estimatePointById } = useEstimate(
     projectId ? currentActiveEstimateIdByProjectId(projectId) : undefined
   );
+  
+  // 항상 controlled 컴포넌트로 동작하도록 value 처리
+  const controlledValue = value === null || value === undefined ? null : value;
 
   const currentActiveEstimateId = projectId ? currentActiveEstimateIdByProjectId(projectId) : undefined;
 
@@ -218,7 +221,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
       ref={dropdownRef}
       tabIndex={tabIndex}
       className={cn("h-full w-full", className)}
-      value={value}
+      value={controlledValue}
       onChange={dropdownOnChange}
       disabled={disabled}
       onKeyDown={handleKeyDown}

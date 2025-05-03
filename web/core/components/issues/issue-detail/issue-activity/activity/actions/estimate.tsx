@@ -26,8 +26,9 @@ export const IssueEstimateActivity: FC<TIssueEstimateActivity> = observer((props
       ends={ends}
     >
       <>
-        {activity.new_value ? `set the estimate point to ` : `removed the estimate point`}
+        {activity.new_value ? `님이 소요자원을 ` : `님이 소요자원을 삭제했습니다`}
         {activity.new_value ? activity.new_value : activity?.old_value}
+        {activity.new_value ? ` 로 변경했습니다` : ``}
         {showIssue && (activity.new_value ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

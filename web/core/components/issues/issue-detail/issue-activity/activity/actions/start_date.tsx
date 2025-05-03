@@ -27,10 +27,10 @@ export const IssueStartDateActivity: FC<TIssueStartDateActivity> = observer((pro
       ends={ends}
     >
       <>
-        {activity.new_value ? `set the start date to ` : `removed the start date `}
+        {activity.new_value ? `님이 시작일을 ` : `님이 시작일을 삭제했습니다 `}
         {activity.new_value && (
           <>
-            <span className="font-medium text-custom-text-100">{renderFormattedDate(activity.new_value)}</span>
+            <span className="font-medium text-custom-text-100">{renderFormattedDate(activity.new_value)}</span> 로 변경했습니다
           </>
         )}
         {showIssue && (activity.new_value ? ` for ` : ` from `)}

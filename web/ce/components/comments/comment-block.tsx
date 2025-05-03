@@ -55,7 +55,7 @@ export const CommentBlock: FC<TCommentBlock> = observer((props) => {
                 : comment?.actor_detail?.display_name || userDetails.display_name}
             </div>
             <div className="text-xs text-custom-text-300">
-              commented{" "}
+              님이 댓글을 남겼습니다.{" "}
               <Tooltip
                 tooltipContent={`${renderFormattedDate(comment.created_at)} at ${renderFormattedTime(comment.created_at)}`}
                 position="bottom"

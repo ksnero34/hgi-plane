@@ -30,7 +30,7 @@ export const IssueCycleActivity: FC<TIssueCycleActivity> = observer((props) => {
       <>
         {activity.verb === "created" ? (
           <>
-            <span>added this work item to the cycle </span>
+            <span>님이 이 작업항목을 주기 </span>
             <a
               href={`/${activity.workspace_detail?.slug}/projects/${activity.project}/cycles/${activity.new_identifier}`}
               target="_blank"
@@ -38,11 +38,12 @@ export const IssueCycleActivity: FC<TIssueCycleActivity> = observer((props) => {
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate">{activity.new_value}</span>
-            </a>
+            </a> 
+            <span> 에 추가했습니다.</span>
           </>
         ) : activity.verb === "updated" ? (
           <>
-            <span>set the cycle to </span>
+            <span>님이 주기를 </span>
             <a
               href={`/${activity.workspace_detail?.slug}/projects/${activity.project}/cycles/${activity.new_identifier}`}
               target="_blank"
@@ -50,11 +51,12 @@ export const IssueCycleActivity: FC<TIssueCycleActivity> = observer((props) => {
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate"> {activity.new_value}</span>
-            </a>
+            </a> 
+            <span> 로 변경했습니다.</span>
           </>
         ) : (
           <>
-            <span>removed the work item from the cycle </span>
+            <span>님이 이 작업항목을 주기에서 제외했습니다.</span>
             <a
               href={`/${activity.workspace_detail?.slug}/projects/${activity.project}/cycles/${activity.old_identifier}`}
               target="_blank"

@@ -204,7 +204,7 @@ export const IssueDetailsSidebar: React.FC<Props> = observer((props) => {
                   <span>{t("common.estimate")}</span>
                 </div>
                 <EstimateDropdown
-                  value={issue?.estimate_point ?? undefined}
+                  value={issue?.estimate_point}
                   onChange={(val: string | undefined) =>
                     issueOperations.update(workspaceSlug, projectId, issueId, { estimate_point: val })
                   }

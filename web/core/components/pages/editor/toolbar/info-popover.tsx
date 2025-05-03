@@ -111,7 +111,7 @@ export const PageInfoPopover: React.FC<Props> = observer((props) => {
                 />
                 <span>
                   {editorInformation?.display_name}{" "}
-                  <span className="text-custom-text-300">{calculateTimeAgoShort(page.updated_at ?? "")} ago</span>
+                  <span className="text-custom-text-300">{calculateTimeAgoShort(page.updated_at ?? "")} 전</span>
                 </span>
               </Link>
             </div>

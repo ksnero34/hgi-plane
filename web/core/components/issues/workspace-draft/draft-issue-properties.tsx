@@ -256,7 +256,7 @@ export const DraftIssueProperties: React.FC<IIssueProperties> = observer((props)
       {issue.project_id && areEstimateEnabledByProjectId(issue.project_id?.toString()) && (
         <div className="h-5" onClick={handleEventPropagation}>
           <EstimateDropdown
-            value={issue.estimate_point ?? undefined}
+            value={issue.estimate_point}
             onChange={handleEstimate}
             projectId={issue.project_id}
             buttonVariant="border-with-text"

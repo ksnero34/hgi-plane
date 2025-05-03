@@ -179,8 +179,8 @@ export const InboxIssueCreateRoot: FC<TInboxIssueCreateRoot> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: `Success!`,
-          message: "Work item created successfully.",
+          title: `성공!`,
+          message: "작업항목이 성공적으로 생성되었습니다.",
         });
       })
       .catch((error) => {

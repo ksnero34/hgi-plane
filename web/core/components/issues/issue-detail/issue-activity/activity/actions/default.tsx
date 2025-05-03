@@ -35,14 +35,14 @@ export const IssueDefaultActivity: FC<TIssueDefaultActivity> = observer((props) 
         {activity.verb === "created" ? (
           source && source !== EInboxIssueSource.IN_APP ? (
             <span>
-              created the work item via{" "}
-              <span className="font-medium">{capitalizeFirstLetter(source.toLowerCase() || "")}</span>.
+              {" "}
+              <span className="font-medium">{capitalizeFirstLetter(source.toLowerCase() || "")}</span> 을 통해 작업항목을 생성했습니다.
             </span>
           ) : (
-            <span> created the work item.</span>
+            <span> 님이 작업항목을 생성했습니다.</span>
           )
         ) : (
-          <span> deleted a work item.</span>
+          <span> 님이 작업항목을 삭제했습니다.</span>
         )}
       </>
     </IssueActivityBlockComponent>

@@ -1,4 +1,5 @@
 import { differenceInDays, format, formatDistanceToNow, isAfter, isEqual, isValid, parseISO } from "date-fns";
+import {ko} from "date-fns/locale";
 
 /**
  * This method returns a date from string of type yyyy-mm-dd
@@ -133,7 +134,7 @@ export const calculateTimeAgo = (time: string | number | Date | null): string =>
   if (!time) return "";
   const parsedTime = typeof time === "string" || typeof time === "number" ? parseISO(String(time)) : time;
   if (!parsedTime) return "";
-  const distance = formatDistanceToNow(parsedTime, { addSuffix: true });
+  const distance = formatDistanceToNow(parsedTime, { addSuffix: true, locale: ko });
   return distance;
 };
 

@@ -417,7 +417,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
         <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="estimate">
           <div className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <EstimateDropdown
-              value={issue.estimate_point ?? undefined}
+              value={issue.estimate_point} // null 값을 그대로 전달하여 controlled 상태 유지
               onChange={handleEstimate}
               projectId={issue.project_id}
               disabled={isReadOnly}

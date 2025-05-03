@@ -91,15 +91,15 @@ const WorkspaceInvitationPage = observer(() => {
         ) : error || invitationDetail?.responded_at ? (
           invitationDetail?.accepted ? (
             <EmptySpace
-              title={`You are already a member of ${invitationDetail.workspace.name}`}
-              description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Plane account."
+              title={`이미 ${invitationDetail.workspace.name} 에 참여하고 있습니다.`}
+              description="이슈트레커(Plane) 에서 프로젝트를 생성하고, 작업 항목(이슈)에 대해 협업하며 업무 효율을 증대할 수 있습니다."
             >
               <EmptySpaceItem Icon={Boxes} title="Continue to home" href="/" />
             </EmptySpace>
           ) : (
             <EmptySpace
-              title="This invitation link is not active anymore."
-              description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Plane account."
+              title="이 초대 링크는 더 이상 활성화되지 않습니다."
+              description="이슈트레커(Plane) 에서 프로젝트를 생성하고, 작업 항목(이슈)에 대해 협업하며 업무 효율을 증대할 수 있습니다."
               link={{ text: "Or start from an empty project", href: "/" }}
             >
               {!currentUser ? (

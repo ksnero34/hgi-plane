@@ -25,7 +25,7 @@ export const IssueDescriptionActivity: FC<TIssueDescriptionActivity> = observer(
       ends={ends}
     >
       <>
-        updated the description
+        님이 내용을 수정했습니다
         {showIssue ? ` of ` : ``}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

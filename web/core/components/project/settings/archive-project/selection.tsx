@@ -21,7 +21,7 @@ export const ArchiveProjectSelection: React.FC<IArchiveProject> = (props) => {
       {({ open }) => (
         <div className="w-full">
           <Disclosure.Button as="button" type="button" className="flex w-full items-center justify-between">
-            <span className="text-xl tracking-tight">Archive project</span>
+            <span className="text-xl tracking-tight">프로젝트 보관</span>
             {open ? <ChevronUp className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </Disclosure.Button>
           <Transition
@@ -36,14 +36,13 @@ export const ArchiveProjectSelection: React.FC<IArchiveProject> = (props) => {
             <Disclosure.Panel>
               <div className="flex flex-col gap-8 pt-4">
                 <span className="text-sm tracking-tight">
-                  Archiving a project will unlist your project from your side navigation although you will still be able
-                  to access it from your projects page. You can restore the project or delete it whenever you want.
+                  프로젝트를 보관하면 사이드 네비게이션에서 프로젝트가 더 이상 표시되지 않지만 프로젝트 페이지에서 계속 액세스할 수 있습니다. 프로젝트를 복원하거나 삭제할 수 있습니다.
                 </span>
                 <div>
                   {projectDetails ? (
                     <div>
                       <Button variant="outline-danger" onClick={handleArchive}>
-                        Archive project
+                        보관하기
                       </Button>
                     </div>
                   ) : (

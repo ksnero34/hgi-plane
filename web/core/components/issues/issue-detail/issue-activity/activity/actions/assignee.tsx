@@ -26,7 +26,7 @@ export const IssueAssigneeActivity: FC<TIssueAssigneeActivity> = observer((props
       ends={ends}
     >
       <>
-        {activity.old_value === "" ? `added a new assignee ` : `removed the assignee `}
+        {activity.old_value === "" ? `님이 새로운 담당자 ` : `님이 담당자 `}
         <a
           href={`/${activity.workspace_detail?.slug}/profile/${activity.new_identifier ?? activity.old_identifier}`}
           target="_blank"
@@ -35,6 +35,7 @@ export const IssueAssigneeActivity: FC<TIssueAssigneeActivity> = observer((props
         >
           {activity.new_value && activity.new_value !== "" ? activity.new_value : activity.old_value}
         </a>
+        {activity.old_value === "" ? ` 님을 추가했습니다` : ` 님을 삭제했습니다`}
         {showIssue && (activity.old_value === "" ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

@@ -84,26 +84,26 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
       return {
         message: (
           <>
-            set the priority to <span className="font-medium text-custom-text-100">{newValue || "none"}</span>
+            우선순위를 <span className="font-medium text-custom-text-100">{newValue || "none"}</span>로 변경했습니다.
           </>
         ),
       };
     case "archived_at":
       return {
-        message: newValue === "restore" ? "restored the project" : "archived the project",
+        message: newValue === "restore" ? "프로젝트를 복구했습니다." : "프로젝트를 보관했습니다.",
         customUserName: newValue === "archive" ? "Plane" : undefined,
       };
     case "name":
       return {
         message: (
           <>
-            renamed the project to <span className="font-medium text-custom-text-100">{newValue}</span>
+            프로젝트 이름을 <span className="font-medium text-custom-text-100">{newValue}</span>로 변경했습니다.
           </>
         ),
       };
     case "description":
       return {
-        message: newValue ? "updated the project description" : "removed the project description",
+        message: newValue ? "프로젝트 설명을 변경했습니다." : "프로젝트 설명을 삭제했습니다.",
       };
     case "start_date":
       return {
@@ -111,7 +111,7 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
           <>
             {newValue ? (
               <>
-                set the start date to <span className="font-medium text-custom-text-100">{newValue}</span>
+                시작일을 <span className="font-medium text-custom-text-100">{newValue}</span>로 변경했습니다.
               </>
             ) : (
               "removed the start date"
@@ -125,7 +125,7 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
           <>
             {newValue ? (
               <>
-                set the target date to <span className="font-medium text-custom-text-100">{newValue}</span>
+                종료일을 <span className="font-medium text-custom-text-100">{newValue}</span>로 변경했습니다.
               </>
             ) : (
               "removed the target date"
@@ -137,7 +137,7 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
       return {
         message: (
           <>
-            set the state to <span className="font-medium text-custom-text-100">{newValue || "none"}</span>
+            상태를 <span className="font-medium text-custom-text-100">{newValue || "none"}</span>로 변경했습니다.
           </>
         ),
       };
@@ -147,11 +147,11 @@ export const messages = (activity: TProjectActivity): { message: string | ReactN
           <>
             {newValue ? (
               <>
-                set the estimate point to <span className="font-medium text-custom-text-100">{newValue}</span>
+                소요 자원을 <span className="font-medium text-custom-text-100">{newValue}</span>로 변경했습니다.
               </>
             ) : (
               <>
-                removed the estimate point
+                소요 자원 값을 삭제했습니다.
                 {oldValue && (
                   <>
                     {" "}

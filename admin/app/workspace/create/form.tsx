@@ -47,16 +47,16 @@ export const WorkspaceCreateForm = () => {
             .then(async () => {
               setToast({
                 type: TOAST_TYPE.SUCCESS,
-                title: "Success!",
-                message: "Workspace created successfully.",
+                title: "성공!",
+                message: "워크스페이스가 성공적으로 생성되었습니다.",
               });
               router.push(`/workspace`);
             })
             .catch(() => {
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Workspace could not be created. Please try again.",
+                title: "오류!",
+                message: "워크스페이스를 생성할 수 없습니다. 다시 시도해주세요.",
               });
             });
         } else setSlugError(true);
@@ -64,8 +64,8 @@ export const WorkspaceCreateForm = () => {
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Some error occurred while creating workspace. Please try again.",
+          title: "오류!",
+          message: "워크스페이스를 생성하는 도중 오류가 발생했습니다. 다시 시도해주세요.",
         });
       });
   };
@@ -82,7 +82,7 @@ export const WorkspaceCreateForm = () => {
     <div className="space-y-8">
       <div className="grid-col grid w-full max-w-4xl grid-cols-1 items-start justify-between gap-x-10 gap-y-6 lg:grid-cols-2">
         <div className="flex flex-col gap-1">
-          <h4 className="text-sm text-custom-text-300">Name your workspace</h4>
+          <h4 className="text-sm text-custom-text-300">워크스페이스 이름을 입력해주세요</h4>
           <div className="flex flex-col gap-1">
             <Controller
               control={control}

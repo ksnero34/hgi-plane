@@ -40,7 +40,7 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
   return (
     <Card>
       <Link href={redirectionLink} className="text-lg font-semibold text-custom-text-300 hover:underline mb-4">
-        Your work item activities
+        최근 활동
       </Link>
       {widgetStats.length > 0 ? (
         <div className="mt-4 space-y-6">
@@ -73,13 +73,13 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
               <div className="-mt-2 break-words">
                 <p className="inline text-sm text-custom-text-200">
                   <span className="font-medium text-custom-text-100">
-                    {currentUser?.id === activity.actor_detail.id ? "You" : activity.actor_detail?.display_name}{" "}
+                    {currentUser?.id === activity.actor_detail.id ? "당신이" : activity.actor_detail?.display_name}{" "}
                   </span>
                   {activity.field ? (
                     <ActivityMessage activity={activity} showIssue />
                   ) : (
                     <span>
-                      created <IssueLink activity={activity} />
+                      <IssueLink activity={activity} /> 생성 하였습니다.
                     </span>
                   )}
                 </p>
@@ -96,7 +96,7 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
               "mx-auto w-min px-2 py-1 text-xs hover:bg-custom-primary-100/20"
             )}
           >
-            View all
+            모든 활동 보기
           </Link>
         </div>
       ) : (

@@ -28,11 +28,12 @@ export const IssueLabelActivity: FC<TIssueLabelActivity> = observer((props) => {
       ends={ends}
     >
       <>
-        {activity.old_value === "" ? `added a new label ` : `removed the label `}
+        {activity.old_value === "" ? `님이 새로운 레이블 ` : `님이 레이블 `}
         <LabelActivityChip
           name={activity.old_value === "" ? activity.new_value : activity.old_value}
           color={activity.old_value === "" ? newLabelColor : oldLabelColor}
         />
+        {activity.old_value === "" ? ` 을(를) 추가했습니다` : ` 을(를) 삭제했습니다`}
         {showIssue && (activity.old_value === "" ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}
       </>

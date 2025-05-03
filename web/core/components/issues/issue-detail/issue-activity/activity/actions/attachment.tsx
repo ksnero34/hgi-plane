@@ -25,7 +25,7 @@ export const IssueAttachmentActivity: FC<TIssueAttachmentActivity> = observer((p
       ends={ends}
     >
       <>
-        {activity.verb === "created" ? `uploaded a new ` : `removed an attachment`}
+        {activity.verb === "created" ? `님이 새로운 첨부파일` : `님이 첨부파일을 삭제했습니다`}
         {activity.verb === "created" && (
           <a
             href={`${activity.new_value}`}

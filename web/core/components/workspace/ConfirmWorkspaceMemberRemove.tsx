@@ -69,14 +69,12 @@ export const ConfirmWorkspaceMemberRemove: React.FC<Props> = observer((props) =>
                       <div className="mt-2">
                         {currentUser?.id === userDetails.id ? (
                           <p className="text-sm text-custom-text-200">
-                            Are you sure you want to leave the workspace? You will no longer have access to this
-                            workspace. This action cannot be undone.
+                            이 워크스페이스를 나가시겠습니까? 이 워크스페이스에 더 이상 접근할 수 없게 됩니다. 이 작업은 되돌릴 수 없습니다.
                           </p>
                         ) : (
                           <p className="text-sm text-custom-text-200">
-                            Are you sure you want to remove member-{" "}
-                            <span className="font-bold">{userDetails?.display_name}</span>? They will no longer have
-                            access to this workspace. This action cannot be undone.
+                            정말로 멤버를 제거하시겠습니까?{" "}
+                            <span className="font-bold">{userDetails?.display_name}</span> 은(는) 이 워크스페이스에 더 이상 접근할 수 없게 됩니다. 이 작업은 되돌릴 수 없습니다.
                           </p>
                         )}
                       </div>

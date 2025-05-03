@@ -193,6 +193,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         "priority": safe_str(row.get("Priority", "none")).split(',')[0].strip(),  # 첫 번째 값만 사용
                         "state_id": state.id if state else default_state.id,
                         "updated_by_id": user_id,
+                        "created_by_id": user_id,  # 명시적으로 created_by_id 설정
                         "sequence_id": sequence_id,
                         "start_date": start_date,
                         "target_date": target_date
@@ -230,7 +231,6 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         issue_data.update({
                             "workspace_id": workspace_id,
                             "project": project,
-                            "created_by_id": user_id
                         })
                         issue = Issue.objects.create(**issue_data)
                         current_instance = None

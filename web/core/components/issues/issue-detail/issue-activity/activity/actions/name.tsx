@@ -24,7 +24,7 @@ export const IssueNameActivity: FC<TIssueNameActivity> = observer((props) => {
       activityId={activityId}
       ends={ends}
     >
-      <>set the name to {activity.new_value}.</>
+      <>님이 제목을 <span className="font-medium text-custom-text-100">{activity.new_value}</span> 로 변경했습니다.</>
     </IssueActivityBlockComponent>
   );
 });

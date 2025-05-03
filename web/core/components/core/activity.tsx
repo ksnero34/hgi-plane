@@ -107,20 +107,20 @@ const LabelPill = observer(({ labelId, workspaceSlug }: { labelId: string; works
 
 const inboxActivityMessage = {
   declined: {
-    showIssue: "declined work item",
-    noIssue: "declined this work item from intake.",
+    showIssue: "작업항목을 거부함",
+    noIssue: "인테이크에서 이 작업항목을 거부했습니다.",
   },
   snoozed: {
-    showIssue: "snoozed work item",
-    noIssue: "snoozed this work item.",
+    showIssue: "작업항목을 미룸",
+    noIssue: "이 작업항목을 미루었습니다다.",
   },
   accepted: {
-    showIssue: "accepted work item",
-    noIssue: "accepted this work item from intake.",
+    showIssue: "작업항목을 승인함",
+    noIssue: "인테이크에서 이 작업항목을 승인했습니다.",
   },
   markedDuplicate: {
-    showIssue: "declined work item",
-    noIssue: "declined this work item from intake by marking a duplicate work item.",
+    showIssue: "작업항목을 거부함",
+    noIssue: "인테이크에서 중복 작업항목으로 표시하여 이 작업항목을 거부했습니다.",
   },
 };
 
@@ -150,11 +150,11 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            added a new assignee <UserLink activity={activity} />
+            새로운 담당자 <UserLink activity={activity} />
             {showIssue && (
               <>
                 {" "}
-                to <IssueLink activity={activity} />
+                님 을 <IssueLink activity={activity} /> 에 추가했습니다.
               </>
             )}
           </>
@@ -162,11 +162,11 @@ const activityDetails: {
       else
         return (
           <>
-            removed the assignee <UserLink activity={activity} />
+            담당자 <UserLink activity={activity} />
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                님을 <IssueLink activity={activity} /> 에서 제외했습니다.
               </>
             )}
           </>
@@ -179,13 +179,13 @@ const activityDetails: {
       if (activity.new_value === "restore")
         return (
           <>
-            restored <IssueLink activity={activity} />
+            작업항목 <IssueLink activity={activity} /> 을(를) 복구했습니다.
           </>
         );
       else
         return (
           <>
-            archived <IssueLink activity={activity} />
+            작업항목 <IssueLink activity={activity} /> 을(를) 보관했습니다.
           </>
         );
     },
@@ -196,33 +196,36 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            uploaded a new{" "}
+            새로운 첨부파일{" "}
             <a
               href={`${activity.new_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              attachment
+              파일
             </a>
+            을
             {showIssue && (
               <>
                 {" "}
-                to <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에
               </>
             )}
+            업로드 했습니다.
           </>
         );
       else
         return (
           <>
-            removed an attachment
+            첨부파일을
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에서 
               </>
             )}
+            삭제했습니다.
           </>
         );
     },
@@ -231,13 +234,13 @@ const activityDetails: {
   description: {
     message: (activity, showIssue) => (
       <>
-        updated the description
         {showIssue && (
           <>
             {" "}
-            of <IssueLink activity={activity} />
+            <IssueLink activity={activity} /> 의 
           </>
         )}
+        내용을 수정했습니다.
       </>
     ),
     icon: <MessageSquareIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
@@ -247,25 +250,26 @@ const activityDetails: {
       if (!activity.new_value)
         return (
           <>
-            removed the estimate point
+            소요자원을
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에서 
               </>
             )}
+            삭제했습니다.
           </>
         );
       else
         return (
           <>
-            set the estimate point to {activity.new_value}
             {showIssue && (
               <>
                 {" "}
-                for <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에 
               </>
             )}
+            소요자원을 {activity.new_value} 로 설정했습니다
           </>
         );
     },
@@ -276,13 +280,13 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            created <IssueLink activity={activity} />
+            <IssueLink activity={activity} /> 을 생성했습니다.
           </>
         );
       else
         return (
           <>
-            deleted <IssueLink activity={activity} />
+            <IssueLink activity={activity} /> 을 삭제했습니다.
           </>
         );
     },
@@ -293,25 +297,27 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <span className="overflow-hidden">
-            added a new label{" "}
+            새로운 레이블 {" "}
             <span className="inline-flex items-center gap-2 rounded-full border border-custom-border-300 px-2 py-0.5 text-xs">
               <LabelPill labelId={activity.new_identifier ?? ""} workspaceSlug={workspaceSlug} />
               <span className="flex-shrink font-medium text-custom-text-100 break-all line-clamp-1">
                 {activity.new_value}
               </span>
             </span>
+            을
             {showIssue && (
               <span className="">
                 {" "}
-                to <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에 
               </span>
             )}
+             추가했습니다.
           </span>
         );
       else
         return (
           <>
-            removed the label{" "}
+            레이블 {" "} 을
             <span className="inline-flex items-center gap-2 rounded-full border border-custom-border-300 px-2 py-0.5 text-xs">
               <LabelPill labelId={activity.old_identifier ?? ""} workspaceSlug={workspaceSlug} />
               <span className="flex-shrink font-medium text-custom-text-100 break-all line-clamp-1">
@@ -321,9 +327,10 @@ const activityDetails: {
             {showIssue && (
               <span>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에서 
               </span>
             )}
+            삭제했습니다.
           </>
         );
     },
@@ -334,61 +341,66 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            added this{" "}
+            새로운 링크 {" "}
             <a
               href={`${activity.new_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              link
+             링크
             </a>
             {showIssue && (
               <>
                 {" "}
-                to <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에 
               </>
             )}
+            추가했습니다.
           </>
         );
       else if (activity.verb === "updated")
         return (
           <>
-            updated the{" "}
+            링크 {" "}
             <a
               href={`${activity.old_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              link
+              링크
             </a>
+             를
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에서 
               </>
             )}
+            수정 했습니다.
           </>
         );
       else
         return (
           <>
-            removed this{" "}
+            링크 {" "}
             <a
               href={`${activity.old_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              link
+              링크
             </a>
+             를
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} /> 에서 
               </>
             )}
+            삭제했습니다.
           </>
         );
     },
@@ -400,8 +412,8 @@ const activityDetails: {
         return (
           <>
             <span className="flex-shrink-0">
-              added {showIssue ? <IssueLink activity={activity} /> : "this work item"}{" "}
-              <span className="whitespace-nowrap">to the cycle</span>{" "}
+              {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}{" "}
+              <span className="whitespace-nowrap">을(를) 사이클에</span>{" "}
             </span>
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/cycles/${activity.new_identifier}`}
@@ -411,12 +423,13 @@ const activityDetails: {
             >
               <span className="break-all">{activity.new_value}</span>
             </a>
+            <span> 추가했습니다</span>
           </>
         );
       else if (activity.verb === "updated")
         return (
           <>
-            <span className="flex-shrink-0 whitespace-nowrap">set the cycle to </span>
+            <span className="flex-shrink-0 whitespace-nowrap">사이클을 </span>
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/cycles/${activity.new_identifier}`}
               target="_blank"
@@ -425,12 +438,13 @@ const activityDetails: {
             >
               <span className="break-all">{activity.new_value}</span>
             </a>
+            <span>으로 설정했습니다</span>
           </>
         );
       else
         return (
           <>
-            removed <IssueLink activity={activity} /> from the cycle{" "}
+            <IssueLink activity={activity} /> 을(를) 사이클 {" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/cycles/${activity.old_identifier}`}
               target="_blank"
@@ -439,6 +453,7 @@ const activityDetails: {
             >
               <span className="break-all">{activity.old_value}</span>
             </a>
+            <span>에서 제거했습니다</span>
           </>
         );
     },
@@ -449,7 +464,7 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            added {showIssue ? <IssueLink activity={activity} /> : "this work item"} to the module{" "}
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}을(를) 모듈 {" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.new_identifier}`}
               target="_blank"
@@ -458,12 +473,13 @@ const activityDetails: {
             >
               <span className="break-all">{activity.new_value}</span>
             </a>
+            <span>에 추가했습니다</span>
           </>
         );
       else if (activity.verb === "updated")
         return (
           <>
-            set the module to{" "}
+            모듈을 {" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.new_identifier}`}
               target="_blank"
@@ -472,12 +488,13 @@ const activityDetails: {
             >
               <span className="break-all">{activity.new_value}</span>
             </a>
+            <span>으로 설정했습니다</span>
           </>
         );
       else
         return (
           <>
-            removed <IssueLink activity={activity} /> from the module{" "}
+            <IssueLink activity={activity} /> 을(를) 모듈 {" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.old_identifier}`}
               target="_blank"
@@ -486,6 +503,7 @@ const activityDetails: {
             >
               <span className="break-all">{activity.old_value}</span>
             </a>
+            <span>에서 제거했습니다</span>
           </>
         );
     },
@@ -494,13 +512,14 @@ const activityDetails: {
   name: {
     message: (activity, showIssue) => (
       <>
-        set the title to <span className="break-all">{activity.new_value}</span>
+        제목을 <span className="break-all">{activity.new_value}</span>
         {showIssue && (
           <>
             {" "}
-            of <IssueLink activity={activity} />
+            (으)로 <IssueLink activity={activity} />
           </>
         )}
+        {!showIssue && " (으)로"} 변경했습니다
       </>
     ),
     icon: <MessageSquareIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
@@ -510,27 +529,29 @@ const activityDetails: {
       if (!activity.new_value)
         return (
           <>
-            removed the parent{" "}
+            상위 항목 {" "}
             <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                을(를) <IssueLink activity={activity} />에서 
               </>
             )}
+            제거했습니다
           </>
         );
       else
         return (
           <>
-            set the parent to{" "}
+            상위 항목을 {" "}
             <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>
             {showIssue && (
               <>
                 {" "}
-                for <IssueLink activity={activity} />
+                (으)로 <IssueLink activity={activity} />에 
               </>
             )}
+            설정했습니다
           </>
         );
     },
@@ -539,16 +560,17 @@ const activityDetails: {
   priority: {
     message: (activity, showIssue) => (
       <>
-        set the priority to{" "}
+        우선순위를 {" "}
         <span className="font-medium text-custom-text-100">
-          {activity.new_value ? capitalizeFirstLetter(activity.new_value) : "None"}
+          {activity.new_value ? capitalizeFirstLetter(activity.new_value) : "없음"}
         </span>
         {showIssue && (
           <>
             {" "}
-            for <IssueLink activity={activity} />
+            (으)로 <IssueLink activity={activity} />에 
           </>
         )}
+        {!showIssue && " (으)로"} 설정했습니다
       </>
     ),
     icon: <SignalMediumIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
@@ -558,15 +580,14 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            marked that {showIssue ? <IssueLink activity={activity} /> : "this work item"} relates to{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>와(과) 관련됨을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            removed the relation from{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>.
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>와(과)의 관계를 제거했습니다.
           </>
         );
     },
@@ -577,15 +598,15 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            marked {showIssue ? <IssueLink activity={activity} /> : "this work item"} is blocking work item{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span> 작업항목을 차단하고 있음을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            removed the blocking work item{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>.
+            차단 작업항목 {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>을(를) 제거했습니다.
           </>
         );
     },
@@ -596,15 +617,15 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            marked {showIssue ? <IssueLink activity={activity} /> : "this work item"} is being blocked by{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>에 의해 차단되고 있음을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            removed {showIssue ? <IssueLink activity={activity} /> : "this work item"} being blocked by work item{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) 작업항목 {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>에 의해 차단되는 것을 제거했습니다.
           </>
         );
     },
@@ -615,15 +636,15 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            marked {showIssue ? <IssueLink activity={activity} /> : "this work item"} as duplicate of{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>의 중복임을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            removed {showIssue ? <IssueLink activity={activity} /> : "this work item"} as a duplicate of{" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>의 중복이라는 표시를 제거했습니다.
           </>
         );
     },
@@ -632,13 +653,14 @@ const activityDetails: {
   state: {
     message: (activity, showIssue) => (
       <>
-        set the state to <span className="font-medium text-custom-text-100 break-all">{activity.new_value}</span>
+        상태를 <span className="font-medium text-custom-text-100 break-all">{activity.new_value}</span>
         {showIssue && (
           <>
             {" "}
-            for <IssueLink activity={activity} />
+            (으)로 <IssueLink activity={activity} />에 
           </>
         )}
+        {!showIssue && " (으)로"} 설정했습니다
       </>
     ),
     icon: <LayoutGridIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
@@ -648,28 +670,30 @@ const activityDetails: {
       if (!activity.new_value)
         return (
           <>
-            removed the start date
+            시작일을
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} />에서 
               </>
             )}
+            삭제했습니다
           </>
         );
       else
         return (
           <>
-            set the start date to{" "}
+            시작일을 {" "}
             <span className="font-medium text-custom-text-100 whitespace-nowrap">
               {renderFormattedDate(activity.new_value)}
             </span>
             {showIssue && (
               <>
                 {" "}
-                for <IssueLink activity={activity} />
+                (으)로 <IssueLink activity={activity} />에 
               </>
             )}
+            {!showIssue && " (으)로"} 설정했습니다
           </>
         );
     },
@@ -680,27 +704,29 @@ const activityDetails: {
       if (!activity.new_value)
         return (
           <>
-            removed the due date
+            마감일을
             {showIssue && (
               <>
                 {" "}
-                from <IssueLink activity={activity} />
+                <IssueLink activity={activity} />에서 
               </>
             )}
+            삭제했습니다
           </>
         );
       else
         return (
           <>
-            set the due date to{" "}
+            마감일을 {" "}
             <span className="font-medium text-custom-text-100 whitespace-nowrap">
               {renderFormattedDate(activity.new_value)}
             </span>
             {showIssue && (
               <>
-                <IssueLink activity={activity} />
+                {" "}(으)로 <IssueLink activity={activity} />에 
               </>
             )}
+            {!showIssue && " (으)로"} 설정했습니다
           </>
         );
     },
@@ -716,7 +742,7 @@ const activityDetails: {
             <IssueLink activity={activity} />
           </>
         )}
-        {activity.verb === "2" && ` from intake by marking a duplicate work item.`}
+        {activity.verb === "2" && ` 인테이크에서 중복 작업항목으로 표시하여 거부함.`}
       </>
     ),
     icon: <Intake className="size-3 text-custom-text-200" aria-hidden="true" />,
