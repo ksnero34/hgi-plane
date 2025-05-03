@@ -6,9 +6,11 @@ import { useInstance } from "@/hooks/store";
 
 type TOAuthOptionProps = {
   isSignUp?: boolean;
+  showEmailLogin?: boolean;
 };
 
-export const OAuthOptions: React.FC<TOAuthOptionProps> = observer(() => {
+export const OAuthOptions: React.FC<TOAuthOptionProps> = observer((props) => {
+  const { showEmailLogin = true } = props;
   // hooks
   const { config } = useInstance();
 
@@ -18,12 +20,14 @@ export const OAuthOptions: React.FC<TOAuthOptionProps> = observer(() => {
 
   return (
     <>
-      <div className="mt-4 flex items-center">
-        <hr className="w-full border-onboarding-border-100" />
-        <p className="mx-3 flex-shrink-0 text-center text-sm text-onboarding-text-400">or</p>
-        <hr className="w-full border-onboarding-border-100" />
-      </div>
-      <div className={`mt-7 grid gap-4 overflow-hidden`}>
+      {showEmailLogin && (
+        <div className="mt-4 flex items-center">
+          <hr className="w-full border-onboarding-border-100" />
+          <p className="mx-3 flex-shrink-0 text-center text-sm text-onboarding-text-400">or</p>
+          <hr className="w-full border-onboarding-border-100" />
+        </div>
+      )}
+      <div className={`${showEmailLogin ? "mt-7" : "mt-3"} grid gap-4 overflow-hidden`}>
         {config?.is_google_enabled && (
           <div className="flex h-[42px] items-center !overflow-hidden">
             <GoogleOAuthButton text="Continue with Google" />
@@ -31,7 +35,7 @@ export const OAuthOptions: React.FC<TOAuthOptionProps> = observer(() => {
         )}
         {config?.is_github_enabled && <GithubOAuthButton text="Continue with GitHub" />}
         {config?.is_gitlab_enabled && <GitlabOAuthButton text="Continue with GitLab" />}
-        {config?.is_oidc_enabled && <OIDCOAuthButton text="HGI SSO로 로그인하기" />}
+        {config?.is_oidc_enabled && <OIDCOAuthButton text="한화손해보험 포털ID로 로그인하기" />}
       </div>
     </>
   );

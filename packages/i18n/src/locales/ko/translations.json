@@ -1265,7 +1265,7 @@
     },
     "request_email": {
       "subject": "새 작업 공간 요청",
-      "body": "안녕하세요 인스턴스 관리자님,\n\n[목적]을 위해 [/workspace-name] URL로 새 작업 공간을 생성해 주세요.\n\n감사합니다,\n{firstName} {lastName}\n{email}"
+      "body": "안녕하세요 인스턴스 관리자님,\n\n[목적]을 위해 [/workspace-name] URL로 새 작업 공간을 생성해 주세요.\n\n감사합니다,\n{lastName} {firstName}\n{email}"
     },
     "button": {
       "default": "작업 공간 생성",
@@ -2360,6 +2360,16 @@
   },
 
   "user_roles": {
+    "hgi_pm": "현업 PM",
+    "hgi_itpm": "IT PM",
+    "hgi_it": "IT",
+    "hgi_vendor_pl": "수행사 PL",
+    "hgi_business_stakeholder": "현업",
+    "hgi_vendor_pm": "수행사 PM",
+    "hgi_vendor_worker": "수행사 직원",
+    "designer": "디자이너",
+    "developer": "개발자",
+    "planner": "기획자",
     "product_or_project_manager": "제품 / 프로젝트 관리자",
     "development_or_engineering": "개발 / 엔지니어링",
     "founder_or_executive": "창립자 / 임원",

@@ -81,11 +81,11 @@ const WorkspaceInvitationPage = observer(() => {
             </div>
           ) : (
             <EmptySpace
-              title={`You have been invited to ${invitationDetail.workspace.name}`}
-              description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Plane account."
+              title={`${invitationDetail.workspace.name} 에 초대되셨습니다!`}
+              description="이슈트레커(Plane) 에서 프로젝트를 생성하고, 작업 항목(이슈)에 대해 협업하며 업무 효율을 증대할 수 있습니다."
             >
-              <EmptySpaceItem Icon={Check} title="Accept" action={handleAccept} />
-              <EmptySpaceItem Icon={X} title="Ignore" action={handleReject} />
+              <EmptySpaceItem Icon={Check} title="수락" action={handleAccept} />
+              <EmptySpaceItem Icon={X} title="거절" action={handleReject} />
             </EmptySpace>
           )
         ) : error || invitationDetail?.responded_at ? (

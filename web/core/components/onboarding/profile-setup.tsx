@@ -63,24 +63,21 @@ enum EProfileSetupSteps {
   USER_PERSONALIZATION = "USER_PERSONALIZATION",
 }
 
-const USER_ROLE = ["한화손해보험 현업 PM", "한화손해보험 IT PM", "한화손해보험 IT", "한화손해보험 ITO", "한화손해보험 현업", "프로젝트 수행사 PM", "프로젝트 수행사 직원", "Product / Project Manager", "Development / Engineering", "Founder / Executive", "Freelancer / Consultant", "Marketing / Growth", "Sales / Business Development", "Support / Operations", "Student / Professor", "Human Resources", "Other"];
+const USER_ROLE = ["현업 PM", "IT PM", "IT", "현업", "수행사 PM", "수행사 PL", "수행사 직원", "디자이너", "개발자", "기획자", "기타"];
 
 const USER_DOMAIN = [
-  "보험 비즈니스",
-  "보험 상품",
-  "보험 IT",
   "보험 영업",
-  "보험 지원",
-  "보험 기타",
-  "Product",
-  "Marketing",
-  "Sales",
-  "Operations",
-  "Legal",
-  "Finance",
-  "Human Resources",
-  "Project",
-  "Other",
+  "보험 업무",
+  "보험 상품",
+  "IT",
+  "인사",
+  "총무",
+  "회계",
+  "마케팅",
+  "디자인",
+  "법무",
+  "정보보호",
+  "기타",
 ];
 
 const authService = new AuthService();
@@ -292,13 +289,13 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
           <div className="text-center space-y-1 py-4 mx-auto">
             <h3 className="text-3xl font-bold text-onboarding-text-100">
               {isCurrentStepUserPersonalization
-                ? `Looking good${user?.first_name && `, ${user.first_name}`}!`
-                : "Welcome to Plane!"}
+                ? `좋은 하루 보내세요 ${user?.first_name && `, ${user.first_name}`}!`
+                : "이슈트래커(Plane) 에 오신 것을 환영합니다!"}
             </h3>
             <p className="font-medium text-onboarding-text-400">
               {isCurrentStepUserPersonalization
-                ? "Let's personalize Plane for you."
-                : "Let's setup your profile, tell us a bit about yourself."}
+                ? "팀원들이 잘 알 수 있게 프로필을 설정해주세요."
+                : "팀원들이 잘 알 수 있게 프로필을 설정해주세요."}
             </p>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="w-full mx-auto mt-2 space-y-4 sm:w-96">
@@ -330,7 +327,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                           </div>
                         </div>
                         <div className="pt-1 text-sm font-medium text-custom-primary-300 hover:text-custom-primary-400">
-                          Choose image
+                          프로필 이미지 선택
                         </div>
                       </div>
                     ) : (
@@ -373,7 +370,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                           onChange={onChange}
                           ref={ref}
                           hasError={Boolean(errors.last_name)}
-                          placeholder="Wright"
+                          placeholder="홍"
                           className="w-full border-onboarding-border-100"
                           autoComplete="on"
                         />
@@ -407,7 +404,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                           onChange={onChange}
                           ref={ref}
                           hasError={Boolean(errors.first_name)}
-                          placeholder="Wilbur"
+                          placeholder="길동"
                           className="w-full border-onboarding-border-100"
                           autoComplete="on"
                         />
@@ -516,7 +513,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                     className="text-sm text-onboarding-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
                     htmlFor="role"
                   >
-                    What role are you working on? Choose one.
+                    당신의 업무는 어디에 해당하나요? 하나를 선택해주세요.
                   </label>
                   <Controller
                     control={control}
@@ -547,7 +544,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
                     className="text-sm text-onboarding-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
                     htmlFor="use_case"
                   >
-                    What is your domain expertise? Choose one.
+                    당신의 전문 분야는 무엇인가요? 하나를 선택해주세요.
                   </label>
                   <Controller
                     control={control}
@@ -576,7 +573,7 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
               </>
             )}
             <Button variant="primary" type="submit" size="lg" className="w-full" disabled={isButtonDisabled}>
-              {isSubmitting ? <Spinner height="20px" width="20px" /> : "Continue"}
+              {isSubmitting ? <Spinner height="20px" width="20px" /> : "시작하기"}
             </Button>
           </form>
         </div>

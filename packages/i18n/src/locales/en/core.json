@@ -115,7 +115,7 @@
     },
     "sign_in": {
       "header": {
-        "label": "Log in to start managing work with your team.",
+        "label": "로그인 하여 팀과 협업하세요.",
         "step": {
           "email": {
             "header": "Log in or sign up",

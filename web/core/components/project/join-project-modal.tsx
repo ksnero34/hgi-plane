@@ -72,18 +72,16 @@ export const JoinProjectModal: React.FC<TJoinProjectModalProps> = (props) => {
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-custom-background-100 px-5 py-8 text-left shadow-custom-shadow-md transition-all sm:w-full sm:max-w-xl sm:p-6">
                 <div className="space-y-5">
                   <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-custom-text-100">
-                    Join Project?
+                    프로젝트에 참가하시겠습니까?
                   </Dialog.Title>
                   <p>
-                    Are you sure you want to join the project{" "}
-                    <span className="break-words font-semibold">{project?.name}</span>? Please click the &apos;Join
-                    Project&apos; button below to continue.
+                    <span className="break-words font-semibold">{project?.name}</span> 프로젝트에 참여하시겠습니까? 아래의 &apos;참여하기&apos; 버튼을 클릭하여 계속 진행하세요.
                   </p>
                   <div className="space-y-3" />
                 </div>
                 <div className="mt-5 flex justify-end gap-2">
                   <Button variant="neutral-primary" size="sm" onClick={handleClose}>
-                    Cancel
+                    취소
                   </Button>
                   <Button
                     variant="primary"
@@ -93,7 +91,7 @@ export const JoinProjectModal: React.FC<TJoinProjectModalProps> = (props) => {
                     onClick={handleJoin}
                     loading={isJoiningLoading}
                   >
-                    {isJoiningLoading ? "Joining..." : "Join Project"}
+                    {isJoiningLoading ? "참여중..." : "참여하기"}
                   </Button>
                 </div>
               </Dialog.Panel>

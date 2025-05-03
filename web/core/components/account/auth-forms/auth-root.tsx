@@ -52,6 +52,7 @@ export const AuthRoot: FC<TAuthRoot> = observer((props) => {
   const [email, setEmail] = useState(emailParam ? emailParam.toString() : "");
   const [errorInfo, setErrorInfo] = useState<TAuthErrorInfo | undefined>(undefined);
   const [isExistingEmail, setIsExistingEmail] = useState(false);
+  const [isDevMode, setIsDevMode] = useState<boolean>(false);
   // plane hooks
   const { t } = useTranslation();
   // hooks
@@ -59,6 +60,12 @@ export const AuthRoot: FC<TAuthRoot> = observer((props) => {
 
   useEffect(() => {
     if (!authMode && currentAuthMode) setAuthMode(currentAuthMode);
+    
+    // 개발자 모드 확인
+    if (typeof window !== "undefined") {
+      const devMode = localStorage.getItem("devMode") === "true";
+      setIsDevMode(devMode);
+    }
   }, [currentAuthMode, authMode]);
 
   useEffect(() => {
@@ -104,6 +111,8 @@ export const AuthRoot: FC<TAuthRoot> = observer((props) => {
   }, [error_code, authMode]);
 
   const isSMTPConfigured = config?.is_smtp_configured || false;
+  const isOIDCEnabled = config?.is_oidc_enabled || false;
+  const showEmailLogin = isDevMode || !isOIDCEnabled;
 
   // submit handler- email verification
   const handleEmailVerification = async (data: IEmailCheckData) => {
@@ -172,31 +181,35 @@ export const AuthRoot: FC<TAuthRoot> = observer((props) => {
         {errorInfo && errorInfo?.type === EErrorAlertType.BANNER_ALERT && (
           <AuthBanner bannerData={errorInfo} handleBannerData={(value) => setErrorInfo(value)} />
         )}
-        {authStep === EAuthSteps.EMAIL && <AuthEmailForm defaultEmail={email} onSubmit={handleEmailVerification} />}
-        {authStep === EAuthSteps.UNIQUE_CODE && (
-          <AuthUniqueCodeForm
-            mode={authMode}
-            email={email}
-            isExistingEmail={isExistingEmail}
-            handleEmailClear={handleEmailClear}
-            generateEmailUniqueCode={generateEmailUniqueCode}
-            nextPath={nextPath || undefined}
-          />
+        {showEmailLogin && (
+          <>
+            {authStep === EAuthSteps.EMAIL && <AuthEmailForm defaultEmail={email} onSubmit={handleEmailVerification} />}
+            {authStep === EAuthSteps.UNIQUE_CODE && (
+              <AuthUniqueCodeForm
+                mode={authMode}
+                email={email}
+                isExistingEmail={isExistingEmail}
+                handleEmailClear={handleEmailClear}
+                generateEmailUniqueCode={generateEmailUniqueCode}
+                nextPath={nextPath || undefined}
+              />
+            )}
+            {authStep === EAuthSteps.PASSWORD && (
+              <AuthPasswordForm
+                mode={authMode}
+                isSMTPConfigured={isSMTPConfigured}
+                email={email}
+                handleEmailClear={handleEmailClear}
+                handleAuthStep={(step: EAuthSteps) => {
+                  if (step === EAuthSteps.UNIQUE_CODE) generateEmailUniqueCode(email);
+                  setAuthStep(step);
+                }}
+                nextPath={nextPath || undefined}
+              />
+            )}
+          </>
         )}
-        {authStep === EAuthSteps.PASSWORD && (
-          <AuthPasswordForm
-            mode={authMode}
-            isSMTPConfigured={isSMTPConfigured}
-            email={email}
-            handleEmailClear={handleEmailClear}
-            handleAuthStep={(step: EAuthSteps) => {
-              if (step === EAuthSteps.UNIQUE_CODE) generateEmailUniqueCode(email);
-              setAuthStep(step);
-            }}
-            nextPath={nextPath || undefined}
-          />
-        )}
-        <OAuthOptions isSignUp={authMode === EAuthModes.SIGN_UP} />
+        <OAuthOptions isSignUp={authMode === EAuthModes.SIGN_UP} showEmailLogin={showEmailLogin} />
         <TermsAndConditions isSignUp={authMode === EAuthModes.SIGN_UP} />
       </AuthHeader>
     </div>

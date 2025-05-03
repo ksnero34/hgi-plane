@@ -25,7 +25,7 @@ export const OAuthOptions: React.FC = observer(() => {
         <hr className="w-full border-onboarding-border-100" />
       </div>
       <div className={`mt-7 grid gap-4 overflow-hidden`}>
-        {config?.is_oidc_enabled && <OIDCOAuthButton text="HGI SSO로 로그인하기" />}
+        {config?.is_oidc_enabled && <OIDCOAuthButton text="한화손해보험 포털ID로 로그인하기" />}
       </div>
     </>
   );

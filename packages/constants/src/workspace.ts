@@ -174,44 +174,29 @@ export const ROLE_DETAILS = {
 };
 
 export const USER_ROLES = [
-  { value: "한화손해보험 현업 PM", i18n_label: "user_roles.hgi_pm" },
-  { value: "한화손해보험 IT PM", i18n_label: "user_roles.hgi_itpm" },
-  { value: "한화손해보험 IT", i18n_label: "user_roles.hgi_it" },
-  { value: "한화손해보험 ITO", i18n_label: "user_roles.hgi_ito" },
-  { value: "한화손해보험 현업", i18n_label: "user_roles.hgi_business_stakeholder" },
-  { value: "프로젝트 수행사 PM", i18n_label: "user_roles.hgi_vendor_pm" },
-  { value: "프로젝트 수행사 직원", i18n_label: "user_roles.hgi_vendor_worker" },
+  { value: "현업 PM", i18n_label: "user_roles.hgi_pm" },
+  { value: "IT PM", i18n_label: "user_roles.hgi_itpm" },
+  { value: "IT", i18n_label: "user_roles.hgi_it" },
+  { value: "현업", i18n_label: "user_roles.hgi_business_stakeholder" },
+  { value: "수행사 PM", i18n_label: "user_roles.hgi_vendor_pm" },
+  { value: "수행사 PL", i18n_label: "user_roles.hgi_vendor_pl" },
+  { value: "수행사 직원", i18n_label: "user_roles.hgi_vendor_worker" },
   {
-    value: "Product / Project Manager",
-    i18n_label: "user_roles.product_or_project_manager",
+    value: "디자이너",
+    i18n_label: "user_roles.designer",
   },
   {
-    value: "Development / Engineering",
-    i18n_label: "user_roles.development_or_engineering",
+    value: "개발자",
+    i18n_label: "user_roles.developer",
   },
   {
-    value: "Founder / Executive",
-    i18n_label: "user_roles.founder_or_executive",
+    value: "기획자",
+    i18n_label: "user_roles.planner",
   },
   {
-    value: "Freelancer / Consultant",
-    i18n_label: "user_roles.freelancer_or_consultant",
-  },
-  { value: "Marketing / Growth", i18n_label: "user_roles.marketing_or_growth" },
-  {
-    value: "Sales / Business Development",
-    i18n_label: "user_roles.sales_or_business_development",
-  },
-  {
-    value: "Support / Operations",
-    i18n_label: "user_roles.support_or_operations",
-  },
-  {
-    value: "Student / Professor",
-    i18n_label: "user_roles.student_or_professor",
-  },
-  { value: "Human Resources", i18n_label: "user_roles.human_resources" },
-  { value: "Other", i18n_label: "user_roles.other" },
+    value: "기타",
+    i18n_label: "user_roles.other",
+  }
 ];
 
 export const IMPORTERS_LIST = [
