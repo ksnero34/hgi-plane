@@ -118,15 +118,15 @@
         "label": "로그인 하여 팀과 협업하세요.",
         "step": {
           "email": {
-            "header": "Log in or sign up",
+            "header": "로그인 하여 팀과 협업하세요.",
             "sub_header": ""
           },
           "password": {
-            "header": "Log in or sign up",
+            "header": "로그인 하여 팀과 협업하세요.",
             "sub_header": "Use your email-password combination to log in."
           },
           "unique_code": {
-            "header": "Log in or sign up",
+            "header": "로그인 하여 팀과 협업하세요.",
             "sub_header": "Log in using a unique code sent to the email address above."
           }
         }

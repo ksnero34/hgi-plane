@@ -56,6 +56,7 @@ export class IssueFiltersService extends APIService {
     projectId: string,
     data: Partial<IIssueFiltersResponse>
   ): Promise<any> {
+    /* 캘린더 뷰 자동 필터 비활성화
     if (data.display_filters?.layout === 'calendar') {
       const currentDate = new Date();
       const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -70,6 +71,7 @@ export class IssueFiltersService extends APIService {
         }
       };
     }
+    */
 
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-properties/`, data)
       .then((response) => response?.data)
@@ -152,7 +154,8 @@ export class IssueFiltersService extends APIService {
   }
 
   async updateFilters(workspaceSlug: string, projectId: string, data: IIssueFiltersRequest): Promise<IIssueFilterOptions> {
-    // 캘린더 뷰를 위한 날짜 범위 계산
+    // 캘린더 뷰를 위한 날짜 범위 계산 (비활성화)
+    /*
     if (data.filters?.layout === "calendar") {
       const firstDayOfMonth = new Date(data.filters.start_date?.[0] || new Date());
       firstDayOfMonth.setDate(1);
@@ -174,6 +177,7 @@ export class IssueFiltersService extends APIService {
           throw error?.response?.data;
         });
     }
+    */
 
     // 일반적인 필터 업데이트
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-filters/`, data)

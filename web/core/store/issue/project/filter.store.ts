@@ -124,7 +124,8 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       const filterParams = this.getAppliedFilters(projectId);
       const paginationParams = this.getPaginationParams(filterParams, options, cursor, groupId, subGroupId);
 
-      // 캘린더 뷰인 경우
+      // 캘린더 뷰인 경우 (자동 필터 추가 비활성화)
+      /* 자동 필터 추가 주석 처리
       const displayFilters = this.filters[projectId]?.displayFilters;
       if (displayFilters?.layout === "calendar") {
         const calendarParams = this.getCalendarFilterParams(new Date());
@@ -141,6 +142,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
 
         return mergedParams;
       }
+      */
 
       console.log("Final Pagination Params:", paginationParams);
       return paginationParams;
@@ -221,6 +223,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
           _filters.displayFilters = { ..._filters.displayFilters, ...updatedDisplayFilters };
 
           // 캘린더 뷰로 전환하는 경우
+          /* 자동 필터 추가 주석 처리
           if (updatedDisplayFilters.layout === "calendar") {
             const calendarParams = this.getCalendarFilterParams(new Date());
             _filters.filters = {
@@ -229,6 +232,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
               target_date: calendarParams.target_date
             };
           }
+          */
 
           runInAction(() => {
             Object.keys(updatedDisplayFilters).forEach((_key) => {

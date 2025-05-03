@@ -165,7 +165,7 @@ export const getBaseAuthenticationModes: (props: TGetBaseAuthenticationModeProps
   {
     key: "hgi-oidc",
     name: "HGI OpenID Connect",
-    description: "Allow members to log in or sign up to plane with OIDC.",
+    description: "한화손해보험 포털ID로 로그인하세요.",
     icon: <Image src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />,
     config: <OIDCConfiguration disabled={disabled} updateConfig={updateConfig} />,
   },

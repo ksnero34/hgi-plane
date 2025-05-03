@@ -509,7 +509,8 @@ def filter_logged_by(params, issue_filter, method, prefix=""):
 
 
 def filter_calendar_dates(params, issue_filter, method, prefix=""):
-    """캘린더 뷰를 위한 날짜 필터링"""
+    """캘린더 뷰를 위한 날짜 필터링 (자동 필터 적용 비활성화)"""
+    """
     if params.get("layout") == "calendar":
         start_date_from = params.get("start_date_from")
         start_date_to = params.get("start_date_to")
@@ -526,7 +527,7 @@ def filter_calendar_dates(params, issue_filter, method, prefix=""):
                 f"{prefix}target_date__gte": target_date_from,
                 f"{prefix}target_date__lte": target_date_to,
             })
-
+    """
     return issue_filter
 
 
@@ -559,7 +560,7 @@ def issue_filters(query_params, method, prefix=""):
         "sub_issue": filter_sub_issue_toggle,
         "subscriber": filter_subscribed_issues,
         "start_target_date": filter_start_target_date_issues,
-        "layout": filter_calendar_dates,  # 캘린더 뷰 필터 추가
+        # "layout": filter_calendar_dates,  # 캘린더 뷰 필터 제거
     }
 
     for key, value in ISSUE_FILTER.items():

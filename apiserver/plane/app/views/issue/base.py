@@ -288,7 +288,8 @@ class IssueViewSet(BaseViewSet):
         order_by_param = request.GET.get("order_by", "-created_at")
         # print("Order By:", order_by_param)
 
-        # 캘린더 뷰인 경우 Q 객체로 필터링
+        # 캘린더 뷰인 경우 Q 객체로 필터링 (자동 필터 추가 비활성화)
+        """
         if request.GET.get('layout') == 'calendar':
             start_date_from = request.GET.get('start_date_from')
             start_date_to = request.GET.get('start_date_to')
@@ -318,6 +319,7 @@ class IssueViewSet(BaseViewSet):
                 
                 # print("Calendar Filter Query:", str(calendar_filter))
                 # print("Total Issues After Calendar Filter:", issue_queryset.count())
+        """
 
         # print("Total Issues Before Grouping:", issue_queryset.count())
 
