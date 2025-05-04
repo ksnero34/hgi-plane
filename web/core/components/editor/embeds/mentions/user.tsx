@@ -88,7 +88,7 @@ export const EditorUserMention: React.FC<Props> = observer((props) => {
           </div>
           <div>
             <Link href={profileLink} className="not-prose font-medium text-custom-text-100 text-sm hover:underline">
-              {userDetails?.first_name} {userDetails?.last_name}
+            {userDetails?.last_name} {userDetails?.first_name}
             </Link>
             {roleDetails && <p className="text-custom-text-200 text-xs">{ROLE[roleDetails]}</p>}
           </div>

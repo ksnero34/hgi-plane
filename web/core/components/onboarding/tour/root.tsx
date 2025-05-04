@@ -38,45 +38,47 @@ const TOUR_STEPS: {
 }[] = [
   {
     key: "work-items",
-    title: "Plan with work items",
+    title: "작업항목으로 계획 세우기",
     description:
-      "The work item is the building block of the Plane. Most concepts in Plane are either associated with work items and their properties.",
+      "작업항목은 이슈트래커(Plane)의 기본 구성 요소입니다. 이슈 라고도 불리며 이슈 트래커의 대부분의 기능은 작업항목과 그 속성에 연관되어 있습니다.",
     image: IssuesTour,
     nextStep: "cycles",
   },
   {
     key: "cycles",
-    title: "Move with cycles",
+    title: "주기로 진행 관리하기",
     description:
-      "Cycles help you and your team to progress faster, similar to the sprints commonly used in agile development.",
+      "주기는 애자일 개발에서 흔히 사용되는 스프린트처럼, 팀이 더 빠르게 나아갈 수 있도록 도와줍니다.",
     image: CyclesTour,
     prevStep: "work-items",
     nextStep: "modules",
   },
   {
     key: "modules",
-    title: "Break into modules",
-    description: "Modules break your big thing into Projects or Features, to help you organize better.",
+    title: "모듈로 나누기",
+    description:
+      "모듈은 큰 작업을 프로젝트나 기능 단위로 나누어 더 체계적으로 정리할 수 있도록 도와줍니다.",
     image: ModulesTour,
     prevStep: "cycles",
     nextStep: "views",
   },
   {
     key: "views",
-    title: "Views",
+    title: "보기로 원하는 뷰 만들기",
     description:
-      "Create custom filters to display only the work items that matter to you. Save and share your filters in just a few clicks.",
+      "보기를 사용해 필요한 작업항목만 보기 쉽게 설정하고, 클릭 몇 번으로 저장 및 공유할 수 있습니다. 특히 작업항목이 늘어나면 보기를 통해 효율적으로 관리할 수 있습니다.",
     image: ViewsTour,
     prevStep: "modules",
     nextStep: "pages",
   },
   {
     key: "pages",
-    title: "Document with pages",
-    description: "Use Pages to quickly jot down work items when you're in a meeting or starting a day.",
+    title: "페이지로 문서화하기",
+    description:
+      "회의 중이거나 하루를 시작할 때, 페이지를 활용해 빠르게 내용을 작성할 수 있습니다. 또한 팀원과 동일한 페이지를 실시간으로 수정할 수 있습니다.",
     image: PagesTour,
     prevStep: "views",
-  },
+  }
 ];
 
 export const TourRoot: React.FC<Props> = observer((props) => {
@@ -101,11 +103,12 @@ export const TourRoot: React.FC<Props> = observer((props) => {
             </div>
             <div className="flex h-2/5 flex-col overflow-y-auto p-6">
               <h3 className="font-semibold sm:text-xl">
-                Welcome to Plane, {currentUser?.first_name} {currentUser?.last_name}
+                이슈트래커(Plane)에 오신 것을 환영합니다, {currentUser?.last_name} {currentUser?.first_name} 님
               </h3>
               <p className="mt-3 text-sm text-custom-text-200">
-                We{"'"}re glad that you decided to try out Plane. You can now manage your projects with ease. Get
-                started by creating a project.
+                Plane을 사용하여 프로젝트를 관리할 수 있습니다. 프로젝트를 생성하여 시작하세요.
+                <br />
+                기존에 생성된 프로젝트에 참가하시려면 왼쪽 사이드바에서 프로젝트를 누른뒤 원하는 프로젝트에 참가하거나 팀원에게 프로젝트 초대를 요청하세요.
               </p>
               <div className="flex h-full items-end">
                 <div className="mt-8 flex items-center gap-6">
@@ -116,7 +119,7 @@ export const TourRoot: React.FC<Props> = observer((props) => {
                       setStep("work-items");
                     }}
                   >
-                    Take a Product Tour
+                    튜토리얼 보기
                   </Button>
                   <button
                     type="button"
@@ -126,7 +129,7 @@ export const TourRoot: React.FC<Props> = observer((props) => {
                       onComplete();
                     }}
                   >
-                    No thanks, I will explore it myself
+                    넘어가기
                   </button>
                 </div>
               </div>
@@ -158,12 +161,12 @@ export const TourRoot: React.FC<Props> = observer((props) => {
                 <div className="flex items-center gap-4">
                   {currentStep?.prevStep && (
                     <Button variant="neutral-primary" onClick={() => setStep(currentStep.prevStep ?? "welcome")}>
-                      Back
+                      이전
                     </Button>
                   )}
                   {currentStep?.nextStep && (
                     <Button variant="primary" onClick={() => setStep(currentStep.nextStep ?? "work-items")}>
-                      Next
+                      다음
                     </Button>
                   )}
                 </div>
@@ -176,7 +179,7 @@ export const TourRoot: React.FC<Props> = observer((props) => {
                       toggleCreateProjectModal(true);
                     }}
                   >
-                    Create your first project
+                    첫 프로젝트 생성하기
                   </Button>
                 )}
               </div>

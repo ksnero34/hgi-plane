@@ -13,27 +13,27 @@ const sidebarOptions: {
 }[] = [
   {
     key: "work-items",
-    label: "Work items",
+    label: "작업항목",
     Icon: LayersIcon,
   },
   {
     key: "cycles",
-    label: "Cycles",
+    label: "주기",
     Icon: ContrastIcon,
   },
   {
     key: "modules",
-    label: "Modules",
+    label: "모듈",
     Icon: DiceIcon,
   },
   {
     key: "views",
-    label: "Views",
+    label: "보기",
     Icon: Layers,
   },
   {
     key: "pages",
-    label: "Pages",
+    label: "페이지",
     Icon: FileText,
   },
 ];
@@ -46,9 +46,10 @@ type Props = {
 export const TourSidebar: React.FC<Props> = ({ step, setStep }) => (
   <div className="col-span-3 hidden bg-custom-background-90 p-8 lg:block">
     <h3 className="text-lg font-medium">
-      Let{"'"}s get started!
+      Plane에 대해 알아봅시다.
       <br />
-      Get more out of Plane.
+      <br />
+      이슈트래커(Plane)를 활용해서 팀과 협업하고 이슈를 정리하여 업무 효율을 높여보세요.
     </h3>
     <div className="mt-8 space-y-5">
       {sidebarOptions.map((option) => (
