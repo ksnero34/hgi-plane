@@ -172,7 +172,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
                                 <span className="text-gray font-medium">
                                   {currentUser?.id === activityItem.actor_detail.id
                                     ? "당신이"
-                                    : activityItem.actor_detail.display_name}
+                                    : activityItem.actor_detail.display_name + " 님이"}
                                 </span>
                               </Link>
                             )}{" "}

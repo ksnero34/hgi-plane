@@ -47,7 +47,7 @@ export const IssueAttachmentActivity: FC<TIssueAttachmentActivity> = observer((p
           <span className="font-medium text-custom-text-100">{fileName}</span>
         )}
         {activity.verb === "created" && (
-          <span> 을 업로드 했습니다.</span>
+          <span> 을 업로드 했습니다</span>
         )}
         {showIssue && (activity.verb === "created" ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.

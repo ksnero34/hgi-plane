@@ -209,7 +209,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에
+                <IssueLink activity={activity} /> 에{" "}
               </>
             )}
             업로드 했습니다.
@@ -222,7 +222,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에서 
+                <IssueLink activity={activity} /> 에서{" "}
               </>
             )}
             삭제했습니다.
@@ -254,7 +254,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에서 
+                <IssueLink activity={activity} /> 에서{" "}
               </>
             )}
             삭제했습니다.
@@ -266,7 +266,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에 
+                <IssueLink activity={activity} /> 에{" "} 
               </>
             )}
             소요자원을 {activity.new_value} 로 설정했습니다
@@ -308,7 +308,7 @@ const activityDetails: {
             {showIssue && (
               <span className="">
                 {" "}
-                <IssueLink activity={activity} /> 에 
+                <IssueLink activity={activity} /> 에{" "} 
               </span>
             )}
              추가했습니다.
@@ -327,7 +327,7 @@ const activityDetails: {
             {showIssue && (
               <span>
                 {" "}
-                <IssueLink activity={activity} /> 에서 
+                <IssueLink activity={activity} /> 에서{" "} 
               </span>
             )}
             삭제했습니다.
@@ -353,7 +353,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에 
+                <IssueLink activity={activity} /> 에{" "} 
               </>
             )}
             추가했습니다.
@@ -375,7 +375,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에서 
+                <IssueLink activity={activity} /> 에서{" "} 
               </>
             )}
             수정 했습니다.
@@ -397,7 +397,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에서 
+                <IssueLink activity={activity} /> 에서{" "}
               </>
             )}
             삭제했습니다.
@@ -534,7 +534,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                을(를) <IssueLink activity={activity} />에서 
+                을(를) <IssueLink activity={activity} />에서{" "}
               </>
             )}
             제거했습니다
@@ -548,7 +548,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                (으)로 <IssueLink activity={activity} />에 
+                (으)로 <IssueLink activity={activity} />에{" "}
               </>
             )}
             설정했습니다
@@ -567,7 +567,7 @@ const activityDetails: {
         {showIssue && (
           <>
             {" "}
-            (으)로 <IssueLink activity={activity} />에 
+            (으)로 <IssueLink activity={activity} />에{" "}
           </>
         )}
         {!showIssue && " (으)로"} 설정했습니다
@@ -657,7 +657,7 @@ const activityDetails: {
         {showIssue && (
           <>
             {" "}
-            (으)로 <IssueLink activity={activity} />에 
+            (으)로 <IssueLink activity={activity} />에{" "}
           </>
         )}
         {!showIssue && " (으)로"} 설정했습니다
@@ -674,7 +674,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} />에서 
+                <IssueLink activity={activity} />에서{" "}
               </>
             )}
             삭제했습니다
@@ -690,7 +690,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                (으)로 <IssueLink activity={activity} />에 
+                (으)로 <IssueLink activity={activity} />에{" "}
               </>
             )}
             {!showIssue && " (으)로"} 설정했습니다
@@ -708,7 +708,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} />에서 
+                <IssueLink activity={activity} />에서{" "}
               </>
             )}
             삭제했습니다
@@ -723,7 +723,7 @@ const activityDetails: {
             </span>
             {showIssue && (
               <>
-                {" "}(으)로 <IssueLink activity={activity} />에 
+                {" "}(으)로 <IssueLink activity={activity} />에{" "}
               </>
             )}
             {!showIssue && " (으)로"} 설정했습니다

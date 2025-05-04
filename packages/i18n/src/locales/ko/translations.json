@@ -118,7 +118,7 @@
         "label": "팀과 함께 작업을 관리하려면 로그인하세요.",
         "step": {
           "email": {
-            "header": "로그인",
+            "header": "로그인하여 작업을 관리하세요.",
             "sub_header": ""
           },
           "password": {

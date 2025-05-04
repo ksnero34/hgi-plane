@@ -341,6 +341,7 @@ def notifications(
                         )
                         # 알림 처리 함수 호출
                         process_notification(notification)
+                        # 알림을 bulk_notifications 배열에 추가
                         bulk_notifications.append(notification)
                     except Exception as e:
                         print(f"Error creating mention notification: {e}")
@@ -574,6 +575,8 @@ def notifications(
                 )
                 # 알림 처리 함수 호출
                 process_notification(notification)
+                # 알림을 bulk_notifications 배열에 추가
+                bulk_notifications.append(notification)
                 # Create email notification
                 if send_email:
                     bulk_email_logs.append(
@@ -664,6 +667,8 @@ def notifications(
 
                     # 알림 처리 함수 호출
                     process_notification(notification)
+                    # 알림을 bulk_notifications 배열에 추가
+                    bulk_notifications.append(notification)
 
         for mention_id in new_mentions:
             if mention_id != actor_id:
@@ -686,6 +691,8 @@ def notifications(
                     )
                     # 알림 처리 함수 호출
                     process_notification(notification)
+                    # 알림을 bulk_notifications 배열에 추가
+                    bulk_notifications.append(notification)
                 else:
                     for issue_activity in issue_activities_created:
                         notification = create_mention_notification(
@@ -699,6 +706,8 @@ def notifications(
                         )
                         # 알림 처리 함수 호출
                         process_notification(notification)
+                        # 알림을 bulk_notifications 배열에 추가
+                        bulk_notifications.append(notification)
 
         # save new mentions for the particular issue and remove the mentions that has been deleted from the description
         update_mentions_for_issue(
