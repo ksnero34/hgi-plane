@@ -86,12 +86,12 @@ LOGGING = {
     },
     "loggers": {
         "plane.api.request": {
-            "level": "DEBUG" if DEBUG else "INFO",
+            "level": "WARNING",
             "handlers": ["console"],
             "propagate": False,
         },
         "plane.api": {
-            "level": "DEBUG" if DEBUG else "INFO",
+            "level": "WARNING",
             "handlers": ["console"],
             "propagate": False,
         },
