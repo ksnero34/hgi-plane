@@ -58,7 +58,7 @@ export const FilterCycle: React.FC<Props> = observer((props) => {
   return (
     <>
       <FilterHeader
-        title={`Cycle ${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
+        title={`주기 ${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />

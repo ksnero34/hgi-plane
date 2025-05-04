@@ -53,7 +53,7 @@ export const FilterAssignees: React.FC<Props> = observer((props: Props) => {
   return (
     <>
       <FilterHeader
-        title={`Assignee${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
+        title={`담당자 ${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />
@@ -79,7 +79,7 @@ export const FilterAssignees: React.FC<Props> = observer((props: Props) => {
                           size="md"
                         />
                       }
-                      title={currentUser?.id === member.id ? "You" : member?.display_name}
+                      title={currentUser?.id === member.id ? "당신" : member?.display_name + " 님"}
                     />
                   );
                 })}
@@ -89,12 +89,12 @@ export const FilterAssignees: React.FC<Props> = observer((props: Props) => {
                     className="ml-8 text-xs font-medium text-custom-primary-100"
                     onClick={handleViewToggle}
                   >
-                    {itemsToRender === sortedOptions.length ? "View less" : "View all"}
+                    {itemsToRender === sortedOptions.length ? "줄여서 보기" : "모두 보기"}
                   </button>
                 )}
               </>
             ) : (
-              <p className="text-xs italic text-custom-text-400">No matches found</p>
+              <p className="text-xs italic text-custom-text-400">일치하는 항목 없음</p>
             )
           ) : (
             <Loader className="space-y-2">

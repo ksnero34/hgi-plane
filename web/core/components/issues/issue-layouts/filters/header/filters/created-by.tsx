@@ -53,7 +53,7 @@ export const FilterCreatedBy: React.FC<Props> = observer((props: Props) => {
   return (
     <>
       <FilterHeader
-        title={`Created by${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
+        title={`생성자 ${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />

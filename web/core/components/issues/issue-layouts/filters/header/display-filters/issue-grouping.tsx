@@ -15,7 +15,7 @@ const ISSUE_FILTER_OPTIONS: {
   key: TIssueGroupingFilters;
   title: string;
 }[] = [
-  { key: null, title: "All" },
+  { key: null, title: "모든" },
   { key: "active", title: "Active" },
   { key: "backlog", title: "Backlog" },
 ];
@@ -30,7 +30,7 @@ export const FilterIssueGrouping: React.FC<Props> = observer((props) => {
   return (
     <>
       <FilterHeader
-        title={`${isEpic ? "Epic" : "Work item"} Grouping`}
+        title={`${isEpic ? "Epic" : "작업항목"} 그룹화`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />
@@ -41,7 +41,7 @@ export const FilterIssueGrouping: React.FC<Props> = observer((props) => {
               key={issueType?.key}
               isChecked={activeIssueType === issueType?.key ? true : false}
               onClick={() => handleUpdate(issueType?.key)}
-              title={`${issueType.title} ${isEpic ? "Epics" : "Work items"}`}
+              title={`${issueType.title} ${isEpic ? "Epics" : "작업항목"}`}
               multiple={false}
             />
           ))}

@@ -4,19 +4,19 @@ export enum E_SORT_ORDER {
 }
 export const DATE_AFTER_FILTER_OPTIONS = [
   {
-    name: "1 week from now",
+    name: "1주일 이내",
     value: "1_weeks;after;fromnow",
   },
   {
-    name: "2 weeks from now",
+    name: "2주일 이내",
     value: "2_weeks;after;fromnow",
   },
   {
-    name: "1 month from now",
+    name: "1개월 이내",
     value: "1_months;after;fromnow",
   },
   {
-    name: "2 months from now",
+    name: "2개월 이내",
     value: "2_months;after;fromnow",
   },
 ];

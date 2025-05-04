@@ -53,7 +53,7 @@ export const FilterMentions: React.FC<Props> = observer((props: Props) => {
   return (
     <>
       <FilterHeader
-        title={`Mention${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
+        title={`멘션 ${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />

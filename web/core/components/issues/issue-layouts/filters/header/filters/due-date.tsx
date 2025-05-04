@@ -42,11 +42,11 @@ export const FilterDueDate: React.FC<Props> = observer((props) => {
           handleClose={() => setIsDateFilterModalOpen(false)}
           isOpen={isDateFilterModalOpen}
           onSelect={(val) => handleUpdate(val)}
-          title="Due date"
+          title="마감일"
         />
       )}
       <FilterHeader
-        title={`Due date${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
+        title={`마감일${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />
@@ -63,10 +63,10 @@ export const FilterDueDate: React.FC<Props> = observer((props) => {
                   multiple
                 />
               ))}
-              <FilterOption isChecked={isCustomDateSelected()} onClick={handleCustomDate} title="Custom" multiple />
+              <FilterOption isChecked={isCustomDateSelected()} onClick={handleCustomDate} title="사용자 정의" multiple />
             </>
           ) : (
-            <p className="text-xs italic text-custom-text-400">No matches found</p>
+            <p className="text-xs italic text-custom-text-400">일치하는 항목 없음</p>
           )}
         </div>
       )}

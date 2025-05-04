@@ -61,6 +61,29 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
     (alwaysAllowEditing ||
       allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT));
 
+  // 필터 키에 따라 한글 이름을 반환하는 함수
+  const getFilterKeyLabel = (key: keyof IIssueFilterOptions) => {
+    const filterLabels: Record<string, string> = {
+      assignees: "담당자",
+      mentions: "멘션",
+      created_by: "생성자",
+      subscriber: "구독자",
+      start_date: "시작일",
+      target_date: "마감일",
+      labels: "레이블",
+      priority: "우선순위",
+      state: "상태",
+      state_group: "상태 그룹",
+      project: "프로젝트",
+      cycle: "주기",
+      module: "모듈",
+      issue_type: "작업 항목 유형",
+      team_project: "팀 프로젝트"
+    };
+
+    return filterLabels[key] || replaceUnderscoreIfSnakeCase(key);
+  };
+
   return (
     <div className="flex flex-wrap items-stretch gap-2 bg-custom-background-100 truncate my-auto">
       {Object.entries(appliedFilters).map(([key, value]) => {
@@ -71,7 +94,7 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
 
         return (
           <Tag key={filterKey}>
-            <span className="text-xs text-custom-text-300">{replaceUnderscoreIfSnakeCase(filterKey)}</span>
+            <span className="text-xs text-custom-text-300">{getFilterKeyLabel(filterKey)}</span>
             {membersFilters.includes(filterKey) && (
               <AppliedMembersFilters
                 editable={isEditingAllowed}

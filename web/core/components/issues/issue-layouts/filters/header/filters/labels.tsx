@@ -51,7 +51,7 @@ export const FilterLabels: React.FC<Props> = observer((props) => {
   return (
     <>
       <FilterHeader
-        title={`Label${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
+        title={`레이블 ${appliedFiltersCount > 0 ? ` (${appliedFiltersCount})` : ""}`}
         isPreviewEnabled={previewEnabled}
         handleIsPreviewEnabled={() => setPreviewEnabled(!previewEnabled)}
       />

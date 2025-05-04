@@ -265,9 +265,10 @@ class IssueViewSet(BaseViewSet):
 
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         
-        # 기본 필터 적용 (날짜 필터 제외)
-        filters = {k: v for k, v in issue_filters(request.query_params, "GET").items() 
-                  if not k.startswith('start_date') and not k.startswith('target_date')}
+        # 모든 필터 적용 (날짜 필터 포함)
+        filters = issue_filters(request.query_params, "GET")
+        
+        print("적용된 필터:", filters)
         
         # 기본 queryset 가져오기
         issue_queryset = self.get_queryset()
@@ -286,51 +287,10 @@ class IssueViewSet(BaseViewSet):
 
         # 정렬 파라미터 설정
         order_by_param = request.GET.get("order_by", "-created_at")
-        # print("Order By:", order_by_param)
-
-        # 캘린더 뷰인 경우 Q 객체로 필터링 (자동 필터 추가 비활성화)
-        """
-        if request.GET.get('layout') == 'calendar':
-            start_date_from = request.GET.get('start_date_from')
-            start_date_to = request.GET.get('start_date_to')
-            target_date_from = request.GET.get('target_date_from')
-            target_date_to = request.GET.get('target_date_to')
-
-            # print("Calendar View Parameters:", {
-            #     'start_date_from': start_date_from,
-            #     'start_date_to': start_date_to,
-            #     'target_date_from': target_date_from,
-            #     'target_date_to': target_date_to
-            # })
-
-            if start_date_from and start_date_to and target_date_from and target_date_to:
-                # 캘린더 날짜 필터 적용
-                calendar_filter = (
-                    Q(start_date__range=(start_date_from, start_date_to)) |
-                    Q(target_date__range=(target_date_from, target_date_to)) |
-                    Q(
-                        Q(start_date__isnull=False) & 
-                        Q(target_date__isnull=False) & 
-                        Q(start_date__lte=target_date_to) & 
-                        Q(target_date__gte=start_date_from)
-                    )
-                )
-                issue_queryset = issue_queryset.filter(calendar_filter)
-                
-                # print("Calendar Filter Query:", str(calendar_filter))
-                # print("Total Issues After Calendar Filter:", issue_queryset.count())
-        """
-
-        # print("Total Issues Before Grouping:", issue_queryset.count())
 
         # Group by
         group_by = request.GET.get("group_by", False)
         sub_group_by = request.GET.get("sub_group_by", False)
-
-        # print("Grouping Parameters:", {
-        #     'group_by': group_by,
-        #     'sub_group_by': sub_group_by
-        # })
 
         # issue queryset
         issue_queryset = issue_queryset_grouper(

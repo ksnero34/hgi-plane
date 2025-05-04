@@ -96,7 +96,7 @@ LOGGING = {
             "propagate": False,
         },
         "plane.worker": {
-            "level": "DEBUG" if DEBUG else "INFO",
+            "level": "WARNING",
             "handlers": ["console"],
             "propagate": False,
         },
