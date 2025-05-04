@@ -18,23 +18,23 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
     hour: "numeric",
   }).format(currentTime);
 
-  const date = new Intl.DateTimeFormat("en-US", {
-    month: "short",
+  const date = new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
     day: "numeric",
   }).format(currentTime);
 
-  const weekDay = new Intl.DateTimeFormat("en-US", {
+  const weekDay = new Intl.DateTimeFormat("ko-KR", {
     weekday: "long",
   }).format(currentTime);
 
-  const timeString = new Intl.DateTimeFormat("en-US", {
+  const timeString = new Intl.DateTimeFormat("ko-KR", {
     timeZone: user?.user_timezone,
     hour12: false, // Use 24-hour format
     hour: "2-digit",
     minute: "2-digit",
   }).format(currentTime);
 
-  const greeting = parseInt(hour, 10) < 12 ? "morning" : parseInt(hour, 10) < 18 ? "afternoon" : "evening";
+  const greeting = parseInt(hour, 10) < 6 ? "dawn" : parseInt(hour, 10) < 12 ? "morning" : parseInt(hour, 10) < 18 ? "afternoon" : "evening"; 
 
   return (
     <div>
@@ -42,9 +42,9 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
         Good {greeting}, {user?.first_name} 님
       </h3>
       <h6 className="flex items-center gap-2 font-medium text-custom-text-400">
-        <div>{greeting === "morning" ? "🌤️" : greeting === "afternoon" ? "🌥️" : "🌙️"}</div>
+        <div>{greeting === "dawn" ? "🌃" : greeting === "morning" ? "🌤️" : greeting === "afternoon" ? "🌥️" : "🌙️"}</div>
         <div>
-          {weekDay}, {date} {timeString}
+          {date} {weekDay} {timeString}
         </div>
       </h6>
     </div>

@@ -27,39 +27,42 @@ export const IssueLinkActivity: FC<TIssueLinkActivity> = observer((props) => {
       <>
         {activity.verb === "created" ? (
           <>
-            <span>added </span>
+            <span>님이 새로운 </span>
             <a
               href={`${activity.new_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              link
+              링크
             </a>
+            <span> 를 추가했습니다.</span>
           </>
         ) : activity.verb === "updated" ? (
           <>
-            <span>updated the </span>
+            <span>님이 </span>
             <a
               href={`${activity.old_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              link
+              링크
             </a>
+            <span> 를 수정정했습니다.</span>
           </>
         ) : (
           <>
-            <span>removed this </span>
+            <span>님이 </span>
             <a
               href={`${activity.old_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              link
+              링크
             </a>
+            <span> 를 삭제했습니다.</span>
           </>
         )}
         {showIssue && (activity.verb === "created" ? ` to ` : ` from `)}

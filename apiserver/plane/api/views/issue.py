@@ -1110,23 +1110,22 @@ class IssueAttachmentEndpoint(BaseAPIView):
         )
         serializer = IssueAttachmentSerializer(issue_attachment)
 
-        # Send this activity only if the attachment is not uploaded before
-        if not issue_attachment.is_uploaded:
-            issue_activity.delay(
-                type="attachment.activity.created",
-                requested_data=None,
-                actor_id=str(self.request.user.id),
-                issue_id=str(self.kwargs.get("issue_id", None)),
-                project_id=str(self.kwargs.get("project_id", None)),
-                current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
-                epoch=int(timezone.now().timestamp()),
-                notification=True,
-                origin=base_host(request=request, is_app=True),
-            )
+        # 항상 첨부파일 추가 활동 기록 생성 (is_uploaded 상태와 관계없이)
+        issue_activity.delay(
+            type="attachment.activity.created",
+            requested_data=None,
+            actor_id=str(self.request.user.id),
+            issue_id=str(self.kwargs.get("issue_id", None)),
+            project_id=str(self.kwargs.get("project_id", None)),
+            current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
+            epoch=int(timezone.now().timestamp()),
+            notification=True,
+            origin=base_host(request=request, is_app=True),
+        )
 
-            # Update the attachment
-            issue_attachment.is_uploaded = True
-            issue_attachment.created_by = request.user
+        # Update the attachment
+        issue_attachment.is_uploaded = True
+        issue_attachment.created_by = request.user
 
         # Get the storage metadata
         if not issue_attachment.storage_metadata:

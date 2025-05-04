@@ -31,7 +31,7 @@ export const IssueParentActivity: FC<TIssueParentActivity> = observer((props) =>
         ) : (
           <span className="font-medium text-custom-text-100">{activity.old_value}</span>
         )}
-        {activity.new_value ? ` 을(를) 상위 작업항목으로 설정했습니다.` : ` 을(를) 삭제했습니다.`}
+        {activity.new_value ? ` 을 상위 작업항목으로 설정했습니다.` : ` 을 상위 작업항목에서 삭제했습니다.`}
         {showIssue && (activity.new_value ? ` for ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

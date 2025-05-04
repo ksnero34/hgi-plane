@@ -5,15 +5,21 @@ export const getRelationActivityContent = (activity: TIssueActivity | undefined)
 
   switch (activity.field) {
     case "blocking":
-      return activity.old_value === "" ? `marked this work item is blocking work item ` : `removed the blocking work item `;
+      return activity.old_value === "" 
+        ? ` 을 차단함으로 표시했습니다: ` 
+        : ` 을 차단함 표시를 제거했습니다: `;
     case "blocked_by":
       return activity.old_value === ""
-        ? `marked this work item is being blocked by `
-        : `removed this work item being blocked by work item `;
+        ? ` 에 의해 차단됨으로 표시했습니다: `
+        : ` 에 의해 차단됨 표시를 제거했습니다: `;
     case "duplicate":
-      return activity.old_value === "" ? `marked this work item as duplicate of ` : `removed this work item as a duplicate of `;
+      return activity.old_value === "" 
+        ? ` 의 중복임으로 표시했습니다: ` 
+        : ` 의 중복임 표시를 제거했습니다: `;
     case "relates_to":
-      return activity.old_value === "" ? `marked that this work item relates to ` : `removed the relation from `;
+      return activity.old_value === "" 
+        ? ` 과 관련있음으로 표시했습니다: ` 
+        : ` 간의 관련성을 제거했습니다: `;
   }
 
   return;

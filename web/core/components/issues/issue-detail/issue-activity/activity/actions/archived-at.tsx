@@ -36,7 +36,7 @@ export const IssueArchivedAtActivity: FC<TIssueArchivedAtActivity> = observer((p
       ends={ends}
       customUserName={activity.new_value === "archive" ? "Plane" : undefined}
     >
-      {activity.new_value === "restore" ? "restored the work item" : "archived the work item"}.
+      {activity.new_value === "restore" ? "님이 작업 항목을 복구했습니다." : "님이 작업 항목을 보관했습니다."}.
     </IssueActivityBlockComponent>
   );
 });

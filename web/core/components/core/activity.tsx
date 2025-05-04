@@ -196,15 +196,15 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            새로운 첨부파일{" "}
-            <a
+            새로운 첨부파일
+            {/* <a
               href={`${activity.new_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
               파일
-            </a>
+            </a> */}
             을
             {showIssue && (
               <>

@@ -28,12 +28,13 @@ export const IssueRelationActivity: FC<TIssueRelationActivity> = observer((props
       activityId={activityId}
       ends={ends}
     >
-      {activityContent}
+      <span>님이 이 작업항목이 다음 작업항목 </span>
       {activity.old_value === "" ? (
-        <span className="font-medium text-custom-text-100">{activity.new_value}.</span>
+        <span className="font-medium text-custom-text-100">{activity.new_value}</span>
       ) : (
-        <span className="font-medium text-custom-text-100">{activity.old_value}.</span>
+        <span className="font-medium text-custom-text-100">{activity.old_value}</span>
       )}
+      {activityContent}
     </IssueActivityBlockComponent>
   );
 });

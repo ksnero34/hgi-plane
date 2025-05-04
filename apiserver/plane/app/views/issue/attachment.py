@@ -530,115 +530,98 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             )
             serializer = IssueAttachmentSerializer(issue_attachment)
 
-            # Send this activity only if the attachment is not uploaded before
-            if not issue_attachment.is_uploaded:
-                issue_activity.delay(
-                    type="attachment.activity.created",
-                    requested_data=None,
-                    actor_id=str(self.request.user.id),
-                    issue_id=str(self.kwargs.get("issue_id", None)),
-                    project_id=str(self.kwargs.get("project_id", None)),
-                    current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
-                    epoch=int(timezone.now().timestamp()),
-                    notification=True,
-                    origin=base_host(request=request, is_app=True),
-                )
+            try:
+                # S3/MinIO에서 파일 가져오기
+                storage = S3Storage(request=request)
+                file_content = storage.get_object(issue_attachment.asset)
                 
+                if not file_content:
+                    return Response(
+                        {"error": "파일을 읽을 수 없습니다."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # 파일의 실제 MIME 타입 확인
                 try:
-                    # S3/MinIO에서 파일 가져오기
-                    storage = S3Storage(request=request)
-                    file_content = storage.get_object(issue_attachment.asset)
-                    
-                    if not file_content:
+                    mime = magic.Magic(mime=True)
+                    # 전체 내용을 읽어서 바이트로 저장
+                    content_bytes = file_content.read()
+                    if not content_bytes:
                         return Response(
-                            {"error": "파일을 읽을 수 없습니다."},
+                            {"error": "파일 내용을 읽을 수 없습니다."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                        
+                    actual_mime_type = mime.from_buffer(content_bytes)
+                    
+                    # 파일 확장자 가져오기
+                    file_name = issue_attachment.attributes.get("name", "")
+                    file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
+                    
+                    # MIME 타입 검증
+                    if not self.is_valid_mime_type(file_extension, actual_mime_type):
+                        # 파일 삭제
+                        storage.delete_object(issue_attachment.asset)
+                        issue_attachment.delete()
+                        
+                        return Response(
+                            {
+                                "error": "파일 형식이 올바르지 않습니다.",
+                                "message": f"파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, "
+                                        f"감지된 MIME 타입: {actual_mime_type}"
+                            },
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     
-                    # 파일의 실제 MIME 타입 확인
-                    try:
-                        mime = magic.Magic(mime=True)
-                        # 전체 내용을 읽어서 바이트로 저장
-                        content_bytes = file_content.read()
-                        if not content_bytes:
-                            return Response(
-                                {"error": "파일 내용을 읽을 수 없습니다."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                            
-                        actual_mime_type = mime.from_buffer(content_bytes)
-                        
-                        # 파일 확장자 가져오기
-                        file_name = issue_attachment.attributes.get("name", "")
-                        file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
-                        
-                        # MIME 타입 검증
-                        if not self.is_valid_mime_type(file_extension, actual_mime_type):
-                            # 파일 삭제
-                            storage.delete_object(issue_attachment.asset)
-                            issue_attachment.delete()
-                            
-                            return Response(
-                                {
-                                    "error": "파일 형식이 올바르지 않습니다.",
-                                    "message": f"파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, "
-                                            f"감지된 MIME 타입: {actual_mime_type}"
-                                },
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                        
-                    except Exception as e:
-                        import logging
-                        logger = logging.getLogger(__name__)
-                        logger.error(f"File validation error: {str(e)}")
-                        logger.error(f"File info - name: {file_name}, asset: {issue_attachment.asset}")
-                        return Response(
-                            {"error": "파일 내용을 처리하는 중 오류가 발생했습니다."},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-
-                except Exception as storage_error:
-                    # 에러 로깅
+                except Exception as e:
                     import logging
                     logger = logging.getLogger(__name__)
-                    logger.error(f"File validation error: {str(storage_error)}")
-                    logger.error(f"File info - name: {issue_attachment.attributes.get('name')}, "
-                                f"asset: {issue_attachment.asset}")
-                    
+                    logger.error(f"File validation error: {str(e)}")
+                    logger.error(f"File info - name: {file_name}, asset: {issue_attachment.asset}")
                     return Response(
-                        {
-                            "error": f"파일 형식 검증에 실패했습니다: {str(storage_error)}",
-                            "message": "파일 형식이 올바르지 않습니다. 파일 확장자: {file_extension}, 감지된 MIME 타입: {actual_mime_type}"
-                        },
+                        {"error": "파일 내용을 처리하는 중 오류가 발생했습니다."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # 파일이 정상적으로 검증되면 업로드 완료 처리
-                serializer = IssueAttachmentSerializer(issue_attachment)
+            except Exception as storage_error:
+                # 에러 로깅
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"File validation error: {str(storage_error)}")
+                logger.error(f"File info - name: {issue_attachment.attributes.get('name')}, "
+                            f"asset: {issue_attachment.asset}")
+                
+                return Response(
+                    {
+                        "error": f"파일 형식 검증에 실패했습니다: {str(storage_error)}",
+                        "message": "파일 형식이 올바르지 않습니다."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-                if not issue_attachment.is_uploaded:
-                    issue_activity.delay(
-                        type="attachment.activity.created",
-                        requested_data=None,
-                        actor_id=str(request.user.id),
-                        issue_id=str(issue_id),
-                        project_id=str(project_id),
-                        current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
-                        epoch=int(timezone.now().timestamp()),
-                        notification=True,
-                        origin=request.META.get("HTTP_ORIGIN"),
-                    )
+            # 파일이 정상적으로 검증되면 활동 기록 항상 생성 (is_uploaded 상태와 관계 없이)
+            issue_activity.delay(
+                type="attachment.activity.created",
+                requested_data=None,
+                actor_id=str(request.user.id),
+                issue_id=str(issue_id),
+                project_id=str(project_id),
+                current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
+                epoch=int(timezone.now().timestamp()),
+                notification=True,
+                origin=request.META.get("HTTP_ORIGIN"),
+            )
 
-                    # 업로드 상태 업데이트
-                    issue_attachment.is_uploaded = True
-                    issue_attachment.created_by = request.user
+            # 업로드 상태 업데이트
+            issue_attachment.is_uploaded = True
+            issue_attachment.created_by = request.user
 
-                # 스토리지 메타데이터 업데이트
-                if not issue_attachment.storage_metadata:
-                    get_asset_object_metadata.delay(str(issue_attachment.id))
-                    
-                issue_attachment.save()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            # 스토리지 메타데이터 업데이트
+            if not issue_attachment.storage_metadata:
+                get_asset_object_metadata.delay(str(issue_attachment.id))
+                
+            issue_attachment.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         except FileAsset.DoesNotExist:
             return Response(
