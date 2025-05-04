@@ -568,6 +568,9 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     // 이슈 ID 수집
     const issueIds = new Set<string>();
     
+    // 현재 적용된 필터 가져오기
+    const appliedFilters = issuesFilterStore?.issueFilters?.filters || {};
+    
     // 이슈 맵에서 날짜에 해당하는 이슈 찾기
     Object.values(issues || {}).forEach(issue => {
       if (!issue) return;
@@ -579,6 +582,9 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       if (startDate) startDate.setHours(0, 0, 0, 0);
       if (targetDate) targetDate.setHours(0, 0, 0, 0);
 
+      // 날짜 필터링 로직 - 현재 날짜에 표시되어야 하는지 확인
+      let isVisibleOnCurrentDate = false;
+      
       // 시작일과 종료일이 모두 있는 경우
       if (startDate && targetDate) {
         // 현재 날짜가 시작일과 종료일 사이에 있는지 확인 (시작일과 종료일 포함)
@@ -586,22 +592,87 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
         const targetTime = targetDate.getTime();
         
         if (currentTime >= startTime && currentTime <= targetTime) {
-          issueIds.add(issue.id);
+          isVisibleOnCurrentDate = true;
         }
       } 
       // 시작일만 있는 경우
       else if (startDate) {
         // 현재 날짜가 시작일과 같은지 확인
         if (currentTime === startDate.getTime()) {
-          issueIds.add(issue.id);
+          isVisibleOnCurrentDate = true;
         }
       } 
       // 종료일만 있는 경우
       else if (targetDate) {
         // 현재 날짜가 종료일과 같은지 확인
         if (currentTime === targetDate.getTime()) {
-          issueIds.add(issue.id);
+          isVisibleOnCurrentDate = true;
         }
+      }
+      
+      // 날짜 조건을 만족하지 않으면 스킵
+      if (!isVisibleOnCurrentDate) return;
+      
+      // 필터 조건에 맞는지 확인
+      let passesFilters = true;
+      
+      // 상태 필터 확인
+      if (appliedFilters.state && appliedFilters.state.length > 0) {
+        if (!appliedFilters.state.includes(issue.state_id)) {
+          passesFilters = false;
+        }
+      }
+      
+      // 상태 그룹 필터 확인
+      if (passesFilters && appliedFilters.state_group && appliedFilters.state_group.length > 0) {
+        // issue의 state 객체에 직접 접근할 수 없으므로, 
+        // 여기서는 이 필터를 적용하지 않음 (API 호출 시 이미 적용됨)
+      }
+      
+      // 담당자 필터 확인
+      if (passesFilters && appliedFilters.assignees && appliedFilters.assignees.length > 0) {
+        if (!issue.assignee_ids || !issue.assignee_ids.some(id => appliedFilters.assignees!.includes(id))) {
+          passesFilters = false;
+        }
+      }
+      
+      // 생성자 필터 확인
+      if (passesFilters && appliedFilters.created_by && appliedFilters.created_by.length > 0) {
+        if (!appliedFilters.created_by.includes(issue.created_by)) {
+          passesFilters = false;
+        }
+      }
+      
+      // 멘션 필터 확인 (이 필터는 API 단에서 처리됨)
+      
+      // 레이블 필터 확인
+      if (passesFilters && appliedFilters.labels && appliedFilters.labels.length > 0) {
+        if (!issue.label_ids || !issue.label_ids.some(id => appliedFilters.labels!.includes(id))) {
+          passesFilters = false;
+        }
+      }
+      
+      // 우선순위 필터 확인
+      if (passesFilters && appliedFilters.priority && appliedFilters.priority.length > 0) {
+        if (!appliedFilters.priority.includes(issue.priority)) {
+          passesFilters = false;
+        }
+      }
+      
+      // 프로젝트 필터 확인
+      if (passesFilters && appliedFilters.project && appliedFilters.project.length > 0) {
+        if (!appliedFilters.project.includes(issue.project_id)) {
+          passesFilters = false;
+        }
+      }
+      
+      // 모듈 필터 확인 (여기서는 module_ids가 없어서 적용 불가능)
+      
+      // 주기 필터 확인 (여기서는 cycle_id가 없어서 적용 불가능)
+      
+      // 모든 필터를 통과했으면 이슈 ID 추가
+      if (passesFilters) {
+        issueIds.add(issue.id);
       }
     });
 
@@ -1008,7 +1079,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                       date={date.date}
                       canEditProperties={canEditProperties}
                       isEpic={isEpic}
-                      issueInfo={issueInfoMap.get(id)}
+                      issueInfo={issueIds.includes(id) ? issueInfoMap.get(id) : undefined}
                     />
                   </div>
                 );

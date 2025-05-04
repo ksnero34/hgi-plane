@@ -259,6 +259,7 @@ export const CalendarChart: React.FC<Props> = observer((props) => {
                 isDragDisabled
                 isMobileView
                 isEpic={isEpic}
+                issuesFilterStore={issuesFilterStore}
               />
             </div>
           </div>
@@ -285,6 +286,7 @@ export const CalendarChart: React.FC<Props> = observer((props) => {
             isDragDisabled
             isMobileView
             isEpic={isEpic}
+            issuesFilterStore={issuesFilterStore}
           />
         </div>
       </div>

@@ -9,6 +9,12 @@ import { useIssueDetail, useIssues } from "@/hooks/store";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { TRenderQuickActions } from "../list/list-view-types";
 import { CalendarStoreType } from "./base-calendar-root";
+// 추가 임포트
+import { IProjectEpicsFilter } from "@/plane-web/store/issue/epic";
+import { ICycleIssuesFilter } from "@/store/issue/cycle";
+import { IModuleIssuesFilter } from "@/store/issue/module";
+import { IProjectIssuesFilter } from "@/store/issue/project";
+import { IProjectViewIssuesFilter } from "@/store/issue/project-views";
 
 type Props = {
   date: Date;
@@ -31,6 +37,13 @@ type Props = {
     isEndDate: boolean;
     isContinuous: boolean;
   }>;
+  // 필터 스토어 추가
+  issuesFilterStore?:
+    | IProjectIssuesFilter
+    | IModuleIssuesFilter
+    | ICycleIssuesFilter
+    | IProjectViewIssuesFilter
+    | IProjectEpicsFilter;
 };
 
 export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
@@ -50,7 +63,9 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     isMobileView = false,
     canEditProperties,
     isEpic = false,
-    issueInfo
+    issueInfo,
+    // 필터 스토어 추가
+    issuesFilterStore,
   } = props;
 
   const { t } = useTranslation();
@@ -80,6 +95,9 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     currentDate.setHours(0, 0, 0, 0);
     const currentTime = currentDate.getTime();
 
+    // 현재 적용된 필터 가져오기
+    const appliedFilters = issuesFilterStore?.issueFilters?.filters || {};
+
     // start_date와 target_date를 Date 객체로 변환
     const startDate = issue.start_date ? new Date(issue.start_date) : null;
     const targetDate = issue.target_date ? new Date(issue.target_date) : null;
@@ -87,22 +105,78 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     if (startDate) startDate.setHours(0, 0, 0, 0);
     if (targetDate) targetDate.setHours(0, 0, 0, 0);
 
+    // 날짜 필터링 로직 - 현재 날짜에 표시되어야 하는지 확인
+    let isVisibleOnCurrentDate = false;
+
     // 시작일과 종료일이 모두 있는 경우
     if (startDate && targetDate) {
-      return currentTime >= startDate.getTime() && currentTime <= targetDate.getTime();
+      // 현재 날짜가 시작일과 종료일 사이에 있는지 확인 (시작일과 종료일 포함)
+      isVisibleOnCurrentDate = currentTime >= startDate.getTime() && currentTime <= targetDate.getTime();
     }
-
     // 시작일만 있는 경우
-    if (startDate && !targetDate) {
-      return currentTime === startDate.getTime();
+    else if (startDate && !targetDate) {
+      // 현재 날짜가 시작일과 같은지 확인
+      isVisibleOnCurrentDate = currentTime === startDate.getTime();
     }
-
     // 종료일만 있는 경우 
-    if (!startDate && targetDate) {
-      return currentTime === targetDate.getTime();
+    else if (!startDate && targetDate) {
+      // 현재 날짜가 종료일과 같은지 확인
+      isVisibleOnCurrentDate = currentTime === targetDate.getTime();
     }
 
-    return false;
+    // 날짜 조건을 만족하지 않으면 즉시 false 반환
+    if (!isVisibleOnCurrentDate) return false;
+
+    // 필터 조건에 맞는지 확인
+    // 필터가 적용되지 않았다면 (필터 스토어가 없거나 필터가 비어있다면) 바로 true 반환
+    if (!issuesFilterStore || Object.keys(appliedFilters).length === 0) return true;
+
+    // 상태 필터 확인
+    if (appliedFilters.state?.length > 0) {
+      if (!appliedFilters.state.includes(issue.state_id)) {
+        return false;
+      }
+    }
+    
+    // 상태 그룹 필터 확인 (API 단에서 처리됨)
+    
+    // 담당자 필터 확인
+    if (appliedFilters.assignees?.length > 0) {
+      if (!issue.assignee_ids || !issue.assignee_ids.some(id => appliedFilters.assignees!.includes(id))) {
+        return false;
+      }
+    }
+    
+    // 생성자 필터 확인
+    if (appliedFilters.created_by?.length > 0) {
+      if (!appliedFilters.created_by.includes(issue.created_by)) {
+        return false;
+      }
+    }
+    
+    // 레이블 필터 확인
+    if (appliedFilters.labels?.length > 0) {
+      if (!issue.label_ids || !issue.label_ids.some(id => appliedFilters.labels!.includes(id))) {
+        return false;
+      }
+    }
+    
+    // 우선순위 필터 확인
+    if (appliedFilters.priority?.length > 0) {
+      if (!appliedFilters.priority.includes(issue.priority)) {
+        return false;
+      }
+    }
+    
+    // 프로젝트 필터 확인
+    if (appliedFilters.project?.length > 0) {
+      if (!appliedFilters.project.includes(issue.project_id)) {
+        return false;
+      }
+    }
+
+    // 모든 필터를 통과하면 true 반환
+    return true;
   };
   
   // 이슈 정렬 및 처리
