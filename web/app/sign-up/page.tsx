@@ -20,6 +20,7 @@ import PlaneBackgroundPatternDark from "@/public/auth/background-pattern-dark.sv
 import PlaneBackgroundPattern from "@/public/auth/background-pattern.svg";
 import BlackHorizontalLogo from "@/public/plane-logos/black-horizontal-with-blue-logo.png";
 import WhiteHorizontalLogo from "@/public/plane-logos/white-horizontal-with-blue-logo.png";
+import PlaneTakeOffImage from "@/public/plane-takeoff.png";
 
 export type AuthType = "sign-in" | "sign-up";
 
@@ -42,6 +43,7 @@ const SignInPage = observer(() => {
             className="w-full h-full object-cover"
             alt="Plane background pattern"
           />
+          <div className="absolute inset-0 bg-gradient-to-l from-custom-background-90/40 to-custom-background-100/40"></div>
         </div>
         <div className="relative z-10 w-screen h-screen overflow-hidden overflow-y-auto flex flex-col">
           <div className="container min-w-full px-10 lg:px-20 xl:px-36 flex-shrink-0 relative flex items-center justify-between pb-4 transition-all">
@@ -61,7 +63,15 @@ const SignInPage = observer(() => {
               </Link>
             </div>
           </div>
-          <div className="flex flex-col justify-center flex-grow container h-[100vh-60px] mx-auto max-w-lg px-10 lg:max-w-md lg:px-5 transition-all">
+          <div className="flex flex-col justify-start items-center flex-grow container mx-auto max-w-lg px-10 lg:max-w-md lg:px-5 transition-all mt-2">
+            <div className="w-[350px] h-[350px] md:w-[400px] md:h-[400px] mb-4 opacity-95 relative">
+              <Image
+                src={PlaneTakeOffImage}
+                alt="Plane takeoff illustration"
+                className="object-contain"
+                fill
+              />
+            </div>
             <AuthRoot authMode={EAuthModes.SIGN_UP} />
           </div>
         </div>

@@ -2,6 +2,8 @@
 
 import { useParams } from "next/navigation";
 import { mutate } from "swr";
+// nivo
+import { BarDatum } from "@nivo/bar";
 // types
 import { IAnalyticsParams, IAnalyticsResponse } from "@plane/types";
 // ui
@@ -36,29 +38,20 @@ export const CustomAnalyticsMainContent: React.FC<Props> = (props) => {
   const estimateType = estimateDetails?.type;
 
   const yAxisKey = params.y_axis === "issue_count" ? "count" : "estimate";
-  const barGraphData = convertResponseToBarGraphData(analytics?.distribution, params, estimateType);
-
-  // 차트 데이터 가공 시 정렬 유지
-  const sortTimeEstimateData = (data: BarDatum[], yAxisKey: string): BarDatum[] => {
-    if (!data || data.length === 0) return data;
-    
-    // X축이 추정값이고 숫자로 변환 가능한 경우 숫자 기준 정렬
-    const isNumericName = data.every(item => !isNaN(parseInt(`${item.name}`.replace(/[^0-9]/g, ''), 10)));
-    
-    if (isNumericName) {
-      return [...data].sort((a, b) => {
-        const aValue = parseInt(`${a.name}`.replace(/[^0-9]/g, ''), 10);
-        const bValue = parseInt(`${b.name}`.replace(/[^0-9]/g, ''), 10);
-        return aValue - bValue;
-      });
-    }
-    
-    return data;
-  };
+  let barGraphData = convertResponseToBarGraphData(analytics?.distribution, params, estimateType);
 
   // 시간 타입이면 추가 정렬 적용
-  if (estimateType === EEstimateSystem.TIME && params.x_axis === "estimate_point__value") {
-    barGraphData.data = sortTimeEstimateData(barGraphData.data, yAxisKey);
+  if (estimateType === EEstimateSystem.TIME && params.x_axis === "estimate_point__value" && barGraphData.data.length > 0) {
+    // 숫자만 추출하는 함수
+    const extractNumber = (str: string): number => {
+      const match = str.toString().match(/(\d+)/g);
+      return match ? parseInt(match.join(''), 10) : 0;
+    };
+
+    // 데이터 정렬
+    barGraphData.data.sort((a, b) => {
+      return extractNumber(a.name.toString()) - extractNumber(b.name.toString());
+    });
   }
 
   return (
