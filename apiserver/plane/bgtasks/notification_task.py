@@ -507,11 +507,30 @@ def notifications(
                 elif field == "target_date":
                     sender = "in_app:issue_activities:target_date_change"
                     message = f"이슈 '{issue.name}'의 마감일이 변경되었습니다."
+                elif field.startswith("estimate_"):  # 모든 추정 필드 타입을 처리 (estimate_point, estimate_time 등)
+                    # 추정 값 변경 알림
+                    if type == "issue.activity.created":
+                        # 이슈 생성 시 추정값 설정
+                        if receiver in issue_subscribers:
+                            sender = "in_app:issue_activities:estimate_change"
+                            message = f"이슈 '{issue.name}'의 추정 소요자원 값이 설정되었습니다."
+                        else:
+                            continue
+                    else:
+                        # 추정값 업데이트
+                        sender = "in_app:issue_activities:estimate_change"
+                        message = f"이슈 '{issue.name}'의 추정 소요자원 값이 변경되었습니다."
                 else:
                     # 이슈 생성 시 구독자에게만 알림
                     if receiver in issue_subscribers:
-                        sender = "in_app:issue_activities:subscribed"
-                        message = f"이슈 '{issue.name}'이(가) 생성되었습니다."
+                        if type == "issue.activity.created":
+                            sender = "in_app:issue_activities:subscribed"
+                            message = f"이슈 '{issue.name}'이(가) 생성되었습니다."
+                        elif type == "issue.activity.updated":
+                            sender = "in_app:issue_activities:updated"
+                            message = f"이슈 '{issue.name}'이(가) 업데이트되었습니다."
+                        else:
+                            continue
                         send_email = True
                     else:
                         continue

@@ -289,13 +289,13 @@ export const convertMinutesToHoursAndMinutes = (mins: number): { hours: number; 
 /**
  * @description Converts minutes to hours and minutes string
  * @param {number} totalMinutes - Total minutes
- * @returns {string} Formatted string (e.g., "2h 30m")
+ * @returns {string} Formatted string (e.g., "2시간 30분")
  * @example
- * convertMinutesToHoursMinutesString(150) // returns "2h 30m"
+ * convertMinutesToHoursMinutesString(150) // returns "2시간 30분"
  */
 export const convertMinutesToHoursMinutesString = (totalMinutes: number): string => {
   const { hours, minutes } = convertMinutesToHoursAndMinutes(totalMinutes);
-  return `${hours ? `${hours}h ` : ``}${minutes ? `${minutes}m ` : ``}`;
+  return `${hours ? `${hours}시간 ` : ``}${minutes ? `${minutes}분 ` : ``}`;
 };
 
 /**

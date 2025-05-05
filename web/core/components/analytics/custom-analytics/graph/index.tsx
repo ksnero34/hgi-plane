@@ -7,6 +7,9 @@ import { IAnalyticsParams, IAnalyticsResponse } from "@plane/types";
 import { Tooltip } from "@plane/ui";
 // ui
 import { BarGraph } from "@/components/ui";
+// hooks
+import { useProjectEstimates } from "@/hooks/store";
+import { EEstimateSystem } from "@plane/types/src/enums";
 // helpers
 import { generateBarColor, generateDisplayName, renderChartDynamicLabel } from "@/helpers/analytics.helper";
 import { findStringWithMostCharacters } from "@/helpers/array.helper";
@@ -26,6 +29,13 @@ type Props = {
 };
 
 export const AnalyticsGraph: React.FC<Props> = ({ analytics, barGraphData, params, yAxisKey, fullScreen }) => {
+  // 프로젝트 추정 타입 정보 가져오기
+  const { projectId } = params;
+  const { currentActiveEstimateIdByProjectId, estimateById } = useProjectEstimates();
+  const currentEstimateId = projectId?.[0] ? currentActiveEstimateIdByProjectId(projectId[0]) : undefined;
+  const estimateDetails = currentEstimateId ? estimateById(currentEstimateId) : undefined;
+  const estimateType = estimateDetails?.type;
+
   const generateYAxisTickValues = () => {
     if (!analytics) return [];
 

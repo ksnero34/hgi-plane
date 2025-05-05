@@ -58,6 +58,23 @@ export class EstimateService extends APIService {
     }
   }
 
+  async updateEstimate(
+    workspaceSlug: string,
+    projectId: string,
+    estimateId: string,
+    payload: Partial<IEstimateFormData>
+  ): Promise<IEstimate | undefined> {
+    try {
+      const { data } = await this.patch(
+        `/api/workspaces/${workspaceSlug}/projects/${projectId}/estimates/${estimateId}/`,
+        payload
+      );
+      return data || undefined;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async deleteEstimate(workspaceSlug: string, projectId: string, estimateId: string): Promise<void> {
     try {
       await this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/estimates/${estimateId}/`);

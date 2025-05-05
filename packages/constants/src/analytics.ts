@@ -13,51 +13,51 @@ export const ANALYTICS_X_AXIS_VALUES: { value: TXAxisValues; label: string }[] =
   [
     {
       value: "state_id",
-      label: "State name",
+      label: "상태값",
     },
     {
       value: "state__group",
-      label: "State group",
+      label: "상태 그룹",
     },
     {
       value: "priority",
-      label: "Priority",
+      label: "우선 순위",
     },
     {
       value: "labels__id",
-      label: "Label",
+      label: "라벨",
     },
     {
       value: "assignees__id",
-      label: "Assignee",
+      label: "담당자",
     },
     {
       value: "estimate_point__value",
-      label: "Estimate point",
+      label: "추정 포인트",
     },
     {
       value: "issue_cycle__cycle_id",
-      label: "Cycle",
+      label: "주기",
     },
     {
       value: "issue_module__module_id",
-      label: "Module",
+      label: "모듈",
     },
     {
       value: "completed_at",
-      label: "Completed date",
+      label: "완료 날짜",
     },
     {
       value: "target_date",
-      label: "Due date",
+      label: "마감 날짜",
     },
     {
       value: "start_date",
-      label: "Start date",
+      label: "시작 날짜",
     },
     {
       value: "created_at",
-      label: "Created date",
+      label: "생성 날짜",
     },
   ];
 
@@ -65,11 +65,11 @@ export const ANALYTICS_Y_AXIS_VALUES: { value: TYAxisValues; label: string }[] =
   [
     {
       value: "issue_count",
-      label: "Work item Count",
+      label: "작업 항목 수",
     },
     {
       value: "estimate",
-      label: "Estimate",
+      label: "추정값 (포인트/시간)",
     },
   ];
 

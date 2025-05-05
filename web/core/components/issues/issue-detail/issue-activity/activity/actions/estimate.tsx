@@ -5,6 +5,8 @@ import { Triangle } from "lucide-react";
 import { useIssueDetail } from "@/hooks/store";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
+// utilities
+import { convertMinutesToHoursMinutesString } from "@/helpers/date-time.helper";
 
 type TIssueEstimateActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -18,6 +20,33 @@ export const IssueEstimateActivity: FC<TIssueEstimateActivity> = observer((props
   const activity = getActivityById(activityId);
 
   if (!activity) return <></>;
+  
+  const getEstimateLabel = (field?: string | null) => {
+    if (!field) return "소요자원";
+    
+    if (field.includes("time")) return "소요시간";
+    if (field.includes("points")) return "포인트";
+    if (field.includes("categories")) return "카테고리";
+    
+    return "소요자원";
+  };
+
+  const estimateLabel = getEstimateLabel(activity.field);
+  
+  // 시간 타입일 경우 분 단위를 시간:분 형식으로 변환
+  const formatEstimateValue = (value: string | null, field?: string | null) => {
+    if (!value) return "";
+    
+    // 시간 추정값인 경우 분 단위를 시간:분 형식으로 변환
+    if (field && field.includes("time")) {
+      return convertMinutesToHoursMinutesString(Number(value)).trim();
+    }
+    
+    return value;
+  };
+
+  const formattedNewValue = formatEstimateValue(activity.new_value, activity.field);
+  const formattedOldValue = formatEstimateValue(activity.old_value, activity.field);
 
   return (
     <IssueActivityBlockComponent
@@ -26,9 +55,9 @@ export const IssueEstimateActivity: FC<TIssueEstimateActivity> = observer((props
       ends={ends}
     >
       <>
-        {activity.new_value ? `님이 소요자원을 ` : `님이 소요자원을 삭제했습니다`}
-        {activity.new_value ? activity.new_value : activity?.old_value}
-        {activity.new_value ? ` 로 변경했습니다` : ``}
+        {activity.new_value ? `님이 ${estimateLabel}을 ` : `님이 ${estimateLabel}을 삭제했습니다`}
+        {activity.new_value ? formattedNewValue : formattedOldValue}
+        {activity.new_value ? ` 으으로 변경했습니다` : ``}
         {showIssue && (activity.new_value ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

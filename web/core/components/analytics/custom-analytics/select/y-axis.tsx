@@ -27,7 +27,8 @@ export const SelectYAxis: React.FC<Props> = observer(({ value, onChange }) => {
         projectId &&
         currentActiveEstimateId &&
         areEstimateEnabledByProjectId(projectId.toString()) &&
-        estimateById(currentActiveEstimateId)?.type === EEstimateSystem.POINTS
+        (estimateById(currentActiveEstimateId)?.type === EEstimateSystem.POINTS ||
+         estimateById(currentActiveEstimateId)?.type === EEstimateSystem.TIME)
       ) {
         return true;
       } else {

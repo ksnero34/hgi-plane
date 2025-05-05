@@ -3,14 +3,40 @@ import { BarDatum } from "@nivo/bar";
 // plane imports
 import { ANALYTICS_DATE_KEYS, STATE_GROUPS } from "@plane/constants";
 import { IAnalyticsData, IAnalyticsParams, IAnalyticsResponse, TStateGroups } from "@plane/types";
+import { EEstimateSystem } from "@plane/types/src/enums";
+import { convertMinutesToHoursMinutesString } from "@plane/utils";
 // constants
 import { MONTHS_LIST } from "@/constants/calendar";
 // helpers
 import { addSpaceIfCamelCase, capitalizeFirstLetter, generateRandomColor } from "@/helpers/string.helper";
 
+/**
+ * 분 단위의 시간 값을 읽기 쉬운 형식으로 변환합니다.
+ * estimate_point__value 값이 x-axis인 경우에 사용됩니다.
+ * @param value 변환할 분 단위 값 (문자열)
+ * @returns 변환된 시간 문자열 (예: "15분", "1시간", "2시간 30분")
+ */
+export const formatTimeEstimateLabel = (value: string): string => {
+  const minutes = parseInt(value, 10);
+  if (isNaN(minutes)) return value;
+  
+  // 60분 미만이면 "n분"
+  if (minutes < 60) return `${minutes}분`;
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  // 정확히 n시간이면 "n시간"
+  if (remainingMinutes === 0) return `${hours}시간`;
+  
+  // 그 외에는 "n시간 m분"
+  return `${hours}시간 ${remainingMinutes}분`;
+};
+
 export const convertResponseToBarGraphData = (
   response: IAnalyticsData | undefined,
-  params: IAnalyticsParams
+  params: IAnalyticsParams,
+  estimateType?: EEstimateSystem
 ): { data: BarDatum[]; xAxisKeys: string[] } => {
   if (!response || !(typeof response === "object") || Object.keys(response).length === 0)
     return { data: [], xAxisKeys: [] };
@@ -31,12 +57,18 @@ export const convertResponseToBarGraphData = (
         if (!xAxisKeys.includes(item.segment ?? "None")) xAxisKeys.push(item.segment ?? "None");
       });
 
+      // 차원 값 포맷팅 - 추정값이 시간 타입이면 적절한 형식으로 변환
+      let formattedKey = key;
+      if (params.x_axis === "estimate_point__value" && estimateType === EEstimateSystem.TIME) {
+        formattedKey = formatTimeEstimateLabel(key);
+      }
+
       data.push({
         name: ANALYTICS_DATE_KEYS.includes(params.x_axis)
           ? renderMonthAndYear(key)
           : params.x_axis === "priority" || params.x_axis === "state__group"
             ? capitalizeFirstLetter(key)
-            : key,
+            : formattedKey,
         ...segments,
       });
     } else {
@@ -44,12 +76,18 @@ export const convertResponseToBarGraphData = (
 
       const item = response[key][0];
 
+      // 차원 값 포맷팅 - 추정값이 시간 타입이면 적절한 형식으로 변환
+      let formattedDimension = item.dimension;
+      if (params.x_axis === "estimate_point__value" && estimateType === EEstimateSystem.TIME) {
+        formattedDimension = formatTimeEstimateLabel(item.dimension);
+      }
+
       data.push({
         name: ANALYTICS_DATE_KEYS.includes(params.x_axis)
           ? renderMonthAndYear(item.dimension)
           : params.x_axis === "priority" || params.x_axis === "state__group"
             ? capitalizeFirstLetter(item.dimension ?? "None")
-            : (item.dimension ?? "None"),
+            : (formattedDimension ?? "None"),
         [yAxisKey]: item[yAxisKey] ?? 0,
       });
     }
@@ -149,4 +187,17 @@ export const renderChartDynamicLabel = (
     label: `${label.length > MAX_CHART_LABEL_LENGTH ? `${currentLabel.substring(0, MAX_CHART_LABEL_LENGTH - 3)}...` : currentLabel}`,
     length: currentLabel.length,
   };
+};
+
+/**
+ * 분석 차트에서 프로젝트 설정에 따라 추정 값을 적절히 포맷팅합니다.
+ * @param value 포맷팅할 값
+ * @param estimateType 추정 타입 (POINTS, TIME, CATEGORIES)
+ * @returns 포맷팅된 문자열
+ */
+export const formatAnalyticsEstimateValue = (value: number, estimateType?: EEstimateSystem): string | number => {
+  if (estimateType === EEstimateSystem.TIME) {
+    return convertMinutesToHoursMinutesString(value);
+  }
+  return value;
 };

@@ -1751,16 +1751,16 @@
     },
     "estimates": {
       "label": "추정",
-      "title": "프로젝트 추정 활성화",
+      "title": "프로젝트 추정 시스템 활성화",
       "description": "팀의 복잡성과 작업량을 전달하는 데 도움이 됩니다.",
-      "no_estimate": "추정 없음",
-      "new": "새 추정 시스템",
+      "no_estimate": "없음",
+      "new": "새 추정 시스템 추가",
       "create": {
         "custom": "사용자 지정",
         "start_from_scratch": "처음부터 시작",
         "choose_template": "템플릿 선택",
         "choose_estimate_system": "추정 시스템 선택",
-        "enter_estimate_point": "추정 입력",
+        "enter_estimate_point": "추정(소요자원) 입력",
         "step": "단계 {step}/{total}",
         "label": "추정 생성"
       },

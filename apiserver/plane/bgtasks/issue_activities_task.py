@@ -465,6 +465,15 @@ def track_estimate_points(
             if requested_data.get("estimate_point") is not None
             else None
         )
+        
+        # 활동 기록에 사용할 필드명 결정
+        if new_estimate and hasattr(new_estimate, 'estimate') and hasattr(new_estimate.estimate, 'type'):
+            field_name = "estimate_" + new_estimate.estimate.type
+        elif old_estimate and hasattr(old_estimate, 'estimate') and hasattr(old_estimate.estimate, 'type'):
+            field_name = "estimate_" + old_estimate.estimate.type
+        else:
+            field_name = "estimate_point"  # 기본값으로 사용
+            
         issue_activities.append(
             IssueActivity(
                 issue_id=issue_id,
@@ -482,7 +491,7 @@ def track_estimate_points(
                 ),
                 old_value=old_estimate.value if old_estimate else None,
                 new_value=new_estimate.value if new_estimate else None,
-                field="estimate_" + new_estimate.estimate.type,
+                field=field_name,
                 project_id=project_id,
                 workspace_id=workspace_id,
                 comment="updated the estimate point to ",

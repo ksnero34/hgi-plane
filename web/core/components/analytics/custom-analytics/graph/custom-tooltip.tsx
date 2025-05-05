@@ -3,8 +3,11 @@ import { BarTooltipProps } from "@nivo/bar";
 // plane imports
 import { ANALYTICS_DATE_KEYS } from "@plane/constants";
 import { IAnalyticsParams, IAnalyticsResponse } from "@plane/types";
+// hooks
+import { useProjectEstimates } from "@/hooks/store";
 // helpers
-import { renderMonthAndYear } from "@/helpers/analytics.helper";
+import { formatAnalyticsEstimateValue, renderMonthAndYear } from "@/helpers/analytics.helper";
+import { EEstimateSystem } from "@plane/types/src/enums";
 
 type Props = {
   datum: BarTooltipProps<any>;
@@ -14,6 +17,13 @@ type Props = {
 
 export const CustomTooltip: React.FC<Props> = ({ datum, analytics, params }) => {
   let tooltipValue: string | number = "";
+  
+  // Get project estimate details to check if it's time type
+  const { projectId } = params;
+  const { currentActiveEstimateIdByProjectId, estimateById } = useProjectEstimates();
+  const currentEstimateId = projectId?.[0] ? currentActiveEstimateIdByProjectId(projectId[0]) : undefined;
+  const estimateDetails = currentEstimateId ? estimateById(currentEstimateId) : undefined;
+  const estimateType = estimateDetails?.type;
 
   const renderAssigneeName = (assigneeId: string): string => {
     const assignee = analytics.extras.assignee_details.find((a) => a.assignees__id === assigneeId);
@@ -67,7 +77,11 @@ export const CustomTooltip: React.FC<Props> = ({ datum, analytics, params }) => 
       >
         {params.segment === "assignees__id" ? renderAssigneeName(tooltipValue.toString()) : tooltipValue}:
       </span>
-      <span>{datum.value}</span>
+      <span>
+        {params.y_axis === "estimate" 
+          ? formatAnalyticsEstimateValue(datum.value, estimateType as EEstimateSystem) 
+          : datum.value}
+      </span>
     </div>
   );
 };

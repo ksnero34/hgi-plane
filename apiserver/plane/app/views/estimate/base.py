@@ -134,10 +134,16 @@ class BulkEstimatePointEndpoint(BaseViewSet):
 
         estimate_points_data = request.data.get("estimate_points", [])
 
+        # 기존 포인트 ID 목록 추출
+        existing_point_ids = [
+            estimate_point.get("id") 
+            for estimate_point in estimate_points_data 
+            if estimate_point.get("id")
+        ]
+
+        # 기존 포인트 업데이트
         estimate_points = EstimatePoint.objects.filter(
-            pk__in=[
-                estimate_point.get("id") for estimate_point in estimate_points_data
-            ],
+            pk__in=existing_point_ids,
             workspace__slug=slug,
             project_id=project_id,
             estimate_id=estimate_id,
@@ -160,9 +166,34 @@ class BulkEstimatePointEndpoint(BaseViewSet):
                 )
                 updated_estimate_points.append(estimate_point)
 
+        # 일괄 업데이트
         EstimatePoint.objects.bulk_update(
             updated_estimate_points, ["key", "value"], batch_size=10
         )
+
+        # 새 포인트 생성 (ID가 없는 포인트)
+        new_estimate_points = [
+            EstimatePoint(
+                estimate_id=estimate_id,
+                key=point.get("key", 0),
+                value=point.get("value", ""),
+                description=point.get("description", ""),
+                project_id=project_id,
+                workspace_id=estimate.workspace_id,
+                created_by=request.user,
+                updated_by=request.user,
+            )
+            for point in estimate_points_data
+            if not point.get("id")
+        ]
+
+        # 새 포인트 일괄 생성
+        if new_estimate_points:
+            EstimatePoint.objects.bulk_create(
+                new_estimate_points,
+                batch_size=10,
+                ignore_conflicts=True,
+            )
 
         estimate_serializer = EstimateReadSerializer(estimate)
         return Response(estimate_serializer.data, status=status.HTTP_200_OK)

@@ -26,6 +26,7 @@ import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, LayersIcon, DiceIcon, I
 import { renderFormattedDate } from "@/helpers/date-time.helper";
 import { generateWorkItemLink } from "@/helpers/issue.helper";
 import { capitalizeFirstLetter } from "@/helpers/string.helper";
+import { convertMinutesToHoursMinutesString } from "@/helpers/date-time.helper";
 import { useLabel } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // types
@@ -237,7 +238,7 @@ const activityDetails: {
         {showIssue && (
           <>
             {" "}
-            <IssueLink activity={activity} /> 의 
+            <IssueLink activity={activity} /> 의{" "}
           </>
         )}
         내용을 수정했습니다.
@@ -246,6 +247,102 @@ const activityDetails: {
     icon: <MessageSquareIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
   },
   estimate_point: {
+    message: (activity, showIssue) => {
+      if (!activity.new_value)
+        return (
+          <>
+            소요자원을
+            {showIssue && (
+              <>
+                {" "}
+                <IssueLink activity={activity} /> 에서{" "}
+              </>
+            )}
+            삭제했습니다.
+          </>
+        );
+      else
+        return (
+          <>
+            {showIssue && (
+              <>
+                {" "}
+                <IssueLink activity={activity} /> 에{" "} 
+              </>
+            )}
+            소요자원을 {activity.new_value} 로 설정했습니다
+          </>
+        );
+    },
+    icon: <TriangleIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
+  },
+  estimate_time: {
+    message: (activity, showIssue) => {
+      if (!activity.new_value)
+        return (
+          <>
+            소요시간을
+            {showIssue && (
+              <>
+                {" "}
+                <IssueLink activity={activity} /> 에서{" "}
+              </>
+            )}
+            삭제했습니다.
+          </>
+        );
+      else {
+        // 시간 값을 분에서 시간:분 형식으로 변환
+        const timeDisplay = activity.new_value ? 
+          convertMinutesToHoursMinutesString(Number(activity.new_value)) : 
+          activity.new_value;
+          
+        return (
+          <>
+            {showIssue && (
+              <>
+                {" "}
+                <IssueLink activity={activity} /> 에{" "} 
+              </>
+            )}
+            소요시간을 {timeDisplay} 으로 설정했습니다.
+          </>
+        );
+      }
+    },
+    icon: <TriangleIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
+  },
+  estimate_points: {
+    message: (activity, showIssue) => {
+      if (!activity.new_value)
+        return (
+          <>
+            소요자원을
+            {showIssue && (
+              <>
+                {" "}
+                <IssueLink activity={activity} /> 에서{" "}
+              </>
+            )}
+            삭제했습니다.
+          </>
+        );
+      else
+        return (
+          <>
+            {showIssue && (
+              <>
+                {" "}
+                <IssueLink activity={activity} /> 에{" "} 
+              </>
+            )}
+            소요자원을 {activity.new_value} 로 설정했습니다
+          </>
+        );
+    },
+    icon: <TriangleIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
+  },
+  estimate_categories: {
     message: (activity, showIssue) => {
       if (!activity.new_value)
         return (

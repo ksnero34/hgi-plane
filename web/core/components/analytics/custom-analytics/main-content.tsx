@@ -8,6 +8,9 @@ import { IAnalyticsParams, IAnalyticsResponse } from "@plane/types";
 import { Button, Loader } from "@plane/ui";
 // components
 import { AnalyticsGraph, AnalyticsTable } from "@/components/analytics";
+// hooks
+import { useProjectEstimates } from "@/hooks/store";
+import { EEstimateSystem } from "@plane/types/src/enums";
 // fetch-keys
 import { ANALYTICS } from "@/constants/fetch-keys";
 // helpers
@@ -24,9 +27,39 @@ export const CustomAnalyticsMainContent: React.FC<Props> = (props) => {
   const { analytics, error, fullScreen, params } = props;
 
   const { workspaceSlug } = useParams();
+  
+  // 프로젝트 추정 타입 정보 가져오기
+  const { projectId } = params;
+  const { currentActiveEstimateIdByProjectId, estimateById } = useProjectEstimates();
+  const currentEstimateId = projectId?.[0] ? currentActiveEstimateIdByProjectId(projectId[0]) : undefined;
+  const estimateDetails = currentEstimateId ? estimateById(currentEstimateId) : undefined;
+  const estimateType = estimateDetails?.type;
 
   const yAxisKey = params.y_axis === "issue_count" ? "count" : "estimate";
-  const barGraphData = convertResponseToBarGraphData(analytics?.distribution, params);
+  const barGraphData = convertResponseToBarGraphData(analytics?.distribution, params, estimateType);
+
+  // 차트 데이터 가공 시 정렬 유지
+  const sortTimeEstimateData = (data: BarDatum[], yAxisKey: string): BarDatum[] => {
+    if (!data || data.length === 0) return data;
+    
+    // X축이 추정값이고 숫자로 변환 가능한 경우 숫자 기준 정렬
+    const isNumericName = data.every(item => !isNaN(parseInt(`${item.name}`.replace(/[^0-9]/g, ''), 10)));
+    
+    if (isNumericName) {
+      return [...data].sort((a, b) => {
+        const aValue = parseInt(`${a.name}`.replace(/[^0-9]/g, ''), 10);
+        const bValue = parseInt(`${b.name}`.replace(/[^0-9]/g, ''), 10);
+        return aValue - bValue;
+      });
+    }
+    
+    return data;
+  };
+
+  // 시간 타입이면 추가 정렬 적용
+  if (estimateType === EEstimateSystem.TIME && params.x_axis === "estimate_point__value") {
+    barGraphData.data = sortTimeEstimateData(barGraphData.data, yAxisKey);
+  }
 
   return (
     <>

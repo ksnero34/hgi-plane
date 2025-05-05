@@ -118,19 +118,29 @@ export const ESTIMATE_SYSTEMS: TEstimateSystems = {
     i18n_name: "project_settings.estimates.systems.time.label",
     templates: {
       hours: {
-        title: "Hours",
+        title: "시간",
         i18n_title: "project_settings.estimates.systems.time.hours",
         values: [
           { id: undefined, key: 1, value: "1" },
-          { id: undefined, key: 2, value: "2" },
-          { id: undefined, key: 3, value: "3" },
-          { id: undefined, key: 4, value: "4" },
-          { id: undefined, key: 5, value: "5" },
-          { id: undefined, key: 6, value: "6" },
+          { id: undefined, key: 2, value: "5" },
+          { id: undefined, key: 3, value: "10" },
+          { id: undefined, key: 4, value: "15" },
+          { id: undefined, key: 5, value: "30" },
+          { id: undefined, key: 6, value: "45" },
+          { id: undefined, key: 7, value: "60" },
         ],
+      },
+      custom: {
+        title: "Custom",
+        i18n_title: "project_settings.estimates.systems.time.custom",
+        values: [
+          { id: undefined, key: 1, value: "1" },
+          { id: undefined, key: 5, value: "5" },
+        ],
+        hide: true,
       },
     },
     is_available: true,
-    is_ee: true,
+    is_ee: false,
   },
 };

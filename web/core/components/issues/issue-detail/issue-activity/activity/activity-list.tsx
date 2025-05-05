@@ -63,6 +63,7 @@ export const IssueActivityItem: FC<TIssueActivityItem> = observer((props) => {
     case "estimate_points":
     case "estimate_categories":
     case "estimate_point" /* This case is to handle all the older recorded activities for estimates. Field changed from  "estimate_point" -> `estimate_${estimate_type}`*/:
+    case "estimate_time": /* 시간 추정 타입을 위한 처리 추가 */
       return <IssueEstimateActivity {...componentDefaultProps} showIssue={false} />;
     case "parent":
       return <IssueParentActivity {...componentDefaultProps} showIssue={false} />;

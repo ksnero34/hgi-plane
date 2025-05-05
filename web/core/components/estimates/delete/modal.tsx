@@ -56,15 +56,13 @@ export const DeleteEstimateModal: FC<TDeleteEstimateModal> = observer((props) =>
       <div className="relative space-y-6 py-5">
         {/* heading */}
         <div className="relative flex justify-between items-center gap-2 px-5">
-          <div className="text-xl font-medium text-custom-text-100">Delete Estimate System</div>
+          <div className="text-xl font-medium text-custom-text-100">추정 시스템 삭제</div>
         </div>
 
         {/* estimate steps */}
         <div className="px-5">
           <div className="text-base text-custom-text-200">
-            Deleting the estimate <span className="font-bold text-custom-text-100">{estimate?.name}</span>
-            &nbsp;system will remove it from all work items permanently. This action cannot be undone. If you add
-            estimates again, you will need to update all the work items.
+            추정 시스템 <span className="font-bold text-custom-text-100">{estimate?.name}</span> 을 삭제하면 추정 소요 자원이 모든 작업항목에서 영구적으로 제거됩니다. 이 작업은 되돌릴 수 없습니다. 추정 시스템을 다시 추가하면 모든 작업항목에 다시 소요자원 값을 업데이트해야 합니다.
           </div>
         </div>
 
