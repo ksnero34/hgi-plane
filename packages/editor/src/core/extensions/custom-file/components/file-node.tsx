@@ -3,6 +3,7 @@ import { NodeViewWrapper } from "@tiptap/react";
 import { CustomBaseFileNodeViewProps } from "../custom-file";
 import { FileBlock } from "./file-block";
 import { FileUploader } from "./file-uploader";
+import { FileDeleteConfirmModal } from "./file-delete-confirm-modal";
 
 export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   const { node, editor, getPos, updateAttributes } = props;
@@ -16,6 +17,7 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   const [failedToLoadFile, setFailedToLoadFile] = useState(uploadStatus === "error");
   const [editorContainer, setEditorContainer] = useState<HTMLDivElement | null>(null);
   const fileComponentRef = useRef<HTMLDivElement>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const closestEditorContainer = fileComponentRef.current?.closest(".editor-container");
@@ -29,7 +31,13 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
     setFailedToLoadFile(uploadStatus === "error");
   }, [uploadStatus]);
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async (): Promise<void> => {
+    // 삭제 버튼 클릭 시 모달 열기
+    setIsDeleteModalOpen(true);
+    return Promise.resolve();
+  };
+
+  const handleDeleteConfirm = async () => {
     // 편집 모드가 아니면 삭제 불가능
     if (!editor.isEditable) return;
     
@@ -45,7 +53,13 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
         errorMessage: message
       });
       setFailedToLoadFile(true);
+    } finally {
+      setIsDeleteModalOpen(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
   };
 
   const handleDownload = async () => {
@@ -95,31 +109,43 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   };
 
   return (
-    <NodeViewWrapper as="div" className="relative group">
-      <div className="p-0 mx-0 my-2" ref={fileComponentRef}>
-        {isUploaded && !failedToLoadFile ? (
-          <FileBlock
-            {...props}
-            editorContainer={editorContainer}
-            onDelete={handleDelete}
-            onDownload={handleDownload}
-            setFailedToLoadFile={setFailedToLoadFile}
-          />
-        ) : editor.isEditable ? (
-          <FileUploader
-            {...props}
-            setIsUploaded={setIsUploaded}
-            setFailedToLoadFile={setFailedToLoadFile}
-          />
-        ) : (
-          // 읽기 모드에서 업로드 실패/진행 중인 경우 간단한 메시지 표시
-          <div className="p-3 border rounded-md bg-custom-background-100">
-            <div className="text-sm text-custom-text-200">
-              {failedToLoadFile ? "파일을 불러올 수 없습니다." : "파일 업로드 중..."}
+    <>
+      <NodeViewWrapper as="div" className="relative group">
+        <div className="p-0 mx-0 my-2" ref={fileComponentRef}>
+          {isUploaded && !failedToLoadFile ? (
+            <FileBlock
+              {...props}
+              editorContainer={editorContainer}
+              onDelete={handleDeleteClick}
+              onDownload={handleDownload}
+              setFailedToLoadFile={setFailedToLoadFile}
+            />
+          ) : editor.isEditable ? (
+            <FileUploader
+              {...props}
+              setIsUploaded={setIsUploaded}
+              setFailedToLoadFile={setFailedToLoadFile}
+            />
+          ) : (
+            // 읽기 모드에서 업로드 실패/진행 중인 경우 간단한 메시지 표시
+            <div className="p-3 border rounded-md bg-custom-background-100">
+              <div className="text-sm text-custom-text-200">
+                {failedToLoadFile ? "파일을 불러올 수 없습니다." : "파일 업로드 중..."}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </NodeViewWrapper>
+          )}
+        </div>
+      </NodeViewWrapper>
+
+      {/* 파일 삭제 확인 모달 */}
+      {isDeleteModalOpen && (
+        <FileDeleteConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          fileName={fileName}
+        />
+      )}
+    </>
   );
 }; 
