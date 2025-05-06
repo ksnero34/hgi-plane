@@ -618,7 +618,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       
       // 상태 필터 확인
       if (appliedFilters.state && appliedFilters.state.length > 0) {
-        if (!appliedFilters.state.includes(issue.state_id)) {
+        if (!issue.state_id || !appliedFilters.state.includes(issue.state_id)) {
           passesFilters = false;
         }
       }
@@ -654,14 +654,14 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       
       // 우선순위 필터 확인
       if (passesFilters && appliedFilters.priority && appliedFilters.priority.length > 0) {
-        if (!appliedFilters.priority.includes(issue.priority)) {
+        if (!issue.priority || !appliedFilters.priority.includes(issue.priority)) {
           passesFilters = false;
         }
       }
       
       // 프로젝트 필터 확인
       if (passesFilters && appliedFilters.project && appliedFilters.project.length > 0) {
-        if (!appliedFilters.project.includes(issue.project_id)) {
+        if (!issue.project_id || !appliedFilters.project.includes(issue.project_id)) {
           passesFilters = false;
         }
       }

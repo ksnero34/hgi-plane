@@ -52,7 +52,7 @@ const HomePage = observer(() => {
                 className="object-cover w-full h-full"
                 alt="Plane background pattern"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-custom-background-90/40 to-custom-background-100/40"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-custom-background-90/40 to-custom-background-100/40" />
             </div>
             <div className="relative z-10 flex flex-col w-screen h-screen overflow-hidden overflow-y-auto">
               <div className="container relative flex items-center justify-between flex-shrink-0 min-w-full px-10 pb-4 transition-all lg:px-20 xl:px-36">

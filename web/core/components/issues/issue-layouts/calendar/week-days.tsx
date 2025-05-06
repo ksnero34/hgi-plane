@@ -123,43 +123,43 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
       if (Object.keys(appliedFilters).length === 0) return true;
       
       // 상태 필터 확인
-      if (appliedFilters.state?.length > 0) {
-        if (!appliedFilters.state.includes(issue.state_id)) {
+      if (appliedFilters.state && appliedFilters.state.length > 0) {
+        if (!issue.state_id || !appliedFilters.state.includes(issue.state_id)) {
           return false;
         }
       }
       
       // 담당자 필터 확인
-      if (appliedFilters.assignees?.length > 0) {
-        if (!issue.assignee_ids || !issue.assignee_ids.some(id => appliedFilters.assignees!.includes(id))) {
+      if (appliedFilters.assignees && appliedFilters.assignees.length > 0) {
+        if (!issue.assignee_ids || !issue.assignee_ids.some(id => appliedFilters.assignees && appliedFilters.assignees.includes(id))) {
           return false;
         }
       }
       
       // 생성자 필터 확인
-      if (appliedFilters.created_by?.length > 0) {
-        if (!appliedFilters.created_by.includes(issue.created_by)) {
+      if (appliedFilters.created_by && appliedFilters.created_by.length > 0) {
+        if (!issue.created_by || !appliedFilters.created_by.includes(issue.created_by)) {
           return false;
         }
       }
       
       // 레이블 필터 확인
-      if (appliedFilters.labels?.length > 0) {
-        if (!issue.label_ids || !issue.label_ids.some(id => appliedFilters.labels!.includes(id))) {
+      if (appliedFilters.labels && appliedFilters.labels.length > 0) {
+        if (!issue.label_ids || !issue.label_ids.some(id => appliedFilters.labels && appliedFilters.labels.includes(id))) {
           return false;
         }
       }
       
       // 우선순위 필터 확인
-      if (appliedFilters.priority?.length > 0) {
-        if (!appliedFilters.priority.includes(issue.priority)) {
+      if (appliedFilters.priority && appliedFilters.priority.length > 0) {
+        if (!issue.priority || !appliedFilters.priority.includes(issue.priority)) {
           return false;
         }
       }
       
       // 프로젝트 필터 확인
-      if (appliedFilters.project?.length > 0) {
-        if (!appliedFilters.project.includes(issue.project_id)) {
+      if (appliedFilters.project && appliedFilters.project.length > 0) {
+        if (!issue.project_id || !appliedFilters.project.includes(issue.project_id)) {
           return false;
         }
       }

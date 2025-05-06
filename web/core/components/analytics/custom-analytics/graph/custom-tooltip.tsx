@@ -19,9 +19,9 @@ export const CustomTooltip: React.FC<Props> = ({ datum, analytics, params }) => 
   let tooltipValue: string | number = "";
   
   // Get project estimate details to check if it's time type
-  const { projectId } = params;
+  const { project } = params;
   const { currentActiveEstimateIdByProjectId, estimateById } = useProjectEstimates();
-  const currentEstimateId = projectId?.[0] ? currentActiveEstimateIdByProjectId(projectId[0]) : undefined;
+  const currentEstimateId = project?.[0] ? currentActiveEstimateIdByProjectId(project[0]) : undefined;
   const estimateDetails = currentEstimateId ? estimateById(currentEstimateId) : undefined;
   const estimateType = estimateDetails?.type;
 

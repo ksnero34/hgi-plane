@@ -139,7 +139,7 @@ export const EstimatePointUpdate: FC<TEstimatePointUpdate> = observer((props) =>
         handleClose();
       } else {
         // 부모 컴포넌트에 변경 사항 알림
-        handleSuccess(estimateInputValue);
+        handleSuccess(estimateInputValue || "");
       }
     }
   };

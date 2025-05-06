@@ -45,8 +45,8 @@ export const IssueEstimateActivity: FC<TIssueEstimateActivity> = observer((props
     return value;
   };
 
-  const formattedNewValue = formatEstimateValue(activity.new_value, activity.field);
-  const formattedOldValue = formatEstimateValue(activity.old_value, activity.field);
+  const formattedNewValue = formatEstimateValue(activity.new_value ?? null, activity.field);
+  const formattedOldValue = formatEstimateValue(activity.old_value ?? null, activity.field);
 
   return (
     <IssueActivityBlockComponent

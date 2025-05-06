@@ -266,7 +266,10 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
       if (templateKey) {
         // 템플릿 모드 - 서비스를 직접 호출
         await estimateService.updateEstimate(workspaceSlug, projectId, estimateId, {
-          template: templateKey
+          estimate: {
+            type: templateKey
+          },
+          estimate_points: [] // 템플릿 키를 전달할 때는 빈 배열로 전송하고 서버에서 처리
         });
       } else if (estimatePoints) {
         // 사용자 지정 모드 - 서비스를 직접 호출

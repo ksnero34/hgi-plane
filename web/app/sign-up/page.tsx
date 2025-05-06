@@ -43,7 +43,7 @@ const SignInPage = observer(() => {
             className="w-full h-full object-cover"
             alt="Plane background pattern"
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-custom-background-90/40 to-custom-background-100/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-l from-custom-background-90/40 to-custom-background-100/40" />
         </div>
         <div className="relative z-10 w-screen h-screen overflow-hidden overflow-y-auto flex flex-col">
           <div className="container min-w-full px-10 lg:px-20 xl:px-36 flex-shrink-0 relative flex items-center justify-between pb-4 transition-all">

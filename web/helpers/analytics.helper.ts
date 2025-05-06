@@ -79,7 +79,7 @@ export const convertResponseToBarGraphData = (
       // 차원 값 포맷팅 - 추정값이 시간 타입이면 적절한 형식으로 변환
       let formattedDimension = item.dimension;
       if (params.x_axis === "estimate_point__value" && estimateType === EEstimateSystem.TIME) {
-        formattedDimension = formatTimeEstimateLabel(item.dimension);
+        formattedDimension = item.dimension !== null ? formatTimeEstimateLabel(item.dimension) : "None";
       }
 
       data.push({
