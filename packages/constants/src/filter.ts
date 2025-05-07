@@ -4,34 +4,53 @@ export enum E_SORT_ORDER {
 }
 export const DATE_AFTER_FILTER_OPTIONS = [
   {
-    name: "1주일 이내",
+    name: "1주일 이후",
     value: "1_weeks;after;fromnow",
   },
   {
-    name: "2주일 이내",
+    name: "2주일 이후",
     value: "2_weeks;after;fromnow",
   },
   {
-    name: "1개월 이내",
+    name: "1개월 이후",
     value: "1_months;after;fromnow",
   },
   {
-    name: "2개월 이내",
+    name: "2개월 이후",
     value: "2_months;after;fromnow",
+  },
+];
+
+export const DATE_WITHIN_FILTER_OPTIONS = [
+  {
+    name: "1주일 이내",
+    value: "1_weeks;within;fromnow",
+  },
+  {
+    name: "2주일 이내",
+    value: "2_weeks;within;fromnow",
+  },
+  {
+    name: "1개월 이내",
+    value: "1_months;within;fromnow",
+  },
+  {
+    name: "2개월 이내",
+    value: "2_months;within;fromnow",
   },
 ];
 
 export const DATE_BEFORE_FILTER_OPTIONS = [
   {
-    name: "1 week ago",
+    name: "1주일 이전",
     value: "1_weeks;before;fromnow",
   },
   {
-    name: "2 weeks ago",
+    name: "2주일 이전",
     value: "2_weeks;before;fromnow",
   },
   {
-    name: "1 month ago",
+    name: "1개월 이전",
     i18n_name: "date_filters.1_month_ago",
     value: "1_months;before;fromnow",
   },
