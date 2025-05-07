@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { observer } from "mobx-react";
 // constants
-import { DATE_AFTER_FILTER_OPTIONS } from "@plane/constants";
+import { DATE_AFTER_FILTER_OPTIONS, DATE_WITHIN_FILTER_OPTIONS } from "@plane/constants";
 // components
 import { DateFilterModal } from "@/components/core";
 import { FilterHeader, FilterOption } from "@/components/issues";
@@ -20,7 +20,7 @@ export const FilterDueDate: React.FC<Props> = observer((props) => {
 
   const appliedFiltersCount = appliedFilters?.length ?? 0;
 
-  const filteredOptions = DATE_AFTER_FILTER_OPTIONS.filter((d) =>
+  const filteredOptions = [...DATE_WITHIN_FILTER_OPTIONS, ...DATE_AFTER_FILTER_OPTIONS].filter((d) =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 

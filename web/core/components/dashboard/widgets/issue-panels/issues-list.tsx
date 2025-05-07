@@ -126,7 +126,7 @@ export const WidgetIssuesList: React.FC<WidgetIssuesListProps> = (props) => {
             "w-min my-3 mx-auto py-1 px-2 text-xs hover:bg-custom-primary-100/20"
           )}
         >
-          View all work items
+          모든 작업 항목 보기
         </Link>
       )}
     </>

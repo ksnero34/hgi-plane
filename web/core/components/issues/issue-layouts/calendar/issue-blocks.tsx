@@ -127,6 +127,51 @@ export const CalendarIssueBlocks: React.FC<Props> = observer((props) => {
     // 날짜 조건을 만족하지 않으면 즉시 false 반환
     if (!isVisibleOnCurrentDate) return false;
 
+    // 마감일 필터 확인
+    if (appliedFilters.target_date && appliedFilters.target_date.length > 0) {
+      if (!targetDate) return false;
+      
+      let passesTargetDateFilter = false;
+      for (const dateFilter of appliedFilters.target_date) {
+        const [filterDate, filterType] = dateFilter.split(";");
+        const filterDateObj = new Date(filterDate);
+        filterDateObj.setHours(0, 0, 0, 0);
+
+        switch (filterType) {
+          case "before":
+            if (targetDate.getTime() <= filterDateObj.getTime()) {
+              passesTargetDateFilter = true;
+            }
+            break;
+          case "after":
+            if (targetDate.getTime() >= filterDateObj.getTime()) {
+              passesTargetDateFilter = true;
+            }
+            break;
+          case "on":
+            if (targetDate.getTime() === filterDateObj.getTime()) {
+              passesTargetDateFilter = true;
+            }
+            break;
+          default:
+            // 사용자 정의 날짜 범위인 경우
+            const [startDateStr, endDateStr] = dateFilter.split("-");
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+
+            if (targetDate.getTime() >= startDate.getTime() && targetDate.getTime() <= endDate.getTime()) {
+              passesTargetDateFilter = true;
+            }
+        }
+
+        if (passesTargetDateFilter) break;
+      }
+
+      if (!passesTargetDateFilter) return false;
+    }
+
     // 필터 조건에 맞는지 확인
     // 필터가 적용되지 않았다면 (필터 스토어가 없거나 필터가 비어있다면) 바로 true 반환
     if (!issuesFilterStore || Object.keys(appliedFilters).length === 0) return true;

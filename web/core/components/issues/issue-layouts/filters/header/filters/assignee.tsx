@@ -79,7 +79,7 @@ export const FilterAssignees: React.FC<Props> = observer((props: Props) => {
                           size="md"
                         />
                       }
-                      title={currentUser?.id === member.id ? "당신" : member?.display_name + " 님"}
+                      title={currentUser?.id === member.id ? "당신" : member?.display_name}
                     />
                   );
                 })}
