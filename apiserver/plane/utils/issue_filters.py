@@ -27,33 +27,35 @@ def string_date_filter(issue_filter, duration, subsequent, term, date_filter, of
     if term == "months":
         if subsequent == "after":
             if offset == "fromnow":
-                issue_filter[f"{date_filter}__gte"] = now + timedelta(
-                    days=duration * 30
-                )
+                issue_filter[f"{date_filter}__gte"] = now + timedelta(days=duration * 30)
             else:
-                issue_filter[f"{date_filter}__gte"] = now - timedelta(
-                    days=duration * 30
-                )
-        else:
+                issue_filter[f"{date_filter}__gte"] = now - timedelta(days=duration * 30)
+        elif subsequent == "before":
             if offset == "fromnow":
-                issue_filter[f"{date_filter}__lte"] = now + timedelta(
-                    days=duration * 30
-                )
+                issue_filter[f"{date_filter}__lte"] = now + timedelta(days=duration * 30)
             else:
-                issue_filter[f"{date_filter}__lte"] = now - timedelta(
-                    days=duration * 30
-                )
+                issue_filter[f"{date_filter}__lte"] = now - timedelta(days=duration * 30)
+        elif subsequent == "within":
+            # Within means between (now - duration) and (now + duration)
+            if offset == "fromnow":
+                issue_filter[f"{date_filter}__gte"] = now
+                issue_filter[f"{date_filter}__lte"] = now + timedelta(days=duration * 30)
     if term == "weeks":
         if subsequent == "after":
             if offset == "fromnow":
                 issue_filter[f"{date_filter}__gte"] = now + timedelta(weeks=duration)
             else:
                 issue_filter[f"{date_filter}__gte"] = now - timedelta(weeks=duration)
-        else:
+        elif subsequent == "before":
             if offset == "fromnow":
                 issue_filter[f"{date_filter}__lte"] = now + timedelta(weeks=duration)
             else:
                 issue_filter[f"{date_filter}__lte"] = now - timedelta(weeks=duration)
+        elif subsequent == "within":
+            # Within means between (now - duration) and (now + duration)
+            if offset == "fromnow":
+                issue_filter[f"{date_filter}__gte"] = now
+                issue_filter[f"{date_filter}__lte"] = now + timedelta(weeks=duration)
 
 
 def date_filter(issue_filter, date_term, queries):

@@ -58,6 +58,13 @@ export const satisfiesDateFilter = (date: Date, filter: string): boolean => {
       if (value === "1_months") return differenceInDays >= 30;
       if (value === "2_months") return differenceInDays >= 60;
     }
+
+    if (operator === "within") {
+      if (value === "1_weeks") return differenceInDays >= 0 && differenceInDays <= 7;
+      if (value === "2_weeks") return differenceInDays >= 0 && differenceInDays <= 14;
+      if (value === "1_months") return differenceInDays >= 0 && differenceInDays <= 30;
+      if (value === "2_months") return differenceInDays >= 0 && differenceInDays <= 60;
+    }
   }
 
   return false;
