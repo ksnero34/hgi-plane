@@ -34,7 +34,7 @@ class SessionMiddleware(MiddlewareMixin):
         request.session = self.SessionStore(session_key)
         
         # 인증된 세션에 대해서만 IP 검증
-        if SESSION_IP_CHECK and request.user.is_authenticated and not request.session.is_empty():
+        if SESSION_IP_CHECK and request.session.get('is_authenticated', False):
             stored_ip = request.session.get('ip_address')
             current_ip = request.META.get("REMOTE_ADDR", "")
             
@@ -42,7 +42,7 @@ class SessionMiddleware(MiddlewareMixin):
             if stored_ip and current_ip and stored_ip != current_ip:
                 security_logger.warning(
                     f"IP mismatch - Session: {session_key[:8]}... | "
-                    f"User ID: {request.user.id} | "
+                    # f"User ID: {request.session.get('_auth_user_id', 'unknown')} | "
                     f"Stored IP: {stored_ip} | Current IP: {current_ip}"
                 )
                 
@@ -50,9 +50,9 @@ class SessionMiddleware(MiddlewareMixin):
                 request.session.flush()
                 # 새로운 세션 생성
                 request.session = self.SessionStore()
-            
-            # 현재 IP 저장
-            request.session['ip_address'] = current_ip
+                # 현재 IP 저장
+                request.session['ip_address'] = current_ip
+                request.session.save()
 
     def process_response(self, request, response):
         """

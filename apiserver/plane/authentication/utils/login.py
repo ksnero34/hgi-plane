@@ -19,6 +19,8 @@ def user_login(request, user, is_app=False, is_admin=False, is_space=False):
 
     # 현재 IP 주소 저장
     request.session['ip_address'] = get_client_ip(request=request)
+    # 인증 상태 저장
+    request.session['is_authenticated'] = True
 
     device_info = {
         "user_agent": request.META.get("HTTP_USER_AGENT", ""),
