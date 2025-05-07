@@ -17,6 +17,9 @@ def user_login(request, user, is_app=False, is_admin=False, is_space=False):
     if is_admin:
         request.session.set_expiry(settings.ADMIN_SESSION_COOKIE_AGE)
 
+    # 현재 IP 주소 저장
+    request.session['ip_address'] = get_client_ip(request=request)
+
     device_info = {
         "user_agent": request.META.get("HTTP_USER_AGENT", ""),
         "ip_address": get_client_ip(request=request),
