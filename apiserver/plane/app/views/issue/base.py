@@ -69,7 +69,7 @@ from plane.bgtasks.webhook_task import model_activity
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.utils.audit_logger import log_audit
 from plane.utils.host import base_host
-
+from plane.utils.ip_address import get_client_ip
 class IssueListEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def get(self, request, slug, project_id):
@@ -268,7 +268,7 @@ class IssueViewSet(BaseViewSet):
         # 모든 필터 적용 (날짜 필터 포함)
         filters = issue_filters(request.query_params, "GET")
         
-        print("적용된 필터:", filters)
+        # print("적용된 필터:", filters)
         
         # 기본 queryset 가져오기
         issue_queryset = self.get_queryset()
@@ -432,7 +432,7 @@ class IssueViewSet(BaseViewSet):
                     "assignees": request.data.get("assignee_ids", []),
                     "labels": request.data.get("label_ids", []),
                 },
-                ip_address=request.META.get('REMOTE_ADDR'),
+                ip_address=get_client_ip(request),
             )
 
             # Track the issue

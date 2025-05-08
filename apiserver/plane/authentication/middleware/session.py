@@ -8,7 +8,7 @@ from django.contrib.sessions.exceptions import SessionInterrupted
 from django.utils.cache import patch_vary_headers
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.http import http_date
-
+from plane.utils.audit_logger import log_audit
 from plane.utils.ip_address import get_client_ip
 
 # 보안 로거 설정
@@ -36,22 +36,43 @@ class SessionMiddleware(MiddlewareMixin):
         # 인증된 세션에 대해서만 IP 검증
         if SESSION_IP_CHECK and request.session.get('is_authenticated', False):
             stored_ip = request.session.get('ip_address')
-            current_ip = request.META.get("REMOTE_ADDR", "")
+            current_ip = get_client_ip(request)
             
-            # IP가 다르면 세션 무효화
-            if stored_ip and current_ip and stored_ip != current_ip:
-                security_logger.warning(
-                    f"IP mismatch - Session: {session_key[:8]}... | "
-                    # f"User ID: {request.session.get('_auth_user_id', 'unknown')} | "
-                    f"Stored IP: {stored_ip} | Current IP: {current_ip}"
-                )
+           
+            # IP가 없으면 저장
+            if not stored_ip:
+                request.session['ip_address'] = current_ip
+                request.session.modified = True
+                request.session.save()
+            # IP가 다르면 세션 무효화 
+            elif current_ip and stored_ip != current_ip:
+                # 현재 user_id 저장
+                user_id = request.session.get('user_id')
                 
                 # 세션 초기화
                 request.session.flush()
+                
+                # 로그 기록
+                log_audit(
+                    action="ip_mismatch",
+                    user_id=user_id,
+                    user_email=None,
+                    resource_type="session",
+                    resource_id=None,
+                    details={
+                        "stored_ip": stored_ip,
+                        "current_ip": current_ip,
+                        "path": request.path
+                    },
+                    request=request,
+                )
+                
                 # 새로운 세션 생성
                 request.session = self.SessionStore()
                 # 현재 IP 저장
                 request.session['ip_address'] = current_ip
+                request.session['is_authenticated'] = False
+                request.session.modified = True
                 request.session.save()
 
     def process_response(self, request, response):

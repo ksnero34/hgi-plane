@@ -94,7 +94,7 @@
         "label": "팀과 함께 작업을 관리하려면 계정을 만드세요.",
         "step": {
           "email": {
-            "header": "가입",
+            "header": "포털 ID로 로그인 시 자동으로 가입됩니다.",
             "sub_header": ""
           },
           "password": {

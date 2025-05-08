@@ -31,7 +31,7 @@ from plane.authentication.adapter.error import (
     AUTHENTICATION_ERROR_CODES,
 )
 from plane.utils.audit_logger import log_audit
-
+from plane.utils.ip_address import get_client_ip
 
 class InstanceEndpoint(BaseAPIView):
     def get_permissions(self):
@@ -261,7 +261,7 @@ class OIDCOauthInitiateAdminEndpoint(View):
             auth_url = provider.get_auth_url()
             
             # 감사 로그 추가 (로그인 시도)
-            ip_address = request.META.get("REMOTE_ADDR", "")
+            ip_address = get_client_ip(request)
             log_audit(
                 action="admin_login_attempt",
                 resource_type="admin",
@@ -311,7 +311,7 @@ class OIDCCallbackAdminEndpoint(View):
                 resource_id="admin_login",
                 details={
                     "reason": "invalid_state",
-                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "ip_address": get_client_ip(request),
                     "user_agent": request.META.get("HTTP_USER_AGENT", ""),
                 },
                 request=request,
@@ -341,7 +341,7 @@ class OIDCCallbackAdminEndpoint(View):
                 resource_id="admin_login",
                 details={
                     "reason": "invalid_code",
-                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "ip_address": get_client_ip(request),
                     "user_agent": request.META.get("HTTP_USER_AGENT", ""),
                 },
                 request=request,
@@ -375,7 +375,7 @@ class OIDCCallbackAdminEndpoint(View):
                 resource_id="admin_login",
                 details={
                     "login_method": "oidc",
-                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "ip_address": get_client_ip(request),
                     "user_agent": request.META.get("HTTP_USER_AGENT", ""),
                 },
                 request=request,
@@ -405,7 +405,7 @@ class OIDCCallbackAdminEndpoint(View):
                 details={
                     "reason": str(e),
                     "error_code": e.error_code if hasattr(e, 'error_code') else "unknown",
-                    "ip_address": request.META.get("REMOTE_ADDR", ""),
+                    "ip_address": get_client_ip(request),
                     "user_agent": request.META.get("HTTP_USER_AGENT", ""),
                 },
                 request=request,

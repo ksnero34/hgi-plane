@@ -15,7 +15,7 @@ from plane.authentication.adapter.error import (
 from plane.license.models import Instance, InstanceAdmin
 from django.conf import settings
 from plane.db.models import User
-
+from plane.utils.ip_address import get_client_ip
 class OIDCOAuthProvider(OauthAdapter):
     provider = "oidc"
     scope = "openid profile email roles"
@@ -189,7 +189,7 @@ class OIDCOAuthProvider(OauthAdapter):
                     user.is_active = True
                     user.last_active = current_time
                     user.last_login_time = current_time
-                    user.last_login_ip = self.request.META.get("REMOTE_ADDR")
+                    user.last_login_ip = get_client_ip(self.request)
                     user.last_login_uagent = self.request.META.get("HTTP_USER_AGENT")
                     user.token_updated_at = current_time
                     user.save()
