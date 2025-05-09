@@ -120,16 +120,46 @@ class OIDCOAuthProvider(OauthAdapter):
 
     def set_user_data(self):
         user_info_response = self.get_user_response()
-        # print("[OIDC] User info response:", user_info_response)  # 디버깅용 로그
         
         # ID 토큰에서 클레임 가져오기
         id_token_claims = self.get_id_token_claims()
-        # print("[OIDC] ID token claims:", id_token_claims)  # 디버깅용 로그
         
         # 이메일 가져오기
         email = user_info_response.get("email")
         if not email and id_token_claims:
             email = id_token_claims.get("email")
+
+        # avatar URL 검증
+        avatar_url = user_info_response.get("picture")
+        valid_avatar_url = None
+        if avatar_url:
+            try:
+                # HEAD 요청으로 Content-Type만 확인
+                response = requests.head(avatar_url, allow_redirects=True, timeout=5)
+                content_type = response.headers.get('Content-Type', '').lower()
+                
+                # 허용할 이미지 Content-Type 목록
+                valid_image_types = [
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/gif',
+                    'image/jfif',
+                    'image/webp',
+                    'image/svg+xml',
+                    'application/octet-stream'
+                ]
+                
+                # Content-Type이 없는 경우 GET 요청으로 재시도
+                if not content_type and response.status_code == 200:
+                    response = requests.get(avatar_url, allow_redirects=True, timeout=5)
+                    content_type = response.headers.get('Content-Type', '').lower()
+                
+                # 이미지 타입인 경우에만 URL 사용
+                if any(content_type.startswith(valid_type) for valid_type in valid_image_types):
+                    valid_avatar_url = avatar_url
+            except (requests.RequestException, Exception):
+                valid_avatar_url = None
             
         # 표시 이름 가져오기 - 우선 순위: userinfo의 name -> id_token의 name -> sub
         display_name = None
@@ -212,13 +242,33 @@ class OIDCOAuthProvider(OauthAdapter):
             "user": {
                 "provider_id": user_info_response.get("sub"),
                 "email": email,
-                "avatar": user_info_response.get("picture"),
+                "avatar": valid_avatar_url,
                 "first_name": user_info_response.get("given_name", ""),
                 "last_name": user_info_response.get("family_name", ""),
                 "is_password_autoset": True,
-                "display_name": display_name,  # display_name 추가
+                "display_name": display_name,
             },
         }
+        
+        # 기존 사용자가 있는지 확인하고 정보 업데이트
+        existing_user = User.objects.filter(email=email).first()
+        if existing_user:
+            # 사용자 정보 업데이트
+            existing_user.first_name = user_data["user"]["first_name"]
+            existing_user.last_name = user_data["user"]["last_name"]
+            if valid_avatar_url:  # 유효한 이미지 URL인 경우에만 업데이트
+                existing_user.avatar = valid_avatar_url
+            existing_user.display_name = user_data["user"]["display_name"]
+            existing_user.save()
+            
+            # user_data에 업데이트된 사용자 정보 반영
+            user_data["user"].update({
+                "id": existing_user.id,
+                "first_name": existing_user.first_name,
+                "last_name": existing_user.last_name,
+                "avatar": existing_user.avatar,
+                "display_name": existing_user.display_name,
+            })
         
         # print(f"[OIDC] 사용자 데이터 설정 완료: display_name={user_data['user']['display_name']}")
         super().set_user_data(user_data)
