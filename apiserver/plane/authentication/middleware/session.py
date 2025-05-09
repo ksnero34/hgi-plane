@@ -16,6 +16,7 @@ security_logger = logging.getLogger('security')
 
 # 세션 보안 설정 (settings.py에 정의되지 않은 경우 기본값)
 SESSION_IP_CHECK = getattr(settings, 'SESSION_IP_CHECK', True)
+SESSION_USER_AGENT_CHECK = getattr(settings, 'SESSION_USER_AGENT_CHECK', True)
 
 class SessionMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
@@ -35,45 +36,83 @@ class SessionMiddleware(MiddlewareMixin):
         
         # 인증된 세션에 대해서만 IP 검증
         if SESSION_IP_CHECK and request.session.get('is_authenticated', False):
-            stored_ip = request.session.get('ip_address')
-            current_ip = get_client_ip(request)
+            # CSRF 토큰 검증
+            csrf_cookie = request.COOKIES.get('csrftoken')
             
-           
-            # IP가 없으면 저장
-            if not stored_ip:
-                request.session['ip_address'] = current_ip
-                request.session.modified = True
-                request.session.save()
-            # IP가 다르면 세션 무효화 
-            elif current_ip and stored_ip != current_ip:
-                # 현재 user_id 저장
-                user_id = request.session.get('user_id')
+            # CSRF 토큰이 쿠키에 있으면 IP 체크와 User-Agent 체크 건너뛰기
+            if csrf_cookie:
+                return
+            else:
+                stored_ip = request.session.get('ip_address')
+                current_ip = get_client_ip(request)
                 
-                # 세션 초기화
-                request.session.flush()
-                
-                # 로그 기록
-                log_audit(
-                    action="ip_mismatch",
-                    user_id=user_id,
-                    user_email=None,
-                    resource_type="session",
-                    resource_id=None,
-                    details={
-                        "stored_ip": stored_ip,
-                        "current_ip": current_ip,
-                        "path": request.path
-                    },
-                    request=request,
-                )
-                
-                # 새로운 세션 생성
-                request.session = self.SessionStore()
-                # 현재 IP 저장
-                request.session['ip_address'] = current_ip
-                request.session['is_authenticated'] = False
-                request.session.modified = True
-                request.session.save()
+                # IP가 없으면 저장
+                if not stored_ip:
+                    request.session['ip_address'] = current_ip
+                    request.session.modified = True
+                    request.session.save()
+                # IP가 다르면 세션 무효화 
+                elif current_ip and stored_ip != current_ip:
+                    # 현재 user_id 저장
+                    user_id = request.session.get('user_id')
+                    
+                    # 세션 초기화
+                    request.session.flush()
+                    
+                    # 로그 기록
+                    log_audit(
+                        action="ip_mismatch",
+                        user_id=user_id,
+                        user_email=None,
+                        resource_type="session",
+                        resource_id=None,
+                        details={
+                            "stored_ip": stored_ip,
+                            "current_ip": current_ip,
+                            "path": request.path
+                        },
+                        request=request,
+                    )
+                    
+                    # 새로운 세션 생성
+                    request.session = self.SessionStore()
+                    request.session['ip_address'] = current_ip
+                    request.session['is_authenticated'] = False
+                    request.session.modified = True
+                    request.session.save()
+
+                # User-Agent 체크
+                if SESSION_USER_AGENT_CHECK:
+                    stored_user_agent = request.session.get('device_info', {}).get('user_agent')
+                    current_user_agent = request.META.get('HTTP_USER_AGENT', '')
+                    
+                    if stored_user_agent and current_user_agent != stored_user_agent:
+                        # 현재 user_id 저장
+                        user_id = request.session.get('user_id')
+                        
+                        # 세션 초기화
+                        request.session.flush()
+                        
+                        # 로그 기록
+                        log_audit(
+                            action="user_agent_mismatch",
+                            user_id=user_id,
+                            user_email=None,
+                            resource_type="session",
+                            resource_id=None,
+                            details={
+                                "stored_user_agent": stored_user_agent,
+                                "current_user_agent": current_user_agent,
+                                "path": request.path
+                            },
+                            request=request,
+                        )
+                        
+                        # 새로운 세션 생성
+                        request.session = self.SessionStore()
+                        request.session['is_authenticated'] = False
+                        request.session.modified = True
+                        request.session.save()
 
     def process_response(self, request, response):
         """

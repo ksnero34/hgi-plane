@@ -109,6 +109,33 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       sub_issue: displayFilters?.sub_issue ?? true,
     };
 
+    // target_date within 필터 처리
+    if (filters?.target_date && Array.isArray(filters.target_date)) {
+      const processedDates = filters.target_date.map(dateFilter => {
+        const [duration, filterType, offset] = dateFilter.split(";");
+        
+        if (filterType === "within" && offset === "fromnow") {
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          
+          const [amount, unit] = duration.split("_");
+          const futureDate = new Date(now);
+          
+          if (unit === "weeks") {
+            futureDate.setDate(futureDate.getDate() + parseInt(amount) * 7);
+          } else if (unit === "months") {
+            futureDate.setMonth(futureDate.getMonth() + parseInt(amount));
+          }
+          
+          return `${now.toISOString().split("T")[0]};after,${futureDate.toISOString().split("T")[0]};before`;
+        }
+        
+        return dateFilter;
+      });
+      
+      computedFilters.target_date = processedDates;
+    }
+
     const issueFiltersParams: Partial<Record<TIssueParams, boolean | string>> = {};
     Object.keys(computedFilters).forEach((key) => {
       const _key = key as TIssueParams;
