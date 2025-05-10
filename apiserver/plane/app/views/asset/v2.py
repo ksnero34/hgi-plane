@@ -8,7 +8,7 @@ import re
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.utils import timezone
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 # Third party imports
 from rest_framework import status
@@ -319,6 +319,73 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
                 get_asset_object_metadata.delay(asset_id=str(asset_id))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete(self, request, asset_id):
+        """Delete user profile image asset."""
+        from django.db import transaction
+
+        try:
+            with transaction.atomic():
+                # Get the asset
+                asset = FileAsset.objects.select_for_update().filter(id=asset_id).first()
+                
+                # Check if the asset exists
+                if asset is None:
+                    return Response(
+                        {"error": "Asset not found", "status": False},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                # Check if the user has permission
+                if asset.user != request.user:
+                    return Response(
+                        {"error": "You don't have permission to delete this asset", "status": False},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+
+                # Update user profile based on entity type
+                user = request.user
+                if asset.entity_type == FileAsset.EntityTypeContext.USER_AVATAR:
+                    if user.avatar_asset_id:
+                        # 첫 번째 단계: 업로드된 이미지만 삭제
+                        user.avatar_asset = None
+                        user.save(update_fields=["avatar_asset"])
+                    else:
+                        # 두 번째 단계: avatar_asset이 없는 상태에서의 삭제 요청은 URL도 함께 삭제
+                        user.avatar = ""
+                        user.save(update_fields=["avatar"])
+                elif asset.entity_type == FileAsset.EntityTypeContext.USER_COVER:
+                    if user.cover_image_asset_id == asset.id:
+                        user.cover_image_asset = None
+                        user.cover_image = ""
+                        user.save(update_fields=["cover_image", "cover_image_asset"])
+
+                # Mark the asset as deleted
+                asset.is_deleted = True
+                asset.deleted_at = timezone.now()
+                asset.save(update_fields=["is_deleted", "deleted_at"])
+
+                # Invalidate user profile cache
+                invalidate_cache_directly(
+                    path="/api/users/me/",
+                    url_params=False,
+                    user=True,
+                    request=request,
+                )
+                invalidate_cache_directly(
+                    path="/api/users/me/profile/",
+                    url_params=False,
+                    user=True,
+                    request=request,
+                )
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+                
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):

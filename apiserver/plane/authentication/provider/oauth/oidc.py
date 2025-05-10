@@ -131,12 +131,20 @@ class OIDCOAuthProvider(OauthAdapter):
 
         # avatar URL 검증
         avatar_url = user_info_response.get("picture")
+        # print(f"[OIDC] userinfo에서 가져온 picture URL: {avatar_url}")
+        
+        if not avatar_url and id_token_claims:
+            avatar_url = id_token_claims.get("picture")
+            # print(f"[OIDC] ID 토큰에서 가져온 picture URL: {avatar_url}")
+            
         valid_avatar_url = None
         if avatar_url:
             try:
                 # HEAD 요청으로 Content-Type만 확인
+                # print(f"[OIDC] 아바타 URL 유효성 검사 시작: {avatar_url}")
                 response = requests.head(avatar_url, allow_redirects=True, timeout=5)
                 content_type = response.headers.get('Content-Type', '').lower()
+                # print(f"[OIDC] 아바타 URL Content-Type: {content_type}")
                 
                 # 허용할 이미지 Content-Type 목록
                 valid_image_types = [
@@ -158,7 +166,12 @@ class OIDCOAuthProvider(OauthAdapter):
                 # 이미지 타입인 경우에만 URL 사용
                 if any(content_type.startswith(valid_type) for valid_type in valid_image_types):
                     valid_avatar_url = avatar_url
-            except (requests.RequestException, Exception):
+                    # print(f"[OIDC] 유효한 아바타 URL 확인됨: {valid_avatar_url}")
+                else:
+                    # print(f"[OIDC] 유효하지 않은 Content-Type: {content_type}")
+                    pass
+            except (requests.RequestException, Exception) as e:
+                # print(f"[OIDC] 아바타 URL 검증 중 오류 발생: {str(e)}")
                 valid_avatar_url = None
             
         # 표시 이름 가져오기 - 우선 순위: userinfo의 name -> id_token의 name -> sub
@@ -250,27 +263,60 @@ class OIDCOAuthProvider(OauthAdapter):
             },
         }
         
-        # 기존 사용자가 있는지 확인하고 정보 업데이트
+        # 기존 사용자가 있는지 확인하고 정보 업데이트 (필요시 활성화)
         existing_user = User.objects.filter(email=email).first()
         if existing_user:
-            # 사용자 정보 업데이트
-            existing_user.first_name = user_data["user"]["first_name"]
-            existing_user.last_name = user_data["user"]["last_name"]
-            if valid_avatar_url:  # 유효한 이미지 URL인 경우에만 업데이트
-                existing_user.avatar = valid_avatar_url
-            existing_user.display_name = user_data["user"]["display_name"]
+            # valid_avatar_url이 None이면 기존 아바타 URL 검증
+            if not valid_avatar_url and existing_user.avatar:
+                try:
+                    response = requests.head(existing_user.avatar, allow_redirects=True, timeout=5)
+                    content_type = response.headers.get('Content-Type', '').lower()
+                    
+                    # Content-Type이 없는 경우 GET 요청으로 재시도
+                    if not content_type and response.status_code == 200:
+                        response = requests.get(existing_user.avatar, allow_redirects=True, timeout=5)
+                        content_type = response.headers.get('Content-Type', '').lower()
+                    
+                    # 허용할 이미지 Content-Type 목록
+                    valid_image_types = [
+                        'image/jpeg',
+                        'image/jpg',
+                        'image/png',
+                        'image/gif',
+                        'image/jfif',
+                        'image/webp',
+                        'image/svg+xml',
+                        'application/octet-stream'
+                    ]
+                    
+                    # 이미지 타입이 아닌 경우 빈 문자열로 설정
+                    if not any(content_type.startswith(valid_type) for valid_type in valid_image_types):
+                        existing_user.avatar = ""
+                        # existing_user.avatar_asset = None
+                except (requests.RequestException, Exception):
+                    # URL 접근 실패시 빈 문자열로 설정
+                    existing_user.avatar = ""
+                    # existing_user.avatar_asset = None
+            # 새로운 유효한 아바타 URL이 있는 경우에만 업데이트
+            elif valid_avatar_url:
+                 existing_user.avatar = valid_avatar_url
+            #     existing_user.avatar_asset = None
+            
+            # existing_user.first_name = user_data["user"]["first_name"]
+            # existing_user.last_name = user_data["user"]["last_name"]
+            # existing_user.display_name = user_data["user"]["display_name"]
             existing_user.save()
             
             # user_data에 업데이트된 사용자 정보 반영
             user_data["user"].update({
                 "id": existing_user.id,
-                "first_name": existing_user.first_name,
-                "last_name": existing_user.last_name,
+                # "first_name": existing_user.first_name,
+                # "last_name": existing_user.last_name,
                 "avatar": existing_user.avatar,
-                "display_name": existing_user.display_name,
+                "avatar_url": existing_user.avatar_url,
+                # "display_name": existing_user.display_name,
             })
-        
-        # print(f"[OIDC] 사용자 데이터 설정 완료: display_name={user_data['user']['display_name']}")
+            
         super().set_user_data(user_data)
 
     def get_id_token_claims(self):
