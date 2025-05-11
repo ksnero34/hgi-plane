@@ -191,13 +191,13 @@ def generate_table_row(issue):
         dateConverter(issue["target_date"]),
         issue["priority"],
         (
-            f"{issue['created_by__first_name']} {issue['created_by__last_name']}"
-            if issue["created_by__first_name"] and issue["created_by__last_name"]
+            f"{issue['created_by__last_name']} {issue['created_by__first_name']}"
+            if issue["created_by__last_name"] and issue["created_by__first_name"]
             else ""
         ),
         (
-            f"{issue['assignees__first_name']} {issue['assignees__last_name']}"
-            if issue["assignees__first_name"] and issue["assignees__last_name"]
+            f"{issue['assignees__last_name']} {issue['assignees__first_name']}"
+            if issue["assignees__last_name"] and issue["assignees__first_name"]
             else ""
         ),
         issue["labels__name"] if issue["labels__name"] else "",
@@ -233,13 +233,13 @@ def generate_json_row(issue):
         "Target Date": dateConverter(issue["target_date"]),
         "Priority": issue["priority"],
         "Created By": (
-            f"{issue['created_by__first_name']} {issue['created_by__last_name']}"
-            if issue["created_by__first_name"] and issue["created_by__last_name"]
+            f"{issue['created_by__last_name']} {issue['created_by__first_name']}"
+            if issue["created_by__last_name"] and issue["created_by__first_name"]
             else ""
         ),
         "Assignee": (
-            f"{issue['assignees__first_name']} {issue['assignees__last_name']}"
-            if issue["assignees__first_name"] and issue["assignees__last_name"]
+            f"{issue['assignees__last_name']} {issue['assignees__first_name']}"
+            if issue["assignees__last_name"] and issue["assignees__first_name"]
             else ""
         ),
         "Labels": issue["labels__name"] if issue["labels__name"] else "",
@@ -379,10 +379,10 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 "issue_module__module__name",
                 "issue_module__module__start_date",
                 "issue_module__module__target_date",
-                "created_by__first_name",
                 "created_by__last_name",
-                "assignees__first_name",
+                "created_by__first_name",
                 "assignees__last_name",
+                "assignees__first_name",
                 "labels__name",
             )
             .order_by("project__identifier", "sequence_id")

@@ -49,8 +49,8 @@ export const PagesListHeader = observer(() => {
       .catch((err) =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: err?.data?.error || "Page could not be created. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "페이지를 생성할 수 없습니다. 다시 시도해주세요.",
         })
       )
       .finally(() => setIsCreatingPage(false));

@@ -89,8 +89,8 @@ export const BulkDeleteIssuesModal: React.FC<Props> = observer((props) => {
     if (!data.delete_issue_ids || data.delete_issue_ids.length === 0) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "Please select at least one work item.",
+        title: "오류가 발생했습니다!",
+        message: "최소 하나의 작업 항목을 선택해주세요.",
       });
       return;
     }
@@ -101,16 +101,16 @@ export const BulkDeleteIssuesModal: React.FC<Props> = observer((props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Work items deleted successfully!",
+          title: "성공했습니다!",
+          message: "작업 항목이 삭제되었습니다!",
         });
         handleClose();
       })
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Something went wrong. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "문제가 발생했습니다. 다시 시도해주세요.",
         })
       );
   };

@@ -74,9 +74,9 @@ export const useAttachmentOperations = (
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
           await removeAttachment(workspaceSlug, projectId, issueId, attachmentId);
           setToast({
-            message: "The attachment has been successfully removed",
+            message: "첨부파일이 성공적으로 제거되었습니다.",
             type: TOAST_TYPE.SUCCESS,
-            title: "Attachment removed",
+            title: "첨부파일 제거",
           });
           captureIssueEvent({
             eventName: "Issue attachment deleted",
@@ -96,9 +96,9 @@ export const useAttachmentOperations = (
             },
           });
           setToast({
-            message: "The Attachment could not be removed",
+            message: "첨부파일을 제거할 수 없습니다.",
             type: TOAST_TYPE.ERROR,
-            title: "Attachment not removed",
+            title: "첨부파일 제거 실패",
           });
         }
       },

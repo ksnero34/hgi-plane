@@ -77,8 +77,8 @@ export const ProjectIssueQuickActions: React.FC<IQuickActionProps> = observer((p
     copyUrlToClipboard(workItemLink).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Link copied",
-        message: "Work item link copied to clipboard",
+        title: "링크가 복사되었습니다.",
+        message: "작업 항목 링크가 클립보드에 복사되었습니다.",
       })
     );
   const handleOpenInNewTab = () => window.open(workItemLink, "_blank");

@@ -101,7 +101,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
         setToast({
           type: TOAST_TYPE.ERROR,
           title: t("toast.error"),
-          message: "Error while updating work item dates, Please try again Later",
+          message: "작업 항목 날짜를 업데이트하는 중 오류가 발생했습니다. 나중에 다시 시도해주세요.",
         });
       }),
     [issues]

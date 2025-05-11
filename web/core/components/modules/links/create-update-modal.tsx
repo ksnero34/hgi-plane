@@ -48,15 +48,15 @@ export const CreateUpdateModuleLinkModal: FC<Props> = (props) => {
         await createLink(payload);
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Module link created successfully.",
+          title: "성공!",
+          message: "모듈 링크가 성공적으로 생성되었습니다.",
         });
       } else {
         await updateLink(payload, data.id);
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Module link updated successfully.",
+          title: "성공!",
+          message: "모듈 링크가 성공적으로 업데이트되었습니다.",
         });
       }
       onClose();

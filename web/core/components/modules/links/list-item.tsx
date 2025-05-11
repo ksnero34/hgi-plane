@@ -34,8 +34,8 @@ export const ModulesLinksListItem: React.FC<Props> = observer((props) => {
     copyTextToClipboard(text).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Copied to clipboard",
-        message: "The URL has been successfully copied to your clipboard",
+        title: "링크가 복사되었습니다.",
+        message: "URL이 클립보드에 성공적으로 복사되었습니다.",
       })
     );
   };

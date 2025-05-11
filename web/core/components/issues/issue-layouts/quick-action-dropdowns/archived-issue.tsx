@@ -54,8 +54,8 @@ export const ArchivedIssueQuickActions: React.FC<IQuickActionProps> = observer((
     copyUrlToClipboard(issueLink).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Link copied",
-        message: "Work item link copied to clipboard",
+        title: "링크가 복사되었습니다.",
+        message: "작업 항목 링크가 클립보드에 복사되었습니다.",
       })
     );
   const handleIssueRestore = async () => {
@@ -64,15 +64,15 @@ export const ArchivedIssueQuickActions: React.FC<IQuickActionProps> = observer((
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Restore success",
-          message: "Your work item can be found in project work items.",
+          title: "복원 성공",
+          message: "작업항목을 프로젝트에서 다시 확인할 수 있습니다 .",
         });
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Work item could not be restored. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "작업 항목을 복원할 수 없습니다. 다시 시도해주세요.",
         });
       });
   };

@@ -45,8 +45,8 @@ export const WorkspaceViewQuickActions: React.FC<Props> = observer((props) => {
     copyUrlToClipboard(viewLink).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Link Copied!",
-        message: "View link copied to clipboard.",
+        title: "링크가 복사되었습니다.",
+        message: "뷰 링크가 클립보드에 복사되었습니다.",
       });
     });
   const handleOpenInNewTab = () => window.open(`/${viewLink}`, "_blank");

@@ -324,8 +324,8 @@ export const InviteMembers: React.FC<Props> = (props) => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Invitations sent successfully.",
+          title: "성공!",
+          message: "초대장이 성공적으로 전송되었습니다.",
         });
 
         await nextStep();

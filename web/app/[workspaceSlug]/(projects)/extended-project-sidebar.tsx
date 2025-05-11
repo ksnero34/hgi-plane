@@ -56,8 +56,8 @@ export const ExtendedProjectSidebar = observer(() => {
       updateProjectView(workspaceSlug.toString(), sourceId, { sort_order: updatedSortOrder }).catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: t("error"),
-          message: t("something_went_wrong"),
+          title: "오류가 발생했습니다!",
+          message: "프로젝트 순서 변경에 실패했습니다. 다시 시도해주세요.",
         });
       });
   };
@@ -89,8 +89,8 @@ export const ExtendedProjectSidebar = observer(() => {
     copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: t("link_copied"),
-        message: t("project_link_copied_to_clipboard"),
+        title: "링크가 복사되었습니다!",
+        message: "프로젝트 링크가 클립보드에 복사되었습니다.",
       });
     });
   };

@@ -37,8 +37,8 @@ export const DeactivateAccountModal: React.FC<Props> = (props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Account deactivated successfully.",
+          title: "성공했습니다!",
+          message: "계정이 비활성화되었습니다.",
         });
         signOut();
         router.push("/");

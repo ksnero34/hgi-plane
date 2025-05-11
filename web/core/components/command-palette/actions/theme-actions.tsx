@@ -30,7 +30,8 @@ export const CommandPaletteThemeActions: FC<Props> = observer((props) => {
     return updateUserTheme({ theme: newTheme }).catch(() => {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Failed to save user theme settings!",
+        title: "오류가 발생했습니다!",
+        message: "사용자 테마 설정을 저장할 수 없습니다. 다시 시도해주세요.",
       });
     });
   };

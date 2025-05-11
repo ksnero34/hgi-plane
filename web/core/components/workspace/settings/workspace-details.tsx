@@ -71,9 +71,9 @@ export const WorkspaceDetails: FC = observer(() => {
           },
         });
         setToast({
-          title: "Success!",
+          title: "성공!",
           type: TOAST_TYPE.SUCCESS,
-          message: "Workspace updated successfully",
+          message: "워크스페이스가 성공적으로 업데이트되었습니다.",
         });
       })
       .catch((err) => {
@@ -100,15 +100,15 @@ export const WorkspaceDetails: FC = observer(() => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Workspace picture removed successfully.",
+          title: "성공!",
+          message: "워크스페이스 이미지가 성공적으로 삭제되었습니다.",
         });
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "There was some error in deleting your profile picture. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "워크스페이스 이미지를 삭제할 수 없습니다. 다시 시도해주세요.",
         });
       });
   };
@@ -119,7 +119,8 @@ export const WorkspaceDetails: FC = observer(() => {
     copyUrlToClipboard(`${currentWorkspace.slug}`).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Workspace URL copied to the clipboard.",
+        title: "링크가 복사되었습니다.",
+        message: "워크스페이스 링크가 클립보드에 복사되었습니다.",
       });
     });
   };

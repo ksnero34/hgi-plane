@@ -60,8 +60,8 @@ export const AddComment: React.FC<Props> = observer((props) => {
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Comment could not be posted. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "댓글을 게시할 수 없습니다. 다시 시도해주세요.",
         })
       );
   };

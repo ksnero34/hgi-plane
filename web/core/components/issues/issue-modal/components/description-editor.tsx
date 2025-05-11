@@ -97,8 +97,8 @@ export const IssueDescriptionEditor: React.FC<TIssueDescriptionEditorProps> = ob
     } else {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "Editor is still processing changes. Please wait before proceeding.",
+        title: "오류가 발생했습니다!",
+        message: "편집기가 변경 사항을 처리하고 있습니다. 진행하기 전에 기다려주세요.",
       });
       event.preventDefault(); // Prevent default action if editor is not ready to discard
     }

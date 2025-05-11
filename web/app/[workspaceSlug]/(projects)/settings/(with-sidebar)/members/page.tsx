@@ -65,8 +65,8 @@ const WorkspaceMembersSettingsPage = observer(() => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: t("workspace_settings.settings.members.invitations_sent_successfully"),
+          title: "성공했습니다!",
+          message: "초대 알림이 발송되었습니다.",
         });
       })
       .catch((err) => {
@@ -83,8 +83,8 @@ const WorkspaceMembersSettingsPage = observer(() => {
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: `${err.error ?? t("something_went_wrong_please_try_again")}`,
+          title: "오류가 발생했습니다!",
+          message: `${err.error ?? "문제가 발생했습니다. 다시 시도해주세요."}`,
         });
         throw err;
       });

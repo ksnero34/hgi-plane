@@ -278,8 +278,8 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     } catch {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "Failed to move work item to project. Please try again.",
+        title: "오류가 발생했습니다!",
+        message: "작업 항목을 프로젝트로 이동할 수 없습니다. 다시 시도해주세요.",
       });
     } finally {
       setIsMoving(false);
@@ -532,8 +532,8 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                         } else {
                           setToast({
                             type: TOAST_TYPE.ERROR,
-                            title: "Error!",
-                            message: "Editor is still processing changes. Please wait before proceeding.",
+                            title: "오류가 발생했습니다!",
+                            message: "편집기가 변경 사항을 처리하고 있습니다. 진행하기 전에 기다려주세요.",
                           });
                         }
                       }}

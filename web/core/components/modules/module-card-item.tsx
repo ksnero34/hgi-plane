@@ -144,15 +144,15 @@ export const ModuleCardItem: React.FC<Props> = observer((props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Module updated successfully.",
+          title: "성공!",
+          message: "모듈이 성공적으로 업데이트되었습니다.",
         });
       })
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: err?.detail ?? "Module could not be updated. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: err?.detail ?? "모듈을 업데이트할 수 없습니다. 다시 시도해주세요.",
         });
       });
   };

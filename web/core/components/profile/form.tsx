@@ -87,16 +87,16 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Profile picture deleted successfully.",
+          title: "성공!",
+          message: "프로필 사진이 성공적으로 삭제되었습니다.",
         });
         setValue("avatar_url", "");
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "There was some error in deleting your profile picture. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "프로필 사진을 삭제할 수 없습니다. 다시 시도해주세요.",
         });
       })
       .finally(() => {
@@ -133,12 +133,12 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
     setPromiseToast(updateUserAndProfile, {
       loading: "Updating...",
       success: {
-        title: "Success!",
-        message: () => `Profile updated successfully.`,
+        title: "성공!",
+        message: () => `프로필이 성공적으로 업데이트되었습니다.`,
       },
       error: {
-        title: "Error!",
-        message: () => `There was some error in updating your profile. Please try again.`,
+        title: "오류가 발생했습니다!",
+        message: () => `프로필을 업데이트할 수 없습니다. 다시 시도해주세요.`,
       },
     });
   };
@@ -213,7 +213,7 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
           <div className="item-center mt-6 flex justify-between">
             <div className="flex flex-col">
               <div className="item-center flex text-lg font-medium text-custom-text-200">
-                <span>{`${watch("first_name")} ${watch("last_name")}`}</span>
+                <span>{`${watch("last_name")} ${watch("first_name")}`}</span>
               </div>
               <span className="text-sm text-custom-text-300 tracking-tight">{watch("email")}</span>
             </div>

@@ -66,10 +66,10 @@ export const CommandPaletteIssueActions: React.FC<Props> = observer((props) => {
     const url = new URL(window.location.href);
     copyTextToClipboard(url.href)
       .then(() => {
-        setToast({ type: TOAST_TYPE.SUCCESS, title: "Copied to clipboard" });
+        setToast({ type: TOAST_TYPE.SUCCESS, title: "클립보드에 복사했습니다." });
       })
       .catch(() => {
-        setToast({ type: TOAST_TYPE.ERROR, title: "Some error occurred" });
+        setToast({ type: TOAST_TYPE.ERROR, title: "오류가 발생했습니다." });
       });
   };
 

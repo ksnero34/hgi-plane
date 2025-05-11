@@ -83,8 +83,8 @@ const OnboardingPage = observer(() => {
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Failed",
-          message: "Failed to finish onboarding, Please try again later.",
+          title: "오류가 발생했습니다!",
+          message: "온보딩을 완료할 수 없습니다. 나중에 다시 시도해주세요.",
         });
       });
   };
@@ -170,7 +170,7 @@ const OnboardingPage = observer(() => {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              Something Went wrong. Please try again.
+              문제가 발생했습니다. 다시 시도해주세요.
             </div>
           )}
         </div>

@@ -54,8 +54,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "View created successfully.",
+          title: "성공!",
+          message: "뷰가 성공적으로 생성되었습니다.",
         });
 
         router.push(`/${workspaceSlug}/workspace-views/${res.id}`);
@@ -68,8 +68,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "View could not be created. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "뷰를 생성할 수 없습니다. 다시 시도해주세요.",
         });
       });
   };
@@ -94,8 +94,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
           });
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "Success!",
-            message: "View updated successfully.",
+            title: "성공!",
+            message: "뷰가 성공적으로 업데이트되었습니다.",
           });
           handleClose();
         }
@@ -108,8 +108,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "View could not be updated. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "뷰를 업데이트할 수 없습니다. 다시 시도해주세요.",
         });
       });
   };

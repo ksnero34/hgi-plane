@@ -68,8 +68,8 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
     copyTextToClipboard(editorRef.current.getMarkDown()).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: t("toast.success"),
-        message: "Markdown copied to clipboard.",
+        title: "성공했습니다!",
+        message: "Markdown이 클립보드에 복사되었습니다.",
       })
     );
   }, [t]);

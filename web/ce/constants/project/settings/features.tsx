@@ -81,8 +81,8 @@ export const PROJECT_OTHER_FEATURES_LIST: TOtherFeatureList = {
     title: "Time Tracking",
     description: "Log time, see timesheets, and download full CSVs for your entire workspace.",
     icon: <Timer className="h-5 w-5 flex-shrink-0 text-custom-text-300" />,
-    isPro: true,
-    isEnabled: false,
+    isPro: false,
+    isEnabled: true,
   },
 };
 
@@ -108,10 +108,10 @@ export const PROJECT_FEATURES_LIST: TProjectFeatures = {
     description: "Toggle these on or off this project.",
     featureList: PROJECT_BASE_FEATURES_LIST,
   },
-  project_others: {
-    key: "work_management",
-    title: "Work management",
-    description: "Available only on some plans as indicated by the label next to the feature below.",
-    featureList: PROJECT_OTHER_FEATURES_LIST,
-  },
+  // project_others: {
+  //   key: "work_management",
+  //   title: "Work management",
+  //   description: "Available only on some plans as indicated by the label next to the feature below.",
+  //   featureList: PROJECT_OTHER_FEATURES_LIST,
+  // },
 };

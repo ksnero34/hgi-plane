@@ -233,10 +233,10 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
           else {
             setToast({
               type: TOAST_TYPE.WARNING,
-              title: "Cannot move work item",
+              title: "작업 항목을 이동할 수 없습니다.",
               message: !canEditIssueProperties
-                ? "You are not allowed to move this work item"
-                : "Drag and drop is disabled for the current grouping",
+                ? "이 작업 항목을 이동할 수 없습니다."
+                : "현재 그룹화에 대해 드래그 앤 드롭이 비활성화되어 있습니다.",
             });
           }
         }}

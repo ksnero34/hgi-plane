@@ -68,8 +68,8 @@ export const PageOptionsDropdown: React.FC<Props> = observer((props) => {
           copyTextToClipboard(editorRef.getMarkDown()).then(() =>
             setToast({
               type: TOAST_TYPE.SUCCESS,
-              title: "Success!",
-              message: "Markdown copied to clipboard.",
+              title: "성공!",
+              message: "Markdown이 클립보드에 복사되었습니다.",
             })
           );
         },

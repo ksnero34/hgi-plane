@@ -39,8 +39,8 @@ export const ArchiveModuleModal: React.FC<Props> = (props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Archive success",
-          message: "Your archives can be found in project archives.",
+          title: "성공!",
+          message: "보관된 모듈을 보관함에서 찾을 수 있습니다.",
         });
         onClose();
         router.push(`/${workspaceSlug}/projects/${projectId}/modules`);
@@ -48,8 +48,8 @@ export const ArchiveModuleModal: React.FC<Props> = (props) => {
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Module could not be archived. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "모듈을 보관할 수 없습니다. 다시 시도해주세요.",
         })
       )
       .finally(() => setIsArchiving(false));

@@ -117,7 +117,7 @@ export const CustomAnalyticsSidebar: React.FC<Props> = observer((props) => {
       .then((res) => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
+          title: "성공했습니다!",
           message: res.message,
         });
 
@@ -126,8 +126,8 @@ export const CustomAnalyticsSidebar: React.FC<Props> = observer((props) => {
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "There was some error in exporting the analytics. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "분석을 내보내는 중 오류가 발생했습니다. 다시 시도해주세요.",
         })
       );
   };

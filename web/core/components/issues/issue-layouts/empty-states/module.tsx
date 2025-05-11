@@ -60,15 +60,15 @@ export const ModuleEmptyState: React.FC = observer(() => {
       .then(() =>
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Work items added to the module successfully.",
+          title: "성공했습니다!",
+          message: "작업 항목이 모듈에 성공적으로 추가되었습니다.",
         })
       )
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Selected work items could not be added to the module. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "선택한 작업 항목을 모듈에 추가할 수 없습니다. 다시 시도해주세요.",
         })
       );
   };

@@ -154,8 +154,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
       });
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success",
-        message: "Profile setup completed!",
+        title: "성공!",
+        message: "프로필 설정이 완료되었습니다.",
       });
       // For Invited Users, they will skip all other steps and finish onboarding.
       if (totalSteps <= 2) {
@@ -168,8 +168,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
       });
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error",
-        message: "Profile setup failed. Please try again!",
+        title: "오류가 발생했습니다!",
+        message: "프로필 설정에 실패했습니다. 다시 시도해주세요.",
       });
     }
   };
@@ -216,8 +216,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
       });
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success",
-        message: "Profile setup completed!",
+        title: "성공!",
+        message: "프로필 설정이 완료되었습니다.",
       });
       // For Invited Users, they will skip all other steps and finish onboarding.
       if (totalSteps <= 2) {
@@ -230,8 +230,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
       });
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error",
-        message: "Profile setup failed. Please try again!",
+        title: "오류가 발생했습니다!",
+        message: "프로필 설정에 실패했습니다. 다시 시도해주세요.",
       });
     }
   };

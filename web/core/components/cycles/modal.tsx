@@ -59,8 +59,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
 
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Cycle created successfully.",
+          title: "성공했습니다!",
+          message: "주기가 생성되었습니다.",
         });
         captureCycleEvent({
           eventName: CYCLE_CREATED,
@@ -70,8 +70,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: err?.detail ?? "Error in creating cycle. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: err?.detail ?? "주기 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
         });
         captureCycleEvent({
           eventName: CYCLE_CREATED,
@@ -93,8 +93,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Cycle updated successfully.",
+          title: "성공했습니다!",
+          message: "주기가 업데이트되었습니다.",
         });
       })
       .catch((err) => {
@@ -104,8 +104,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: err?.detail ?? "Error in updating cycle. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: err?.detail ?? "주기 업데이트 중 오류가 발생했습니다. 다시 시도해주세요.",
         });
       });
   };
@@ -154,8 +154,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
     } else
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "You already have a cycle on the given dates, if you want to create a draft cycle, remove the dates.",
+        title: "오류가 발생했습니다!",
+        message: "날짜에 해당하는 주기가 이미미 있습니다. 주기를 생성하려면 날짜를 제거해주세요.",
       });
   };
 

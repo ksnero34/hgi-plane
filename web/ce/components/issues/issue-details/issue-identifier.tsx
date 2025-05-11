@@ -50,7 +50,7 @@ export const IdentifierText: React.FC<TIdentifierTextProps> = (props) => {
       navigator.clipboard.writeText(identifier).then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Work item ID copied to clipboard",
+          title: "작업 항목 ID가 클립보드에 복사되었습니다!",
         });
       });
     }

@@ -87,13 +87,13 @@ export const CommandPalette: FC = observer(() => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Copied to clipboard",
+          title: "클립보드에 복사되었습니다.",
         });
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Some error occurred",
+          title: "오류가 발생했습니다.",
         });
       });
   }, [workItem]);
@@ -104,7 +104,7 @@ export const CommandPalette: FC = observer(() => {
       if (!canPerformProjectMemberActions && showToast)
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "You don't have permission to perform this action.",
+          title: "권한이 없습니다.",
         });
 
       return canPerformProjectMemberActions;
@@ -117,7 +117,7 @@ export const CommandPalette: FC = observer(() => {
       if (!canPerformProjectAdminActions && projectId && showToast)
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "You don't have permission to perform this action.",
+          title: "권한이 없습니다.",
         });
 
       return canPerformProjectAdminActions;
@@ -130,7 +130,7 @@ export const CommandPalette: FC = observer(() => {
       if (!canPerformWorkspaceMemberActions && showToast)
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "You don't have permission to perform this action.",
+          title: "권한이 없습니다.",
         });
       return canPerformWorkspaceMemberActions;
     },
@@ -142,7 +142,7 @@ export const CommandPalette: FC = observer(() => {
       if (!canPerformAnyCreateAction && showToast)
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "You don't have permission to perform this action.",
+          title: "권한이 없습니다.",
         });
       return canPerformAnyCreateAction;
     },

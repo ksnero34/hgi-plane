@@ -61,8 +61,8 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
     copyUrlToClipboard(moduleLink).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Link Copied!",
-        message: "Module link copied to clipboard.",
+        title: "링크가 복사되었습니다.",
+        message: "모듈 링크가 클립보드에 복사되었습니다.",
       });
     });
   const handleOpenInNewTab = () => window.open(`/${moduleLink}`, "_blank");
@@ -87,8 +87,8 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Module could not be restored. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: "모듈을 복원할 수 없습니다. 다시 시도해주세요.",
         })
       );
 

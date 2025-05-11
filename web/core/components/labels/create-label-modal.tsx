@@ -80,9 +80,9 @@ export const CreateLabelModal: React.FC<Props> = observer((props) => {
       })
       .catch((error) => {
         setToast({
-          title: "Error!",
+          title: "오류가 발생했습니다!",
           type: TOAST_TYPE.ERROR,
-          message: error?.detail ?? "Something went wrong. Please try again later.",
+          message: error?.detail ?? "문제가 발생했습니다. 나중에 다시 시도해주세요.",
         });
         reset(formData);
       });

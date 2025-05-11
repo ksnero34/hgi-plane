@@ -1496,14 +1496,19 @@ class ImportIssuesEndpoint(BaseAPIView):
             else:  # xlsx
                 file_content = file.read()
                 file_type = 'xlsx'
+
+            # UUID를 문자열로 명시적 변환
+            workspace_id = str(workspace.id)
+            project_id = str(project_id)
+            user_id = str(request.user.id)
             
             # Celery 태스크로 임포트 작업 시작
             task = issue_import_task.delay(
-                workspace_id=workspace.id,
+                workspace_id=workspace_id,
                 project_id=project_id,
                 file_content=file_content,
                 file_type=file_type,
-                user_id=request.user.id
+                user_id=user_id
             )
             
             return Response({

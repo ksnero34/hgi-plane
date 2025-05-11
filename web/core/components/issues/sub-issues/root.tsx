@@ -138,8 +138,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
         copyTextToClipboard(`${originURL}${text}`).then(() => {
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "Link Copied!",
-            message: "Work item link copied to clipboard.",
+            title: "링크가 복사되었습니다.",
+            message: "작업 항목 링크가 클립보드에 복사되었습니다.",
           });
         });
       },
@@ -149,8 +149,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
         } catch (error) {
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: "Error!",
-            message: "Error fetching sub-work items",
+            title: "오류가 발생했습니다!",
+            message: "하위 작업 항목을 가져올 수 없습니다.",
           });
         }
       },
@@ -159,14 +159,14 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
           await createSubIssues(workspaceSlug, projectId, parentIssueId, issueIds);
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "Success!",
-            message: "Sub-work items added successfully",
+            title: "성공!",
+            message: "하위 작업 항목이 성공적으로 추가되었습니다.",
           });
         } catch (error) {
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: "Error!",
-            message: "Error adding sub-work item",
+            title: "오류가 발생했습니다!",
+            message: "하위 작업 항목을 추가할 수 없습니다.",
           });
         }
       },
@@ -193,8 +193,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
           });
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "Success!",
-            message: "Sub-work item updated successfully",
+            title: "성공!",
+            message: "하위 작업 항목이 성공적으로 업데이트되었습니다.",
           });
           setSubIssueHelpers(parentIssueId, "issue_loader", issueId);
         } catch (error) {
@@ -209,8 +209,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
           });
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: "Error!",
-            message: "Error updating sub-work item",
+            title: "오류가 발생했습니다!",
+            message: "하위 작업 항목을 업데이트할 수 없습니다.",
           });
         }
       },
@@ -220,8 +220,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
           await removeSubIssue(workspaceSlug, projectId, parentIssueId, issueId);
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "Success!",
-            message: "Sub-work item removed successfully",
+            title: "성공!",
+            message: "하위 작업 항목이 성공적으로 제거되었습니다.",
           });
           captureIssueEvent({
             eventName: "Sub-issue removed",
@@ -245,8 +245,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
           });
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: "Error!",
-            message: "Error removing sub-work item",
+            title: "오류가 발생했습니다!",
+            message: "하위 작업 항목을 제거할 수 없습니다.",
           });
         }
       },
@@ -268,8 +268,8 @@ export const SubIssuesRoot: FC<ISubIssuesRoot> = observer((props) => {
           });
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: "Error!",
-            message: "Error deleting work item",
+            title: "오류가 발생했습니다!",
+            message: "작업 항목을 삭제할 수 없습니다.",
           });
         }
       },

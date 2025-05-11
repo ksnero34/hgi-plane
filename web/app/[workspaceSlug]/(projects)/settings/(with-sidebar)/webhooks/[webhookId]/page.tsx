@@ -56,15 +56,15 @@ const WebhookDetailsPage = observer(() => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Webhook updated successfully.",
+          title: "성공했습니다!",
+          message: "웹훅이 업데이트되었습니다.",
         });
       })
       .catch((error) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: error?.error ?? "Something went wrong. Please try again.",
+          title: "오류가 발생했습니다!",
+          message: error?.error ?? "문제가 발생했습니다. 다시 시도해주세요.",
         });
       });
   };

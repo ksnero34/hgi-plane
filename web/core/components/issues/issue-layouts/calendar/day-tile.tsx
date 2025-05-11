@@ -329,11 +329,11 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               }
             })
             .catch((error) => {
-              console.error("[중요] API 오류 - 날짜 업데이트 실패:", error);
+              // console.error("[중요] API 오류 - 날짜 업데이트 실패:", error);
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Failed to update dates on server.",
+                title: "오류가 발생했습니다!",
+                message: "날짜를 업데이트할 수 없습니다.",
               });
             });
             return;
@@ -353,8 +353,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             if (targetDate && newDate > targetDate) {
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Due date cannot be before the start date of the work item.",
+                title: "오류가 발생했습니다!",
+                message: "종료일은 작업 항목의 시작일보다 이전일 수 없습니다.",
               });
               return;
             }
@@ -436,8 +436,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               console.error("[중요] API 오류 - 시작일 업데이트 실패:", error);
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Failed to update start date on server.",
+                title: "오류가 발생했습니다!",
+                message: "시작일을 업데이트할 수 없습니다.",
               });
             });
             
@@ -458,8 +458,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             if (startDate && newDate < startDate) {
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Due date cannot be before the start date of the work item.",
+                title: "오류가 발생했습니다!",
+                message: "종료일은 작업 항목의 시작일보다 이전일 수 없습니다.",
               });
               return;
             }
@@ -541,8 +541,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               console.error("[중요] API 오류 - 종료일 업데이트 실패:", error);
               setToast({
                 type: TOAST_TYPE.ERROR,
-                title: "Error!",
-                message: "Failed to update target date on server.",
+                title: "오류가 발생했습니다!",
+                message: "종료일을 업데이트할 수 없습니다.",
               });
             });
             

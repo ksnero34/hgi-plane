@@ -134,15 +134,15 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: "Module link deleted successfully.",
+          title: "성공!",
+          message: "모듈 링크가 성공적으로 삭제되었습니다.",
         });
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: "Some error occurred",
+          title: "오류가 발생했습니다!",
+          message: "모듈 링크를 삭제할 수 없습니다. 다시 시도해주세요.",
         });
       });
   };
@@ -154,8 +154,8 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
     });
     setToast({
       type: TOAST_TYPE.SUCCESS,
-      title: "Success!",
-      message: "Module updated successfully.",
+      title: "성공!",
+      message: "모듈이 성공적으로 업데이트되었습니다.",
     });
   };
 

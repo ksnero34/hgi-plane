@@ -174,16 +174,16 @@ export const ExportPageModal: React.FC<Props> = (props) => {
       }
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Success!",
-        message: "Page exported successfully.",
+        title: "성공!",
+        message: "페이지가 성공적으로 내보내졌습니다.",
       });
       handleClose();
     } catch (error) {
       console.error("Error in exporting page:", error);
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message: "Page could not be exported. Please try again later.",
+        title: "오류가 발생했습니다!",
+        message: "페이지를 내보낼 수 없습니다. 다시 시도해주세요.",
       });
     } finally {
       setIsExporting(false);

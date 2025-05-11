@@ -55,14 +55,14 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "Page version restored.",
+          title: "페이지 버전이 복원되었습니다.",
         });
         handleClose();
       })
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "Failed to restore page version.",
+          title: "페이지 버전을 복원할 수 없습니다.",
         })
       )
       .finally(() => setIsRestoring(false));
@@ -85,11 +85,11 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
               <TriangleAlert className="size-10" />
             </span>
             <div>
-              <h6 className="text-lg font-semibold">Something went wrong!</h6>
-              <p className="text-sm text-custom-text-300">The version could not be loaded, please try again.</p>
+              <h6 className="text-lg font-semibold">문제가 발생했습니다!</h6>
+              <p className="text-sm text-custom-text-300">버전을 로드할 수 없습니다. 다시 시도해주세요.</p>
             </div>
             <Button variant="link-primary" onClick={handleRetry} loading={isRetrying}>
-              Try again
+              다시 시도
             </Button>
           </div>
         </div>
@@ -98,7 +98,7 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
           <div className="min-h-14 py-3 px-5 border-b border-custom-border-200 flex items-center justify-between gap-2">
             <h6 className="text-base font-medium">
               {isCurrentVersionActive
-                ? "Current version"
+                ? "현재 버전"
                 : versionDetails
                   ? `${renderFormattedDate(versionDetails.last_saved_at)} ${renderFormattedTime(versionDetails.last_saved_at)}`
                   : "Loading version details"}
@@ -111,7 +111,7 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
                 onClick={handleRestoreVersion}
                 loading={isRestoring}
               >
-                {isRestoring ? "Restoring" : "Restore"}
+                {isRestoring ? "복원 중" : "복원"}
               </Button>
             )}
           </div>
