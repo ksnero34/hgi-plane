@@ -1,10 +1,15 @@
 import os
 from datetime import datetime, timedelta
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
+import logging
+import ssl
+import http.client
+import subprocess
 
 import pytz
 import requests
 import jwt
+import filetype
 
 from plane.authentication.adapter.oauth import OauthAdapter
 from plane.license.utils.instance_value import get_configuration_value
@@ -16,6 +21,7 @@ from plane.license.models import Instance, InstanceAdmin
 from django.conf import settings
 from plane.db.models import User
 from plane.utils.ip_address import get_client_ip
+
 class OIDCOAuthProvider(OauthAdapter):
     provider = "oidc"
     scope = "openid profile email roles"
@@ -129,51 +135,6 @@ class OIDCOAuthProvider(OauthAdapter):
         if not email and id_token_claims:
             email = id_token_claims.get("email")
 
-        # avatar URL 검증
-        avatar_url = user_info_response.get("picture")
-        # print(f"[OIDC] userinfo에서 가져온 picture URL: {avatar_url}")
-        
-        if not avatar_url and id_token_claims:
-            avatar_url = id_token_claims.get("picture")
-            # print(f"[OIDC] ID 토큰에서 가져온 picture URL: {avatar_url}")
-            
-        valid_avatar_url = None
-        if avatar_url:
-            try:
-                # HEAD 요청으로 Content-Type만 확인
-                # print(f"[OIDC] 아바타 URL 유효성 검사 시작: {avatar_url}")
-                response = requests.head(avatar_url, allow_redirects=True, timeout=5)
-                content_type = response.headers.get('Content-Type', '').lower()
-                # print(f"[OIDC] 아바타 URL Content-Type: {content_type}")
-                
-                # 허용할 이미지 Content-Type 목록
-                valid_image_types = [
-                    'image/jpeg',
-                    'image/jpg',
-                    'image/png',
-                    'image/gif',
-                    'image/jfif',
-                    'image/webp',
-                    'image/svg+xml',
-                    'application/octet-stream'
-                ]
-                
-                # Content-Type이 없는 경우 GET 요청으로 재시도
-                if not content_type and response.status_code == 200:
-                    response = requests.get(avatar_url, allow_redirects=True, timeout=5)
-                    content_type = response.headers.get('Content-Type', '').lower()
-                
-                # 이미지 타입인 경우에만 URL 사용
-                if any(content_type.startswith(valid_type) for valid_type in valid_image_types):
-                    valid_avatar_url = avatar_url
-                    # print(f"[OIDC] 유효한 아바타 URL 확인됨: {valid_avatar_url}")
-                else:
-                    # print(f"[OIDC] 유효하지 않은 Content-Type: {content_type}")
-                    pass
-            except (requests.RequestException, Exception) as e:
-                # print(f"[OIDC] 아바타 URL 검증 중 오류 발생: {str(e)}")
-                valid_avatar_url = None
-            
         # 표시 이름 가져오기 - 우선 순위: userinfo의 name -> id_token의 name -> sub
         display_name = None
         
@@ -191,6 +152,41 @@ class OIDCOAuthProvider(OauthAdapter):
             # print(f"[OIDC] name 없음, sub 사용: {display_name}")
             
         # print(f"[OIDC] 최종 display_name: {display_name}")
+
+        # avatar URL 검증 - curl 기반으로 이미지 다운로드
+        avatar_url = user_info_response.get("picture")
+        if not avatar_url and id_token_claims:
+            avatar_url = id_token_claims.get("picture")
+            
+        valid_avatar_url = None
+        if avatar_url:
+            try:
+                # 이미지 다운로드를 위한 curl 명령어 실행
+                cmd = [
+                    "curl", "-s", "--location",
+                    "--header", "User-Agent: Mozilla/5.0",
+                    "--header", "Referer: https://plane.hwgeneralins.com",
+                    "--header", "Cookie: ",  # 필요한 경우 쿠키 추가
+                    "--insecure",  # SSL 인증서 검증 무시
+                    avatar_url
+                ]
+                
+                # subprocess로 curl 실행
+                image_bytes = subprocess.check_output(cmd)
+                
+                # 이미지 유형 확인
+                kind = filetype.guess(image_bytes)
+                if kind and kind.mime.startswith('image/'):
+                    valid_avatar_url = avatar_url
+                    # logging.warning(f"[OIDC] 유효한 이미지 파일 확인됨: {kind.mime}")
+                else:
+                    logging.warning(f"[OIDC] 유효하지 않은 파일 형식 또는 빈 응답")
+            except subprocess.CalledProcessError as e:
+                logging.warning(f"[OIDC] 아바타 URL curl 호출 실패: {e}")
+                valid_avatar_url = None
+            except Exception as e:
+                logging.warning(f"[OIDC] 아바타 URL 검증 중 오류 발생: {str(e)}")
+                valid_avatar_url = None
 
         # admin 로그인인 경우 roles 확인
         if self.is_admin:
@@ -269,52 +265,39 @@ class OIDCOAuthProvider(OauthAdapter):
             # valid_avatar_url이 None이면 기존 아바타 URL 검증
             if not valid_avatar_url and existing_user.avatar:
                 try:
-                    response = requests.head(existing_user.avatar, allow_redirects=True, timeout=5)
-                    content_type = response.headers.get('Content-Type', '').lower()
-                    
-                    # Content-Type이 없는 경우 GET 요청으로 재시도
-                    if not content_type and response.status_code == 200:
-                        response = requests.get(existing_user.avatar, allow_redirects=True, timeout=5)
-                        content_type = response.headers.get('Content-Type', '').lower()
-                    
-                    # 허용할 이미지 Content-Type 목록
-                    valid_image_types = [
-                        'image/jpeg',
-                        'image/jpg',
-                        'image/png',
-                        'image/gif',
-                        'image/jfif',
-                        'image/webp',
-                        'image/svg+xml',
-                        'application/octet-stream'
+                    # 이미지 다운로드를 위한 curl 명령어 실행
+                    cmd = [
+                        "curl", "-s", "--location",
+                        "--header", "User-Agent: Mozilla/5.0",
+                        "--header", "Referer: https://plane.hwgeneralins.com",
+                        "--header", "Cookie: ",  # 필요한 경우 쿠키 추가
+                        "--insecure",  # SSL 인증서 검증 무시
+                        existing_user.avatar
                     ]
                     
-                    # 이미지 타입이 아닌 경우 빈 문자열로 설정
-                    if not any(content_type.startswith(valid_type) for valid_type in valid_image_types):
+                    # subprocess로 curl 실행
+                    image_bytes = subprocess.check_output(cmd)
+                    
+                    # 이미지 유형 확인
+                    kind = filetype.guess(image_bytes)
+                    if not kind or not kind.mime.startswith('image/'):
+                        logging.warning(f"[OIDC] 기존 아바타 이미지 유형이 아님")
                         existing_user.avatar = ""
-                        # existing_user.avatar_asset = None
-                except (requests.RequestException, Exception):
-                    # URL 접근 실패시 빈 문자열로 설정
+                except (subprocess.CalledProcessError, Exception) as e:
+                    # curl 실행 실패시 빈 문자열로 설정
+                    logging.warning(f"[OIDC] 기존 아바타 URL 검증 중 오류 발생: {str(e)}")
                     existing_user.avatar = ""
-                    # existing_user.avatar_asset = None
             # 새로운 유효한 아바타 URL이 있는 경우에만 업데이트
             elif valid_avatar_url:
                  existing_user.avatar = valid_avatar_url
-            #     existing_user.avatar_asset = None
             
-            # existing_user.first_name = user_data["user"]["first_name"]
-            # existing_user.last_name = user_data["user"]["last_name"]
-            # existing_user.display_name = user_data["user"]["display_name"]
             existing_user.save()
             
             # user_data에 업데이트된 사용자 정보 반영
             user_data["user"].update({
                 "id": existing_user.id,
-                # "first_name": existing_user.first_name,
-                # "last_name": existing_user.last_name,
                 "avatar": existing_user.avatar,
                 "avatar_url": existing_user.avatar_url,
-                # "display_name": existing_user.display_name,
             })
             
         super().set_user_data(user_data)

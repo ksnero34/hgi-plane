@@ -23,7 +23,8 @@ RUN apk --no-cache add \
     "libc-dev" \
     "linux-headers" \
     "file" \
-    "openjdk21-jre"
+    "openjdk21-jre" \
+    "curl"
 
 WORKDIR /code
 

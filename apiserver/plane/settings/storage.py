@@ -91,7 +91,7 @@ class S3Storage(S3Boto3Storage):
             # nginx가 /storage/uploads로 프록시하므로 /uploads로 설정
             response['url'] = f"/{self.aws_storage_bucket_name}"
             
-            print(f"\nGenerated Response: {response}")
+            # print(f"\nGenerated Response: {response}")
             return response
         except ClientError as e:
             print(f"\nError generating presigned POST URL: {e}")

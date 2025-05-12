@@ -5,6 +5,23 @@ http {
     sendfile on;
     more_set_headers 'Server: MIN-WEB';
     
+    # 실제 클라이언트 IP를 가져오기 위한 맵 설정
+    map ${dollar}http_x_real_ip ${dollar}real_client_ip {
+        ""      ${dollar}http_x_forwarded_for;
+        default ${dollar}http_x_real_ip;
+    }
+
+    map ${dollar}real_client_ip ${dollar}final_client_ip {
+        ""      ${dollar}remote_addr;
+        default ${dollar}real_client_ip;
+    }
+
+    # IP 접근 제어를 위한 맵 설정
+    map ${dollar}final_client_ip ${dollar}is_allowed_ip {
+        "~^(${ADMIN_ALLOWED_IPS})$" 1;
+        default 0;
+    }
+    
     server {
         listen 18080;
         root /www/data/;
@@ -73,7 +90,10 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
-            proxy_pass http://live:3100/live/;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
+            proxy_pass http://live:3000/live/;
         }
 
         location /spaces/ {
@@ -81,6 +101,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://space:3000/spaces/;
         }
 
@@ -89,6 +112,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://api:8000/storage/${BUCKET_NAME};
             proxy_redirect off;
         }

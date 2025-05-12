@@ -26,6 +26,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://dev-web:3000/;
         }
 
@@ -51,6 +54,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://dev-live:3100/live/;
         }
 
@@ -81,6 +87,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://dev-space:3002/spaces/;
         }
 
@@ -89,6 +98,9 @@ http {
             proxy_set_header Upgrade ${dollar}http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host ${dollar}http_host;
+            proxy_set_header X-Real-IP ${dollar}remote_addr;
+            proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto ${dollar}scheme;
             proxy_pass http://dev-api:8000/storage/${BUCKET_NAME};
             proxy_redirect off;
         }

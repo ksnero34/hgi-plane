@@ -93,12 +93,12 @@ type TProjectFeatures = {
     description: string;
     featureList: TBaseFeatureList;
   };
-  project_others: {
-    key: string;
-    title: string;
-    description: string;
-    featureList: TOtherFeatureList;
-  };
+  // project_others: {
+  //   key: string;
+  //   title: string;
+  //   description: string;
+  //   featureList: TOtherFeatureList;
+  // };
 };
 
 export const PROJECT_FEATURES_LIST: TProjectFeatures = {
