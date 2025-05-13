@@ -32,6 +32,25 @@ const ProjectManagementPage = observer(() => {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedTargetWorkspace, setSelectedTargetWorkspace] = useState<string | null>(null);
   
+  // 직접 인스턴스 관리자 API 호출로 인증 체크
+  useEffect(() => {
+    // 페이지 로드 즉시 직접 API 호출하여 401 에러 발생시키기
+    // console.log("General 페이지: 직접 API 호출로 인증 체크");
+    axios.get("/api/instances/admins/", { withCredentials: true })
+      .then(response => {
+        // console.log("General 페이지: 관리자 API 호출 성공", response.data);
+      })
+      .catch(error => {
+        // console.log("General 페이지: 관리자 API 호출 오류", error);
+        // 401 에러 발생 시 리다이렉션
+        if (error.response && error.response.status === 401) {
+          const currentPath = window.location.pathname;
+          const normalizedPath = currentPath.replace(/^\/god-mode/, '');
+          window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
+        }
+      });
+  }, []);
+
   // CSRF 토큰 가져오기
   const getCSRFToken = async () => {
     try {
@@ -135,8 +154,8 @@ const ProjectManagementPage = observer(() => {
         // CSRF 토큰 가져오기
         const csrfToken = await getCSRFToken();
         
-        // 일반 워크스페이스 API 사용 (관리자 권한으로 접근)
-        const url = `/api/workspaces/${selectedWorkspace.slug}/projects/`;
+        // 인스턴스 관리자용 프로젝트 목록 API 호출
+        const url = `/api/instances/workspaces/${selectedWorkspace.slug}/projects/`;
         console.log("프로젝트 목록 요청 URL:", url);
         
         const response = await axios.get(url, {
@@ -161,6 +180,18 @@ const ProjectManagementPage = observer(() => {
         }
       } catch (error) {
         console.error("프로젝트 목록 API 요청 실패:", error);
+        
+        if (error?.response?.status === 401) {
+          console.error("인증 오류가 발생했습니다. 관리자 권한이 필요합니다.");
+          handleAuthError();
+        } else {
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: "오류",
+            message: "프로젝트 목록을 불러오는데 실패했습니다."
+          });
+        }
+        
         setProjects([]);
       }
       
@@ -219,19 +250,24 @@ const ProjectManagementPage = observer(() => {
     try {
       setIsTransferring(true);
       
-      // 프로젝트 이동 요청 객체 준비
-      const transferData = {
+      // CSRF 토큰 가져오기
+      const csrfToken = await getCSRFToken();
+      
+      // 프로젝트 이동 요청
+      const selectedWorkspace = workspaces.find(w => w.id === selectedSourceWorkspace);
+      const url = `/api/instances/workspaces/${selectedWorkspace?.slug}/projects/`;
+      
+      const response = await axios.post(url, {
         project_id: selectedProject,
-        source_workspace_id: selectedSourceWorkspace,
         target_workspace_id: selectedTargetWorkspace
-      };
+      }, {
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        withCredentials: true
+      });
       
-      console.log("프로젝트 이동 요청:", transferData);
-      
-      // instanceService를 사용하여 프로젝트 이동
-      const result = await instanceService.transferProject(transferData);
-      
-      console.log("프로젝트 이동 결과:", result);
+      console.log("프로젝트 이동 결과:", response);
       
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -243,7 +279,7 @@ const ProjectManagementPage = observer(() => {
       setSelectedProject(null);
       setProjects([]);
       
-      // 프로젝트 목록 다시 로드 (선택적)
+      // 프로젝트 목록 다시 로드
       if (selectedSourceWorkspace) {
         setTimeout(() => {
           fetchProjects(selectedSourceWorkspace).catch(console.error);
@@ -310,6 +346,7 @@ const ProjectManagementPage = observer(() => {
           <CustomSelect
             key={selectedSourceWorkspace || 'workspace-select'}
             value={selectedSourceWorkspace}
+            label={workspaces.find(w => w.id === selectedSourceWorkspace)?.name || "워크스페이스 선택"}
             onChange={(value) => {
               console.log("워크스페이스 선택됨:", value);
               if (value) {
@@ -340,6 +377,7 @@ const ProjectManagementPage = observer(() => {
           <CustomSelect
             key={`project-select-${selectedSourceWorkspace || ''}`}
             value={selectedProject}
+            label={projects.find(p => p.id === selectedProject)?.name || "프로젝트 선택"}
             onChange={handleProjectChange}
             placeholder={selectedSourceWorkspace ? "프로젝트 선택" : "먼저 소스 워크스페이스를 선택하세요"}
             disabled={!selectedSourceWorkspace || isLoading || isTransferring}
@@ -360,6 +398,7 @@ const ProjectManagementPage = observer(() => {
           <CustomSelect
             key={`target-workspace-select-${selectedProject || ''}`}
             value={selectedTargetWorkspace}
+            label={workspaces.find(w => w.id === selectedTargetWorkspace)?.name || "워크스페이스 선택"}
             onChange={handleTargetWorkspaceChange}
             placeholder={selectedProject ? "워크스페이스 선택" : "먼저 프로젝트를 선택하세요"}
             disabled={!selectedProject || isLoading || isTransferring}

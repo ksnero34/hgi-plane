@@ -3,6 +3,7 @@ from plane.app.views.instance.base import InstanceMemberViewSet, InstanceMemberP
 from plane.app.views.instance.file_settings import FileSettingsViewSet
 from plane.app.views.instance.workspace import DefaultWorkspaceConfigViewSet
 from plane.app.views import WorkSpaceViewSet
+from plane.license.api.views.project import InstanceAdminProjectEndpoint
 
 urlpatterns = [
     # 인스턴스 멤버 관리 URL
@@ -48,6 +49,14 @@ urlpatterns = [
         WorkSpaceViewSet.as_view({"get": "list", "post": "create"}),
         name="instance-workspaces",
     ),
+    
+    # 인스턴스 관리자용 프로젝트 목록 조회
+    path(
+        "instances/workspaces/<str:slug>/projects/",
+        InstanceAdminProjectEndpoint.as_view(),
+        name="instance-admin-projects",
+    ),
+    
     # public 멤버 목록 조회 URL
     path(
         "instances/public/members/",
