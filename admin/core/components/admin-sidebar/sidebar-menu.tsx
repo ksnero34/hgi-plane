@@ -3,7 +3,7 @@
 import { observer } from "mobx-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Image, BrainCog, Cog, Lock, Mail, Users, FileText, LayoutTemplate } from "lucide-react";
+import { Image, BrainCog, Cog, Lock, Mail, Users, FileText, LayoutTemplate, FolderKanban } from "lucide-react";
 import { Tooltip, WorkspaceIcon } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
@@ -33,6 +33,12 @@ const INSTANCE_ADMIN_LINKS = [
     name: "기본 워크스페이스",
     description: "사용자 가입 시 자동 추가될 워크스페이스 설정",
     href: `/workspace-config/`,
+  },
+  {
+    Icon: FolderKanban,
+    name: "프로젝트 관리",
+    description: "프로젝트 이동 등 고급 프로젝트 관리 기능",
+    href: `/project-management/`,
   },
   {
     Icon: Mail,
