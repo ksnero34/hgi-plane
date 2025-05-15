@@ -73,6 +73,10 @@ Meet [Plane](https://plane.so/), an open-source project management tool to track
 - 사용자 신규 생성 시 기본으로 seoul 타임존 및 한국어 설정되도록 수정
 - 이름 성 이아니라 성 이름 순으로 나오도록 수정
 - oidc 로 사용자 생성 시 비밀번호 입력칸 안나오게 세팅
+- oidc id_token에 picture로 이미지 세팅, 검증기능 추가
+- 엑셀 등 스프레드 시트의 셀 복사 붙여넣기시 테이블형태로 들어가도록 수정
+- 추가 한글화(activity, 알림 등)
+- 프로젝트를 다른 워크스페이스 이동하는 기능 추가
 - 이 외 계속 추가중...
 
 
