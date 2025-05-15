@@ -13,21 +13,79 @@ export const DropHandlerExtension = Extension.create({
         key: new PluginKey("drop-handler-plugin"),
         props: {
           handlePaste: (view: EditorView, event: ClipboardEvent) => {
+            if (!editor.isEditable) return false;
+
+            // 엑셀 데이터 처리 - 테이블이 있는 HTML 확인
+            const types = Array.from(event.clipboardData?.types || []);
+            const hasHtml = types.indexOf("text/html") !== -1;
+            
+            if (hasHtml && event.clipboardData) {
+              const html = event.clipboardData.getData("text/html");
+              const hasTable = html.indexOf("<table") !== -1 && html.indexOf("<td") !== -1;
+              
+              // CSV나 TSV 형식인지도 확인
+              const isSpreadsheetData = 
+                hasTable || 
+                html.indexOf("LibreOffice") !== -1 || 
+                html.indexOf("Microsoft Excel") !== -1 ||
+                html.indexOf("Google Sheets") !== -1 ||
+                html.indexOf("data-sheets-value") !== -1;
+              
+              if (isSpreadsheetData) {
+                event.preventDefault();
+                
+                try {
+                  // HTML을 파싱하여 테이블 데이터 추출
+                  const parser = new DOMParser();
+                  const doc = parser.parseFromString(html, "text/html");
+                  const tables = doc.querySelectorAll("table");
+                  
+                  if (tables.length > 0) {
+                    const table = tables[0];
+                    const rows = Array.from(table.rows);
+                    const rowCount = rows.length;
+                    const colCount = rows[0]?.cells.length || 1;
+                    
+                    // HTML 테이블로 변환하여 삽입
+                    let tableHTML = '<table><tbody>';
+                    for (let i = 0; i < rowCount; i++) {
+                      tableHTML += '<tr>';
+                      for (let j = 0; j < colCount; j++) {
+                        const content = rows[i]?.cells[j]?.textContent || '';
+                        tableHTML += `<td>${content}</td>`;
+                      }
+                      tableHTML += '</tr>';
+                    }
+                    tableHTML += '</tbody></table>';
+                    
+                    // HTML을 직접 삽입
+                    editor.commands.insertContent(tableHTML);
+                    
+                    // 테이블로 처리했으므로 이후 처리 중단
+                    return true;
+                  }
+                } catch (error) {
+                  // 오류가 발생해도 이미지 처리를 시도하지 않고 반환
+                  return false;
+                }
+              }
+            }
+            
+            // 기존 이미지 처리 로직 - 테이블 처리가 되지 않은 경우에만 실행
             if (
-              editor.isEditable &&
               event.clipboardData &&
               event.clipboardData.files &&
               event.clipboardData.files.length > 0
             ) {
-              event.preventDefault();
               const files = Array.from(event.clipboardData.files);
               const imageFiles = files.filter((file) => file.type.startsWith("image"));
 
               if (imageFiles.length > 0) {
+                event.preventDefault();
                 const pos = view.state.selection.from;
                 insertImagesSafely({ editor, files: imageFiles, initialPos: pos, event: "drop" });
+                return true;
               }
-              return true;
             }
             return false;
           },
