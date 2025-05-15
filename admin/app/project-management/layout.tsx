@@ -9,4 +9,4 @@ export const metadata: Metadata = {
 
 export default function ProjectManagementLayout({ children }: { children: ReactNode }) {
   return <AdminLayout>{children}</AdminLayout>;
-} 
+}
