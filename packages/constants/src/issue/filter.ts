@@ -469,6 +469,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       display_filters: {
         order_by: [
           "sort_order",
+          "parent_child",
           "-created_at",
           "-updated_at",
           "start_date",

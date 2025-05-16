@@ -216,7 +216,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
             />
 
             <FiltersDropdown
-              title="Filters"
+              title="필터"
               placement="bottom-end"
               disabled={!canUserCreateIssue}
               isFiltersApplied={isIssueFilterActive(issueFilters)}

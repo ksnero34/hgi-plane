@@ -139,6 +139,7 @@ export const ISSUE_ORDER_BY_OPTIONS: {
   titleTranslationKey: string;
 }[] = [
   { key: "sort_order", titleTranslationKey: "common.order_by.manual" },
+  { key: "parent_child", titleTranslationKey: "common.order_by.parent_child" },
   { key: "-created_at", titleTranslationKey: "common.order_by.last_created" },
   { key: "-updated_at", titleTranslationKey: "common.order_by.last_updated" },
   { key: "start_date", titleTranslationKey: "common.order_by.start_date" },

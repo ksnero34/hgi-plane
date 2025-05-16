@@ -235,7 +235,7 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
               selectedLayout={activeLayout}
             />
             <FiltersDropdown
-              title="Filters"
+              title="필터"
               placement="bottom-end"
               isFiltersApplied={isIssueFilterActive(issueFilters)}
             >

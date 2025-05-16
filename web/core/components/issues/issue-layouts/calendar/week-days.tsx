@@ -131,7 +131,7 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
       
       // 담당자 필터 확인
       if (appliedFilters.assignees && appliedFilters.assignees.length > 0) {
-        if (!issue.assignee_ids || !issue.assignee_ids.some(id => appliedFilters.assignees && appliedFilters.assignees.includes(id))) {
+        if (!issue.assignee_ids || !issue.assignee_ids.some((id: any) => appliedFilters.assignees && appliedFilters.assignees.includes(id))) {
           return false;
         }
       }
@@ -145,7 +145,7 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
       
       // 레이블 필터 확인
       if (appliedFilters.labels && appliedFilters.labels.length > 0) {
-        if (!issue.label_ids || !issue.label_ids.some(id => appliedFilters.labels && appliedFilters.labels.includes(id))) {
+        if (!issue.label_ids || !issue.label_ids.some((id: any) => appliedFilters.labels && appliedFilters.labels.includes(id))) {
           return false;
         }
       }
@@ -164,6 +164,199 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
         }
       }
       
+      // 상태 그룹 필터 확인
+      if (appliedFilters.state_group && appliedFilters.state_group.length > 0) {
+        // issue 객체에 state_detail이 있는지 확인
+        const stateGroup = (issue as any).state_detail?.group;
+        if (!stateGroup || !appliedFilters.state_group.includes(stateGroup)) {
+          return false;
+        }
+      }
+      
+      // 멘션 필터 확인
+      if (appliedFilters.mentions && appliedFilters.mentions.length > 0) {
+        // 멘션은 이슈 내용이나 댓글에서 참조된 사용자를 확인해야 하므로
+        // 이슈 객체에 mentions_data 또는 mentions 필드가 있는지 확인
+        const mentionsData = (issue as any).mentions_data;
+        
+        if (!mentionsData) {
+          return false;
+        }
+        
+        // 멘션 데이터가 배열인 경우 일치하는 사용자 ID가 있는지 확인
+        if (Array.isArray(mentionsData)) {
+          if (!mentionsData.some((id: any) => appliedFilters.mentions && appliedFilters.mentions.includes(id))) {
+            return false;
+          }
+        }
+        // 멘션 데이터가 사용자 ID 목록인 경우 일치하는 값이 있는지 확인
+        else if (typeof mentionsData === 'object') {
+          const mentionedUserIds = Object.keys(mentionsData);
+          if (!mentionedUserIds.some((id: any) => appliedFilters.mentions && appliedFilters.mentions.includes(id))) {
+            return false;
+          }
+        }
+      }
+      
+      // 모듈 필터 확인
+      if (appliedFilters.module && appliedFilters.module.length > 0) {
+        // 모듈 ID 배열이 issue.module_ids 또는 다른 형태로 저장되어 있는지 확인
+        const moduleIds = (issue as any).module_ids;
+        const issueModule = (issue as any).issue_module;
+        
+        if (!moduleIds && !issueModule) {
+          return false;
+        }
+        
+        // module_ids가 있는 경우
+        if (moduleIds) {
+          if (!moduleIds.some((id: any) => appliedFilters.module && appliedFilters.module.includes(id))) {
+            return false;
+          }
+        } 
+        // issue_module이 있는 경우 (다른 형태로 저장되었을 때)
+        else if (issueModule) {
+          const moduleIdList = Array.isArray(issueModule) 
+            ? issueModule.map((m: any) => m.module_id || m.id)
+            : [issueModule.module_id || issueModule.id];
+          
+          if (!moduleIdList.some((id: any) => appliedFilters.module && appliedFilters.module.includes(id))) {
+            return false;
+          }
+        }
+      }
+      
+      // 주기(cycle) 필터 확인
+      if (appliedFilters.cycle && appliedFilters.cycle.length > 0) {
+        // 주기 ID가 issue.cycle_id 또는 다른 형태로 저장되어 있는지 확인
+        const cycleId = (issue as any).cycle_id;
+        const issueCycle = (issue as any).issue_cycle;
+        
+        if (!cycleId && !issueCycle) {
+          return false;
+        }
+        
+        // cycle_id가 있는 경우
+        if (cycleId) {
+          if (!appliedFilters.cycle.includes(cycleId)) {
+            return false;
+          }
+        } 
+        // issue_cycle이 있는 경우 (다른 형태로 저장되었을 때)
+        else if (issueCycle) {
+          const cycleSingleId = issueCycle.cycle_id || issueCycle.id;
+          if (!appliedFilters.cycle.includes(cycleSingleId)) {
+            return false;
+          }
+        }
+      }
+      
+      // 이슈 타입 필터 확인
+      if (appliedFilters.issue_type && appliedFilters.issue_type.length > 0) {
+        const issueType = (issue as any).issue_type;
+        if (!issueType || !appliedFilters.issue_type.includes(issueType)) {
+          return false;
+        }
+      }
+      
+      // 시작일 필터 확인
+      if (appliedFilters.start_date && appliedFilters.start_date.length > 0) {
+        if (!startDate) return false;
+        
+        let passesStartDateFilter = false;
+        for (const dateFilter of appliedFilters.start_date) {
+          const [filterDate, filterType] = dateFilter.split(";");
+          const filterDateObj = new Date(filterDate);
+          filterDateObj.setHours(0, 0, 0, 0);
+          
+          switch (filterType) {
+            case "before":
+              if (startDate.getTime() <= filterDateObj.getTime()) {
+                passesStartDateFilter = true;
+              }
+              break;
+            case "after":
+              if (startDate.getTime() >= filterDateObj.getTime()) {
+                passesStartDateFilter = true;
+              }
+              break;
+            case "on":
+              if (startDate.getTime() === filterDateObj.getTime()) {
+                passesStartDateFilter = true;
+              }
+              break;
+            default:
+              // 사용자 정의 날짜 범위인 경우
+              const [startDateStr, endDateStr] = dateFilter.split("-");
+              const filterStartDate = new Date(startDateStr);
+              const filterEndDate = new Date(endDateStr);
+              filterStartDate.setHours(0, 0, 0, 0);
+              filterEndDate.setHours(23, 59, 59, 999);
+              
+              if (startDate.getTime() >= filterStartDate.getTime() && startDate.getTime() <= filterEndDate.getTime()) {
+                passesStartDateFilter = true;
+              }
+          }
+          
+          if (passesStartDateFilter) break;
+        }
+        
+        if (!passesStartDateFilter) return false;
+      }
+      
+      // 종료일 필터 확인
+      if (appliedFilters.target_date && appliedFilters.target_date.length > 0) {
+        if (!targetDate) return false;
+        
+        let passesTargetDateFilter = false;
+        for (const dateFilter of appliedFilters.target_date) {
+          const [filterDate, filterType] = dateFilter.split(";");
+          const filterDateObj = new Date(filterDate);
+          filterDateObj.setHours(0, 0, 0, 0);
+          
+          switch (filterType) {
+            case "before":
+              if (targetDate.getTime() <= filterDateObj.getTime()) {
+                passesTargetDateFilter = true;
+              }
+              break;
+            case "after":
+              if (targetDate.getTime() >= filterDateObj.getTime()) {
+                passesTargetDateFilter = true;
+              }
+              break;
+            case "on":
+              if (targetDate.getTime() === filterDateObj.getTime()) {
+                passesTargetDateFilter = true;
+              }
+              break;
+            default:
+              // 사용자 정의 날짜 범위인 경우
+              const [startDateStr, endDateStr] = dateFilter.split("-");
+              const filterStartDate = new Date(startDateStr);
+              const filterEndDate = new Date(endDateStr);
+              filterStartDate.setHours(0, 0, 0, 0);
+              filterEndDate.setHours(23, 59, 59, 999);
+              
+              if (targetDate.getTime() >= filterStartDate.getTime() && targetDate.getTime() <= filterEndDate.getTime()) {
+                passesTargetDateFilter = true;
+              }
+          }
+          
+          if (passesTargetDateFilter) break;
+        }
+        
+        if (!passesTargetDateFilter) return false;
+      }
+      
+      // 구독자 필터 확인
+      if (appliedFilters.subscriber && appliedFilters.subscriber.length > 0) {
+        const subscriberIds = (issue as any).subscriber_ids;
+        if (!subscriberIds || !subscriberIds.some((id: any) => appliedFilters.subscriber && appliedFilters.subscriber.includes(id))) {
+          return false;
+        }
+      }
+      
       // 모든 필터를 통과하면 true 반환
       return true;
     });
@@ -173,9 +366,10 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
     // 2. 기간이 넓은 순 (종료일-시작일)
     // 3. ID 기준
     return visibleIssues.sort((a, b) => {
-      // 시작일 기준으로 정렬
-      const startDateA = a.start_date ? new Date(a.start_date).getTime() : Number.MAX_SAFE_INTEGER;
-      const startDateB = b.start_date ? new Date(b.start_date).getTime() : Number.MAX_SAFE_INTEGER;
+      // 시작일 기준으로 정렬 (MAX_SAFE_INTEGER 대신 직접 큰 숫자 사용)
+      const MAX_DATE_VALUE = 9007199254740991; // 2^53 - 1, MAX_SAFE_INTEGER 값
+      const startDateA = a.start_date ? new Date(a.start_date).getTime() : MAX_DATE_VALUE;
+      const startDateB = b.start_date ? new Date(b.start_date).getTime() : MAX_DATE_VALUE;
       
       if (startDateA !== startDateB) return startDateA - startDateB;
       

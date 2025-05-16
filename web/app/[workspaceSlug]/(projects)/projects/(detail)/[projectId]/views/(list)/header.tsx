@@ -33,7 +33,7 @@ export const ProjectViewsHeader = observer(() => {
           <ViewListHeader />
           <div>
             <Button variant="primary" size="sm" onClick={() => toggleCreateViewModal(true)}>
-              Add view
+              보기 추가
             </Button>
           </div>
         </Header.RightItem>

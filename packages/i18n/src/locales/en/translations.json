@@ -547,6 +547,7 @@
     "order_by": {
       "label": "Order by",
       "manual": "Manual",
+      "parent_child": "Group parent/child issues",
       "last_created": "Last created",
       "last_updated": "Last updated",
       "start_date": "Start date",
@@ -1902,7 +1903,7 @@
     "empty_state": {
       "general": {
         "title": "Save filtered views for your project. Create as many as you need",
-        "description": "Views are a set of saved filters that you use frequently or want easy access to. All your colleagues in a project can see everyone’s views and choose whichever suits their needs best.",
+        "description": "Views are a set of saved filters that you use frequently or want easy access to. All your colleagues in a project can see everyone's views and choose whichever suits their needs best.",
         "primary_button": {
           "text": "Create your first view",
           "comic": {
@@ -2185,7 +2186,7 @@
     },
     "admin": {
       "title": "Admin",
-      "description": "All permissions set to true within the workspace."
+      "description": "All permissions set to true within the workspace."
     }
   },
 

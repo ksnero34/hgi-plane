@@ -302,7 +302,13 @@ class IssueViewSet(BaseViewSet):
 
         # 정렬 적용
         if order_by_param and not group_by:
-            issue_queryset = issue_queryset.order_by(order_by_param)
+            # parent_child 정렬 옵션은 특별한 처리가 필요하므로 order_issue_queryset 함수 사용
+            if order_by_param == "parent_child":
+                issue_queryset, _ = order_issue_queryset(
+                    issue_queryset=issue_queryset, order_by_param=order_by_param
+                )
+            else:
+                issue_queryset = issue_queryset.order_by(order_by_param)
 
         recent_visited_task.delay(
             slug=slug,
@@ -333,9 +339,13 @@ class IssueViewSet(BaseViewSet):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 else:
+                    # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
+                    # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경
+                    pagination_order_by = "id" if order_by_param == "parent_child" else order_by_param
+                    
                     return self.paginate(
                         request=request,
-                        order_by=order_by_param,
+                        order_by=pagination_order_by,
                         queryset=issue_queryset,
                         on_results=lambda issues: issue_on_results(
                             group_by=group_by, issues=issues, sub_group_by=sub_group_by
@@ -366,9 +376,13 @@ class IssueViewSet(BaseViewSet):
                     )
             else:
                 # Group paginate
+                # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
+                # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경
+                pagination_order_by = "id" if order_by_param == "parent_child" else order_by_param
+                
                 return self.paginate(
                     request=request,
-                    order_by=order_by_param,
+                    order_by=pagination_order_by,
                     queryset=issue_queryset,
                     on_results=lambda issues: issue_on_results(
                         group_by=group_by, issues=issues, sub_group_by=sub_group_by
@@ -391,8 +405,12 @@ class IssueViewSet(BaseViewSet):
                     ),
                 )
         else:
+            # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
+            # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경
+            pagination_order_by = "id" if order_by_param == "parent_child" else order_by_param
+            
             return self.paginate(
-                order_by=order_by_param,
+                order_by=pagination_order_by,
                 request=request,
                 queryset=issue_queryset,
                 on_results=lambda issues: issue_on_results(

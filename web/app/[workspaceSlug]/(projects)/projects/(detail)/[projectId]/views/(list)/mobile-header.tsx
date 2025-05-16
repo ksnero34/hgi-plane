@@ -35,7 +35,7 @@ export const ViewMobileHeader = observer(() => {
         <div className="flex flex-grow items-center justify-center border-l border-custom-border-200 text-sm text-custom-text-200">
           <FiltersDropdown
             icon={<ListFilter className="h-3 w-3" />}
-            title="Filters"
+            title="필터"
             placement="bottom-end"
             isFiltersApplied={false}
             menuButton={

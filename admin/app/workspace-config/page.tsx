@@ -120,22 +120,22 @@ const WorkspaceConfigPage = observer(() => {
   const handleEditWorkspace = (workspaceConfig: any) => {
     // 워크스페이스 업데이트 데이터 준비
     const updateData: { role?: number; excluded_user_groups?: string[] } = {};
-    
+
     // role 처리
     if (workspaceConfig.role !== undefined) {
       updateData.role = workspaceConfig.role;
     }
-    
+
     // excluded_user_groups 처리
     if (Array.isArray(workspaceConfig.excluded_user_groups)) {
       updateData.excluded_user_groups = workspaceConfig.excluded_user_groups;
     }
-    
+
     // console.log(`워크스페이스 설정 업데이트 요청:`, {
     //   id: workspaceConfig.id,
     //   data: JSON.stringify(updateData)
     // });
-    
+
     // 업데이트 요청 전송
     updateWorkspaceConfig(
       workspaceConfig.id,

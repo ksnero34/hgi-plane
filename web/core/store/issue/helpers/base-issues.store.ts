@@ -155,6 +155,7 @@ const ISSUE_ORDERBY_KEY: Record<TIssueOrderByOptions, keyof TIssue> = {
   priority: "priority",
   "-priority": "priority",
   sort_order: "sort_order",
+  parent_child: "id", // 부모-자식 관계는 id로 정렬
   state__name: "state_id",
   "-state__name": "state_id",
   assignees__first_name: "assignee_ids",
@@ -1811,6 +1812,72 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     const array = orderBy(issues, (issue) => convertToISODateString(issue["created_at"]), ["desc"]);
 
     switch (key) {
+      case "parent_child":
+        // 1. 부모 없는 이슈와 그 자식 이슈를 함께 그룹화
+        const parentChildMap: Record<string, string[]> = {};
+        // 모든 최상위 이슈(부모가 없는)를 찾아서 맵 생성
+        array.forEach(issue => {
+          if (!issue.parent_id) {
+            if (!parentChildMap[issue.id]) {
+              parentChildMap[issue.id] = [];
+            }
+          }
+        });
+        
+        // 하위 이슈들을 부모에 맵핑
+        array.forEach(issue => {
+          if (issue.parent_id && parentChildMap[issue.parent_id]) {
+            parentChildMap[issue.parent_id].push(issue.id);
+          }
+        });
+        
+        // 결과 배열 생성 - 각 부모 이슈 뒤에 자식 이슈 추가
+        const sortedIds: string[] = [];
+        
+        // 부모 이슈들을 start_date 기준으로 먼저 정렬
+        const parentIssues = array.filter(issue => !issue.parent_id);
+        const sortedParentIssues = orderBy(
+          parentIssues,
+          [
+            (issue) => issue?.start_date ? new Date(issue.start_date).getTime() : Infinity,
+            (issue) => issue?.sort_order || 0,
+            (issue) => issue?.created_at ? new Date(issue.created_at).getTime() : 0
+          ],
+          ['asc', 'asc', 'asc']
+        );
+        
+        // 정렬된 부모 이슈 순서대로 자식 이슈들 추가
+        sortedParentIssues.forEach(parentIssue => {
+          sortedIds.push(parentIssue.id); // 부모 이슈 먼저 추가
+          
+          // 자식 이슈들을 start_date 기준으로 정렬 후 추가
+          const childIssues = parentChildMap[parentIssue.id].map(id => 
+            array.find(issue => issue.id === id)
+          ).filter(Boolean);
+          
+          // start_date 기준으로 정렬 (없으면 생성 날짜 기준)
+          const sortedChildren = orderBy(
+            childIssues, 
+            [
+              (issue) => issue?.start_date ? new Date(issue.start_date).getTime() : Infinity,
+              (issue) => issue?.sort_order || 0,
+              (issue) => issue?.created_at ? new Date(issue.created_at).getTime() : 0
+            ],
+            ['asc', 'asc', 'asc']
+          );
+          
+          // 정렬된 자식들의 ID를 추가
+          sortedChildren.forEach(child => {
+            if (child) sortedIds.push(child.id);
+          });
+        });
+        
+        // 나머지 이슈들 (부모 맵에 포함되지 않은 모든 이슈) 추가
+        const remainingIds = array
+          .filter(issue => !sortedIds.includes(issue.id))
+          .map(issue => issue.id);
+        
+        return [...sortedIds, ...remainingIds];
       case "sort_order":
         return getIssueIds(orderBy(array, "sort_order"));
       case "state__name":

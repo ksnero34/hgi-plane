@@ -24,6 +24,7 @@ export type TIssueOrderByOptions =
   | "priority"
   | "-priority"
   | "sort_order"
+  | "parent_child"
   | "state__name"
   | "-state__name"
   | "assignees__first_name"

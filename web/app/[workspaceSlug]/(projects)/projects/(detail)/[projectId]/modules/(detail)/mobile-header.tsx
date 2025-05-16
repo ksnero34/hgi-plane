@@ -135,7 +135,7 @@ export const ModuleIssuesMobileHeader = observer(() => {
         </CustomMenu>
         <div className="flex flex-grow items-center justify-center border-l border-custom-border-200 text-sm text-custom-text-200">
           <FiltersDropdown
-            title="Filters"
+            title="필터"
             placement="bottom-end"
             menuButton={
               <span className="flex items-center text-sm text-custom-text-200">

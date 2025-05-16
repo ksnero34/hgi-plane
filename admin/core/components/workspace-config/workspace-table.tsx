@@ -165,17 +165,18 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
         // 디버깅을 위한 로그 추가
         console.log("제외 그룹 변경 시도:", { workspaceId, groups: JSON.stringify(groups), role: currentRole });
         
-        // API 호출을 위한 최소한의 데이터만 준비
+        // API 호출을 위한 데이터 준비
         const updateData = {
+          ...workspace, // 기존 워크스페이스 객체의 모든 속성 복사
           id: workspaceId,
           config_id: (workspace as any).config_id,
           role: currentRole,
           excluded_user_groups: groups
-        };
+        } as IWorkspaceConfig; // IWorkspaceConfig로 타입 단언
         
         console.log("업데이트할 데이터:", JSON.stringify(updateData));
         
-        // 필요한 데이터만 포함하여 API 호출
+        // API 호출
         await handleEditWorkspace(updateData);
         
         // API 호출 성공 후 상태 업데이트
