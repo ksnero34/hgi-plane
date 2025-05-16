@@ -47,6 +47,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     display_name = models.CharField(max_length=255, default="")
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
+    # 사용자 그룹 (직무)
+    user_group = models.CharField(max_length=255, blank=True)
     # avatar
     avatar = models.TextField(blank=True)
     avatar_asset = models.ForeignKey(

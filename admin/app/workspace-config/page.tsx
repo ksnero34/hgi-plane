@@ -40,7 +40,7 @@ const WorkspaceConfigPage = observer(() => {
   const checkAndLogError = (error: any, context: string): boolean => {
     // 에러 디버깅을 위해 상세 정보 출력
       console.error(`${context} 중 에러 발생:`, error);
-      console.log("에러 타입:", typeof error);
+      // console.log("에러 타입:", typeof error);
 
     try {
       console.log("에러 객체 구조:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
@@ -118,10 +118,28 @@ const WorkspaceConfigPage = observer(() => {
   }
 
   const handleEditWorkspace = (workspaceConfig: any) => {
-    // 워크스페이스 역할 변경 처리
+    // 워크스페이스 업데이트 데이터 준비
+    const updateData: { role?: number; excluded_user_groups?: string[] } = {};
+    
+    // role 처리
+    if (workspaceConfig.role !== undefined) {
+      updateData.role = workspaceConfig.role;
+    }
+    
+    // excluded_user_groups 처리
+    if (Array.isArray(workspaceConfig.excluded_user_groups)) {
+      updateData.excluded_user_groups = workspaceConfig.excluded_user_groups;
+    }
+    
+    // console.log(`워크스페이스 설정 업데이트 요청:`, {
+    //   id: workspaceConfig.id,
+    //   data: JSON.stringify(updateData)
+    // });
+    
+    // 업데이트 요청 전송
     updateWorkspaceConfig(
       workspaceConfig.id,
-      { role: workspaceConfig.role }
+      updateData
     )
       .catch(error => {
         // 401 에러 확인 및 처리

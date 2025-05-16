@@ -482,6 +482,11 @@ class DefaultWorkspaceConfig(BaseModel):
         default=True,
         help_text="이 설정이 활성화되어 있는지 여부"
     )
+    excluded_user_groups = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="이 워크스페이스에 자동 추가되지 않을 사용자 그룹 목록"
+    )
     
     def __str__(self):
         return f"{self.workspace.name} (역할: {self.get_role_display()})"

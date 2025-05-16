@@ -16,9 +16,20 @@ def add_user_to_default_workspaces(sender, instance, created, **kwargs):
         # 활성화된 모든 기본 워크스페이스 설정 가져오기
         default_configs = DefaultWorkspaceConfig.objects.filter(is_active=True)
         
+        # 사용자의 그룹 확인
+        user_group = instance.user_group
+        
         with transaction.atomic():
             for config in default_configs:
-                # 이미 멤버인지 확인
+                # 사용자 그룹이 제외 목록에 있는지 확인
+                excluded_groups = config.excluded_user_groups or []
+                
+                # 사용자 그룹이 제외 목록에 있으면 건너뛰기
+                if user_group and user_group in excluded_groups:
+                    # print(f"사용자 그룹 '{user_group}'은(는) 워크스페이스 {config.workspace.name}에서 제외되어 있습니다.")
+                    continue
+                
+                # 제외 대상이 아니고 이미 멤버가 아닌 경우에만 추가
                 if not WorkspaceMember.objects.filter(
                     workspace=config.workspace, 
                     member=instance
@@ -44,6 +55,7 @@ def add_user_to_default_workspaces(sender, instance, created, **kwargs):
                             "member_id": str(instance.id),
                             "member_email": instance.email,
                             "role": config.role,
+                            "user_group": user_group,  # 감사 로그에 사용자 그룹 정보 추가
                         },
                         ip_address=None,  # 자동 추가이므로 IP 주소 없음
                     )

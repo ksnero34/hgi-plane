@@ -242,9 +242,10 @@ export class InstanceService extends APIService {
    * @param {string} configId - 설정 ID
    * @param {Object} data - 업데이트할 데이터
    * @param {number} data.role - 역할 레벨
+   * @param {string[]} data.excluded_user_groups - 제외할 사용자 그룹 목록
    * @returns {Promise<IWorkspace>} 업데이트된 기본 워크스페이스 설정
    */
-  async updateDefaultWorkspace(configId: string, data: { role: number }): Promise<IWorkspace> {
+  async updateDefaultWorkspace(configId: string, data: { role?: number; excluded_user_groups?: string[] }): Promise<IWorkspace> {
     const csrfToken = await this.requestCSRFToken();
     
     return this.patch(

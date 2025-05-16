@@ -25,6 +25,9 @@ from plane.db.models import (
     Estimate,
     EstimatePoint,
     IssueView,
+    IssueSequence,
+    IssueVersion,
+    IssueDescriptionVersion,
 )
 
 
@@ -212,6 +215,15 @@ class ProjectTransferService:
         for view in issue_views:
             view.workspace = target_workspace
             view.save()
+        
+        # IssueSequence 업데이트
+        IssueSequence.objects.filter(project=project).update(workspace=target_workspace)
+        
+        # 이슈 버전 이력 업데이트
+        IssueVersion.objects.filter(project=project).update(workspace=target_workspace)
+        
+        # 이슈 설명 버전 이력 업데이트
+        IssueDescriptionVersion.objects.filter(project=project).update(workspace=target_workspace)
         
         # 이슈와 관련 데이터 업데이트 (마지막에 처리하여 관련 엔티티가 모두 업데이트된 후 진행)
         issues = Issue.objects.filter(project=project)

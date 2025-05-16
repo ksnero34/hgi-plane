@@ -1,6 +1,6 @@
-import { FC, useState, useEffect, ChangeEvent } from "react";
+import { FC, useState, useEffect, ChangeEvent, KeyboardEvent } from "react";
 import { observer } from "mobx-react";
-import { Edit2, Trash2, MoreVertical, UserIcon } from "lucide-react";
+import { Edit2, Trash2, MoreVertical, UserIcon, X } from "lucide-react";
 import { IWorkspaceConfig } from "@/store/workspace-config.store";
 
 // components
@@ -10,7 +10,9 @@ import {
   Tooltip,
   ToggleSwitch,
   Checkbox,
-  Avatar
+  Avatar,
+  Input,
+  CustomSelect
 } from "@plane/ui";
 
 interface IWorkspaceTableProps {
@@ -57,6 +59,19 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
       return acc;
     }, {} as {[key: string]: boolean});
   });
+
+  // 제외할 사용자 그룹 상태 관리
+  const [excludedUserGroups, setExcludedUserGroups] = useState<{[key: string]: string[]}>(() => {
+    return workspaceList.reduce((acc, workspace) => {
+      if ((workspace as any)?.id) {
+        acc[(workspace as any).id] = workspace.excluded_user_groups || [];
+      }
+      return acc;
+    }, {} as {[key: string]: string[]});
+  });
+
+  // 새 그룹 입력값 관리
+  const [newGroupInputs, setNewGroupInputs] = useState<{[key: string]: string}>({});
 
   // 워크스페이스 설정 변경 처리 함수
   const handleWorkspaceChange = async (workspace: IWorkspaceConfig) => {
@@ -109,13 +124,15 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
     try {
       // 기본 워크스페이스인 경우에만 API 호출
       if (defaultWorkspaces[workspaceId]) {
-        console.log("역할 변경 시도:", { workspaceId, role, workspace });
+        const currentGroups = excludedUserGroups[workspaceId] || [];
+        // console.log("역할 변경 시도:", { workspaceId, role, excludedGroups: currentGroups, workspace });
         
         // API 호출을 위한 워크스페이스 객체 준비
         const workspaceToUpdate = {
           ...workspace,
           id: workspaceId,
-          role: role // 명시적으로 선택된 역할 값 설정
+          role: role, // 명시적으로 선택된 역할 값 설정
+          excluded_user_groups: currentGroups // 현재 제외된 그룹 값도 함께 전송
         };
         
         console.log("업데이트할 데이터:", workspaceToUpdate);
@@ -132,6 +149,91 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
     } catch (error) {
       console.error("Error updating workspace role:", error);
       // 에러는 이미 상위 컴포넌트에서 처리됨
+    }
+  };
+
+  // 사용자 그룹 제외 설정 변경 처리
+  const handleExcludedGroupsChange = async (workspaceId: string, groups: string[]) => {
+    const workspace = workspaceList.find(w => (w as any).id === workspaceId);
+    if (!workspace) return;
+    
+    try {
+      if (defaultWorkspaces[workspaceId]) {
+        // 현재 역할 가져오기
+        const currentRole = workspaceRoles[workspaceId] || 15;
+        
+        // 디버깅을 위한 로그 추가
+        console.log("제외 그룹 변경 시도:", { workspaceId, groups: JSON.stringify(groups), role: currentRole });
+        
+        // API 호출을 위한 최소한의 데이터만 준비
+        const updateData = {
+          id: workspaceId,
+          config_id: (workspace as any).config_id,
+          role: currentRole,
+          excluded_user_groups: groups
+        };
+        
+        console.log("업데이트할 데이터:", JSON.stringify(updateData));
+        
+        // 필요한 데이터만 포함하여 API 호출
+        await handleEditWorkspace(updateData);
+        
+        // API 호출 성공 후 상태 업데이트
+        setExcludedUserGroups((prev) => ({ ...prev, [workspaceId]: groups }));
+        console.log("제외 그룹 변경 성공:", { workspaceId, groups: JSON.stringify(groups) });
+      }
+    } catch (error) {
+      console.error("Error updating excluded user groups:", error);
+    }
+  };
+  
+  // 그룹 추가 처리
+  const handleAddGroup = (workspaceId: string, group: string) => {
+    if (!group.trim()) return;
+    
+    const currentGroups = excludedUserGroups[workspaceId] || [];
+    
+    // 이미 존재하는 그룹인지 확인
+    if (currentGroups.includes(group.trim())) return;
+    
+    // 새 그룹 추가
+    const updatedGroups = [...currentGroups, group.trim()];
+    
+    // console.log("[그룹 추가] 워크스페이스 ID:", workspaceId);
+    // console.log("[그룹 추가] 추가할 그룹:", group.trim());
+    // console.log("[그룹 추가] 기존 그룹:", currentGroups);
+    // console.log("[그룹 추가] 업데이트된 그룹:", updatedGroups);
+    
+    // 로컬 상태 즉시 업데이트
+    setExcludedUserGroups((prev) => ({ ...prev, [workspaceId]: updatedGroups }));
+    
+    // 입력 필드 초기화
+    setNewGroupInputs((prev) => ({ ...prev, [workspaceId]: "" }));
+    
+    // API 호출로 서버에 변경사항 저장
+    handleExcludedGroupsChange(workspaceId, updatedGroups);
+  };
+  
+  // 그룹 삭제 처리
+  const handleRemoveGroup = (workspaceId: string, group: string) => {
+    const currentGroups = excludedUserGroups[workspaceId] || [];
+    
+    // 그룹 제거
+    const updatedGroups = currentGroups.filter(g => g !== group);
+    
+    // 로컬 상태 즉시 업데이트
+    setExcludedUserGroups((prev) => ({ ...prev, [workspaceId]: updatedGroups }));
+    
+    // API 호출로 서버에 변경사항 저장
+    handleExcludedGroupsChange(workspaceId, updatedGroups);
+  };
+  
+  // 키 입력 처리 (Enter 키로 그룹 추가)
+  const handleKeyDown = (workspaceId: string, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const value = newGroupInputs[workspaceId] || "";
+      handleAddGroup(workspaceId, value);
     }
   };
 
@@ -206,14 +308,23 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
       }
       return acc;
     }, {} as Record<string, number>);
+
+    const initialExcludedGroups = workspaceList.reduce((acc, workspace) => {
+      if ((workspace as any)?.id) {
+        acc[(workspace as any).id] = workspace.excluded_user_groups || [];
+      }
+      return acc;
+    }, {} as Record<string, string[]>);
     
     // 상태 업데이트
     setDefaultWorkspaces(initialDefaultState);
     setWorkspaceRoles(initialRoleState);
+    setExcludedUserGroups(initialExcludedGroups);
     
     // 콘솔에 선택된 설정 정보 로깅
     console.log("Initial default states:", initialDefaultState);
     console.log("Initial role states:", initialRoleState);
+    console.log("Initial excluded groups:", initialExcludedGroups);
   }, [workspaces]);
 
   return (
@@ -233,6 +344,8 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
             
             const isDefault = defaultWorkspaces[(workspace as any).id] || false;
             const role = workspaceRoles[(workspace as any).id] || 15; // 기본값은 member
+            const excludedGroups = excludedUserGroups[(workspace as any).id] || [];
+            const newGroupInput = newGroupInputs[(workspace as any).id] || "";
             
             return (
               <div
@@ -308,6 +421,60 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
                         />
                       </div>
                     </div>
+                    
+                    {/* 제외할 사용자 그룹 설정 */}
+                    {isDefault && (
+                      <div className="mt-4">
+                        <div className="text-sm font-medium mb-2">제외할 사용자 그룹:</div>
+                        
+                        {/* 그룹 칩 표시 영역 */}
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {excludedGroups.map((group) => (
+                            <div 
+                              key={group} 
+                              className="flex items-center gap-1 px-2 py-1 bg-custom-background-80 text-custom-text-200 rounded-md text-xs"
+                            >
+                              <span>{group}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveGroup((workspace as any).id, group)}
+                                className="text-custom-text-300 hover:text-custom-text-100"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* 그룹 입력 필드 */}
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="text"
+                            placeholder="사용자 그룹 입력 후 Enter"
+                            value={newGroupInput}
+                            onChange={(e) => setNewGroupInputs(prev => ({
+                              ...prev,
+                              [(workspace as any).id]: e.target.value
+                            }))}
+                            onKeyDown={(e) => handleKeyDown((workspace as any).id, e)}
+                            className="text-sm"
+                            disabled={!isDefault}
+                          />
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => handleAddGroup((workspace as any).id, newGroupInput)}
+                            disabled={!newGroupInput.trim() || !isDefault}
+                          >
+                            추가
+                          </Button>
+                        </div>
+                        
+                        <div className="text-xs text-custom-text-300 mt-2">
+                          선택한 사용자 그룹은 이 워크스페이스에 자동으로 추가되지 않습니다.
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* 액션 */}

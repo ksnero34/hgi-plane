@@ -33,7 +33,7 @@ class DefaultWorkspaceConfigSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DefaultWorkspaceConfig
-        fields = ['id', 'workspace', 'workspace_detail', 'role', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'workspace', 'workspace_detail', 'role', 'is_active', 'excluded_user_groups', 'created_at', 'updated_at']
 
 # 뷰셋 정의
 class DefaultWorkspaceConfigViewSet(viewsets.ModelViewSet):
@@ -124,7 +124,8 @@ class DefaultWorkspaceConfigViewSet(viewsets.ModelViewSet):
                     "total_members": workspace.total_members or 0,
                     "is_default": bool(config),
                     "role": config.role if config else None,
-                    "config_id": str(config.id) if config else None
+                    "config_id": str(config.id) if config else None,
+                    "excluded_user_groups": config.excluded_user_groups if config else []
                 })
             
             # 페이지네이션 형식으로 응답

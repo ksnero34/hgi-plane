@@ -8,6 +8,7 @@ export interface IWorkspaceConfig extends IWorkspace {
   is_default?: boolean;
   role: number;
   config_id?: string;
+  excluded_user_groups?: string[];
 }
 
 // API 응답 타입 정의
@@ -22,7 +23,7 @@ export interface IWorkspaceConfigStore {
   error: Error | null;
   fetchConfigs: () => Promise<{ results: IWorkspaceConfig[] }>;
   createConfig: (config: { workspace_id: string; role: number }) => Promise<void>;
-  updateConfig: (workspaceId: string, config: { role: number }) => Promise<void>;
+  updateConfig: (workspaceId: string, config: { role?: number; excluded_user_groups?: string[] }) => Promise<void>;
   deleteConfig: (configIdOrWorkspaceId: string) => Promise<void>;
 }
 
@@ -114,7 +115,7 @@ export class WorkspaceConfigStore implements IWorkspaceConfigStore {
     }
   }
   
-  async updateConfig(workspaceId: string, config: { role: number }) {
+  async updateConfig(workspaceId: string, config: { role?: number; excluded_user_groups?: string[] }) {
     try {
       const workspace = this.workspaces.results.find(w => w.id === workspaceId);
       if (!workspace) {

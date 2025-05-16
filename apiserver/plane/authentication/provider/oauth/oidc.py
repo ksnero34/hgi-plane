@@ -254,6 +254,7 @@ class OIDCOAuthProvider(OauthAdapter):
                 "avatar": valid_avatar_url,
                 "first_name": user_info_response.get("given_name", ""),
                 "last_name": user_info_response.get("family_name", ""),
+                "user_group": user_info_response.get("user_group", ""),
                 "is_password_autoset": True,
                 "display_name": display_name,
             },

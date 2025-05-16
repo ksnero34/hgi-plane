@@ -56,11 +56,27 @@ export const useWorkspaceConfig = () => {
     }
   };
 
-  const updateWorkspaceConfig = async (id: string, data: { role: number }) => {
+  const updateWorkspaceConfig = async (id: string, data: { role?: number; excluded_user_groups?: string[] }) => {
     try {
-      console.log("워크스페이스 설정 업데이트 시작:", { id, role: data.role });
-      await workspaceConfig.updateConfig(id, data);
-      console.log("워크스페이스 설정 업데이트 성공:", { id, role: data.role });
+      // 요청 데이터 로깅 (디버깅용)
+      console.log(`워크스페이스 설정 업데이트 요청 데이터(원본):`, JSON.stringify(data));
+      
+      // 전달된 데이터 처리 - 항상 두 필드 모두 포함하도록 수정
+      const updateData: { role?: number; excluded_user_groups?: string[] } = {
+        role: data.role !== undefined ? data.role : undefined,
+        excluded_user_groups: Array.isArray(data.excluded_user_groups) ? data.excluded_user_groups : undefined
+      };
+      
+      // null이나 undefined인 필드 제거
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === undefined) {
+          delete updateData[key as keyof typeof updateData];
+        }
+      });
+      
+      console.log(`최종 전송 데이터:`, JSON.stringify(updateData));
+      
+      await workspaceConfig.updateConfig(id, updateData);
       
       // 업데이트 성공 후 목록 갱신
       await fetchWorkspaceConfigs();
