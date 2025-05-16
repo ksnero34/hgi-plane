@@ -23,12 +23,14 @@ from plane.settings.storage import S3Storage
 
 def dateTimeConverter(time):
     if time:
-        return time.strftime("%a, %d %b %Y %I:%M:%S %Z%z")
+        # 날짜 형식을 ISO 형식(YYYY-MM-DD HH:MM:SS)으로 변경
+        return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def dateConverter(time):
     if time:
-        return time.strftime("%a, %d %b %Y")
+        # 날짜 형식을 ISO 형식(YYYY-MM-DD)으로 변경
+        return time.strftime("%Y-%m-%d")
 
 
 def create_csv_file(data):
@@ -179,6 +181,24 @@ def generate_table_row(issue):
             "project__identifier", "sequence_id"
         ).first()
 
+    # priority 값에 target_date가 함께 들어가는 문제 해결
+    priority = issue.get("priority", "none")
+    # 만약 priority에 콤마가 포함되어 있다면 첫 번째 값만 사용
+    if isinstance(priority, str) and "," in priority:
+        priority = priority.split(",")[0].strip()
+
+    # 담당자 목록을 쉼표로 구분된 문자열로 변환
+    if isinstance(issue.get("assignees__email", []), list):
+        assignees = ", ".join(issue.get("assignees__email", []))
+    else:
+        assignees = issue.get("assignees__email", "")
+    
+    # 라벨 목록을 쉼표로 구분된 문자열로 변환
+    if isinstance(issue.get("labels__name", []), list):
+        labels = ", ".join(issue.get("labels__name", []))
+    else:
+        labels = issue.get("labels__name", "")
+
     return [
         f"""{issue["project__identifier"]}-{issue["sequence_id"]}""",
         issue["project__name"],
@@ -189,18 +209,13 @@ def generate_table_row(issue):
         issue["state__name"],
         dateConverter(issue["start_date"]),
         dateConverter(issue["target_date"]),
-        issue["priority"],
-        (
-            f"{issue['created_by__last_name']} {issue['created_by__first_name']}"
-            if issue["created_by__last_name"] and issue["created_by__first_name"]
-            else ""
-        ),
-        (
-            f"{issue['assignees__last_name']} {issue['assignees__first_name']}"
-            if issue["assignees__last_name"] and issue["assignees__first_name"]
-            else ""
-        ),
-        issue["labels__name"] if issue["labels__name"] else "",
+        priority,  # 수정된 priority 값 사용
+        # 사용자 이름 대신 이메일 사용
+        issue.get("created_by__email", ""),
+        # 담당자 이메일 목록을 쉼표로 구분해서 표시
+        assignees,
+        # 라벨 목록을 쉼표로 구분해서 표시
+        labels,
         issue["issue_cycle__cycle__name"],
         dateConverter(issue["issue_cycle__cycle__start_date"]),
         dateConverter(issue["issue_cycle__cycle__end_date"]),
@@ -222,6 +237,24 @@ def generate_json_row(issue):
             "project__identifier", "sequence_id"
         ).first()
 
+    # priority 값에 target_date가 함께 들어가는 문제 해결
+    priority = issue.get("priority", "none")
+    # 만약 priority에 콤마가 포함되어 있다면 첫 번째 값만 사용
+    if isinstance(priority, str) and "," in priority:
+        priority = priority.split(",")[0].strip()
+
+    # 담당자 목록을 쉼표로 구분된 문자열로 변환
+    if isinstance(issue.get("assignees__email", []), list):
+        assignees = ", ".join(issue.get("assignees__email", []))
+    else:
+        assignees = issue.get("assignees__email", "")
+    
+    # 라벨 목록을 쉼표로 구분된 문자열로 변환
+    if isinstance(issue.get("labels__name", []), list):
+        labels = ", ".join(issue.get("labels__name", []))
+    else:
+        labels = issue.get("labels__name", "")
+
     return {
         "ID": f"""{issue["project__identifier"]}-{issue["sequence_id"]}""",
         "Project": issue["project__name"],
@@ -231,18 +264,13 @@ def generate_json_row(issue):
         "State": issue["state__name"],
         "Start Date": dateConverter(issue["start_date"]),
         "Target Date": dateConverter(issue["target_date"]),
-        "Priority": issue["priority"],
-        "Created By": (
-            f"{issue['created_by__last_name']} {issue['created_by__first_name']}"
-            if issue["created_by__last_name"] and issue["created_by__first_name"]
-            else ""
-        ),
-        "Assignee": (
-            f"{issue['assignees__last_name']} {issue['assignees__first_name']}"
-            if issue["assignees__last_name"] and issue["assignees__first_name"]
-            else ""
-        ),
-        "Labels": issue["labels__name"] if issue["labels__name"] else "",
+        "Priority": priority,  # 수정된 priority 값 사용
+        # 사용자 이름 대신 이메일 사용
+        "Created By": issue.get("created_by__email", ""),
+        # 담당자 이메일 목록을 쉼표로 구분해서 표시
+        "Assignee": assignees,
+        # 라벨 목록을 쉼표로 구분해서 표시 
+        "Labels": labels,
         "Cycle Name": issue["issue_cycle__cycle__name"],
         "Cycle Start Date": dateConverter(issue["issue_cycle__cycle__start_date"]),
         "Cycle End Date": dateConverter(issue["issue_cycle__cycle__end_date"]),
@@ -267,20 +295,32 @@ def update_json_row(rows, row):
     )
 
     if matched_index is not None:
-        existing_assignees, existing_labels = (
-            rows[matched_index]["Assignee"],
-            rows[matched_index]["Labels"],
-        )
-        assignee, label = row["Assignee"], row["Labels"]
+        # 필드 이름으로 정확하게 참조
+        existing_assignee = rows[matched_index]["Assignee"]
+        existing_labels = rows[matched_index]["Labels"]
+        
+        assignee = row["Assignee"]
+        label = row["Labels"]
 
-        if assignee is not None and (
-            existing_assignees is None or label not in existing_assignees
-        ):
-            rows[matched_index]["Assignee"] += f", {assignee}"
-        if label is not None and (
-            existing_labels is None or label not in existing_labels
-        ):
-            rows[matched_index]["Labels"] += f", {label}"
+        # Assignee 업데이트
+        if assignee and assignee.strip():
+            if existing_assignee and existing_assignee.strip():
+                # 이미 존재하는 담당자가 있고, 새 담당자가 아직 포함되어 있지 않다면 추가
+                if assignee not in existing_assignee:
+                    rows[matched_index]["Assignee"] += f", {assignee}"
+            else:
+                # 담당자가 없는 경우 새 담당자로 설정
+                rows[matched_index]["Assignee"] = assignee
+        
+        # Labels 업데이트
+        if label and label.strip():
+            if existing_labels and existing_labels.strip():
+                # 이미 존재하는 라벨이 있고, 새 라벨이 아직 포함되어 있지 않다면 추가
+                if label not in existing_labels:
+                    rows[matched_index]["Labels"] += f", {label}"
+            else:
+                # 라벨이 없는 경우 새 라벨로 설정
+                rows[matched_index]["Labels"] = label
     else:
         rows.append(row)
 
@@ -292,17 +332,32 @@ def update_table_row(rows, row):
     )
 
     if matched_index is not None:
-        existing_assignees, existing_labels = rows[matched_index][7:9]
-        assignee, label = row[7:9]
+        # 인덱스를 올바르게 수정 - 10, 11이 Assignee와 Labels임
+        existing_assignee = rows[matched_index][10]  # Assignee 인덱스
+        existing_labels = rows[matched_index][11]    # Labels 인덱스
+        
+        assignee = row[10]  # 새 행의 Assignee
+        label = row[11]     # 새 행의 Labels
 
-        if assignee is not None and (
-            existing_assignees is None or label not in existing_assignees
-        ):
-            rows[matched_index][8] += f", {assignee}"
-        if label is not None and (
-            existing_labels is None or label not in existing_labels
-        ):
-            rows[matched_index][8] += f", {label}"
+        # Assignee 업데이트
+        if assignee and assignee.strip():
+            if existing_assignee and existing_assignee.strip():
+                # 이미 존재하는 담당자가 있고, 새 담당자가 아직 포함되어 있지 않다면 추가
+                if assignee not in existing_assignee:
+                    rows[matched_index][10] += f", {assignee}"
+            else:
+                # 담당자가 없는 경우 새 담당자로 설정
+                rows[matched_index][10] = assignee
+        
+        # Labels 업데이트
+        if label and label.strip():
+            if existing_labels and existing_labels.strip():
+                # 이미 존재하는 라벨이 있고, 새 라벨이 아직 포함되어 있지 않다면 추가
+                if label not in existing_labels:
+                    rows[matched_index][11] += f", {label}"
+            else:
+                # 라벨이 없는 경우 새 라벨로 설정
+                rows[matched_index][11] = label
     else:
         rows.append(row)
 
@@ -344,7 +399,8 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
         exporter_instance.status = "processing"
         exporter_instance.save(update_fields=["status"])
 
-        workspace_issues = (
+        # 기본 이슈 정보를 먼저 가져옵니다 (중복 없이)
+        base_issues = (
             Issue.objects.filter(
                 workspace__id=workspace_id,
                 project_id__in=project_ids,
@@ -353,16 +409,13 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 project__archived_at__isnull=True,
             )
             .select_related("project", "workspace", "state", "parent", "created_by")
-            .prefetch_related(
-                "assignees", "labels", "issue_cycle__cycle", "issue_module__module"
-            )
             .values(
                 "id",
                 "project__identifier",
                 "project__name",
                 "project__id",
                 "sequence_id",
-                "parent_id",  # parent_id 추가
+                "parent_id",
                 "name",
                 "description_stripped",
                 "priority",
@@ -379,15 +432,75 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 "issue_module__module__name",
                 "issue_module__module__start_date",
                 "issue_module__module__target_date",
-                "created_by__last_name",
-                "created_by__first_name",
-                "assignees__last_name",
-                "assignees__first_name",
-                "labels__name",
+                "created_by__email",
             )
             .order_by("project__identifier", "sequence_id")
-            .distinct()
         )
+
+        # 이슈 데이터를 저장할 딕셔너리 - 중복 제거를 위해 id를 키로 사용
+        issues_data = {}
+        
+        # 이슈 기본 정보 저장
+        for issue in base_issues:
+            issue_id = issue["id"]
+            issues_data[issue_id] = {
+                "id": issue["id"],
+                "project__identifier": issue["project__identifier"],
+                "project__name": issue["project__name"],
+                "project__id": issue["project__id"],
+                "sequence_id": issue["sequence_id"],
+                "parent_id": issue["parent_id"],
+                "name": issue["name"],
+                "description_stripped": issue["description_stripped"],
+                "priority": issue["priority"],
+                "start_date": issue["start_date"],
+                "target_date": issue["target_date"],
+                "state__name": issue["state__name"],
+                "created_at": issue["created_at"],
+                "updated_at": issue["updated_at"],
+                "completed_at": issue["completed_at"],
+                "archived_at": issue["archived_at"],
+                "issue_cycle__cycle__name": issue["issue_cycle__cycle__name"],
+                "issue_cycle__cycle__start_date": issue["issue_cycle__cycle__start_date"],
+                "issue_cycle__cycle__end_date": issue["issue_cycle__cycle__end_date"],
+                "issue_module__module__name": issue["issue_module__module__name"],
+                "issue_module__module__start_date": issue["issue_module__module__start_date"],
+                "issue_module__module__target_date": issue["issue_module__module__target_date"],
+                "created_by__email": issue["created_by__email"],
+                "assignees__email": [],  # 담당자 이메일 목록
+                "labels__name": [],      # 라벨 목록
+            }
+        
+        # 이슈 ID 목록
+        issue_ids = list(issues_data.keys())
+        
+        # 담당자 정보 가져오기
+        assignees = Issue.objects.filter(id__in=issue_ids).values("id", "assignees__email").exclude(assignees__email=None)
+        for assignee in assignees:
+            issue_id = assignee["id"]
+            email = assignee["assignees__email"]
+            if email and issue_id in issues_data:
+                if email not in issues_data[issue_id]["assignees__email"]:
+                    issues_data[issue_id]["assignees__email"].append(email)
+        
+        # 라벨 정보 가져오기
+        labels = Issue.objects.filter(id__in=issue_ids).values("id", "labels__name").exclude(labels__name=None)
+        for label in labels:
+            issue_id = label["id"]
+            name = label["labels__name"]
+            if name and issue_id in issues_data:
+                if name not in issues_data[issue_id]["labels__name"]:
+                    issues_data[issue_id]["labels__name"].append(name)
+        
+        # 최종 이슈 목록 생성
+        final_issues = []
+        for project_id in project_ids:
+            project_issues = [
+                issue for issue in issues_data.values() 
+                if str(issue["project__id"]) == str(project_id)
+            ]
+            final_issues.extend(project_issues)
+        
         # CSV header 수정
         header = [
             "ID",
@@ -423,15 +536,17 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
         files = []
         if multiple:
             for project_id in project_ids:
-                issues = workspace_issues.filter(project__id=project_id)
+                project_issues = [
+                    issue for issue in final_issues 
+                    if str(issue["project__id"]) == str(project_id)
+                ]
                 exporter = EXPORTER_MAPPER.get(provider)
                 if exporter is not None:
-                    exporter(header, project_id, issues, files)
-
+                    exporter(header, project_id, project_issues, files)
         else:
             exporter = EXPORTER_MAPPER.get(provider)
             if exporter is not None:
-                exporter(header, workspace_id, workspace_issues, files)
+                exporter(header, workspace_id, final_issues, files)
 
         zip_buffer = create_zip_file(files)
         upload_to_s3(zip_buffer, workspace_id, token_id, slug)

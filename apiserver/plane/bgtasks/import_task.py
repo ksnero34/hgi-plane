@@ -24,6 +24,7 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from uuid import UUID
 from django.db import connection
+from plane.utils.html_processor import strip_tags
 
 def parse_date(date_str):
     """날짜 문자열을 파싱하는 함수"""
@@ -36,19 +37,23 @@ def parse_date(date_str):
         return None
         
     try:
-        # YYYY-MM-DD 형식 처리
+        # YYYY-MM-DD 형식 처리 (기본 형식)
         return datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         try:
-            # "Tue, 04 Mar 2025" 형식 처리
-            return datetime.strptime(date_str, "%a, %d %b %Y").date()
+            # YYYY-MM-DD HH:MM:SS 형식 처리
+            return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").date()
         except ValueError:
             try:
-                # "04 Mar 2025" 형식 처리
-                return datetime.strptime(date_str, "%d %b %Y").date()
+                # 이전 형식 지원: "Tue, 04 Mar 2025" 형식 처리
+                return datetime.strptime(date_str, "%a, %d %b %Y").date()
             except ValueError:
-                #print(f"Warning: Could not parse date '{date_str}'. Skipping date field.")
-                return None
+                try:
+                    # 이전 형식 지원: "04 Mar 2025" 형식 처리
+                    return datetime.strptime(date_str, "%d %b %Y").date()
+                except ValueError:
+                    #print(f"Warning: Could not parse date '{date_str}'. Skipping date field.")
+                    return None
 
 def get_or_create_state(project, state_name, default_state):
     if not state_name:
@@ -86,6 +91,42 @@ def safe_str(value):
     if pd.isna(value) or value is None:  # pandas의 nan 값과 None 체크
         return ""
     return str(value).strip()
+
+def process_description(description_text):
+    """
+    description_text로부터 HTML과 JSON 형태의 description 생성
+    """
+    if not description_text or description_text.strip() == "":
+        return {
+            "description": dict(),  # 빈 JSON 객체
+            "description_html": "<p></p>",  # 기본 빈 HTML
+            "description_stripped": ""  # 빈 텍스트
+        }
+    
+    # 간단한 HTML 생성 (텍스트가 있을 경우)
+    html = f"<p>{description_text}</p>"
+    
+    # 간단한 JSON 객체 생성
+    description_json = {
+        "type": "doc",
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": description_text
+                    }
+                ]
+            }
+        ]
+    }
+    
+    return {
+        "description": description_json,
+        "description_html": html,
+        "description_stripped": description_text.strip()
+    }
 
 @shared_task
 def issue_import_task(workspace_id, project_id, file_content, file_type, user_id):
@@ -192,10 +233,16 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         default_state=default_state
                     )
                     
+                    # 설명 필드 처리
+                    description_text = safe_str(row.get("Description", ""))
+                    description_data = process_description(description_text)
+                    
                     # 기본 이슈 데이터 준비
                     issue_data = {
                         "name": safe_str(row.get("Name", "")),
-                        "description_stripped": safe_str(row.get("Description", "")),
+                        "description": description_data["description"],
+                        "description_html": description_data["description_html"],
+                        "description_stripped": description_data["description_stripped"],
                         "priority": safe_str(row.get("Priority", "none")).split(',')[0].strip(),  # 첫 번째 값만 사용
                         "state_id": state.id if state else default_state.id,
                         "sequence_id": sequence_id,
@@ -395,36 +442,32 @@ def process_related_data(issue, row, project, workspace_id):
                             [created_by_id, updated_by_id, label_relation.id]
                         )
     
-    # 담당자 처리
+    # 담당자 처리 - 이메일로 검색하도록 변경
     if not pd.isna(row.get("Assignee")):
-        for assignee_name in str(row["Assignee"]).split(","):
-            assignee_name = assignee_name.strip()
-            if assignee_name:
-                # 성과 이름으로 분리 (성 이름 순서)
-                name_parts = assignee_name.split()
-                if len(name_parts) >= 2:
-                    last_name = name_parts[0]  # 성
-                    first_name = name_parts[1]  # 이름
-                    member = project.project_projectmember.filter(
-                        member__last_name__icontains=last_name,
-                        member__first_name__icontains=first_name,
-                        is_active=True
-                    ).first()
-                    if member:
-                        # 객체 생성
-                        assignee_relation = IssueAssignee.objects.create(
-                            issue=issue,
-                            assignee=member.member,
-                            project_id=project.id,
-                            workspace_id=workspace_id,
+        for assignee_email in str(row["Assignee"]).split(","):
+            assignee_email = assignee_email.strip()
+            if assignee_email:
+                # 이메일로 사용자 검색
+                member = project.project_projectmember.filter(
+                    member__email__iexact=assignee_email,
+                    is_active=True
+                ).first()
+                
+                if member:
+                    # 객체 생성
+                    assignee_relation = IssueAssignee.objects.create(
+                        issue=issue,
+                        assignee=member.member,
+                        project_id=project.id,
+                        workspace_id=workspace_id,
+                    )
+                    
+                    # 직접 SQL로 created_by_id와 updated_by_id 설정
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            "UPDATE issue_assignees SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
+                            [created_by_id, updated_by_id, assignee_relation.id]
                         )
-                        
-                        # 직접 SQL로 created_by_id와 updated_by_id 설정
-                        with connection.cursor() as cursor:
-                            cursor.execute(
-                                "UPDATE issue_assignees SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
-                                [created_by_id, updated_by_id, assignee_relation.id]
-                            )
     
     # 모듈 처리
     module_name = safe_str(row.get("Module Name"))
