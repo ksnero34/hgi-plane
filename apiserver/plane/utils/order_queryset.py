@@ -1,5 +1,5 @@
-from django.db.models import Case, CharField, Min, Value, When, F, Window, Q
-from django.db.models.functions import RowNumber, Coalesce
+from django.db.models import Case, CharField, Min, Value, When, F, Window, Q, ExpressionWrapper, BooleanField
+from django.db.models.functions import RowNumber, Coalesce, Cast, Extract
 import logging
 
 # 로깅 설정
@@ -14,26 +14,47 @@ def order_issue_queryset(issue_queryset, order_by_param="-created_at"):
     try:
         # 상위 작업과 하위 작업 그룹화 정렬
         if order_by_param == "parent_child":
-            # 먼저 모든 부모 이슈(parent_id가 None인)를 sort_order로 정렬
-            # 그 다음 각 부모 이슈의 ID를 기준으로 하위 이슈들이 정렬되도록 함
-            # 부모 이슈가 없는 이슈들은 자신의 ID로 그룹화되도록 함
-            # annotate를 통해 정렬에 필요한 두 개의 필드 추가:
-            # 1. grouping_id: 부모 ID 또는 자신의 ID (그룹화 기준)
-            # 2. is_parent: 부모 이슈인지 여부 (같은 그룹 내에서 부모가 먼저 오도록)
-            # 3. 그룹 내에서 start_date가 빠른 순으로 정렬
-            
-            # 상위 작업이 없는 경우는 자신의 ID를 그룹 ID로 사용하고,
-            # 하위 작업은 부모의 ID를 그룹 ID로 사용하여 그룹화
+            # Window 함수를 사용하여 계층 구조를 만들고 정렬
             issue_queryset = issue_queryset.annotate(
-                grouping_id=Coalesce('parent_id', 'id'),
-                # 동일 그룹 내에서 상위 작업이 먼저 오도록 정렬
-                is_parent=Case(
+                # 날짜 우선순위 계산
+                date_priority=Case(
+                    # 날짜 없음 - 최상위
+                    When(start_date__isnull=True, target_date__isnull=True, then=Value(0)),
+                    # end date만 있음
+                    When(start_date__isnull=True, target_date__isnull=False, then=Value(1)),
+                    # start date 있음
+                    default=Value(2),
+                    output_field=CharField(),
+                ),
+                # 계층 구조를 위한 path 생성
+                path=Window(
+                    expression=RowNumber(),
+                    partition_by=F('parent_id'),
+                    order_by=[
+                        F('date_priority').asc(),
+                        F('target_date').asc(nulls_last=True),
+                        F('start_date').asc(nulls_last=True),
+                        F('sort_order').asc(nulls_last=True),
+                        F('created_at').asc()
+                    ]
+                ),
+                # 최상위 부모 구분
+                is_root=Case(
                     When(parent_id__isnull=True, then=Value(0)),
                     default=Value(1),
                     output_field=CharField(),
                 )
-            ).order_by('grouping_id', 'is_parent', 'start_date', 'sort_order')
-            order_by_param = 'id'  # 실제 DB 쿼리에서는 id로 정렬
+            ).order_by(
+                'is_root',  # 최상위 부모 먼저
+                Coalesce('parent_id', 'id'),  # 부모 ID로 그룹화
+                'date_priority',  # 날짜 우선순위
+                'target_date',  # target_date 정렬
+                'start_date',  # start_date 정렬
+                'path',  # 각 그룹 내에서 정렬된 순서
+                'sort_order',
+                'created_at'
+            )
+            order_by_param = 'id'
             
         # Priority Ordering
         elif order_by_param == "priority" or order_by_param == "-priority":
