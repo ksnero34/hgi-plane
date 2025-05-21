@@ -277,6 +277,11 @@ class OIDCOAuthProvider(OauthAdapter):
             elif valid_avatar_url:
                  existing_user.avatar = valid_avatar_url
             
+            # user_group 업데이트
+            user_group = user_info_response.get("user_group", "")
+            if user_group:
+                existing_user.user_group = user_group
+            
             existing_user.save()
             
             # user_data에 업데이트된 사용자 정보 반영

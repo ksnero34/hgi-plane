@@ -159,10 +159,12 @@ class Adapter:
             first_name = self.user_data.get("user", {}).get("first_name", "")
             last_name = self.user_data.get("user", {}).get("last_name", "")
             display_name = self.user_data.get("user", {}).get("display_name", "")
+            user_group = self.user_data.get("user", {}).get("user_group", "")
             
             user.avatar = avatar if avatar else ""
             user.first_name = first_name if first_name else ""
             user.last_name = last_name if last_name else ""
+            user.user_group = user_group if user_group else ""
             
             if display_name:
                 user.display_name = display_name
