@@ -155,6 +155,19 @@ const columnsToolboxItems: ToolboxItem[] = [
   },
 ];
 
+const cellToolboxItems: ToolboxItem[] = [
+  {
+    label: "Merge cells",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>`,
+    action: ({ editor }: { editor: Editor }) => editor.chain().focus().mergeCells().run(),
+  },
+  {
+    label: "Split cell",
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>`,
+    action: ({ editor }: { editor: Editor }) => editor.chain().focus().splitCell().run(),
+  },
+];
+
 const rowsToolboxItems: ToolboxItem[] = [
   {
     label: "Toggle row header",
@@ -321,6 +334,7 @@ export class TableView implements NodeView {
         this.rowsControl,
         this.columnsControl
       );
+
       const columnColors = {
         Blue: { backgroundColor: "#D9E4FF", textColor: "#171717" },
         Orange: { backgroundColor: "#FFEDD5", textColor: "#171717" },
@@ -364,7 +378,7 @@ export class TableView implements NodeView {
           ...defaultTippyOptions,
           appendTo: this.controls,
         },
-        onSelectColor: (color) => setTableRowBackgroundColor(editor, color),
+        onSelectColor: (color) => setTableRowBackgroundColor(this.editor, color),
         onClickItem: (item) => {
           item.action({
             editor: this.editor,
@@ -392,6 +406,133 @@ export class TableView implements NodeView {
       this.controls,
       this.table
     );
+
+    if (editor.isEditable && typeof window !== 'undefined') {
+      // Add styles dynamically only on client side
+      const style = document.createElement("style");
+      style.textContent = `
+        .table-wrapper table td,
+        .table-wrapper table th {
+          position: relative;
+        }
+        .cell-menu-button {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          z-index: 10;
+          padding: 2px;
+          border-radius: 4px;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s;
+          pointer-events: none;
+        }
+        .table-wrapper table td:hover .cell-menu-button,
+        .table-wrapper table th:hover .cell-menu-button,
+        .table-wrapper table td.selectedCell .cell-menu-button,
+        .table-wrapper table th.selectedCell .cell-menu-button {
+          opacity: 1;
+          pointer-events: all;
+        }
+        .cell-menu-button:hover {
+          background-color: rgba(var(--color-background-80));
+        }
+        .selectedCell {
+          background-color: rgba(var(--color-background-80), 0.1);
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Create a single reusable menu button element
+      const menuButton = h(
+        "div",
+        {
+          className: "cell-menu-button",
+          innerHTML: `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg>`,
+        }
+      );
+
+      const cellToolbox = createToolbox({
+        triggerButton: menuButton,
+        items: cellToolboxItems,
+        colors: {},
+        tippyOptions: {
+          ...defaultTippyOptions,
+          placement: "bottom",
+        },
+        onSelectColor: () => {},
+        onClickItem: (item) => {
+          item.action({
+            editor: this.editor,
+          });
+          cellToolbox?.hide();
+        },
+      });
+
+      // Add menu buttons to cells using event delegation
+      if (this.root) {
+        this.root.addEventListener('mouseover', (e) => {
+          const cell = (e.target as HTMLElement)?.closest('td, th');
+          if (cell && !cell.querySelector('.cell-menu-button')) {
+            const buttonClone = menuButton.cloneNode(true) as HTMLElement;
+            cell.appendChild(buttonClone);
+            
+            // Create new tippy instance for the cloned button
+            createToolbox({
+              triggerButton: buttonClone,
+              items: cellToolboxItems,
+              colors: {},
+              tippyOptions: {
+                ...defaultTippyOptions,
+                placement: "bottom",
+              },
+              onSelectColor: () => {},
+              onClickItem: (item) => {
+                item.action({
+                  editor: this.editor,
+                });
+              },
+            });
+          }
+        }, { capture: true });
+
+        // Add selection observer
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+              const cell = mutation.target as HTMLElement;
+              if (cell.classList.contains('selectedCell') && !cell.querySelector('.cell-menu-button')) {
+                const buttonClone = menuButton.cloneNode(true) as HTMLElement;
+                cell.appendChild(buttonClone);
+                
+                createToolbox({
+                  triggerButton: buttonClone,
+                  items: cellToolboxItems,
+                  colors: {},
+                  tippyOptions: {
+                    ...defaultTippyOptions,
+                    placement: "bottom",
+                  },
+                  onSelectColor: () => {},
+                  onClickItem: (item) => {
+                    item.action({
+                      editor: this.editor,
+                    });
+                  },
+                });
+              }
+            }
+          });
+        });
+
+        observer.observe(this.table, {
+          attributes: true,
+          attributeFilter: ['class'],
+          subtree: true,
+          childList: true
+        });
+      }
+    }
 
     this.render();
   }

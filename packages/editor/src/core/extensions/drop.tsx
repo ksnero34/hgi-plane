@@ -51,8 +51,18 @@ export const DropHandlerExtension = Extension.create({
                     for (let i = 0; i < rowCount; i++) {
                       tableHTML += '<tr>';
                       for (let j = 0; j < colCount; j++) {
-                        const content = rows[i]?.cells[j]?.textContent || '';
-                        tableHTML += `<td>${content}</td>`;
+                        const cell = rows[i]?.cells[j];
+                        if (!cell) continue;
+                        
+                        const content = cell.textContent || '';
+                        const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                        
+                        // 병합된 셀인 경우 colspan과 rowspan 속성 추가
+                        tableHTML += `<td${colspan > 1 ? ` colspan="${colspan}"` : ''}${rowspan > 1 ? ` rowspan="${rowspan}"` : ''}>${content}</td>`;
+                        
+                        // colspan만큼 j 증가 (다음 셀로 이동)
+                        j += (colspan - 1);
                       }
                       tableHTML += '</tr>';
                     }
