@@ -34,6 +34,10 @@ export function tableControls() {
       },
       handleDOMEvents: {
         mousemove: (view, event) => {
+          if (view.dom.getAttribute('data-cell-toolbar-visible') === 'true') {
+            return;
+          }
+
           const pluginState = key.getState(view.state);
 
           if (!(event.target as HTMLElement).closest(".table-wrapper") && pluginState.values.hoveredTable) {

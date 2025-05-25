@@ -73,7 +73,7 @@ declare module "@tiptap/core" {
           name: string;
           options: Options;
           storage: Storage;
-          parent: ParentConfig<NodeConfig<Options>>["tableRole"];
+          parent: ParentConfig<NodeConfig<Options, Storage>>["tableRole"];
         }) => string);
   }
 }
