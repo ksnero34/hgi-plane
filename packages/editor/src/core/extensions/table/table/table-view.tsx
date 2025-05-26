@@ -458,7 +458,7 @@ export class TableView implements NodeView {
       appendTo: editor.view.dom.parentElement || document.body,
       hideOnClick: true,
       onHide: () => {
-        console.log("[TableView] cellSelectionToolbar onHide (Tippy internal)");
+        // console.log("[TableView] cellSelectionToolbar onHide (Tippy internal)");
         this.editor.view.dom.removeAttribute('data-cell-toolbar-visible');
         this.currentToolbarItemsKey = null;
       },
@@ -567,44 +567,37 @@ export class TableView implements NodeView {
     this.editor.view.dispatch(this.editor.view.state.tr.setSelection(cellSelection));
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   handleSelectionUpdate(editor: Editor) {
     const { selection } = editor.state;
-    console.log('[TableView] handleSelectionUpdate triggered. Selection type:', selection.constructor.name, 'Is CellSelection:', selection instanceof CellSelection, 'Current selection:', JSON.stringify(selection.toJSON()));
+    // console.log('[TableView] handleSelectionUpdate triggered. Selection type:', selection.constructor.name);
 
     if (!(selection instanceof CellSelection)) {
       this.currentToolbarItemsKey = null;
       if (this.cellSelectionToolbar.state.isShown) {
-        console.log("[TableView] Hiding toolbar because current selection is not CellSelection.");
-        this.cellSelectionToolbar.hide(); // onHide callback should handle data-attribute removal
+        // console.log("[TableView] Hiding toolbar because current selection is not CellSelection.");
+        this.cellSelectionToolbar.hide();
       }
       this.lastSelectionStateKey = null;
-      if (this.lastKnownCellSelectionRange !== null) {
-        console.log("[TableView] Clearing lastKnownCellSelectionRange because selection is no longer CellSelection.");
-        this.lastKnownCellSelectionRange = null;
-      }
+      this.lastKnownCellSelectionRange = null;
       return;
     }
 
-    // If we are here, selection IS a CellSelection.
-    const cellSelection = selection as CellSelection; // Cast for easier access
-    const capturedAnchorPos = cellSelection.$anchorCell.pos; // Capture at this moment
-    const capturedHeadPos = cellSelection.$headCell.pos;   // Capture at this moment
+    // CellSelection인 경우의 처리
+    const cellSelection = selection as CellSelection;
+    const capturedAnchorPos = cellSelection.$anchorCell.pos;
+    const capturedHeadPos = cellSelection.$headCell.pos;
 
-    // Store it primarily for debugging or if other parts of the class need the most recent valid range.
-    // The onClickItem callback will use the capturedPos from its closure.
     this.lastKnownCellSelectionRange = { anchor: capturedAnchorPos, head: capturedHeadPos };
 
     const currentSelectionKey = `${selection.from}-${selection.to}-${selection.constructor.name}`;
-
     if (this.lastSelectionStateKey === currentSelectionKey && this.cellSelectionToolbar.state.isShown) {
       return;
     }
     this.lastSelectionStateKey = currentSelectionKey;
 
+    // 표시할 툴바 아이템 결정
     let itemsToShow: ToolboxItem[] = [];
-    if (selection instanceof CellSelection && editor.isEditable) {
+    if (editor.isEditable) {
       let selectedCellCount = 0;
       selection.forEachCell(() => { selectedCellCount++; });
 
@@ -625,82 +618,100 @@ export class TableView implements NodeView {
         if (this.cellSelectionToolbar.state.isShown) this.cellSelectionToolbar.hide();
         return;
       }
+
       const coords = editor.view.coordsAtPos($headCell.pos);
 
       if (this.currentToolbarItemsKey !== newToolbarItemsKey || !this.cellSelectionToolbar.state.isShown) {
-        console.log(`[TableView] Updating/Showing toolbar. New items: ${newToolbarItemsKey}`);
+        // console.log(`[TableView] Updating/Showing toolbar. New items: ${newToolbarItemsKey}`);
         this.currentToolbarItemsKey = newToolbarItemsKey;
 
         const newContent = createToolboxContent(
           itemsToShow,
           {},
-          (item, event) => {
-            const currentEditor = this.editor;
-            console.log(`[TableView] Toolbar item '${item.label}' clicked. Using captured range: anchor=${capturedAnchorPos}, head=${capturedHeadPos}`);
+          async (item, event) => {
+            event.preventDefault();
+            event.stopPropagation();
 
-            if (capturedAnchorPos === undefined || capturedHeadPos === undefined) { 
-                console.error("[TableView] Captured anchor/head is undefined at click time. Aborting.");
-                if (this.cellSelectionToolbar.state.isShown) this.cellSelectionToolbar.hide();
-                return;
+            const success = await this.handleToolbarAction(
+              item,
+              capturedAnchorPos,
+              capturedHeadPos,
+              this.editor
+            );
+
+            if (!success) {
+              // console.warn(`[TableView] Action '${item.label}' was not successful`);
             }
 
-            let restoredSelection: CellSelection | null = null;
-            try {
-                restoredSelection = CellSelection.create(currentEditor.state.doc, capturedAnchorPos, capturedHeadPos);
-            } catch (e) {
-                console.error("[TableView] Failed to create CellSelection object from captured range:", e);
-                if (this.cellSelectionToolbar.state.isShown) this.cellSelectionToolbar.hide();
-                return;
-            }
-
-            const tr = currentEditor.state.tr.setSelection(restoredSelection);
-            currentEditor.view.dispatch(tr);
-            currentEditor.view.focus(); 
-            
-            const selectionForAction = currentEditor.state.selection;
-            console.log(`[TableView] Selection for action for '${item.label}':`, selectionForAction.toJSON());
-
-            let commandSuccessful = false;
-            if (selectionForAction instanceof CellSelection) {
-              commandSuccessful = item.action({ editor: currentEditor }); 
-            } else {
-              console.warn(`[TableView] Action '${item.label}' aborted. Selection is not CellSelection for action.`);
-            }
-            
-            console.log(`[TableView] Action for '${item.label}' was ${commandSuccessful ? 'successful' : 'NOT successful'}.`);
-            console.log(`[TableView] Selection after action:`, currentEditor.state.selection.toJSON());
-
-            // Assuming hideOnClick:true or similar behavior, toolbar hides itself.
-            // No explicit hide call here needed if that assumption holds based on logs.
-            if (commandSuccessful) {
-              console.log("[TableView] Action successful. Toolbar should hide automatically.");
-            } else {
-              console.warn(`[TableView] Action '${item.label}' failed or not applicable. Toolbar might still be visible or hide automatically.`);
+            // 액션 완료 후 툴바 숨기기
+            if (this.cellSelectionToolbar.state.isShown) {
+              this.cellSelectionToolbar.hide();
             }
           },
           () => {}
         );
+
         this.cellSelectionToolbar.setContent(newContent);
       }
 
       this.cellSelectionToolbar.setProps({
         getReferenceClientRect: () => ({
           width: 0, height: 0,
-          top: coords.bottom + 5, bottom: coords.bottom + 5,
-          left: coords.left, right: coords.left,
+          top: coords.bottom + 5,
+          bottom: coords.bottom + 5,
+          left: coords.left,
+          right: coords.left,
         }),
       });
 
       if (!this.cellSelectionToolbar.state.isShown) {
         this.cellSelectionToolbar.show();
       }
-
     } else {
       this.currentToolbarItemsKey = null;
       if (this.cellSelectionToolbar.state.isShown) {
-        console.log("[TableView] Hiding toolbar (no items or not CellSelection)");
+        // console.log("[TableView] Hiding toolbar (no items or not CellSelection)");
         this.cellSelectionToolbar.hide();
       }
+    }
+  }
+
+  private async handleToolbarAction(
+    item: ToolboxItem,
+    anchorPos: number,
+    headPos: number,
+    currentEditor: Editor
+  ): Promise<boolean> {
+    try {
+      // 현재 selection이 이미 CellSelection이고 동일한 범위인 경우 재선택하지 않음
+      const currentSelection = currentEditor.state.selection;
+      const isSameSelection =
+        currentSelection instanceof CellSelection &&
+        currentSelection.$anchorCell.pos === anchorPos &&
+        currentSelection.$headCell.pos === headPos;
+
+      if (!isSameSelection) {
+        // 새로운 CellSelection 생성 및 적용
+        const restoredSelection = CellSelection.create(currentEditor.state.doc, anchorPos, headPos);
+        const tr = currentEditor.state.tr.setSelection(restoredSelection);
+        currentEditor.view.dispatch(tr);
+        
+        // selection이 안정화되도록 잠시 대기
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // 현재 selection 상태 확인
+      const selectionAfterRestore = currentEditor.state.selection;
+      if (!(selectionAfterRestore instanceof CellSelection)) {
+        // console.warn("[TableView] Selection is not CellSelection after restoration");
+        return false;
+      }
+
+      // 액션 실행
+      return item.action({ editor: currentEditor });
+    } catch (error) {
+      // console.error("[TableView] Error in toolbar action:", error);
+      return false;
     }
   }
 
