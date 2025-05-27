@@ -22,15 +22,18 @@ type Props = {
   user: IUser | null;
   provider: string | string[];
   mutateServices: () => void;
+  projectId?: string;
 };
 
 const projectExportService = new ProjectExportService();
 
 export const Exporter: React.FC<Props> = observer((props) => {
-  const { isOpen, handleClose, user, provider, mutateServices } = props;
+  const { isOpen, handleClose, user, provider, mutateServices, projectId } = props;
   // states
   const [exportLoading, setExportLoading] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [value, setValue] = React.useState<string[]>([]);
+  const [multiple, setMultiple] = React.useState<boolean>(false);
   // router
   const router = useAppRouter();
   const { workspaceSlug } = useParams();
@@ -58,17 +61,16 @@ export const Exporter: React.FC<Props> = observer((props) => {
     };
   });
 
-  const [value, setValue] = React.useState<string[]>([]);
-  const [multiple, setMultiple] = React.useState<boolean>(false);
   const onChange = (val: any) => {
     setValue(val);
   };
+
   const ExportCSVToMail = async () => {
     setExportLoading(true);
     if (workspaceSlug && user && typeof provider === "string") {
       const payload = {
         provider: provider,
-        project: value,
+        project: projectId ? [projectId] : value,
         multiple: multiple,
       };
       await projectExportService
@@ -138,39 +140,42 @@ export const Exporter: React.FC<Props> = observer((props) => {
                       </h3>
                     </span>
                   </div>
-                  <div>
-                    <CustomSearchSelect
-                      value={value ?? []}
-                      onChange={(val: string[]) => onChange(val)}
-                      options={options}
-                      input
-                      label={
-                        value && value.length > 0
-                          ? value
-                              .map((projectId) => {
-                                const projectDetails = getProjectById(projectId);
-
-                                return projectDetails?.identifier;
-                              })
-                              .join(", ")
-                          : "All projects"
-                      }
-                      onOpen={() => setIsSelectOpen(true)}
-                      onClose={() => setIsSelectOpen(false)}
-                      optionsClassName="max-w-48 sm:max-w-[532px]"
-                      placement="bottom-end"
-                      multiple
-                    />
-                  </div>
-                  <div
-                    onClick={() => setMultiple(!multiple)}
-                    className="flex max-w-min cursor-pointer items-center gap-2"
-                  >
-                    <input type="checkbox" checked={multiple} onChange={() => setMultiple(!multiple)} />
-                    <div className="whitespace-nowrap text-sm">
-                      {t("workspace_settings.settings.exports.export_separate_files")}
-                    </div>
-                  </div>
+                  {!projectId && (
+                    <>
+                      <div>
+                        <CustomSearchSelect
+                          value={value ?? []}
+                          onChange={(val: string[]) => onChange(val)}
+                          options={options}
+                          input
+                          label={
+                            value && value.length > 0
+                              ? value
+                                  .map((projectId) => {
+                                    const projectDetails = getProjectById(projectId);
+                                    return projectDetails?.identifier;
+                                  })
+                                  .join(", ")
+                              : "All projects"
+                          }
+                          onOpen={() => setIsSelectOpen(true)}
+                          onClose={() => setIsSelectOpen(false)}
+                          optionsClassName="max-w-48 sm:max-w-[532px]"
+                          placement="bottom-end"
+                          multiple
+                        />
+                      </div>
+                      <div
+                        onClick={() => setMultiple(!multiple)}
+                        className="flex max-w-min cursor-pointer items-center gap-2"
+                      >
+                        <input type="checkbox" checked={multiple} onChange={() => setMultiple(!multiple)} />
+                        <div className="whitespace-nowrap text-sm">
+                          {t("workspace_settings.settings.exports.export_separate_files")}
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-end gap-2">
                     <Button variant="neutral-primary" size="sm" onClick={handleClose}>
                       {t("cancel")}
@@ -179,7 +184,7 @@ export const Exporter: React.FC<Props> = observer((props) => {
                       variant="primary"
                       size="sm"
                       onClick={ExportCSVToMail}
-                      disabled={exportLoading}
+                      disabled={exportLoading || (!projectId && value.length === 0)}
                       loading={exportLoading}
                     >
                       {exportLoading

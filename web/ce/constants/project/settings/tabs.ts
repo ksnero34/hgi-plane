@@ -62,6 +62,14 @@ export const PROJECT_SETTINGS = {
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/automations/`,
     Icon: SettingIcon,
   },
+  exports: {
+    key: "exports",
+    i18n_label: "workspace_settings.settings.exports.title",
+    href: `/settings/exports`,
+    access: [EUserPermissions.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/exports/`,
+    Icon: SettingIcon,
+  },
 };
 
 export const PROJECT_SETTINGS_LINKS: {
@@ -79,4 +87,5 @@ export const PROJECT_SETTINGS_LINKS: {
   PROJECT_SETTINGS["labels"],
   PROJECT_SETTINGS["estimates"],
   PROJECT_SETTINGS["automations"],
+  PROJECT_SETTINGS["exports"],
 ];
