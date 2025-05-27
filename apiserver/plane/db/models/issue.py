@@ -1,5 +1,7 @@
 # Python import
 from uuid import uuid4
+from datetime import datetime
+import re
 
 # Django imports
 from django.conf import settings
@@ -879,3 +881,117 @@ class IssueDescriptionVersion(ProjectBaseModel):
         except Exception as e:
             log_exception(e)
             return False
+
+
+class CustomField(ProjectBaseModel):
+    """프로젝트의 커스텀 필드 정의"""
+    name = models.CharField(max_length=100, verbose_name="필드 이름")
+    key = models.CharField(max_length=50, verbose_name="고유 식별자")  
+    description = models.TextField(blank=True, null=True, verbose_name="설명")
+    field_type = models.CharField(
+        max_length=20,
+        choices=(
+            ("select", "선택"),
+            ("multiselect", "다중선택"),
+            ("date", "날짜"),
+            ("project_member", "프로젝트 멤버"),
+            ("project_members", "프로젝트 멤버(다중)"),
+        ),
+        verbose_name="필드 타입"
+    )
+    options = models.JSONField(default=list, blank=True, verbose_name="선택 옵션")  # select, multiselect 타입의 옵션
+    is_required = models.BooleanField(default=False, verbose_name="필수 여부")
+    default_value = models.JSONField(null=True, blank=True, verbose_name="기본값")
+    settings = models.JSONField(default=dict, blank=True, verbose_name="추가 설정")  # validation rules 등
+    sort_order = models.FloatField(default=65535)
+
+    class Meta:
+        verbose_name = "커스텀 필드"
+        verbose_name_plural = "커스텀 필드들"
+        db_table = "custom_fields"
+        ordering = ("sort_order", "created_at",)
+        unique_together = ["project", "key", "deleted_at"]
+        indexes = [
+            models.Index(fields=["project", "key"]),
+            models.Index(fields=["workspace", "project", "key"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.key})"
+
+    def clean(self):
+        super().clean()
+        
+        # 필드 타입별 설정 검증
+        if self.field_type in ["select", "multiselect"]:
+            if not isinstance(self.options, list):
+                raise ValidationError({"options": "options는 리스트 형식이어야 합니다."})
+            
+            if not self.options:
+                raise ValidationError({"options": "선택 타입의 필드는 최소 하나의 옵션이 필요합니다."})
+        
+        elif self.field_type == "date":
+            # 날짜 타입은 추가 검증 필요 없음
+            pass
+        
+        elif self.field_type in ["project_member", "project_members"]:
+            # 프로젝트 멤버 타입은 추가 검증 필요 없음
+            pass
+
+class CustomFieldValue(ProjectBaseModel):
+    """이슈의 커스텀 필드 값"""
+    custom_field = models.ForeignKey(
+        CustomField, 
+        on_delete=models.CASCADE, 
+        related_name="field_values",
+        verbose_name="커스텀 필드"
+    )
+    issue = models.ForeignKey(
+        Issue, 
+        on_delete=models.CASCADE, 
+        related_name="custom_field_values",
+        verbose_name="이슈"
+    )
+    value = models.JSONField(verbose_name="필드 값")
+
+    class Meta:
+        verbose_name = "커스텀 필드 값"
+        verbose_name_plural = "커스텀 필드 값들"
+        db_table = "custom_field_values"
+        ordering = ("custom_field__sort_order", "created_at",)
+        unique_together = ["custom_field", "issue", "deleted_at"]
+        indexes = [
+            models.Index(fields=["issue", "deleted_at"]),
+            models.Index(fields=["custom_field", "deleted_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.custom_field.name}: {self.value} <{self.issue.name}>"
+
+    def clean(self):
+        # 필드 타입에 따른 값 검증
+        field_type = self.custom_field.field_type
+        value = self.value
+
+        if self.custom_field.is_required and value is None:
+            raise ValidationError("이 필드는 필수입니다.")
+
+        if value is not None:
+            if field_type == "date":
+                try:
+                    datetime.strptime(value, "%Y-%m-%d")
+                except (TypeError, ValueError):
+                    raise ValidationError("날짜 형식이 아닙니다.")
+            elif field_type in ["select", "multiselect"]:
+                options = self.custom_field.options
+                if field_type == "select":
+                    if value not in options:
+                        raise ValidationError("유효하지 않은 선택값입니다.")
+                else:  # multiselect
+                    if not isinstance(value, list):
+                        raise ValidationError("다중 선택은 리스트 형태여야 합니다.")
+                    if not all(v in options for v in value):
+                        raise ValidationError("유효하지 않은 선택값이 포함되어 있습니다.")
+            elif field_type in ["project_member", "project_members"]:
+                # TODO: 프로젝트 멤버 검증 로직 추가
+                pass

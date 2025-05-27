@@ -41,6 +41,10 @@ export type TBaseIssue = {
 
   is_draft: boolean;
   is_epic?: boolean;
+
+  custom_field_values?: {
+    [field_id: string]: any;
+  };
 };
 
 export type IssueRelation = {

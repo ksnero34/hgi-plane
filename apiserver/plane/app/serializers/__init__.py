@@ -76,6 +76,8 @@ from .issue import (
     IssueLinkLiteSerializer,
     IssueVersionDetailSerializer,
     IssueDescriptionVersionDetailSerializer,
+    CustomFieldSerializer,
+    CustomFieldValueSerializer,
 )
 
 from .module import (

@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from datetime import datetime
 
 # Third Party imports
 from rest_framework import serializers
@@ -37,6 +38,8 @@ from plane.db.models import (
     IssueVersion,
     IssueDescriptionVersion,
     ProjectMember,
+    CustomField,
+    CustomFieldValue,
 )
 
 
@@ -90,6 +93,11 @@ class IssueCreateSerializer(BaseSerializer):
     )
     project_id = serializers.UUIDField(source="project.id", read_only=True)
     workspace_id = serializers.UUIDField(source="workspace.id", read_only=True)
+    custom_field_values = serializers.ListField(
+        child=serializers.JSONField(),
+        write_only=True,
+        required=False
+    )
 
     class Meta:
         model = Issue
@@ -102,6 +110,57 @@ class IssueCreateSerializer(BaseSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_custom_field_values(self, values):
+        """커스텀 필드 값 유효성 검사"""
+        if not values:
+            return values
+
+        project_id = self.context.get("project_id")
+        custom_fields = CustomField.objects.filter(
+            project_id=project_id,
+            deleted_at__isnull=True
+        )
+        custom_field_map = {str(field.id): field for field in custom_fields}
+
+        for value in values:
+            field_id = value.get("custom_field_id")
+            if not field_id:
+                raise serializers.ValidationError("custom_field_id는 필수입니다.")
+
+            field = custom_field_map.get(str(field_id))
+            if not field:
+                raise serializers.ValidationError(f"커스텀 필드 {field_id}를 찾을 수 없습니다.")
+
+            # 필수 필드 체크
+            if field.is_required and value.get("value") is None:
+                raise serializers.ValidationError(f"필드 {field.name}는 필수입니다.")
+
+            # 타입별 유효성 검사
+            field_value = value.get("value")
+            if field_value is not None:
+                if field.field_type == "number":
+                    try:
+                        float(field_value)
+                    except (TypeError, ValueError):
+                        raise serializers.ValidationError(f"필드 {field.name}는 숫자여야 합니다.")
+                elif field.field_type == "date":
+                    try:
+                        datetime.strptime(field_value, "%Y-%m-%d")
+                    except (TypeError, ValueError):
+                        raise serializers.ValidationError(f"필드 {field.name}는 YYYY-MM-DD 형식이어야 합니다.")
+                elif field.field_type in ["select", "multiselect"]:
+                    options = field.options or []
+                    if field.field_type == "select":
+                        if field_value not in options:
+                            raise serializers.ValidationError(f"필드 {field.name}의 값이 유효하지 않습니다.")
+                    else:  # multiselect
+                        if not isinstance(field_value, list):
+                            raise serializers.ValidationError(f"필드 {field.name}는 리스트여야 합니다.")
+                        if not all(v in options for v in field_value):
+                            raise serializers.ValidationError(f"필드 {field.name}의 값이 유효하지 않습니다.")
+
+        return values
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -141,6 +200,7 @@ class IssueCreateSerializer(BaseSerializer):
         ).values_list('member_id', flat=True)
 
     def create(self, validated_data):
+        custom_field_values = validated_data.pop("custom_field_values", None)
         assignees = validated_data.pop("assignee_ids", None)
         labels = validated_data.pop("label_ids", None)
 
@@ -215,9 +275,35 @@ class IssueCreateSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
+        if custom_field_values:
+            for field_value in custom_field_values:
+                CustomFieldValue.objects.create(
+                    custom_field_id=field_value["custom_field_id"],
+                    issue=issue,
+                    value=field_value["value"],
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    created_by_id=created_by_id,
+                    updated_by_id=updated_by_id,
+                )
+
+                # 활동 로그 생성
+                field = CustomField.objects.get(id=field_value["custom_field_id"])
+                IssueActivity.objects.create(
+                    issue=issue,
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    actor_id=created_by_id,
+                    verb="created",
+                    field=f"custom_field_{field.key}",
+                    new_value=str(field_value["value"]),
+                    comment=f"커스텀 필드 {field.name} 생성됨"
+                )
+
         return issue
 
     def update(self, instance, validated_data):
+        custom_field_values = validated_data.pop("custom_field_values", None)
         assignees = validated_data.pop("assignee_ids", None)
         labels = validated_data.pop("label_ids", None)
 
@@ -268,6 +354,87 @@ class IssueCreateSerializer(BaseSerializer):
                 )
             except IntegrityError:
                 pass
+
+        if custom_field_values is not None:
+            # 기존 값들 가져오기
+            old_values = {
+                str(value.custom_field_id): value 
+                for value in CustomFieldValue.objects.filter(
+                    issue=instance,
+                    deleted_at__isnull=True
+                )
+            }
+            
+            # 새로운 값들 생성/수정
+            for field_value in custom_field_values:
+                field_id = field_value["custom_field_id"]
+                new_value = field_value["value"]
+                
+                # 기존 값이 있으면 업데이트
+                if str(field_id) in old_values:
+                    old_value = old_values[str(field_id)]
+                    if old_value.value != new_value:
+                        old_value.value = new_value
+                        old_value.updated_by_id = updated_by_id
+                        old_value.save()
+                        
+                        # 활동 로그 생성
+                        field = CustomField.objects.get(id=field_id)
+                        IssueActivity.objects.create(
+                            issue=instance,
+                            project_id=project_id,
+                            workspace_id=workspace_id,
+                            actor_id=updated_by_id,
+                            verb="updated",
+                            field=f"custom_field_{field.key}",
+                            old_value=str(old_value.value),
+                            new_value=str(new_value),
+                            comment=f"커스텀 필드 {field.name} 수정됨"
+                        )
+                else:
+                    # 새로운 값 생성
+                    CustomFieldValue.objects.create(
+                        custom_field_id=field_id,
+                        issue=instance,
+                        value=new_value,
+                        project_id=project_id,
+                        workspace_id=workspace_id,
+                        created_by_id=created_by_id,
+                        updated_by_id=updated_by_id,
+                    )
+                    
+                    # 활동 로그 생성
+                    field = CustomField.objects.get(id=field_id)
+                    IssueActivity.objects.create(
+                        issue=instance,
+                        project_id=project_id,
+                        workspace_id=workspace_id,
+                        actor_id=updated_by_id,
+                        verb="created",
+                        field=f"custom_field_{field.key}",
+                        new_value=str(new_value),
+                        comment=f"커스텀 필드 {field.name} 생성됨"
+                    )
+
+            # 삭제된 값들 처리
+            for field_id, old_value in old_values.items():
+                if not any(str(v["custom_field_id"]) == field_id for v in custom_field_values):
+                    old_value.deleted_at = timezone.now()
+                    old_value.deleted_by_id = updated_by_id
+                    old_value.save()
+                    
+                    # 활동 로그 생성
+                    field = CustomField.objects.get(id=field_id)
+                    IssueActivity.objects.create(
+                        issue=instance,
+                        project_id=project_id,
+                        workspace_id=workspace_id,
+                        actor_id=updated_by_id,
+                        verb="deleted",
+                        field=f"custom_field_{field.key}",
+                        old_value=str(old_value.value),
+                        comment=f"커스텀 필드 {field.name} 삭제됨"
+                    )
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
@@ -690,6 +857,58 @@ class IssueIntakeSerializer(DynamicBaseSerializer):
         read_only_fields = fields
 
 
+class CustomFieldSerializer(BaseSerializer):
+    class Meta:
+        model = CustomField
+        fields = "__all__"
+        read_only_fields = ["workspace", "project", "created_by", "updated_by"]
+
+    def validate(self, data):
+        if data.get("field_type") in ["select", "multiselect"] and not data.get("options"):
+            raise serializers.ValidationError("선택 타입의 필드는 옵션이 필요합니다.")
+        return data
+
+
+class CustomFieldValueSerializer(BaseSerializer):
+    class Meta:
+        model = CustomFieldValue
+        fields = "__all__"
+        read_only_fields = ["workspace", "project", "created_by", "updated_by"]
+
+    def validate(self, data):
+        custom_field = data.get("custom_field")
+        value = data.get("value")
+
+        if custom_field.is_required and value is None:
+            raise serializers.ValidationError("이 필드는 필수입니다.")
+
+        if value is not None:
+            field_type = custom_field.field_type
+            
+            if field_type == "number":
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError("숫자 형식이 아닙니다.")
+            elif field_type == "date":
+                try:
+                    datetime.strptime(value, "%Y-%m-%d")
+                except (TypeError, ValueError):
+                    raise serializers.ValidationError("날짜 형식이 아닙니다.")
+            elif field_type in ["select", "multiselect"]:
+                options = custom_field.options
+                if field_type == "select":
+                    if value not in options:
+                        raise serializers.ValidationError("유효하지 않은 선택값입니다.")
+                else:  # multiselect
+                    if not isinstance(value, list):
+                        raise serializers.ValidationError("다중 선택은 리스트 형태여야 합니다.")
+                    if not all(v in options for v in value):
+                        raise serializers.ValidationError("유효하지 않은 선택값이 포함되어 있습니다.")
+
+        return data
+
+
 class IssueSerializer(DynamicBaseSerializer):
     # ids
     cycle_id = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -703,6 +922,7 @@ class IssueSerializer(DynamicBaseSerializer):
     sub_issues_count = serializers.IntegerField(read_only=True)
     attachment_count = serializers.IntegerField(read_only=True)
     link_count = serializers.IntegerField(read_only=True)
+    custom_field_values = CustomFieldValueSerializer(many=True, read_only=True)
 
     class Meta:
         model = Issue
@@ -732,6 +952,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "link_count",
             "is_draft",
             "archived_at",
+            "custom_field_values",
         ]
         read_only_fields = fields
 

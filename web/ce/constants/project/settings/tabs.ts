@@ -78,6 +78,14 @@ export const PROJECT_SETTINGS = {
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/notifications/`,
     Icon: SettingIcon,
   },
+  custom_fields: {
+    key: "custom_fields",
+    i18n_label: "커스텀 필드",
+    href: `/settings/custom-fields`,
+    access: [EUserPermissions.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/custom-fields/`,
+    Icon: SettingIcon,
+  },
 };
 
 export const PROJECT_SETTINGS_LINKS: {
@@ -97,4 +105,5 @@ export const PROJECT_SETTINGS_LINKS: {
   PROJECT_SETTINGS["automations"],
   PROJECT_SETTINGS["exports"],
   PROJECT_SETTINGS["notifications"],
+  PROJECT_SETTINGS["custom_fields"],
 ];

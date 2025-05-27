@@ -8,6 +8,8 @@ from .project.base import (
     ProjectArchiveUnarchiveEndpoint,
 )
 
+from .project.custom_field import CustomFieldViewSet
+
 from .project.invite import (
     UserProjectInvitationsViewset,
     ProjectInvitationsViewset,

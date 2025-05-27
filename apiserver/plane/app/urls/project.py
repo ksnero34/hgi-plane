@@ -15,6 +15,7 @@ from plane.app.views import (
     UserProjectRolesEndpoint,
     ProjectArchiveUnarchiveEndpoint,
     ProjectMattermostConfigViewSet,
+    CustomFieldViewSet,
 )
 
 
@@ -133,5 +134,37 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/archive/",
         ProjectArchiveUnarchiveEndpoint.as_view(),
         name="project-archive-unarchive",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-fields/",
+        CustomFieldViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-custom-fields",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-fields/<uuid:pk>/",
+        CustomFieldViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="project-custom-field-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-fields/bulk-create/",
+        CustomFieldViewSet.as_view({"post": "bulk_create"}),
+        name="project-custom-fields-bulk-create",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-fields/reorder/",
+        CustomFieldViewSet.as_view({"post": "reorder"}),
+        name="project-custom-fields-reorder",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-fields/analytics/",
+        CustomFieldViewSet.as_view({"get": "analytics"}),
+        name="project-custom-fields-analytics",
     ),
 ]

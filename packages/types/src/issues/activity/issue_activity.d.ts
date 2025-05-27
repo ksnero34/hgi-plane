@@ -38,6 +38,8 @@ export type TIssueActivity = {
     source_email?: string;
     extra: {
       username?: string;
+      custom_field_name?: string;
+      custom_field_value?: any;
     };
   };
 };

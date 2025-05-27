@@ -9,6 +9,7 @@ export * from "./issue_attachment";
 export * from "./issue_relation";
 export * from "./issue_sub_issues";
 export * from "./activity/base";
+export * from "./custom_field";
 
 
 export type TLoader =

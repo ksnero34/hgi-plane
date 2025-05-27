@@ -31,6 +31,7 @@ import { useProjectEstimates, useProject, useUserPermissions } from "@/hooks/sto
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues";
+import { IssueCustomField } from "./custom-field";
 
 type TIssueDefaultPropertiesProps = {
   control: Control<TIssue>;
@@ -337,6 +338,12 @@ export const IssueDefaultProperties: React.FC<TIssueDefaultPropertiesProps> = ob
             searchEpic
           />
         )}
+      />
+      <IssueCustomField
+        control={control}
+        projectId={projectId ?? ""}
+        workspaceSlug={workspaceSlug}
+        handleFormChange={handleFormChange}
       />
     </div>
   );
