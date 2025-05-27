@@ -22,6 +22,7 @@ from plane.db.models import (
     UserNotificationPreference,
     ProjectMember,
     Workspace,
+    ProjectMattermostConfig,
 )
 from django.db.models import Subquery
 from django.conf import settings
@@ -32,6 +33,8 @@ from bs4 import BeautifulSoup
 
 # Import Java notification service
 from plane.bgtasks.java_notification_task import send_java_notification
+# Import Mattermost notification service
+from plane.bgtasks.mattermost_notification_task import send_mattermost_notification, create_mattermost_notification_data
 
 
 # =========== Issue Description Html Parsing and notification Functions ======================
@@ -254,6 +257,41 @@ def process_notification(notification):
         
         # 비동기로 Java 알림 API 호출
         send_java_notification.delay(java_notification_data)
+    
+    # Mattermost DM 알림 처리
+    try:
+        if notification.project_id:
+            # 프로젝트에 Mattermost 설정이 활성화되어 있는지 확인
+            mattermost_config = ProjectMattermostConfig.objects.filter(
+                project_id=notification.project_id,
+                is_enabled=True
+            ).first()
+            
+            if mattermost_config:
+                # 이슈와 프로젝트 정보 가져오기
+                issue = None
+                project = None
+                
+                try:
+                    if notification.entity_name == "issue":
+                        issue = Issue.objects.get(pk=notification.entity_identifier)
+                        project = issue.project
+                    elif notification.project_id:
+                        project = Project.objects.get(pk=notification.project_id)
+                except Exception as e:
+                    logging.getLogger("plane").warning(f"Error getting issue/project for Mattermost notification: {str(e)}")
+                
+                # Mattermost 알림 데이터 생성
+                mattermost_data = create_mattermost_notification_data(
+                    notification, issue=issue, project=project
+                )
+                
+                if mattermost_data:
+                    # 비동기로 Mattermost DM 알림 전송
+                    send_mattermost_notification.delay(mattermost_data)
+    
+    except Exception as e:
+        logging.getLogger("plane").warning(f"Error processing Mattermost notification: {str(e)}")
     
     return notification
 

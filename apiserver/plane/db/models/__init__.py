@@ -54,6 +54,8 @@ from .project import (
     ProjectMember,
     ProjectMemberInvite,
     ProjectPublicMember,
+    ProjectDeployBoard,
+    ProjectMattermostConfig,
 )
 from .session import Session
 from .social_connection import SocialLoginConnection

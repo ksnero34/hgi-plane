@@ -14,6 +14,7 @@ from plane.app.views import (
     ProjectPublicCoverImagesEndpoint,
     UserProjectRolesEndpoint,
     ProjectArchiveUnarchiveEndpoint,
+    ProjectMattermostConfigViewSet,
 )
 
 
@@ -118,11 +119,15 @@ urlpatterns = [
         name="project-deploy-board",
     ),
     path(
-        "workspaces/<str:slug>/projects/<uuid:project_id>/project-deploy-boards/<uuid:pk>/",
-        DeployBoardViewSet.as_view(
-            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
-        ),
-        name="project-deploy-board",
+        "workspaces/<str:slug>/projects/<uuid:project_id>/mattermost-config/",
+        ProjectMattermostConfigViewSet.as_view({
+            "get": "retrieve",
+            "post": "create",
+            "put": "update",
+            "patch": "partial_update",
+            "delete": "destroy"
+        }),
+        name="project-mattermost-config",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/archive/",

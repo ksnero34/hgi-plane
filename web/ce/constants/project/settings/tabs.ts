@@ -70,6 +70,14 @@ export const PROJECT_SETTINGS = {
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/exports/`,
     Icon: SettingIcon,
   },
+  notifications: {
+    key: "notifications",
+    i18n_label: "알림 연동",
+    href: `/settings/notifications`,
+    access: [EUserPermissions.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/notifications/`,
+    Icon: SettingIcon,
+  },
 };
 
 export const PROJECT_SETTINGS_LINKS: {
@@ -88,4 +96,5 @@ export const PROJECT_SETTINGS_LINKS: {
   PROJECT_SETTINGS["estimates"],
   PROJECT_SETTINGS["automations"],
   PROJECT_SETTINGS["exports"],
+  PROJECT_SETTINGS["notifications"],
 ];

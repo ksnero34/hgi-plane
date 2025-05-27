@@ -338,3 +338,49 @@ class ProjectPublicMember(ProjectBaseModel):
         verbose_name_plural = "Project Public Members"
         db_table = "project_public_members"
         ordering = ("-created_at",)
+
+
+class ProjectMattermostConfig(models.Model):
+    project = models.OneToOneField(
+        "db.Project", 
+        on_delete=models.CASCADE, 
+        related_name="mattermost_config",
+        verbose_name="프로젝트"
+    )
+    is_enabled = models.BooleanField(default=False, verbose_name="활성화 여부")
+    server_url = models.URLField(
+        max_length=500, 
+        null=True, 
+        blank=True, 
+        verbose_name="Mattermost 서버 URL"
+    )
+    bot_token = models.CharField(
+        max_length=500, 
+        null=True, 
+        blank=True, 
+        verbose_name="봇 토큰"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성일")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="수정일")
+    created_by = models.ForeignKey(
+        "db.User",
+        on_delete=models.SET_NULL,
+        related_name="created_mattermost_configs",
+        null=True,
+        verbose_name="생성자"
+    )
+    updated_by = models.ForeignKey(
+        "db.User",
+        on_delete=models.SET_NULL,
+        related_name="updated_mattermost_configs",
+        null=True,
+        verbose_name="수정자"
+    )
+
+    class Meta:
+        verbose_name = "프로젝트 Mattermost 설정"
+        verbose_name_plural = "프로젝트 Mattermost 설정"
+        db_table = "project_mattermost_configs"
+
+    def __str__(self):
+        return f"{self.project.name}의 Mattermost 설정"

@@ -2,7 +2,7 @@
 from rest_framework import serializers
 
 # Module imports
-from plane.db.models import Project, ProjectIdentifier, WorkspaceMember
+from plane.db.models import Project, ProjectIdentifier, WorkspaceMember, ProjectMattermostConfig
 
 from .base import BaseSerializer
 
@@ -96,3 +96,28 @@ class ProjectLiteSerializer(BaseSerializer):
             "cover_image_url",
         ]
         read_only_fields = fields
+
+
+class ProjectMattermostConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectMattermostConfig
+        fields = (
+            "id",
+            "project",
+            "is_enabled",
+            "webhook_url",
+            "channel_id",
+            "bot_token",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        )
+        read_only_fields = (
+            "id",
+            "project",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        )

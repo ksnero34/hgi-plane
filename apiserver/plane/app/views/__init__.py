@@ -14,6 +14,8 @@ from .project.invite import (
     ProjectJoinEndpoint,
 )
 
+from .project.mattermost import ProjectMattermostConfigViewSet
+
 from .project.member import (
     ProjectMemberViewSet,
     ProjectMemberUserEndpoint,
