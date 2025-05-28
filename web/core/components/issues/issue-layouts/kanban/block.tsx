@@ -9,7 +9,7 @@ import { useParams } from "next/navigation";
 import { EIssueServiceType } from "@plane/constants";
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
-import { TIssue, IIssueDisplayProperties, IIssueMap } from "@plane/types";
+import { TIssue, IIssueDisplayProperties, IIssueMap, TCustomField } from "@plane/types";
 // ui
 import { ControlLink, DropIndicator, TOAST_TYPE, Tooltip, setToast } from "@plane/ui";
 // components
@@ -46,6 +46,7 @@ interface IssueBlockProps {
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 interface IssueDetailsBlockProps {
@@ -56,10 +57,11 @@ interface IssueDetailsBlockProps {
   quickActions: TRenderQuickActions;
   isReadOnly: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((props) => {
-  const { cardRef, issue, updateIssue, quickActions, isReadOnly, displayProperties, isEpic = false } = props;
+  const { cardRef, issue, updateIssue, quickActions, isReadOnly, displayProperties, isEpic = false, customFields = [] } = props;
   // hooks
   const { isMobile } = usePlatformOS();
 
@@ -109,7 +111,7 @@ const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((prop
         updateIssue={updateIssue}
         isReadOnly={isReadOnly}
         isEpic={isEpic}
-        customFields={[]}
+        customFields={customFields}
       />
 
       {isEpic && displayProperties && (
@@ -140,6 +142,7 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
     scrollableContainerRef,
     shouldRenderByDefault,
     isEpic = false,
+    customFields = [],
   } = props;
 
   const cardRef = useRef<HTMLAnchorElement | null>(null);
@@ -271,6 +274,7 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
               quickActions={quickActions}
               isReadOnly={!canEditIssueProperties}
               isEpic={isEpic}
+              customFields={customFields}
             />
           </RenderIfVisible>
         </ControlLink>

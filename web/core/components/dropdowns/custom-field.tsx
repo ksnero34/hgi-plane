@@ -30,6 +30,8 @@ type Props = {
   placeholder?: string;
   showTooltip?: boolean;
   hideIcon?: boolean;
+  showFieldNameWhenEmpty?: boolean;
+  hideIconWhenEmpty?: boolean;
   onClose?: () => void;
   placement?: Placement;
   maxRender?: number;
@@ -375,9 +377,11 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     buttonClassName = "",
     dropdownArrow = false,
     dropdownArrowClassName = "",
-    placeholder,
+    placeholder = "",
     showTooltip = false,
     hideIcon = false,
+    showFieldNameWhenEmpty = false,
+    hideIconWhenEmpty = false,
     onClose,
     placement,
     maxRender = 2,
@@ -388,9 +392,9 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
   // refs
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // popper-js refs
   const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
-
-  // hooks
+  // store hooks
   const { isMobile } = usePlatformOS();
 
   const { handleClose, handleKeyDown, handleOnClick } = useDropdown({
@@ -400,6 +404,12 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     onClose,
     setIsOpen,
   });
+
+  // MemberDropdown과 동일한 패턴으로 dropdownOnChange 추가
+  const dropdownOnChange = (val: any) => {
+    onChange(val);
+    if (field.field_type !== "multiselect") handleClose();
+  };
 
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
@@ -424,7 +434,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     const hasValue = selectedValues.length > 0;
 
     if (!hasValue) {
-      // 값이 없을 때는 아이콘만 표시
+      // 값이 없을 때 - showFieldNameWhenEmpty가 true면 아이콘과 속성명 모두 표시, 아니면 기존 로직
       const comboButton = (
         <button
           ref={setReferenceElement}
@@ -434,6 +444,8 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
             {
               "cursor-not-allowed text-custom-text-200": disabled,
               "cursor-pointer": !disabled,
+              "border border-custom-border-300 rounded": buttonVariant === "border-with-text",
+              "hover:bg-custom-background-80": !disabled,
             },
             buttonContainerClassName,
             buttonClassName
@@ -441,9 +453,26 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           onClick={handleOnClick}
           disabled={disabled}
         >
-          <div className="flex items-center justify-center">
-            {getFieldIcon(field.field_type)}
-          </div>
+          {showFieldNameWhenEmpty ? (
+            hideIconWhenEmpty ? (
+              <div className={`flex items-center justify-start w-full ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+                <span className="truncate">{field.name}</span>
+              </div>
+            ) : (
+              <div className={`flex items-center gap-1.5 ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+                {getFieldIcon(field.field_type)}
+                <span className="truncate">{field.name}</span>
+              </div>
+            )
+          ) : hideIcon ? (
+            <div className={`flex items-center justify-start w-full ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+              <span className="truncate">{placeholder || field.name}</span>
+            </div>
+          ) : (
+            <div className={`flex items-center justify-center ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+              {getFieldIcon(field.field_type)}
+            </div>
+          )}
         </button>
       );
 
@@ -466,7 +495,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           onKeyDown={handleKeyDown}
           button={tooltipWrappedButton}
           value={selectedValues}
-          onChange={onChange}
+          onChange={dropdownOnChange}
           disabled={disabled}
           multiple={true}
         >
@@ -477,7 +506,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
             placement={placement}
             multiple={true}
             value={value}
-            onChange={onChange}
+            onChange={dropdownOnChange}
             onClose={handleClose}
           />
         </ComboDropDown>
@@ -534,15 +563,10 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
   // SELECT 타입 처리
   if (field.field_type === "select") {
     const hasValue = value && value !== "";
-    const showText = (buttonVariant === "border-with-text" || buttonVariant === "transparent-with-text") && hasValue;
-
-    const dropdownOnChange = (val: any) => {
-      onChange(val);
-      handleClose();
-    };
+    const showText = (buttonVariant === "border-with-text" || buttonVariant === "transparent-with-text") && (hasValue || showFieldNameWhenEmpty);
 
     const comboboxProps: any = {
-      value: value || "", // null 값을 빈 문자열로 변환하여 체크 상태 초기화
+      value,
       onChange: dropdownOnChange,
       disabled,
     };
@@ -556,6 +580,8 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           {
             "cursor-not-allowed text-custom-text-200": disabled,
             "cursor-pointer": !disabled,
+            "border border-custom-border-300 rounded": buttonVariant === "border-with-text",
+            "hover:bg-custom-background-80": !disabled,
           },
           buttonContainerClassName,
           buttonClassName
@@ -563,12 +589,12 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
         onClick={handleOnClick}
         disabled={disabled}
       >
-        <div className={`flex items-center ${showText ? 'gap-1.5' : 'justify-center'}`}>
-          {getFieldIcon(field.field_type)}
+        <div className={`flex items-center ${showText ? 'gap-1.5' : 'justify-center'} ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+          {(!hideIconWhenEmpty || hasValue) && getFieldIcon(field.field_type)}
           {showText && (
-            <>
-              <span className="truncate">{value}</span>
-            </>
+            <span className="truncate">
+              {hasValue ? value : field.name}
+            </span>
           )}
         </div>
       </button>
@@ -601,7 +627,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           placement={placement}
           multiple={false}
           value={value}
-          onChange={onChange}
+          onChange={dropdownOnChange}
           onClose={handleClose}
         />
       </ComboDropDown>

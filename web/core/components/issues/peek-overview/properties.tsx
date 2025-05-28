@@ -274,17 +274,6 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
           />
         </div>
 
-        {/* label */}
-        <div className="flex w-full items-center gap-3 min-h-8">
-          <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">
-            <Tag className="h-4 w-4 flex-shrink-0" />
-            <span>{t("common.labels")}</span>
-          </div>
-          <div className="flex w-full flex-col gap-3 truncate">
-            <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
-          </div>
-        </div>
-
         <IssueWorklogProperty
           workspaceSlug={workspaceSlug}
           projectId={projectId}
@@ -309,6 +298,17 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
           issueOperations={issueOperations}
           disabled={disabled}
         />
+
+        {/* label */}
+        <div className="flex w-full items-center gap-3 min-h-8">
+          <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">
+            <Tag className="h-4 w-4 flex-shrink-0" />
+            <span>{t("common.labels")}</span>
+          </div>
+          <div className="flex w-full flex-col gap-3 truncate">
+            <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
+          </div>
+        </div>
       </div>
     </div>
   );

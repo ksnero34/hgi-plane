@@ -59,8 +59,24 @@ def issue_queryset_grouper(
             Value([], output_field=ArrayField(UUIDField())),
         )
         for key, (field, condition) in annotations_map.items()
-        if FIELD_MAPPER.get(key) != group_by or FIELD_MAPPER.get(key) != sub_group_by
+        if FIELD_MAPPER.get(key) != group_by and FIELD_MAPPER.get(key) != sub_group_by
     }
+
+    # group_by와 sub_group_by 필드를 쿼리셋에 직접 추가
+    if group_by == "issue_module__module_id":
+        default_annotations["issue_module__module_id"] = F("issue_module__module_id")
+    elif group_by == "assignees__id":
+        default_annotations["assignees__id"] = F("assignees__id")
+    elif group_by == "labels__id":
+        default_annotations["labels__id"] = F("labels__id")
+    
+    # sub_group_by 필드가 issue_module__module_id인 경우 해당 필드를 어노테이션으로 추가
+    if sub_group_by == "issue_module__module_id":
+        default_annotations["issue_module__module_id"] = F("issue_module__module_id")
+    elif sub_group_by == "assignees__id":
+        default_annotations["assignees__id"] = F("assignees__id")
+    elif sub_group_by == "labels__id":
+        default_annotations["labels__id"] = F("labels__id")
 
     return queryset.annotate(**default_annotations)
 
@@ -68,113 +84,17 @@ def issue_queryset_grouper(
 def issue_on_results(
     issues: QuerySet[Issue], group_by: Optional[str], sub_group_by: Optional[str]
 ) -> List[Dict[str, Any]]:
+    from plane.space.serializer import IssuePublicSerializer
+    
     FIELD_MAPPER = {
         "labels__id": "label_ids",
         "assignees__id": "assignee_ids",
         "issue_module__module_id": "module_ids",
     }
 
-    original_list = ["assignee_ids", "label_ids", "module_ids"]
-
-    required_fields = [
-        "id",
-        "name",
-        "state_id",
-        "sort_order",
-        "estimate_point",
-        "priority",
-        "start_date",
-        "target_date",
-        "sequence_id",
-        "project_id",
-        "parent_id",
-        "cycle_id",
-        "created_by",
-        "state__group",
-    ]
-
-    if group_by in FIELD_MAPPER:
-        original_list.remove(FIELD_MAPPER[group_by])
-        original_list.append(group_by)
-
-    if sub_group_by in FIELD_MAPPER:
-        original_list.remove(FIELD_MAPPER[sub_group_by])
-        original_list.append(sub_group_by)
-
-    required_fields.extend(original_list)
-
-    issues = issues.annotate(
-        vote_items=ArrayAgg(
-            Case(
-                When(
-                    votes__isnull=False,
-                    votes__deleted_at__isnull=True,
-                    then=JSONObject(
-                        vote=F("votes__vote"),
-                        actor_details=JSONObject(
-                            id=F("votes__actor__id"),
-                            first_name=F("votes__actor__first_name"),
-                            last_name=F("votes__actor__last_name"),
-                            avatar=F("votes__actor__avatar"),
-                            avatar_url=Case(
-                                When(
-                                    votes__actor__avatar_asset__isnull=False,
-                                    then=Concat(
-                                        Value("/api/assets/v2/static/"),
-                                        F("votes__actor__avatar_asset"),
-                                        Value("/"),
-                                    ),
-                                ),
-                                default=F("votes__actor__avatar"),
-                                output_field=CharField(),
-                            ),
-                            display_name=F("votes__actor__display_name"),
-                        ),
-                    ),
-                ),
-                default=None,
-                output_field=JSONField(),
-            ),
-            filter=Q(votes__isnull=False,votes__deleted_at__isnull=True),
-            distinct=True,
-        ),
-        reaction_items=ArrayAgg(
-            Case(
-                When(
-                    issue_reactions__isnull=False,
-                    issue_reactions__deleted_at__isnull=True,
-                    then=JSONObject(
-                        reaction=F("issue_reactions__reaction"),
-                        actor_details=JSONObject(
-                            id=F("issue_reactions__actor__id"),
-                            first_name=F("issue_reactions__actor__first_name"),
-                            last_name=F("issue_reactions__actor__last_name"),
-                            avatar=F("issue_reactions__actor__avatar"),
-                            avatar_url=Case(
-                                When(
-                                    issue_reactions__actor__avatar_asset__isnull=False,
-                                    then=Concat(
-                                        Value("/api/assets/v2/static/"),
-                                        F("issue_reactions__actor__avatar_asset"),
-                                        Value("/"),
-                                    ),
-                                ),
-                                default=F("issue_reactions__actor__avatar"),
-                                output_field=CharField(),
-                            ),
-                            display_name=F("issue_reactions__actor__display_name"),
-                        ),
-                    ),
-                ),
-                default=None,
-                output_field=JSONField(),
-            ),
-            filter=Q(issue_reactions__isnull=False, issue_reactions__deleted_at__isnull=True),
-            distinct=True,
-        ),
-    ).values(*required_fields, "vote_items", "reaction_items")
-
-    return issues
+    # IssuePublicSerializer를 사용하여 커스텀 필드 값들을 포함한 데이터 반환
+    serializer = IssuePublicSerializer(issues, many=True)
+    return serializer.data
 
 
 def issue_group_values(

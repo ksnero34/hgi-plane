@@ -11,6 +11,7 @@ import {
   TIssueKanbanFilters,
   TIssueGroupByOptions,
   TIssueOrderByOptions,
+  TCustomField,
 } from "@plane/types";
 // UI
 import { Row } from "@plane/ui";
@@ -112,6 +113,7 @@ interface ISubGroupSwimlane extends ISubGroupSwimlaneHeader {
   quickAddCallback?: (projectId: string | null | undefined, data: TIssue) => Promise<TIssue | undefined>;
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   loadMoreIssues: (groupId?: string, subGroupId?: string) => void;
+  customFields?: TCustomField[];
 }
 
 const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
@@ -137,6 +139,7 @@ const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
     scrollableContainerRef,
     handleOnDrop,
     orderBy,
+    customFields,
   } = props;
 
   const visibilitySubGroupBy = (
@@ -207,6 +210,7 @@ const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
                     orderBy={orderBy}
                     isDropDisabled={_list.isDropDisabled}
                     dropErrorMessage={_list.dropErrorMessage}
+                    customFields={customFields}
                   />
                 </div>
               )}
@@ -242,6 +246,7 @@ export interface IKanBanSwimLanes {
   canEditProperties: (projectId: string | undefined) => boolean;
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   orderBy: TIssueOrderByOptions | undefined;
+  customFields?: TCustomField[];
 }
 
 export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
@@ -266,6 +271,7 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
     addIssuesToView,
     quickAddCallback,
     scrollableContainerRef,
+    customFields,
   } = props;
   // store hooks
   const storeType = useIssueStoreType();
@@ -320,6 +326,7 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
           canEditProperties={canEditProperties}
           quickAddCallback={quickAddCallback}
           scrollableContainerRef={scrollableContainerRef}
+          customFields={customFields}
         />
       )}
     </div>

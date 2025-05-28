@@ -1,7 +1,7 @@
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 // types
-import { IIssueDisplayFilterOptions, IIssueDisplayProperties, TIssue } from "@plane/types";
+import { IIssueDisplayFilterOptions, IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
 import { SpreadsheetIssueRowLoader } from "@/components/ui/loader";
 //hooks
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -30,6 +30,7 @@ type Props = {
   spreadsheetColumnsList: (keyof IIssueDisplayProperties)[];
   selectionHelpers: TSelectionHelper;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 };
 
 export const SpreadsheetTable = observer((props: Props) => {
@@ -49,6 +50,7 @@ export const SpreadsheetTable = observer((props: Props) => {
     spreadsheetColumnsList,
     selectionHelpers,
     isEpic = false,
+    customFields = [],
   } = props;
 
   // states
@@ -113,6 +115,7 @@ export const SpreadsheetTable = observer((props: Props) => {
         spreadsheetColumnsList={spreadsheetColumnsList}
         selectionHelpers={selectionHelpers}
         isEpic={isEpic}
+        customFields={customFields}
       />
       <tbody>
         {issueIds.map((id) => (
@@ -131,6 +134,7 @@ export const SpreadsheetTable = observer((props: Props) => {
             spreadsheetColumnsList={spreadsheetColumnsList}
             selectionHelpers={selectionHelpers}
             isEpic={isEpic}
+            customFields={customFields}
           />
         ))}
       </tbody>

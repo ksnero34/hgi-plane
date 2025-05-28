@@ -1,7 +1,7 @@
 # Django imports
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
-from django.db.models import Q, UUIDField, Value, QuerySet
+from django.db.models import Q, UUIDField, Value, QuerySet, F
 from django.db.models.functions import Coalesce
 
 # Module imports
@@ -64,8 +64,25 @@ def issue_queryset_grouper(
             Value([], output_field=ArrayField(UUIDField())),
         )
         for key, (field, condition) in annotations_map.items()
-        if FIELD_MAPPER.get(key) != group_by or FIELD_MAPPER.get(key) != sub_group_by
+        if FIELD_MAPPER.get(key) != group_by and FIELD_MAPPER.get(key) != sub_group_by
     }
+
+    # group_by와 sub_group_by 필드를 쿼리셋에 직접 추가
+    # group_by 필드가 issue_module__module_id인 경우 해당 필드를 어노테이션으로 추가
+    if group_by == "issue_module__module_id":
+        default_annotations["issue_module__module_id"] = F("issue_module__module_id")
+    elif group_by == "assignees__id":
+        default_annotations["assignees__id"] = F("assignees__id")
+    elif group_by == "labels__id":
+        default_annotations["labels__id"] = F("labels__id")
+    
+    # sub_group_by 필드가 issue_module__module_id인 경우 해당 필드를 어노테이션으로 추가
+    if sub_group_by == "issue_module__module_id":
+        default_annotations["issue_module__module_id"] = F("issue_module__module_id")
+    elif sub_group_by == "assignees__id":
+        default_annotations["assignees__id"] = F("assignees__id")
+    elif sub_group_by == "labels__id":
+        default_annotations["labels__id"] = F("labels__id")
 
     return queryset.annotate(**default_annotations)
 
@@ -75,13 +92,17 @@ def issue_on_results(
     group_by: Optional[str],
     sub_group_by: Optional[str],
 ) -> List[Dict[str, Any]]:
-    # IssueSerializer를 사용하여 커스텀 필드 값들을 포함
     from plane.app.serializers import IssueSerializer
     
-    # 커스텀 필드 값들을 포함하여 시리얼라이즈
-    serialized_issues = IssueSerializer(issues, many=True).data
-    
-    return serialized_issues
+    FIELD_MAPPER = {
+        "labels__id": "label_ids",
+        "assignees__id": "assignee_ids",
+        "issue_module__module_id": "module_ids",
+    }
+
+    # IssueSerializer를 사용하여 커스텀 필드 값들을 포함한 데이터 반환
+    serializer = IssueSerializer(issues, many=True)
+    return serializer.data
 
 
 def issue_group_values(

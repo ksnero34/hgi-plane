@@ -13,6 +13,7 @@ import {
   TIssueKanbanFilters,
   TIssueGroupByOptions,
   TIssueOrderByOptions,
+  TCustomField,
 } from "@plane/types";
 // constants
 import { ContentWrapper } from "@plane/ui";
@@ -62,6 +63,7 @@ export interface IKanBan {
   showEmptyGroup?: boolean;
   subGroupIndex?: number;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const KanBan: React.FC<IKanBan> = observer((props) => {
@@ -91,6 +93,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
     dropErrorMessage,
     subGroupIndex = 0,
     isEpic = false,
+    customFields = [],
   } = props;
   // i18n
   const { t } = useTranslation();
@@ -224,6 +227,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
                     loadMoreIssues={loadMoreIssues}
                     handleOnDrop={handleOnDrop}
                     isEpic={isEpic}
+                    customFields={customFields}
                   />
                 </RenderIfVisible>
               )}

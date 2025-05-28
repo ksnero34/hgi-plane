@@ -577,46 +577,11 @@ class IssueViewSet(BaseViewSet):
                 notification=True,
                 origin=base_host(request=request, is_app=True),
             )
-            issue = (
-                issue_queryset_grouper(
-                    queryset=self.get_queryset().filter(pk=serializer.data["id"]),
-                    group_by=None,
-                    sub_group_by=None,
-                )
-                .values(
-                    "id",
-                    "name",
-                    "state_id",
-                    "sort_order",
-                    "completed_at",
-                    "estimate_point",
-                    "priority",
-                    "start_date",
-                    "target_date",
-                    "sequence_id",
-                    "project_id",
-                    "parent_id",
-                    "cycle_id",
-                    "module_ids",
-                    "label_ids",
-                    "assignee_ids",
-                    "sub_issues_count",
-                    "created_at",
-                    "updated_at",
-                    "created_by",
-                    "updated_by",
-                    "attachment_count",
-                    "link_count",
-                    "is_draft",
-                    "archived_at",
-                    "deleted_at",
-                )
-                .first()
-            )
-            datetime_fields = ["created_at", "updated_at"]
-            issue = user_timezone_converter(
-                issue, datetime_fields, request.user.user_timezone
-            )
+            
+            # 커스텀 필드 값이 포함된 응답을 위해 이슈를 다시 조회하여 시리얼라이즈
+            issue_instance = Issue.objects.get(pk=serializer.data["id"])
+            issue_response = IssueSerializer(issue_instance).data
+            
             # Send the model activity
             model_activity.delay(
                 model_name="issue",
@@ -634,7 +599,7 @@ class IssueViewSet(BaseViewSet):
                 user_id=request.user.id,
                 is_creating=True,
             )
-            return Response(issue, status=status.HTTP_201_CREATED)
+            return Response(issue_response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission(

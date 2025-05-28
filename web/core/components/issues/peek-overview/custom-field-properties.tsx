@@ -157,6 +157,9 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
             disabled={disabled}
             dropdownArrow
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+            placeholder={field.name}
+            showFieldNameWhenEmpty={true}
+            hideIconWhenEmpty={true}
           />
         );
 
@@ -164,7 +167,11 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val) => {
+              // 같은 값을 다시 클릭하면 값을 제거 (토글 기능)
+              const newValue = fieldValue === val ? null : val;
+              updateFieldValue(field.id, newValue);
+            }}
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             disabled={disabled}
@@ -175,6 +182,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
             hideIcon={!fieldValue}
             dropdownArrow
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+            showUserDetails={true}
           />
         );
 
@@ -194,6 +202,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
             hideIcon={!fieldValue || fieldValue.length === 0}
             dropdownArrow
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+            showUserDetails={true}
           />
         );
 

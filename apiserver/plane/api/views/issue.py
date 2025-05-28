@@ -334,7 +334,10 @@ class IssueAPIEndpoint(BaseAPIView):
                 slug=slug,
                 origin=base_host(request=request, is_app=True),
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            # 커스텀 필드 값이 포함된 응답을 위해 이슈를 다시 시리얼라이즈
+            response_serializer = IssueSerializer(issue)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, slug, project_id):

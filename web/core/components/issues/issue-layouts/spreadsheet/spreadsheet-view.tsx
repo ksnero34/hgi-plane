@@ -1,9 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import { observer } from "mobx-react";
 // plane constants
 import { EIssueLayoutTypes, SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
 // types
-import { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
+import { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties, TCustomField } from "@plane/types";
 // components
 import { LogoSpinner } from "@/components/common";
 import { MultipleSelectGroup } from "@/components/core";
@@ -34,6 +34,7 @@ type Props = {
   disableIssueCreation?: boolean;
   isWorkspaceLevel?: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 };
 
 export const SpreadsheetView: React.FC<Props> = observer((props) => {
@@ -52,6 +53,7 @@ export const SpreadsheetView: React.FC<Props> = observer((props) => {
     loadMoreIssues,
     isWorkspaceLevel = false,
     isEpic = false,
+    customFields = [],
   } = props;
   // refs
   const containerRef = useRef<HTMLTableElement | null>(null);
@@ -63,13 +65,27 @@ export const SpreadsheetView: React.FC<Props> = observer((props) => {
 
   const isEstimateEnabled: boolean = currentProjectDetails?.estimate !== null;
 
-  const spreadsheetColumnsList = isWorkspaceLevel
-    ? SPREADSHEET_PROPERTY_LIST
-    : SPREADSHEET_PROPERTY_LIST.filter((property) => {
-        if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
-        if (property === "modules" && !currentProjectDetails?.module_view) return false;
-        return true;
-      });
+  // 커스텀 필드를 개별 컬럼으로 추가하는 로직
+  const spreadsheetColumnsList = useMemo(() => {
+    let baseColumns = isWorkspaceLevel
+      ? SPREADSHEET_PROPERTY_LIST
+      : SPREADSHEET_PROPERTY_LIST.filter((property) => {
+          if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
+          if (property === "modules" && !currentProjectDetails?.module_view) return false;
+          return true;
+        });
+
+    // custom_fields 컬럼을 제거하고 개별 커스텀 필드 컬럼들로 대체
+    baseColumns = baseColumns.filter(property => property !== "custom_fields");
+
+    // 활성화된 커스텀 필드들을 개별 컬럼으로 추가
+    if (customFields && customFields.length > 0) {
+      const customFieldColumns = customFields.map(field => `custom_field_${field.id}` as keyof IIssueDisplayProperties);
+      baseColumns = [...baseColumns, ...customFieldColumns];
+    }
+
+    return baseColumns;
+  }, [isWorkspaceLevel, currentProjectDetails, customFields]);
 
   if (!issueIds || issueIds.length === 0)
     return (
@@ -107,6 +123,7 @@ export const SpreadsheetView: React.FC<Props> = observer((props) => {
                 spreadsheetColumnsList={spreadsheetColumnsList}
                 selectionHelpers={helpers}
                 isEpic={isEpic}
+                customFields={customFields}
               />
             </div>
             <div className="border-t border-custom-border-100">

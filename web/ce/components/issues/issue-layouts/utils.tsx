@@ -32,8 +32,8 @@ import {
   SpreadsheetStateColumn,
   SpreadsheetSubIssueColumn,
   SpreadsheetUpdatedOnColumn,
-  SpreadsheetCustomFieldColumn,
-} from "@/components/issues/issue-layouts/spreadsheet";
+  AllCustomFieldsColumn,
+} from "@/components/issues/issue-layouts/spreadsheet/columns";
 
 export const getTeamProjectColumns = (): IGroupByColumn[] | undefined => undefined;
 
@@ -69,5 +69,5 @@ export const SPREADSHEET_COLUMNS: { [key in keyof IIssueDisplayProperties]: TSpr
   sub_issue_count: SpreadsheetSubIssueColumn,
   updated_on: SpreadsheetUpdatedOnColumn,
   attachment_count: SpreadsheetAttachmentColumn,
-  custom_fields: SpreadsheetCustomFieldColumn,
+  custom_fields: AllCustomFieldsColumn,
 };

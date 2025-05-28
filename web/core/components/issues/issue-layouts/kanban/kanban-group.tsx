@@ -18,6 +18,7 @@ import {
   TSubGroupedIssues,
   TIssueGroupByOptions,
   TIssueOrderByOptions,
+  TCustomField,
 } from "@plane/types";
 import { TOAST_TYPE, setToast } from "@plane/ui";
 import { KanbanQuickAddIssueButton, QuickAddIssueRoot } from "@/components/issues";
@@ -60,6 +61,7 @@ interface IKanbanGroup {
   handleOnDrop: (source: GroupDropLocation, destination: GroupDropLocation) => Promise<void>;
   orderBy: TIssueOrderByOptions | undefined;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const KanbanGroup = observer((props: IKanbanGroup) => {
@@ -84,6 +86,7 @@ export const KanbanGroup = observer((props: IKanbanGroup) => {
     scrollableContainerRef,
     handleOnDrop,
     isEpic = false,
+    customFields = [],
   } = props;
   // i18n
   const { t } = useTranslation();
@@ -300,6 +303,7 @@ export const KanbanGroup = observer((props: IKanbanGroup) => {
         canDropOverIssue={!canOverlayBeVisible}
         canDragIssuesInCurrentGrouping={canDragIssuesInCurrentGrouping}
         isEpic={isEpic}
+        customFields={customFields}
       />
 
       {shouldLoadMore && (isSubGroup ? <>{loadMore}</> : <KanbanIssueBlockLoader ref={setIntersectionElement} />)}

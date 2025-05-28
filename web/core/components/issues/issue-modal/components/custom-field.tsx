@@ -8,8 +8,7 @@ import { useTranslation } from "@plane/i18n";
 // types
 import { TIssue, TCustomField } from "@plane/types";
 // ui
-import { CustomSelect } from "@plane/ui";
-import { DateDropdown, MemberDropdown } from "@/components/dropdowns";
+import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // services
 import { CustomFieldService } from "@/services/custom-field.service";
 // helpers
@@ -53,11 +52,13 @@ export const IssueCustomField: FC<Props> = observer((props) => {
   if (isLoading || !customFields || customFields.length === 0) return null;
 
   const renderFieldInput = (field: TCustomField, value: any, onChange: (value: any) => void) => {
+    const fieldValue = value?.value;
+    
     switch (field.field_type) {
       case "date":
         return (
           <DateDropdown
-            value={value}
+            value={fieldValue}
             onChange={(date) => {
               const formattedDate = date ? renderFormattedPayloadDate(date) : null;
               onChange({
@@ -66,44 +67,22 @@ export const IssueCustomField: FC<Props> = observer((props) => {
               });
               handleFormChange();
             }}
-            placeholder={field.name}
+            placeholder="날짜 선택"
             buttonVariant="border-with-text"
-            className="w-full"
+            className="w-full group"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
+            clearIconClassName="h-3 w-3 hidden group-hover:inline"
           />
         );
 
       case "select":
-        return (
-          <CustomSelect
-            value={value?.value}
-            onChange={(val: string) => {
-              onChange({
-                custom_field_id: field.id,
-                value: val
-              });
-              handleFormChange();
-            }}
-            buttonVariant="border-with-text"
-            className="w-full"
-            buttonContainerClassName="w-full text-left"
-            buttonClassName="text-sm"
-            label={value?.value || field.name}
-          >
-            {field.options?.map((option) => (
-              <CustomSelect.Option key={option} value={option}>
-                {option}
-              </CustomSelect.Option>
-            ))}
-          </CustomSelect>
-        );
-
       case "multiselect":
         return (
-          <CustomSelect
-            value={value?.value}
-            onChange={(val: string[]) => {
+          <CustomFieldDropdown
+            field={field}
+            value={fieldValue}
+            onChange={(val) => {
               onChange({
                 custom_field_id: field.id,
                 value: val
@@ -111,44 +90,43 @@ export const IssueCustomField: FC<Props> = observer((props) => {
               handleFormChange();
             }}
             buttonVariant="border-with-text"
-            className="w-full"
+            className="w-full group"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
-            label={Array.isArray(value?.value) && value.value.length > 0 ? `${value.value.length}개 선택됨` : field.name}
-            multiple
-          >
-            {field.options?.map((option) => (
-              <CustomSelect.Option key={option} value={option}>
-                {option}
-              </CustomSelect.Option>
-            ))}
-          </CustomSelect>
+            placeholder={field.name}
+            showFieldNameWhenEmpty={true}
+            dropdownArrow
+            dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+          />
         );
 
       case "project_member":
         return (
           <MemberDropdown
-            value={value?.value ? [value.value] : []}
+            value={fieldValue}
             onChange={(val) => {
+              // 같은 값을 다시 클릭하면 값을 제거 (토글 기능)
+              const newValue = fieldValue === val ? null : val;
               onChange({
                 custom_field_id: field.id,
-                value: val && val.length > 0 ? val[0] : null
+                value: newValue
               });
               handleFormChange();
             }}
             projectId={projectId}
-            placeholder={field.name}
+            placeholder={`${field.name} 선택`}
             buttonVariant="border-with-text"
-            className="w-full"
+            className="w-full group"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
+            showUserDetails={true}
           />
         );
 
       case "project_members":
         return (
           <MemberDropdown
-            value={value?.value || []}
+            value={fieldValue}
             onChange={(val) => {
               onChange({
                 custom_field_id: field.id,
@@ -157,17 +135,26 @@ export const IssueCustomField: FC<Props> = observer((props) => {
               handleFormChange();
             }}
             projectId={projectId}
-            placeholder={field.name}
+            placeholder={`${field.name} 선택`}
             buttonVariant="border-with-text"
-            className="w-full"
+            className="w-full group"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
+            showUserDetails={true}
             multiple
           />
         );
 
       default:
-        return null;
+        return (
+          <div className="w-full">
+            <div className="w-full h-full flex items-center gap-1.5 rounded border border-custom-border-300 px-2 py-0.5 text-sm justify-between cursor-not-allowed">
+              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">
+                지원하지 않는 필드 타입
+              </span>
+            </div>
+          </div>
+        );
     }
   };
 

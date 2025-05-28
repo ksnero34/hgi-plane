@@ -272,21 +272,6 @@ export const IssueDetailsSidebar: React.FC<Props> = observer((props) => {
               />
             </div>
 
-            <div className="flex min-h-8 gap-2">
-              <div className="flex w-2/5 flex-shrink-0 gap-1 pt-2 text-sm text-custom-text-300">
-                <Tag className="h-4 w-4 flex-shrink-0" />
-                <span>{t("common.labels")}</span>
-              </div>
-              <div className="h-full min-h-8 w-3/5 flex-grow">
-                <IssueLabel
-                  workspaceSlug={workspaceSlug}
-                  projectId={projectId}
-                  issueId={issueId}
-                  disabled={!isEditable}
-                />
-              </div>
-            </div>
-
             <IssueWorklogProperty
               workspaceSlug={workspaceSlug}
               projectId={projectId}
@@ -311,6 +296,21 @@ export const IssueDetailsSidebar: React.FC<Props> = observer((props) => {
               issueOperations={issueOperations}
               disabled={!isEditable}
             />
+
+            <div className="flex min-h-8 gap-2">
+              <div className="flex w-2/5 flex-shrink-0 gap-1 pt-2 text-sm text-custom-text-300">
+                <Tag className="h-4 w-4 flex-shrink-0" />
+                <span>{t("common.labels")}</span>
+              </div>
+              <div className="h-full min-h-8 w-3/5 flex-grow">
+                <IssueLabel
+                  workspaceSlug={workspaceSlug}
+                  projectId={projectId}
+                  issueId={issueId}
+                  disabled={!isEditable}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

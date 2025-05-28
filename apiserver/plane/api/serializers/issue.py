@@ -20,6 +20,8 @@ from plane.db.models import (
     ProjectMember,
     State,
     User,
+    CustomField,
+    CustomFieldValue,
 )
 
 from .base import BaseSerializer
@@ -49,6 +51,13 @@ class IssueSerializer(BaseSerializer):
         write_only=True,
         required=False,
     )
+    
+    custom_field_values = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=False,
+    )
+    
     type_id = serializers.PrimaryKeyRelatedField(
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
@@ -117,6 +126,7 @@ class IssueSerializer(BaseSerializer):
     def create(self, validated_data):
         assignees = validated_data.pop("assignees", None)
         labels = validated_data.pop("labels", None)
+        custom_field_values = validated_data.pop("custom_field_values", None)
 
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
@@ -196,11 +206,29 @@ class IssueSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
+        # 커스텀 필드 값 생성
+        if custom_field_values:
+            for field_value in custom_field_values:
+                try:
+                    CustomFieldValue.objects.create(
+                        custom_field_id=field_value["custom_field_id"],
+                        issue=issue,
+                        value=field_value["value"],
+                        project_id=project_id,
+                        workspace_id=workspace_id,
+                        created_by_id=created_by_id,
+                        updated_by_id=updated_by_id,
+                    )
+                except Exception as e:
+                    # 커스텀 필드 생성 실패 시 로그만 남기고 계속 진행
+                    print(f"커스텀 필드 값 생성 실패: {e}")
+
         return issue
 
     def update(self, instance, validated_data):
         assignees = validated_data.pop("assignees", None)
         labels = validated_data.pop("labels", None)
+        custom_field_values = validated_data.pop("custom_field_values", None)
 
         # Related models
         project_id = instance.project_id
@@ -250,6 +278,27 @@ class IssueSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
+        # 커스텀 필드 값 업데이트
+        if custom_field_values is not None:
+            # 기존 커스텀 필드 값 삭제
+            CustomFieldValue.objects.filter(issue=instance).delete()
+            
+            # 새로운 커스텀 필드 값 생성
+            for field_value in custom_field_values:
+                try:
+                    CustomFieldValue.objects.create(
+                        custom_field_id=field_value["custom_field_id"],
+                        issue=instance,
+                        value=field_value["value"],
+                        project_id=project_id,
+                        workspace_id=workspace_id,
+                        created_by_id=created_by_id,
+                        updated_by_id=updated_by_id,
+                    )
+                except Exception as e:
+                    # 커스텀 필드 업데이트 실패 시 로그만 남기고 계속 진행
+                    print(f"커스텀 필드 값 업데이트 실패: {e}")
+
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
         return super().update(instance, validated_data)
@@ -292,6 +341,20 @@ class IssueSerializer(BaseSerializer):
                         "label_id", flat=True
                     )
                 ]
+
+        # 커스텀 필드 값 포함
+        custom_field_values = CustomFieldValue.objects.filter(
+            issue=instance,
+            deleted_at__isnull=True
+        ).select_related('custom_field')
+        
+        data["custom_field_values"] = [
+            {
+                "custom_field_id": str(cfv.custom_field_id),
+                "value": cfv.value,
+            }
+            for cfv in custom_field_values
+        ]
 
         return data
 

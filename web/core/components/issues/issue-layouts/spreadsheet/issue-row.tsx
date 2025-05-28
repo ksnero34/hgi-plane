@@ -1,6 +1,7 @@
 "use client";
 
 import { Dispatch, MouseEvent, MutableRefObject, SetStateAction, useRef, useState } from "react";
+import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
@@ -8,7 +9,7 @@ import { EIssueServiceType, SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
-import { IIssueDisplayProperties, TIssue } from "@plane/types";
+import { IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
 // ui
 import { ControlLink, Row, Tooltip } from "@plane/ui";
 // components
@@ -22,12 +23,14 @@ import { useIssueDetail, useIssues, useProject } from "@/hooks/store";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useEventTracker } from "@/hooks/store";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues";
 // local components
 import { TRenderQuickActions } from "../list/list-view-types";
 import { isIssueNew } from "../utils";
 import { IssueColumn } from "./issue-column";
+import { SpreadsheetSingleCustomFieldColumn } from "./columns/single-custom-field-column";
 
 interface Props {
   displayProperties: IIssueDisplayProperties;
@@ -45,6 +48,7 @@ interface Props {
   selectionHelpers: TSelectionHelper;
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const SpreadsheetIssueRow = observer((props: Props) => {
@@ -64,6 +68,7 @@ export const SpreadsheetIssueRow = observer((props: Props) => {
     selectionHelpers,
     shouldRenderByDefault,
     isEpic = false,
+    customFields = [],
   } = props;
   // states
   const [isExpanded, setExpanded] = useState<boolean>(false);
@@ -113,6 +118,7 @@ export const SpreadsheetIssueRow = observer((props: Props) => {
           spreadsheetColumnsList={spreadsheetColumnsList}
           selectionHelpers={selectionHelpers}
           isEpic={isEpic}
+          customFields={customFields}
         />
       </RenderIfVisible>
 
@@ -135,6 +141,7 @@ export const SpreadsheetIssueRow = observer((props: Props) => {
             spreadsheetColumnsList={spreadsheetColumnsList}
             selectionHelpers={selectionHelpers}
             shouldRenderByDefault={isExpanded}
+            customFields={customFields}
           />
         ))}
     </>
@@ -157,6 +164,7 @@ interface IssueRowDetailsProps {
   spacingLeft?: number;
   selectionHelpers: TSelectionHelper;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
@@ -176,6 +184,7 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
     spacingLeft = 6,
     selectionHelpers,
     isEpic = false,
+    customFields = [],
   } = props;
   // states
   const [isMenuActive, setIsMenuActive] = useState(false);
@@ -249,6 +258,14 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
     sequenceId: issueDetail?.sequence_id,
     isEpic,
   });
+
+  // 커스텀 필드 맵 생성
+  const customFieldsMap = React.useMemo(() => {
+    return customFields.reduce((acc, field) => {
+      acc[`custom_field_${field.id}`] = field;
+      return acc;
+    }, {} as Record<string, TCustomField>);
+  }, [customFields]);
 
   return (
     <>
@@ -371,17 +388,56 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
         </ControlLink>
       </td>
       {/* Rest of the columns */}
-      {spreadsheetColumnsList.map((property) => (
-        <IssueColumn
-          key={property}
-          displayProperties={displayProperties}
-          issueDetail={issueDetail}
-          disableUserActions={disableUserActions}
-          property={property}
-          updateIssue={updateIssue}
-          isEstimateEnabled={isEstimateEnabled}
-        />
-      ))}
+      {spreadsheetColumnsList.map((property) => {
+        // 커스텀 필드인지 확인
+        if (property.toString().startsWith('custom_field_')) {
+          const customField = customFieldsMap[property.toString()];
+          if (!customField) return null;
+          
+          return (
+            <td
+              key={property}
+              tabIndex={0}
+              className="h-11 w-full min-w-36 max-w-48 text-sm after:absolute after:w-full after:bottom-[-1px] after:border after:border-custom-border-100 border-r-[1px] border-custom-border-100"
+            >
+              <SpreadsheetSingleCustomFieldColumn
+                issue={issueDetail}
+                customField={customField}
+                onChange={(issue: TIssue, data: Partial<TIssue>, updates: any) =>
+                  updateIssue &&
+                  updateIssue(issue.project_id, issue.id, data).then(() => {
+                    captureIssueEvent({
+                      eventName: "Issue updated",
+                      payload: {
+                        ...issue,
+                        ...data,
+                        element: "Spreadsheet layout",
+                      },
+                      updates: updates,
+                      path: pathname,
+                    });
+                  })
+                }
+                disabled={disableUserActions}
+                onClose={() => {}}
+              />
+            </td>
+          );
+        }
+        
+        // 기본 속성 컬럼
+        return (
+          <IssueColumn
+            key={property}
+            displayProperties={displayProperties}
+            issueDetail={issueDetail}
+            disableUserActions={disableUserActions}
+            property={property}
+            updateIssue={updateIssue}
+            isEstimateEnabled={isEstimateEnabled}
+          />
+        );
+      })}
     </>
   );
 });

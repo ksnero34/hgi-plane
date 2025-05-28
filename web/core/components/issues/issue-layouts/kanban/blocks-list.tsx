@@ -1,7 +1,7 @@
 import { MutableRefObject } from "react";
 import { observer } from "mobx-react";
 //types
-import { TIssue, IIssueDisplayProperties, IIssueMap } from "@plane/types";
+import { TIssue, IIssueDisplayProperties, IIssueMap, TCustomField } from "@plane/types";
 import { KanbanIssueBlock } from "@/components/issues";
 import { TRenderQuickActions } from "../list/list-view-types";
 // components
@@ -19,6 +19,7 @@ interface IssueBlocksListProps {
   canDragIssuesInCurrentGrouping: boolean;
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const KanbanIssueBlocksList: React.FC<IssueBlocksListProps> = observer((props) => {
@@ -35,6 +36,7 @@ export const KanbanIssueBlocksList: React.FC<IssueBlocksListProps> = observer((p
     canEditProperties,
     scrollableContainerRef,
     isEpic = false,
+    customFields = [],
   } = props;
 
   return (
@@ -65,6 +67,7 @@ export const KanbanIssueBlocksList: React.FC<IssueBlocksListProps> = observer((p
                 canEditProperties={canEditProperties}
                 scrollableContainerRef={scrollableContainerRef}
                 isEpic={isEpic}
+                customFields={customFields}
               />
             );
           })}

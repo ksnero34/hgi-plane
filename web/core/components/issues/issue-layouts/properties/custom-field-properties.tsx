@@ -11,6 +11,7 @@ import { Tooltip } from "@plane/ui";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useMember } from "@/hooks/store";
 // components
 import { CustomFieldDropdown, DateDropdown, MemberDropdown } from "@/components/dropdowns";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
@@ -22,12 +23,13 @@ type Props = {
   isReadOnly: boolean;
   activeLayout: string;
   displayProperties: IIssueDisplayProperties | undefined;
-  customFields?: TCustomField[]; // 커스텀 필드를 props로 받음
+  customFields?: TCustomField[];
 };
 
 export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   const { issue, updateIssue, isReadOnly, activeLayout, displayProperties, customFields = [] } = props;
   const { isMobile } = usePlatformOS();
+  const { getUserDetails } = useMember();
   
   if (!customFields || customFields.length === 0 || !displayProperties?.custom_fields) return null;
 
@@ -72,19 +74,19 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
     return updatedValues;
   };
 
-  // 필드 타입에 따른 아이콘 선택 (실제 드롭다운에서 사용하는 아이콘과 일치)
+  // 필드 타입에 따른 아이콘 선택
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
       case "select":
-        return Tag; // CustomFieldDropdown에서 사용
+        return Tag;
       case "multiselect":
-        return Tags; // CustomFieldDropdown에서 사용 (labels와 구분)
+        return Tags;
       case "date":
-        return CalendarCheck2; // DateDropdown에서 사용 (target_date와 동일)
+        return CalendarCheck2;
       case "project_member":
-        return UserCircle2; // MemberDropdown에서 사용 (created_by와 동일)
+        return UserCircle2;
       case "project_members":
-        return Users; // MemberDropdown multiple에서 사용 (assignees와 동일)
+        return Users;
       default:
         return Settings;
     }
@@ -105,8 +107,20 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
       case "date":
         return renderFormattedPayloadDate(value);
       case "project_member":
+        if (value) {
+          const member = getUserDetails(value);
+          return member?.display_name || "알 수 없는 사용자";
+        }
+        return "";
       case "project_members":
-        return Array.isArray(value) ? `${value.length}명 선택됨` : "선택됨";
+        if (Array.isArray(value) && value.length > 0) {
+          const memberNames = value.map(memberId => {
+            const member = getUserDetails(memberId);
+            return member?.display_name || "알 수 없는 사용자";
+          }).filter(Boolean);
+          return memberNames.join(", ");
+        }
+        return "";
       default:
         return value;
     }
@@ -181,26 +195,25 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <MemberDropdown
               projectId={issue.project_id}
-              value={fieldValue ? [fieldValue] : []}
-              onChange={(val) => updateIssue && updateIssue(issue.project_id, issue.id, {
-                custom_field_values: updateFieldValue(field.id, val && val.length > 0 ? val[0] : null)
-              })}
+              value={fieldValue || null}
+              onChange={(val) => {
+                // 기존 값과 같은 값을 선택하면 값을 제거
+                const newValue = val === fieldValue ? null : val;
+                updateIssue && updateIssue(issue.project_id, issue.id, {
+                  custom_field_values: updateFieldValue(field.id, newValue)
+                });
+              }}
+              multiple={false}
               buttonVariant={hasValue ? "transparent-without-text" : "border-without-text"}
               className="h-5"
               buttonContainerClassName="h-5"
-              buttonClassName={cn(
-                "h-5 text-xs",
-                hasValue ? "hover:bg-transparent px-0" : "w-5 border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 rounded justify-center"
-              )}
+              buttonClassName={hasValue ? "hover:bg-transparent px-0" : ""}
               disabled={isReadOnly}
               showTooltip={true}
-              tooltipHeading={field.name}
-              tooltipContent={formattedValue || "none"}
-              button={!hasValue ? (
-                <div className="flex items-center justify-center h-full w-full">
-                  <FieldIcon className="h-3 w-3" />
-                </div>
-              ) : undefined}
+              tooltipHeading={hasValue ? field.name : ""}
+              tooltipContent={hasValue ? formattedValue : "none"}
+              placeholder={field.name}
+              renderByDefault={isMobile}
             />
           </div>
         );
@@ -217,20 +230,14 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
               buttonVariant={hasValue ? "transparent-without-text" : "border-without-text"}
               className="h-5"
               buttonContainerClassName="h-5"
-              buttonClassName={cn(
-                "h-5 text-xs",
-                hasValue ? "hover:bg-transparent px-0" : "w-5 border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 rounded justify-center"
-              )}
+              buttonClassName={hasValue ? "hover:bg-transparent px-0" : ""}
               disabled={isReadOnly}
               multiple
               showTooltip={true}
-              tooltipHeading={field.name}
-              tooltipContent={formattedValue || "none"}
-              button={!hasValue ? (
-                <div className="flex items-center justify-center h-full w-full">
-                  <FieldIcon className="h-3 w-3" />
-                </div>
-              ) : undefined}
+              tooltipHeading={hasValue ? field.name : ""}
+              tooltipContent={hasValue ? formattedValue : "none"}
+              placeholder={field.name}
+              renderByDefault={isMobile}
             />
           </div>
         );
