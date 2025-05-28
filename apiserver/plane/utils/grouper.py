@@ -75,50 +75,13 @@ def issue_on_results(
     group_by: Optional[str],
     sub_group_by: Optional[str],
 ) -> List[Dict[str, Any]]:
-    FIELD_MAPPER: Dict[str, str] = {
-        "labels__id": "label_ids",
-        "assignees__id": "assignee_ids",
-        "issue_module__module_id": "module_ids",
-    }
-
-    original_list: List[str] = ["assignee_ids", "label_ids", "module_ids"]
-
-    required_fields: List[str] = [
-        "id",
-        "name",
-        "state_id",
-        "sort_order",
-        "completed_at",
-        "estimate_point",
-        "priority",
-        "start_date",
-        "target_date",
-        "sequence_id",
-        "project_id",
-        "parent_id",
-        "cycle_id",
-        "sub_issues_count",
-        "created_at",
-        "updated_at",
-        "created_by",
-        "updated_by",
-        "attachment_count",
-        "link_count",
-        "is_draft",
-        "archived_at",
-        "state__group",
-    ]
-
-    if group_by in FIELD_MAPPER:
-        original_list.remove(FIELD_MAPPER[group_by])
-        original_list.append(group_by)
-
-    if sub_group_by in FIELD_MAPPER:
-        original_list.remove(FIELD_MAPPER[sub_group_by])
-        original_list.append(sub_group_by)
-
-    required_fields.extend(original_list)
-    return list(issues.values(*required_fields))
+    # IssueSerializer를 사용하여 커스텀 필드 값들을 포함
+    from plane.app.serializers import IssueSerializer
+    
+    # 커스텀 필드 값들을 포함하여 시리얼라이즈
+    serialized_issues = IssueSerializer(issues, many=True).data
+    
+    return serialized_issues
 
 
 def issue_group_values(

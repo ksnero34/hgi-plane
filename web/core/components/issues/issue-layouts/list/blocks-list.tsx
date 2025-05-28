@@ -1,6 +1,6 @@
 import { FC, MutableRefObject } from "react";
 // components
-import { TIssue, IIssueDisplayProperties, TIssueMap, TGroupedIssues } from "@plane/types";
+import { TIssue, IIssueDisplayProperties, TIssueMap, TGroupedIssues, TCustomField } from "@plane/types";
 import { IssueBlockRoot } from "@/components/issues/issue-layouts/list";
 // hooks
 import { TSelectionHelper } from "@/hooks/use-multiple-select";
@@ -20,6 +20,7 @@ interface Props {
   canDropOverIssue: boolean;
   selectionHelpers: TSelectionHelper;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const IssueBlocksList: FC<Props> = (props) => {
@@ -36,6 +37,7 @@ export const IssueBlocksList: FC<Props> = (props) => {
     isDragAllowed,
     canDropOverIssue,
     isEpic = false,
+    customFields,
   } = props;
 
   return (
@@ -60,6 +62,7 @@ export const IssueBlocksList: FC<Props> = (props) => {
             isDragAllowed={isDragAllowed}
             canDropOverIssue={canDropOverIssue}
             isEpic={isEpic}
+            customFields={customFields}
           />
         ))}
     </div>

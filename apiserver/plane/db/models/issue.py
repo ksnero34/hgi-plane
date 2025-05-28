@@ -80,6 +80,7 @@ def get_default_display_properties():
         "state": True,
         "sub_issue_count": True,
         "updated_on": True,
+        "custom_fields": True,
     }
 
 
@@ -993,5 +994,27 @@ class CustomFieldValue(ProjectBaseModel):
                     if not all(v in options for v in value):
                         raise ValidationError("유효하지 않은 선택값이 포함되어 있습니다.")
             elif field_type in ["project_member", "project_members"]:
-                # TODO: 프로젝트 멤버 검증 로직 추가
-                pass
+                # 프로젝트 멤버 검증 로직
+                from plane.db.models import ProjectMember
+                
+                if field_type == "project_member":
+                    # 단일 멤버 검증
+                    if not ProjectMember.objects.filter(
+                        project_id=self.project_id,
+                        member_id=value,
+                        is_active=True
+                    ).exists():
+                        raise ValidationError("유효하지 않은 프로젝트 멤버입니다.")
+                else:  # project_members
+                    # 다중 멤버 검증
+                    if not isinstance(value, list):
+                        raise ValidationError("프로젝트 멤버(다중)는 리스트 형태여야 합니다.")
+                    
+                    valid_members = ProjectMember.objects.filter(
+                        project_id=self.project_id,
+                        member_id__in=value,
+                        is_active=True
+                    ).values_list("member_id", flat=True)
+                    
+                    if len(valid_members) != len(value):
+                        raise ValidationError("유효하지 않은 프로젝트 멤버가 포함되어 있습니다.")

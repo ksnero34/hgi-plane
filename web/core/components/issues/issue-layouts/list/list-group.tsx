@@ -17,6 +17,7 @@ import {
   TIssue,
   IIssueDisplayProperties,
   TIssueKanbanFilters,
+  TCustomField,
 } from "@plane/types";
 import { Row, setToast, TOAST_TYPE } from "@plane/ui";
 // plane utils
@@ -68,6 +69,7 @@ interface Props {
   handleCollapsedGroups: (value: string) => void;
   collapsedGroups: TIssueKanbanFilters;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const ListGroup = observer((props: Props) => {
@@ -95,6 +97,7 @@ export const ListGroup = observer((props: Props) => {
     handleCollapsedGroups,
     collapsedGroups,
     isEpic = false,
+    customFields,
   } = props;
 
   const [isDraggingOverColumn, setIsDraggingOverColumn] = useState(false);
@@ -294,17 +297,18 @@ export const ListGroup = observer((props: Props) => {
           {groupIssueIds && (
             <IssueBlocksList
               issueIds={groupIssueIds}
-              groupId={group.id}
               issuesMap={issuesMap}
+              groupId={group.id}
               updateIssue={updateIssue}
               quickActions={quickActions}
               displayProperties={displayProperties}
               canEditProperties={canEditProperties}
               containerRef={containerRef}
+              selectionHelpers={selectionHelpers}
               isDragAllowed={isDragAllowed}
               canDropOverIssue={!canOverlayBeVisible}
-              selectionHelpers={selectionHelpers}
               isEpic={isEpic}
+              customFields={customFields}
             />
           )}
 

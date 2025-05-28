@@ -4,6 +4,7 @@ export * from "./links";
 export * from "./parent";
 export * from "./reactions";
 export * from "./cycle-select";
+export * from "./custom-field-select";
 export * from "./main-content";
 export * from "./module-select";
 export * from "./parent-select";

@@ -28,9 +28,6 @@ interface ICustomField {
 }
 
 const FIELD_TYPES = [
-  { value: "text", label: "텍스트", description: "일반 텍스트를 입력할 수 있습니다." },
-  { value: "number", label: "숫자", description: "숫자만 입력할 수 있습니다." },
-  { value: "date", label: "날짜", description: "날짜를 선택할 수 있습니다." },
   { value: "select", label: "선택", description: "미리 정의된 옵션 중 하나를 선택할 수 있습니다." },
   { value: "multiselect", label: "다중선택", description: "미리 정의된 옵션 중 여러 개를 선택할 수 있습니다." },
   { value: "date", label: "날짜", description: "날짜를 선택할 수 있습니다." },
@@ -38,7 +35,7 @@ const FIELD_TYPES = [
   { value: "project_members", label: "프로젝트 멤버(다중)", description: "프로젝트 멤버 중 여러 명을 선택할 수 있습니다." },
 ];
 
-const CustomFieldItem = observer(({ field, index, onDelete }: { field: ICustomField; index: number; onDelete: (id: string) => void }) => {
+const CustomFieldItem = observer(({ field, index, onDelete, onEdit }: { field: ICustomField; index: number; onDelete: (id: string) => void; onEdit: (field: ICustomField) => void }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [instruction, setInstruction] = useState<string | undefined>();
   const elementRef = useRef<HTMLDivElement>(null);
@@ -81,20 +78,30 @@ const CustomFieldItem = observer(({ field, index, onDelete }: { field: ICustomFi
           <div className="text-sm text-custom-text-200">필드명</div>
           <div className="font-medium">{field.name}</div>
         </div>
-        <div className="col-span-3">
+        <div className="col-span-2">
           <div className="text-sm text-custom-text-200">식별자</div>
           <div className="font-medium">{field.key}</div>
         </div>
-        <div className="col-span-3">
+        <div className="col-span-2">
           <div className="text-sm text-custom-text-200">필드 타입</div>
           <div className="font-medium">{FIELD_TYPES.find(t => t.value === field.field_type)?.label || field.field_type}</div>
         </div>
         <div className="col-span-2">
-          <div className="text-sm text-custom-text-200">사전 정의된 값</div>
-          <div className="font-medium">{field.settings?.predefined_values?.length || 0}개</div>
+          <div className="text-sm text-custom-text-200">옵션/값</div>
+          <div className="font-medium">
+            {field.field_type === "select" || field.field_type === "multiselect" 
+              ? `${field.options?.length || 0}개 옵션`
+              : "없음"
+            }
+          </div>
         </div>
-        <div className="col-span-1 flex justify-end">
-          <Button variant="danger" onClick={() => onDelete(field.id)}>삭제</Button>
+        <div className="col-span-1">
+          <div className="text-sm text-custom-text-200">필수</div>
+          <div className="font-medium">{field.is_required ? "예" : "아니오"}</div>
+        </div>
+        <div className="col-span-2 flex justify-end gap-2">
+          <Button variant="neutral-primary" size="sm" onClick={() => onEdit(field)}>수정</Button>
+          <Button variant="danger" size="sm" onClick={() => onDelete(field.id)}>삭제</Button>
         </div>
       </div>
     </div>
@@ -107,14 +114,14 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [fields, setFields] = useState<ICustomField[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [newField, setNewField] = useState<Partial<ICustomField>>({
     name: "",
     key: "",
     field_type: "",
     is_required: false,
-    settings: {
-      predefined_values: [],
-    },
+    options: [],
   });
 
   useEffect(() => {
@@ -143,7 +150,7 @@ export const ProjectCustomFieldsSettings = observer(() => {
     }
   };
 
-  const handleCreateField = async () => {
+  const handleCreateOrUpdateField = async () => {
     if (!newField.name || !newField.key) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -153,52 +160,79 @@ export const ProjectCustomFieldsSettings = observer(() => {
       return;
     }
 
+    // 선택/다중선택 타입의 경우 옵션이 필요
+    if ((newField.field_type === "select" || newField.field_type === "multiselect") && (!newField.options || newField.options.length === 0)) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "옵션을 추가해주세요",
+        message: "선택 타입의 필드는 최소 하나의 옵션이 필요합니다.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...newField,
-            settings: {
-              ...newField.settings,
-              predefined_values: newField.settings?.predefined_values?.filter(v => v.trim() !== "") || [],
-            },
-          }),
-        }
-      );
+      const url = isEditMode && editingFieldId 
+        ? `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/${editingFieldId}/`
+        : `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`;
+      
+      const method = isEditMode ? "PATCH" : "POST";
+      
+      const requestData = {
+        ...newField,
+        options: (newField.field_type === "select" || newField.field_type === "multiselect") 
+          ? newField.options?.filter(v => v.trim() !== "") || []
+          : undefined,
+      };
 
-      if (!response.ok) throw new Error("Failed to create custom field");
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) throw new Error("Failed to save custom field");
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "커스텀 필드 생성 완료",
-        message: "새로운 커스텀 필드가 추가되었습니다.",
+        title: isEditMode ? "커스텀 필드 수정 완료" : "커스텀 필드 생성 완료",
+        message: isEditMode ? "커스텀 필드가 수정되었습니다." : "새로운 커스텀 필드가 추가되었습니다.",
       });
 
       await fetchCustomFields();
-      setNewField({
-        name: "",
-        key: "",
-        field_type: "",
-        is_required: false,
-        settings: {
-          predefined_values: [],
-        },
-      });
+      resetForm();
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "커스텀 필드 생성 실패",
-        message: "커스텀 필드를 생성하는 중 오류가 발생했습니다.",
+        title: isEditMode ? "커스텀 필드 수정 실패" : "커스텀 필드 생성 실패",
+        message: "커스텀 필드를 저장하는 중 오류가 발생했습니다.",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setNewField({
+      name: "",
+      key: "",
+      field_type: "",
+      is_required: false,
+      options: [],
+    });
+    setIsEditMode(false);
+    setEditingFieldId(null);
+  };
+
+  const handleEditField = (field: ICustomField) => {
+    setNewField({
+      ...field,
+      options: field.options || [],
+    });
+    setIsEditMode(true);
+    setEditingFieldId(field.id);
   };
 
   const handleDeleteField = async (fieldId: string) => {
@@ -275,19 +309,11 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const getFieldPlaceholder = (fieldType: string) => {
     switch (fieldType) {
-      case "text":
-        return "예: 고객사 이름";
-      case "number":
-        return "예: 1234";
-      case "date":
-        return "예: 2024-03-21";
       case "select":
       case "multiselect":
         return "예: 선택 옵션";
-      case "url":
-        return "예: https://example.com";
-      case "email":
-        return "예: user@example.com";
+      case "date":
+        return "예: 2024-03-21";
       case "project_member":
       case "project_members":
         return "예: 담당자";
@@ -298,20 +324,12 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const getFieldHelperText = (fieldType: string) => {
     switch (fieldType) {
-      case "text":
-        return "일반 텍스트를 입력할 수 있습니다.";
-      case "number":
-        return "숫자만 입력할 수 있습니다.";
-      case "date":
-        return "날짜를 선택할 수 있습니다.";
       case "select":
         return "미리 정의된 옵션 중 하나를 선택할 수 있습니다.";
       case "multiselect":
         return "미리 정의된 옵션 중 여러 개를 선택할 수 있습니다.";
-      case "url":
-        return "웹 주소를 입력할 수 있습니다.";
-      case "email":
-        return "이메일 주소를 입력할 수 있습니다.";
+      case "date":
+        return "날짜를 선택할 수 있습니다.";
       case "project_member":
         return "프로젝트 멤버 중 한 명을 선택할 수 있습니다.";
       case "project_members":
@@ -323,19 +341,11 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const getKeyPlaceholder = (fieldType: string) => {
     switch (fieldType) {
-      case "text":
-        return "예: customer_name";
-      case "number":
-        return "예: amount";
-      case "date":
-        return "예: due_date";
       case "select":
       case "multiselect":
         return "예: status";
-      case "url":
-        return "예: website_url";
-      case "email":
-        return "예: contact_email";
+      case "date":
+        return "예: due_date";
       case "project_member":
       case "project_members":
         return "예: assignee";
@@ -353,6 +363,16 @@ export const ProjectCustomFieldsSettings = observer(() => {
       <div className="mt-6 space-y-8">
         {/* 새 필드 추가 폼 */}
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-lg font-medium">
+              {isEditMode ? "커스텀 필드 수정" : "새 커스텀 필드 추가"}
+            </h4>
+            {isEditMode && (
+              <Button variant="neutral-primary" onClick={resetForm}>
+                취소
+              </Button>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="필드 이름"
@@ -366,7 +386,8 @@ export const ProjectCustomFieldsSettings = observer(() => {
               value={newField.key}
               onChange={(e) => setNewField({ ...newField, key: e.target.value })}
               placeholder={newField.name ? newField.name.toLowerCase().replace(/\s+/g, "_") : getKeyPlaceholder(newField.field_type || "text")}
-              helperText="시스템에서 사용될 고유 식별자 (영문, 숫자, _ 만 사용)"
+              helperText={isEditMode ? "식별자는 수정할 수 없습니다" : "시스템에서 사용될 고유 식별자 (영문, 숫자, _ 만 사용)"}
+              disabled={isEditMode}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -394,24 +415,23 @@ export const ProjectCustomFieldsSettings = observer(() => {
               <span className="ml-2">필수 필드</span>
             </div>
           </div>
-          {(newField.field_type === "text" || newField.field_type === "email" || newField.field_type === "url" || newField.field_type === "number") && (
+          
+          {/* 선택/다중선택 타입의 옵션 추가 */}
+          {(newField.field_type === "select" || newField.field_type === "multiselect") && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">사전 정의된 값</label>
+              <label className="text-sm font-medium">선택 옵션</label>
               <div className="flex flex-wrap gap-2">
-                {newField.settings?.predefined_values?.map((value, index) => (
+                {newField.options?.map((option, index) => (
                   <div key={index} className="flex items-center gap-1 bg-custom-background-80 rounded px-2 py-1">
-                    <span className="text-sm">{value}</span>
+                    <span className="text-sm">{option}</span>
                     <button
                       className="text-custom-text-200 hover:text-custom-text-100"
                       onClick={() => {
-                        const newValues = [...(newField.settings?.predefined_values || [])];
-                        newValues.splice(index, 1);
+                        const newOptions = [...(newField.options || [])];
+                        newOptions.splice(index, 1);
                         setNewField({
                           ...newField,
-                          settings: {
-                            ...newField.settings,
-                            predefined_values: newValues,
-                          },
+                          options: newOptions,
                         });
                       }}
                     >
@@ -420,32 +440,30 @@ export const ProjectCustomFieldsSettings = observer(() => {
                   </div>
                 ))}
                 <Input
-                  type={newField.field_type === "number" ? "number" : "text"}
-                  placeholder="새 값 추가"
+                  type="text"
+                  placeholder="새 옵션 추가"
                   className="w-32"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && e.currentTarget.value.trim() !== "") {
                       setNewField({
                         ...newField,
-                        settings: {
-                          ...newField.settings,
-                          predefined_values: [...(newField.settings?.predefined_values || []), e.currentTarget.value.trim()],
-                        },
+                        options: [...(newField.options || []), e.currentTarget.value.trim()],
                       });
                       e.currentTarget.value = "";
                     }
                   }}
                 />
               </div>
-              <p className="text-xs text-custom-text-200">Enter 키를 눌러 값을 추가하세요</p>
+              <p className="text-xs text-custom-text-200">Enter 키를 눌러 옵션을 추가하세요</p>
             </div>
           )}
+          
           <Button
             variant="primary"
-            onClick={handleCreateField}
+            onClick={handleCreateOrUpdateField}
             loading={isLoading}
           >
-            필드 추가
+            {isEditMode ? "필드 수정" : "필드 추가"}
           </Button>
         </div>
 
@@ -457,6 +475,7 @@ export const ProjectCustomFieldsSettings = observer(() => {
               field={field}
               index={index}
               onDelete={handleDeleteField}
+              onEdit={handleEditField}
             />
           ))}
         </div>

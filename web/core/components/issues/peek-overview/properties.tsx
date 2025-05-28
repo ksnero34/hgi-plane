@@ -25,6 +25,7 @@ import { useIssueDetail, useMember, useProject, useProjectState } from "@/hooks/
 // plane web components
 import { IssueParentSelectRoot, IssueWorklogProperty } from "@/plane-web/components/issues";
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
+import { CustomFieldProperties } from "./custom-field-properties";
 
 interface IPeekOverviewProperties {
   workspaceSlug: string;
@@ -298,6 +299,15 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
           workspaceSlug={workspaceSlug}
           isEditable={!disabled}
           isPeekView
+        />
+
+        {/* Custom Fields */}
+        <CustomFieldProperties
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          issueId={issueId}
+          issueOperations={issueOperations}
+          disabled={disabled}
         />
       </div>
     </div>

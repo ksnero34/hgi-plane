@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect } from "react";
+import { FC, useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane constants
@@ -10,7 +10,7 @@ import {
   EUserPermissionsLevel,
 } from "@plane/constants";
 // types
-import { GroupByColumnTypes, TGroupedIssues, TIssueKanbanFilters } from "@plane/types";
+import { GroupByColumnTypes, TGroupedIssues, TIssueKanbanFilters, TCustomField } from "@plane/types";
 // constants
 // hooks
 import { useIssues, useUserPermissions } from "@/hooks/store";
@@ -72,6 +72,10 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   const { allowPermissions } = useUserPermissions();
   const { issueMap } = useIssues();
 
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
+
   const displayFilters = issuesFilter?.issueFilters?.displayFilters;
   const displayProperties = issuesFilter?.issueFilters?.displayProperties;
   const orderBy = displayFilters?.order_by || undefined;
@@ -83,6 +87,33 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   const { updateFilters } = useIssuesActions(storeType);
   const collapsedGroups =
     issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
 
   useEffect(() => {
     fetchIssues("init-loader", { canGroup: true, perPageCount: group_by ? 50 : 100 }, viewId);
@@ -173,6 +204,7 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
           handleCollapsedGroups={handleCollapsedGroups}
           collapsedGroups={collapsedGroups}
           isEpic={isEpic}
+          customFields={customFields}
         />
       </div>
     </IssueLayoutHOC>

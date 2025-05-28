@@ -15,6 +15,11 @@ from django.db.models import (
     UUIDField,
     Value,
     Subquery,
+    Case,
+    CharField,
+    IntegerField,
+    When,
+    Count,
 )
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -52,6 +57,7 @@ from plane.db.models import (
     UserRecentVisit,
     ModuleIssue,
     Workspace,
+    CustomFieldValue,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -70,32 +76,116 @@ from plane.bgtasks.issue_description_version_task import issue_description_versi
 from plane.utils.audit_logger import log_audit
 from plane.utils.host import base_host
 from plane.utils.ip_address import get_client_ip
+
 class IssueListEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST])
     def get(self, request, slug, project_id):
         issue_ids = request.GET.get("issues", False)
 
-        if not issue_ids:
-            return Response(
-                {"error": "Issues are required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        issue_ids = [issue_id for issue_id in issue_ids.split(",") if issue_id != ""]
-
-        queryset = (
-            Issue.issue_objects.filter(
-                workspace__slug=slug, project_id=project_id, pk__in=issue_ids
-            )
-            .filter(workspace__slug=self.kwargs.get("slug"))
-            .select_related("workspace", "project", "state", "parent")
-            .prefetch_related("assignees", "labels", "issue_module__module")
-            .annotate(
-                cycle_id=Subquery(
-                    CycleIssue.objects.filter(
-                        issue=OuterRef("id"), deleted_at__isnull=True
-                    ).values("cycle_id")[:1]
+        if issue_ids:
+            issues = (
+                Issue.issue_objects.filter(
+                    workspace__slug=slug, project_id=project_id, pk__in=issue_ids.split(",")
+                )
+                .prefetch_related(
+                    Prefetch(
+                        "custom_field_values",
+                        queryset=CustomFieldValue.objects.filter(deleted_at__isnull=True).select_related("custom_field"),
+                    )
+                )
+                .annotate(
+                    sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
+                    .order_by()
+                    .annotate(count=Func(F("id"), function="Count"))
+                    .values("count")
+                )
+                .annotate(
+                    link_count=IssueLink.objects.filter(issue=OuterRef("id"))
+                    .order_by()
+                    .annotate(count=Func(F("id"), function="Count"))
+                    .values("count")
+                )
+                .annotate(
+                    attachment_count=FileAsset.objects.filter(
+                        issue_id=OuterRef("id"),
+                        entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
+                    )
+                    .order_by()
+                    .annotate(count=Func(F("id"), function="Count"))
+                    .values("count")
+                )
+                .annotate(
+                    cycle_id=Subquery(
+                        CycleIssue.objects.filter(
+                            issue=OuterRef("id"), deleted_at__isnull=True
+                        ).values("cycle_id")[:1]
+                    )
+                )
+                .annotate(
+                    module_ids=Coalesce(
+                        ArrayAgg(
+                            "issue_module__module_id",
+                            distinct=True,
+                            filter=~Q(issue_module__module_id__isnull=True),
+                        ),
+                        Value([], output_field=ArrayField(UUIDField())),
+                    )
+                )
+                .annotate(
+                    label_ids=Coalesce(
+                        ArrayAgg(
+                            "labels__id",
+                            distinct=True,
+                            filter=~Q(labels__id__isnull=True),
+                        ),
+                        Value([], output_field=ArrayField(UUIDField())),
+                    )
+                )
+                .annotate(
+                    assignee_ids=Coalesce(
+                        ArrayAgg(
+                            "assignees__id",
+                            distinct=True,
+                            filter=~Q(assignees__id__isnull=True),
+                        ),
+                        Value([], output_field=ArrayField(UUIDField())),
+                    )
                 )
             )
+
+            recent_visited_task.delay(
+                slug=slug,
+                project_id=project_id,
+                entity_name="project",
+                entity_identifier=project_id,
+                user_id=request.user.id,
+            )
+
+            # 항상 IssueSerializer를 사용하여 커스텀 필드 값들을 포함
+            issues = IssueSerializer(issues, many=True).data
+            return Response(issues, status=status.HTTP_200_OK)
+
+        filters = issue_filters(request.query_params, "GET")
+
+        # Custom ordering for priority and state
+        priority_order = ["urgent", "high", "medium", "low", "none"]
+        state_order = ["backlog", "unstarted", "started", "completed", "cancelled"]
+
+        order_by_param = request.GET.get("order_by", "-created_at")
+
+        issue_queryset = (
+            Issue.issue_objects.filter(workspace__slug=slug)
+            .filter(project_id=project_id)
+            .filter(**filters)
+            .select_related("workspace", "project", "state", "parent")
+            .prefetch_related("assignees", "labels", "issue_module__module")
+            .prefetch_related(
+                Prefetch(
+                    "custom_field_values",
+                    queryset=CustomFieldValue.objects.filter(deleted_at__isnull=True).select_related("custom_field"),
+                )
+            )
+            .annotate(cycle_id=Subquery(CycleIssue.objects.filter(issue=OuterRef("id")).values("cycle_id")[:1]))
             .annotate(
                 link_count=IssueLink.objects.filter(issue=OuterRef("id"))
                 .order_by()
@@ -117,25 +207,76 @@ class IssueListEndpoint(BaseAPIView):
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
+            .annotate(
+                module_ids=Coalesce(
+                    ArrayAgg(
+                        "issue_module__module_id",
+                        distinct=True,
+                        filter=~Q(issue_module__module_id__isnull=True),
+                    ),
+                    Value([], output_field=ArrayField(UUIDField())),
+                )
+            )
+            .annotate(
+                label_ids=Coalesce(
+                    ArrayAgg(
+                        "labels__id",
+                        distinct=True,
+                        filter=~Q(labels__id__isnull=True),
+                    ),
+                    Value([], output_field=ArrayField(UUIDField())),
+                )
+            )
+            .annotate(
+                assignee_ids=Coalesce(
+                    ArrayAgg(
+                        "assignees__id",
+                        distinct=True,
+                        filter=~Q(assignees__id__isnull=True),
+                    ),
+                    Value([], output_field=ArrayField(UUIDField())),
+                )
+            )
         ).distinct()
 
-        filters = issue_filters(request.query_params, "GET")
+        # Order queryset based on priority
+        if order_by_param == "priority" or order_by_param == "-priority":
+            priority_order = (
+                priority_order if order_by_param == "priority" else priority_order[::-1]
+            )
+            issue_queryset = issue_queryset.annotate(
+                priority_order=Case(
+                    *[
+                        When(priority=p, then=Value(i))
+                        for i, p in enumerate(priority_order)
+                    ],
+                    output_field=CharField(),
+                )
+            ).order_by("priority_order")
 
-        order_by_param = request.GET.get("order_by", "-created_at")
-        issue_queryset = queryset.filter(**filters)
-        # Issue queryset
-        issue_queryset, _ = order_issue_queryset(
-            issue_queryset=issue_queryset, order_by_param=order_by_param
-        )
-
-        # Group by
-        group_by = request.GET.get("group_by", False)
-        sub_group_by = request.GET.get("sub_group_by", False)
-
-        # issue queryset
-        issue_queryset = issue_queryset_grouper(
-            queryset=issue_queryset, group_by=group_by, sub_group_by=sub_group_by
-        )
+        elif order_by_param in [
+            "state__name",
+            "state__group",
+            "-state__name",
+            "-state__group",
+        ]:
+            state_order = (
+                state_order
+                if order_by_param in ["state__name", "state__group"]
+                else state_order[::-1]
+            )
+            issue_queryset = issue_queryset.annotate(
+                state_order=Case(
+                    *[
+                        When(state__group=state_group, then=Value(i))
+                        for i, state_group in enumerate(state_order)
+                    ],
+                    default=Value(len(state_order)),
+                    output_field=IntegerField(),
+                )
+            ).order_by("state_order")
+        else:
+            issue_queryset = issue_queryset.order_by(order_by_param)
 
         recent_visited_task.delay(
             slug=slug,
@@ -145,43 +286,8 @@ class IssueListEndpoint(BaseAPIView):
             user_id=request.user.id,
         )
 
-        if self.fields or self.expand:
-            issues = IssueSerializer(
-                queryset, many=True, fields=self.fields, expand=self.expand
-            ).data
-        else:
-            issues = issue_queryset.values(
-                "id",
-                "name",
-                "state_id",
-                "sort_order",
-                "completed_at",
-                "estimate_point",
-                "priority",
-                "start_date",
-                "target_date",
-                "sequence_id",
-                "project_id",
-                "parent_id",
-                "cycle_id",
-                "module_ids",
-                "label_ids",
-                "assignee_ids",
-                "sub_issues_count",
-                "created_at",
-                "updated_at",
-                "created_by",
-                "updated_by",
-                "attachment_count",
-                "link_count",
-                "is_draft",
-                "archived_at",
-                "deleted_at",
-            )
-            datetime_fields = ["created_at", "updated_at"]
-            issues = user_timezone_converter(
-                issues, datetime_fields, request.user.user_timezone
-            )
+        # 항상 IssueSerializer를 사용하여 커스텀 필드 값들을 포함
+        issues = IssueSerializer(issue_queryset, many=True).data
         return Response(issues, status=status.HTTP_200_OK)
 
 
@@ -206,6 +312,12 @@ class IssueViewSet(BaseViewSet):
             .filter(workspace__slug=self.kwargs.get("slug"))
             .select_related("workspace", "project", "state", "parent")
             .prefetch_related("assignees", "labels", "issue_module__module")
+            .prefetch_related(
+                Prefetch(
+                    "custom_field_values",
+                    queryset=CustomFieldValue.objects.filter(deleted_at__isnull=True).select_related("custom_field"),
+                )
+            )
             .annotate(
                 cycle_id=Subquery(
                     CycleIssue.objects.filter(
@@ -962,6 +1074,12 @@ class IssuePaginatedViewSet(BaseViewSet):
         return (
             issue_queryset.select_related("workspace", "project", "state", "parent")
             .prefetch_related("assignees", "labels", "issue_module__module")
+            .prefetch_related(
+                Prefetch(
+                    "custom_field_values",
+                    queryset=CustomFieldValue.objects.filter(deleted_at__isnull=True).select_related("custom_field"),
+                )
+            )
             .annotate(
                 cycle_id=Subquery(
                     CycleIssue.objects.filter(
@@ -993,7 +1111,9 @@ class IssuePaginatedViewSet(BaseViewSet):
         ).distinct()
 
     def process_paginated_result(self, fields, results, timezone):
-        paginated_data = results.values(*fields)
+        # IssueSerializer를 사용하여 커스텀 필드 값 포함
+        serializer = IssueSerializer(results, many=True)
+        paginated_data = serializer.data
 
         # converting the datetime fields in paginated data
         datetime_fields = ["created_at", "updated_at"]

@@ -109,6 +109,7 @@ const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((prop
         updateIssue={updateIssue}
         isReadOnly={isReadOnly}
         isEpic={isEpic}
+        customFields={[]}
       />
 
       {isEpic && displayProperties && (

@@ -8,7 +8,7 @@ import { useParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { EIssueServiceType } from "@plane/constants";
 // types
-import { TIssue, IIssueDisplayProperties, TIssueMap } from "@plane/types";
+import { TIssue, IIssueDisplayProperties, TIssueMap, TCustomField } from "@plane/types";
 // ui
 import { Spinner, Tooltip, ControlLink, setToast, TOAST_TYPE, Row } from "@plane/ui";
 // components
@@ -45,6 +45,7 @@ interface IssueBlockProps {
   setIsCurrentBlockDragging: React.Dispatch<React.SetStateAction<boolean>>;
   canDrag: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const IssueBlock = observer((props: IssueBlockProps) => {
@@ -65,6 +66,7 @@ export const IssueBlock = observer((props: IssueBlockProps) => {
     setIsCurrentBlockDragging,
     canDrag,
     isEpic = false,
+    customFields,
   } = props;
   // ref
   const issueRef = useRef<HTMLDivElement | null>(null);
@@ -305,6 +307,7 @@ export const IssueBlock = observer((props: IssueBlockProps) => {
                 displayProperties={displayProperties}
                 activeLayout="List"
                 isEpic={isEpic}
+                customFields={customFields}
               />
               <div
                 className={cn("hidden", {

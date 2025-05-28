@@ -716,6 +716,7 @@
     "sub_work_items": "하위 작업 항목",
     "comment": "댓글",
     "workspace_level": "작업 공간 수준",
+    "custom_fields": "커스텀 필드",
     "order_by": {
       "label": "정렬 기준",
       "manual": "수동",

@@ -159,6 +159,29 @@ class IssueCreateSerializer(BaseSerializer):
                             raise serializers.ValidationError(f"필드 {field.name}는 리스트여야 합니다.")
                         if not all(v in options for v in field_value):
                             raise serializers.ValidationError(f"필드 {field.name}의 값이 유효하지 않습니다.")
+                elif field.field_type in ["project_member", "project_members"]:
+                    # 프로젝트 멤버 검증 로직
+                    if field.field_type == "project_member":
+                        # 단일 멤버 검증
+                        if not ProjectMember.objects.filter(
+                            project_id=self.context.get("project_id"),
+                            member_id=field_value,
+                            is_active=True
+                        ).exists():
+                            raise serializers.ValidationError(f"필드 {field.name}의 멤버가 유효하지 않습니다.")
+                    else:  # project_members
+                        # 다중 멤버 검증
+                        if not isinstance(field_value, list):
+                            raise serializers.ValidationError(f"필드 {field.name}는 리스트여야 합니다.")
+                        
+                        valid_members = ProjectMember.objects.filter(
+                            project_id=self.context.get("project_id"),
+                            member_id__in=field_value,
+                            is_active=True
+                        ).values_list("member_id", flat=True)
+                        
+                        if len(valid_members) != len(field_value):
+                            raise serializers.ValidationError(f"필드 {field.name}에 유효하지 않은 멤버가 포함되어 있습니다.")
 
         return values
 
@@ -168,6 +191,23 @@ class IssueCreateSerializer(BaseSerializer):
         data["assignee_ids"] = assignee_ids if assignee_ids else []
         label_ids = self.initial_data.get("label_ids")
         data["label_ids"] = label_ids if label_ids else []
+        
+        # 커스텀 필드 값 포함 (간소화된 형태)
+        custom_field_values = CustomFieldValue.objects.filter(
+            issue=instance,
+            deleted_at__isnull=True
+        ).select_related('custom_field')
+        
+        data["custom_field_values"] = [
+            {
+                "custom_field_id": str(cfv.custom_field_id),
+                "value": cfv.value,
+                "field_name": cfv.custom_field.name,
+                "field_type": cfv.custom_field.field_type,
+            }
+            for cfv in custom_field_values
+        ]
+        
         return data
 
     def validate(self, attrs):
@@ -861,12 +901,28 @@ class CustomFieldSerializer(BaseSerializer):
     class Meta:
         model = CustomField
         fields = "__all__"
-        read_only_fields = ["workspace", "project", "created_by", "updated_by"]
+        read_only_fields = ["workspace", "project", "created_by", "updated_by", "deleted_at"]
 
     def validate(self, data):
-        if data.get("field_type") in ["select", "multiselect"] and not data.get("options"):
-            raise serializers.ValidationError("선택 타입의 필드는 옵션이 필요합니다.")
+        field_type = data.get("field_type")
+        options = data.get("options", [])
+        
+        if field_type in ["select", "multiselect"]:
+            if not options or len(options) == 0:
+                raise serializers.ValidationError("선택 타입의 필드는 최소 하나의 옵션이 필요합니다.")
+        elif field_type == "date":
+            # 날짜 타입은 options가 필요하지 않음
+            pass
+        elif field_type in ["project_member", "project_members"]:
+            # 프로젝트 멤버 타입은 options가 필요하지 않음
+            pass
+            
         return data
+
+    def update(self, instance, validated_data):
+        # key 필드는 수정할 수 없도록 제거
+        validated_data.pop('key', None)
+        return super().update(instance, validated_data)
 
 
 class CustomFieldValueSerializer(BaseSerializer):
@@ -905,6 +961,29 @@ class CustomFieldValueSerializer(BaseSerializer):
                         raise serializers.ValidationError("다중 선택은 리스트 형태여야 합니다.")
                     if not all(v in options for v in value):
                         raise serializers.ValidationError("유효하지 않은 선택값이 포함되어 있습니다.")
+            elif field_type in ["project_member", "project_members"]:
+                # 프로젝트 멤버 검증 로직
+                if field_type == "project_member":
+                    # 단일 멤버 검증
+                    if not ProjectMember.objects.filter(
+                        project_id=custom_field.project_id,
+                        member_id=value,
+                        is_active=True
+                    ).exists():
+                        raise serializers.ValidationError("유효하지 않은 프로젝트 멤버입니다.")
+                else:  # project_members
+                    # 다중 멤버 검증
+                    if not isinstance(value, list):
+                        raise serializers.ValidationError("프로젝트 멤버(다중)는 리스트 형태여야 합니다.")
+                    
+                    valid_members = ProjectMember.objects.filter(
+                        project_id=custom_field.project_id,
+                        member_id__in=value,
+                        is_active=True
+                    ).values_list("member_id", flat=True)
+                    
+                    if len(valid_members) != len(value):
+                        raise serializers.ValidationError("유효하지 않은 프로젝트 멤버가 포함되어 있습니다.")
 
         return data
 
@@ -922,7 +1001,24 @@ class IssueSerializer(DynamicBaseSerializer):
     sub_issues_count = serializers.IntegerField(read_only=True)
     attachment_count = serializers.IntegerField(read_only=True)
     link_count = serializers.IntegerField(read_only=True)
-    custom_field_values = CustomFieldValueSerializer(many=True, read_only=True)
+    custom_field_values = serializers.SerializerMethodField()
+
+    def get_custom_field_values(self, obj):
+        """커스텀 필드 값을 간소화된 형태로 반환"""
+        custom_field_values = CustomFieldValue.objects.filter(
+            issue=obj,
+            deleted_at__isnull=True
+        ).select_related('custom_field')
+        
+        return [
+            {
+                "custom_field_id": str(cfv.custom_field_id),
+                "value": cfv.value,
+                "field_name": cfv.custom_field.name,
+                "field_type": cfv.custom_field.field_type,
+            }
+            for cfv in custom_field_values
+        ]
 
     class Meta:
         model = Issue

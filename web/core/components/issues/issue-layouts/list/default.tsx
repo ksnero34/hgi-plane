@@ -15,6 +15,7 @@ import {
   TIssueOrderByOptions,
   IGroupByColumn,
   TIssueKanbanFilters,
+  TCustomField,
 } from "@plane/types";
 // components
 import { MultipleSelectGroup } from "@/components/core";
@@ -49,6 +50,7 @@ export interface IList {
   handleCollapsedGroups: (value: string) => void;
   collapsedGroups: TIssueKanbanFilters;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const List: React.FC<IList> = observer((props) => {
@@ -72,6 +74,7 @@ export const List: React.FC<IList> = observer((props) => {
     handleCollapsedGroups,
     collapsedGroups,
     isEpic = false,
+    customFields,
   } = props;
 
   const storeType = useIssueStoreType();
@@ -161,6 +164,7 @@ export const List: React.FC<IList> = observer((props) => {
                     handleCollapsedGroups={handleCollapsedGroups}
                     collapsedGroups={collapsedGroups}
                     isEpic={isEpic}
+                    customFields={customFields}
                   />
                 ))}
               </div>

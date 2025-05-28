@@ -164,6 +164,7 @@ export const ISSUE_DISPLAY_PROPERTIES_KEYS: (keyof IIssueDisplayProperties)[] = 
   "modules",
   "cycle",
   "issue_type",
+  "custom_fields",
 ];
 
 export const ISSUE_DISPLAY_PROPERTIES: {
@@ -211,6 +212,7 @@ export const ISSUE_DISPLAY_PROPERTIES: {
   },
   { key: "modules", titleTranslationKey: "common.module" },
   { key: "cycle", titleTranslationKey: "common.cycle" },
+  { key: "custom_fields", titleTranslationKey: "common.custom_fields" },
 ];
 
 export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
@@ -228,6 +230,7 @@ export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
   "link",
   "attachment_count",
   "sub_issue_count",
+  "custom_fields",
 ];
 
 export const SPREADSHEET_PROPERTY_DETAILS: {
@@ -351,5 +354,13 @@ export const SPREADSHEET_PROPERTY_DETAILS: {
     descendingOrderKey: "sub_issues_count",
     descendingOrderTitle: "Least",
     icon: "LayersIcon",
+  },
+  custom_fields: {
+    i18n_title: "common.custom_fields",
+    ascendingOrderKey: "created_at",
+    ascendingOrderTitle: "Old",
+    descendingOrderKey: "-created_at",
+    descendingOrderTitle: "New",
+    icon: "Settings",
   },
 };

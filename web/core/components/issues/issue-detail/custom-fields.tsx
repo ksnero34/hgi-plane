@@ -28,12 +28,6 @@ export const IssueDetailCustomFields: React.FC<Props> = observer((props) => {
     if (!fieldValue) return "-";
 
     switch (field.field_type) {
-      case "text":
-      case "url":
-      case "email":
-      case "number":
-        return fieldValue.value || "-";
-
       case "date":
         return fieldValue.value ? new Date(fieldValue.value).toLocaleDateString() : "-";
 

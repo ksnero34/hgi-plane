@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, SyntheticEvent } from "react";
+import { useCallback, useMemo, SyntheticEvent, useState, useEffect } from "react";
 import xor from "lodash/xor";
 import { observer } from "mobx-react";
 import { useParams, usePathname } from "next/navigation";
@@ -10,7 +10,7 @@ import { CalendarCheck2, CalendarClock, Layers, Link, Paperclip } from "lucide-r
 import { ISSUE_UPDATED } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
-import { TIssue, IIssueDisplayProperties, TIssuePriorities } from "@plane/types";
+import { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
 // ui
 import { Tooltip } from "@plane/ui";
 // components
@@ -38,6 +38,7 @@ import { WorkItemLayoutAdditionalProperties } from "@/plane-web/components/issue
 // local components
 import { IssuePropertyLabels } from "./labels";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
+import { IssueCustomFieldProperties } from "./custom-field-properties";
 
 export interface IIssueProperties {
   issue: TIssue;
@@ -47,10 +48,11 @@ export interface IIssueProperties {
   className: string;
   activeLayout: string;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 }
 
 export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, updateIssue, displayProperties, activeLayout, isReadOnly, className, isEpic = false } = props;
+  const { issue, updateIssue, displayProperties, activeLayout, isReadOnly, className, isEpic = false, customFields } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
@@ -73,7 +75,6 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
   const pathname = usePathname();
-
   const currentLayout = `${activeLayout} layout`;
   // derived values
   const stateDetails = getStateById(issue.state_id);
@@ -512,6 +513,16 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
 
       {/* Additional Properties */}
       <WorkItemLayoutAdditionalProperties displayProperties={displayProperties} issue={issue} />
+
+      {/* Custom Fields */}
+      <IssueCustomFieldProperties
+        issue={issue}
+        updateIssue={updateIssue}
+        isReadOnly={isReadOnly}
+        activeLayout={activeLayout}
+        displayProperties={displayProperties}
+        customFields={customFields || []}
+      />
 
       {/* label */}
       <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="labels">

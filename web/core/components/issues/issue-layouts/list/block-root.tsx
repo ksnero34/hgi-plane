@@ -9,7 +9,7 @@ import { EIssueServiceType } from "@plane/constants";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
-import { IIssueDisplayProperties, TIssue, TIssueMap } from "@plane/types";
+import { IIssueDisplayProperties, TIssue, TIssueMap, TCustomField } from "@plane/types";
 // components
 import { DropIndicator } from "@plane/ui";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
@@ -41,6 +41,7 @@ type Props = {
   isLastChild?: boolean;
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 };
 
 export const IssueBlockRoot: FC<Props> = observer((props) => {
@@ -62,6 +63,7 @@ export const IssueBlockRoot: FC<Props> = observer((props) => {
     selectionHelpers,
     shouldRenderByDefault,
     isEpic = false,
+    customFields,
   } = props;
   // states
   const [isExpanded, setExpanded] = useState<boolean>(false);
@@ -154,6 +156,7 @@ export const IssueBlockRoot: FC<Props> = observer((props) => {
           isCurrentBlockDragging={isParentIssueBeingDragged || isCurrentBlockDragging}
           setIsCurrentBlockDragging={setIsCurrentBlockDragging}
           isEpic={isEpic}
+          customFields={customFields}
         />
       </RenderIfVisible>
 
@@ -177,6 +180,7 @@ export const IssueBlockRoot: FC<Props> = observer((props) => {
             canDropOverIssue={canDropOverIssue}
             isParentIssueBeingDragged={isParentIssueBeingDragged || isCurrentBlockDragging}
             shouldRenderByDefault={isExpanded}
+            customFields={customFields}
           />
         ))}
       {isLastChild && <DropIndicator classNames={"absolute z-[2]"} isVisible={instruction === "DRAG_BELOW"} />}

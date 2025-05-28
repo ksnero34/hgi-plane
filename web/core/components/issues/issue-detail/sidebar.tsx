@@ -28,7 +28,7 @@ import { IssueParentSelectRoot, IssueWorklogProperty } from "@/plane-web/compone
 // components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
 import type { TIssueOperations } from "./root";
-import { IssueCustomFieldSidebar } from "./custom-field-sidebar";
+import { IssueCustomFieldSelect } from "./custom-field-select";
 
 type Props = {
   workspaceSlug: string;
@@ -304,12 +304,12 @@ export const IssueDetailsSidebar: React.FC<Props> = observer((props) => {
             />
 
             {/* Custom Fields */}
-            <IssueCustomFieldSidebar
+            <IssueCustomFieldSelect
               workspaceSlug={workspaceSlug}
               projectId={projectId}
               issueId={issueId}
               issueOperations={issueOperations}
-              isEditable={isEditable}
+              disabled={!isEditable}
             />
           </div>
         </div>

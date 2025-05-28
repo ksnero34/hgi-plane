@@ -11,6 +11,7 @@ import {
   Tag,
   Triangle,
   Users,
+  Settings,
 } from "lucide-react";
 // types
 import { IGroupByColumn, IIssueDisplayProperties, TSpreadsheetColumn } from "@plane/types";
@@ -31,6 +32,7 @@ import {
   SpreadsheetStateColumn,
   SpreadsheetSubIssueColumn,
   SpreadsheetUpdatedOnColumn,
+  SpreadsheetCustomFieldColumn,
 } from "@/components/issues/issue-layouts/spreadsheet";
 
 export const getTeamProjectColumns = (): IGroupByColumn[] | undefined => undefined;
@@ -49,6 +51,7 @@ export const SpreadSheetPropertyIconMap: Record<string, FC<ISvgIcons>> = {
   Link2: Link2,
   Paperclip: Paperclip,
   LayersIcon: LayersIcon,
+  Settings: Settings,
 };
 
 export const SPREADSHEET_COLUMNS: { [key in keyof IIssueDisplayProperties]: TSpreadsheetColumn } = {
@@ -66,4 +69,5 @@ export const SPREADSHEET_COLUMNS: { [key in keyof IIssueDisplayProperties]: TSpr
   sub_issue_count: SpreadsheetSubIssueColumn,
   updated_on: SpreadsheetUpdatedOnColumn,
   attachment_count: SpreadsheetAttachmentColumn,
+  custom_fields: SpreadsheetCustomFieldColumn,
 };

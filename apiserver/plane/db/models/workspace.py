@@ -59,6 +59,7 @@ def get_default_props():
             "state": True,
             "sub_issue_count": True,
             "updated_on": True,
+            "custom_fields": True,
         },
     }
 
@@ -107,6 +108,7 @@ def get_default_display_properties():
             "state": True,
             "sub_issue_count": True,
             "updated_on": True,
+            "custom_fields": True,
         }
     }
 

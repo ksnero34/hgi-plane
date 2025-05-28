@@ -221,14 +221,22 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     )
       return;
 
+    // 커스텀 필드 값을 백엔드 형식으로 변환
+    const customFieldValues = formData.custom_field_values ? 
+      Object.values(formData.custom_field_values).filter(value => value && value.custom_field_id) : [];
+
     const submitData = !data?.id
-      ? formData
+      ? {
+          ...formData,
+          custom_field_values: customFieldValues
+        }
       : {
           ...getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined }),
           project_id: getValues<"project_id">("project_id"),
           id: data.id,
           description_html: formData.description_html ?? "<p></p>",
           type_id: getValues<"type_id">("type_id"),
+          custom_field_values: customFieldValues
         };
 
     // this condition helps to move the issues from draft to project issues

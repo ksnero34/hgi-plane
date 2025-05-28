@@ -31,6 +31,8 @@ type Props = TDropdownProps & {
   closeOnSelect?: boolean;
   formatToken?: string;
   renderByDefault?: boolean;
+  tooltipHeading?: string;
+  tooltipContent?: string;
 };
 
 export const DateDropdown: React.FC<Props> = (props) => {
@@ -57,6 +59,8 @@ export const DateDropdown: React.FC<Props> = (props) => {
     value,
     formatToken,
     renderByDefault = true,
+    tooltipHeading,
+    tooltipContent,
   } = props;
   // states
   const [isOpen, setIsOpen] = useState(false);
@@ -122,8 +126,8 @@ export const DateDropdown: React.FC<Props> = (props) => {
       <DropdownButton
         className={buttonClassName}
         isActive={isOpen}
-        tooltipHeading={placeholder}
-        tooltipContent={value ? renderFormattedDate(value, formatToken) : "None"}
+        tooltipHeading={tooltipHeading || placeholder}
+        tooltipContent={tooltipContent || (value ? renderFormattedDate(value, formatToken) : "None")}
         showTooltip={showTooltip}
         variant={buttonVariant}
         renderToolTipByDefault={renderByDefault}

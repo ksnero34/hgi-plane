@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useEffect, FC } from "react";
+import React, { useEffect, FC, useState } from "react";
 import { observer } from "mobx-react";
 import { Control, Controller } from "react-hook-form";
 import { useParams } from "next/navigation";
 import { useTranslation } from "@plane/i18n";
 // types
-import { TIssue, TCustomField, TCustomFieldType } from "@plane/types";
+import { TIssue, TCustomField } from "@plane/types";
 // ui
-import { Input, CustomSelect } from "@plane/ui";
+import { CustomSelect } from "@plane/ui";
 import { DateDropdown, MemberDropdown } from "@/components/dropdowns";
-// hooks
-import { useCustomField, useProject } from "@/hooks/store";
+// services
+import { CustomFieldService } from "@/services/custom-field.service";
+// helpers
+import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 
 type Props = {
   control: Control<TIssue>;
@@ -20,78 +22,48 @@ type Props = {
   handleFormChange: () => void;
 };
 
+const customFieldService = new CustomFieldService();
+
 export const IssueCustomField: FC<Props> = observer((props) => {
   const { control, projectId, workspaceSlug, handleFormChange } = props;
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   // store hooks
   const { t } = useTranslation();
-  const customFieldStore = useCustomField();
-  const { getProjectById } = useProject();
 
   useEffect(() => {
-    if (projectId && workspaceSlug) {
-      customFieldStore.fetchCustomFields(workspaceSlug, projectId);
-    }
-  }, [projectId, workspaceSlug, customFieldStore]);
+    const fetchCustomFields = async () => {
+      if (!projectId || !workspaceSlug) return;
+      
+      try {
+        setIsLoading(true);
+        const fields = await customFieldService.getCustomFields(workspaceSlug, projectId);
+        setCustomFields(fields);
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const customFields = customFieldStore.getCustomFields();
+    fetchCustomFields();
+  }, [projectId, workspaceSlug]);
 
-  if (!customFields || customFields.length === 0) return null;
+  if (isLoading || !customFields || customFields.length === 0) return null;
 
-  const renderFieldInput = (field: TCustomField) => {
+  const renderFieldInput = (field: TCustomField, value: any, onChange: (value: any) => void) => {
     switch (field.field_type) {
-      case "text":
-      case "url":
-      case "email":
-        return (
-          <CustomSelect
-            value={field.value}
-            onChange={(val: string) => {
-              field.onChange(val);
-              handleFormChange();
-            }}
-            options={field.settings?.predefined_values?.map((value) => ({
-              value,
-              label: value,
-            })) || []}
-            placeholder={field.name}
-            buttonVariant="border-with-text"
-            className="w-full"
-            buttonContainerClassName="w-full text-left"
-            buttonClassName="text-sm"
-            createable
-          />
-        );
-
-      case "number":
-        return (
-          <CustomSelect
-            value={field.value?.toString()}
-            onChange={(val: string) => {
-              const value = parseFloat(val);
-              if (field.settings?.min_value !== undefined && value < field.settings.min_value) return;
-              if (field.settings?.max_value !== undefined && value > field.settings.max_value) return;
-              field.onChange(value);
-              handleFormChange();
-            }}
-            options={field.settings?.predefined_values?.map((value) => ({
-              value: value.toString(),
-              label: value.toString(),
-            })) || []}
-            placeholder={field.name}
-            buttonVariant="border-with-text"
-            className="w-full"
-            buttonContainerClassName="w-full text-left"
-            buttonClassName="text-sm"
-            createable
-          />
-        );
-
       case "date":
         return (
           <DateDropdown
-            value={field.value}
+            value={value}
             onChange={(date) => {
-              field.onChange(date);
+              const formattedDate = date ? renderFormattedPayloadDate(date) : null;
+              onChange({
+                custom_field_id: field.id,
+                value: formattedDate
+              });
               handleFormChange();
             }}
             placeholder={field.name}
@@ -105,50 +77,63 @@ export const IssueCustomField: FC<Props> = observer((props) => {
       case "select":
         return (
           <CustomSelect
-            value={field.value}
+            value={value?.value}
             onChange={(val: string) => {
-              field.onChange(val);
+              onChange({
+                custom_field_id: field.id,
+                value: val
+              });
               handleFormChange();
             }}
-            options={field.options?.map((option) => ({
-              value: option,
-              label: option,
-            })) || []}
-            placeholder={field.name}
             buttonVariant="border-with-text"
             className="w-full"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
-          />
+            label={value?.value || field.name}
+          >
+            {field.options?.map((option) => (
+              <CustomSelect.Option key={option} value={option}>
+                {option}
+              </CustomSelect.Option>
+            ))}
+          </CustomSelect>
         );
 
       case "multiselect":
         return (
           <CustomSelect
-            value={field.value}
+            value={value?.value}
             onChange={(val: string[]) => {
-              field.onChange(val);
+              onChange({
+                custom_field_id: field.id,
+                value: val
+              });
               handleFormChange();
             }}
-            options={field.options?.map((option) => ({
-              value: option,
-              label: option,
-            })) || []}
-            placeholder={field.name}
             buttonVariant="border-with-text"
             className="w-full"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
+            label={Array.isArray(value?.value) && value.value.length > 0 ? `${value.value.length}개 선택됨` : field.name}
             multiple
-          />
+          >
+            {field.options?.map((option) => (
+              <CustomSelect.Option key={option} value={option}>
+                {option}
+              </CustomSelect.Option>
+            ))}
+          </CustomSelect>
         );
 
       case "project_member":
         return (
           <MemberDropdown
-            value={field.value}
+            value={value?.value ? [value.value] : []}
             onChange={(val) => {
-              field.onChange(val);
+              onChange({
+                custom_field_id: field.id,
+                value: val && val.length > 0 ? val[0] : null
+              });
               handleFormChange();
             }}
             projectId={projectId}
@@ -163,9 +148,12 @@ export const IssueCustomField: FC<Props> = observer((props) => {
       case "project_members":
         return (
           <MemberDropdown
-            value={field.value}
+            value={value?.value || []}
             onChange={(val) => {
-              field.onChange(val);
+              onChange({
+                custom_field_id: field.id,
+                value: val
+              });
               handleFormChange();
             }}
             projectId={projectId}
@@ -184,24 +172,20 @@ export const IssueCustomField: FC<Props> = observer((props) => {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <>
       {customFields.map((field) => (
         <Controller
           key={field.id}
           control={control}
-          name={`custom_field_values.${field.id}`}
+          name={`custom_field_values.${field.id}` as any}
           render={({ field: formField }) => (
-            <div className="h-7">
-              {renderFieldInput({
-                ...field,
-                value: formField.value,
-                onChange: formField.onChange,
-              })}
-              {field.is_required && <span className="text-red-500 ml-1">*</span>}
+            <div className="h-7 flex items-center">
+              {renderFieldInput(field, formField.value, formField.onChange)}
+              {field.is_required && <span className="text-red-500 ml-1 text-xs">*</span>}
             </div>
           )}
         />
       ))}
-    </div>
+    </>
   );
 }); 
