@@ -3,9 +3,11 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Button, ModalCore, EModalWidth, EModalPosition } from "@plane/ui";
 import { useTranslation } from "@plane/i18n";
-import { TIssue } from "@plane/types";
-import { Check, X } from "lucide-react";
+import { TIssue, TCustomField } from "@plane/types";
+import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings } from "lucide-react";
 import { useProject, useProjectState, useMember } from "@/hooks/store";
+import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
+import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 
 type TBulkEditModalProps = {
   isOpen: boolean;
@@ -21,29 +23,78 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [updates, setUpdates] = useState<Partial<TIssue>>({});
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [customFieldUpdates, setCustomFieldUpdates] = useState<{[fieldId: string]: any}>({});
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
 
   // Store hooks
   const { currentProjectDetails } = useProject();
   const { projectStates } = useProjectState();
   const { 
-    project: { getProjectMemberIds, getProjectMemberDetails }
+    project: { getProjectMemberIds, getProjectMemberDetails },
+    getUserDetails
   } = useMember();
 
   // Get project data
   const projectStatesList = projectStates;
   const projectMemberIds = getProjectMemberIds(projectId, true);
 
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data || []);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCustomFields();
+    }
+  }, [workspaceSlug, projectId, isOpen]);
+
   const handleUpdate = async () => {
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0 && Object.keys(customFieldUpdates).length === 0) {
       onClose();
       return;
     }
 
     setIsUpdating(true);
     try {
-      await onBulkUpdate(updates);
+      // 커스텀 필드 업데이트가 있으면 custom_field_values 형태로 변환
+      const finalUpdates = { ...updates };
+      if (Object.keys(customFieldUpdates).length > 0) {
+        const customFieldValues = Object.entries(customFieldUpdates)
+          .filter(([_, value]) => value !== null && value !== undefined && value !== "")
+          .map(([fieldId, value]) => ({
+            custom_field_id: fieldId,
+            value: value
+          }));
+        
+        if (customFieldValues.length > 0) {
+          finalUpdates.custom_field_values = customFieldValues;
+        }
+      }
+
+      await onBulkUpdate(finalUpdates);
       onClose();
       setUpdates({});
+      setCustomFieldUpdates({});
     } catch (error) {
       console.error("Bulk update failed:", error);
     } finally {
@@ -58,9 +109,102 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
     }));
   };
 
+  const handleCustomFieldChange = (fieldId: string, value: any) => {
+    setCustomFieldUpdates(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
+  };
+
   const handleClose = () => {
     setUpdates({});
+    setCustomFieldUpdates({});
     onClose();
+  };
+
+  // 커스텀 필드 타입에 따른 아이콘 반환
+  const getCustomFieldIcon = (fieldType: string) => {
+    switch (fieldType) {
+      case "select":
+      case "multiselect":
+        return Tag;
+      case "date":
+        return CalendarCheck2;
+      case "project_member":
+        return UserCircle2;
+      case "project_members":
+        return Users;
+      default:
+        return Settings;
+    }
+  };
+
+  // 커스텀 필드 렌더링
+  const renderCustomFieldInput = (field: TCustomField) => {
+    const FieldIcon = getCustomFieldIcon(field.field_type);
+    const fieldValue = customFieldUpdates[field.id];
+
+    switch (field.field_type) {
+      case "select":
+      case "multiselect":
+        return (
+          <CustomFieldDropdown
+            field={field}
+            value={fieldValue}
+            onChange={(value) => handleCustomFieldChange(field.id, value)}
+            buttonVariant="border-with-text"
+            className="min-w-[200px]"
+            placeholder={`${field.name} 선택`}
+          />
+        );
+
+      case "date":
+        return (
+          <DateDropdown
+            value={fieldValue}
+            onChange={(date) => handleCustomFieldChange(field.id, date ? renderFormattedPayloadDate(date) : null)}
+            buttonVariant="border-with-text"
+            className="min-w-[200px]"
+            placeholder={`${field.name} 선택`}
+          />
+        );
+
+      case "project_member":
+        return (
+          <MemberDropdown
+            projectId={projectId}
+            value={fieldValue}
+            onChange={(value) => handleCustomFieldChange(field.id, value)}
+            buttonVariant="border-with-text"
+            className="min-w-[200px]"
+            placeholder={`${field.name} 선택`}
+          />
+        );
+
+      case "project_members":
+        return (
+          <MemberDropdown
+            projectId={projectId}
+            value={fieldValue || []}
+            onChange={(value) => handleCustomFieldChange(field.id, value)}
+            buttonVariant="border-with-text"
+            className="min-w-[200px]"
+            placeholder={`${field.name} 선택`}
+            multiple
+          />
+        );
+
+      default:
+        return (
+          <input
+            type="text"
+            placeholder={`${field.name} 입력`}
+            className="px-3 py-2 border border-custom-border-200 rounded-md text-sm min-w-[200px]"
+            value={fieldValue || ""}
+            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+          />
+        );
+    }
   };
 
   return (
@@ -80,7 +224,7 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
           </p>
         </div>
 
-        <div className="space-y-4 mb-6">
+        <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
           {/* 상태 변경 */}
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-custom-text-200">
@@ -116,11 +260,19 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
                 <option value="">변경하지 않음</option>
                 <option value="">담당자 없음</option>
                 {projectMemberIds?.map((memberId) => {
+                  // 먼저 getUserDetails로 시도
+                  const userDetails = getUserDetails(memberId);
+                  // 그 다음 getProjectMemberDetails로 시도
                   const memberDetails = getProjectMemberDetails(projectId, memberId);
-                  const displayName = memberDetails?.member?.display_name || 
+                  
+                  const displayName = userDetails?.display_name || 
+                                    userDetails?.first_name || 
+                                    userDetails?.email ||
+                                    memberDetails?.member?.display_name || 
                                     memberDetails?.member?.first_name || 
                                     memberDetails?.member?.email || 
-                                    "Unknown Member";
+                                    `멤버 ${memberId.slice(0, 8)}`;
+                  
                   return (
                     <option key={memberId} value={memberId}>
                       {displayName}
@@ -169,6 +321,29 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
               />
             </div>
           </div>
+
+          {/* 커스텀 필드들 */}
+          {customFields.length > 0 && (
+            <>
+              <div className="border-t border-custom-border-200 pt-4">
+                <h3 className="text-sm font-medium text-custom-text-200 mb-3">커스텀 필드</h3>
+              </div>
+              {customFields.map((field) => {
+                const FieldIcon = getCustomFieldIcon(field.field_type);
+                return (
+                  <div key={field.id} className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-custom-text-200 flex items-center gap-2">
+                      <FieldIcon className="h-4 w-4" />
+                      {field.name}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      {renderCustomFieldInput(field)}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
 
         <div className="flex justify-end gap-3">

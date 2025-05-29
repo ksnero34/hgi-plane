@@ -56,7 +56,7 @@ export const useMultipleSelect = (props: Props) => {
 
   useReloadConfirmations(
     selectedEntityIds && selectedEntityIds.length > 0,
-    "Are you sure you want to leave? Your current bulk operation selections will be lost.",
+    "현재 일괄 변경을 위해 선택중입니다. 다른페이지로 이동하시겠습니까?",
     true,
     () => {
       clearSelection();
