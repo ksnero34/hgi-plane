@@ -1900,8 +1900,8 @@ class ImportIssuesEndpoint(BaseAPIView):
             project_id = str(project_id)
             user_id = str(request.user.id)
             
-            # Celery 태스크로 임포트 작업 시작
-            task = issue_import_task.delay(
+            # 동기적으로 임포트 작업 실행
+            result = issue_import_task(
                 workspace_id=workspace_id,
                 project_id=project_id,
                 file_content=file_content,
@@ -1909,10 +1909,16 @@ class ImportIssuesEndpoint(BaseAPIView):
                 user_id=user_id
             )
             
-            return Response({
-                'message': 'Import started',
-                'task_id': task.id
-            })
+            if result.get('success'):
+                return Response({
+                    'message': 'Import completed successfully',
+                    'imported_count': result.get('imported_count', 0),
+                    'updated_count': result.get('updated_count', 0)
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': result.get('error', 'Import failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
             
         except Exception as e:
             return Response({

@@ -68,7 +68,8 @@ def issue_queryset_grouper(
     }
 
     # group_by와 sub_group_by 필드를 쿼리셋에 직접 추가
-    # group_by 필드가 issue_module__module_id인 경우 해당 필드를 어노테이션으로 추가
+    # many-to-many 필드들은 이미 Django ORM에서 자동으로 처리됨
+    # 단, 해당 필드가 결과에 포함되도록 명시적으로 annotate
     if group_by == "issue_module__module_id":
         default_annotations["issue_module__module_id"] = F("issue_module__module_id")
     elif group_by == "assignees__id":
@@ -102,7 +103,31 @@ def issue_on_results(
 
     # IssueSerializer를 사용하여 커스텀 필드 값들을 포함한 데이터 반환
     serializer = IssueSerializer(issues, many=True)
-    return serializer.data
+    serialized_data = serializer.data
+    
+    # many-to-many 필드로 그룹화하는 경우, 해당 필드를 결과에 추가
+    # 이는 paginator에서 group_by_field_name을 찾을 수 있도록 하기 위함
+    if group_by in FIELD_MAPPER or sub_group_by in FIELD_MAPPER:
+        # 필요한 필드들을 포함하여 values() 호출
+        fields_to_include = ["id"]
+        if group_by in FIELD_MAPPER:
+            fields_to_include.append(group_by)
+        if sub_group_by in FIELD_MAPPER:
+            fields_to_include.append(sub_group_by)
+            
+        # values()를 사용하여 필요한 필드들 가져오기
+        issue_values = list(issues.values(*fields_to_include))
+        
+        # 결과 딕셔너리에 필드 추가
+        for i, result in enumerate(serialized_data):
+            if i < len(issue_values):
+                issue_value = issue_values[i]
+                if group_by in FIELD_MAPPER and group_by in issue_value:
+                    result[group_by] = issue_value[group_by]
+                if sub_group_by in FIELD_MAPPER and sub_group_by in issue_value:
+                    result[sub_group_by] = issue_value[sub_group_by]
+    
+    return serialized_data
 
 
 def issue_group_values(

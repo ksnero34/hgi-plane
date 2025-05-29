@@ -14,7 +14,9 @@ from plane.db.models import (
     IssueActivity,
     Module,
     User,
-    Cycle
+    Cycle,
+    CustomField,
+    CustomFieldValue
 )
 from plane.utils.exception_logger import log_exception
 from plane.app.serializers import IssueSerializer, IssueCreateSerializer
@@ -194,6 +196,104 @@ def process_description(description_text):
         "description_stripped": description_text.strip()
     }
 
+def process_custom_field_value(field, value_str):
+    """커스텀 필드 값을 필드 타입에 맞게 처리하는 함수"""
+    if not value_str or value_str.strip() == "":
+        return None
+    
+    value_str = value_str.strip()
+    field_type = field.field_type
+    
+    try:
+        if field_type == "select":
+            # 선택 필드: 옵션 중 하나여야 함
+            if value_str in field.options:
+                return value_str
+            else:
+                print(f"Warning: Invalid option '{value_str}' for select field '{field.name}'. Skipping.")
+                return None
+                
+        elif field_type == "multiselect":
+            # 다중선택 필드: 쉼표로 구분된 값들을 리스트로 변환
+            values = [v.strip() for v in value_str.split(",") if v.strip()]
+            valid_values = [v for v in values if v in field.options]
+            if valid_values:
+                return valid_values
+            else:
+                print(f"Warning: No valid options found in '{value_str}' for multiselect field '{field.name}'. Skipping.")
+                return None
+                
+        elif field_type == "date":
+            # 날짜 필드: 날짜 형식으로 파싱
+            parsed_date = parse_date(value_str)
+            if parsed_date:
+                return parsed_date.strftime("%Y-%m-%d")
+            else:
+                print(f"Warning: Invalid date format '{value_str}' for date field '{field.name}'. Skipping.")
+                return None
+                
+        elif field_type == "project_member":
+            # 프로젝트 멤버 필드: 이메일로 사용자 찾기
+            user = find_user_by_email(value_str, field.project)
+            if user:
+                return str(user.id)
+            else:
+                print(f"Warning: User '{value_str}' not found for project member field '{field.name}'. Skipping.")
+                return None
+                
+        elif field_type == "project_members":
+            # 프로젝트 멤버(다중) 필드: 쉼표로 구분된 이메일들을 사용자 ID 리스트로 변환
+            emails = [email.strip() for email in value_str.split(",") if email.strip()]
+            user_ids = []
+            for email in emails:
+                user = find_user_by_email(email, field.project)
+                if user:
+                    user_ids.append(str(user.id))
+                else:
+                    print(f"Warning: User '{email}' not found for project members field '{field.name}'. Skipping this user.")
+            
+            if user_ids:
+                return user_ids
+            else:
+                print(f"Warning: No valid users found in '{value_str}' for project members field '{field.name}'. Skipping.")
+                return None
+        else:
+            # 기타 필드 타입은 문자열로 처리
+            return value_str
+            
+    except Exception as e:
+        print(f"Error processing custom field value '{value_str}' for field '{field.name}': {str(e)}")
+        return None
+
+def process_custom_fields(row, project, creator_user):
+    """행에서 커스텀 필드 값들을 처리하는 함수"""
+    custom_field_values = []
+    
+    # 프로젝트의 모든 커스텀 필드 가져오기
+    custom_fields = CustomField.objects.filter(
+        project=project,
+        deleted_at__isnull=True
+    )
+    
+    # 각 커스텀 필드에 대해 값 확인
+    for field in custom_fields:
+        # 행에서 필드 이름으로 값 찾기
+        field_value_str = safe_str(row.get(field.name, ""))
+        
+        if field_value_str:
+            # 필드 타입에 맞게 값 처리
+            processed_value = process_custom_field_value(field, field_value_str)
+            
+            if processed_value is not None:
+                custom_field_values.append({
+                    "custom_field_id": str(field.id),
+                    "value": processed_value,
+                    "field_name": field.name,
+                    "field_type": field.field_type
+                })
+    
+    return custom_field_values
+
 @shared_task
 def issue_import_task(workspace_id, project_id, file_content, file_type, user_id):
     try:
@@ -315,6 +415,9 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     if not creator_user:
                         creator_user = User.objects.get(id=UUID(user_id))
                     
+                    # 커스텀 필드 값 처리
+                    custom_field_values = process_custom_fields(row, project, creator_user)
+                    
                     # 기본 이슈 데이터 준비
                     issue_data = {
                         "name": safe_str(row.get("Name", "")),
@@ -368,6 +471,8 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         IssueAssignee.objects.filter(issue=issue).delete()
                         ModuleIssue.objects.filter(issue=issue).delete()
                         CycleIssue.objects.filter(issue=issue).delete()
+                        # 커스텀 필드 값도 삭제 후 재생성
+                        CustomFieldValue.objects.filter(issue=issue).delete()
                     else:
                         # print("\n[Debug] 새 이슈 생성:")
                         # UUID 문자열을 UUID 객체로 변환
@@ -418,6 +523,10 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     
                     # 관련 데이터 처리 (라벨, 담당자, 모듈, 사이클)
                     process_related_data(issue, row, project, workspace_id, creator_user)
+                    
+                    # 커스텀 필드 값 처리
+                    if custom_field_values:
+                        process_custom_field_values(issue, custom_field_values, project, workspace_id, creator_user)
                     
                     # 이슈 활동 로그 생성
                     requested_data = json.dumps(row, cls=DjangoJSONEncoder)
@@ -576,3 +685,31 @@ def process_related_data(issue, row, project, workspace_id, creator_user):
                     "UPDATE cycle_issues SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
                     [created_by_id, updated_by_id, cycle_relation.id]
                 )
+
+def process_custom_field_values(issue, custom_field_values, project, workspace_id, creator_user):
+    """커스텀 필드 값들을 데이터베이스에 저장하는 함수"""
+    # 사용할 created_by_id와 updated_by_id 준비
+    created_by_id = creator_user.id if creator_user else None
+    updated_by_id = creator_user.id if creator_user else None
+    
+    for cfv_data in custom_field_values:
+        try:
+            # CustomFieldValue 객체 생성
+            custom_field_value = CustomFieldValue.objects.create(
+                custom_field_id=cfv_data["custom_field_id"],
+                issue=issue,
+                value=cfv_data["value"],
+                project_id=project.id,
+                workspace_id=workspace_id,
+            )
+            
+            # 직접 SQL로 created_by_id와 updated_by_id 설정
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE custom_field_values SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
+                    [created_by_id, updated_by_id, custom_field_value.id]
+                )
+                
+        except Exception as e:
+            print(f"Error saving custom field value for field {cfv_data.get('field_name', 'unknown')}: {str(e)}")
+            continue

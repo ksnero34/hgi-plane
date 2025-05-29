@@ -16,7 +16,7 @@ from django.utils import timezone
 from openpyxl import Workbook
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue, FileAsset
+from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User
 from plane.utils.exception_logger import log_exception
 from plane.settings.storage import S3Storage
 
@@ -74,10 +74,27 @@ def create_zip_file(files):
     return zip_buffer
 
 
-def upload_to_s3(zip_file, workspace_id, token_id, slug):
-    file_name = (
-        f"export-{slug}-{token_id[:6]}-{str(timezone.now().date())}.zip"
-    )
+def upload_to_s3(zip_file, workspace_id, token_id, slug, project_names=None):
+    # 현재 시간을 YYYYMMDD_HHMMSS 형태로 포맷
+    now = timezone.now()
+    timestamp = now.strftime("%Y%m%d_%H%M%S")
+    
+    # 프로젝트명 처리
+    if project_names and len(project_names) > 0:
+        if len(project_names) == 1:
+            # 단일 프로젝트인 경우
+            project_name = project_names[0]
+            # 파일명에 사용할 수 없는 문자 제거
+            safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_project_name = safe_project_name.replace(' ', '_')
+            file_name = f"{safe_project_name}-export-{timestamp}.zip"
+        else:
+            # 다중 프로젝트인 경우
+            file_name = f"Multiple_Projects-export-{timestamp}.zip"
+    else:
+        # 프로젝트명이 없는 경우 기존 방식 사용
+        file_name = f"export-{slug}-{token_id[:6]}-{timestamp}.zip"
+    
     object_key = f"{workspace_id}/{file_name}"
     expires_in = 7 * 24 * 60 * 60
 
@@ -173,7 +190,53 @@ def upload_to_s3(zip_file, workspace_id, token_id, slug):
     exporter_instance.save(update_fields=["status", "url", "key"])
 
 
-def generate_table_row(issue):
+def format_custom_field_value(field_id, field_value, custom_fields_info):
+    """커스텀 필드 값을 적절한 형태로 포맷팅하는 함수"""
+    if not field_value or field_id not in custom_fields_info:
+        return ""
+    
+    field_info = custom_fields_info[field_id]
+    field_type = field_info['field_type']
+    
+    try:
+        if field_type == "project_member":
+            # 단일 프로젝트 멤버: UUID를 이메일로 변환
+            try:
+                user = User.objects.get(id=field_value)
+                return user.email
+            except User.DoesNotExist:
+                return ""
+                
+        elif field_type == "project_members":
+            # 다중 프로젝트 멤버: UUID 리스트를 이메일 리스트로 변환
+            if isinstance(field_value, list):
+                emails = []
+                for user_id in field_value:
+                    try:
+                        user = User.objects.get(id=user_id)
+                        emails.append(user.email)
+                    except User.DoesNotExist:
+                        continue
+                return ", ".join(emails)
+            else:
+                return ""
+                
+        elif field_type == "multiselect":
+            # 다중선택: 리스트를 쉼표로 구분된 문자열로 변환
+            if isinstance(field_value, list):
+                return ", ".join(str(v) for v in field_value)
+            else:
+                return str(field_value)
+        else:
+            # 기타 타입: 문자열로 변환
+            return str(field_value)
+            
+    except Exception as e:
+        print(f"Error formatting custom field value: {str(e)}")
+        return ""
+
+
+def generate_table_row(issue, custom_fields_map=None, custom_fields_info=None):
     # parent 정보를 가져오기 위해 쿼리 수정
     parent_issue = None
     if issue.get("parent_id"):
@@ -199,7 +262,8 @@ def generate_table_row(issue):
     else:
         labels = issue.get("labels__name", "")
 
-    return [
+    # 기본 행 데이터
+    row = [
         f"""{issue["project__identifier"]}-{issue["sequence_id"]}""",
         issue["project__name"],
         # 부모 이슈 ID 추가
@@ -227,9 +291,19 @@ def generate_table_row(issue):
         dateTimeConverter(issue["completed_at"]),
         dateTimeConverter(issue["archived_at"]),
     ]
+    
+    # 커스텀 필드 값 추가
+    if custom_fields_map and custom_fields_info:
+        custom_field_values = issue.get("custom_field_values", {})
+        for field_id in custom_fields_map.keys():
+            field_value = custom_field_values.get(field_id, "")
+            formatted_value = format_custom_field_value(field_id, field_value, custom_fields_info)
+            row.append(formatted_value)
+    
+    return row
 
 
-def generate_json_row(issue):
+def generate_json_row(issue, custom_fields_map=None, custom_fields_info=None):
     # parent 정보를 가져오기 위해 쿼리 수정
     parent_issue = None
     if issue.get("parent_id"):
@@ -255,7 +329,8 @@ def generate_json_row(issue):
     else:
         labels = issue.get("labels__name", "")
 
-    return {
+    # 기본 JSON 데이터
+    json_data = {
         "ID": f"""{issue["project__identifier"]}-{issue["sequence_id"]}""",
         "Project": issue["project__name"],
         "Parent Issue": f"""{parent_issue["project__identifier"]}-{parent_issue["sequence_id"]}""" if parent_issue else "",
@@ -282,6 +357,16 @@ def generate_json_row(issue):
         "Completed At": dateTimeConverter(issue["completed_at"]),
         "Archived At": dateTimeConverter(issue["archived_at"]),
     }
+    
+    # 커스텀 필드 값 추가
+    if custom_fields_map and custom_fields_info:
+        custom_field_values = issue.get("custom_field_values", {})
+        for field_id, field_name in custom_fields_map.items():
+            field_value = custom_field_values.get(field_id, "")
+            formatted_value = format_custom_field_value(field_id, field_value, custom_fields_info)
+            json_data[field_name] = formatted_value
+    
+    return json_data
 
 
 def update_json_row(rows, row):
@@ -321,6 +406,26 @@ def update_json_row(rows, row):
             else:
                 # 라벨이 없는 경우 새 라벨로 설정
                 rows[matched_index]["Labels"] = label
+                
+        # 커스텀 필드 값들도 업데이트 (기본 필드가 아닌 모든 필드)
+        basic_fields = {"ID", "Project", "Parent Issue", "Name", "Description", "State", 
+                       "Start Date", "Target Date", "Priority", "Created By", "Assignee", 
+                       "Labels", "Cycle Name", "Cycle Start Date", "Cycle End Date", 
+                       "Module Name", "Module Start Date", "Module Target Date", 
+                       "Created At", "Updated At", "Completed At", "Archived At"}
+        
+        for field_name, field_value in row.items():
+            if field_name not in basic_fields:
+                # 커스텀 필드 값 업데이트
+                existing_value = rows[matched_index].get(field_name, "")
+                if field_value and field_value.strip():
+                    if existing_value and existing_value.strip():
+                        # 이미 값이 있고, 새 값이 포함되어 있지 않다면 추가
+                        if field_value not in existing_value:
+                            rows[matched_index][field_name] += f", {field_value}"
+                    else:
+                        # 값이 없는 경우 새 값으로 설정
+                        rows[matched_index][field_name] = field_value
     else:
         rows.append(row)
 
@@ -358,38 +463,93 @@ def update_table_row(rows, row):
             else:
                 # 라벨이 없는 경우 새 라벨로 설정
                 rows[matched_index][11] = label
+                
+        # 커스텀 필드 값들도 업데이트 (기본 필드 이후의 모든 필드)
+        basic_field_count = 22  # 기본 필드 개수
+        for i in range(basic_field_count, len(row)):
+            if i < len(rows[matched_index]):
+                existing_value = rows[matched_index][i]
+                new_value = row[i]
+                
+                if new_value and str(new_value).strip():
+                    if existing_value and str(existing_value).strip():
+                        # 이미 값이 있고, 새 값이 포함되어 있지 않다면 추가
+                        if str(new_value) not in str(existing_value):
+                            rows[matched_index][i] += f", {new_value}"
+                    else:
+                        # 값이 없는 경우 새 값으로 설정
+                        rows[matched_index][i] = new_value
+            else:
+                # 새로운 커스텀 필드인 경우 추가
+                rows[matched_index].append(row[i])
     else:
         rows.append(row)
 
 
-def generate_csv(header, project_id, issues, files):
+def generate_csv(header, project_id, issues, files, custom_fields_map=None, custom_fields_info=None, project_name=None):
     """
     Generate CSV export for all the passed issues.
     """
     rows = [header]
     for issue in issues:
-        row = generate_table_row(issue)
+        row = generate_table_row(issue, custom_fields_map, custom_fields_info)
         update_table_row(rows, row)
     csv_file = create_csv_file(rows)
-    files.append((f"{project_id}.csv", csv_file))
+    
+    # 프로젝트명이 있으면 사용, 없으면 project_id 사용
+    if project_name:
+        # 파일명에 사용할 수 없는 문자 제거
+        safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_project_name = safe_project_name.replace(' ', '_')
+        # 현재 시간을 YYYYMMDD_HHMMSS 형태로 포맷
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{safe_project_name}-export-{timestamp}.csv"
+    else:
+        filename = f"{project_id}.csv"
+    
+    files.append((filename, csv_file))
 
 
-def generate_json(header, project_id, issues, files):
+def generate_json(header, project_id, issues, files, custom_fields_map=None, custom_fields_info=None, project_name=None):
     rows = []
     for issue in issues:
-        row = generate_json_row(issue)
+        row = generate_json_row(issue, custom_fields_map, custom_fields_info)
         update_json_row(rows, row)
     json_file = create_json_file(rows)
-    files.append((f"{project_id}.json", json_file))
+    
+    # 프로젝트명이 있으면 사용, 없으면 project_id 사용
+    if project_name:
+        # 파일명에 사용할 수 없는 문자 제거
+        safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_project_name = safe_project_name.replace(' ', '_')
+        # 현재 시간을 YYYYMMDD_HHMMSS 형태로 포맷
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{safe_project_name}-export-{timestamp}.json"
+    else:
+        filename = f"{project_id}.json"
+    
+    files.append((filename, json_file))
 
 
-def generate_xlsx(header, project_id, issues, files):
+def generate_xlsx(header, project_id, issues, files, custom_fields_map=None, custom_fields_info=None, project_name=None):
     rows = [header]
     for issue in issues:
-        row = generate_table_row(issue)
+        row = generate_table_row(issue, custom_fields_map, custom_fields_info)
         update_table_row(rows, row)
     xlsx_file = create_xlsx_file(rows)
-    files.append((f"{project_id}.xlsx", xlsx_file))
+    
+    # 프로젝트명이 있으면 사용, 없으면 project_id 사용
+    if project_name:
+        # 파일명에 사용할 수 없는 문자 제거
+        safe_project_name = "".join(c for c in project_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_project_name = safe_project_name.replace(' ', '_')
+        # 현재 시간을 YYYYMMDD_HHMMSS 형태로 포맷
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{safe_project_name}-export-{timestamp}.xlsx"
+    else:
+        filename = f"{project_id}.xlsx"
+    
+    files.append((filename, xlsx_file))
 
 
 @shared_task
@@ -398,6 +558,25 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
         exporter_instance = ExporterHistory.objects.get(token=token_id)
         exporter_instance.status = "processing"
         exporter_instance.save(update_fields=["status"])
+
+        # 프로젝트의 커스텀 필드 가져오기
+        custom_fields = CustomField.objects.filter(
+            project_id__in=project_ids,
+            deleted_at__isnull=True
+        ).order_by("sort_order", "created_at")
+        
+        # 커스텀 필드 맵 생성 (field_id -> field_name)
+        custom_fields_map = {str(field.id): field.name for field in custom_fields}
+        
+        # 커스텀 필드 정보 맵 생성 (field_id -> field_info)
+        custom_fields_info = {
+            str(field.id): {
+                'name': field.name,
+                'field_type': field.field_type,
+                'options': field.options
+            } 
+            for field in custom_fields
+        }
 
         # 기본 이슈 정보를 먼저 가져옵니다 (중복 없이)
         base_issues = (
@@ -469,6 +648,7 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 "created_by__email": issue["created_by__email"],
                 "assignees__email": [],  # 담당자 이메일 목록
                 "labels__name": [],      # 라벨 목록
+                "custom_field_values": {},  # 커스텀 필드 값들
             }
         
         # 이슈 ID 목록
@@ -492,16 +672,42 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 if name not in issues_data[issue_id]["labels__name"]:
                     issues_data[issue_id]["labels__name"].append(name)
         
+        # 커스텀 필드 값 가져오기
+        if custom_fields_map:
+            custom_field_values = CustomFieldValue.objects.filter(
+                issue_id__in=issue_ids,
+                custom_field_id__in=custom_fields_map.keys(),
+                deleted_at__isnull=True
+            ).values("issue_id", "custom_field_id", "value")
+            
+            for cfv in custom_field_values:
+                issue_id = cfv["issue_id"]
+                field_id = str(cfv["custom_field_id"])
+                value = cfv["value"]
+                
+                if issue_id in issues_data:
+                    issues_data[issue_id]["custom_field_values"][field_id] = value
+        
         # 최종 이슈 목록 생성
         final_issues = []
+        project_names = []  # 프로젝트 이름 수집
+        project_id_to_name = {}  # 프로젝트 ID와 이름 매핑
+        
         for project_id in project_ids:
             project_issues = [
                 issue for issue in issues_data.values() 
                 if str(issue["project__id"]) == str(project_id)
             ]
             final_issues.extend(project_issues)
+            
+            # 프로젝트 이름 수집 및 매핑
+            if project_issues:
+                project_name = project_issues[0]["project__name"]
+                project_id_to_name[str(project_id)] = project_name
+                if project_name not in project_names:
+                    project_names.append(project_name)
         
-        # CSV header 수정
+        # CSV header 수정 - 커스텀 필드 추가
         header = [
             "ID",
             "Project",
@@ -526,6 +732,11 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
             "Completed At",
             "Archived At",
         ]
+        
+        # 커스텀 필드 헤더 추가
+        if custom_fields_map:
+            for field_name in custom_fields_map.values():
+                header.append(field_name)
 
         EXPORTER_MAPPER = {
             "csv": generate_csv,
@@ -542,14 +753,18 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 ]
                 exporter = EXPORTER_MAPPER.get(provider)
                 if exporter is not None:
-                    exporter(header, project_id, project_issues, files)
+                    # 해당 프로젝트의 정확한 이름 전달
+                    project_name = project_id_to_name.get(str(project_id))
+                    exporter(header, project_id, project_issues, files, custom_fields_map, custom_fields_info, project_name)
         else:
             exporter = EXPORTER_MAPPER.get(provider)
             if exporter is not None:
-                exporter(header, workspace_id, final_issues, files)
+                # 단일 프로젝트인 경우 첫 번째 프로젝트명 사용
+                project_name = project_names[0] if project_names else None
+                exporter(header, workspace_id, final_issues, files, custom_fields_map, custom_fields_info, project_name)
 
         zip_buffer = create_zip_file(files)
-        upload_to_s3(zip_buffer, workspace_id, token_id, slug)
+        upload_to_s3(zip_buffer, workspace_id, token_id, slug, project_names)
 
     except Exception as e:
         exporter_instance = ExporterHistory.objects.get(token=token_id)
