@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 import useSWR from "swr";
 // icons
 import { History, MessageSquare } from "lucide-react";
+// types
+import { TCustomField } from "@plane/types";
 // hooks
 import { ActivityIcon, ActivityMessage, IssueLink } from "@/components/core";
 import { RichTextReadOnlyEditor } from "@/components/editor/rich-text-editor/rich-text-read-only-editor";
@@ -32,6 +34,9 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
   const { cursor, perPage, updateResultsCount, updateTotalPages, updateEmptyState } = props;
   // store hooks
   const { data: currentUser } = useUser();
+  
+  // 커스텀 필드 상태
+  const [customFieldsByProject, setCustomFieldsByProject] = useState<{ [projectId: string]: TCustomField[] }>({});
 
   const { data: userProfileActivity } = useSWR(
     USER_ACTIVITY({
@@ -54,12 +59,57 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
     updateResultsCount(userProfileActivity.results.length);
   }, [updateResultsCount, updateTotalPages, userProfileActivity, updateEmptyState]);
 
+  // 프로젝트별 커스텀 필드 조회
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!userProfileActivity?.results) return;
+      
+      // 활동에서 고유한 프로젝트 ID들과 워크스페이스 슬러그 추출
+      const projectData = userProfileActivity.results.reduce((acc: any, activity: any) => {
+        if (activity.project && activity.workspace_detail?.slug) {
+          acc[activity.project] = activity.workspace_detail.slug;
+        }
+        return acc;
+      }, {});
+      
+      const customFieldsMap: { [projectId: string]: TCustomField[] } = {};
+      
+      await Promise.all(
+        Object.entries(projectData).map(async ([projectId, workspaceSlug]) => {
+          try {
+            const response = await fetch(
+              `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+              {
+                credentials: "include",
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              customFieldsMap[projectId] = data;
+            }
+          } catch (error) {
+            console.error(`커스텀 필드 로드 중 오류 (프로젝트 ${projectId}):`, error);
+            customFieldsMap[projectId] = [];
+          }
+        })
+      );
+      
+      setCustomFieldsByProject(customFieldsMap);
+    };
+
+    if (userProfileActivity?.results && userProfileActivity.results.length > 0) {
+      fetchCustomFields();
+    }
+  }, [userProfileActivity]);
+
   // TODO: refactor this component
   return (
     <>
       {userProfileActivity ? (
         <ul role="list">
           {userProfileActivity.results.map((activityItem: any) => {
+            const projectCustomFields = customFieldsByProject[activityItem.project] || [];
+            
             if (activityItem.field === "comment")
               return (
                 <div key={activityItem.id} className="mt-2">
@@ -121,7 +171,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
                   created <IssueLink activity={activityItem} />
                 </span>
               ) : (
-                <ActivityMessage activity={activityItem} showIssue />
+                <ActivityMessage activity={activityItem} showIssue customFields={projectCustomFields} />
               );
 
             if ("field" in activityItem && activityItem.field !== "updated_by")
@@ -138,7 +188,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
                                   activityItem.new_value === "restore" ? (
                                     <History className="h-5 w-5 text-custom-text-200" />
                                   ) : (
-                                    <ActivityIcon activity={activityItem} />
+                                    <ActivityIcon activity={activityItem} customFields={projectCustomFields} />
                                   )
                                 ) : activityItem.actor_detail.avatar_url &&
                                   activityItem.actor_detail.avatar_url !== "" ? (

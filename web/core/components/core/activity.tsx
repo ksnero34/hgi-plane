@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // store hooks
@@ -19,15 +19,18 @@ import {
   SignalMediumIcon,
   MessageSquareIcon,
   UsersIcon,
+  CalendarDays,
+  Users,
+  User,
 } from "lucide-react";
-import { IIssueActivity } from "@plane/types";
+import { IIssueActivity, TCustomField } from "@plane/types";
 import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, LayersIcon, DiceIcon, Intake } from "@plane/ui";
 // helpers
 import { renderFormattedDate } from "@/helpers/date-time.helper";
 import { generateWorkItemLink } from "@/helpers/issue.helper";
 import { capitalizeFirstLetter } from "@/helpers/string.helper";
 import { convertMinutesToHoursMinutesString } from "@/helpers/date-time.helper";
-import { useLabel } from "@/hooks/store";
+import { useLabel, useMember } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // types
 
@@ -105,6 +108,249 @@ const LabelPill = observer(({ labelId, workspaceSlug }: { labelId: string; works
     />
   );
 });
+
+// 커스텀 필드 타입별 아이콘 반환
+const getCustomFieldIcon = (fieldType: string) => {
+  switch (fieldType) {
+    case "date":
+      return <Calendar size={12} className="text-custom-text-200" aria-hidden="true" />; // due date 아이콘
+    case "project_member":
+      return <User size={12} className="text-custom-text-200" aria-hidden="true" />; // created by 아이콘
+    case "project_members":
+      return <Users2Icon size={12} className="text-custom-text-200" aria-hidden="true" />; // assignees 아이콘
+    case "select":
+    case "multiselect":
+    default:
+      return <TagIcon size={12} className="text-custom-text-200" aria-hidden="true" />; // labels 아이콘
+  }
+};
+
+// 커스텀 필드 값 포맷팅 함수
+const formatCustomFieldValue = (
+  value: string | null, 
+  fieldType: string, 
+  workspaceSlug: string, 
+  projectId: string,
+  memberHook: any,
+  activity?: IIssueActivity
+): React.ReactNode => {
+  if (!value) return "없음";
+  
+  const { project: { getProjectMemberDetails, getProjectMemberIds } } = memberHook;
+  
+  if (fieldType === "project_member") {
+    // 단일 멤버인 경우 - 백엔드에서 UUID를 받음
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    
+    if (isUUID) {
+      // UUID인 경우 멤버 정보 조회
+      const memberDetails = getProjectMemberDetails(value, projectId);
+      const displayName = memberDetails?.member?.display_name || value;
+      
+      return (
+        <a
+          href={`/${workspaceSlug}/profile/${value}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center font-medium text-custom-text-100 hover:underline"
+        >
+          {displayName}
+        </a>
+      );
+    } else {
+      // UUID가 아닌 경우 (레거시 데이터) 일반 텍스트로 표시
+      return <span className="font-medium text-custom-text-100">{value}</span>;
+    }
+  } else if (fieldType === "project_members") {
+    // 다중 멤버인 경우 - 백엔드에서 UUID 배열을 JSON으로 받음
+    let memberIds: string[] = [];
+    
+    try {
+      // JSON 배열 형태인지 확인
+      if (value.startsWith('[') && value.endsWith(']')) {
+        memberIds = JSON.parse(value);
+      } else {
+        // 단일 값인 경우
+        memberIds = [value.trim()];
+      }
+    } catch {
+      // JSON 파싱 실패 시 단일 값으로 처리
+      memberIds = [value.trim()];
+    }
+    
+    return memberIds.map((memberId, index) => {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
+      
+      if (isUUID) {
+        // UUID인 경우 멤버 정보 조회
+        const memberDetails = getProjectMemberDetails(memberId, projectId);
+        const displayName = memberDetails?.member?.display_name || memberId;
+        
+        const memberElement = (
+          <a
+            key={index}
+            href={`/${workspaceSlug}/profile/${memberId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center font-medium text-custom-text-100 hover:underline"
+          >
+            {displayName}
+          </a>
+        );
+        
+        return index < memberIds.length - 1 ? (
+          <span key={`wrapper-${index}`}>
+            {memberElement}, 
+          </span>
+        ) : memberElement;
+      } else {
+        // UUID가 아닌 경우 (레거시 데이터) 일반 텍스트로 표시
+        const memberElement = (
+          <span key={index} className="font-medium text-custom-text-100">{memberId}</span>
+        );
+        
+        return index < memberIds.length - 1 ? (
+          <span key={`wrapper-${index}`}>
+            {memberElement}, 
+          </span>
+        ) : memberElement;
+      }
+    });
+  } else if (fieldType === "date") {
+    try {
+      return renderFormattedDate(value);
+    } catch {
+      return value;
+    }
+  }
+  
+  return value;
+};
+
+// 커스텀 필드 타입 추출 함수 (실제 커스텀 필드 정보 사용)
+const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField[]): string => {
+  const fieldKey = activity.field?.replace("custom_field_", "");
+  
+  if (!fieldKey) return 'text';
+  
+  // 실제 커스텀 필드에서 타입 찾기
+  const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
+  
+  if (field) {
+    return field.field_type;
+  }
+  
+  // 필드를 찾을 수 없는 경우 값의 형태로 타입 추정 (fallback)
+  const value = activity.new_value || activity.old_value;
+  if (value) {
+    // UUID 패턴 체크 (project_member)
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidPattern.test(value)) {
+      return 'project_member';
+    }
+    
+    // JSON 배열 패턴 체크 (project_members)
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed) && parsed.length > 0 && uuidPattern.test(parsed[0])) {
+          return 'project_members';
+        }
+      } catch {}
+    }
+    
+    // 쉼표로 구분된 UUID들 (project_members)
+    if (value.includes(',')) {
+      const parts = value.split(',').map(p => p.trim());
+      if (parts.length > 1 && parts.every(p => uuidPattern.test(p) || p.length > 0)) {
+        return 'project_members';
+      }
+    }
+    
+    // 날짜 패턴 체크
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return 'date';
+    }
+  }
+  
+  return 'text'; // 기본값
+};
+
+// 커스텀 필드 activity 메시지 생성
+const getCustomFieldActivityMessage = (
+  activity: IIssueActivity, 
+  showIssue: boolean, 
+  workspaceSlug: string,
+  memberHook: any,
+  customFields: TCustomField[]
+) => {
+  const fieldKey = activity.field?.replace("custom_field_", "");
+  
+  // 실제 커스텀 필드에서 이름 찾기
+  const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
+  const fieldName = field?.name || fieldKey || "알 수 없는 필드";
+  const fieldType = getCustomFieldType(activity, customFields);
+  
+  const projectId = activity.project;
+  
+  if (activity.verb === "created") {
+    return (
+      <>
+        커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span> 값을{" "}
+        <span className="font-medium text-custom-text-100">
+          {formatCustomFieldValue(activity.new_value, fieldType, workspaceSlug, projectId, memberHook, activity)}
+        </span>
+        {showIssue && (
+          <>
+            {" "}(으)로 <IssueLink activity={activity} />에{" "}
+          </>
+        )}
+        {!showIssue && " (으)로"} 설정했습니다
+      </>
+    );
+  } else if (activity.verb === "updated") {
+    return (
+      <>
+        커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span> 값을{" "}
+        <span className="font-medium text-custom-text-100">
+          {formatCustomFieldValue(activity.old_value, fieldType, workspaceSlug, projectId, memberHook, activity)}
+        </span>에서{" "}
+        <span className="font-medium text-custom-text-100">
+          {formatCustomFieldValue(activity.new_value, fieldType, workspaceSlug, projectId, memberHook, activity)}
+        </span>
+        {showIssue && (
+          <>
+            {" "}(으)로 <IssueLink activity={activity} />에서{" "}
+          </>
+        )}
+        {!showIssue && " (으)로"} 변경했습니다
+      </>
+    );
+  } else if (activity.verb === "deleted") {
+    return (
+      <>
+        커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>
+        {showIssue && (
+          <>
+            {" "}을(를) <IssueLink activity={activity} />에서{" "}
+          </>
+        )}
+        {!showIssue && " 을(를)"} 삭제했습니다
+      </>
+    );
+  }
+  
+  return (
+    <>
+      커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>을(를) 수정했습니다
+      {showIssue && (
+        <>
+          {" "} <IssueLink activity={activity} />에서
+        </>
+      )}
+    </>
+  );
+};
 
 const inboxActivityMessage = {
   declined: {
@@ -198,14 +444,6 @@ const activityDetails: {
         return (
           <>
             새로운 첨부파일
-            {/* <a
-              href={`${activity.new_value}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
-            >
-              파일
-            </a> */}
             을
             {showIssue && (
               <>
@@ -846,18 +1084,42 @@ const activityDetails: {
   },
 };
 
-export const ActivityIcon = ({ activity }: { activity: IIssueActivity }) => (
-  <>{activityDetails[activity.field as keyof typeof activityDetails]?.icon}</>
-);
+export const ActivityIcon = ({ activity, customFields = [] }: { activity: IIssueActivity; customFields?: TCustomField[] }) => {
+  // 커스텀 필드 activity인 경우
+  if (activity.field?.startsWith("custom_field_")) {
+    const fieldType = getCustomFieldType(activity, customFields);
+    return getCustomFieldIcon(fieldType);
+  }
+  
+  return <>{activityDetails[activity.field as keyof typeof activityDetails]?.icon}</>;
+};
 
 type ActivityMessageProps = {
   activity: IIssueActivity;
   showIssue?: boolean;
+  customFields?: TCustomField[];
 };
 
-export const ActivityMessage = ({ activity, showIssue = false }: ActivityMessageProps) => {
+export const ActivityMessage = ({ activity, showIssue = false, customFields = [] }: ActivityMessageProps) => {
   // router params
   const { workspaceSlug } = useParams();
+  // member hook
+  const memberHook = useMember();
+
+  // 커스텀 필드 activity 처리
+  if (activity.field?.startsWith("custom_field_")) {
+    return (
+      <>
+        {getCustomFieldActivityMessage(
+          activity,
+          showIssue,
+          workspaceSlug ? workspaceSlug.toString() : (activity.workspace_detail?.slug ?? ""),
+          memberHook,
+          customFields
+        )}
+      </>
+    );
+  }
 
   return (
     <>

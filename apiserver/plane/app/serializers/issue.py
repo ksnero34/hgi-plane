@@ -4,6 +4,7 @@ from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from datetime import datetime
+import json
 
 # Third Party imports
 from rest_framework import serializers
@@ -41,6 +42,54 @@ from plane.db.models import (
     CustomField,
     CustomFieldValue,
 )
+
+
+def format_custom_field_value_for_activity(field, value):
+    """커스텀 필드 값을 activity 표시용으로 포맷팅"""
+    if value is None:
+        return "없음"
+    
+    try:
+        if field.field_type == "project_member":
+            # 단일 멤버인 경우 UUID 그대로 반환 (프론트엔드에서 변환)
+            return str(value)
+                
+        elif field.field_type == "project_members":
+            # 다중 멤버인 경우 UUID 배열을 JSON 문자열로 반환
+            try:
+                if isinstance(value, str):
+                    member_ids = json.loads(value) if value.startswith('[') else [value]
+                elif isinstance(value, list):
+                    member_ids = value
+                else:
+                    member_ids = [value]
+                
+                # UUID 배열을 JSON 문자열로 반환
+                return json.dumps(member_ids)
+            except (json.JSONDecodeError, ValueError):
+                return str(value)
+                
+        elif field.field_type in ["select", "multiselect"]:
+            # 선택 필드인 경우
+            if field.field_type == "multiselect":
+                try:
+                    if isinstance(value, str):
+                        options = json.loads(value) if value.startswith('[') else [value]
+                    elif isinstance(value, list):
+                        options = value
+                    else:
+                        options = [value]
+                    return ", ".join(str(opt) for opt in options)
+                except (json.JSONDecodeError, ValueError):
+                    return str(value)
+            else:
+                return str(value)
+        else:
+            # 기타 필드 타입 (text, number, date 등)
+            return str(value)
+            
+    except Exception:
+        return str(value)
 
 
 class IssueFlatSerializer(BaseSerializer):
@@ -329,15 +378,23 @@ class IssueCreateSerializer(BaseSerializer):
 
                 # 활동 로그 생성
                 field = CustomField.objects.get(id=field_value["custom_field_id"])
+                
+                # project_member 타입인 경우 identifier에 멤버 ID 저장
+                new_identifier = None
+                if field.field_type == "project_member":
+                    new_identifier = field_value["value"]
+                # project_members 타입은 identifier에 저장하지 않음 (UUID 필드이므로)
+                
                 IssueActivity.objects.create(
                     issue=issue,
                     project_id=project_id,
                     workspace_id=workspace_id,
                     actor_id=created_by_id,
                     verb="created",
-                    field=f"custom_field_{field.key}",
-                    new_value=str(field_value["value"]),
-                    comment=f"커스텀 필드 {field.name} 생성됨"
+                    field=f"custom_field_{field.name}",
+                    new_value=format_custom_field_value_for_activity(field, field_value["value"]),
+                    new_identifier=new_identifier,
+                    comment=f"커스텀 필드 '{field.name}' 값을 '{format_custom_field_value_for_activity(field, field_value['value'])}'로 설정했습니다."
                 )
 
         return issue
@@ -412,24 +469,39 @@ class IssueCreateSerializer(BaseSerializer):
                 
                 # 기존 값이 있으면 업데이트
                 if str(field_id) in old_values:
-                    old_value = old_values[str(field_id)]
-                    if old_value.value != new_value:
-                        old_value.value = new_value
-                        old_value.updated_by_id = updated_by_id
-                        old_value.save()
+                    old_value_obj = old_values[str(field_id)]
+                    if old_value_obj.value != new_value:
+                        # 기존 값을 저장 (업데이트 전에)
+                        previous_value = old_value_obj.value
+                        
+                        # 값 업데이트
+                        old_value_obj.value = new_value
+                        old_value_obj.updated_by_id = updated_by_id
+                        old_value_obj.save()
                         
                         # 활동 로그 생성
                         field = CustomField.objects.get(id=field_id)
+                        
+                        # project_member 타입인 경우 identifier에 멤버 ID 저장
+                        old_identifier = None
+                        new_identifier = None
+                        if field.field_type == "project_member":
+                            old_identifier = previous_value
+                            new_identifier = new_value
+                        # project_members 타입은 identifier에 저장하지 않음 (UUID 필드이므로)
+                        
                         IssueActivity.objects.create(
                             issue=instance,
                             project_id=project_id,
                             workspace_id=workspace_id,
                             actor_id=updated_by_id,
                             verb="updated",
-                            field=f"custom_field_{field.key}",
-                            old_value=str(old_value.value),
-                            new_value=str(new_value),
-                            comment=f"커스텀 필드 {field.name} 수정됨"
+                            field=f"custom_field_{field.name}",
+                            old_value=format_custom_field_value_for_activity(field, previous_value),
+                            new_value=format_custom_field_value_for_activity(field, new_value),
+                            old_identifier=old_identifier,
+                            new_identifier=new_identifier,
+                            comment=f"커스텀 필드 '{field.name}' 값을 '{format_custom_field_value_for_activity(field, new_value)}'로 수정했습니다."
                         )
                 else:
                     # 새로운 값 생성
@@ -445,15 +517,23 @@ class IssueCreateSerializer(BaseSerializer):
                     
                     # 활동 로그 생성
                     field = CustomField.objects.get(id=field_id)
+                    
+                    # project_member 타입인 경우 identifier에 멤버 ID 저장
+                    new_identifier = None
+                    if field.field_type == "project_member":
+                        new_identifier = new_value
+                    # project_members 타입은 identifier에 저장하지 않음 (UUID 필드이므로)
+                    
                     IssueActivity.objects.create(
                         issue=instance,
                         project_id=project_id,
                         workspace_id=workspace_id,
                         actor_id=updated_by_id,
                         verb="created",
-                        field=f"custom_field_{field.key}",
-                        new_value=str(new_value),
-                        comment=f"커스텀 필드 {field.name} 생성됨"
+                        field=f"custom_field_{field.name}",
+                        new_value=format_custom_field_value_for_activity(field, new_value),
+                        new_identifier=new_identifier,
+                        comment=f"커스텀 필드 '{field.name}' 값을 '{format_custom_field_value_for_activity(field, new_value)}'로 설정했습니다."
                     )
 
             # 삭제된 값들 처리
@@ -465,15 +545,23 @@ class IssueCreateSerializer(BaseSerializer):
                     
                     # 활동 로그 생성
                     field = CustomField.objects.get(id=field_id)
+                    
+                    # project_member 타입인 경우 identifier에 멤버 ID 저장
+                    old_identifier = None
+                    if field.field_type == "project_member":
+                        old_identifier = old_value.value
+                    # project_members 타입은 identifier에 저장하지 않음 (UUID 필드이므로)
+                    
                     IssueActivity.objects.create(
                         issue=instance,
                         project_id=project_id,
                         workspace_id=workspace_id,
                         actor_id=updated_by_id,
                         verb="deleted",
-                        field=f"custom_field_{field.key}",
-                        old_value=str(old_value.value),
-                        comment=f"커스텀 필드 {field.name} 삭제됨"
+                        field=f"custom_field_{field.name}",
+                        old_value=format_custom_field_value_for_activity(field, old_value.value),
+                        old_identifier=old_identifier,
+                        comment=f"커스텀 필드 '{field.name}' 삭제됨"
                     )
 
         # Time updation occues even when other related models are updated

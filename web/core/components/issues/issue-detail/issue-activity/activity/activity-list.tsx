@@ -7,6 +7,8 @@ import { useIssueDetail } from "@/hooks/store";
 // plane web components
 import { IssueTypeActivity, AdditionalActivityRoot } from "@/plane-web/components/issues/issue-details";
 import { useTimeLineRelationOptions } from "@/plane-web/components/relations";
+// types
+import { TCustomField } from "@plane/types";
 // local components
 import {
   IssueDefaultActivity,
@@ -27,15 +29,17 @@ import {
   IssueAttachmentActivity,
   IssueArchivedAtActivity,
   IssueInboxActivity,
+  IssueCustomFieldActivity,
 } from "./actions";
 
 type TIssueActivityItem = {
   activityId: string;
   ends: "top" | "bottom" | undefined;
+  customFields?: TCustomField[];
 };
 
 export const IssueActivityItem: FC<TIssueActivityItem> = observer((props) => {
-  const { activityId, ends } = props;
+  const { activityId, ends, customFields = [] } = props;
   // hooks
   const {
     activity: { getActivityById },
@@ -47,6 +51,12 @@ export const IssueActivityItem: FC<TIssueActivityItem> = observer((props) => {
   const componentDefaultProps = { activityId, ends };
 
   const activityField = getActivityById(activityId)?.field;
+  
+  // 커스텀 필드 activity 처리
+  if (activityField?.startsWith("custom_field_")) {
+    return <IssueCustomFieldActivity {...componentDefaultProps} showIssue={false} customFields={customFields} />;
+  }
+  
   switch (activityField) {
     case null: // default issue creation
       return <IssueDefaultActivity {...componentDefaultProps} />;
