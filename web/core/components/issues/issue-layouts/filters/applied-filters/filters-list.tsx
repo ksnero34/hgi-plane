@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 // types
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IIssueFilterOptions, IIssueLabel, IState } from "@plane/types";
+import { IIssueFilterOptions, IIssueLabel, IState, TCustomField } from "@plane/types";
 // components
 import { Tag } from "@plane/ui";
 import {
@@ -16,6 +16,7 @@ import {
   AppliedProjectFilters,
   AppliedStateFilters,
   AppliedStateGroupFilters,
+  AppliedCustomFieldFilters,
 } from "@/components/issues";
 // constants
 // helpers
@@ -31,8 +32,11 @@ type Props = {
   handleRemoveFilter: (key: keyof IIssueFilterOptions, value: string | null) => void;
   labels?: IIssueLabel[] | undefined;
   states?: IState[] | undefined;
+  customFields?: TCustomField[] | undefined;
   alwaysAllowEditing?: boolean;
   disableEditing?: boolean;
+  workspaceSlug?: string;
+  projectId?: string;
 };
 
 const membersFilters = ["assignees", "mentions", "created_by", "subscriber"];
@@ -45,8 +49,11 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
     handleRemoveFilter,
     labels,
     states,
+    customFields,
     alwaysAllowEditing,
     disableEditing = false,
+    workspaceSlug,
+    projectId,
   } = props;
   // store hooks
   const { allowPermissions } = useUserPermissions();
@@ -78,7 +85,8 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
       cycle: "주기",
       module: "모듈",
       issue_type: "작업 항목 유형",
-      team_project: "팀 프로젝트"
+      team_project: "팀 프로젝트",
+      custom_fields: "커스텀 필드"
     };
 
     return filterLabels[key] || replaceUnderscoreIfSnakeCase(key);
@@ -91,6 +99,82 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
 
         if (!value) return;
         if (Array.isArray(value) && value.length === 0) return;
+
+        // 커스텀 필드의 경우 별도 처리
+        if (filterKey === "custom_fields" && customFields) {
+          const customFieldFilters = typeof value === 'string' ? JSON.parse(value) : value as { [field_id: string]: string[] };
+          
+          return Object.entries(customFieldFilters).map(([fieldId, fieldValues]) => {
+            if (!fieldValues || fieldValues.length === 0) return null;
+            
+            const field = customFields.find(f => f.id === fieldId);
+            if (!field) return null;
+            
+            return (
+              <Tag key={`${filterKey}-${fieldId}`}>
+                <span className="text-xs text-custom-text-300">{field.name}</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  <AppliedCustomFieldFilters
+                    appliedFilters={{ [fieldId]: fieldValues }}
+                    customFields={customFields}
+                    editable={isEditingAllowed}
+                    handleRemove={(fieldId, val) => {
+                      // 커스텀 필드 필터 제거 로직
+                      const currentCustomFieldFilters = typeof appliedFilters.custom_fields === 'string' 
+                        ? JSON.parse(appliedFilters.custom_fields) 
+                        : appliedFilters.custom_fields || {};
+                      const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
+                      const newFieldValues = currentFieldValues.filter(v => v !== val);
+                      
+                      const newCustomFieldFilters = {
+                        ...currentCustomFieldFilters,
+                        [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
+                      };
+                      
+                      // 빈 배열인 필드들 제거
+                      Object.keys(newCustomFieldFilters).forEach(key => {
+                        if (!newCustomFieldFilters[key] || newCustomFieldFilters[key].length === 0) {
+                          delete newCustomFieldFilters[key];
+                        }
+                      });
+                      
+                      const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
+                        ? JSON.stringify(newCustomFieldFilters) 
+                        : null;
+                      
+                      handleRemoveFilter("custom_fields", customFieldsValue);
+                    }}
+                    workspaceSlug={workspaceSlug}
+                    projectId={projectId}
+                  />
+                </div>
+                {isEditingAllowed && (
+                  <button
+                    type="button"
+                    className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
+                    onClick={() => {
+                      // 특정 필드의 모든 값 제거
+                      const currentCustomFieldFilters = typeof appliedFilters.custom_fields === 'string' 
+                        ? JSON.parse(appliedFilters.custom_fields) 
+                        : appliedFilters.custom_fields || {};
+                      
+                      const newCustomFieldFilters = { ...currentCustomFieldFilters };
+                      delete newCustomFieldFilters[fieldId];
+                      
+                      const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
+                        ? JSON.stringify(newCustomFieldFilters) 
+                        : null;
+                      
+                      handleRemoveFilter("custom_fields", customFieldsValue);
+                    }}
+                  >
+                    <X size={12} strokeWidth={2} />
+                  </button>
+                )}
+              </Tag>
+            );
+          }).filter(Boolean);
+        }
 
         return (
           <Tag key={filterKey}>
@@ -165,15 +249,6 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
                 handleRemove={(val) => handleRemoveFilter("team_project", val)}
                 values={value}
               />
-            )}
-            {isEditingAllowed && (
-              <button
-                type="button"
-                className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
-                onClick={() => handleRemoveFilter(filterKey, null)}
-              >
-                <X size={12} strokeWidth={2} />
-              </button>
             )}
           </Tag>
         );

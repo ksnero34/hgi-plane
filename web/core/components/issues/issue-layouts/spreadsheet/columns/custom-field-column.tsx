@@ -13,6 +13,7 @@ import { Tooltip } from "@plane/ui";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // helpers
 import { cn } from "@/helpers/common.helper";
+import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 
 type Props = {
   issue: TIssue;
@@ -251,7 +252,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
         return (
           <DateDropdown
             value={fieldValue}
-            onChange={updateFieldValue}
+            onChange={(date) => updateFieldValue(date ? renderFormattedPayloadDate(date) : null)}
             buttonVariant="transparent-with-text"
             buttonClassName={buttonClassName}
             buttonContainerClassName="w-full"

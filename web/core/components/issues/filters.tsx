@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 // plane constants
 import { EIssueLayoutTypes, EIssueFilterType, EIssuesStoreType, ISSUE_STORE_TO_FILTERS_MAP } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
-import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions } from "@plane/types";
+import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions, TCustomField } from "@plane/types";
 import { Button } from "@plane/ui";
 // components
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
@@ -38,6 +38,8 @@ const HeaderFilters = observer((props: Props) => {
   const { t } = useTranslation();
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const {
     project: { projectMemberIds },
@@ -51,9 +53,44 @@ const HeaderFilters = observer((props: Props) => {
   const activeLayout = issueFilters?.displayFilters?.layout;
   const layoutDisplayFiltersOptions = ISSUE_STORE_TO_FILTERS_MAP[storeType]?.[activeLayout];
 
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
+
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
+      
+      // 커스텀 필드의 경우 특별한 처리
+      if (key === "custom_fields") {
+        // value가 이미 JSON 문자열인 경우 그대로 사용
+        updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: value });
+        return;
+      }
+      
       const newValues = issueFilters?.filters?.[key] ?? [];
 
       if (Array.isArray(value)) {
@@ -128,6 +165,7 @@ const HeaderFilters = observer((props: Props) => {
           memberIds={projectMemberIds ?? undefined}
           projectId={projectId}
           states={projectStates}
+          customFields={customFields}
           cycleViewDisabled={!currentProjectDetails?.cycle_view}
           moduleViewDisabled={!currentProjectDetails?.module_view}
           isEpic={storeType === EIssuesStoreType.EPIC}

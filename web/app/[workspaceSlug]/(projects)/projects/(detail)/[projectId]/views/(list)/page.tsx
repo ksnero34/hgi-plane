@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // components
 import { EUserPermissionsLevel, EUserProjectRoles, EViewAccess } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TViewFilterProps } from "@plane/types";
+import { TViewFilterProps, TCustomField } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
 import { PageHead } from "@/components/core";
 import { DetailedEmptyState } from "@/components/empty-state";
@@ -26,6 +26,9 @@ const ProjectViewsPage = observer(() => {
   const { workspaceSlug, projectId } = useParams();
   // plane hooks
   const { t } = useTranslation();
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store
   const { getProjectById, currentProjectDetails } = useProject();
   const { filters, updateFilters, clearAllFilters } = useProjectView();
@@ -35,6 +38,33 @@ const ProjectViewsPage = observer(() => {
   const pageTitle = project?.name ? `${project?.name} - Views` : undefined;
   const canPerformEmptyStateActions = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/views" });
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
 
   const handleRemoveFilter = useCallback(
     (key: keyof TViewFilterProps, value: string | EViewAccess | null) => {
@@ -86,6 +116,11 @@ const ProjectViewsPage = observer(() => {
             handleClearAllFilters={clearAllFilters}
             handleRemoveFilter={handleRemoveFilter}
             alwaysAllowEditing
+            customFields={customFields}
+            workspaceSlug={workspaceSlug as string}
+            projectId={projectId as string}
+            isProjectLevel={true}
+            viewProjectId={projectId as string}
           />
         </Header>
       )}

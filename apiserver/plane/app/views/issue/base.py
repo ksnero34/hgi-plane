@@ -58,6 +58,7 @@ from plane.db.models import (
     ModuleIssue,
     Workspace,
     CustomFieldValue,
+    CustomField,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -166,6 +167,11 @@ class IssueListEndpoint(BaseAPIView):
             return Response(issues, status=status.HTTP_200_OK)
 
         filters = issue_filters(request.query_params, "GET")
+        
+        # 커스텀 필드 필터 처리
+        custom_field_filters = filters.pop('custom_field_filters', None)
+        # print(f"[DEBUG] IssueListEndpoint - custom_field_filters: {custom_field_filters}")
+        # print(f"[DEBUG] IssueListEndpoint - remaining filters: {filters}")
 
         # Custom ordering for priority and state
         priority_order = ["urgent", "high", "medium", "low", "none"]
@@ -237,7 +243,149 @@ class IssueListEndpoint(BaseAPIView):
                     Value([], output_field=ArrayField(UUIDField())),
                 )
             )
-        ).distinct()
+        )
+        
+        # 커스텀 필드 필터 적용
+        if custom_field_filters:
+            # print(f"[DEBUG] IssueListEndpoint - Applying custom field filters: {custom_field_filters}")
+            
+            for custom_filter in custom_field_filters:
+                field_id = custom_filter['field_id']
+                values = custom_filter['values']
+                # print(f"[DEBUG] IssueListEndpoint - Filtering by field_id: {field_id}, values: {values}")
+                
+                # 커스텀 필드 타입 확인
+                try:
+                    custom_field = CustomField.objects.get(id=field_id)
+                    field_type = custom_field.field_type
+                    # print(f"[DEBUG] IssueListEndpoint - Field type: {field_type}")
+                except CustomField.DoesNotExist:
+                    # print(f"[DEBUG] IssueListEndpoint - Custom field {field_id} not found")
+                    continue
+                
+                # 여러 값에 대한 OR 조건 생성
+                q_objects = Q()
+                for value in values:
+                    if field_type == "select":
+                        # select 필드: 문자열 포함 검색 (가장 확실한 방법)
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__icontains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                        
+                        # print(f"[DEBUG] IssueListEndpoint - Searching for contains: {value}")
+                    elif field_type == "multiselect":
+                        # multiselect 필드: JSON 배열에 포함된 경우 확인
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__contains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                    elif field_type == "project_member":
+                        # project_member 필드: 단일 멤버 ID로 필터링
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__icontains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                        # print(f"[DEBUG] IssueListEndpoint - Searching for project member: {value}")
+                    elif field_type == "project_members":
+                        # project_members 필드: 다중 멤버 ID로 필터링 (JSON 배열)
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__contains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                        # print(f"[DEBUG] IssueListEndpoint - Searching for project members: {value}")
+                    elif field_type == "date":
+                        # date 필드: 날짜 범위 처리
+                        if ';' in value:
+                            # "1_weeks;after;fromnow" 또는 "2025-05-29;after" 형태 처리
+                            parts = value.split(';')
+                            
+                            if len(parts) >= 2:
+                                date_part = parts[0]
+                                condition = parts[1]
+                                
+                                # fromnow 처리 (상대적 날짜)
+                                if len(parts) >= 3 and parts[2] == "fromnow":
+                                    from datetime import datetime, timedelta
+                                    import re
+                                    
+                                    # "1_weeks", "2_days" 등 파싱
+                                    match = re.match(r'(\d+)_(\w+)', date_part)
+                                    if match:
+                                        amount = int(match.group(1))
+                                        unit = match.group(2)
+                                        
+                                        # 현재 날짜 기준으로 계산
+                                        now = datetime.now().date()
+                                        if unit.startswith('day'):
+                                            target_date = now + timedelta(days=amount)
+                                        elif unit.startswith('week'):
+                                            target_date = now + timedelta(weeks=amount)
+                                        elif unit.startswith('month'):
+                                            target_date = now + timedelta(days=amount * 30)  # 근사치
+                                        elif unit.startswith('year'):
+                                            target_date = now + timedelta(days=amount * 365)  # 근사치
+                                        else:
+                                            target_date = now
+                                        
+                                        date_str = target_date.strftime('%Y-%m-%d')
+                                        # print(f"[DEBUG] IssueListEndpoint - Calculated date from {date_part}: {date_str}")
+                                    else:
+                                        date_str = date_part
+                                else:
+                                    date_str = date_part
+                                
+                                if condition == "after":
+                                    # 해당 날짜 이후의 모든 날짜 찾기
+                                    q_objects |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__gte=f'"{date_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    )
+                                elif condition == "before":
+                                    # 해당 날짜 이전의 모든 날짜 찾기
+                                    q_objects |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__lte=f'"{date_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    )
+                                elif condition == "within":
+                                    # 현재 날짜부터 해당 날짜까지의 범위
+                                    from datetime import datetime
+                                    now = datetime.now().date()
+                                    now_str = now.strftime('%Y-%m-%d')
+                                    
+                                    q_objects |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__gte=f'"{now_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    ) & Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__lte=f'"{date_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    )
+                                    # print(f"[DEBUG] IssueListEndpoint - Date filter: {date_str} {condition}")
+                        else:
+                            # 정확한 날짜 매칭
+                            import json
+                            json_value = json.dumps(value, ensure_ascii=False)
+                            q_objects |= Q(
+                                custom_field_values__custom_field_id=field_id,
+                                custom_field_values__value=json_value,
+                                custom_field_values__deleted_at__isnull=True
+                            )
+                
+                issue_queryset = issue_queryset.filter(q_objects)
+                # print(f"[DEBUG] IssueListEndpoint - After filtering, queryset count: {issue_queryset.count()}")
+        else:
+            # print(f"[DEBUG] IssueListEndpoint - No custom field filters to apply")
+            pass
+        
+        issue_queryset = issue_queryset.distinct()
 
         # Order queryset based on priority
         if order_by_param == "priority" or order_by_param == "-priority":
@@ -380,6 +528,11 @@ class IssueViewSet(BaseViewSet):
         # 모든 필터 적용 (날짜 필터 포함)
         filters = issue_filters(request.query_params, "GET")
         
+        # 커스텀 필드 필터 처리
+        custom_field_filters = filters.pop('custom_field_filters', None)
+        # print(f"[DEBUG] IssueViewSet - custom_field_filters: {custom_field_filters}")
+        # print(f"[DEBUG] IssueViewSet - remaining filters: {filters}")
+        
         # print("적용된 필터:", filters)
         
         # 기본 queryset 가져오기
@@ -392,6 +545,148 @@ class IssueViewSet(BaseViewSet):
 
         # 기본 필터와 extra 필터 적용
         issue_queryset = issue_queryset.filter(**filters, **extra_filters)
+        
+        # 커스텀 필드 필터 적용
+        if custom_field_filters:
+            # print(f"[DEBUG] IssueViewSet - Applying custom field filters: {custom_field_filters}")
+            
+            for custom_filter in custom_field_filters:
+                field_id = custom_filter['field_id']
+                values = custom_filter['values']
+                # print(f"[DEBUG] IssueViewSet - Filtering by field_id: {field_id}, values: {values}")
+                
+                # 커스텀 필드 타입 확인
+                try:
+                    custom_field = CustomField.objects.get(id=field_id)
+                    field_type = custom_field.field_type
+                    # print(f"[DEBUG] IssueViewSet - Field type: {field_type}")
+                except CustomField.DoesNotExist:
+                    # print(f"[DEBUG] IssueViewSet - Custom field {field_id} not found")
+                    continue
+                
+                # 여러 값에 대한 OR 조건 생성
+                q_objects = Q()
+                for value in values:
+                    if field_type == "select":
+                        # select 필드: 문자열 포함 검색 (가장 확실한 방법)
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__icontains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                        
+                        # print(f"[DEBUG] IssueViewSet - Searching for contains: {value}")
+                    elif field_type == "multiselect":
+                        # multiselect 필드: JSON 배열에 포함된 경우 확인
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__contains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                    elif field_type == "project_member":
+                        # project_member 필드: 단일 멤버 ID로 필터링
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__icontains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                        # print(f"[DEBUG] IssueViewSet - Searching for project member: {value}")
+                    elif field_type == "project_members":
+                        # project_members 필드: 다중 멤버 ID로 필터링 (JSON 배열)
+                        q_objects |= Q(
+                            custom_field_values__custom_field_id=field_id,
+                            custom_field_values__value__contains=value,
+                            custom_field_values__deleted_at__isnull=True
+                        )
+                        # print(f"[DEBUG] IssueViewSet - Searching for project members: {value}")
+                    elif field_type == "date":
+                        # date 필드: 날짜 범위 처리
+                        if ';' in value:
+                            # "1_weeks;after;fromnow" 또는 "2025-05-29;after" 형태 처리
+                            parts = value.split(';')
+                            
+                            if len(parts) >= 2:
+                                date_part = parts[0]
+                                condition = parts[1]
+                                
+                                # fromnow 처리 (상대적 날짜)
+                                if len(parts) >= 3 and parts[2] == "fromnow":
+                                    from datetime import datetime, timedelta
+                                    import re
+                                    
+                                    # "1_weeks", "2_days" 등 파싱
+                                    match = re.match(r'(\d+)_(\w+)', date_part)
+                                    if match:
+                                        amount = int(match.group(1))
+                                        unit = match.group(2)
+                                        
+                                        # 현재 날짜 기준으로 계산
+                                        now = datetime.now().date()
+                                        if unit.startswith('day'):
+                                            target_date = now + timedelta(days=amount)
+                                        elif unit.startswith('week'):
+                                            target_date = now + timedelta(weeks=amount)
+                                        elif unit.startswith('month'):
+                                            target_date = now + timedelta(days=amount * 30)  # 근사치
+                                        elif unit.startswith('year'):
+                                            target_date = now + timedelta(days=amount * 365)  # 근사치
+                                        else:
+                                            target_date = now
+                                        
+                                        date_str = target_date.strftime('%Y-%m-%d')
+                                        # print(f"[DEBUG] IssueViewSet - Calculated date from {date_part}: {date_str}")
+                                    else:
+                                        date_str = date_part
+                                else:
+                                    date_str = date_part
+                                
+                                if condition == "after":
+                                    # 해당 날짜 이후의 모든 날짜 찾기
+                                    q_objects |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__gte=f'"{date_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    )
+                                elif condition == "before":
+                                    # 해당 날짜 이전의 모든 날짜 찾기
+                                    q_objects |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__lte=f'"{date_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    )
+                                elif condition == "within":
+                                    # 현재 날짜부터 해당 날짜까지의 범위
+                                    from datetime import datetime
+                                    now = datetime.now().date()
+                                    now_str = now.strftime('%Y-%m-%d')
+                                    
+                                    q_objects |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__gte=f'"{now_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    ) & Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__lte=f'"{date_str}"',
+                                        custom_field_values__deleted_at__isnull=True
+                                    )
+                                    # print(f"[DEBUG] IssueViewSet - Date filter: {date_str} {condition}")
+                        else:
+                            # 정확한 날짜 매칭
+                            import json
+                            json_value = json.dumps(value, ensure_ascii=False)
+                            q_objects |= Q(
+                                custom_field_values__custom_field_id=field_id,
+                                custom_field_values__value=json_value,
+                                custom_field_values__deleted_at__isnull=True
+                            )
+                
+                issue_queryset = issue_queryset.filter(q_objects)
+                # print(f"[DEBUG] IssueViewSet - After filtering, queryset count: {issue_queryset.count()}")
+                
+                # 실제 실행되는 SQL 쿼리 확인
+                from django.db import connection
+                # print(f"[DEBUG] IssueViewSet - SQL Query: {issue_queryset.query}")
+                # print(f"[DEBUG] IssueViewSet - Last SQL queries: {connection.queries[-3:]}")
         
         # print("Applied Filters:", filters)
         # print("Extra Filters:", extra_filters)

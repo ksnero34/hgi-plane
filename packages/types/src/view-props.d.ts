@@ -2,6 +2,8 @@ import { TIssue } from "./issues/issue";
 
 export type TIssueLayouts = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt_chart";
 
+export type TIssueViewOptions = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt_chart";
+
 export type TIssueGroupByOptions =
   | "state"
   | "priority"
@@ -77,7 +79,8 @@ export type TIssueParams =
   | "per_page"
   | "issue_type"
   | "layout"
-  | "expand";
+  | "expand"
+  | "custom_fields";
 
 export type TCalendarLayouts = "month" | "week";
 
@@ -97,6 +100,7 @@ export interface IIssueFilterOptions {
   subscriber?: string[] | null;
   target_date?: string[] | null;
   issue_type?: string[] | null;
+  custom_fields?: { [field_id: string]: string[] } | null;
 }
 
 export interface IIssueDisplayFilterOptions {
@@ -160,6 +164,13 @@ export interface IWorkspaceIssueFilterOptions {
   start_date?: string[] | null;
   target_date?: string[] | null;
   project?: string[] | null;
+}
+
+export interface IWorkspaceIssueDisplayFilterOptions {
+  order_by?: string | undefined;
+  type?: "active" | "backlog" | null;
+  sub_issue?: boolean;
+  layout?: TIssueViewOptions;
 }
 
 export interface IWorkspaceGlobalViewDisplayFilterOptions {

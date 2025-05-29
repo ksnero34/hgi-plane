@@ -10,6 +10,7 @@ import { ViewFiltersSelection } from "@/components/views/filters/filter-selectio
 import { ViewOrderByDropdown } from "@/components/views/filters/order-by";
 // hooks
 import { useMember, useProjectView } from "@/hooks/store";
+import { useParams } from "next/navigation";
 
 export const ViewMobileHeader = observer(() => {
   // store hooks
@@ -17,6 +18,8 @@ export const ViewMobileHeader = observer(() => {
   const {
     project: { projectMemberIds },
   } = useMember();
+  // router
+  const { projectId } = useParams();
 
   return (
     <>
@@ -49,6 +52,8 @@ export const ViewMobileHeader = observer(() => {
               filters={filters}
               handleFiltersUpdate={updateFilters}
               memberIds={projectMemberIds ?? undefined}
+              isProjectLevel={true}
+              viewProjectId={projectId as string}
             />
           </FiltersDropdown>
         </div>

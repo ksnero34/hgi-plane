@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   IIssueLabel,
   ILayoutDisplayFiltersOptions,
   IState,
+  TCustomField,
 } from "@plane/types";
 // components
 import {
@@ -28,6 +29,7 @@ import {
   FilterCycle,
   FilterModule,
   FilterIssueGrouping,
+  FilterCustomFields,
 } from "@/components/issues";
 // hooks
 import { useMember } from "@/hooks/store";
@@ -45,6 +47,7 @@ type Props = {
   labels?: IIssueLabel[] | undefined;
   memberIds?: string[] | undefined;
   states?: IState[] | undefined;
+  customFields?: TCustomField[] | undefined;
   cycleViewDisabled?: boolean;
   moduleViewDisabled?: boolean;
   isEpic?: boolean;
@@ -61,6 +64,7 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
     labels,
     memberIds,
     states,
+    customFields,
     cycleViewDisabled = false,
     moduleViewDisabled = false,
     isEpic = false,
@@ -70,6 +74,7 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
   const { t } = useTranslation();
   // hooks
   const { isMobile } = usePlatformOS();
+  const { workspaceSlug } = useParams();
   const { moduleId, cycleId } = useParams();
   const {
     project: { getProjectMemberDetails },
@@ -91,6 +96,63 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
 
   const isDisplayFilterEnabled = (displayFilter: keyof IIssueDisplayFilterOptions) =>
     Object.keys(layoutDisplayFiltersOptions?.display_filters ?? {}).includes(displayFilter);
+
+  // 커스텀 필드 필터 업데이트 핸들러
+  const handleCustomFieldUpdate = (fieldId: string, value: string) => {
+    // console.log("handleCustomFieldUpdate called:", fieldId, value);
+    // console.log("Current filters.custom_fields:", filters.custom_fields);
+    
+    // 현재 커스텀 필드 필터를 파싱
+    let currentCustomFieldFilters: { [field_id: string]: string[] } = {};
+    if (filters.custom_fields) {
+      if (typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== '') {
+        try {
+          currentCustomFieldFilters = JSON.parse(filters.custom_fields);
+        } catch (e) {
+          console.error('Failed to parse custom_fields:', e);
+          currentCustomFieldFilters = {};
+        }
+      } else if (typeof filters.custom_fields === 'object') {
+        currentCustomFieldFilters = JSON.parse(JSON.stringify(filters.custom_fields));
+      }
+    }
+    
+    // console.log("Parsed currentCustomFieldFilters:", currentCustomFieldFilters);
+    
+    const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
+    
+    let newFieldValues: string[];
+    if (currentFieldValues.includes(value)) {
+      newFieldValues = currentFieldValues.filter(v => v !== value);
+    } else {
+      newFieldValues = [...currentFieldValues, value];
+    }
+    
+    // console.log("New field values:", newFieldValues);
+    
+    const newCustomFieldFilters = {
+      ...currentCustomFieldFilters,
+      [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
+    };
+    
+    // 빈 배열인 필드들 제거
+    Object.keys(newCustomFieldFilters).forEach(key => {
+      if (!newCustomFieldFilters[key] || newCustomFieldFilters[key].length === 0) {
+        delete newCustomFieldFilters[key];
+      }
+    });
+    
+    // console.log("Final newCustomFieldFilters:", newCustomFieldFilters);
+    
+    // JSON 문자열로 변환하여 전달 (빈 객체인 경우 빈 문자열)
+    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
+      ? JSON.stringify(newCustomFieldFilters) 
+      : "";
+    
+    // console.log("Calling handleFiltersUpdate with:", customFieldsValue);
+    
+    handleFiltersUpdate("custom_fields", customFieldsValue);
+  };
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
@@ -246,6 +308,22 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
               searchQuery={filtersSearchQuery}
             />
           </div>
+        )}
+
+        {/* custom fields */}
+        {isFilterEnabled("custom_fields") && (
+          <FilterCustomFields
+            appliedFilters={
+              filters.custom_fields && typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== ''
+                ? JSON.parse(filters.custom_fields)
+                : {}
+            }
+            handleUpdate={handleCustomFieldUpdate}
+            searchQuery={filtersSearchQuery}
+            customFields={customFields}
+            workspaceSlug={workspaceSlug as string}
+            projectId={projectId as string}
+          />
         )}
 
         {/* issue type */}

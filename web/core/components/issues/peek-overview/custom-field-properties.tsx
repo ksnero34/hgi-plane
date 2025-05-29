@@ -11,6 +11,8 @@ import type { TIssueOperations } from "@/components/issues";
 
 // hooks
 import { useIssueDetail } from "@/hooks/store";
+// helpers
+import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 
 type TCustomFieldProperties = {
   workspaceSlug: string;
@@ -131,7 +133,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <DateDropdown
             value={fieldValue}
-            onChange={(date) => updateFieldValue(field.id, date)}
+            onChange={(date) => updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)}
             placeholder="날짜 선택"
             disabled={disabled}
             buttonVariant="transparent-with-text"

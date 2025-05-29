@@ -102,6 +102,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "labels",
         "start_date",
         "target_date",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -127,6 +128,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "labels",
         "start_date",
         "target_date",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -159,6 +161,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -199,6 +202,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -235,6 +239,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -273,6 +278,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "project",
         "start_date",
         "target_date",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -295,6 +301,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "project",
         "start_date",
         "target_date",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -320,6 +327,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -361,6 +369,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -411,6 +420,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         // "start_date",
         // "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ["key", "issue_type"],
       display_filters: {
@@ -434,6 +444,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
@@ -464,6 +475,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         "start_date",
         "target_date",
         "issue_type",
+        "custom_fields",
       ],
       display_properties: ["key", "issue_type"],
       display_filters: {

@@ -4,17 +4,19 @@ import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
 import { Layers } from "lucide-react";
+import { useParams } from "next/navigation";
 // plane constants
 import { EIssueLayoutTypes, ETabIndices, EViewAccess, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
-import { IProjectView, IIssueFilterOptions, IIssueDisplayProperties, IIssueDisplayFilterOptions } from "@plane/types";
+import { IProjectView, IIssueFilterOptions, IIssueDisplayProperties, IIssueDisplayFilterOptions, TCustomField } from "@plane/types";
 // ui
 import { Button, EmojiIconPicker, EmojiIconPickerTypes, Input, TextArea } from "@plane/ui";
 // components
 import { Logo } from "@/components/common";
 import { AppliedFiltersList, DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
+import { ViewFiltersSelection } from "@/components/views/filters/filter-selection";
 // helpers
 import { convertHexEmojiToDecimal } from "@/helpers/emoji.helper";
 import { getComputedDisplayFilters, getComputedDisplayProperties } from "@/helpers/issue.helper";
@@ -45,8 +47,12 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
   const { handleFormSubmit, handleClose, data, preLoadedData } = props;
   // i18n
   const { t } = useTranslation();
+  // router
+  const { workspaceSlug, projectId } = useParams();
   // state
   const [isOpen, setIsOpen] = useState(false);
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const { currentProjectDetails } = useProject();
   const { projectStates } = useProjectState();
@@ -55,6 +61,34 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
     project: { projectMemberIds },
   } = useMember();
   const { isMobile } = usePlatformOS();
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
+
   // form info
   const {
     control,
@@ -255,31 +289,14 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                     name="filters"
                     render={({ field: { onChange, value: filters } }) => (
                       <FiltersDropdown title={t("common.filters")} tabIndex={getIndex("filters")}>
-                        <FilterSelection
-                          filters={filters ?? {}}
-                          handleFiltersUpdate={(key, value) => {
-                            const newValues = filters?.[key] ?? [];
-
-                            if (Array.isArray(value)) {
-                              value.forEach((val) => {
-                                if (!newValues.includes(val)) newValues.push(val);
-                              });
-                            } else {
-                              if (filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-                              else newValues.push(value);
+                        <ViewFiltersSelection
+                          filters={{ filters: filters ?? {} }}
+                          handleFiltersUpdate={(filterKey, filterValue) => {
+                            if (filterKey === "filters") {
+                              onChange(filterValue);
                             }
-
-                            onChange({
-                              ...filters,
-                              [key]: newValues,
-                            });
                           }}
-                          layoutDisplayFiltersOptions={ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[displayFilters.layout]}
-                          labels={projectLabels ?? undefined}
                           memberIds={projectMemberIds ?? undefined}
-                          states={projectStates}
-                          cycleViewDisabled={!currentProjectDetails?.cycle_view}
-                          moduleViewDisabled={!currentProjectDetails?.module_view}
                         />
                       </FiltersDropdown>
                     )}
@@ -327,6 +344,9 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                 handleRemoveFilter={handleRemoveFilter}
                 labels={projectLabels ?? []}
                 states={projectStates}
+                customFields={customFields}
+                workspaceSlug={workspaceSlug?.toString()}
+                projectId={projectId?.toString()}
               />
             </div>
           )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // icons
 import { ListFilter, Search, X } from "lucide-react";
 // plane helpers
@@ -17,6 +18,8 @@ export const ViewListHeader = observer(() => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   // refs
   const inputRef = useRef<HTMLInputElement>(null);
+  // router
+  const { projectId } = useParams();
   // store hooks
   const { filters, updateFilters } = useProjectView();
   const {
@@ -109,6 +112,8 @@ export const ViewListHeader = observer(() => {
             filters={filters}
             handleFiltersUpdate={updateFilters}
             memberIds={projectMemberIds ?? undefined}
+            isProjectLevel={true}
+            viewProjectId={projectId as string}
           />
         </FiltersDropdown>
       </div>

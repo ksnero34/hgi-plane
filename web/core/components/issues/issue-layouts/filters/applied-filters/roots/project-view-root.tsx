@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import isEmpty from "lodash/isEmpty";
 import { observer } from "mobx-react";
@@ -13,7 +13,7 @@ import {
   EUserPermissions,
   EUserPermissionsLevel,
 } from "@plane/constants";
-import { IIssueFilterOptions } from "@plane/types";
+import { IIssueFilterOptions, TCustomField } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList } from "@/components/issues";
@@ -27,6 +27,9 @@ import { getAreFiltersEqual } from "../../../utils";
 export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   // router
   const { workspaceSlug, projectId, viewId } = useParams();
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const {
     issuesFilter: { issueFilters, updateFilters },
@@ -38,6 +41,34 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   const { allowPermissions } = useUserPermissions();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
+
   // derived values
   const viewDetails = viewId ? viewMap[viewId.toString()] : null;
   const userFilters = issueFilters?.filters;
@@ -140,6 +171,7 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
           handleRemoveFilter={handleRemoveFilter}
           labels={projectLabels ?? []}
           states={projectStates}
+          customFields={customFields}
           disableEditing={isLocked}
         />
       </Header.LeftItem>

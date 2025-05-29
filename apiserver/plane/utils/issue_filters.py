@@ -1,8 +1,10 @@
 import re
 import uuid
+import json
 from datetime import timedelta
 
 from django.utils import timezone
+from django.db.models import Q
 
 # The date from pattern
 pattern = re.compile(r"\d+_(weeks|months)$")
@@ -509,6 +511,70 @@ def filter_logged_by(params, issue_filter, method, prefix=""):
     return issue_filter
 
 
+def filter_custom_fields(params, issue_filter, method, prefix=""):
+    """커스텀 필드 필터링"""
+    # print(f"[DEBUG] filter_custom_fields called with method: {method}")
+    # print(f"[DEBUG] params: {params}")
+    
+    if method == "GET":
+        custom_fields_param = params.get("custom_fields")
+        # print(f"[DEBUG] custom_fields_param: {custom_fields_param}")
+        
+        if custom_fields_param:
+            try:
+                # JSON 문자열을 파싱
+                if isinstance(custom_fields_param, str):
+                    custom_fields = json.loads(custom_fields_param)
+                    # print(f"[DEBUG] Parsed custom_fields from string: {custom_fields}")
+                else:
+                    custom_fields = custom_fields_param
+                    # print(f"[DEBUG] Using custom_fields as-is: {custom_fields}")
+                
+                # 각 커스텀 필드에 대해 필터링
+                if custom_fields and isinstance(custom_fields, dict):
+                    # 커스텀 필드 필터링을 위한 조건들을 수집
+                    custom_field_filters = []
+                    
+                    for field_id, values in custom_fields.items():
+                        # print(f"[DEBUG] Processing field_id: {field_id}, values: {values}")
+                        if values and len(values) > 0:
+                            # 각 커스텀 필드에 대한 필터 조건
+                            custom_field_filters.append({
+                                'field_id': field_id,
+                                'values': values
+                            })
+                    
+                    # print(f"[DEBUG] Final custom_field_filters: {custom_field_filters}")
+                    
+                    if custom_field_filters:
+                        # 커스텀 필드 필터 정보를 저장 (뷰에서 처리하기 위해)
+                        issue_filter['custom_field_filters'] = custom_field_filters
+                        # print(f"[DEBUG] Added custom_field_filters to issue_filter")
+                        
+            except (json.JSONDecodeError, TypeError) as e:
+                # print(f"[DEBUG] Error parsing custom_fields: {e}")
+                pass
+    else:
+        custom_fields = params.get("custom_fields")
+        # print(f"[DEBUG] Non-GET method, custom_fields: {custom_fields}")
+        
+        if custom_fields and isinstance(custom_fields, dict):
+            custom_field_filters = []
+            
+            for field_id, values in custom_fields.items():
+                if values and len(values) > 0:
+                    custom_field_filters.append({
+                        'field_id': field_id,
+                        'values': values
+                    })
+            
+            if custom_field_filters:
+                issue_filter['custom_field_filters'] = custom_field_filters
+    
+    # print(f"[DEBUG] Returning issue_filter: {issue_filter}")
+    return issue_filter
+
+
 def issue_filters(query_params, method, prefix=""):
     issue_filter = {}
 
@@ -538,6 +604,7 @@ def issue_filters(query_params, method, prefix=""):
         "sub_issue": filter_sub_issue_toggle,
         "subscriber": filter_subscribed_issues,
         "start_target_date": filter_start_target_date_issues,
+        "custom_fields": filter_custom_fields,
     }
 
     for key, value in ISSUE_FILTER.items():

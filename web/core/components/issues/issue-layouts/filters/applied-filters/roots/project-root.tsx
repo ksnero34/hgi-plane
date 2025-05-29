@@ -1,8 +1,9 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
 // types
 import { EIssueFilterType, EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { IIssueFilterOptions } from "@plane/types";
+import { IIssueFilterOptions, TCustomField } from "@plane/types";
 // ui
 import { Header, EHeaderVariant } from "@plane/ui";
 // components
@@ -21,6 +22,9 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
   const { storeType = EIssuesStoreType.PROJECT } = props;
   // router
   const { workspaceSlug, projectId } = useParams();
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const { projectLabels } = useLabel();
   const {
@@ -29,6 +33,34 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
   const { allowPermissions } = useUserPermissions();
 
   const { projectStates } = useProjectState();
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
+
   // derived values
   const isEditingAllowed = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
@@ -81,7 +113,10 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
           handleRemoveFilter={handleRemoveFilter}
           labels={projectLabels ?? []}
           states={projectStates}
+          customFields={customFields}
           alwaysAllowEditing
+          workspaceSlug={workspaceSlug?.toString()}
+          projectId={projectId?.toString()}
         />
       </Header.LeftItem>
       <Header.RightItem>

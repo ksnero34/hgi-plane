@@ -96,11 +96,16 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
     const filteredParams = handleIssueQueryParamsByLayout(userFilters?.displayFilters?.layout, "issues");
     if (!filteredParams) return undefined;
 
+    console.log('getAppliedFilters - userFilters.filters:', userFilters?.filters);
+    console.log('getAppliedFilters - filteredParams:', filteredParams);
+
     const filteredRouteParams: Partial<Record<TIssueParams, string | boolean>> = this.computedFilteredParams(
       userFilters?.filters as IIssueFilterOptions,
       userFilters?.displayFilters as IIssueDisplayFilterOptions,
       filteredParams
     );
+
+    console.log('getAppliedFilters - filteredRouteParams:', filteredRouteParams);
 
     return filteredRouteParams;
   }
@@ -113,15 +118,11 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       groupId: string | undefined,
       subGroupId: string | undefined
     ): Partial<Record<TIssueParams, string | boolean>> => {
-      // console.log("Filter Params Input:", {
-      //   options,
-      //   projectId,
-      //   cursor,
-      //   groupId,
-      //   subGroupId
-      // });
+      console.log("getFilterParams called with projectId:", projectId);
 
       const filterParams = this.getAppliedFilters(projectId);
+      console.log("getFilterParams - filterParams from getAppliedFilters:", filterParams);
+      
       const paginationParams = this.getPaginationParams(filterParams, options, cursor, groupId, subGroupId);
 
       // 캘린더 뷰인 경우 (자동 필터 추가 비활성화)
@@ -192,6 +193,8 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
     filters: IIssueFilterOptions | IIssueDisplayFilterOptions | IIssueDisplayProperties | TIssueKanbanFilters
   ) => {
     try {
+      console.log("updateFilters called with:", { workspaceSlug, projectId, type, filters });
+      
       if (isEmpty(this.filters) || isEmpty(this.filters[projectId]) || isEmpty(filters)) return;
 
       const _filters = {
@@ -203,8 +206,11 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
 
       switch (type) {
         case EIssueFilterType.FILTERS: {
+          console.log("Processing FILTERS type update");
           const updatedFilters = filters as IIssueFilterOptions;
           _filters.filters = { ..._filters.filters, ...updatedFilters };
+
+          console.log("Updated _filters.filters:", _filters.filters);
 
           runInAction(() => {
             Object.keys(updatedFilters).forEach((_key) => {
@@ -212,6 +218,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
             });
           });
 
+          console.log("Calling fetchIssuesWithExistingPagination");
           this.rootIssueStore.projectIssues.fetchIssuesWithExistingPagination(workspaceSlug, projectId, "mutation");
           await this.issueFilterService.patchProjectIssueFilters(workspaceSlug, projectId, {
             filters: _filters.filters,

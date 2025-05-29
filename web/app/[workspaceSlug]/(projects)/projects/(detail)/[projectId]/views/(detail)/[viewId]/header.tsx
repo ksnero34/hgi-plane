@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Layers, Lock } from "lucide-react";
@@ -20,6 +20,7 @@ import {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
   IIssueFilterOptions,
+  TCustomField,
 } from "@plane/types";
 // ui
 import { Breadcrumbs, Button, Tooltip, Header, CustomSearchSelect } from "@plane/ui";
@@ -49,6 +50,8 @@ import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
 export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // refs
   const parentRef = useRef(null);
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
   // router
   const { workspaceSlug, projectId, viewId } = useParams();
   const router = useAppRouter();
@@ -67,6 +70,33 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   const {
     project: { projectMemberIds },
   } = useMember();
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId) return;
+      
+      try {
+        // console.log("ProjectViewIssuesHeader - Fetching custom fields");
+        const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`, {
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // console.log("ProjectViewIssuesHeader - Custom fields loaded:", data);
+          setCustomFields(data || []);
+        } else {
+          setCustomFields([]);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+        setCustomFields([]);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
 
   const activeLayout = issueFilters?.displayFilters?.layout;
 
@@ -87,6 +117,19 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId || !viewId) return;
+      
+      // custom_fields는 별도 처리
+      if (key === "custom_fields") {
+        updateFilters(
+          workspaceSlug.toString(),
+          projectId.toString(),
+          EIssueFilterType.FILTERS,
+          { [key]: value },
+          viewId.toString()
+        );
+        return;
+      }
+      
       const newValues = issueFilters?.filters?.[key] ?? [];
 
       if (Array.isArray(value)) {
@@ -235,6 +278,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
                 states={projectStates}
                 cycleViewDisabled={!currentProjectDetails?.cycle_view}
                 moduleViewDisabled={!currentProjectDetails?.module_view}
+                customFields={customFields}
               />
             </FiltersDropdown>
             <FiltersDropdown title="Display" placement="bottom-end">

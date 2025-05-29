@@ -13,6 +13,8 @@ import { TCustomField } from "@plane/types";
 // hooks
 import { useIssueDetail } from "@/hooks/store";
 import type { TIssueOperations } from "./root";
+// helpers
+import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 
 type Props = {
   workspaceSlug: string;
@@ -117,7 +119,7 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
         return (
           <DateDropdown
             value={fieldValue}
-            onChange={(date) => updateFieldValue(field.id, date)}
+            onChange={(date) => updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)}
             placeholder="날짜 선택"
             disabled={!isEditable}
             buttonVariant="transparent-with-text"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import isEmpty from "lodash/isEmpty";
 import { observer } from "mobx-react";
@@ -13,7 +13,7 @@ import {
   EViewAccess,
   GLOBAL_VIEW_UPDATED,
  EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { IIssueFilterOptions, TStaticViewTypes } from "@plane/types";
+import { IIssueFilterOptions, TStaticViewTypes, TCustomField } from "@plane/types";
 //ui
 // components
 import { Header, EHeaderVariant, Loader } from "@plane/ui";
@@ -36,6 +36,9 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
   const { globalViewId, isLoading = false } = props;
   // router
   const { workspaceSlug } = useParams();
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const {
     issuesFilter: { filters, updateFilters },
@@ -47,6 +50,33 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
   const { allowPermissions } = useUserPermissions();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 워크스페이스 레벨 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || isLoadingCustomFields) return;
+      
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug]);
 
   // derived values
   const issueFilters = filters?.[globalViewId];
@@ -169,6 +199,7 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
           appliedFilters={appliedFilters ?? {}}
           handleClearAllFilters={handleClearAllFilters}
           handleRemoveFilter={handleRemoveFilter}
+          customFields={customFields}
           disableEditing={isLocked}
           alwaysAllowEditing
         />

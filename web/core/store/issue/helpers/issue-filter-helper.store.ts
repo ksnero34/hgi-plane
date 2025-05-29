@@ -82,6 +82,9 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     displayFilters: IIssueDisplayFilterOptions,
     acceptableParamsByLayout: TIssueParams[]
   ) => {
+    // console.log('computedFilteredParams - acceptableParamsByLayout:', acceptableParamsByLayout);
+    // console.log('computedFilteredParams - filters.custom_fields:', filters?.custom_fields);
+    
     const computedFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
       // issue filters
       priority: filters?.priority || undefined,
@@ -99,6 +102,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       team_project: filters?.team_project || undefined,
       subscriber: filters?.subscriber || undefined,
       issue_type: filters?.issue_type || undefined,
+      custom_fields: filters?.custom_fields || undefined,
       // display filters
       group_by: displayFilters?.group_by ? EIssueGroupByToServerOptions[displayFilters.group_by] : undefined,
       sub_group_by: displayFilters?.sub_group_by
@@ -108,6 +112,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       type: displayFilters?.type || undefined,
       sub_issue: displayFilters?.sub_issue ?? true,
     };
+
+    // console.log('computedFilteredParams - computedFilters.custom_fields:', computedFilters.custom_fields);
 
     // target_date within 필터 처리
     if (filters?.target_date && Array.isArray(filters.target_date)) {
@@ -123,11 +129,11 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
           
           if (unit === "weeks") {
             futureDate.setDate(futureDate.getDate() + parseInt(amount) * 7);
-          } else if (unit === "months") {
-            futureDate.setMonth(futureDate.getMonth() + parseInt(amount));
+          } else if (unit === "days") {
+            futureDate.setDate(futureDate.getDate() + parseInt(amount));
           }
           
-          return `${now.toISOString().split("T")[0]};after,${futureDate.toISOString().split("T")[0]};before`;
+          return `${futureDate.toISOString().split('T')[0]};after;fromnow`;
         }
         
         return dateFilter;
@@ -141,11 +147,27 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       const _key = key as TIssueParams;
       const _value: string | boolean | string[] | undefined = computedFilters[_key];
       const nonEmptyArrayValue = Array.isArray(_value) && _value.length === 0 ? undefined : _value;
-      if (nonEmptyArrayValue != undefined && acceptableParamsByLayout.includes(_key))
-        issueFiltersParams[_key] = Array.isArray(nonEmptyArrayValue)
-          ? nonEmptyArrayValue.join(",")
-          : nonEmptyArrayValue;
+      
+      console.log(`Processing filter ${_key}:`, {
+        value: _value,
+        nonEmptyArrayValue,
+        isAcceptable: acceptableParamsByLayout.includes(_key)
+      });
+      
+      if (nonEmptyArrayValue != undefined && acceptableParamsByLayout.includes(_key)) {
+        // custom_fields는 특별한 처리가 필요 (객체를 JSON 문자열로 변환)
+        if (_key === "custom_fields" && typeof nonEmptyArrayValue === "object" && !Array.isArray(nonEmptyArrayValue)) {
+          // console.log('Converting custom_fields to JSON:', nonEmptyArrayValue);
+          issueFiltersParams[_key] = JSON.stringify(nonEmptyArrayValue);
+        } else {
+          issueFiltersParams[_key] = Array.isArray(nonEmptyArrayValue)
+            ? nonEmptyArrayValue.join(",")
+            : nonEmptyArrayValue;
+        }
+      }
     });
+
+    // console.log('computedFilteredParams - final issueFiltersParams:', issueFiltersParams);
 
     if (displayFilters?.layout) issueFiltersParams.layout = displayFilters?.layout;
 
@@ -176,6 +198,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     team_project: filters?.team_project || null,
     subscriber: filters?.subscriber || null,
     issue_type: filters?.issue_type || null,
+    custom_fields: filters?.custom_fields || null,
   });
 
   /**

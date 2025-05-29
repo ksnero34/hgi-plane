@@ -92,6 +92,72 @@ def safe_str(value):
         return ""
     return str(value).strip()
 
+def normalize_priority(priority_str):
+    """Priority 값을 정규화하는 함수 (대소문자 구분 없이)"""
+    if not priority_str:
+        return "none"
+    
+    priority_str = priority_str.strip().lower()
+    
+    # 유효한 priority 값들
+    valid_priorities = ["urgent", "high", "medium", "low", "none"]
+    
+    if priority_str in valid_priorities:
+        return priority_str
+    
+    # 일반적인 변형들 처리
+    priority_mapping = {
+        "critical": "urgent",
+        "높음": "high",
+        "보통": "medium", 
+        "낮음": "low",
+        "없음": "none"
+    }
+    
+    return priority_mapping.get(priority_str, "none")
+
+def find_user_by_email(email, project):
+    """이메일로 사용자를 안전하게 찾는 함수"""
+    if not email or not email.strip():
+        return None
+    
+    email = email.strip()
+    
+    try:
+        # 1. 먼저 프로젝트 멤버에서 찾기
+        member = project.project_projectmember.filter(
+            member__email__iexact=email,
+            is_active=True
+        ).first()
+        
+        if member:
+            return member.member
+        
+        # 2. 프로젝트 멤버가 아닌 경우 워크스페이스 멤버에서 찾기
+        workspace_member = project.workspace.workspace_member.filter(
+            member__email__iexact=email,
+            is_active=True
+        ).first()
+        
+        if workspace_member:
+            # 워크스페이스 멤버이지만 프로젝트 멤버가 아닌 경우 로그 남기고 None 반환
+            print(f"Warning: User {email} is workspace member but not project member. Skipping assignment.")
+            return None
+        
+        # 3. 전체 사용자에서 찾기 (시스템에 존재하는지 확인)
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
+            print(f"Warning: User {email} exists but is not a member of this workspace/project. Skipping assignment.")
+            return None
+        
+        # 4. 사용자가 존재하지 않는 경우
+        print(f"Warning: User with email {email} not found in system. Skipping assignment.")
+        return None
+        
+    except Exception as e:
+        print(f"Error finding user by email {email}: {str(e)}")
+        return None
+
 def process_description(description_text):
     """
     description_text로부터 HTML과 JSON 형태의 description 생성
@@ -237,29 +303,41 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     description_text = safe_str(row.get("Description", ""))
                     description_data = process_description(description_text)
                     
+                    # Creator 필드 처리 (이메일로)
+                    creator_email = safe_str(row.get("Created By", ""))
+                    creator_user = None
+                    if creator_email:
+                        creator_user = find_user_by_email(creator_email, project)
+                        if not creator_user:
+                            print(f"Warning: Created By email {creator_email} not found or not a project member. Using import user as creator.")
+                    
+                    # Creator가 없거나 찾을 수 없는 경우 import를 실행한 사용자를 사용
+                    if not creator_user:
+                        creator_user = User.objects.get(id=UUID(user_id))
+                    
                     # 기본 이슈 데이터 준비
                     issue_data = {
                         "name": safe_str(row.get("Name", "")),
                         "description": description_data["description"],
                         "description_html": description_data["description_html"],
                         "description_stripped": description_data["description_stripped"],
-                        "priority": safe_str(row.get("Priority", "none")).split(',')[0].strip(),  # 첫 번째 값만 사용
+                        "priority": normalize_priority(safe_str(row.get("Priority", "none"))),
                         "state_id": state.id if state else default_state.id,
                         "sequence_id": sequence_id,
                         "start_date": start_date,
                         "target_date": target_date
                     }
 
-                    print("\n[Debug] 이슈 데이터 준비:")
-                    print(f"user_id: {user_id}")
-                    print(f"issue_data: {issue_data}")
+                    # print("\n[Debug] 이슈 데이터 준비:")
+                    # print(f"user_id: {user_id}")
+                    # print(f"issue_data: {issue_data}")
 
                     # 이슈 ID가 있는 경우 기존 이슈 찾기
                     existing_issue = existing_issues.get(sequence_id)
                     
                     if existing_issue:
-                        print("\n[Debug] 기존 이슈 업데이트:")
-                        print(f"existing_issue.created_by_id before: {existing_issue.created_by_id}")
+                        # print("\n[Debug] 기존 이슈 업데이트:")
+                        # print(f"existing_issue.created_by_id before: {existing_issue.created_by_id}")
                         
                         # 기존 이슈의 현재 상태 저장 (활동 로그용)
                         current_instance = json.dumps(
@@ -273,13 +351,14 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         # created_by는 제외하고 업데이트
                         created_by = existing_issue.created_by  # 기존 created_by 저장
                         for key, value in issue_data.items():
-                            if key != 'created_by_id':  # created_by_id는 업데이트하지 않음
+                            # created_by_id와 description 관련 필드들은 업데이트하지 않음
+                            if key not in ['created_by_id', 'description', 'description_html', 'description_stripped']:
                                 setattr(existing_issue, key, value)
                         existing_issue.created_by = created_by  # 기존 created_by 복원
                         existing_issue.updated_by = user  # updated_by는 현재 사용자로 설정
                         existing_issue.save()
                         
-                        print(f"existing_issue.created_by_id after: {existing_issue.created_by_id}")
+                        # print(f"existing_issue.created_by_id after: {existing_issue.created_by_id}")
                         
                         issue = existing_issue
                         updated_count += 1
@@ -290,13 +369,13 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         ModuleIssue.objects.filter(issue=issue).delete()
                         CycleIssue.objects.filter(issue=issue).delete()
                     else:
-                        print("\n[Debug] 새 이슈 생성:")
+                        # print("\n[Debug] 새 이슈 생성:")
                         # UUID 문자열을 UUID 객체로 변환
                         user_uuid = UUID(user_id)
                         workspace_uuid = UUID(workspace_id)
                         
-                        # User 객체를 조회
-                        user = User.objects.get(id=user_uuid)
+                        # 현재 import를 실행한 사용자 (updated_by용)
+                        import_user = User.objects.get(id=user_uuid)
                         
                         # Issue 모델을 직접 인스턴스화하는 대신 Django ORM을 통해 생성
                         issue_data.update({
@@ -313,13 +392,13 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         with connection.cursor() as cursor:
                             cursor.execute(
                                 "UPDATE issues SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
-                                [user.id, user.id, issue.id]
+                                [creator_user.id, import_user.id, issue.id]
                             )
                         
                         # 객체를 새로고침하여 데이터베이스 변경사항을 반영
                         issue.refresh_from_db()
                         
-                        print(f"Created issue.created_by_id: {issue.created_by_id}")
+                        # print(f"Created issue.created_by_id: {issue.created_by_id}")
                         
                         current_instance = None
                         imported_count += 1
@@ -338,7 +417,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                             continue
                     
                     # 관련 데이터 처리 (라벨, 담당자, 모듈, 사이클)
-                    process_related_data(issue, row, project, workspace_id)
+                    process_related_data(issue, row, project, workspace_id, creator_user)
                     
                     # 이슈 활동 로그 생성
                     requested_data = json.dumps(row, cls=DjangoJSONEncoder)
@@ -394,22 +473,14 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
             "error": str(e)
         }
 
-def process_related_data(issue, row, project, workspace_id):
+def process_related_data(issue, row, project, workspace_id, creator_user):
     # User 객체 조회
-    created_by = issue.created_by
+    created_by = issue.created_by or creator_user
     updated_by = issue.updated_by
     
-    # created_by나 updated_by가 None인 경우 user_id로부터 User 객체 가져오기
-    if created_by is None or updated_by is None:
-        user_id = issue.created_by_id or issue.updated_by_id
-        if user_id:
-            try:
-                user = User.objects.get(id=user_id)
-                created_by = user if created_by is None else created_by
-                updated_by = user if updated_by is None else updated_by
-            except User.DoesNotExist:
-                # User를 찾을 수 없는 경우 로그 기록
-                print(f"Warning: User with ID {user_id} not found")
+    # updated_by가 None인 경우 creator_user 사용
+    if updated_by is None:
+        updated_by = creator_user
     
     # 모두 None인 경우 실행하지 않음
     if created_by is None and updated_by is None:
@@ -448,16 +519,13 @@ def process_related_data(issue, row, project, workspace_id):
             assignee_email = assignee_email.strip()
             if assignee_email:
                 # 이메일로 사용자 검색
-                member = project.project_projectmember.filter(
-                    member__email__iexact=assignee_email,
-                    is_active=True
-                ).first()
+                member = find_user_by_email(assignee_email, project)
                 
                 if member:
                     # 객체 생성
                     assignee_relation = IssueAssignee.objects.create(
                         issue=issue,
-                        assignee=member.member,
+                        assignee=member,
                         project_id=project.id,
                         workspace_id=workspace_id,
                     )

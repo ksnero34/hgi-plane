@@ -11,6 +11,7 @@ export type TCycleFilters = {
   end_date?: string[] | null;
   start_date?: string[] | null;
   status?: string[] | null;
+  custom_fields?: string | null;
 };
 
 export type TCycleFiltersByState = {

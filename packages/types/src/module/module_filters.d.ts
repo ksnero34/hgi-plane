@@ -25,6 +25,7 @@ export type TModuleFilters = {
   start_date?: string[] | null;
   status?: string[] | null;
   target_date?: string[] | null;
+  custom_fields?: string | null;
 };
 
 export type TModuleFiltersByState = {
