@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import axios from "axios";
 // icons
-import { Circle, ExternalLink, Upload } from "lucide-react";
+import { Circle, ExternalLink, Upload, Edit3 } from "lucide-react";
 // plane constants
 import { EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
@@ -18,14 +18,16 @@ import HeaderFilters from "@/components/issues/filters";
 // helpers
 import { SPACE_BASE_PATH, SPACE_BASE_URL } from "@/helpers/common.helper";
 // hooks
-import { useEventTracker, useProject, useCommandPalette, useUserPermissions } from "@/hooks/store";
+import { useEventTracker, useProject, useCommandPalette, useUserPermissions, useMultipleSelectStore } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
 import { IssueUploadModal } from "./issue-uploader/issue-upload-modal";
+import { BulkEditModal } from "./bulk-operations/bulk-edit-modal";
 
 export const IssuesHeader = observer(() => {
   // router
@@ -35,7 +37,11 @@ export const IssuesHeader = observer(() => {
   const {
     issues: { getGroupIssueCount },
   } = useIssues(EIssuesStoreType.PROJECT);
-  const { fetchIssues } = useIssuesActions(EIssuesStoreType.PROJECT);
+  const { fetchIssues, updateIssue } = useIssuesActions(EIssuesStoreType.PROJECT);
+  const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
   // i18n
   const { t } = useTranslation();
 
@@ -56,6 +62,7 @@ export const IssuesHeader = observer(() => {
   );
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     try {
@@ -93,6 +100,37 @@ export const IssuesHeader = observer(() => {
       });
     }
   };
+
+  const handleBulkUpdate = async (updates: Partial<any>) => {
+    try {
+      // 각 선택된 이슈에 대해 업데이트 실행
+      await Promise.all(
+        selectedEntityIds.map(issueId => 
+          updateIssue && updateIssue(projectId, issueId, updates)
+        )
+      );
+
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("issue.bulk_edit.success"),
+      });
+
+      // 선택 해제
+      clearSelection();
+      
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("issue.bulk_edit.error"),
+      });
+    }
+  };
+
+  // 선택된 이슈들의 데이터를 가져오기
+  const selectedIssuesList = selectedEntityIds.map(issueId => {
+    const issue = getIssueById(issueId);
+    return issue || { id: issueId };
+  });
 
   return (
     <Header>
@@ -155,6 +193,16 @@ export const IssuesHeader = observer(() => {
               <Upload className="h-4 w-4 mr-2" />
               {t("issue.upload.label")}
             </Button>
+            {isSelectionActive && selectedEntityIds.length > 0 && (
+              <Button
+                onClick={() => setIsBulkEditModalOpen(true)}
+                size="sm"
+                variant="neutral-primary"
+              >
+                <Edit3 className="h-4 w-4 mr-2" />
+                {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
+              </Button>
+            )}
             <Button
               onClick={() => {
                 setTrackElement("Project work items page");
@@ -173,6 +221,13 @@ export const IssuesHeader = observer(() => {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handleUpload}
+      />
+
+      <BulkEditModal
+        isOpen={isBulkEditModalOpen}
+        onClose={() => setIsBulkEditModalOpen(false)}
+        selectedIssues={selectedIssuesList}
+        onBulkUpdate={handleBulkUpdate}
       />
     </Header>
   );

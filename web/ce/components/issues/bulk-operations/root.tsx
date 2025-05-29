@@ -15,7 +15,6 @@ export const IssueBulkOperationsRoot: React.FC<Props> = observer((props) => {
   // store hooks
   const { isSelectionActive } = useMultipleSelectStore();
 
-  if (!isSelectionActive || selectionHelpers.isSelectionDisabled) return null;
-
-  return <BulkOperationsUpgradeBanner className={className} />;
+  // 업그레이드 배너를 표시하지 않고 null을 반환
+  return null;
 });
