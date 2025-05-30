@@ -40,12 +40,16 @@ export const ArchivedModuleLayoutRoot: React.FC = observer(() => {
   const handleRemoveFilter = useCallback(
     (key: keyof TModuleFilters, value: string | null) => {
       if (!projectId) return;
-      let newValues = currentProjectArchivedFilters?.[key] ?? [];
+      const newValues: string[] = Array.isArray(currentProjectArchivedFilters?.[key]) 
+        ? [...(currentProjectArchivedFilters[key] as string[])] 
+        : [];
 
-      if (!value) newValues = [];
-      else newValues = newValues.filter((val) => val !== value);
-
-      updateFilters(projectId.toString(), { [key]: newValues }, "archived");
+      if (!value) {
+        updateFilters(projectId.toString(), { [key]: [] }, "archived");
+      } else {
+        const filteredValues = newValues.filter((val: string) => val !== value);
+        updateFilters(projectId.toString(), { [key]: filteredValues }, "archived");
+      }
     },
     [currentProjectArchivedFilters, projectId, updateFilters]
   );

@@ -16,6 +16,7 @@ import { ModuleProgressStats } from "@/components/modules";
 // constants
 // helpers
 import { getDate } from "@/helpers/date-time.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useIssues, useModule, useProjectEstimates } from "@/hooks/store";
 // plane web constants
@@ -120,27 +121,12 @@ export const ModuleAnalyticsProgress: FC<TModuleAnalyticsProgress> = observer((p
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
 
-      let newValues = issueFilters?.filters?.[key] ?? [];
-
-      if (Array.isArray(value)) {
-        if (key === "state") {
-          if (isEqual(newValues, value)) newValues = [];
-          else newValues = value;
-        } else {
-          value.forEach((val) => {
-            if (!newValues.includes(val)) newValues.push(val);
-            else newValues.splice(newValues.indexOf(val), 1);
-          });
-        }
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
       updateFilters(
         workspaceSlug.toString(),
         projectId.toString(),
         EIssueFilterType.FILTERS,
-        { [key]: newValues },
+        { [key]: updatedValue },
         moduleId
       );
     },

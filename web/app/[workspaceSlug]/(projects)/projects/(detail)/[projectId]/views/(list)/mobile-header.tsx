@@ -1,6 +1,7 @@
 "use client";
 
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // icons
 import { ChevronDown, ListFilter } from "lucide-react";
 // components
@@ -10,7 +11,6 @@ import { ViewFiltersSelection } from "@/components/views/filters/filter-selectio
 import { ViewOrderByDropdown } from "@/components/views/filters/order-by";
 // hooks
 import { useMember, useProjectView } from "@/hooks/store";
-import { useParams } from "next/navigation";
 
 export const ViewMobileHeader = observer(() => {
   // store hooks
@@ -52,7 +52,7 @@ export const ViewMobileHeader = observer(() => {
               filters={filters}
               handleFiltersUpdate={updateFilters}
               memberIds={projectMemberIds ?? undefined}
-              isProjectLevel={true}
+              isProjectLevel
               viewProjectId={projectId as string}
             />
           </FiltersDropdown>

@@ -44,7 +44,13 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
       if (!widgetStats) return;
       
       // 활동에서 고유한 프로젝트 ID들 추출
-      const projectIds = [...new Set(widgetStats.map(activity => activity.project))];
+      const projectIdsSet: { [key: string]: boolean } = {};
+      widgetStats.forEach(activity => {
+        if (activity.project) {
+          projectIdsSet[activity.project] = true;
+        }
+      });
+      const projectIds = Object.keys(projectIdsSet);
       
       const customFieldsMap: { [projectId: string]: TCustomField[] } = {};
       

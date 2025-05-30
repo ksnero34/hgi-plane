@@ -11,6 +11,8 @@ import type { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterO
 import { ArchiveTabsList } from "@/components/archives";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
 // helpers
+import { cn } from "@/helpers/common.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
 import { useIssues, useLabel, useMember, useProject, useProjectState } from "@/hooks/store";
@@ -36,19 +38,9 @@ export const ArchivedIssuesHeader: FC = observer(() => {
   const handleFiltersUpdate = (key: keyof IIssueFilterOptions, value: string | string[]) => {
     if (!workspaceSlug || !projectId) return;
 
-    const newValues = issueFilters?.filters?.[key] ?? [];
-
-    if (Array.isArray(value)) {
-      value.forEach((val) => {
-        if (!newValues.includes(val)) newValues.push(val);
-      });
-    } else {
-      if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-      else newValues.push(value);
-    }
-
+    const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
     updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
-      [key]: newValues,
+      [key]: updatedValue,
     });
   };
 

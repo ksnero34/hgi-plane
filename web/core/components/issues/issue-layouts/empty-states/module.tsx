@@ -77,7 +77,11 @@ export const ModuleEmptyState: React.FC = observer(() => {
     if (!workspaceSlug || !projectId || !moduleId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      newFilters[key as keyof IIssueFilterOptions] = null;
+      if (key === 'custom_fields') {
+        (newFilters as any)[key] = null;
+      } else {
+        (newFilters as any)[key] = [];
+      }
     });
     issuesFilter.updateFilters(
       workspaceSlug.toString(),

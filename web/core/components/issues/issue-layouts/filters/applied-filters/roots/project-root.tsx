@@ -12,6 +12,7 @@ import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 // hooks
 import { useLabel, useProjectState, useUserPermissions } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 // plane web constants
 
 type TProjectAppliedFiltersRootProps = {
@@ -77,6 +78,7 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
 
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId) return;
+
     if (!value) {
       updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
         [key]: null,
@@ -84,11 +86,9 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
       return;
     }
 
-    let newValues = issueFilters?.filters?.[key] ?? [];
-    newValues = newValues.filter((val) => val !== value);
-
+    const updatedValue = calculateFilterRemovalValue(key, value, issueFilters?.filters ?? {});
     updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
-      [key]: newValues,
+      [key]: updatedValue,
     });
   };
 
@@ -96,7 +96,11 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
     if (!workspaceSlug || !projectId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      newFilters[key as keyof IIssueFilterOptions] = [];
+      if (key === 'custom_fields') {
+        (newFilters as any)[key] = null;
+      } else {
+        (newFilters as any)[key] = [];
+      }
     });
     updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, { ...newFilters });
   };

@@ -7,6 +7,7 @@ import { IIssueFilterOptions, TCustomField } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 import { useIssues, useLabel, useProjectState } from "@/hooks/store";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 // components
 // types
 
@@ -63,29 +64,24 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
 
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId || !cycleId) return;
+    
     if (!value) {
       updateFilters(
         workspaceSlug.toString(),
         projectId.toString(),
         EIssueFilterType.FILTERS,
-        {
-          [key]: null,
-        },
+        { [key]: null },
         cycleId.toString()
       );
       return;
     }
 
-    let newValues = issueFilters?.filters?.[key] ?? [];
-    newValues = newValues.filter((val) => val !== value);
-
+    const updatedValue = calculateFilterRemovalValue(key, value, issueFilters?.filters ?? {});
     updateFilters(
       workspaceSlug.toString(),
       projectId.toString(),
       EIssueFilterType.FILTERS,
-      {
-        [key]: newValues,
-      },
+      { [key]: updatedValue },
       cycleId.toString()
     );
   };
@@ -94,7 +90,11 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !projectId || !cycleId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      newFilters[key as keyof IIssueFilterOptions] = [];
+      if (key === 'custom_fields') {
+        (newFilters as any)[key] = null;
+      } else {
+        (newFilters as any)[key] = [];
+      }
     });
     updateFilters(
       workspaceSlug.toString(),

@@ -238,8 +238,8 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
 
   const getActivityMessage = () => {
     const fieldName = getFieldName();
-    const formattedNewValue = formatValue(activity.new_value);
-    const formattedOldValue = formatValue(activity.old_value);
+    const formattedNewValue = formatValue(activity.new_value ?? null);
+    const formattedOldValue = formatValue(activity.old_value ?? null);
 
     switch (activity.verb) {
       case "created":

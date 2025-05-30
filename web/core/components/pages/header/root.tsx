@@ -14,6 +14,7 @@ import {
   PageTabNavigation,
 } from "@/components/pages";
 // helpers
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
 // hooks
 import { useMember } from "@/hooks/store";
@@ -38,15 +39,13 @@ export const PagesListHeaderRoot: React.FC<Props> = observer((props) => {
 
   const handleRemoveFilter = useCallback(
     (key: keyof TPageFilterProps, value: string | null) => {
-      let newValues = filters.filters?.[key];
-
-      if (key === "favorites") newValues = !!value;
-      if (Array.isArray(newValues)) {
-        if (!value) newValues = [];
-        else newValues = newValues.filter((val) => val !== value);
+      if (key === "favorites") {
+        updateFilters("filters", { [key]: !!value });
+        return;
       }
 
-      updateFilters("filters", { [key]: newValues });
+      const updatedValue = calculateFilterRemovalValue(key as any, value, filters.filters ?? {});
+      updateFilters("filters", { [key]: updatedValue });
     },
     [filters.filters, updateFilters]
   );

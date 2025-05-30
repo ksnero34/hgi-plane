@@ -178,7 +178,7 @@ export class GlobalViewStore implements IGlobalViewStore {
           ].filters as IIssueFilterOptions;
           const newFilters: IIssueFilterOptions = {};
           Object.keys(currentGlobalViewFilters ?? {}).forEach((key) => {
-            newFilters[key as keyof IIssueFilterOptions] = [];
+            newFilters[key as keyof IIssueFilterOptions] = key === "custom_fields" ? null : [];
           });
           await this.rootStore.issue.workspaceIssuesFilter.updateFilters(
             workspaceSlug,

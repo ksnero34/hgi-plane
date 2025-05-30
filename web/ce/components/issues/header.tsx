@@ -9,6 +9,8 @@ import { Circle, ExternalLink, Upload, Edit3 } from "lucide-react";
 // plane constants
 import { EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+// types
+import { TIssue } from "@plane/types";
 // ui
 import { Breadcrumbs, Button, LayersIcon, Tooltip, Header, setToast, TOAST_TYPE } from "@plane/ui";
 // components
@@ -155,11 +157,10 @@ export const IssuesHeader = observer(() => {
     }
   };
 
-  // 선택된 이슈들의 데이터를 가져오기
-  const selectedIssuesList = selectedEntityIds.map(issueId => {
-    const issue = getIssueById(issueId);
-    return issue || { id: issueId };
-  });
+  // 선택된 이슈들의 데이터를 가져오기 (완전한 이슈 데이터가 있는 것만)
+  const selectedIssuesList = selectedEntityIds
+    .map(issueId => getIssueById(issueId))
+    .filter((issue): issue is TIssue => issue !== undefined);
 
   return (
     <Header>

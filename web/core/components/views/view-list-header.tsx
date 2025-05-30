@@ -112,7 +112,7 @@ export const ViewListHeader = observer(() => {
             filters={filters}
             handleFiltersUpdate={updateFilters}
             memberIds={projectMemberIds ?? undefined}
-            isProjectLevel={true}
+            isProjectLevel
             viewProjectId={projectId as string}
           />
         </FiltersDropdown>

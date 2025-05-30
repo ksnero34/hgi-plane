@@ -63,10 +63,23 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
 
         // 커스텀 필드의 경우 별도 처리
         if (filterKey === "custom_fields" && customFields) {
-          const customFieldFilters = typeof value === 'string' ? JSON.parse(value) : value as { [field_id: string]: string[] };
+          // 타입 안전성을 위한 검증
+          let customFieldFilters: { [field_id: string]: string[] } = {};
+          
+          if (typeof value === 'string') {
+            try {
+              customFieldFilters = JSON.parse(value);
+            } catch {
+              return null; // JSON 파싱 실패 시 무시
+            }
+          } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+            customFieldFilters = value as { [field_id: string]: string[] };
+          } else {
+            return null; // 예상하지 못한 타입인 경우 무시
+          }
           
           return Object.entries(customFieldFilters).map(([fieldId, fieldValues]) => {
-            if (!fieldValues || fieldValues.length === 0) return null;
+            if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) return null;
             
             const field = customFields.find(f => f.id === fieldId);
             if (!field) return null;
@@ -85,7 +98,7 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
                         ? JSON.parse(appliedFilters.custom_fields) 
                         : appliedFilters.custom_fields || {};
                       const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-                      const newFieldValues = currentFieldValues.filter(v => v !== val);
+                      const newFieldValues = currentFieldValues.filter((v: string) => v !== val);
                       
                       const newCustomFieldFilters = {
                         ...currentCustomFieldFilters,
@@ -94,7 +107,8 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
                       
                       // 빈 배열인 필드들 제거
                       Object.keys(newCustomFieldFilters).forEach(key => {
-                        if (!newCustomFieldFilters[key] || newCustomFieldFilters[key].length === 0) {
+                        const fieldValues = newCustomFieldFilters[key];
+                        if (!fieldValues || fieldValues.length === 0) {
                           delete newCustomFieldFilters[key];
                         }
                       });
@@ -145,14 +159,14 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
                 <AppliedStatusFilters
                   editable={isEditingAllowed}
                   handleRemove={(val) => handleRemoveFilter("status", val)}
-                  values={value}
+                  values={Array.isArray(value) ? value : []}
                 />
               )}
               {DATE_FILTERS.includes(filterKey) && (
                 <AppliedDateFilters
                   editable={isEditingAllowed}
                   handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                  values={value}
+                  values={Array.isArray(value) ? value : []}
                 />
               )}
               {isEditingAllowed && (

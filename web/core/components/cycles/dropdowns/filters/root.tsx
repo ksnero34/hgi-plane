@@ -85,7 +85,8 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
     
     // 빈 배열인 필드들 제거
     Object.keys(newCustomFieldFilters).forEach(key => {
-      if (!newCustomFieldFilters[key] || newCustomFieldFilters[key].length === 0) {
+      const fieldValues = newCustomFieldFilters[key];
+      if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) {
         delete newCustomFieldFilters[key];
       }
     });
@@ -157,7 +158,7 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
           }
           handleUpdate={handleCustomFieldUpdate}
           searchQuery={filtersSearchQuery}
-          customFields={customFields}
+          customFields={customFields || []}
           workspaceSlug={workspaceSlug as string}
           projectId={projectId as string}
         />

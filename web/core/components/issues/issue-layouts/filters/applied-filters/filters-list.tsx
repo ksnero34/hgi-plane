@@ -105,7 +105,7 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
           const customFieldFilters = typeof value === 'string' ? JSON.parse(value) : value as { [field_id: string]: string[] };
           
           return Object.entries(customFieldFilters).map(([fieldId, fieldValues]) => {
-            if (!fieldValues || fieldValues.length === 0) return null;
+            if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) return null;
             
             const field = customFields.find(f => f.id === fieldId);
             if (!field) return null;
@@ -124,7 +124,7 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
                         ? JSON.parse(appliedFilters.custom_fields) 
                         : appliedFilters.custom_fields || {};
                       const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-                      const newFieldValues = currentFieldValues.filter(v => v !== val);
+                      const newFieldValues = currentFieldValues.filter((v: string) => v !== val);
                       
                       const newCustomFieldFilters = {
                         ...currentCustomFieldFilters,
@@ -133,7 +133,8 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
                       
                       // 빈 배열인 필드들 제거
                       Object.keys(newCustomFieldFilters).forEach(key => {
-                        if (!newCustomFieldFilters[key] || newCustomFieldFilters[key].length === 0) {
+                        const fieldValues = newCustomFieldFilters[key];
+                        if (!fieldValues || fieldValues.length === 0) {
                           delete newCustomFieldFilters[key];
                         }
                       });

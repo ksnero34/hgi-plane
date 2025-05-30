@@ -244,22 +244,24 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                     {field.name}
                   </div>
                   {projectMembers.length > 0 ? (
-                    projectMembers.map((member) => (
-                      <FilterOption
-                        key={`${field.id}-${member.id}`}
-                        isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
-                        onClick={() => handleUpdate(field.id, member.id)}
-                        icon={
-                          <Avatar
-                            name={member.name}
-                            src={getFileURL(member.avatar)}
-                            showTooltip={false}
-                            size="md"
-                          />
-                        }
-                        title={member.name}
-                      />
-                    ))
+                    projectMembers
+                      .filter((member): member is NonNullable<typeof member> => member !== null)
+                      .map((member) => (
+                        <FilterOption
+                          key={`${field.id}-${member.id}`}
+                          isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
+                          onClick={() => handleUpdate(field.id, member.id)}
+                          icon={
+                            <Avatar
+                              name={member.name}
+                              src={getFileURL(member.avatar ?? "")}
+                              showTooltip={false}
+                              size="md"
+                            />
+                          }
+                          title={member.name}
+                        />
+                      ))
                   ) : (
                     <div className="text-xs text-custom-text-400 italic ml-4">
                       프로젝트 멤버를 불러오는 중...
@@ -269,7 +271,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
               );
             }
 
-            // 프로젝트 멤버 필드 (다중 선택)
+            // 프로젝트 멤버들 필드 (다중 선택)
             if (field.field_type === "project_members") {
               return (
                 <div key={field.id} className="mb-2">
@@ -278,23 +280,25 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                     {field.name}
                   </div>
                   {projectMembers.length > 0 ? (
-                    projectMembers.map((member) => (
-                      <FilterOption
-                        key={`${field.id}-${member.id}`}
-                        isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
-                        onClick={() => handleUpdate(field.id, member.id)}
-                        icon={
-                          <Avatar
-                            name={member.name}
-                            src={getFileURL(member.avatar)}
-                            showTooltip={false}
-                            size="md"
-                          />
-                        }
-                        title={member.name}
-                        multiple
-                      />
-                    ))
+                    projectMembers
+                      .filter((member): member is NonNullable<typeof member> => member !== null)
+                      .map((member) => (
+                        <FilterOption
+                          key={`${field.id}-${member.id}`}
+                          isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
+                          onClick={() => handleUpdate(field.id, member.id)}
+                          icon={
+                            <Avatar
+                              name={member.name}
+                              src={getFileURL(member.avatar ?? "")}
+                              showTooltip={false}
+                              size="md"
+                            />
+                          }
+                          title={member.name}
+                          multiple
+                        />
+                      ))
                   ) : (
                     <div className="text-xs text-custom-text-400 italic ml-4">
                       프로젝트 멤버를 불러오는 중...

@@ -2,6 +2,7 @@ import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 // helpers
 import { IIssueFilters } from "@plane/types";
 import { getDate } from "./date-time.helper";
+import { calculateCustomFieldFilterCount } from "./custom-field.helper";
 // import { IIssueFilterOptions } from "@plane/types";
 
 /**
@@ -9,18 +10,26 @@ import { getDate } from "./date-time.helper";
  * @param {T} filters
  * @returns {number}
  */
-export const calculateTotalFilters = <T>(filters: T): number =>
-  filters && Object.keys(filters).length > 0
-    ? Object.keys(filters)
-        .map((key) => {
-          const value = filters[key as keyof T];
-          if (value === null) return 0;
-          if (Array.isArray(value)) return value.length;
-          if (typeof value === "boolean") return value ? 1 : 0;
-          return 0;
-        })
-        .reduce((curr, prev) => curr + prev, 0)
-    : 0;
+export const calculateTotalFilters = <T>(filters: T): number => {
+  if (!filters || Object.keys(filters).length === 0) return 0;
+  
+  return Object.keys(filters)
+    .map((key) => {
+      const value = filters[key as keyof T];
+      if (value === null) return 0;
+      
+      // 커스텀 필드의 경우 특별한 처리
+      if (key === "custom_fields") {
+        return calculateCustomFieldFilterCount(value);
+      }
+      
+      if (Array.isArray(value)) return value.length;
+      if (typeof value === "boolean") return value ? 1 : 0;
+      return 0;
+    })
+    .reduce((curr, prev) => curr + prev, 0);
+};
+
 /**
  * @description checks if the date satisfies the filter
  * @param {Date} date

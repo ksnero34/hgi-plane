@@ -33,6 +33,7 @@ import { CycleQuickActions } from "@/components/cycles";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // helpers
 import { cn } from "@/helpers/common.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
 import {
@@ -103,20 +104,9 @@ export const CycleIssuesHeader: React.FC = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
-      const newValues = issueFilters?.filters?.[key] ?? [];
 
-      if (Array.isArray(value)) {
-        // this validation is majorly for the filter start_date, target_date custom
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: newValues }, cycleId);
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
+      updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: updatedValue }, cycleId);
     },
     [workspaceSlug, projectId, cycleId, issueFilters, updateFilters]
   );

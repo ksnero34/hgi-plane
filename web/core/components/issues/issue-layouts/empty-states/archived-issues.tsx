@@ -46,7 +46,11 @@ export const ProjectArchivedEmptyState: React.FC = observer(() => {
     if (!workspaceSlug || !projectId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      newFilters[key as keyof IIssueFilterOptions] = [];
+      if (key === 'custom_fields') {
+        (newFilters as any)[key] = null;
+      } else {
+        (newFilters as any)[key] = [];
+      }
     });
     issuesFilter.updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
       ...newFilters,

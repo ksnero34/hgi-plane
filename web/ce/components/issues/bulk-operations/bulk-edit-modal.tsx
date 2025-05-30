@@ -121,10 +121,15 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
       if (Object.keys(customFieldUpdates).length > 0) {
         const customFieldValues = Object.entries(customFieldUpdates)
           .filter(([_, value]) => value !== null && value !== undefined && value !== "")
-          .map(([fieldId, value]) => ({
-            custom_field_id: fieldId,
-            value: value
-          }));
+          .map(([fieldId, value]) => {
+            const field = customFields.find(f => f.id === fieldId);
+            return {
+              custom_field_id: fieldId,
+              value: value,
+              field_name: field?.name || "",
+              field_type: field?.field_type || "text"
+            };
+          });
         
         if (customFieldValues.length > 0) {
           finalUpdates.custom_field_values = customFieldValues;
@@ -219,6 +224,7 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
             buttonVariant="border-with-text"
             className="min-w-[200px]"
             placeholder={`${field.name} 선택`}
+            multiple={false}
           />
         );
 

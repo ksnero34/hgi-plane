@@ -6,6 +6,8 @@ import { EIssueFilterType, EIssuesStoreType } from "@plane/constants";
 import { IIssueFilterOptions } from "@plane/types";
 import { CYCLE_ISSUES_WITH_PARAMS } from "@/constants/fetch-keys";
 import { useCycle, useIssues } from "@/hooks/store";
+// helpers
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 
 interface IActiveCycleDetails {
   workspaceSlug: string;
@@ -64,21 +66,13 @@ const useCyclesDetails = (props: IActiveCycleDetails) => {
     (key: keyof IIssueFilterOptions, value: string[], redirect?: boolean) => {
       if (!workspaceSlug || !projectId || !cycleId) return;
 
-      const newFilters: IIssueFilterOptions = {};
-      Object.keys(issueFilters?.filters ?? {}).forEach((key) => {
-        newFilters[key as keyof IIssueFilterOptions] = [];
-      });
-
-      let newValues: string[] = [];
-
-      if (isEqual(newValues, value)) newValues = [];
-      else newValues = value;
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
 
       updateFilters(
         workspaceSlug.toString(),
         projectId.toString(),
         EIssueFilterType.FILTERS,
-        { ...newFilters, [key]: newValues },
+        { [key]: updatedValue },
         cycleId.toString()
       );
       if (redirect) router.push(`/${workspaceSlug}/projects/${projectId}/cycles/${cycleId}`);

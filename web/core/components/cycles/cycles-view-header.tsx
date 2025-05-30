@@ -13,6 +13,7 @@ import { FiltersDropdown } from "@/components/issues";
 // helpers
 import { cn } from "@/helpers/common.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useCycleFilter } from "@/hooks/store";
 
@@ -37,19 +38,9 @@ export const CyclesViewHeader: React.FC<Props> = observer((props) => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
-      const newValues = currentProjectFilters?.[key] ?? [];
-
-      if (Array.isArray(value))
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      else {
-        if (currentProjectFilters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(projectId, { [key]: newValues });
+      
+      const updatedValue = calculateFilterValue(key as any, value, currentProjectFilters as any);
+      updateFilters(projectId, { [key]: updatedValue });
     },
     [currentProjectFilters, projectId, updateFilters]
   );

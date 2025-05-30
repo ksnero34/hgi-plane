@@ -44,7 +44,9 @@ export const ArchivedModulesHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TModuleFilters, value: string | string[]) => {
       if (!projectId) return;
-      const newValues = currentProjectArchivedFilters?.[key] ?? [];
+      const newValues: string[] = Array.isArray(currentProjectArchivedFilters?.[key]) 
+        ? [...(currentProjectArchivedFilters[key] as string[])] 
+        : [];
 
       if (Array.isArray(value))
         value.forEach((val) => {
@@ -52,7 +54,7 @@ export const ArchivedModulesHeader: FC = observer(() => {
           else newValues.splice(newValues.indexOf(val), 1);
         });
       else {
-        if (currentProjectArchivedFilters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        if (currentProjectArchivedFilters?.[key]?.includes?.(value)) newValues.splice(newValues.indexOf(value), 1);
         else newValues.push(value);
       }
 

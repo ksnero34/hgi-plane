@@ -14,6 +14,8 @@ import { CyclesView, CycleCreateUpdateModal, CycleAppliedFiltersList } from "@/c
 import { ComicBoxButton, DetailedEmptyState } from "@/components/empty-state";
 import { CycleModuleListLayout } from "@/components/ui";
 // helpers
+import { cn } from "@/helpers/common.helper";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
 // hooks
 import { useEventTracker, useCycle, useProject, useCycleFilter, useUserPermissions } from "@/hooks/store";
@@ -48,12 +50,14 @@ const ProjectCyclesPage = observer(() => {
 
   const handleRemoveFilter = (key: keyof TCycleFilters, value: string | null) => {
     if (!projectId) return;
-    let newValues = currentProjectFilters?.[key] ?? [];
 
-    if (!value) newValues = [];
-    else newValues = newValues.filter((val) => val !== value);
+    if (!value) {
+      updateFilters(projectId.toString(), { [key]: [] });
+      return;
+    }
 
-    updateFilters(projectId.toString(), { [key]: newValues });
+    const updatedValue = calculateFilterRemovalValue<TCycleFilters>(key as string, value, currentProjectFilters ?? {});
+    updateFilters(projectId.toString(), { [key]: updatedValue });
   };
 
   if (!workspaceSlug || !projectId) return <></>;

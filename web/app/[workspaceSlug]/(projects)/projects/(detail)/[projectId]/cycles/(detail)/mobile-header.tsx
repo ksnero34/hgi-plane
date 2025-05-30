@@ -22,6 +22,7 @@ import { CustomMenu } from "@plane/ui";
 import { ProjectAnalyticsModal } from "@/components/analytics";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
 // helpers
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
 import { useIssues, useCycle, useProjectState, useLabel, useMember, useProject } from "@/hooks/store";
@@ -70,25 +71,10 @@ export const CycleIssuesMobileHeader = () => {
 
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
-      if (!workspaceSlug || !projectId || !cycleId) return;
-      const newValues = issueFilters?.filters?.[key] ?? [];
+      if (!workspaceSlug || !projectId) return;
 
-      if (Array.isArray(value)) {
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-        });
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(
-        workspaceSlug.toString(),
-        projectId.toString(),
-        EIssueFilterType.FILTERS,
-        { [key]: newValues },
-        cycleId.toString()
-      );
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
+      updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, { [key]: updatedValue }, cycleId.toString());
     },
     [workspaceSlug, projectId, cycleId, issueFilters, updateFilters]
   );

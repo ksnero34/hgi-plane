@@ -13,6 +13,7 @@ import { Button } from "@plane/ui";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // helpers
 import { isIssueFilterActive } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useLabel, useProjectState, useMember, useIssues } from "@/hooks/store";
 // plane web types
@@ -84,27 +85,8 @@ const HeaderFilters = observer((props: Props) => {
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
       
-      // 커스텀 필드의 경우 특별한 처리
-      if (key === "custom_fields") {
-        // value가 이미 JSON 문자열인 경우 그대로 사용
-        updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: value });
-        return;
-      }
-      
-      const newValues = issueFilters?.filters?.[key] ?? [];
-
-      if (Array.isArray(value)) {
-        // this validation is majorly for the filter start_date, target_date custom
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: newValues });
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
+      updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: updatedValue });
     },
     [workspaceSlug, projectId, issueFilters, updateFilters]
   );

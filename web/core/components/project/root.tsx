@@ -42,12 +42,16 @@ const Root = observer(() => {
   const handleRemoveFilter = useCallback(
     (key: keyof TProjectFilters, value: string | null) => {
       if (!workspaceSlug) return;
-      let newValues = currentWorkspaceFilters?.[key] ?? [];
+      const newValues: string[] = Array.isArray(currentWorkspaceFilters?.[key]) 
+        ? [...(currentWorkspaceFilters[key] as string[])] 
+        : [];
 
-      if (!value) newValues = [];
-      else newValues = newValues.filter((val) => val !== value);
-
-      updateFilters(workspaceSlug.toString(), { [key]: newValues });
+      if (!value) {
+        updateFilters(workspaceSlug.toString(), { [key]: [] });
+      } else {
+        const filteredValues = newValues.filter((val: string) => val !== value);
+        updateFilters(workspaceSlug.toString(), { [key]: filteredValues });
+      }
     },
     [currentWorkspaceFilters, updateFilters, workspaceSlug]
   );

@@ -54,7 +54,9 @@ export const ModuleViewHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TModuleFilters, value: string | string[]) => {
       if (!projectId) return;
-      const newValues = filters?.[key] ?? [];
+      const newValues: string[] = Array.isArray(filters?.[key]) 
+        ? [...(filters[key] as string[])] 
+        : [];
 
       if (Array.isArray(value))
         value.forEach((val) => {
@@ -62,7 +64,7 @@ export const ModuleViewHeader: FC = observer(() => {
           else newValues.splice(newValues.indexOf(val), 1);
         });
       else {
-        if (filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        if (filters?.[key]?.includes?.(value)) newValues.splice(newValues.indexOf(value), 1);
         else newValues.push(value);
       }
 

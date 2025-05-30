@@ -39,7 +39,11 @@ export const ProfileIssuesAppliedFiltersRoot: React.FC = observer(() => {
     }
 
     let newValues = issueFilters?.filters?.[key] ?? [];
-    newValues = newValues.filter((val) => val !== value);
+    if (Array.isArray(newValues)) {
+      newValues = newValues.filter((val: string) => val !== value);
+    } else {
+      newValues = [];
+    }
 
     updateFilters(
       workspaceSlug.toString(),
@@ -56,7 +60,11 @@ export const ProfileIssuesAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !userId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      newFilters[key as keyof IIssueFilterOptions] = [];
+      if (key === 'custom_fields') {
+        (newFilters as any)[key] = null;
+      } else {
+        (newFilters as any)[key] = [];
+      }
     });
     updateFilters(workspaceSlug.toString(), undefined, EIssueFilterType.FILTERS, { ...newFilters }, userId.toString());
   };

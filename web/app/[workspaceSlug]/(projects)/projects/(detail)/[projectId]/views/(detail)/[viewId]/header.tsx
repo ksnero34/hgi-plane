@@ -124,7 +124,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
           workspaceSlug.toString(),
           projectId.toString(),
           EIssueFilterType.FILTERS,
-          { [key]: value },
+          { [key]: value } as Partial<IIssueFilterOptions>,
           viewId.toString()
         );
         return;

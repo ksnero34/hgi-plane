@@ -82,7 +82,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
           <CustomFieldDropdown
             field={field}
             value={fieldValue}
-            onChange={(val) => {
+            onChange={(val: any) => {
               onChange({
                 custom_field_id: field.id,
                 value: val
@@ -104,7 +104,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => {
+            onChange={(val: string | null) => {
               // 같은 값을 다시 클릭하면 값을 제거 (토글 기능)
               const newValue = fieldValue === val ? null : val;
               onChange({
@@ -120,6 +120,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
             showUserDetails={true}
+            multiple={false}
           />
         );
 
@@ -127,7 +128,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => {
+            onChange={(val: string[]) => {
               onChange({
                 custom_field_id: field.id,
                 value: val

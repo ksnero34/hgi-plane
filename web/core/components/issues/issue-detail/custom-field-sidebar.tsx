@@ -5,7 +5,7 @@ import { Tag, CalendarCheck2, UserCircle2, Users } from "lucide-react";
 
 // ui
 import { DateDropdown, MemberDropdown } from "@/components/dropdowns";
-import { CustomSelect } from "@plane/ui";
+import { CustomFieldDropdown } from "@/components/dropdowns/custom-field";
 
 // types
 import { TCustomField } from "@plane/types";
@@ -68,9 +68,12 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
     
     if (existingIndex >= 0) {
       // 기존 값 업데이트
+      const field = customFields.find(f => f.id === fieldId);
       updatedValues[existingIndex] = {
         ...updatedValues[existingIndex],
-        value: value
+        value: value,
+        field_name: field?.name || updatedValues[existingIndex].field_name || '',
+        field_type: field?.field_type || updatedValues[existingIndex].field_type || ''
       };
     } else {
       // 새로운 값 추가
@@ -89,7 +92,9 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
     issueOperations.update(workspaceSlug, projectId, issueId, {
       custom_field_values: updatedValues.map(cfv => ({
         custom_field_id: cfv.custom_field_id,
-        value: cfv.value
+        value: cfv.value,
+        field_name: cfv.field_name,
+        field_type: cfv.field_type
       }))
     });
   };
@@ -131,53 +136,49 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
 
       case "select":
         return (
-          <CustomSelect
+          <CustomFieldDropdown
+            field={field}
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: string) => updateFieldValue(field.id, val)}
             buttonVariant="transparent-with-text"
             className="w-full"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
             placeholder={`${field.name} 선택`}
             disabled={!isEditable}
-          >
-            {field.options?.map((option) => (
-              <CustomSelect.Option key={option} value={option}>
-                {option}
-              </CustomSelect.Option>
-            ))}
-          </CustomSelect>
+            dropdownArrow
+            showFieldNameWhenEmpty={true}
+            hideIconWhenEmpty={true}
+          />
         );
 
       case "multiselect":
         return (
-          <CustomSelect
+          <CustomFieldDropdown
+            field={field}
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: string[]) => updateFieldValue(field.id, val)}
             buttonVariant="transparent-with-text"
             className="w-full"
             buttonContainerClassName="w-full text-left"
             buttonClassName="text-sm"
             placeholder={`${field.name} 선택`}
             disabled={!isEditable}
-            multiple
-          >
-            {field.options?.map((option) => (
-              <CustomSelect.Option key={option} value={option}>
-                {option}
-              </CustomSelect.Option>
-            ))}
-          </CustomSelect>
+            dropdownArrow
+            showFieldNameWhenEmpty={true}
+            hideIconWhenEmpty={true}
+          />
         );
 
       case "project_member":
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: string | null) => updateFieldValue(field.id, val)}
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             disabled={!isEditable}
+            multiple={false}
             buttonVariant="transparent-with-text"
             className="w-full"
             buttonContainerClassName="w-full text-left"
@@ -189,7 +190,7 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: string[]) => updateFieldValue(field.id, val)}
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             disabled={!isEditable}

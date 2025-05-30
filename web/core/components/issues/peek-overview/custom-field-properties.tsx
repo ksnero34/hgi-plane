@@ -151,7 +151,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
           <CustomFieldDropdown
             field={field}
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: any) => updateFieldValue(field.id, val)}
             buttonVariant="transparent-with-text"
             className="w-3/4 flex-grow group"
             buttonContainerClassName="w-full text-left"
@@ -169,7 +169,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => {
+            onChange={(val: string | null) => {
               // 같은 값을 다시 클릭하면 값을 제거 (토글 기능)
               const newValue = fieldValue === val ? null : val;
               updateFieldValue(field.id, newValue);
@@ -185,6 +185,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
             dropdownArrow
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
             showUserDetails={true}
+            multiple={false}
           />
         );
 
@@ -192,7 +193,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: string[]) => updateFieldValue(field.id, val)}
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             disabled={disabled}

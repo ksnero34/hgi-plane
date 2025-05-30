@@ -148,7 +148,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
             <CustomFieldDropdown
               field={field}
               value={fieldValue}
-              onChange={(val) => updateIssue && updateIssue(issue.project_id, issue.id, {
+              onChange={(val: any) => updateIssue && updateIssue(issue.project_id, issue.id, {
                 custom_field_values: updateFieldValue(field.id, val)
               })}
               buttonVariant={hasValue ? "border-with-text" : "border-without-text"}
@@ -170,22 +170,23 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <DateDropdown
               value={fieldValue}
-              onChange={(date) => updateIssue && updateIssue(issue.project_id, issue.id, {
+              onChange={(date: Date | null) => updateIssue && updateIssue(issue.project_id, issue.id, {
                 custom_field_values: updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)
               })}
               buttonVariant={hasValue ? "border-with-text" : "border-without-text"}
               className="h-5"
               buttonContainerClassName="h-5"
-              buttonClassName="h-5 text-xs"
+              buttonClassName={cn(
+                "h-5 text-xs border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 rounded flex items-center",
+                hasValue ? "px-1.5" : "justify-center px-0 w-5"
+              )}
               disabled={isReadOnly}
               showTooltip={true}
               tooltipHeading={field.name}
               tooltipContent={formattedValue || "none"}
-              button={!hasValue ? (
-                <div className="flex items-center justify-center h-full w-5 border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 rounded">
-                  <FieldIcon className="h-3 w-3" />
-                </div>
-              ) : undefined}
+              icon={<FieldIcon className="h-3 w-3" />}
+              hideIcon={hasValue}
+              placeholder=""
             />
           </div>
         );
@@ -196,7 +197,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
             <MemberDropdown
               projectId={issue.project_id}
               value={fieldValue || null}
-              onChange={(val) => {
+              onChange={(val: string | null) => {
                 // 기존 값과 같은 값을 선택하면 값을 제거
                 const newValue = val === fieldValue ? null : val;
                 updateIssue && updateIssue(issue.project_id, issue.id, {
@@ -224,7 +225,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
             <MemberDropdown
               projectId={issue.project_id}
               value={Array.isArray(fieldValue) ? fieldValue : []}
-              onChange={(val) => updateIssue && updateIssue(issue.project_id, issue.id, {
+              onChange={(val: string[]) => updateIssue && updateIssue(issue.project_id, issue.id, {
                 custom_field_values: updateFieldValue(field.id, val && val.length > 0 ? val : null)
               })}
               buttonVariant={hasValue ? "transparent-without-text" : "border-without-text"}

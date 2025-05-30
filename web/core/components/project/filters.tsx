@@ -40,7 +40,9 @@ const HeaderFilters = observer(({ filterMenuButton, isMobile, classname = "", fi
   const handleFilters = useCallback(
     (key: keyof TProjectFilters, value: string | string[]) => {
       if (!workspaceSlug) return;
-      let newValues = filters?.[key] ?? [];
+      let newValues: string[] = Array.isArray(filters?.[key]) 
+        ? [...(filters[key] as string[])] 
+        : [];
       if (Array.isArray(value)) {
         if (key === "created_at" && newValues.find((v) => v.includes("custom"))) newValues = [];
         value.forEach((val) => {
@@ -48,14 +50,13 @@ const HeaderFilters = observer(({ filterMenuButton, isMobile, classname = "", fi
           else newValues.splice(newValues.indexOf(val), 1);
         });
       } else {
-        if (filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        if (filters?.[key]?.includes?.(value)) newValues.splice(newValues.indexOf(value), 1);
         else {
           if (key === "created_at") newValues = [value];
           else newValues.push(value);
         }
       }
-
-      updateFilters(workspaceSlug.toString(), { [key]: newValues });
+      updateFilters({ [key]: newValues });
     },
     [filters, updateFilters, workspaceSlug]
   );

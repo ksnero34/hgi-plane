@@ -12,6 +12,8 @@ import { PageHead } from "@/components/core";
 import { DetailedEmptyState } from "@/components/empty-state";
 import { ModuleAppliedFiltersList, ModulesListView } from "@/components/modules";
 // helpers
+import { cn } from "@/helpers/common.helper";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
 // hooks
 import { useModuleFilter, useProject, useUserPermissions } from "@/hooks/store";
@@ -38,14 +40,16 @@ const ProjectModulesPage = observer(() => {
   const handleRemoveFilter = useCallback(
     (key: keyof TModuleFilters, value: string | null) => {
       if (!projectId) return;
-      let newValues = currentProjectFilters?.[key] ?? [];
 
-      if (!value) newValues = [];
-      else newValues = newValues.filter((val) => val !== value);
+      if (!value) {
+        updateFilters(projectId.toString(), { [key]: [] });
+        return;
+      }
 
-      updateFilters(projectId.toString(), { [key]: newValues });
+      const updatedValue = calculateFilterRemovalValue<TModuleFilters>(key as string, value, currentProjectFilters ?? {});
+      updateFilters(projectId.toString(), { [key]: updatedValue });
     },
-    [currentProjectFilters, projectId, updateFilters]
+    [projectId, currentProjectFilters, updateFilters]
   );
 
   if (!workspaceSlug || !projectId) return <></>;

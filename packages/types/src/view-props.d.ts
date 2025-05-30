@@ -100,7 +100,7 @@ export interface IIssueFilterOptions {
   subscriber?: string[] | null;
   target_date?: string[] | null;
   issue_type?: string[] | null;
-  custom_fields?: { [field_id: string]: string[] } | null;
+  custom_fields?: { [field_id: string]: string[] } | string | null;
 }
 
 export interface IIssueDisplayFilterOptions {

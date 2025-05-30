@@ -11,6 +11,7 @@ import type { TIssueOperations } from "@/components/issues";
 
 // hooks
 import { useIssueDetail } from "@/hooks/store";
+import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 
 type TIssueCustomFieldSelect = {
   className?: string;
@@ -132,7 +133,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
         return (
           <DateDropdown
             value={fieldValue}
-            onChange={(date) => updateFieldValue(field.id, date)}
+            onChange={(date) => updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)}
             placeholder="날짜 선택"
             disabled={disabled}
             buttonVariant="transparent-with-text"
@@ -150,7 +151,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
           <CustomFieldDropdown
             field={field}
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: any) => updateFieldValue(field.id, val)}
             buttonVariant="transparent-with-text"
             className="w-3/5 flex-grow group"
             buttonContainerClassName="w-full text-left"
@@ -168,7 +169,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => {
+            onChange={(val: string | null) => {
               // 같은 값을 다시 클릭하면 값을 제거 (토글 기능)
               const newValue = fieldValue === val ? null : val;
               updateFieldValue(field.id, newValue);
@@ -176,6 +177,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             disabled={disabled}
+            multiple={false}
             buttonVariant="transparent-with-text"
             className="w-3/5 flex-grow group"
             buttonContainerClassName="w-full text-left"
@@ -191,7 +193,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
         return (
           <MemberDropdown
             value={fieldValue}
-            onChange={(val) => updateFieldValue(field.id, val)}
+            onChange={(val: string[]) => updateFieldValue(field.id, val)}
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             disabled={disabled}

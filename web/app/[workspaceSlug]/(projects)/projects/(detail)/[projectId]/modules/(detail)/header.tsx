@@ -31,6 +31,7 @@ import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelect
 // helpers
 import { ModuleQuickActions } from "@/components/modules";
 import { cn } from "@/helpers/common.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
 import {
@@ -98,20 +99,9 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!projectId) return;
-      const newValues = issueFilters?.filters?.[key] ?? [];
 
-      if (Array.isArray(value)) {
-        // this validation is majorly for the filter start_date, target_date custom
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(projectId.toString(), EIssueFilterType.FILTERS, { [key]: newValues });
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
+      updateFilters(projectId.toString(), EIssueFilterType.FILTERS, { [key]: updatedValue });
     },
     [projectId, issueFilters, updateFilters]
   );

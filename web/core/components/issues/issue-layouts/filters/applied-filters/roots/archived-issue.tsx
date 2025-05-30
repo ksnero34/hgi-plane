@@ -3,8 +3,10 @@ import { useParams } from "next/navigation";
 import { EIssueFilterType, EIssuesStoreType } from "@plane/constants";
 import { IIssueFilterOptions } from "@plane/types";
 // hooks
-import { AppliedFiltersList } from "@/components/issues";
+import { Header, EHeaderVariant } from "@plane/ui";
+import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 import { useIssues, useLabel, useProjectState } from "@/hooks/store";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 // components
 // types
 
@@ -33,7 +35,6 @@ export const ArchivedIssueAppliedFiltersRoot: React.FC = observer(() => {
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId) return;
 
-    // remove all values of the key if value is null
     if (!value) {
       updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
         [key]: null,
@@ -41,26 +42,23 @@ export const ArchivedIssueAppliedFiltersRoot: React.FC = observer(() => {
       return;
     }
 
-    // remove the passed value from the key
-    let newValues = issueFilters?.filters?.[key] ?? [];
-    newValues = newValues.filter((val) => val !== value);
-
+    const updatedValue = calculateFilterRemovalValue(key, value, issueFilters?.filters ?? {});
     updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
-      [key]: newValues,
+      [key]: updatedValue,
     });
   };
 
   const handleClearAllFilters = () => {
     if (!workspaceSlug || !projectId) return;
-
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      newFilters[key as keyof IIssueFilterOptions] = [];
+      if (key === 'custom_fields') {
+        (newFilters as any)[key] = null;
+      } else {
+        (newFilters as any)[key] = [];
+      }
     });
-
-    updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
-      ...newFilters,
-    });
+    updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, { ...newFilters });
   };
 
   // return if no filters are applied

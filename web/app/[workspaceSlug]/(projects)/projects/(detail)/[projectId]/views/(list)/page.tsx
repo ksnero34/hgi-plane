@@ -14,6 +14,7 @@ import { ProjectViewsList } from "@/components/views";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
 // constants
 // helpers
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
 // hooks
 import { useProject, useProjectView, useUserPermissions } from "@/hooks/store";
@@ -43,7 +44,7 @@ const ProjectViewsPage = observer(() => {
   useEffect(() => {
     const fetchCustomFields = async () => {
       if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
+
       try {
         setIsLoadingCustomFields(true);
         const response = await fetch(
@@ -68,17 +69,13 @@ const ProjectViewsPage = observer(() => {
 
   const handleRemoveFilter = useCallback(
     (key: keyof TViewFilterProps, value: string | EViewAccess | null) => {
-      let newValues = filters.filters?.[key];
-
       if (key === "favorites") {
-        newValues = !!value;
-      }
-      if (Array.isArray(newValues)) {
-        if (!value) newValues = [];
-        else newValues = newValues.filter((val) => val !== value) as string[];
+        updateFilters("filters", { [key]: !!value });
+        return;
       }
 
-      updateFilters("filters", { [key]: newValues });
+      const updatedValue = calculateFilterRemovalValue(key as any, value as string | null, filters.filters ?? {});
+      updateFilters("filters", { [key]: updatedValue });
     },
     [filters.filters, updateFilters]
   );
@@ -119,7 +116,7 @@ const ProjectViewsPage = observer(() => {
             customFields={customFields}
             workspaceSlug={workspaceSlug as string}
             projectId={projectId as string}
-            isProjectLevel={true}
+            isProjectLevel
             viewProjectId={projectId as string}
           />
         </Header>

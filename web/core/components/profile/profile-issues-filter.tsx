@@ -11,6 +11,7 @@ import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOption
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, LayoutSelection } from "@/components/issues";
 // helpers
 import { isIssueFilterActive } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useIssues, useLabel } from "@/hooks/store";
 
@@ -47,24 +48,13 @@ export const ProfileIssuesFilter = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !userId) return;
-      const newValues = issueFilters?.filters?.[key] ?? [];
-
-      if (Array.isArray(value)) {
-        // this validation is majorly for the filter start_date, target_date custom
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
+      
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
       updateFilters(
         workspaceSlug.toString(),
         undefined,
         EIssueFilterType.FILTERS,
-        { [key]: newValues },
+        { [key]: updatedValue },
         userId.toString()
       );
     },

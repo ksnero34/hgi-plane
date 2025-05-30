@@ -55,7 +55,9 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
       // 새 값 추가
       updatedValues.push({
         custom_field_id: customField.id,
-        value: value
+        value: value,
+        field_name: customField.name,
+        field_type: customField.field_type
       });
     }
 
@@ -272,6 +274,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
             buttonClassName={buttonClassName}
             buttonContainerClassName="w-full"
             disabled={disabled}
+            multiple={false}
             placeholder={customField.name}
             onClose={onClose}
           />
