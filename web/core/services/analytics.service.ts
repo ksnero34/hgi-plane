@@ -60,4 +60,14 @@ export class AnalyticsService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  async downloadAnalytics(workspaceSlug: string, data: IExportAnalyticsFormData): Promise<Blob> {
+    return this.post(`/api/workspaces/${workspaceSlug}/download-analytics/`, data, {
+      responseType: 'blob',
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

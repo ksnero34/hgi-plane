@@ -90,4 +90,21 @@ export class AnalyticsService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  /**
+   * Downloads analytics data as CSV for a workspace
+   * @param {string} workspaceSlug - The unique identifier for the workspace
+   * @param {IExportAnalyticsFormData} data - Configuration for the analytics export
+   * @returns {Promise<Blob>} The CSV file as a blob
+   * @throws {Error} Throws response data if the request fails
+   */
+  async download(workspaceSlug: string, data: IExportAnalyticsFormData): Promise<Blob> {
+    return this.post(`/api/workspaces/${workspaceSlug}/download-analytics/`, data, {
+      responseType: 'blob',
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

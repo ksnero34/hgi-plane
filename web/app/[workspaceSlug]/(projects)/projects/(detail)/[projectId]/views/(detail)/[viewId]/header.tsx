@@ -75,13 +75,13 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   useEffect(() => {
     const fetchCustomFields = async () => {
       if (!workspaceSlug || !projectId) return;
-      
+
       try {
         // console.log("ProjectViewIssuesHeader - Fetching custom fields");
         const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`, {
           credentials: "include",
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           // console.log("ProjectViewIssuesHeader - Custom fields loaded:", data);
@@ -117,7 +117,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId || !viewId) return;
-      
+
       // custom_fields는 별도 처리
       if (key === "custom_fields") {
         updateFilters(
@@ -129,7 +129,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
         );
         return;
       }
-      
+
       const newValues = issueFilters?.filters?.[key] ?? [];
 
       if (Array.isArray(value)) {

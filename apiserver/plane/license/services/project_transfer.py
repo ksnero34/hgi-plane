@@ -28,6 +28,8 @@ from plane.db.models import (
     IssueView,
     WorkspaceMember,
     FileAsset,
+    CustomField,
+    CustomFieldValue,
 )
 
 from plane.utils.audit_logger import log_audit
@@ -314,6 +316,15 @@ class ProjectTransferService:
                 
                 # 이슈 담당자 업데이트
                 IssueAssignee.objects.filter(issue=issue).update(workspace=target_workspace)
+            
+            # 커스텀 필드 업데이트
+            custom_fields = CustomField.objects.filter(project=project)
+            for custom_field in custom_fields:
+                custom_field.workspace = target_workspace
+                custom_field.save()
+                
+                # 커스텀 필드 값 업데이트
+                CustomFieldValue.objects.filter(custom_field=custom_field).update(workspace=target_workspace)
             
         except Exception as e:
             # 오류 발생 시 롤백은 transaction.atomic에 의해 자동으로 처리됨

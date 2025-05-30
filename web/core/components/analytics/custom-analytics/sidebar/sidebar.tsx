@@ -113,12 +113,22 @@ export const CustomAnalyticsSidebar: React.FC<Props> = observer((props) => {
     if (params.project) data.project = params.project;
 
     analyticsService
-      .exportAnalytics(workspaceSlug.toString(), data)
-      .then((res) => {
+      .downloadAnalytics(workspaceSlug.toString(), data)
+      .then((blob) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${workspaceSlug}-analytics.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "성공했습니다!",
-          message: res.message,
+          message: "분석 데이터가 다운로드되었습니다.",
         });
 
         trackExportAnalytics();

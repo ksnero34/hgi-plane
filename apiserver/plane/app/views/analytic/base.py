@@ -5,10 +5,13 @@ from django.utils import timezone
 from django.db.models.functions import Concat
 from django.db.models import Case, When, Value, OuterRef, Func
 from django.db import models
+from django.http import HttpResponse
 
 # Third party imports
 from rest_framework import status
 from rest_framework.response import Response
+import csv
+import io
 
 # Module imports
 from plane.app.permissions import WorkSpaceAdminPermission
@@ -531,3 +534,168 @@ class ProjectStatsEndpoint(BaseAPIView):
 
         projects = projects.annotate(**annotations).values("id", *requested_fields)
         return Response(projects, status=status.HTTP_200_OK)
+
+
+class DownloadAnalyticsEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
+    def post(self, request, slug):
+        x_axis = request.data.get("x_axis", False)
+        y_axis = request.data.get("y_axis", False)
+        segment = request.data.get("segment", False)
+
+        valid_xaxis_segment = [
+            "state_id",
+            "state__group",
+            "labels__id",
+            "assignees__id",
+            "estimate_point",
+            "issue_cycle__cycle_id",
+            "issue_module__module_id",
+            "priority",
+            "start_date",
+            "target_date",
+            "created_at",
+            "completed_at",
+        ]
+
+        valid_yaxis = ["issue_count", "estimate"]
+
+        # Check for x-axis and y-axis as they are required parameters
+        if (
+            not x_axis
+            or not y_axis
+            or x_axis not in valid_xaxis_segment
+            or y_axis not in valid_yaxis
+        ):
+            return Response(
+                {
+                    "error": "x-axis and y-axis dimensions are required and the values should be valid"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # If segment is present it cannot be same as x-axis
+        if segment and (segment not in valid_xaxis_segment or x_axis == segment):
+            return Response(
+                {
+                    "error": "Both segment and x axis cannot be same and segment should be valid"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Get filters and queryset
+            filters = issue_filters(request.data, "POST")
+            queryset = Issue.issue_objects.filter(**filters, workspace__slug=slug)
+
+            # Build graph plot data
+            distribution = build_graph_plot(
+                queryset, x_axis=x_axis, y_axis=y_axis, segment=segment
+            )
+
+            # Generate CSV data
+            csv_buffer = io.StringIO()
+            writer = csv.writer(csv_buffer, delimiter=",", quoting=csv.QUOTE_ALL)
+
+            # Helper function to get display names
+            def get_display_name(field, value):
+                if field == "assignees__id":
+                    try:
+                        from django.contrib.auth import get_user_model
+                        User = get_user_model()
+                        user = User.objects.get(id=value)
+                        return f"{user.first_name} {user.last_name}".strip() or user.display_name or user.email
+                    except:
+                        return str(value)
+                elif field == "labels__id":
+                    try:
+                        from plane.db.models import Label
+                        label = Label.objects.get(id=value)
+                        return label.name
+                    except:
+                        return str(value)
+                elif field == "state_id":
+                    try:
+                        from plane.db.models import State
+                        state = State.objects.get(id=value)
+                        return state.name
+                    except:
+                        return str(value)
+                elif field == "issue_cycle__cycle_id":
+                    try:
+                        cycle = Cycle.objects.get(id=value)
+                        return cycle.name
+                    except:
+                        return str(value)
+                elif field == "issue_module__module_id":
+                    try:
+                        module = Module.objects.get(id=value)
+                        return module.name
+                    except:
+                        return str(value)
+                return str(value)
+
+            # Write header
+            x_axis_label = {
+                "state_id": "State",
+                "state__group": "State Group", 
+                "labels__id": "Label",
+                "assignees__id": "Assignee",
+                "estimate_point": "Estimate",
+                "issue_cycle__cycle_id": "Cycle",
+                "issue_module__module_id": "Module",
+                "priority": "Priority",
+                "start_date": "Start Date",
+                "target_date": "Target Date",
+                "created_at": "Created At",
+                "completed_at": "Completed At",
+            }.get(x_axis, "X-Axis")
+
+            y_axis_label = "Issue Count" if y_axis == "issue_count" else "Estimate"
+
+            if segment:
+                # For segmented data, create columns for each segment
+                segments = set()
+                for item_data in distribution.values():
+                    for data_point in item_data:
+                        if segment in data_point:
+                            segments.add(str(data_point[segment]))
+                
+                header = [x_axis_label] + list(segments)
+                writer.writerow(header)
+
+                # Write data rows
+                for item, item_data in distribution.items():
+                    row = [get_display_name(x_axis, item)]
+                    segment_data = {}
+                    for data_point in item_data:
+                        seg_value = str(data_point.get(segment, ""))
+                        count_value = data_point.get("count" if y_axis == "issue_count" else "estimate", 0)
+                        segment_data[seg_value] = count_value
+                    
+                    for seg in segments:
+                        row.append(segment_data.get(seg, 0))
+                    writer.writerow(row)
+            else:
+                # For non-segmented data
+                header = [x_axis_label, y_axis_label]
+                writer.writerow(header)
+
+                # Write data rows
+                for item, item_data in distribution.items():
+                    if item_data:
+                        value = item_data[0].get("count" if y_axis == "issue_count" else "estimate", 0)
+                        row = [get_display_name(x_axis, item), value]
+                        writer.writerow(row)
+
+            # Create HTTP response with CSV
+            response = HttpResponse(csv_buffer.getvalue(), content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{slug}-analytics.csv"'
+            
+            return response
+
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to generate CSV: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

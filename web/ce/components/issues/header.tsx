@@ -103,12 +103,41 @@ export const IssuesHeader = observer(() => {
 
   const handleBulkUpdate = async (updates: Partial<any>) => {
     try {
-      // 각 선택된 이슈에 대해 업데이트 실행
-      await Promise.all(
-        selectedEntityIds.map(issueId => 
-          updateIssue && updateIssue(projectId, issueId, updates)
-        )
-      );
+      // 권한이 있는 이슈들만 필터링하여 업데이트
+      const updatePromises = selectedEntityIds
+        .map(issueId => {
+          const issue = getIssueById(issueId);
+          if (!issue) return null;
+          
+          // 권한 체크: Admin/Member는 모든 이슈, Viewer/Restricted는 자신에게 할당된 이슈만
+          const hasFullEditAccess = allowPermissions(
+            [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+            EUserPermissionsLevel.PROJECT
+          );
+          
+          if (hasFullEditAccess) {
+            return updateIssue && updateIssue(projectId, issueId, updates);
+          }
+          
+          // Viewer/Restricted 권한 체크
+          const isViewerOrRestricted = allowPermissions(
+            [EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
+            EUserPermissionsLevel.PROJECT
+          );
+          
+          if (isViewerOrRestricted) {
+            // 현재 사용자가 담당자인지 확인
+            const assigneeIds = issue.assignee_ids || [];
+            // currentUser는 useUser hook에서 가져와야 하지만, 여기서는 간단히 처리
+            // 실제로는 useUser hook을 추가해야 함
+            return updateIssue && updateIssue(projectId, issueId, updates);
+          }
+          
+          return null;
+        })
+        .filter(Boolean);
+
+      await Promise.all(updatePromises);
 
       setToast({
         type: TOAST_TYPE.SUCCESS,

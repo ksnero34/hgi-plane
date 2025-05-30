@@ -28,6 +28,8 @@ from plane.db.models import (
     IssueSequence,
     IssueVersion,
     IssueDescriptionVersion,
+    CustomField,
+    CustomFieldValue,
 )
 
 
@@ -248,6 +250,15 @@ class ProjectTransferService:
             
             # 이슈 담당자 업데이트
             IssueAssignee.objects.filter(issue=issue).update(workspace=target_workspace)
+        
+        # 커스텀 필드 업데이트
+        custom_fields = CustomField.objects.filter(project=project)
+        for custom_field in custom_fields:
+            custom_field.workspace = target_workspace
+            custom_field.save()
+            
+            # 커스텀 필드 값 업데이트
+            CustomFieldValue.objects.filter(custom_field=custom_field).update(workspace=target_workspace)
         
         # 이동이 완료되었습니다.
         return {
