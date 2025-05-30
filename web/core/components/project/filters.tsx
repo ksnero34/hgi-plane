@@ -56,7 +56,7 @@ const HeaderFilters = observer(({ filterMenuButton, isMobile, classname = "", fi
           else newValues.push(value);
         }
       }
-      updateFilters({ [key]: newValues });
+      updateFilters(workspaceSlug.toString(), { [key]: newValues });
     },
     [filters, updateFilters, workspaceSlug]
   );

@@ -102,7 +102,6 @@ export const SpreadsheetHeader = observer((props: Props) => {
               displayProperties={displayProperties}
               displayFilters={displayFilters}
               handleDisplayFilterUpdate={handleDisplayFilterUpdate}
-              canEditProperties={canEditProperties}
               isEstimateEnabled={isEstimateEnabled}
               isEpic={isEpic}
             />

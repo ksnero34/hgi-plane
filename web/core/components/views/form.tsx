@@ -125,14 +125,14 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
       return;
     }
 
-    const newValues = selectedFilters?.[key] ?? [];
+    const newValues = Array.isArray(selectedFilters?.[key]) ? [...(selectedFilters[key] as string[])] : [];
 
     if (Array.isArray(value)) {
       value.forEach((val) => {
-        if (newValues.includes(val)) newValues.splice(newValues.indexOf(val), 1);
+        if (newValues.indexOf(val) !== -1) newValues.splice(newValues.indexOf(val), 1);
       });
     } else {
-      if (selectedFilters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+      if (selectedFilters?.[key] && (selectedFilters[key] as string[]).indexOf(value) !== -1) newValues.splice(newValues.indexOf(value), 1);
     }
 
     setValue("filters", {
@@ -290,7 +290,14 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                     render={({ field: { onChange, value: filters } }) => (
                       <FiltersDropdown title={t("common.filters")} tabIndex={getIndex("filters")}>
                         <ViewFiltersSelection
-                          filters={{ filters: filters ?? {} }}
+                          filters={{ 
+                            filters: {
+                              ...filters,
+                              custom_fields: typeof filters?.custom_fields === 'object' && filters.custom_fields !== null
+                                ? JSON.stringify(filters.custom_fields)
+                                : filters?.custom_fields
+                            } ?? {} 
+                          }}
                           handleFiltersUpdate={(filterKey, filterValue) => {
                             if (filterKey === "filters") {
                               onChange(filterValue);

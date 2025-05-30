@@ -153,25 +153,6 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
       case "select":
         const hasSelectValue = fieldValue && fieldValue !== "";
         
-        if (!hasSelectValue) {
-          return (
-            <CustomFieldDropdown
-              field={customField}
-              value={fieldValue}
-              onChange={updateFieldValue}
-              disabled={disabled}
-              onClose={onClose}
-              buttonVariant="transparent-without-text"
-              buttonContainerClassName="w-full h-full"
-              buttonClassName={buttonClassName}
-              hideDropdownArrow
-              fullWidth
-              fullHeight
-              button={NoValue}
-            />
-          );
-        }
-
         return (
           <CustomFieldDropdown
             field={customField}
@@ -182,57 +163,16 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
             buttonVariant="transparent-without-text"
             buttonContainerClassName="w-full h-full"
             buttonClassName={buttonClassName}
-            hideDropdownArrow
-            fullWidth
-            fullHeight
-            button={<SelectItem value={fieldValue} />}
+            dropdownArrow={false}
+            placeholder={hasSelectValue ? fieldValue : customField.name}
+            showTooltip={true}
           />
         );
 
       case "multiselect":
         const selectedValues = Array.isArray(fieldValue) ? fieldValue : [];
         const hasMultiSelectValue = selectedValues.length > 0;
-        const maxRender = 1; // 스프레드시트에서는 1개만 표시
-
-        if (!hasMultiSelectValue) {
-          return (
-            <CustomFieldDropdown
-              field={customField}
-              value={fieldValue}
-              onChange={updateFieldValue}
-              disabled={disabled}
-              onClose={onClose}
-              buttonVariant="transparent-without-text"
-              buttonContainerClassName="w-full h-full"
-              buttonClassName={buttonClassName}
-              hideDropdownArrow
-              fullWidth
-              fullHeight
-              button={NoValue}
-            />
-          );
-        }
-
-        // 라벨 컴포넌트와 동일한 패턴: 개수에 따라 조건부 렌더링
-        if (selectedValues.length <= maxRender) {
-          return (
-            <CustomFieldDropdown
-              field={customField}
-              value={fieldValue}
-              onChange={updateFieldValue}
-              disabled={disabled}
-              onClose={onClose}
-              buttonVariant="transparent-without-text"
-              buttonContainerClassName="w-full h-full"
-              buttonClassName={buttonClassName}
-              hideDropdownArrow
-              fullWidth
-              fullHeight
-              button={<SelectItem value={selectedValues[0]} />}
-            />
-          );
-        }
-
+        
         return (
           <CustomFieldDropdown
             field={customField}
@@ -243,10 +183,9 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
             buttonVariant="transparent-without-text"
             buttonContainerClassName="w-full h-full"
             buttonClassName={buttonClassName}
-            hideDropdownArrow
-            fullWidth
-            fullHeight
-            button={SelectSummary}
+            dropdownArrow={false}
+            placeholder={hasMultiSelectValue ? `${selectedValues.length}개 선택됨` : customField.name}
+            showTooltip={true}
           />
         );
 
@@ -267,7 +206,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
       case "project_member":
         return (
           <MemberDropdown
-            projectId={issue.project_id}
+            projectId={issue.project_id ?? undefined}
             value={fieldValue}
             onChange={updateFieldValue}
             buttonVariant="transparent-with-text"
@@ -283,7 +222,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
       case "project_members":
         return (
           <MemberDropdown
-            projectId={issue.project_id}
+            projectId={issue.project_id ?? undefined}
             value={fieldValue}
             onChange={updateFieldValue}
             buttonVariant="transparent-with-text"

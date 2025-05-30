@@ -70,7 +70,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
 
           // 커스텀 필드의 경우 별도 처리
           if (filterKey === "custom_fields" && customFields) {
-            const customFieldFilters = typeof value === 'string' ? JSON.parse(value) : value as { [field_id: string]: string[] };
+            const customFieldFilters = typeof value === 'string' ? JSON.parse(value) : value as unknown as { [field_id: string]: string[] };
             
             return Object.entries(customFieldFilters).map(([fieldId, fieldValues]) => {
               if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) return null;
@@ -85,7 +85,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                     <AppliedCustomFieldFilters
                       appliedFilters={{ [fieldId]: fieldValues }}
                       customFields={customFields}
-                      editable={isEditingAllowed}
+                      editable={isEditingAllowed ?? false}
                       handleRemove={(fieldId, val) => {
                         // 커스텀 필드 필터 제거 로직
                         const currentCustomFieldFilters = typeof appliedFilters.custom_fields === 'string' 
@@ -151,23 +151,23 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                 <span className="text-xs text-custom-text-300">{getFilterKeyLabel(filterKey)}</span>
                 {filterKey === "status" && (
                   <AppliedStatusFilters
-                    editable={isEditingAllowed}
+                    editable={isEditingAllowed ?? false}
                     handleRemove={(val) => handleRemoveFilter("status", val)}
-                    values={value}
+                    values={Array.isArray(value) ? value : [value]}
                   />
                 )}
                 {DATE_FILTERS.includes(filterKey) && (
                   <AppliedDateFilters
-                    editable={isEditingAllowed}
+                    editable={isEditingAllowed ?? false}
                     handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                    values={value}
+                    values={Array.isArray(value) ? value : [value]}
                   />
                 )}
                 {MEMBERS_FILTERS.includes(filterKey) && (
                   <AppliedMembersFilters
-                    editable={isEditingAllowed}
+                    editable={isEditingAllowed ?? false}
                     handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                    values={value}
+                    values={Array.isArray(value) ? value : [value]}
                   />
                 )}
                 {isEditingAllowed && (

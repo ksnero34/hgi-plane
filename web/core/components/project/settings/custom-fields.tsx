@@ -374,43 +374,48 @@ export const ProjectCustomFieldsSettings = observer(() => {
             )}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="필드 이름"
-              value={newField.name}
-              onChange={(e) => setNewField({ ...newField, name: e.target.value })}
-              placeholder={getFieldPlaceholder(newField.field_type || "text")}
-              helperText={getFieldHelperText(newField.field_type || "text")}
-            />
-            <Input
-              label="고유 식별자"
-              value={newField.key}
-              onChange={(e) => setNewField({ ...newField, key: e.target.value })}
-              placeholder={newField.name ? newField.name.toLowerCase().replace(/\s+/g, "_") : getKeyPlaceholder(newField.field_type || "text")}
-              helperText={isEditMode ? "식별자는 수정할 수 없습니다" : "시스템에서 사용될 고유 식별자 (영문, 숫자, _ 만 사용)"}
-              disabled={isEditMode}
-            />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-custom-text-300">필드 이름</label>
+              <Input
+                value={newField.name}
+                onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+                placeholder={getFieldPlaceholder(newField.field_type || "text")}
+              />
+              <p className="text-xs text-custom-text-200">{getFieldHelperText(newField.field_type || "text")}</p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-custom-text-300">고유 식별자</label>
+              <Input
+                value={newField.key}
+                onChange={(e) => setNewField({ ...newField, key: e.target.value })}
+                placeholder={newField.name ? newField.name.toLowerCase().replace(/\s+/g, "_") : getKeyPlaceholder(newField.field_type || "text")}
+                disabled={isEditMode}
+              />
+              <p className="text-xs text-custom-text-200">{isEditMode ? "식별자는 수정할 수 없습니다" : "시스템에서 사용될 고유 식별자 (영문, 숫자, _ 만 사용)"}</p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <CustomSelect
-              label="필드 타입"
-              value={newField.field_type}
-              onChange={(val) => setNewField({ ...newField, field_type: val })}
-              buttonClassName="w-full text-left"
-              label={FIELD_TYPES.find(t => t.value === newField.field_type)?.label || "필드 타입 선택"}
-            >
-              {FIELD_TYPES.map((option) => (
-                <CustomSelect.Option key={option.value} value={option.value}>
-                  <div className="flex flex-col gap-1">
-                    <span>{option.label}</span>
-                    <span className="text-xs text-custom-text-200">{option.description}</span>
-                  </div>
-                </CustomSelect.Option>
-              ))}
-            </CustomSelect>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-custom-text-300">필드 타입</label>
+              <CustomSelect
+                value={newField.field_type}
+                onChange={(val: string) => setNewField({ ...newField, field_type: val })}
+                buttonClassName="w-full text-left"
+              >
+                {FIELD_TYPES.map((option) => (
+                  <CustomSelect.Option key={option.value} value={option.value}>
+                    <div className="flex flex-col gap-1">
+                      <span>{option.label}</span>
+                      <span className="text-xs text-custom-text-200">{option.description}</span>
+                    </div>
+                  </CustomSelect.Option>
+                ))}
+              </CustomSelect>
+            </div>
             <div className="flex items-center">
               <ToggleSwitch
-                value={newField.is_required}
-                onChange={(val) => setNewField({ ...newField, is_required: val })}
+                value={newField.is_required ?? false}
+                onChange={(val: boolean) => setNewField({ ...newField, is_required: val })}
               />
               <span className="ml-2">필수 필드</span>
             </div>
@@ -440,7 +445,6 @@ export const ProjectCustomFieldsSettings = observer(() => {
                   </div>
                 ))}
                 <Input
-                  type="text"
                   placeholder="새 옵션 추가"
                   className="w-32"
                   onKeyDown={(e) => {

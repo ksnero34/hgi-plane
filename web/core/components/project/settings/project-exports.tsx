@@ -98,7 +98,7 @@ export const ProjectExports = observer(() => {
 
   // 현재 프로젝트의 export만 필터링
   const filteredExports = exporterServices?.results?.filter((service) => 
-    Array.isArray(service.project) && service.project.includes(projectId)
+    Array.isArray(service.project) && service.project.includes(projectId as string)
   );
 
   return (

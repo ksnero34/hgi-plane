@@ -16,7 +16,7 @@ type Props = {
 export const SpreadsheetSingleCustomFieldColumn: React.FC<Props> = observer((props: Props) => {
   const { issue, customField, onChange, disabled, onClose } = props;
 
-  const handleCustomFieldUpdate = (projectId: string | null, issueId: string, data: Partial<TIssue>) => {
+  const handleCustomFieldUpdate = async (projectId: string | null, issueId: string, data: Partial<TIssue>) => {
     if (onChange) {
       onChange(issue, data, { 
         changed_property: "custom_fields", 

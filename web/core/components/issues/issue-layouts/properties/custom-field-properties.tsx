@@ -195,7 +195,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
         return (
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <MemberDropdown
-              projectId={issue.project_id}
+              projectId={issue.project_id ?? undefined}
               value={fieldValue || null}
               onChange={(val: string | null) => {
                 // 기존 값과 같은 값을 선택하면 값을 제거
@@ -211,8 +211,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
               buttonClassName={hasValue ? "hover:bg-transparent px-0" : ""}
               disabled={isReadOnly}
               showTooltip={true}
-              tooltipHeading={hasValue ? field.name : ""}
-              tooltipContent={hasValue ? formattedValue : "none"}
+              tooltipContent={hasValue ? `${field.name}: ${formattedValue}` : field.name}
               placeholder={field.name}
               renderByDefault={isMobile}
             />
@@ -223,7 +222,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
         return (
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <MemberDropdown
-              projectId={issue.project_id}
+              projectId={issue.project_id ?? undefined}
               value={Array.isArray(fieldValue) ? fieldValue : []}
               onChange={(val: string[]) => updateIssue && updateIssue(issue.project_id, issue.id, {
                 custom_field_values: updateFieldValue(field.id, val && val.length > 0 ? val : null)
@@ -235,8 +234,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
               disabled={isReadOnly}
               multiple
               showTooltip={true}
-              tooltipHeading={hasValue ? field.name : ""}
-              tooltipContent={hasValue ? formattedValue : "none"}
+              tooltipContent={hasValue ? `${field.name}: ${formattedValue}` : field.name}
               placeholder={field.name}
               renderByDefault={isMobile}
             />

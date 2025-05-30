@@ -91,7 +91,7 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
                   <AppliedCustomFieldFilters
                     appliedFilters={{ [fieldId]: fieldValues }}
                     customFields={customFields}
-                    editable={isEditingAllowed}
+                    editable={isEditingAllowed ?? false}
                     handleRemove={(fieldId, val) => {
                       // 커스텀 필드 필터 제거 로직
                       const currentCustomFieldFilters = typeof appliedFilters.custom_fields === 'string' 
@@ -157,14 +157,14 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
             <div className="flex flex-wrap items-center gap-1">
               {filterKey === "status" && (
                 <AppliedStatusFilters
-                  editable={isEditingAllowed}
+                  editable={isEditingAllowed ?? false}
                   handleRemove={(val) => handleRemoveFilter("status", val)}
                   values={Array.isArray(value) ? value : []}
                 />
               )}
               {DATE_FILTERS.includes(filterKey) && (
                 <AppliedDateFilters
-                  editable={isEditingAllowed}
+                  editable={isEditingAllowed ?? false}
                   handleRemove={(val) => handleRemoveFilter(filterKey, val)}
                   values={Array.isArray(value) ? value : []}
                 />

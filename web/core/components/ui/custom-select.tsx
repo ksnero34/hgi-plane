@@ -1,5 +1,5 @@
 import React from "react";
-import { Input } from "@plane/ui";
+import { CustomSelect as PlaneCustomSelect } from "@plane/ui";
 
 type Props = {
   value: any;
@@ -9,21 +9,26 @@ type Props = {
   className?: string;
   disabled?: boolean;
   isMulti?: boolean;
+  buttonClassName?: string;
 };
 
 export const CustomSelect: React.FC<Props> = (props) => {
-  const { value, onChange, options, placeholder, className, disabled, isMulti } = props;
+  const { value, onChange, options, placeholder, className, disabled, buttonClassName } = props;
 
   return (
-    <Input
-      type="select"
+    <PlaneCustomSelect
       value={value}
       onChange={onChange}
-      options={options}
-      placeholder={placeholder}
+      label={placeholder}
       className={className}
       disabled={disabled}
-      multiple={isMulti}
-    />
+      buttonClassName={buttonClassName}
+    >
+      {options.map((option) => (
+        <PlaneCustomSelect.Option key={option.value} value={option.value}>
+          {option.label}
+        </PlaneCustomSelect.Option>
+      ))}
+    </PlaneCustomSelect>
   );
 }; 

@@ -3,7 +3,7 @@
 import { Dispatch, MouseEvent, MutableRefObject, SetStateAction, useRef, useState } from "react";
 import React from "react";
 import { observer } from "mobx-react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { EIssueServiceType, SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
@@ -193,11 +193,13 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
   const menuActionRef = useRef<HTMLDivElement | null>(null);
   // router
   const { workspaceSlug, projectId } = useParams();
+  const pathname = usePathname();
   // hooks
   const { getProjectIdentifierById } = useProject();
   const { getIsIssuePeeked, peekIssue } = useIssueDetail(isEpic ? EIssueServiceType.EPICS : EIssueServiceType.ISSUES);
   const { handleRedirection } = useIssuePeekOverviewRedirection(isEpic);
   const { isMobile } = usePlatformOS();
+  const { captureIssueEvent } = useEventTracker();
 
   // handlers
   const handleIssuePeekOverview = (issue: TIssue) =>
