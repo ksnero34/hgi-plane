@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
 import { EUserPermissionsLevel, EUserProjectRoles } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TModuleFilters } from "@plane/types";
+import { TModuleFilters, TCustomField } from "@plane/types";
 // components
 import { PageHead } from "@/components/core";
 import { DetailedEmptyState } from "@/components/empty-state";
@@ -26,6 +26,8 @@ const ProjectModulesPage = observer(() => {
   const { workspaceSlug, projectId } = useParams();
   // plane hooks
   const { t } = useTranslation();
+  // states
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
   // store
   const { getProjectById, currentProjectDetails } = useProject();
   const { currentProjectFilters, currentProjectDisplayFilters, clearAllFilters, updateFilters, updateDisplayFilters } =
@@ -36,6 +38,30 @@ const ProjectModulesPage = observer(() => {
   const pageTitle = project?.name ? `${project?.name} - Modules` : undefined;
   const canPerformEmptyStateActions = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/modules" });
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId) return;
+
+      try {
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
 
   const handleRemoveFilter = useCallback(
     (key: keyof TModuleFilters, value: string | null) => {
@@ -88,6 +114,9 @@ const ProjectModulesPage = observer(() => {
               updateDisplayFilters(projectId.toString(), val);
             }}
             alwaysAllowEditing
+            workspaceSlug={workspaceSlug as string}
+            projectId={projectId as string}
+            customFields={customFields}
           />
         )}
         <ModulesListView />

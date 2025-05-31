@@ -25,6 +25,13 @@ type Props = {
 
 export const FilterCustomFields: React.FC<Props> = observer((props) => {
   const { appliedFilters, handleUpdate, searchQuery, customFields, workspaceSlug, projectId } = props;
+  
+  console.log("FilterCustomFields - Received props:");
+  console.log("FilterCustomFields - customFields:", customFields);
+  console.log("FilterCustomFields - customFields length:", customFields?.length);
+  console.log("FilterCustomFields - workspaceSlug:", workspaceSlug);
+  console.log("FilterCustomFields - projectId:", projectId);
+  
   // states
   const [previewEnabled, setPreviewEnabled] = useState(true);
   const [isDateFilterModalOpen, setIsDateFilterModalOpen] = useState(false);
@@ -57,7 +64,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
       const memberDetails = getProjectMemberDetails(memberId, projectId);
       return memberDetails ? {
         id: memberId,
-        name: memberDetails.member?.display_name || "Unknown",
+        name: memberDetails.member?.display_name || memberDetails.member?.first_name || "Unknown",
         avatar: memberDetails.member?.avatar_url || null,
         email: memberDetails.member?.email || null,
       } : null;
@@ -104,7 +111,8 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
     return details.length > 0 ? ` - ${details.join(", ")}` : "";
   }, [appliedFilters, appliedFiltersCount, customFields]);
 
-  if (filteredCustomFields.length === 0) return null;
+  // 커스텀 필드가 없어도 헤더는 표시
+  const shouldShowHeader = customFields && customFields.length > 0;
 
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
@@ -172,146 +180,151 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
       />
       {previewEnabled && (
         <div>
-          {filteredCustomFields.map((field) => {
-            // Select/Multiselect 필드
-            if (field.field_type === "select" || field.field_type === "multiselect") {
-              return (
-                <div key={field.id} className="mb-2">
-                  <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
-                    {getFieldIcon(field.field_type)}
-                    {field.name}
+          {filteredCustomFields.length > 0 ? (
+            filteredCustomFields.map((field) => {
+              // Select/Multiselect 필드
+              if (field.field_type === "select" || field.field_type === "multiselect") {
+                return (
+                  <div key={field.id} className="mb-2">
+                    <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
+                      {getFieldIcon(field.field_type)}
+                      {field.name}
+                    </div>
+                    {field.options?.map((option) => (
+                      <FilterOption
+                        key={`${field.id}-${option}`}
+                        isChecked={appliedFilters?.[field.id]?.includes(option) || false}
+                        onClick={() => {
+                          // console.log("FilterCustomFields - onClick:", field.id, option);
+                          // console.log("FilterCustomFields - current appliedFilters:", appliedFilters);
+                          handleUpdate(field.id, option);
+                        }}
+                        title={option}
+                      />
+                    ))}
                   </div>
-                  {field.options?.map((option) => (
-                    <FilterOption
-                      key={`${field.id}-${option}`}
-                      isChecked={appliedFilters?.[field.id]?.includes(option) || false}
-                      onClick={() => {
-                        // console.log("FilterCustomFields - onClick:", field.id, option);
-                        // console.log("FilterCustomFields - current appliedFilters:", appliedFilters);
-                        handleUpdate(field.id, option);
-                      }}
-                      title={option}
-                    />
-                  ))}
-                </div>
-              );
-            }
-            
-            // 날짜 필드
-            if (field.field_type === "date") {
-              const dateFilterOptions = [
-                { value: "1_weeks;within;fromnow", name: "다음 1주일" },
-                { value: "2_weeks;within;fromnow", name: "다음 2주일" },
-                { value: "1_months;within;fromnow", name: "다음 1개월" },
-                { value: "2_months;within;fromnow", name: "다음 2개월" },
-                { value: "1_weeks;before", name: "지난 1주일" },
-                { value: "2_weeks;before", name: "지난 2주일" },
-                { value: "1_months;before", name: "지난 1개월" },
-                { value: "2_months;before", name: "지난 2개월" },
-              ];
+                );
+              }
+              
+              // 날짜 필드
+              if (field.field_type === "date") {
+                const dateFilterOptions = [
+                  { value: "1_weeks;within;fromnow", name: "다음 1주일" },
+                  { value: "2_weeks;within;fromnow", name: "다음 2주일" },
+                  { value: "1_months;within;fromnow", name: "다음 1개월" },
+                  { value: "2_months;within;fromnow", name: "다음 2개월" },
+                  { value: "1_weeks;before", name: "지난 1주일" },
+                  { value: "2_weeks;before", name: "지난 2주일" },
+                  { value: "1_months;before", name: "지난 1개월" },
+                  { value: "2_months;before", name: "지난 2개월" },
+                ];
 
-              return (
-                <div key={field.id} className="mb-2">
-                  <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
-                    {getFieldIcon(field.field_type)}
-                    {field.name}
-                  </div>
-                  {dateFilterOptions.map((option) => (
+                return (
+                  <div key={field.id} className="mb-2">
+                    <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
+                      {getFieldIcon(field.field_type)}
+                      {field.name}
+                    </div>
+                    {dateFilterOptions.map((option) => (
+                      <FilterOption
+                        key={`${field.id}-${option.value}`}
+                        isChecked={appliedFilters?.[field.id]?.includes(option.value) || false}
+                        onClick={() => handleUpdate(field.id, option.value)}
+                        title={option.name}
+                        multiple
+                      />
+                    ))}
                     <FilterOption
-                      key={`${field.id}-${option.value}`}
-                      isChecked={appliedFilters?.[field.id]?.includes(option.value) || false}
-                      onClick={() => handleUpdate(field.id, option.value)}
-                      title={option.name}
+                      isChecked={isCustomDateSelected(field.id)}
+                      onClick={() => handleCustomDate(field.id)}
+                      title="사용자 정의"
                       multiple
                     />
-                  ))}
-                  <FilterOption
-                    isChecked={isCustomDateSelected(field.id)}
-                    onClick={() => handleCustomDate(field.id)}
-                    title="사용자 정의"
-                    multiple
-                  />
-                </div>
-              );
-            }
-
-            // 프로젝트 멤버 필드 (단일 선택)
-            if (field.field_type === "project_member") {
-              return (
-                <div key={field.id} className="mb-2">
-                  <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
-                    {getFieldIcon(field.field_type)}
-                    {field.name}
                   </div>
-                  {projectMembers.length > 0 ? (
-                    projectMembers
-                      .filter((member): member is NonNullable<typeof member> => member !== null)
-                      .map((member) => (
-                        <FilterOption
-                          key={`${field.id}-${member.id}`}
-                          isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
-                          onClick={() => handleUpdate(field.id, member.id)}
-                          icon={
-                            <Avatar
-                              name={member.name}
-                              src={getFileURL(member.avatar ?? "")}
-                              showTooltip={false}
-                              size="md"
-                            />
-                          }
-                          title={member.name}
-                        />
-                      ))
-                  ) : (
-                    <div className="text-xs text-custom-text-400 italic ml-4">
-                      프로젝트 멤버를 불러오는 중...
-                    </div>
-                  )}
-                </div>
-              );
-            }
+                );
+              }
 
-            // 프로젝트 멤버들 필드 (다중 선택)
-            if (field.field_type === "project_members") {
-              return (
-                <div key={field.id} className="mb-2">
-                  <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
-                    {getFieldIcon(field.field_type)}
-                    {field.name}
+              // 프로젝트 멤버 필드 (단일 선택)
+              if (field.field_type === "project_member") {
+                return (
+                  <div key={field.id} className="mb-2">
+                    <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
+                      {getFieldIcon(field.field_type)}
+                      {field.name}
+                    </div>
+                    {projectMembers.length > 0 ? (
+                      projectMembers
+                        .filter((member): member is NonNullable<typeof member> => member !== null)
+                        .map((member) => (
+                          <FilterOption
+                            key={`${field.id}-${member.id}`}
+                            isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
+                            onClick={() => handleUpdate(field.id, member.id)}
+                            icon={
+                              <Avatar
+                                name={member.name}
+                                src={getFileURL(member.avatar ?? "")}
+                                showTooltip={false}
+                                size="md"
+                              />
+                            }
+                            title={member.name}
+                          />
+                        ))
+                    ) : (
+                      <div className="text-xs text-custom-text-400 italic ml-4">
+                        {projectMemberIds.length === 0 ? "프로젝트 멤버가 없습니다" : "프로젝트 멤버를 불러오는 중..."}
+                      </div>
+                    )}
                   </div>
-                  {projectMembers.length > 0 ? (
-                    projectMembers
-                      .filter((member): member is NonNullable<typeof member> => member !== null)
-                      .map((member) => (
-                        <FilterOption
-                          key={`${field.id}-${member.id}`}
-                          isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
-                          onClick={() => handleUpdate(field.id, member.id)}
-                          icon={
-                            <Avatar
-                              name={member.name}
-                              src={getFileURL(member.avatar ?? "")}
-                              showTooltip={false}
-                              size="md"
-                            />
-                          }
-                          title={member.name}
-                          multiple
-                        />
-                      ))
-                  ) : (
-                    <div className="text-xs text-custom-text-400 italic ml-4">
-                      프로젝트 멤버를 불러오는 중...
-                    </div>
-                  )}
-                </div>
-              );
-            }
+                );
+              }
 
-            return null;
-          })}
-          {filteredCustomFields.length === 0 && (
-            <p className="text-xs italic text-custom-text-400">일치하는 항목 없음</p>
+              // 프로젝트 멤버들 필드 (다중 선택)
+              if (field.field_type === "project_members") {
+                return (
+                  <div key={field.id} className="mb-2">
+                    <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
+                      {getFieldIcon(field.field_type)}
+                      {field.name}
+                    </div>
+                    {projectMembers.length > 0 ? (
+                      projectMembers
+                        .filter((member): member is NonNullable<typeof member> => member !== null)
+                        .map((member) => (
+                          <FilterOption
+                            key={`${field.id}-${member.id}`}
+                            isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
+                            onClick={() => handleUpdate(field.id, member.id)}
+                            icon={
+                              <Avatar
+                                name={member.name}
+                                src={getFileURL(member.avatar ?? "")}
+                                showTooltip={false}
+                                size="md"
+                              />
+                            }
+                            title={member.name}
+                            multiple
+                          />
+                        ))
+                    ) : (
+                      <div className="text-xs text-custom-text-400 italic ml-4">
+                        {projectMemberIds.length === 0 ? "프로젝트 멤버가 없습니다" : "프로젝트 멤버를 불러오는 중..."}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return null;
+            })
+          ) : (
+            <p className="text-xs italic text-custom-text-400">
+              {customFields && customFields.length === 0 
+                ? "커스텀 필드가 없습니다" 
+                : "일치하는 항목 없음"}
+            </p>
           )}
         </div>
       )}

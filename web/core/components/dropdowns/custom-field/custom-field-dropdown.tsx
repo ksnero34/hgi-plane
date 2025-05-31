@@ -27,6 +27,7 @@ type Props = TDropdownProps & {
   value: any;
   renderByDefault?: boolean;
   placeholder?: string;
+  showPlaceholder?: boolean;
 };
 
 export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
@@ -49,6 +50,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     value,
     renderByDefault = true,
     placeholder,
+    showPlaceholder = false,
   } = props;
   
   // states
@@ -182,27 +184,33 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
               </div>
               )}
               
-              {hasValue && (
-              <div className="flex items-center gap-1.5">
-                {!hideIcon && (
-                  <>
-                    {field.field_type === "select" || field.field_type === "multiselect" ? (
-                      <Tag className="h-3 w-3 text-custom-text-400" />
-                    ) : field.field_type === "date" ? (
-                      <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
-                    ) : field.field_type === "project_member" ? (
-                      <UserCircle2 className="h-3 w-3 text-custom-text-400" />
-                    ) : field.field_type === "project_members" ? (
-                      <Users className="h-3 w-3 text-custom-text-400" />
-                    ) : (
-                      <Settings className="h-3 w-3 text-custom-text-400" />
-                    )}
-                  </>
-                )}
-                <span className="flex-grow truncate leading-5">
-                  {getDisplayValue()}
+              {!hasValue && placeholder && showPlaceholder && (
+                <span className="flex-grow truncate text-xs text-custom-text-400 leading-5">
+                  {placeholder}
                 </span>
-              </div>
+              )}
+              
+              {hasValue && (
+                <div className="flex items-center gap-1.5">
+                  {!hideIcon && (
+                    <>
+                      {field.field_type === "select" || field.field_type === "multiselect" ? (
+                        <Tag className="h-3 w-3 text-custom-text-400" />
+                      ) : field.field_type === "date" ? (
+                        <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
+                      ) : field.field_type === "project_member" ? (
+                        <UserCircle2 className="h-3 w-3 text-custom-text-400" />
+                      ) : field.field_type === "project_members" ? (
+                        <Users className="h-3 w-3 text-custom-text-400" />
+                      ) : (
+                        <Settings className="h-3 w-3 text-custom-text-400" />
+                      )}
+                    </>
+                  )}
+                  <span className="flex-grow truncate leading-5">
+                    {getDisplayValue()}
+                  </span>
+                </div>
               )}
             
             {dropdownArrow && (

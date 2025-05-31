@@ -150,6 +150,7 @@ export const ProjectIssuesMobileHeader = observer(() => {
               labels={projectLabels}
               memberIds={projectMemberIds ?? undefined}
               states={projectStates}
+              projectId={projectId}
               cycleViewDisabled={!currentProjectDetails?.cycle_view}
               moduleViewDisabled={!currentProjectDetails?.module_view}
             />

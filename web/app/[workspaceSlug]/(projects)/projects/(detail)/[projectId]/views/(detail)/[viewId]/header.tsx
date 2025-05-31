@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Layers, Lock } from "lucide-react";
+import { Layers, Lock, Edit3 } from "lucide-react";
 // plane constants
 import {
   EIssueLayoutTypes,
@@ -14,6 +14,7 @@ import {
   EUserPermissions,
   EUserPermissionsLevel,
 } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 // types
 import {
   ICustomSearchSelectOption,
@@ -21,15 +22,17 @@ import {
   IIssueDisplayProperties,
   IIssueFilterOptions,
   TCustomField,
+  TIssue,
 } from "@plane/types";
 // ui
-import { Breadcrumbs, Button, Tooltip, Header, CustomSearchSelect } from "@plane/ui";
+import { Breadcrumbs, Button, Tooltip, Header, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { BreadcrumbLink, SwitcherLabel } from "@/components/common";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // constants
 import { ViewQuickActions } from "@/components/views";
 // helpers
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
 import {
@@ -42,16 +45,21 @@ import {
   useProjectState,
   useProjectView,
   useUserPermissions,
+  useMultipleSelectStore,
 } from "@/hooks/store";
-// plane web
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useIssuesActions } from "@/hooks/use-issues-actions";
+// plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { BulkEditModal } from "../../../../../../../../../ce/components/issues/bulk-operations/bulk-edit-modal";
 
 export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // refs
   const parentRef = useRef(null);
   // states
   const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   // router
   const { workspaceSlug, projectId, viewId } = useParams();
   const router = useAppRouter();
@@ -59,9 +67,15 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.PROJECT_VIEW);
+  const { fetchIssues } = useIssuesActions(EIssuesStoreType.PROJECT_VIEW);
+  const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
   const { setTrackElement } = useEventTracker();
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
+  const { t } = useTranslation();
 
   const { currentProjectDetails, loader } = useProject();
   const { projectViewIds, getViewById } = useProjectView();
@@ -118,36 +132,12 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId || !viewId) return;
 
-      // custom_fields는 별도 처리
-      if (key === "custom_fields") {
-        updateFilters(
-          workspaceSlug.toString(),
-          projectId.toString(),
-          EIssueFilterType.FILTERS,
-          { [key]: value } as Partial<IIssueFilterOptions>,
-          viewId.toString()
-        );
-        return;
-      }
-
-      const newValues = issueFilters?.filters?.[key] ?? [];
-
-      if (Array.isArray(value)) {
-        // this validation is majorly for the filter start_date, target_date custom
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
       updateFilters(
         workspaceSlug.toString(),
         projectId.toString(),
         EIssueFilterType.FILTERS,
-        { [key]: newValues },
+        { [key]: updatedValue },
         viewId.toString()
       );
     },
@@ -188,6 +178,66 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
     EUserPermissionsLevel.PROJECT
   );
+
+  // 일괄변경을 위한 핸들러 함수
+  const handleBulkUpdate = async (bulkUpdatePayload: any) => {
+    try {
+      const response = await fetch(
+        `/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(bulkUpdatePayload),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // 성공 메시지 표시
+        let message = `${result.updated_issues || 0}개 작업 항목이 성공적으로 업데이트되었습니다.`;
+
+        // 권한으로 인해 건너뛴 이슈가 있는 경우 경고 메시지 추가
+        if (result.skipped_issues && result.skipped_issues > 0) {
+          message += ` ${result.skipped_issues}개 작업 항목은 권한이 없어 건너뛰었습니다.`;
+        }
+
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: message,
+        });
+
+        // 이슈 목록 새로고침
+        await fetchIssues(
+          "mutation",
+          {
+            canGroup: true,
+            perPageCount: 100
+          }
+        );
+
+        // 선택 해제
+        clearSelection();
+
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "업데이트에 실패했습니다.");
+      }
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: `업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  };
+
+  // 선택된 이슈들의 데이터를 가져오기 (완전한 이슈 데이터가 있는 것만)
+  const selectedIssuesList = selectedEntityIds
+    .map(issueId => getIssueById(issueId))
+    .filter((issue): issue is TIssue => issue !== undefined);
 
   if (!viewDetails) return;
 
@@ -298,18 +348,28 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
         ) : (
           <></>
         )}
-        {canUserCreateIssue ? (
-          <Button
-            onClick={() => {
-              setTrackElement("PROJECT_VIEW_PAGE_HEADER");
-              toggleCreateIssueModal(true, EIssuesStoreType.PROJECT_VIEW);
-            }}
-            size="sm"
-          >
-            Add work item
-          </Button>
-        ) : (
-          <></>
+        {canUserCreateIssue && (
+          <>
+            {isSelectionActive && selectedEntityIds.length > 0 && (
+              <Button
+                onClick={() => setIsBulkEditModalOpen(true)}
+                size="sm"
+                variant="neutral-primary"
+              >
+                <Edit3 className="h-4 w-4 mr-2" />
+                {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setTrackElement("PROJECT_VIEW_PAGE_HEADER");
+                toggleCreateIssueModal(true, EIssuesStoreType.PROJECT_VIEW);
+              }}
+              size="sm"
+            >
+              Add work item
+            </Button>
+          </>
         )}
         <div className="hidden md:block">
           <ViewQuickActions
@@ -321,6 +381,13 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
           />
         </div>
       </Header.RightItem>
+
+      <BulkEditModal
+        isOpen={isBulkEditModalOpen}
+        onClose={() => setIsBulkEditModalOpen(false)}
+        selectedIssues={selectedIssuesList}
+        onBulkUpdate={handleBulkUpdate}
+      />
     </Header>
   );
 });

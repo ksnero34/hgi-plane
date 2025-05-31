@@ -280,24 +280,67 @@ class IssueSerializer(BaseSerializer):
 
         # 커스텀 필드 값 업데이트
         if custom_field_values is not None:
-            # 기존 커스텀 필드 값 삭제
-            CustomFieldValue.objects.filter(issue=instance).delete()
+            print(f"[IssueSerializer] Processing custom field values: {custom_field_values}")
             
-            # 새로운 커스텀 필드 값 생성
+            # 중복된 custom_field_id 제거 - 마지막 값만 사용
+            unique_custom_fields = {}
             for field_value in custom_field_values:
-                try:
+                field_id = field_value["custom_field_id"]
+                unique_custom_fields[field_id] = field_value
+            
+            print(f"[IssueSerializer] After deduplication: {list(unique_custom_fields.values())}")
+            
+            # 커스텀 필드 정보 가져오기
+            custom_fields = CustomField.objects.filter(
+                id__in=[field_value["custom_field_id"] for field_value in unique_custom_fields.values()],
+                deleted_at__isnull=True
+            )
+            custom_field_map = {str(field.id): field for field in custom_fields}
+            
+            # 새로운 값들 생성/수정
+            for field_value in unique_custom_fields.values():
+                field_id = field_value["custom_field_id"]
+                new_value = field_value["value"]
+                field = custom_field_map.get(str(field_id))
+                
+                if not field:
+                    print(f"[IssueSerializer] Field {field_id} not found, skipping")
+                    continue
+                
+                print(f"[IssueSerializer] Processing field {field_id} ({field.field_type}) with value {new_value}")
+                
+                # 모든 타입 동일 처리: 하나의 custom_field_id에 하나의 값 (단일값 또는 JSON 배열)
+                existing_value = CustomFieldValue.objects.filter(
+                    issue=instance,
+                    custom_field_id=field_id,
+                    deleted_at__isnull=True
+                ).first()
+                
+                if existing_value:
+                    # 기존 값 업데이트
+                    if existing_value.value != new_value:
+                        existing_value.value = new_value
+                        existing_value.updated_by_id = updated_by_id
+                        existing_value.save()
+                        
+                        print(f"[IssueSerializer] Successfully updated field {field_id}")
+                    else:
+                        print(f"[IssueSerializer] Field {field_id} value unchanged: {new_value}")
+                else:
+                    # 새로운 값 생성
+                    print(f"[IssueSerializer] Creating new field {field_id} with value {new_value}")
+                    
                     CustomFieldValue.objects.create(
-                        custom_field_id=field_value["custom_field_id"],
+                        custom_field_id=field_id,
                         issue=instance,
-                        value=field_value["value"],
+                        value=new_value,
                         project_id=project_id,
                         workspace_id=workspace_id,
                         created_by_id=created_by_id,
                         updated_by_id=updated_by_id,
                     )
-                except Exception as e:
-                    # 커스텀 필드 업데이트 실패 시 로그만 남기고 계속 진행
-                    print(f"커스텀 필드 값 업데이트 실패: {e}")
+                    
+                    print(f"[IssueSerializer] Successfully created field {field_id}")
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()

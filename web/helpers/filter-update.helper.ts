@@ -19,11 +19,27 @@ export const calculateFilterValue = (
   if (key === "custom_fields") {
     const currentCustomFields = currentFilters[key] as string | null;
     
-    if (Array.isArray(value)) {
-      return updateCustomFieldValues(currentCustomFields, value);
-    } else {
+    // value가 이미 JSON 문자열인 경우 (프로젝트 뷰 등에서 직접 전달)
+    if (typeof value === "string" && (value === "" || value.startsWith("{"))) {
+      return value || null;
+    }
+    
+    // value가 "fieldId:value" 형태인 경우 (FilterCustomFields에서 전달)
+    if (typeof value === "string" && value.includes(":")) {
       return toggleCustomFieldValue(currentCustomFields, value);
     }
+    
+    // value가 단순 문자열인 경우, 컨텍스트에서 fieldId를 추출해야 함
+    // 이 경우는 FilterCustomFields에서 handleUpdate가 직접 호출될 때 발생
+    // 하지만 이 경우는 handleCustomFieldUpdate에서 처리되므로 여기서는 발생하지 않아야 함
+    
+    // 배열인 경우 (다중 값 처리)
+    if (Array.isArray(value)) {
+      return updateCustomFieldValues(currentCustomFields, value);
+    }
+    
+    // 기본적으로 toggleCustomFieldValue 사용
+    return toggleCustomFieldValue(currentCustomFields, value);
   }
 
   // 일반 필터의 경우 기존 로직 적용
@@ -66,6 +82,13 @@ export const calculateFilterRemovalValue = <T extends Record<string, any>>(
   if (key === "custom_fields") {
     if (!value) return null;
     
+    // value가 이미 처리된 JSON 문자열인 경우 (removeCustomFieldFilterValue에서 처리된 결과)
+    // 이 경우 그대로 반환
+    if (value.startsWith("{") || value === "null") {
+      return value === "null" ? null : value;
+    }
+    
+    // value가 "fieldId:value" 형태인 경우 (직접 제거 요청)
     const currentCustomFields = currentFilters[key] as string | null;
     if (!currentCustomFields) return null;
     

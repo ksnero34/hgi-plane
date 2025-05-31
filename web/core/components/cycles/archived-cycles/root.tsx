@@ -23,7 +23,7 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
   // hooks
   const { fetchArchivedCycles, currentProjectArchivedCycleIds, loader } = useCycle();
   // cycle filters hook
-  const { clearAllFilters, currentProjectArchivedFilters, updateFilters } = useCycleFilter();
+  const { clearAllFilters, currentProjectArchivedFilters, updateFilters, currentProjectDisplayFilters, updateDisplayFilters } = useCycleFilter();
   // derived values
   const totalArchivedCycles = currentProjectArchivedCycleIds?.length ?? 0;
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/archived/empty-cycles" });
@@ -64,8 +64,10 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
         <div className="border-b border-custom-border-200 px-5 py-3">
           <CycleAppliedFiltersList
             appliedFilters={currentProjectArchivedFilters ?? {}}
+            isFavoriteFilterApplied={currentProjectDisplayFilters?.favorites ?? false}
             handleClearAllFilters={() => clearAllFilters(projectId.toString(), "archived")}
             handleRemoveFilter={handleRemoveFilter}
+            handleDisplayFiltersUpdate={(filters) => updateDisplayFilters(projectId.toString(), filters)}
           />
         </div>
       )}

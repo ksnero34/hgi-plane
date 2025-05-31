@@ -11,6 +11,7 @@ import { IIssueFilterOptions, IWorkspaceView } from "@plane/types";
 import { WorkspaceService } from "@/plane-web/services";
 // store
 import { CoreRootStore } from "./root.store";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
 export interface IGlobalViewStore {
   // observables
@@ -178,7 +179,8 @@ export class GlobalViewStore implements IGlobalViewStore {
           ].filters as IIssueFilterOptions;
           const newFilters: IIssueFilterOptions = {};
           Object.keys(currentGlobalViewFilters ?? {}).forEach((key) => {
-            newFilters[key as keyof IIssueFilterOptions] = key === "custom_fields" ? null : [];
+            const updatedValue = calculateFilterRemovalValue(key, null, currentGlobalViewFilters);
+            (newFilters as any)[key] = updatedValue;
           });
           await this.rootStore.issue.workspaceIssuesFilter.updateFilters(
             workspaceSlug,

@@ -103,56 +103,56 @@ export const IssuesHeader = observer(() => {
     }
   };
 
-  const handleBulkUpdate = async (updates: Partial<any>) => {
+  const handleBulkUpdate = async (bulkUpdatePayload: any) => {
     try {
-      // 권한이 있는 이슈들만 필터링하여 업데이트
-      const updatePromises = selectedEntityIds
-        .map(issueId => {
-          const issue = getIssueById(issueId);
-          if (!issue) return null;
-          
-          // 권한 체크: Admin/Member는 모든 이슈, Viewer/Restricted는 자신에게 할당된 이슈만
-          const hasFullEditAccess = allowPermissions(
-            [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-            EUserPermissionsLevel.PROJECT
-          );
-          
-          if (hasFullEditAccess) {
-            return updateIssue && updateIssue(projectId, issueId, updates);
+      const response = await fetch(
+        `/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(bulkUpdatePayload),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // 성공 메시지 표시
+        let message = `${result.updated_issues || 0}개 작업 항목이 성공적으로 업데이트되었습니다.`;
+        
+        // 권한으로 인해 건너뛴 이슈가 있는 경우 경고 메시지 추가
+        if (result.skipped_issues && result.skipped_issues > 0) {
+          message += ` ${result.skipped_issues}개 작업 항목은 권한이 없어 건너뛰었습니다.`;
+        }
+
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: message,
+        });
+
+        // 이슈 목록 새로고침
+        await fetchIssues(
+          "mutation",
+          {
+            canGroup: true,
+            perPageCount: 100
           }
-          
-          // Viewer/Restricted 권한 체크
-          const isViewerOrRestricted = allowPermissions(
-            [EUserPermissions.VIEWER, EUserPermissions.RESTRICTED],
-            EUserPermissionsLevel.PROJECT
-          );
-          
-          if (isViewerOrRestricted) {
-            // 현재 사용자가 담당자인지 확인
-            const assigneeIds = issue.assignee_ids || [];
-            // currentUser는 useUser hook에서 가져와야 하지만, 여기서는 간단히 처리
-            // 실제로는 useUser hook을 추가해야 함
-            return updateIssue && updateIssue(projectId, issueId, updates);
-          }
-          
-          return null;
-        })
-        .filter(Boolean);
+        );
 
-      await Promise.all(updatePromises);
-
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: t("issue.bulk_edit.success"),
-      });
-
-      // 선택 해제
-      clearSelection();
-      
+        // 선택 해제
+        clearSelection();
+        
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "업데이트에 실패했습니다.");
+      }
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: t("issue.bulk_edit.error"),
+        title: `업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
   };

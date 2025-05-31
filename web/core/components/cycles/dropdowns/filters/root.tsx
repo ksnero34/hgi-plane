@@ -30,6 +30,10 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
     const fetchCustomFields = async () => {
       if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
       
+      console.log("CycleFiltersSelection - Fetching custom fields...");
+      console.log("CycleFiltersSelection - workspaceSlug:", workspaceSlug);
+      console.log("CycleFiltersSelection - projectId:", projectId);
+      
       try {
         setIsLoadingCustomFields(true);
         const response = await fetch(
@@ -38,9 +42,15 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
             credentials: "include",
           }
         );
+        console.log("CycleFiltersSelection - API response status:", response.status);
+        console.log("CycleFiltersSelection - API response ok:", response.ok);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log("CycleFiltersSelection - Custom fields data:", data);
           setCustomFields(data);
+        } else {
+          console.error("CycleFiltersSelection - API response not ok:", response.statusText);
         }
       } catch (error) {
         console.error("커스텀 필드 로드 중 오류:", error);
@@ -150,18 +160,30 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
         </div>
 
         {/* custom fields */}
-        <FilterCustomFields
-          appliedFilters={
-            filters.custom_fields && typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== ''
-              ? JSON.parse(filters.custom_fields)
-              : {}
-          }
-          handleUpdate={handleCustomFieldUpdate}
-          searchQuery={filtersSearchQuery}
-          customFields={customFields || []}
-          workspaceSlug={workspaceSlug as string}
-          projectId={projectId as string}
-        />
+        <div className="py-2">
+          {(() => {
+            console.log("CycleFiltersSelection - About to render FilterCustomFields");
+            console.log("CycleFiltersSelection - customFields state:", customFields);
+            console.log("CycleFiltersSelection - customFields length:", customFields?.length);
+            console.log("CycleFiltersSelection - workspaceSlug:", workspaceSlug);
+            console.log("CycleFiltersSelection - projectId:", projectId);
+            
+            return (
+              <FilterCustomFields
+                appliedFilters={
+                  filters.custom_fields && typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== ''
+                    ? JSON.parse(filters.custom_fields)
+                    : {}
+                }
+                handleUpdate={handleCustomFieldUpdate}
+                searchQuery={filtersSearchQuery}
+                customFields={customFields || []}
+                workspaceSlug={workspaceSlug as string}
+                projectId={projectId as string}
+              />
+            );
+          })()}
+        </div>
       </div>
     </div>
   );

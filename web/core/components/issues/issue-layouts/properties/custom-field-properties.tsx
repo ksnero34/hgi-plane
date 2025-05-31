@@ -9,6 +9,7 @@ import { TIssue, TCustomField, IIssueDisplayProperties } from "@plane/types";
 import { Tooltip } from "@plane/ui";
 // helpers
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useMember } from "@/hooks/store";
@@ -35,43 +36,38 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
 
   // 특정 필드의 현재 값 가져오기
   const getFieldValue = (fieldId: string) => {
-    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === fieldId);
-    return fieldValue?.value;
+    return getCustomFieldValue(issue?.custom_field_values || [], fieldId);
   };
 
-  // 커스텀 필드 값 업데이트 함수
+  // 커스텀 필드 값 업데이트 함수 (공통 유틸리티 사용)
   const updateFieldValue = (fieldId: string, value: any) => {
-    const currentValues = issue?.custom_field_values || [];
-    const updatedValues = [...currentValues];
+    console.log("[IssueCustomFieldProperties] Updating field:", fieldId, "with value:", value);
     
-    // 해당 필드의 값이 이미 있는지 확인
-    const existingIndex = updatedValues.findIndex(cfv => cfv.custom_field_id === fieldId);
-    
-    if (existingIndex >= 0) {
-      // 기존 값 업데이트 또는 제거
-      if (value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) {
-        // 값이 비어있으면 제거
-        updatedValues.splice(existingIndex, 1);
-      } else {
-        updatedValues[existingIndex] = {
-          ...updatedValues[existingIndex],
-          value: value
-        };
-      }
-    } else if (value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
-      // 새 값 추가
-      const field = customFields.find(f => f.id === fieldId);
-      if (field) {
-        updatedValues.push({
-          custom_field_id: fieldId,
-          value: value,
-          field_name: field.name,
-          field_type: field.field_type
-        });
-      }
+    const field = customFields.find(f => f.id === fieldId);
+    if (!field) {
+      console.error("[IssueCustomFieldProperties] Field not found:", fieldId);
+      return;
     }
 
-    return updatedValues;
+    // 공통 유틸리티 함수 사용 (peek-overview 방식)
+    const updatedValues = updateCustomFieldValueSafely(
+      issue?.custom_field_values || [],
+      fieldId,
+      value,
+      {
+        name: field.name,
+        field_type: field.field_type
+      }
+    );
+
+    console.log("[IssueCustomFieldProperties] Final update values:", updatedValues);
+
+    // 이슈 업데이트
+    if (updateIssue) {
+      updateIssue(issue.project_id, issue.id, {
+        custom_field_values: updatedValues
+      });
+    }
   };
 
   // 필드 타입에 따른 아이콘 선택
@@ -148,9 +144,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
             <CustomFieldDropdown
               field={field}
               value={fieldValue}
-              onChange={(val: any) => updateIssue && updateIssue(issue.project_id, issue.id, {
-                custom_field_values: updateFieldValue(field.id, val)
-              })}
+              onChange={(val: any) => updateFieldValue(field.id, val)}
               buttonVariant={hasValue ? "border-with-text" : "border-without-text"}
               className="h-5 min-w-5"
               buttonContainerClassName="h-5 min-w-5"
@@ -170,9 +164,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <DateDropdown
               value={fieldValue}
-              onChange={(date: Date | null) => updateIssue && updateIssue(issue.project_id, issue.id, {
-                custom_field_values: updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)
-              })}
+              onChange={(date: Date | null) => updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)}
               buttonVariant={hasValue ? "border-with-text" : "border-without-text"}
               className="h-5"
               buttonContainerClassName="h-5"
@@ -200,9 +192,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
               onChange={(val: string | null) => {
                 // 기존 값과 같은 값을 선택하면 값을 제거
                 const newValue = val === fieldValue ? null : val;
-                updateIssue && updateIssue(issue.project_id, issue.id, {
-                  custom_field_values: updateFieldValue(field.id, newValue)
-                });
+                updateFieldValue(field.id, newValue);
               }}
               multiple={false}
               buttonVariant={hasValue ? "transparent-without-text" : "border-without-text"}
@@ -224,9 +214,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
             <MemberDropdown
               projectId={issue.project_id ?? undefined}
               value={Array.isArray(fieldValue) ? fieldValue : []}
-              onChange={(val: string[]) => updateIssue && updateIssue(issue.project_id, issue.id, {
-                custom_field_values: updateFieldValue(field.id, val && val.length > 0 ? val : null)
-              })}
+              onChange={(val: string[]) => updateFieldValue(field.id, val && val.length > 0 ? val : null)}
               buttonVariant={hasValue ? "transparent-without-text" : "border-without-text"}
               className="h-5"
               buttonContainerClassName="h-5"

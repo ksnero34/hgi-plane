@@ -20,6 +20,7 @@ import { ModuleFiltersSelection, ModuleOrderByDropdown } from "@/components/modu
 // constants
 // helpers
 import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useMember, useModuleFilter } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -54,21 +55,9 @@ export const ModuleViewHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TModuleFilters, value: string | string[]) => {
       if (!projectId) return;
-      const newValues: string[] = Array.isArray(filters?.[key]) 
-        ? [...(filters[key] as string[])] 
-        : [];
-
-      if (Array.isArray(value))
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      else {
-        if (filters?.[key]?.includes?.(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(projectId.toString(), { [key]: newValues });
+      
+      const updatedValue = calculateFilterValue(key as any, value, filters as any);
+      updateFilters(projectId.toString(), { [key]: updatedValue });
     },
     [filters, projectId, updateFilters]
   );

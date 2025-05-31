@@ -3,6 +3,8 @@ import { useCallback } from "react";
 import { EIssueFilterType } from "@plane/constants";
 // types
 import { IIssueFilterOptions, IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
+// helpers
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 
 interface UseFilterUpdateProps {
   workspaceSlug: string | undefined;
@@ -32,45 +34,13 @@ export const useFilterUpdate = ({
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
       
-      // 커스텀 필드의 경우 특별한 처리 (JSON 문자열로 직접 전달)
-      if (key === "custom_fields") {
-        updateFilters(
-          workspaceSlug, 
-          projectId, 
-          EIssueFilterType.FILTERS, 
-          { [key]: value } as Partial<IIssueFilterOptions>, 
-          cycleId,
-          moduleId
-        );
-        return;
-      }
+      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
       
-      // 다른 필터들은 기존 로직 유지
-      const newValues: string[] = (issueFilters?.filters?.[key] as string[]) ?? [];
-
-      if (Array.isArray(value)) {
-        value.forEach((val) => {
-          const valIndex = newValues.indexOf(val);
-          if (valIndex === -1) {
-            newValues.push(val);
-          } else {
-            newValues.splice(valIndex, 1);
-          }
-        });
-      } else {
-        const valueIndex = newValues.indexOf(value);
-        if (valueIndex === -1) {
-          newValues.push(value);
-        } else {
-          newValues.splice(valueIndex, 1);
-        }
-      }
-
       updateFilters(
         workspaceSlug, 
         projectId, 
         EIssueFilterType.FILTERS, 
-        { [key]: newValues }, 
+        { [key]: updatedValue } as Partial<IIssueFilterOptions>, 
         cycleId,
         moduleId
       );

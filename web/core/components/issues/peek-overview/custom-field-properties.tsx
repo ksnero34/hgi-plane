@@ -72,36 +72,30 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
 
   // 필드 값 업데이트
   const updateFieldValue = (fieldId: string, value: any) => {
-    const updatedValues = [...(issue?.custom_field_values || [])];
+    console.log("[CustomFieldProperties] Updating field:", fieldId, "with value:", value);
     
-    // 해당 필드의 값이 이미 있는지 확인
-    const existingIndex = updatedValues.findIndex(cfv => cfv.custom_field_id === fieldId);
+    // 기존 커스텀 필드 값들을 가져오되, 변경할 필드는 제외
+    const existingValues = (issue?.custom_field_values || []).filter(cfv => cfv.custom_field_id !== fieldId);
     
-    if (existingIndex >= 0) {
-      // 기존 값 업데이트
-      if (value === null || value === undefined || value === "") {
-        // 값이 비어있으면 제거
-        updatedValues.splice(existingIndex, 1);
-      } else {
-        updatedValues[existingIndex] = {
-          ...updatedValues[existingIndex],
-          value: value
-        };
-      }
-    } else if (value !== null && value !== undefined && value !== "") {
-      // 새 값 추가
+    // 새 값이 유효한 경우에만 추가
+    const updatedValues = [...existingValues];
+    
+    if (value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
       const field = customFields.find(f => f.id === fieldId);
       if (field) {
-        updatedValues.push({
+        const newFieldValue = {
           custom_field_id: fieldId,
           value: value,
           field_name: field.name,
           field_type: field.field_type
-        });
+        };
+        updatedValues.push(newFieldValue);
       }
     }
-
-    // 이슈 업데이트
+    
+    console.log("[CustomFieldProperties] Sending field update:", updatedValues);
+    
+    // 모든 커스텀 필드 값 전송 (기존 값들 + 변경된 값)
     issueOperations.update(workspaceSlug, projectId, issueId, {
       custom_field_values: updatedValues
     });

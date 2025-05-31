@@ -117,6 +117,7 @@ from .issue.base import (
     IssueViewSet,
     IssueUserDisplayPropertyEndpoint,
     BulkDeleteIssuesEndpoint,
+    BulkOperationsEndpoint,
     DeletedIssuesListViewSet,
     IssuePaginatedViewSet,
     IssueDetailEndpoint,
@@ -201,6 +202,7 @@ from .analytic.base import (
     AnalyticViewViewset,
     SavedAnalyticEndpoint,
     ExportAnalyticsEndpoint,
+    DownloadAnalyticsEndpoint,
     DefaultAnalyticsEndpoint,
     ProjectStatsEndpoint,
 )

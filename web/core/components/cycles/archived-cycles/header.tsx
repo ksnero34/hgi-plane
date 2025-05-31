@@ -14,6 +14,7 @@ import { FiltersDropdown } from "@/components/issues";
 // helpers
 import { cn } from "@/helpers/common.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useCycleFilter } from "@/hooks/store";
 
@@ -35,21 +36,9 @@ export const ArchivedCyclesHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
-      const newValues: string[] = Array.isArray(currentProjectArchivedFilters?.[key]) 
-        ? [...(currentProjectArchivedFilters[key] as string[])] 
-        : [];
-
-      if (Array.isArray(value))
-        value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
-        });
-      else {
-        if (currentProjectArchivedFilters?.[key]?.includes?.(value)) newValues.splice(newValues.indexOf(value), 1);
-        else newValues.push(value);
-      }
-
-      updateFilters(projectId.toString(), { [key]: newValues }, "archived");
+      
+      const updatedValue = calculateFilterValue(key as any, value, currentProjectArchivedFilters as any);
+      updateFilters(projectId.toString(), { [key]: updatedValue } as TCycleFilters);
     },
     [currentProjectArchivedFilters, projectId, updateFilters]
   );

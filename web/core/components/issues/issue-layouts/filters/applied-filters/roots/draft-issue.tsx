@@ -48,11 +48,9 @@ export const DraftIssueAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !projectId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      // calculateFilterRemovalValue를 사용하여 모든 필터를 통일된 방식으로 처리
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, { ...newFilters });
   };

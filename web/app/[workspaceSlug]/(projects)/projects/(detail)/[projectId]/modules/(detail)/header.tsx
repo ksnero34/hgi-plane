@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 // icons
-import { PanelRight } from "lucide-react";
+import { PanelRight, Edit3 } from "lucide-react";
 // plane constants
 import {
   EIssueLayoutTypes,
@@ -15,15 +15,19 @@ import {
   EUserPermissions,
   EUserPermissionsLevel,
 } from "@plane/constants";
+// i18n
+import { useTranslation } from "@plane/i18n";
 // types
 import {
   ICustomSearchSelectOption,
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
   IIssueFilterOptions,
+  TCustomField,
+  TIssue
 } from "@plane/types";
 // ui
-import { Breadcrumbs, Button, DiceIcon, Tooltip, Header, CustomSearchSelect } from "@plane/ui";
+import { Breadcrumbs, Button, DiceIcon, Tooltip, Header, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { ProjectAnalyticsModal } from "@/components/analytics";
 import { BreadcrumbLink, SwitcherLabel } from "@/components/common";
@@ -44,22 +48,33 @@ import {
   useIssues,
   useCommandPalette,
   useUserPermissions,
+  useMultipleSelectStore,
 } from "@/hooks/store";
-import { useAppRouter } from "@/hooks/use-app-router";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { BulkEditModal } from "../../../../../../../../ce/components/issues/bulk-operations/bulk-edit-modal";
 
 export const ModuleIssuesHeader: React.FC = observer(() => {
   // refs
   const parentRef = useRef<HTMLDivElement>(null);
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
+  const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   // router
-  const router = useAppRouter();
-  const { workspaceSlug, projectId, moduleId } = useParams();
+  const router = useRouter();
+  const { workspaceSlug, projectId, moduleId } = useParams() as {
+    workspaceSlug: string;
+    projectId: string;
+    moduleId: string;
+  };
+  // i18n
+  const { t } = useTranslation();
   // hooks
   const { isMobile } = usePlatformOS();
   // store hooks
@@ -68,6 +83,11 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
     issues: { getGroupIssueCount },
   } = useIssues(EIssuesStoreType.MODULE);
   const { updateFilters } = useIssuesActions(EIssuesStoreType.MODULE);
+  const { fetchIssues } = useIssuesActions(EIssuesStoreType.MODULE);
+  const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
   const { projectModuleIds, getModuleById } = useModule();
   const { toggleCreateIssueModal } = useCommandPalette();
   const { setTrackElement } = useEventTracker();
@@ -142,6 +162,93 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
       };
     })
     .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
+
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data || []);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
+
+  // 일괄변경을 위한 핸들러 함수
+  const handleBulkUpdate = async (bulkUpdatePayload: any) => {
+    try {
+      const response = await fetch(
+        `/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(bulkUpdatePayload),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // 성공 메시지 표시
+        let message = `${result.updated_issues || 0}개 작업 항목이 성공적으로 업데이트되었습니다.`;
+
+        // 권한으로 인해 건너뛴 이슈가 있는 경우 경고 메시지 추가
+        if (result.skipped_issues && result.skipped_issues > 0) {
+          message += ` ${result.skipped_issues}개 작업 항목은 권한이 없어 건너뛰었습니다.`;
+        }
+
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: message,
+        });
+
+        // 이슈 목록 새로고침
+        await fetchIssues(
+          "mutation",
+          {
+            canGroup: true,
+            perPageCount: 100
+          }
+        );
+
+        // 선택 해제
+        clearSelection();
+
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "업데이트에 실패했습니다.");
+      }
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: `업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  };
+
+  // 선택된 이슈들의 데이터를 가져오기 (완전한 이슈 데이터가 있는 것만)
+  const selectedIssuesList = selectedEntityIds
+    .map(issueId => getIssueById(issueId))
+    .filter((issue): issue is TIssue => issue !== undefined);
 
   return (
     <>
@@ -240,6 +347,8 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
                 labels={projectLabels}
                 memberIds={projectMemberIds ?? undefined}
                 states={projectStates}
+                projectId={projectId as string}
+                customFields={customFields}
                 cycleViewDisabled={!currentProjectDetails?.cycle_view}
                 moduleViewDisabled={!currentProjectDetails?.module_view}
               />
@@ -270,6 +379,16 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
               >
                 Analytics
               </Button>
+              {isSelectionActive && selectedEntityIds.length > 0 && (
+                <Button
+                  onClick={() => setIsBulkEditModalOpen(true)}
+                  size="sm"
+                  variant="neutral-primary"
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
+                </Button>
+              )}
               <Button
                 className="hidden sm:flex"
                 onClick={() => {
@@ -300,6 +419,13 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
           />
         </Header.RightItem>
       </Header>
+
+      <BulkEditModal
+        isOpen={isBulkEditModalOpen}
+        onClose={() => setIsBulkEditModalOpen(false)}
+        selectedIssues={selectedIssuesList}
+        onBulkUpdate={handleBulkUpdate}
+      />
     </>
   );
 });

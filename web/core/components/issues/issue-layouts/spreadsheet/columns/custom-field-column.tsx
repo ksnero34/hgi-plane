@@ -14,6 +14,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // helpers
 import { cn } from "@/helpers/common.helper";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
 
 type Props = {
   issue: TIssue;
@@ -29,37 +30,25 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
 
   // 해당 커스텀 필드의 현재 값 가져오기
   const getFieldValue = () => {
-    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === customField.id);
-    return fieldValue?.value;
+    return getCustomFieldValue(issue?.custom_field_values || [], customField.id);
   };
 
-  // 커스텀 필드 값 업데이트
+  // 커스텀 필드 값 업데이트 (공통 유틸리티 사용)
   const updateFieldValue = (value: any) => {
-    const currentValues = issue?.custom_field_values || [];
-    const updatedValues = [...currentValues];
+    console.log("[SpreadsheetCustomFieldColumn] Updating field:", customField.id, "with value:", value);
     
-    // 해당 필드의 값이 이미 있는지 확인
-    const existingIndex = updatedValues.findIndex(cfv => cfv.custom_field_id === customField.id);
-    
-    if (existingIndex >= 0) {
-      // 기존 값 업데이트 또는 제거
-      if (value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) {
-        updatedValues.splice(existingIndex, 1);
-      } else {
-        updatedValues[existingIndex] = {
-          ...updatedValues[existingIndex],
-          value: value
-        };
-      }
-    } else if (value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
-      // 새 값 추가
-      updatedValues.push({
-        custom_field_id: customField.id,
-        value: value,
-        field_name: customField.name,
+    // 공통 유틸리티 함수 사용 (peek-overview 방식)
+    const updatedValues = updateCustomFieldValueSafely(
+      issue?.custom_field_values || [],
+      customField.id,
+      value,
+      {
+        name: customField.name,
         field_type: customField.field_type
-      });
-    }
+      }
+    );
+
+    console.log("[SpreadsheetCustomFieldColumn] Final update values:", updatedValues);
 
     // 이슈 업데이트
     onChange(issue, { custom_field_values: updatedValues }, {});

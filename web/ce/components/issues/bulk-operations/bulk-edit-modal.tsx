@@ -1,12 +1,12 @@
 import React, { FC, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Button, ModalCore, EModalWidth, EModalPosition } from "@plane/ui";
+import { Button, ModalCore, EModalWidth, EModalPosition, DoubleCircleIcon } from "@plane/ui";
 import { useTranslation } from "@plane/i18n";
 import { TIssue, TCustomField } from "@plane/types";
-import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings, AlertTriangle } from "lucide-react";
+import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings, AlertTriangle, Signal } from "lucide-react";
 import { useProject, useProjectState, useMember, useUser, useUserPermissions } from "@/hooks/store";
-import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
+import { DateDropdown, MemberDropdown, CustomFieldDropdown, StateDropdown, PriorityDropdown } from "@/components/dropdowns";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 
@@ -14,7 +14,7 @@ type TBulkEditModalProps = {
   isOpen: boolean;
   onClose: () => void;
   selectedIssues: TIssue[];
-  onBulkUpdate: (updates: Partial<TIssue>) => Promise<void>;
+  onBulkUpdate: (payload: { issue_ids: string[]; properties: any }) => Promise<void>;
 };
 
 export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
@@ -104,62 +104,135 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   }, [workspaceSlug, projectId, isOpen]);
 
   const handleUpdate = async () => {
-    if (Object.keys(updates).length === 0 && Object.keys(customFieldUpdates).length === 0) {
+    console.log("[BulkEditModal] handleUpdate called");
+    console.log("[BulkEditModal] Updates state:", updates);
+    console.log("[BulkEditModal] Custom field updates state:", customFieldUpdates);
+
+    // 실제로 변경할 데이터가 있는지 검증
+    const hasRegularUpdates = Object.entries(updates).some(([key, value]) => {
+      return value !== null && value !== undefined && value !== "" && 
+             !(Array.isArray(value) && value.length === 0);
+    });
+
+    const hasCustomFieldUpdates = Object.entries(customFieldUpdates).some(([fieldId, value]) => {
+      return value !== null && value !== undefined && value !== "" && 
+             !(Array.isArray(value) && value.length === 0);
+    });
+
+    console.log("[BulkEditModal] Has regular updates:", hasRegularUpdates);
+    console.log("[BulkEditModal] Has custom field updates:", hasCustomFieldUpdates);
+
+    if (!hasRegularUpdates && !hasCustomFieldUpdates) {
+      console.log("[BulkEditModal] No valid updates found, closing modal");
       onClose();
       return;
     }
 
     if (editableIssues.length === 0) {
+      console.log("[BulkEditModal] No editable issues, closing modal");
       onClose();
       return;
     }
 
     setIsUpdating(true);
     try {
-      // 커스텀 필드 업데이트가 있으면 custom_field_values 형태로 변환
-      const finalUpdates = { ...updates };
-      if (Object.keys(customFieldUpdates).length > 0) {
-        const customFieldValues = Object.entries(customFieldUpdates)
-          .filter(([_, value]) => value !== null && value !== undefined && value !== "")
-          .map(([fieldId, value]) => {
-            const field = customFields.find(f => f.id === fieldId);
-            return {
-              custom_field_id: fieldId,
-              value: value,
-              field_name: field?.name || "",
-              field_type: field?.field_type || "text"
-            };
-          });
-        
-        if (customFieldValues.length > 0) {
-          finalUpdates.custom_field_values = customFieldValues;
+      // Prepare custom field values for bulk update - 더 엄격한 필터링
+      const customFieldValues = Object.entries(customFieldUpdates)
+        .filter(([_, value]) => {
+          // null, undefined, 빈 문자열, 빈 배열은 제외
+          if (value === null || value === undefined || value === "") return false;
+          if (Array.isArray(value) && value.length === 0) return false;
+          return true;
+        })
+        .map(([fieldId, value]) => {
+          const field = customFields.find(f => f.id === fieldId);
+          return {
+            custom_field_id: fieldId,
+            value: value,
+            field_name: field?.name || "",
+            field_type: field?.field_type || "text"
+          };
+        });
+
+      // Prepare properties payload - 빈 값 제거
+      const properties: any = {};
+      
+      // 일반 속성 추가 (빈 값 제외)
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "" && 
+            !(Array.isArray(value) && value.length === 0)) {
+          properties[key] = value;
         }
+      });
+
+      // 커스텀 필드 값 추가
+      if (customFieldValues.length > 0) {
+        properties.custom_field_values = customFieldValues;
       }
 
-      // 수정 가능한 이슈들만 업데이트
-      await onBulkUpdate(finalUpdates);
+      // 실제로 업데이트할 속성이 있는지 최종 확인
+      if (Object.keys(properties).length === 0) {
+        console.log("[BulkEditModal] No valid properties to update after filtering");
+        onClose();
+        return;
+      }
+
+      // Single bulk operation API call for all changes
+      const bulkUpdatePayload = {
+        issue_ids: selectedIssues.map(issue => issue.id), // 모든 선택된 이슈 ID 전송
+        properties: properties
+      };
+
+      console.log("[BulkEditModal] Final bulk update payload:", JSON.stringify(bulkUpdatePayload, null, 2));
+      console.log("[BulkEditModal] Properties to update:", Object.keys(properties));
+      console.log("[BulkEditModal] Custom field values count:", customFieldValues.length);
+
+      // 부모 컴포넌트의 onBulkUpdate 함수 사용 (이슈 목록 새로고침 포함)
+      await onBulkUpdate(bulkUpdatePayload);
+      
       onClose();
       setUpdates({});
       setCustomFieldUpdates({});
     } catch (error) {
       console.error("Bulk update failed:", error);
+      // 에러는 부모 컴포넌트에서 처리됨
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleFieldChange = (field: keyof TIssue, value: any) => {
-    setUpdates(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (value === null || value === undefined || value === "" || 
+        (Array.isArray(value) && value.length === 0)) {
+      // 값이 비어있으면 updates에서 제거
+      setUpdates(prev => {
+        const newUpdates = { ...prev };
+        delete newUpdates[field];
+        return newUpdates;
+      });
+    } else {
+      setUpdates(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   const handleCustomFieldChange = (fieldId: string, value: any) => {
-    setCustomFieldUpdates(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
+    // 값이 실제로 변경되었을 때만 상태 업데이트
+    setCustomFieldUpdates(prev => {
+      const newUpdates = { ...prev };
+      
+      // 값이 비어있거나 초기값과 같으면 해당 필드를 제거
+      if (value === null || value === undefined || value === "" || 
+          (Array.isArray(value) && value.length === 0)) {
+        delete newUpdates[fieldId];
+      } else {
+        newUpdates[fieldId] = value;
+      }
+      
+      return newUpdates;
+    });
   };
 
   const handleClose = () => {
@@ -195,12 +268,21 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
       case "multiselect":
         return (
           <CustomFieldDropdown
-            field={field}
+            field={{
+              ...field,
+              name: fieldValue ? field.name : "변경하지 않음"
+            }}
             value={fieldValue}
             onChange={(value) => handleCustomFieldChange(field.id, value)}
-            buttonVariant="border-with-text"
-            className="min-w-[200px]"
-            placeholder={`${field.name} 선택`}
+            buttonVariant="transparent-with-text"
+            className="w-3/5 flex-grow group"
+            buttonContainerClassName="w-full text-left"
+            buttonClassName={`text-sm ${fieldValue ? "" : "text-custom-text-400"}`}
+            placeholder="변경하지 않음"
+            dropdownArrow
+            dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+            hideIconWhenEmpty={true}
+            showFieldNameWhenEmpty={true}
           />
         );
 
@@ -209,9 +291,13 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
           <DateDropdown
             value={fieldValue}
             onChange={(date) => handleCustomFieldChange(field.id, date ? renderFormattedPayloadDate(date) : null)}
-            buttonVariant="border-with-text"
-            className="min-w-[200px]"
-            placeholder={`${field.name} 선택`}
+            buttonVariant="transparent-with-text"
+            className="w-3/5 flex-grow group"
+            buttonContainerClassName="w-full text-left"
+            buttonClassName={`text-sm ${fieldValue ? "" : "text-custom-text-400"}`}
+            placeholder="변경하지 않음"
+            hideIcon
+            clearIconClassName="h-3 w-3 hidden group-hover:inline"
           />
         );
 
@@ -221,9 +307,14 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
             projectId={projectId}
             value={fieldValue}
             onChange={(value) => handleCustomFieldChange(field.id, value)}
-            buttonVariant="border-with-text"
-            className="min-w-[200px]"
-            placeholder={`${field.name} 선택`}
+            buttonVariant="transparent-with-text"
+            className="w-3/5 flex-grow group"
+            buttonContainerClassName="w-full text-left"
+            buttonClassName={`text-sm ${fieldValue ? "" : "text-custom-text-400"}`}
+            placeholder="변경하지 않음"
+            hideIcon={!fieldValue}
+            dropdownArrow
+            dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
             multiple={false}
           />
         );
@@ -234,22 +325,29 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
             projectId={projectId}
             value={fieldValue || []}
             onChange={(value) => handleCustomFieldChange(field.id, value)}
-            buttonVariant="border-with-text"
-            className="min-w-[200px]"
-            placeholder={`${field.name} 선택`}
+            buttonVariant="transparent-with-text"
+            className="w-3/5 flex-grow group"
+            buttonContainerClassName="w-full text-left"
+            buttonClassName={`text-sm ${fieldValue && fieldValue.length > 0 ? "" : "text-custom-text-400"}`}
+            placeholder="변경하지 않음"
+            hideIcon={!fieldValue || fieldValue.length === 0}
+            dropdownArrow
+            dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
             multiple
           />
         );
 
       default:
         return (
-          <input
-            type="text"
-            placeholder={`${field.name} 입력`}
-            className="px-3 py-2 border border-custom-border-200 rounded-md text-sm min-w-[200px]"
-            value={fieldValue || ""}
-            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-          />
+          <div className="w-3/5 flex-grow">
+            <input
+              type="text"
+              placeholder="변경하지 않음"
+              className="w-full px-3 py-2 text-sm bg-transparent border-0 text-custom-text-400 focus:outline-none"
+              value={fieldValue || ""}
+              onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+            />
+          </div>
         );
     }
   };
@@ -295,100 +393,62 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
           <>
             <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
               {/* 상태 변경 */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-custom-text-200">
-                  상태
-                </label>
-                <div className="flex items-center gap-2">
-                  <select
-                    className="px-3 py-2 border border-custom-border-200 rounded-md text-sm min-w-[200px]"
-                    onChange={(e) => handleFieldChange('state_id', e.target.value || null)}
-                    defaultValue=""
-                  >
-                    <option value="">변경하지 않음</option>
-                    {projectStatesList?.map((state) => (
-                      <option key={state.id} value={state.id}>
-                        {state.name}
-                      </option>
-                    ))}
-                  </select>
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <DoubleCircleIcon className="h-4 w-4 flex-shrink-0" />
+                  <span>상태</span>
                 </div>
+                <StateDropdown
+                  value={updates.state_id || null}
+                  onChange={(val) => handleFieldChange('state_id', val)}
+                  projectId={projectId}
+                  buttonVariant="transparent-with-text"
+                  className="w-3/5 flex-grow group"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-sm ${updates.state_id ? "" : "text-custom-text-400"}`}
+                  placeholder="변경하지 않음"
+                  dropdownArrow
+                  dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+                />
               </div>
 
               {/* 담당자 변경 */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-custom-text-200">
-                  담당자
-                </label>
-                <div className="flex items-center gap-2">
-                  <select
-                    className="px-3 py-2 border border-custom-border-200 rounded-md text-sm min-w-[200px]"
-                    onChange={(e) => handleFieldChange('assignee_ids', e.target.value ? [e.target.value] : [])}
-                    defaultValue=""
-                  >
-                    <option value="">변경하지 않음</option>
-                    <option value="">담당자 없음</option>
-                    {projectMemberIds?.map((memberId) => {
-                      // 먼저 getUserDetails로 시도
-                      const userDetails = getUserDetails(memberId);
-                      // 그 다음 getProjectMemberDetails로 시도
-                      const memberDetails = getProjectMemberDetails(projectId, memberId);
-                      
-                      const displayName = userDetails?.display_name || 
-                                        userDetails?.first_name || 
-                                        userDetails?.email ||
-                                        memberDetails?.member?.display_name || 
-                                        memberDetails?.member?.first_name || 
-                                        memberDetails?.member?.email || 
-                                        `멤버 ${memberId.slice(0, 8)}`;
-                      
-                      return (
-                        <option key={memberId} value={memberId}>
-                          {displayName}
-                        </option>
-                      );
-                    })}
-                  </select>
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <Users className="h-4 w-4 flex-shrink-0" />
+                  <span>담당자</span>
                 </div>
+                <MemberDropdown
+                  value={updates.assignee_ids || []}
+                  onChange={(val) => handleFieldChange('assignee_ids', val)}
+                  projectId={projectId}
+                  placeholder="변경하지 않음"
+                  multiple
+                  buttonVariant="transparent-with-text"
+                  className="w-3/5 flex-grow group"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-sm ${updates.assignee_ids && updates.assignee_ids.length > 0 ? "" : "text-custom-text-400"}`}
+                  hideIcon={!updates.assignee_ids || updates.assignee_ids.length === 0}
+                  dropdownArrow
+                  dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+                />
               </div>
 
               {/* 우선순위 변경 */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-custom-text-200">
-                  우선순위
-                </label>
-                <div className="flex items-center gap-2">
-                  <select
-                    className="px-3 py-2 border border-custom-border-200 rounded-md text-sm min-w-[200px]"
-                    onChange={(e) => handleFieldChange('priority', e.target.value || null)}
-                    defaultValue=""
-                  >
-                    <option value="">변경하지 않음</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                    <option value="none">None</option>
-                  </select>
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <Signal className="h-4 w-4 flex-shrink-0" />
+                  <span>우선순위</span>
                 </div>
-              </div>
-
-              {/* 라벨 변경 */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-custom-text-200">
-                  라벨
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="라벨을 쉼표로 구분하여 입력"
-                    className="px-3 py-2 border border-custom-border-200 rounded-md text-sm min-w-[200px]"
-                    onChange={(e) => {
-                      const labels = e.target.value.split(',').map(l => l.trim()).filter(Boolean);
-                      handleFieldChange('label_ids', labels);
-                    }}
-                  />
-                </div>
+                <PriorityDropdown
+                  value={updates.priority || null}
+                  onChange={(val) => handleFieldChange('priority', val)}
+                  buttonVariant="transparent-with-text"
+                  className="w-3/5 flex-grow group"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-sm ${updates.priority ? "" : "text-custom-text-400"}`}
+                  placeholder="변경하지 않음"
+                />
               </div>
 
               {/* 커스텀 필드들 */}
@@ -400,14 +460,12 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
                   {customFields.map((field) => {
                     const FieldIcon = getCustomFieldIcon(field.field_type);
                     return (
-                      <div key={field.id} className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-custom-text-200 flex items-center gap-2">
-                          <FieldIcon className="h-4 w-4" />
-                          {field.name}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          {renderCustomFieldInput(field)}
+                      <div key={field.id} className="flex items-center gap-3 h-8">
+                        <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                          <FieldIcon className="h-4 w-4 flex-shrink-0" />
+                          <span>{field.name}</span>
                         </div>
+                        {renderCustomFieldInput(field)}
                       </div>
                     );
                   })}
@@ -428,7 +486,7 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
                 variant="primary"
                 onClick={handleUpdate}
                 loading={isUpdating}
-                disabled={isUpdating}
+                disabled={isUpdating || (Object.keys(updates).length === 0 && Object.keys(customFieldUpdates).length === 0)}
               >
                 <Check className="h-4 w-4 mr-2" />
                 {editableIssues.length}개 항목 변경 적용

@@ -11,6 +11,7 @@ import { DetailedEmptyState } from "@/components/empty-state";
 import { useIssues, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
 export const ProjectArchivedEmptyState: React.FC = observer(() => {
   // router
@@ -46,11 +47,8 @@ export const ProjectArchivedEmptyState: React.FC = observer(() => {
     if (!workspaceSlug || !projectId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     issuesFilter.updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
       ...newFilters,

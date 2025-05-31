@@ -21,6 +21,7 @@ import {
 // constants
 // helpers
 import { replaceUnderscoreIfSnakeCase } from "@/helpers/string.helper";
+import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@/helpers/custom-field.helper";
 // hooks
 import { useUserPermissions } from "@/hooks/store";
 // plane web components
@@ -100,81 +101,51 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
         if (!value) return;
         if (Array.isArray(value) && value.length === 0) return;
 
-        // 커스텀 필드의 경우 별도 처리
+        // 커스텀 필드의 경우 새로운 헬퍼 함수 사용
         if (filterKey === "custom_fields" && customFields) {
-          const customFieldFilters = typeof value === 'string' ? JSON.parse(value) : value as unknown as { [field_id: string]: string[] };
+          const customFieldsForRender = prepareCustomFieldFiltersForRender(value, customFields);
           
-          return Object.entries(customFieldFilters).map(([fieldId, fieldValues]) => {
-            if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) return null;
-            
-            const field = customFields.find(f => f.id === fieldId);
-            if (!field) return null;
-            
-            return (
-              <Tag key={`${filterKey}-${fieldId}`}>
-                <span className="text-xs text-custom-text-300">{field.name}</span>
-                <div className="flex flex-wrap items-center gap-1">
-                  <AppliedCustomFieldFilters
-                    appliedFilters={{ [fieldId]: fieldValues }}
-                    customFields={customFields}
-                    editable={isEditingAllowed ?? false}
-                    handleRemove={(fieldId, val) => {
-                      // 커스텀 필드 필터 제거 로직
-                      const currentCustomFieldFilters = typeof appliedFilters.custom_fields === 'string' 
-                        ? JSON.parse(appliedFilters.custom_fields) 
-                        : appliedFilters.custom_fields || {};
-                      const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-                      const newFieldValues = currentFieldValues.filter((v: string) => v !== val);
-                      
-                      const newCustomFieldFilters = {
-                        ...currentCustomFieldFilters,
-                        [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
-                      };
-                      
-                      // 빈 배열인 필드들 제거
-                      Object.keys(newCustomFieldFilters).forEach(key => {
-                        const fieldValues = newCustomFieldFilters[key];
-                        if (!fieldValues || fieldValues.length === 0) {
-                          delete newCustomFieldFilters[key];
-                        }
-                      });
-                      
-                      const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
-                        ? JSON.stringify(newCustomFieldFilters) 
-                        : null;
-                      
-                      handleRemoveFilter("custom_fields", customFieldsValue);
-                    }}
-                    workspaceSlug={workspaceSlug}
-                    projectId={projectId}
-                  />
-                </div>
-                {isEditingAllowed && (
-                  <button
-                    type="button"
-                    className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
-                    onClick={() => {
-                      // 특정 필드의 모든 값 제거
-                      const currentCustomFieldFilters = typeof appliedFilters.custom_fields === 'string' 
-                        ? JSON.parse(appliedFilters.custom_fields) 
-                        : appliedFilters.custom_fields || {};
-                      
-                      const newCustomFieldFilters = { ...currentCustomFieldFilters };
-                      delete newCustomFieldFilters[fieldId];
-                      
-                      const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
-                        ? JSON.stringify(newCustomFieldFilters) 
-                        : null;
-                      
-                      handleRemoveFilter("custom_fields", customFieldsValue);
-                    }}
-                  >
-                    <X size={12} strokeWidth={2} />
-                  </button>
-                )}
-              </Tag>
-            );
-          }).filter(Boolean);
+          return customFieldsForRender.map(({ fieldId, field, fieldValues }) => (
+            <Tag key={`${filterKey}-${fieldId}`}>
+              <span className="text-xs text-custom-text-300">{field.name}</span>
+              <div className="flex flex-wrap items-center gap-1">
+                <AppliedCustomFieldFilters
+                  appliedFilters={{ [fieldId]: fieldValues }}
+                  customFields={customFields}
+                  editable={isEditingAllowed ?? false}
+                  handleRemove={(fieldId, val) => {
+                    const newValue = removeCustomFieldFilterValue(
+                      typeof appliedFilters.custom_fields === 'string' 
+                        ? appliedFilters.custom_fields 
+                        : JSON.stringify(appliedFilters.custom_fields || {}),
+                      fieldId,
+                      val
+                    );
+                    handleRemoveFilter("custom_fields", newValue);
+                  }}
+                  workspaceSlug={workspaceSlug}
+                  projectId={projectId}
+                />
+              </div>
+              {isEditingAllowed && (
+                <button
+                  type="button"
+                  className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
+                  onClick={() => {
+                    const newValue = removeCustomFieldFilterField(
+                      typeof appliedFilters.custom_fields === 'string' 
+                        ? appliedFilters.custom_fields 
+                        : JSON.stringify(appliedFilters.custom_fields || {}),
+                      fieldId
+                    );
+                    handleRemoveFilter("custom_fields", newValue);
+                  }}
+                >
+                  <X size={12} strokeWidth={2} />
+                </button>
+              )}
+            </Tag>
+          ));
         }
 
         return (

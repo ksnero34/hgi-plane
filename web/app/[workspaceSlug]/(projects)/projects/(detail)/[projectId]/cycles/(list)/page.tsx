@@ -35,7 +35,7 @@ const ProjectCyclesPage = observer(() => {
   // plane hooks
   const { t } = useTranslation();
   // cycle filters hook
-  const { clearAllFilters, currentProjectFilters, updateFilters } = useCycleFilter();
+  const { clearAllFilters, currentProjectFilters, updateFilters, currentProjectDisplayFilters, updateDisplayFilters } = useCycleFilter();
   const { allowPermissions } = useUserPermissions();
   // derived values
   const totalCycles = currentProjectCycleIds?.length ?? 0;
@@ -119,8 +119,10 @@ const ProjectCyclesPage = observer(() => {
               <Header variant={EHeaderVariant.TERNARY}>
                 <CycleAppliedFiltersList
                   appliedFilters={currentProjectFilters ?? {}}
+                  isFavoriteFilterApplied={currentProjectDisplayFilters?.favorites ?? false}
                   handleClearAllFilters={() => clearAllFilters(projectId.toString())}
                   handleRemoveFilter={handleRemoveFilter}
+                  handleDisplayFiltersUpdate={(filters) => updateDisplayFilters(projectId.toString(), filters)}
                 />
               </Header>
             )}

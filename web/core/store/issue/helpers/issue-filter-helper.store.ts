@@ -85,7 +85,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     // console.log('computedFilteredParams - acceptableParamsByLayout:', acceptableParamsByLayout);
     // console.log('computedFilteredParams - filters.custom_fields:', filters?.custom_fields);
     
-    const computedFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
+    const computedFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string | { [field_id: string]: string[]; }>> = {
       // issue filters
       priority: filters?.priority || undefined,
       state_group: filters?.state_group || undefined,
@@ -145,7 +145,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     const issueFiltersParams: Partial<Record<TIssueParams, boolean | string>> = {};
     Object.keys(computedFilters).forEach((key) => {
       const _key = key as TIssueParams;
-      const _value: string | boolean | string[] | undefined = computedFilters[_key];
+      const _value: string | boolean | string[] | { [field_id: string]: string[]; } | undefined = computedFilters[_key];
       const nonEmptyArrayValue = Array.isArray(_value) && _value.length === 0 ? undefined : _value;
       
       console.log(`Processing filter ${_key}:`, {
@@ -162,7 +162,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
         } else {
           issueFiltersParams[_key] = Array.isArray(nonEmptyArrayValue)
             ? nonEmptyArrayValue.join(",")
-            : nonEmptyArrayValue;
+            : (nonEmptyArrayValue as string | boolean);
         }
       }
     });

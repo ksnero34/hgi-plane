@@ -12,6 +12,8 @@ import type { TIssueOperations } from "@/components/issues";
 // hooks
 import { useIssueDetail } from "@/hooks/store";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+// helpers
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
 
 type TIssueCustomFieldSelect = {
   className?: string;
@@ -66,40 +68,31 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
 
   // 특정 필드의 현재 값 가져오기
   const getFieldValue = (fieldId: string) => {
-    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === fieldId);
-    return fieldValue?.value;
+    return getCustomFieldValue(issue?.custom_field_values || [], fieldId);
   };
 
-  // 필드 값 업데이트
+  // 필드 값 업데이트 (peek-overview 방식 적용)
   const updateFieldValue = (fieldId: string, value: any) => {
-    const updatedValues = [...(issue?.custom_field_values || [])];
+    console.log("[IssueCustomFieldSelect] Updating field:", fieldId, "with value:", value);
     
-    // 해당 필드의 값이 이미 있는지 확인
-    const existingIndex = updatedValues.findIndex(cfv => cfv.custom_field_id === fieldId);
-    
-    if (existingIndex >= 0) {
-      // 기존 값 업데이트
-      if (value === null || value === undefined || value === "") {
-        // 값이 비어있으면 제거
-        updatedValues.splice(existingIndex, 1);
-      } else {
-        updatedValues[existingIndex] = {
-          ...updatedValues[existingIndex],
-          value: value
-        };
-      }
-    } else if (value !== null && value !== undefined && value !== "") {
-      // 새 값 추가
-      const field = customFields.find(f => f.id === fieldId);
-      if (field) {
-        updatedValues.push({
-          custom_field_id: fieldId,
-          value: value,
-          field_name: field.name,
-          field_type: field.field_type
-        });
-      }
+    const field = customFields.find(f => f.id === fieldId);
+    if (!field) {
+      console.error("[IssueCustomFieldSelect] Field not found:", fieldId);
+      return;
     }
+
+    // 공통 유틸리티 함수 사용 (peek-overview 방식)
+    const updatedValues = updateCustomFieldValueSafely(
+      issue?.custom_field_values || [],
+      fieldId,
+      value,
+      {
+        name: field.name,
+        field_type: field.field_type
+      }
+    );
+
+    console.log("[IssueCustomFieldSelect] Final update values:", updatedValues);
 
     // 이슈 업데이트
     issueOperations.update(workspaceSlug, projectId, issueId, {

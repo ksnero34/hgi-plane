@@ -5,6 +5,7 @@ export type TCycleLayoutOptions = "list" | "board" | "gantt";
 export type TCycleDisplayFilters = {
   active_tab?: TCycleTabOptions;
   layout?: TCycleLayoutOptions;
+  favorites?: boolean;
 };
 
 export type TCycleFilters = {

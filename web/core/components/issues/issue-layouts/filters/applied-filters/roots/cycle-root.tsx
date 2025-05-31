@@ -64,7 +64,7 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
 
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId || !cycleId) return;
-    
+
     if (!value) {
       updateFilters(
         workspaceSlug.toString(),
@@ -76,6 +76,7 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
       return;
     }
 
+    // calculateFilterRemovalValue 함수를 사용하여 모든 필터를 통일된 방식으로 처리
     const updatedValue = calculateFilterRemovalValue(key, value, issueFilters?.filters ?? {});
     updateFilters(
       workspaceSlug.toString(),
@@ -90,11 +91,9 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !projectId || !cycleId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      // calculateFilterRemovalValue로 null 처리를 통일
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     updateFilters(
       workspaceSlug.toString(),

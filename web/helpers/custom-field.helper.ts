@@ -1,5 +1,7 @@
 // types
 import { IIssueFilterOptions } from "@plane/types";
+import type { TCustomField } from "@plane/types";
+import { calculateFilterValue } from "./filter-update.helper";
 
 /**
  * @description 커스텀 필드 필터 값이 JSON 문자열인지 확인
@@ -147,7 +149,7 @@ export const calculateCustomFieldFilterCount = (customFieldsFilter: any): number
 };
 
 /**
- * @description 필터 업데이트 시 커스텀 필드 처리
+ * @description 필터 업데이트 시 커스텀 필드 처리 (이제 calculateFilterValue 사용)
  * @param {keyof IIssueFilterOptions} key
  * @param {string | string[]} value
  * @param {IIssueFilterOptions} currentFilters
@@ -158,59 +160,171 @@ export const processFilterUpdate = (
   value: string | string[],
   currentFilters: IIssueFilterOptions
 ): { key: keyof IIssueFilterOptions; value: any } => {
-  // 커스텀 필드의 경우 특별한 처리
-  if (key === "custom_fields") {
-    // value가 이미 JSON 문자열인 경우 그대로 사용
-    if (typeof value === "string" && isCustomFieldFilterJSON(value)) {
-      return { key, value };
-    }
-    
-    // 객체인 경우 JSON 문자열로 변환
-    if (typeof value === "object" && !Array.isArray(value)) {
-      return { key, value: stringifyCustomFieldFilter(value) };
-    }
-    
-    // 배열인 경우 기존 로직 적용 후 JSON 문자열로 변환
-    const currentCustomFields = parseCustomFieldFilter(currentFilters[key] as any);
-    
-    if (Array.isArray(value)) {
-      // 배열 값 처리 로직
-      value.forEach((val) => {
-        const [fieldId, fieldValue] = val.split(":");
-        if (!currentCustomFields[fieldId]) {
-          currentCustomFields[fieldId] = [];
-        }
-        
-        const fieldValues = currentCustomFields[fieldId];
-        if (!fieldValues.includes(fieldValue)) {
-          fieldValues.push(fieldValue);
-        } else {
-          fieldValues.splice(fieldValues.indexOf(fieldValue), 1);
-          if (fieldValues.length === 0) {
-            delete currentCustomFields[fieldId];
-          }
-        }
-      });
-    }
-    
-    return { key, value: stringifyCustomFieldFilter(currentCustomFields) };
-  }
+  // calculateFilterValue 함수를 사용하여 모든 필터를 통일된 방식으로 처리
+  const updatedValue = calculateFilterValue(key, value, currentFilters);
+  return { key, value: updatedValue };
+};
+
+/**
+ * 커스텀 필드 필터에서 특정 필드의 특정 값을 제거합니다
+ */
+export const removeCustomFieldFilterValue = (
+  currentCustomFields: string | null,
+  fieldId: string,
+  valueToRemove: string
+): string | null => {
+  if (!currentCustomFields) return null;
   
-  // 일반 필터의 경우 기존 로직 적용
-  const newValues = currentFilters[key] ?? [];
+  const customFieldFilters = parseCustomFieldFilter(currentCustomFields);
+  const currentFieldValues = customFieldFilters[fieldId] || [];
+  const newFieldValues = currentFieldValues.filter(v => v !== valueToRemove);
   
-  if (Array.isArray(value)) {
-    value.forEach((val) => {
-      if (!newValues.includes(val)) newValues.push(val);
-      else newValues.splice(newValues.indexOf(val), 1);
-    });
-  } else {
-    if (currentFilters[key]?.includes(value)) {
-      newValues.splice(newValues.indexOf(value), 1);
+  // undefined 값들을 제거하고 새로운 객체 생성
+  const newCustomFieldFilters: { [field_id: string]: string[] } = {};
+  
+  // 기존 필드들 복사 (수정된 필드 제외)
+  Object.keys(customFieldFilters).forEach(key => {
+    if (key === fieldId) {
+      if (newFieldValues.length > 0) {
+        newCustomFieldFilters[key] = newFieldValues;
+      }
     } else {
-      newValues.push(value);
+      const values = customFieldFilters[key];
+      if (values && values.length > 0) {
+        newCustomFieldFilters[key] = values;
+      }
     }
+  });
+  
+  return Object.keys(newCustomFieldFilters).length > 0 
+    ? stringifyCustomFieldFilter(newCustomFieldFilters) 
+    : null;
+};
+
+/**
+ * 커스텀 필드 필터에서 특정 필드의 모든 값을 제거합니다
+ */
+export const removeCustomFieldFilterField = (
+  currentCustomFields: string | null,
+  fieldId: string
+): string | null => {
+  if (!currentCustomFields) return null;
+  
+  const customFieldFilters = parseCustomFieldFilter(currentCustomFields);
+  const newCustomFieldFilters: { [field_id: string]: string[] } = {};
+  
+  // 삭제할 필드 제외하고 복사
+  Object.keys(customFieldFilters).forEach(key => {
+    if (key !== fieldId) {
+      const values = customFieldFilters[key];
+      if (values && values.length > 0) {
+        newCustomFieldFilters[key] = values;
+      }
+    }
+  });
+  
+  return Object.keys(newCustomFieldFilters).length > 0 
+    ? stringifyCustomFieldFilter(newCustomFieldFilters) 
+    : null;
+};
+
+/**
+ * 커스텀 필드 필터를 렌더링하기 위한 데이터를 준비합니다
+ */
+export const prepareCustomFieldFiltersForRender = (
+  customFieldsValue: string | { [field_id: string]: string[] },
+  customFields: TCustomField[]
+): Array<{
+  fieldId: string;
+  field: TCustomField;
+  fieldValues: string[];
+}> => {
+  const customFieldFilters = typeof customFieldsValue === 'string' 
+    ? JSON.parse(customFieldsValue) 
+    : customFieldsValue as { [field_id: string]: string[] };
+  
+  const result: Array<{
+    fieldId: string;
+    field: TCustomField;
+    fieldValues: string[];
+  }> = [];
+  
+  Object.keys(customFieldFilters).forEach(fieldId => {
+    const fieldValues = customFieldFilters[fieldId];
+    if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) return;
+    
+    const field = customFields.find(f => f.id === fieldId);
+    if (!field) return;
+    
+    result.push({
+      fieldId,
+      field,
+      fieldValues
+    });
+  });
+  
+  return result;
+};
+
+/**
+ * @description 커스텀 필드 값이 유효한지 확인
+ * @param {any} value - 확인할 값
+ * @returns {boolean} - 유효한 값인지 여부
+ */
+export const isValidCustomFieldValue = (value: any): boolean => {
+  if (value === null || value === undefined || value === "") {
+    return false;
   }
   
-  return { key, value: newValues };
+  // 배열인 경우 길이가 0이면 무효
+  if (Array.isArray(value) && value.length === 0) {
+    return false;
+  }
+  
+  return true;
+};
+
+/**
+ * @description 커스텀 필드 값을 안전하게 업데이트 (peek-overview 방식)
+ * @param {any[]} currentValues - 현재 커스텀 필드 값 배열
+ * @param {string} fieldId - 업데이트할 필드 ID
+ * @param {any} newValue - 새로운 값
+ * @param {Object} fieldInfo - 필드 정보 객체
+ * @param {string} fieldInfo.name - 필드 이름
+ * @param {string} fieldInfo.field_type - 필드 타입
+ * @returns {any[]} - 업데이트된 커스텀 필드 값 배열
+ */
+export const updateCustomFieldValueSafely = (
+  currentValues: any[],
+  fieldId: string,
+  newValue: any,
+  fieldInfo: { name: string; field_type: string }
+): any[] => {
+  // 변경할 필드를 제외한 기존 값들 보존 (peek-overview 방식)
+  const existingValues = (currentValues || []).filter(cfv => cfv.custom_field_id !== fieldId);
+  
+  // 새 값이 유효한 경우에만 추가
+  if (isValidCustomFieldValue(newValue)) {
+    const newFieldValue = {
+      custom_field_id: fieldId,
+      value: newValue,
+      field_name: fieldInfo.name,
+      field_type: fieldInfo.field_type
+    };
+    return [...existingValues, newFieldValue];
+  }
+  
+  // 값이 무효하면 해당 필드 제거된 상태로 반환
+  return existingValues;
+};
+
+/**
+ * @description 커스텀 필드 값 배열에서 특정 필드의 현재 값 조회
+ * @param {any[]} customFieldValues - 커스텀 필드 값 배열
+ * @param {string} fieldId - 조회할 필드 ID
+ * @returns {any} - 필드 값 또는 undefined
+ */
+export const getCustomFieldValue = (customFieldValues: any[], fieldId: string): any => {
+  const fieldValue = customFieldValues?.find(cfv => cfv.custom_field_id === fieldId);
+  return fieldValue?.value;
 }; 

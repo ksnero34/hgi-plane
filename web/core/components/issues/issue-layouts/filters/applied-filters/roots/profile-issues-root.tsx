@@ -8,6 +8,8 @@ import { AppliedFiltersList } from "@/components/issues";
 // types
 import { useIssues, useLabel } from "@/hooks/store";
 import { useWorkspaceIssueProperties } from "@/hooks/use-workspace-issue-properties";
+// helpers
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
 export const ProfileIssuesAppliedFiltersRoot: React.FC = observer(() => {
   // router
@@ -57,14 +59,11 @@ export const ProfileIssuesAppliedFiltersRoot: React.FC = observer(() => {
   };
 
   const handleClearAllFilters = () => {
-    if (!workspaceSlug || !userId) return;
+    if (!workspaceSlug) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     updateFilters(workspaceSlug.toString(), undefined, EIssueFilterType.FILTERS, { ...newFilters }, userId.toString());
   };

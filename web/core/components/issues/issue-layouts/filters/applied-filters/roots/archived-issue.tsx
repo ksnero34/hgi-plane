@@ -52,11 +52,8 @@ export const ArchivedIssueAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !projectId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, { ...newFilters });
   };

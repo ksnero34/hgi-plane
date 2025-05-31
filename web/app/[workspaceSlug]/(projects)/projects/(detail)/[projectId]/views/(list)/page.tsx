@@ -74,7 +74,7 @@ const ProjectViewsPage = observer(() => {
         return;
       }
 
-      const updatedValue = calculateFilterRemovalValue(key as any, value as string | null, filters.filters ?? {});
+      const updatedValue = calculateFilterRemovalValue(key as any, value?.toString() || null, filters.filters ?? {});
       updateFilters("filters", { [key]: updatedValue });
     },
     [filters.filters, updateFilters]

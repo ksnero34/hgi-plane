@@ -26,6 +26,7 @@ import { cn } from "@/helpers/common.helper";
 // hooks
 import { useEventTracker, useGlobalView, useIssues, useLabel, useUser, useUserPermissions } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
 type Props = {
   globalViewId: string;
@@ -122,21 +123,18 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
   };
 
   const handleClearAllFilters = () => {
-    if (!workspaceSlug || !globalViewId) return;
+    if (!workspaceSlug) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     updateFilters(
       workspaceSlug.toString(),
       undefined,
       EIssueFilterType.FILTERS,
       { ...newFilters },
-      globalViewId.toString()
+      globalViewId?.toString()
     );
   };
 

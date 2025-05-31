@@ -1067,6 +1067,10 @@ class IssueViewSet(BaseViewSet):
         model=Issue
     )
     def partial_update(self, request, slug, project_id, pk=None):
+        print(f"[IssueViewSet] partial_update called for issue {pk}")
+        print(f"[IssueViewSet] Request data: {request.data}")
+        print(f"[IssueViewSet] User: {request.user.email}")
+        
         issue = (
             self.get_queryset()
             .annotate(
@@ -1109,73 +1113,41 @@ class IssueViewSet(BaseViewSet):
             .filter(pk=pk)
             .first()
         )
-
+        
         if not issue:
             return Response(
-                {"error": "Issue not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Issue does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        # VIEWER와 RESTRICTED 역할 체크
-        user_role = ProjectMember.objects.filter(
-            workspace__slug=slug,
-            project_id=project_id,
-            member=request.user,
-            is_active=True,
-        ).first()
-
-        if user_role and user_role.role in [ROLE.VIEWER.value, ROLE.RESTRICTED.value]:
-            # 자신에게 할당된 이슈인지 확인
-            if request.user.id not in issue.assignee_ids:
-                return Response(
-                    {"error": "You can only update issues assigned to you"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
         current_instance = json.dumps(
-            IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder
+            IssueSerializer(issue).data, cls=DjangoJSONEncoder
         )
-
-        requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
-        serializer = IssueCreateSerializer(
-            issue, data=request.data, partial=True, context={"project_id": project_id}
+        requested_data = json.dumps(request.data, cls=DjangoJSONEncoder)
+        
+        # 사용될 시리얼라이저 확인
+        serializer_class = self.get_serializer_class()
+        print(f"[IssueViewSet] Using serializer: {serializer_class.__name__}")
+        
+        serializer = serializer_class(
+            issue,
+            data=request.data,
+            context={
+                "project_id": project_id,
+                "workspace_id": issue.workspace_id,
+            },
+            partial=True,
         )
+        
+        print(f"[IssueViewSet] Serializer is_valid check...")
+        
         if serializer.is_valid():
+            print(f"[IssueViewSet] Serializer is valid, saving...")
+            print(f"[IssueViewSet] Validated data: {serializer.validated_data}")
+            
             serializer.save()
             
-            # JSON 문자열을 딕셔너리로 파싱
-            current_instance_dict = json.loads(current_instance)
-            
-            # 변경된 필드만 추출
-            changes = {}
-            for field, value in request.data.items():
-                if field in current_instance_dict:
-                    old_value = current_instance_dict[field]
-                    # 문자열 비교 시 유니코드 정규화
-                    if isinstance(old_value, str) and isinstance(value, str):
-                        old_value = old_value.encode('utf-8').decode('utf-8')
-                        value = value.encode('utf-8').decode('utf-8')
-                    if str(old_value) != str(value):
-                        changes[field] = {
-                            "old": old_value,
-                            "new": value
-                        }
-            
-            # 내용의 경우 worker에서 수행됨
-            
-            # 감사 로그 추가
-            if changes:  # 변경사항이 있을 때만 로그 기록
-                log_audit(
-                    action="update_issue",
-                    user_id=str(request.user.id),
-                    user_email=request.user.email,
-                    resource_type="issue",
-                    resource_id=str(pk),
-                    details={
-                        "project_id": str(project_id),
-                        "changes": changes
-                    },
-                    request=request,
-                )
+            print(f"[IssueViewSet] Issue saved successfully")
 
             issue_activity.delay(
                 type="issue.activity.updated",
@@ -1204,6 +1176,8 @@ class IssueViewSet(BaseViewSet):
                 user_id=request.user.id,
             )
             return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            print(f"[IssueViewSet] Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission([ROLE.ADMIN], creator=True, model=Issue)
@@ -1924,3 +1898,244 @@ class ImportIssuesEndpoint(BaseAPIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BulkOperationsEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
+    def post(self, request, slug, project_id):
+        issue_ids = request.data.get("issue_ids", [])
+        properties = request.data.get("properties", {})
+
+        # 디버깅 로그 추가
+        print(f"[BulkOperationsEndpoint] Received data:")
+        print(f"  - issue_ids: {issue_ids}")
+        print(f"  - properties: {properties}")
+        print(f"  - user: {request.user.email}")
+
+        if not issue_ids:
+            return Response(
+                {"error": "Issue IDs are required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 사용자 역할 확인
+        user_role = ProjectMember.objects.filter(
+            workspace__slug=slug,
+            project_id=project_id,
+            member=request.user,
+            is_active=True,
+        ).first()
+
+        print(f"[BulkOperationsEndpoint] User role: {user_role.role if user_role else 'None'}")
+
+        issues = Issue.objects.filter(
+            workspace__slug=slug, project_id=project_id, pk__in=issue_ids
+        ).annotate(
+            assignee_ids=Coalesce(
+                ArrayAgg(
+                    "assignees__id",
+                    distinct=True,
+                    filter=Q(
+                        ~Q(assignees__id__isnull=True)
+                        & Q(assignees__member_project__is_active=True)
+                        & Q(issue_assignee__deleted_at__isnull=True)
+                    ),
+                ),
+                Value([], output_field=ArrayField(UUIDField())),
+            )
+        )
+
+        print(f"[BulkOperationsEndpoint] Found {issues.count()} issues")
+
+        if not issues.exists():
+            return Response(
+                {"error": "No valid issues found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # VIEWER와 RESTRICTED 사용자는 자신에게 할당된 이슈만 수정 가능
+        editable_issues = []
+        non_editable_issues = []
+        
+        for issue in issues:
+            # ADMIN과 MEMBER는 모든 이슈 수정 가능
+            if user_role and user_role.role in [ROLE.ADMIN.value, ROLE.MEMBER.value]:
+                editable_issues.append(issue)
+            # VIEWER와 RESTRICTED는 자신에게 할당된 이슈만 수정 가능
+            elif user_role and user_role.role in [ROLE.VIEWER.value, ROLE.RESTRICTED.value]:
+                if request.user.id in issue.assignee_ids:
+                    editable_issues.append(issue)
+                else:
+                    non_editable_issues.append(issue)
+            else:
+                non_editable_issues.append(issue)
+
+        print(f"[BulkOperationsEndpoint] Editable issues: {len(editable_issues)}, Non-editable: {len(non_editable_issues)}")
+
+        if not editable_issues:
+            return Response(
+                {"error": "You can only update issues assigned to you"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        epoch = int(timezone.now().timestamp())
+        
+        # Handle regular issue properties
+        regular_properties = {
+            k: v for k, v in properties.items() 
+            if k != "custom_field_values" and hasattr(Issue, k)
+        }
+        
+        # Handle custom field values
+        custom_field_values = properties.get("custom_field_values", [])
+        
+        print(f"[BulkOperationsEndpoint] Regular properties: {regular_properties}")
+        print(f"[BulkOperationsEndpoint] Custom field values: {custom_field_values}")
+        
+        # Update regular properties if any exist
+        if regular_properties:
+            issues_to_update = []
+            for issue in editable_issues:
+                # Update regular properties
+                for field, value in regular_properties.items():
+                    if value is not None:  # Only update if value is provided
+                        old_value = getattr(issue, field, None)
+                        setattr(issue, field, value)
+                        
+                        # Track activity for regular fields
+                        issue_activity.delay(
+                            type="issue.activity.updated",
+                            requested_data=json.dumps({field: value}),
+                            current_instance=json.dumps({field: str(old_value) if old_value else None}),
+                            issue_id=str(issue.id),
+                            actor_id=str(request.user.id),
+                            project_id=str(project_id),
+                            epoch=epoch,
+                        )
+                        
+                issues_to_update.append(issue)
+            
+            # Bulk update regular properties
+            if issues_to_update:
+                print(f"[BulkOperationsEndpoint] Bulk updating {len(issues_to_update)} issues with fields: {list(regular_properties.keys())}")
+                Issue.objects.bulk_update(issues_to_update, list(regular_properties.keys()))
+        
+        # Handle custom field values if provided
+        if custom_field_values:
+            print(f"[BulkOperationsEndpoint] Processing custom field values for {len(editable_issues)} issues")
+            for issue in editable_issues:
+                # Get existing custom field values
+                existing_custom_fields = list(issue.custom_field_values.filter(deleted_at__isnull=True))
+                
+                # Create a mapping of existing custom field values
+                existing_cf_map = {
+                    str(cf.custom_field_id): cf for cf in existing_custom_fields
+                }
+                
+                # Prepare new custom field values
+                new_custom_fields = []
+                
+                for cf_update in custom_field_values:
+                    custom_field_id = cf_update.get("custom_field_id")
+                    value = cf_update.get("value")
+                    
+                    print(f"[BulkOperationsEndpoint] Processing custom field {custom_field_id} with value {value}")
+                    
+                    if not custom_field_id:
+                        continue
+                        
+                    # Check if custom field value already exists
+                    if custom_field_id in existing_cf_map:
+                        # Update existing
+                        existing_cf = existing_cf_map[custom_field_id]
+                        old_value = existing_cf.value
+                        existing_cf.value = value
+                        existing_cf.save()
+                        
+                        print(f"[BulkOperationsEndpoint] Updated existing custom field {custom_field_id}: {old_value} -> {value}")
+                        
+                        # Track activity
+                        issue_activity.delay(
+                            type="issue.activity.updated",
+                            requested_data=json.dumps({
+                                "custom_field": {
+                                    "field_name": cf_update.get("field_name", ""),
+                                    "value": value
+                                }
+                            }),
+                            current_instance=json.dumps({
+                                "custom_field": {
+                                    "field_name": cf_update.get("field_name", ""),
+                                    "value": old_value
+                                }
+                            }),
+                            issue_id=str(issue.id),
+                            actor_id=str(request.user.id),
+                            project_id=str(project_id),
+                            epoch=epoch,
+                        )
+                    else:
+                        # Create new - Check if custom field exists
+                        try:
+                            custom_field = CustomField.objects.get(
+                                id=custom_field_id,
+                                project_id=project_id,
+                                deleted_at__isnull=True
+                            )
+                            
+                            new_cf = CustomFieldValue(
+                                issue=issue,
+                                custom_field=custom_field,  # Use the actual CustomField instance
+                                value=value,
+                                project_id=project_id,
+                                workspace_id=issue.workspace_id,
+                                created_by=request.user,
+                                updated_by=request.user,
+                            )
+                            new_custom_fields.append(new_cf)
+                            
+                            print(f"[BulkOperationsEndpoint] Created new custom field value {custom_field_id}: {value}")
+                            
+                            # Track activity
+                            issue_activity.delay(
+                                type="issue.activity.updated",
+                                requested_data=json.dumps({
+                                    "custom_field": {
+                                        "field_name": cf_update.get("field_name", ""),
+                                        "value": value
+                                    }
+                                }),
+                                current_instance=json.dumps({
+                                    "custom_field": {
+                                        "field_name": cf_update.get("field_name", ""),
+                                        "value": None
+                                    }
+                                }),
+                                issue_id=str(issue.id),
+                                actor_id=str(request.user.id),
+                                project_id=str(project_id),
+                                epoch=epoch,
+                            )
+                        except CustomField.DoesNotExist:
+                            print(f"[BulkOperationsEndpoint] Custom field {custom_field_id} not found, skipping")
+                            # Skip if custom field doesn't exist
+                            continue
+                
+                # Bulk create new custom field values
+                if new_custom_fields:
+                    print(f"[BulkOperationsEndpoint] Bulk creating {len(new_custom_fields)} new custom field values")
+                    CustomFieldValue.objects.bulk_create(new_custom_fields)
+
+        print(f"[BulkOperationsEndpoint] Update completed successfully")
+
+        # 응답에 처리 결과 포함
+        response_data = {
+            "message": "Issues updated successfully",
+            "updated_issues": len(editable_issues),
+            "total_issues": len(issues),
+        }
+        
+        # 권한이 없어서 처리하지 못한 이슈가 있는 경우 알림
+        if non_editable_issues:
+            response_data["warning"] = f"{len(non_editable_issues)} issues were skipped due to insufficient permissions"
+            response_data["skipped_issues"] = len(non_editable_issues)
+
+        return Response(response_data, status=status.HTTP_200_OK)

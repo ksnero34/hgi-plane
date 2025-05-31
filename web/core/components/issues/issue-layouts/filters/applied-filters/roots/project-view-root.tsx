@@ -23,6 +23,7 @@ import { UpdateViewComponent } from "@/components/views/update-view-component";
 // hooks
 import { useIssues, useLabel, useProjectState, useProjectView, useUser, useUserPermissions } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
 export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   // router
@@ -83,33 +84,25 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
 
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId || !viewId) return;
+
     if (!value) {
       updateFilters(
         workspaceSlug.toString(),
         projectId.toString(),
         EIssueFilterType.FILTERS,
-        {
-          [key]: null,
-        },
+        { [key]: null },
         viewId.toString()
       );
       return;
     }
 
-    let newValues = issueFilters?.filters?.[key] ?? [];
-    if (Array.isArray(newValues)) {
-      newValues = newValues.filter((val: string) => val !== value);
-    } else {
-      newValues = [];
-    }
-
+    // calculateFilterRemovalValue 함수를 사용하여 모든 필터를 통일된 방식으로 처리
+    const updatedValue = calculateFilterRemovalValue(key, value, issueFilters?.filters ?? {});
     updateFilters(
       workspaceSlug.toString(),
       projectId.toString(),
       EIssueFilterType.FILTERS,
-      {
-        [key]: newValues,
-      },
+      { [key]: updatedValue },
       viewId.toString()
     );
   };
@@ -118,11 +111,9 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !projectId || !viewId) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      if (key === 'custom_fields') {
-        (newFilters as any)[key] = null;
-      } else {
-        (newFilters as any)[key] = [];
-      }
+      // calculateFilterRemovalValue로 null 처리를 통일
+      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      (newFilters as any)[key] = clearedValue;
     });
     updateFilters(
       workspaceSlug.toString(),

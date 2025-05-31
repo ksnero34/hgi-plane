@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 // icons
 import { Calendar, ChevronDown, Kanban, List } from "lucide-react";
@@ -15,12 +15,12 @@ import {
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
-import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions } from "@plane/types";
+import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions, TCustomField } from "@plane/types";
 // ui
 import { CustomMenu } from "@plane/ui";
 // components
 import { ProjectAnalyticsModal } from "@/components/analytics";
-import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
+import { DisplayFiltersSelection, FilterSelection, IssueLayoutIcon, FiltersDropdown } from "@/components/issues";
 // helpers
 import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
@@ -31,7 +31,11 @@ export const CycleIssuesMobileHeader = () => {
   // i18n
   const { t } = useTranslation();
 
+  // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
+  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
+
   const { getCycleById } = useCycle();
   const layouts = [
     { key: "list", titleTranslationKey: "issue.layouts.list", icon: List },
@@ -107,6 +111,33 @@ export const CycleIssuesMobileHeader = () => {
     [workspaceSlug, projectId, cycleId, updateFilters]
   );
 
+  // 커스텀 필드 가져오기
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
+
+      try {
+        setIsLoadingCustomFields(true);
+        const response = await fetch(
+          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCustomFields(data || []);
+        }
+      } catch (error) {
+        console.error("커스텀 필드 로드 중 오류:", error);
+      } finally {
+        setIsLoadingCustomFields(false);
+      }
+    };
+
+    fetchCustomFields();
+  }, [workspaceSlug, projectId]);
+
   return (
     <>
       <ProjectAnalyticsModal
@@ -161,6 +192,8 @@ export const CycleIssuesMobileHeader = () => {
               labels={projectLabels}
               memberIds={projectMemberIds ?? undefined}
               states={projectStates}
+              projectId={projectId as string}
+              customFields={customFields}
               cycleViewDisabled={!currentProjectDetails?.cycle_view}
               moduleViewDisabled={!currentProjectDetails?.module_view}
             />

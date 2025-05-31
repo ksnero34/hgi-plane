@@ -16,11 +16,11 @@ import { Button, EmojiIconPicker, EmojiIconPickerTypes, Input, TextArea } from "
 // components
 import { Logo } from "@/components/common";
 import { AppliedFiltersList, DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
-import { ViewFiltersSelection } from "@/components/views/filters/filter-selection";
 // helpers
 import { convertHexEmojiToDecimal } from "@/helpers/emoji.helper";
 import { getComputedDisplayFilters, getComputedDisplayProperties } from "@/helpers/issue.helper";
 import { getTabIndex } from "@/helpers/tab-indices.helper";
+import { calculateFilterValue, calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 // hooks
 import { useLabel, useMember, useProject, useProjectState } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -116,8 +116,9 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
 
   // for removing filters from a key
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
-    // If value is null then remove all the filters of that key
-    if (!value) {
+    if (!selectedFilters) return;
+
+    if (value === null) {
       setValue("filters", {
         ...selectedFilters,
         [key]: null,
@@ -125,19 +126,11 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
       return;
     }
 
-    const newValues = Array.isArray(selectedFilters?.[key]) ? [...(selectedFilters[key] as string[])] : [];
-
-    if (Array.isArray(value)) {
-      value.forEach((val) => {
-        if (newValues.indexOf(val) !== -1) newValues.splice(newValues.indexOf(val), 1);
-      });
-    } else {
-      if (selectedFilters?.[key] && (selectedFilters[key] as string[]).indexOf(value) !== -1) newValues.splice(newValues.indexOf(value), 1);
-    }
-
+    // calculateFilterRemovalValue 함수 사용
+    const updatedValue = calculateFilterRemovalValue(key, value, selectedFilters);
     setValue("filters", {
       ...selectedFilters,
-      [key]: newValues,
+      [key]: updatedValue,
     });
   };
 
@@ -289,21 +282,23 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                     name="filters"
                     render={({ field: { onChange, value: filters } }) => (
                       <FiltersDropdown title={t("common.filters")} tabIndex={getIndex("filters")}>
-                        <ViewFiltersSelection
-                          filters={{ 
-                            filters: {
+                        <FilterSelection
+                          filters={filters ?? {}}
+                          handleFiltersUpdate={(key, value) => {
+                            // calculateFilterValue 함수 사용하여 모든 필터를 통일된 방식으로 처리
+                            const updatedValue = calculateFilterValue(key, value, filters ?? {});
+                            onChange({
                               ...filters,
-                              custom_fields: typeof filters?.custom_fields === 'object' && filters.custom_fields !== null
-                                ? JSON.stringify(filters.custom_fields)
-                                : filters?.custom_fields
-                            } ?? {} 
+                              [key]: updatedValue,
+                            });
                           }}
-                          handleFiltersUpdate={(filterKey, filterValue) => {
-                            if (filterKey === "filters") {
-                              onChange(filterValue);
-                            }
-                          }}
+                          layoutDisplayFiltersOptions={ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[displayFilters.layout]}
+                          labels={projectLabels ?? undefined}
                           memberIds={projectMemberIds ?? undefined}
+                          states={projectStates}
+                          customFields={customFields}
+                          cycleViewDisabled={!currentProjectDetails?.cycle_view}
+                          moduleViewDisabled={!currentProjectDetails?.module_view}
                         />
                       </FiltersDropdown>
                     )}
