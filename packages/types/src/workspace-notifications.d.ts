@@ -31,6 +31,7 @@ export type TNotificationData = {
     verb: "created" | "updated" | "deleted";
     new_value: string | undefined;
     old_value: string | undefined;
+    custom_field_name: string | undefined;
   };
 };
 

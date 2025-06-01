@@ -16,8 +16,11 @@ from plane.bgtasks.notification_task import notifications
 from plane.db.models import (
     CommentReaction,
     Cycle,
+    CycleIssue,
     Issue,
     IssueActivity,
+    IssueAssignee,
+    IssueLabel,
     IssueComment,
     IssueReaction,
     IssueSubscriber,
@@ -27,10 +30,13 @@ from plane.db.models import (
     State,
     User,
     EstimatePoint,
+    ProjectMember,
+    CustomField,
+    CustomFieldValue,
 )
 from plane.settings.redis import redis_instance
 from plane.utils.exception_logger import log_exception
-from plane.bgtasks.webhook_task import webhook_activity
+from plane.bgtasks.webhook_task import webhook_activity, model_activity
 from plane.utils.issue_relation_mapper import get_inverse_relation
 from plane.utils.uuid import is_valid_uuid
 
@@ -618,6 +624,156 @@ def create_issue_activity(
         )
 
 
+def track_custom_field_values(
+    requested_data,
+    current_instance,
+    issue_id,
+    project_id,
+    workspace_id,
+    actor_id,
+    issue_activities,
+    epoch,
+):
+    """커스텀 필드 값 변경을 추적하고 알림을 생성하는 함수"""
+    
+    requested_custom_fields = requested_data.get("custom_field_values", [])
+    current_custom_fields = current_instance.get("custom_field_values", [])
+    
+    # 현재 값들을 딕셔너리로 변환 (custom_field_id를 키로 사용)
+    current_cf_dict = {
+        str(cf.get("custom_field_id") if isinstance(cf, dict) else cf.custom_field_id): cf
+        for cf in current_custom_fields
+    }
+    
+    # project_member 타입의 필드에서 추가된 멤버들을 구독자로 등록할 리스트
+    new_subscribers = []
+    
+    def convert_member_values_to_names(value, field_type, project_id):
+        """멤버 UUID를 사용자 이름으로 변환하는 헬퍼 함수"""
+        if not value:
+            return value
+            
+        try:
+            if field_type == "project_member":
+                # 단일 멤버 ID를 이름으로 변환
+                if isinstance(value, str) and is_valid_uuid(value):
+                    user = User.objects.filter(id=value).first()
+                    return user.display_name if user else value
+            elif field_type == "project_members":
+                # 멤버 ID 배열을 이름 배열로 변환
+                if isinstance(value, list):
+                    user_names = []
+                    for member_id in value:
+                        if isinstance(member_id, str) and is_valid_uuid(member_id):
+                            user = User.objects.filter(id=member_id).first()
+                            user_names.append(user.display_name if user else member_id)
+                        else:
+                            user_names.append(str(member_id))
+                    return user_names
+        except Exception:
+            # 오류 발생 시 원본 값 반환
+            pass
+            
+        return value
+    
+    for cf_data in requested_custom_fields:
+        if isinstance(cf_data, dict):
+            custom_field_id = str(cf_data.get("custom_field_id"))
+            new_value = cf_data.get("value")
+        else:
+            custom_field_id = str(cf_data.custom_field_id)
+            new_value = cf_data.value
+        
+        # 커스텀 필드 정보 가져오기
+        try:
+            custom_field = CustomField.objects.get(
+                id=custom_field_id,
+                project_id=project_id,
+                deleted_at__isnull=True
+            )
+        except CustomField.DoesNotExist:
+            continue
+        
+        # 현재 값 가져오기
+        current_cf = current_cf_dict.get(custom_field_id)
+        old_value = current_cf.get("value") if isinstance(current_cf, dict) else (current_cf.value if current_cf else None)
+        
+        # 값이 변경된 경우에만 활동 추가
+        if old_value != new_value:
+            # 멤버 타입인 경우 UUID를 사용자 이름으로 변환
+            display_old_value = convert_member_values_to_names(old_value, custom_field.field_type, project_id)
+            display_new_value = convert_member_values_to_names(new_value, custom_field.field_type, project_id)
+            
+            # 값을 문자열로 변환 (표시용)
+            old_value_str = json.dumps(display_old_value, ensure_ascii=False) if display_old_value is not None else ""
+            new_value_str = json.dumps(display_new_value, ensure_ascii=False) if display_new_value is not None else ""
+            
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=old_value_str,
+                    new_value=new_value_str,
+                    field="custom_field",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment=f"updated custom field {custom_field.name}",
+                    old_identifier=custom_field_id,
+                    new_identifier=custom_field_id,
+                    epoch=epoch,
+                )
+            )
+            
+            # project_member 또는 project_members 타입인 경우 자동 구독 처리
+            if custom_field.field_type in ["project_member", "project_members"]:
+                member_ids = []
+                
+                if custom_field.field_type == "project_member" and new_value:
+                    # 단일 멤버
+                    member_ids = [new_value]
+                elif custom_field.field_type == "project_members" and new_value:
+                    # 다중 멤버 (배열)
+                    if isinstance(new_value, list):
+                        member_ids = new_value
+                
+                # 새로 추가된 멤버들을 구독자로 등록
+                for member_id in member_ids:
+                    if member_id and member_id != actor_id:  # 작업자 본인은 제외
+                        try:
+                            # 프로젝트 멤버인지 확인
+                            if ProjectMember.objects.filter(
+                                project_id=project_id,
+                                member_id=member_id,
+                                is_active=True
+                            ).exists():
+                                new_subscribers.append(
+                                    IssueSubscriber(
+                                        issue_id=issue_id,
+                                        subscriber_id=member_id,
+                                        project_id=project_id,
+                                        workspace_id=workspace_id,
+                                        created_by_id=actor_id,
+                                        updated_by_id=actor_id,
+                                    )
+                                )
+                        except Exception:
+                            # 오류 발생 시 무시하고 계속 진행
+                            pass
+    
+    # 새 구독자들을 한 번에 생성 (중복 무시)
+    if new_subscribers:
+        try:
+            IssueSubscriber.objects.bulk_create(
+                new_subscribers, 
+                batch_size=10, 
+                ignore_conflicts=True
+            )
+        except Exception:
+            # 오류 발생 시 무시
+            pass
+
+
 def update_issue_activity(
     requested_data,
     current_instance,
@@ -641,6 +797,7 @@ def update_issue_activity(
         "estimate_point": track_estimate_points,
         "archived_at": track_archive_at,
         "closed_to": track_closed_to,
+        "custom_field_values": track_custom_field_values,
     }
 
     requested_data = json.loads(requested_data) if requested_data is not None else None

@@ -23,6 +23,7 @@ from plane.db.models import (
     ProjectMember,
     Workspace,
     ProjectMattermostConfig,
+    CustomField,
 )
 from django.db.models import Subquery
 from django.conf import settings
@@ -539,6 +540,36 @@ def notifications(
                 elif field == "labels":
                     sender = "in_app:issue_activities:labels_change"
                     message = f"이슈 '{issue.name}'의 라벨이 변경되었습니다."
+                elif field == "custom_field":
+                    # 커스텀 필드 변경 알림 - 실제 필드명 사용
+                    try:
+                        # 커스텀 필드 ID에서 필드 이름 가져오기
+                        custom_field_id = issue_activity.get("old_identifier") or issue_activity.get("new_identifier")
+                        custom_field_name = "커스텀 필드"  # 기본값
+                        
+                        if custom_field_id:
+                            try:
+                                custom_field = CustomField.objects.get(
+                                    id=custom_field_id,
+                                    project_id=project_id,
+                                    deleted_at__isnull=True
+                                )
+                                custom_field_name = custom_field.name
+                            except CustomField.DoesNotExist:
+                                pass
+                        
+                        sender = "in_app:issue_activities:custom_field_change"
+                        message = f"이슈 '{issue.name}'의 '{custom_field_name}' 필드가 변경되었습니다."
+                        send_email = True
+                        
+                        # 알림 데이터에 커스텀 필드 이름 추가
+                        issue_activity["custom_field_name"] = custom_field_name
+                        
+                    except Exception:
+                        # 오류 시 기본 메시지 사용
+                        sender = "in_app:issue_activities:custom_field_change"
+                        message = f"이슈 '{issue.name}'의 커스텀 필드가 변경되었습니다."
+                        send_email = True
                 elif field == "start_date":
                     sender = "in_app:issue_activities:start_date_change"
                     message = f"이슈 '{issue.name}'의 시작일이 변경되었습니다."
@@ -627,6 +658,11 @@ def notifications(
                                 if issue_activity.get("new_identifier")
                                 else None
                             ),
+                            "custom_field_name": (
+                                str(issue_activity.get("custom_field_name"))
+                                if issue_activity.get("custom_field_name")
+                                else None
+                            ),
                         },
                     },
                 )
@@ -683,6 +719,11 @@ def notifications(
                                     ),
                                     "activity_time": issue_activity.get(
                                         "created_at"
+                                    ),
+                                    "custom_field_name": (
+                                        str(issue_activity.get("custom_field_name"))
+                                        if issue_activity.get("custom_field_name")
+                                        else None
                                     ),
                                 },
                             },

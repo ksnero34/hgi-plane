@@ -19,6 +19,7 @@ export const NotificationContent: FC<{
   const newValue = data?.issue_activity.new_value;
   const oldValue = data?.issue_activity.old_value;
   const verb = data?.issue_activity.verb;
+  const customFieldName = data?.issue_activity.custom_field_name;
 
   const renderTriggerName = () => (
     <span className="text-custom-text-100 font-medium">
@@ -45,7 +46,7 @@ export const NotificationContent: FC<{
       return newValue !== "" ? "님이 작업항목에 라벨" : "님이 작업항목에 라벨";
     }
     if (notificationField === "parent") {
-      return newValue !== "" ? "님이 작업항목의 상위 작업항목을" : "님이 작업항목의 상위 작업항목을 제거했습니다";
+      return newValue !== "" ? "님이 작업항목의 상위 작업항목으로" : "님이 작업항목의 상위 작업항목을 제거했습니다";
     }
     if (notificationField === "cycles") {
       return newValue !== "" ? "님이 작업항목에 주기" : "님이 작업항목에 주기를 삭제했습니다.";
@@ -66,9 +67,15 @@ export const NotificationContent: FC<{
       return newValue === "restore" ? "님이 작업항목을 복구했습니다" : "님이 작업항목을 보관했습니다";
     }
     if (notificationField === "None") return "님이 작업항목을 생성하고 당신을 담당자로 할당했습니다.";
+    
+    // 커스텀 필드 처리 - 실제 필드명 사용
+    if (notificationField === "custom_field") {
+      const fieldName = customFieldName || "커스텀 필드";
+      return `님이 작업항목의 '${fieldName}' 필드를`;
+    }
 
-    const baseAction = !["comment", "archived_at"].includes(notificationField) ? verb : "";
-    return `${baseAction} ${replaceUnderscoreIfSnakeCase(notificationField)}`;
+    const baseAction = ["comment", "archived_at"].indexOf(notificationField || "") === -1 ? verb : "";
+    return `${baseAction} ${replaceUnderscoreIfSnakeCase(notificationField || "")}`;
   };
 
   const renderValue = () => {
@@ -88,6 +95,21 @@ export const NotificationContent: FC<{
       return newValue !== ""
         ? convertMinutesToHoursMinutesString(Number(newValue))
         : convertMinutesToHoursMinutesString(Number(oldValue));
+    
+    // 커스텀 필드 처리
+    if (notificationField === "custom_field") {
+      // 커스텀 필드 값이 JSON 형태인 경우 파싱해서 표시
+      try {
+        if (newValue && typeof newValue === "string" && (newValue.indexOf('"') !== -1 || newValue.indexOf('[') !== -1)) {
+          const parsed = JSON.parse(newValue);
+          return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+        }
+        return newValue || "없음";
+      } catch {
+        return newValue || "없음";
+      }
+    }
+    
     return newValue;
   };
 
@@ -112,22 +134,34 @@ export const NotificationContent: FC<{
       if (newValue !== "") return " 님을 담당자로 추가했습니다.";
       else return " 님을 담당자에서 제외 했습니다.";
     }
-    if (notificationField === "parent") return " 추가했습니다.";
+    if (notificationField === "parent") return "을 추가했습니다.";
     if (notificationField === "cycles") {
       if (newValue !== "") return " 를 추가했습니다.";
+    }
+    
+    // 커스텀 필드 처리
+    if (notificationField === "custom_field") {
+      if (verb === "updated") {
+        return ` (으)로 변경했습니다.`;
+      } else if (verb === "created") {
+        return ` (으)로 설정했습니다.`;
+      } else if (verb === "deleted") {
+        return ` 를 삭제했습니다.`;
+      }
+      return ` 를 수정했습니다.`;
     }
     
     return "";
   };
 
-  const needsValueDisplay = ![
+  const needsValueDisplay = [
     "None", "archived_at"
-  ].includes(notificationField || "");
+  ].indexOf(notificationField || "") === -1;
 
   // 마침표가 필요없는 필드 목록
   const fieldsWithCustomSuffix = [
     "priority", "state", "estimate_time", "start_date", "target_date", 
-    "labels", "assignees", "parent", "cycles"
+    "labels", "assignees", "parent", "cycles", "custom_field"
   ];
 
   return (
@@ -149,7 +183,7 @@ export const NotificationContent: FC<{
               />
             </div>
           )}
-          {!fieldsWithCustomSuffix.includes(notificationField || "") && "."}
+          {fieldsWithCustomSuffix.indexOf(notificationField || "") === -1 && "."}
         </>
       )}
     </>

@@ -2032,6 +2032,15 @@ class BulkOperationsEndpoint(BaseAPIView):
                 
                 # Prepare new custom field values
                 new_custom_fields = []
+                updated_fields = []
+                
+                # 현재 이슈의 기존 커스텀 필드 값들을 시리얼라이즈
+                current_cf_values = []
+                for cf in existing_custom_fields:
+                    current_cf_values.append({
+                        "custom_field_id": str(cf.custom_field_id),
+                        "value": cf.value
+                    })
                 
                 for cf_update in custom_field_values:
                     custom_field_id = cf_update.get("custom_field_id")
@@ -2049,29 +2058,13 @@ class BulkOperationsEndpoint(BaseAPIView):
                         old_value = existing_cf.value
                         existing_cf.value = value
                         existing_cf.save()
+                        updated_fields.append({
+                            "custom_field_id": custom_field_id,
+                            "value": value,
+                            "old_value": old_value
+                        })
                         
                         print(f"[BulkOperationsEndpoint] Updated existing custom field {custom_field_id}: {old_value} -> {value}")
-                        
-                        # Track activity
-                        issue_activity.delay(
-                            type="issue.activity.updated",
-                            requested_data=json.dumps({
-                                "custom_field": {
-                                    "field_name": cf_update.get("field_name", ""),
-                                    "value": value
-                                }
-                            }),
-                            current_instance=json.dumps({
-                                "custom_field": {
-                                    "field_name": cf_update.get("field_name", ""),
-                                    "value": old_value
-                                }
-                            }),
-                            issue_id=str(issue.id),
-                            actor_id=str(request.user.id),
-                            project_id=str(project_id),
-                            epoch=epoch,
-                        )
                     else:
                         # Create new - Check if custom field exists
                         try:
@@ -2091,29 +2084,13 @@ class BulkOperationsEndpoint(BaseAPIView):
                                 updated_by=request.user,
                             )
                             new_custom_fields.append(new_cf)
+                            updated_fields.append({
+                                "custom_field_id": custom_field_id,
+                                "value": value,
+                                "old_value": None
+                            })
                             
                             print(f"[BulkOperationsEndpoint] Created new custom field value {custom_field_id}: {value}")
-                            
-                            # Track activity
-                            issue_activity.delay(
-                                type="issue.activity.updated",
-                                requested_data=json.dumps({
-                                    "custom_field": {
-                                        "field_name": cf_update.get("field_name", ""),
-                                        "value": value
-                                    }
-                                }),
-                                current_instance=json.dumps({
-                                    "custom_field": {
-                                        "field_name": cf_update.get("field_name", ""),
-                                        "value": None
-                                    }
-                                }),
-                                issue_id=str(issue.id),
-                                actor_id=str(request.user.id),
-                                project_id=str(project_id),
-                                epoch=epoch,
-                            )
                         except CustomField.DoesNotExist:
                             print(f"[BulkOperationsEndpoint] Custom field {custom_field_id} not found, skipping")
                             # Skip if custom field doesn't exist
@@ -2123,6 +2100,32 @@ class BulkOperationsEndpoint(BaseAPIView):
                 if new_custom_fields:
                     print(f"[BulkOperationsEndpoint] Bulk creating {len(new_custom_fields)} new custom field values")
                     CustomFieldValue.objects.bulk_create(new_custom_fields)
+                
+                # 업데이트된 커스텀 필드 값들로 새로운 시리얼라이즈
+                new_cf_values = []
+                for cf in updated_fields:
+                    new_cf_values.append({
+                        "custom_field_id": cf["custom_field_id"],
+                        "value": cf["value"]
+                    })
+                
+                # 변경사항이 있는 경우에만 activity 추가
+                if updated_fields:
+                    # Track activity for custom field changes
+                    issue_activity.delay(
+                        type="issue.activity.updated",
+                        requested_data=json.dumps({
+                            "custom_field_values": new_cf_values
+                        }),
+                        current_instance=json.dumps({
+                            "custom_field_values": current_cf_values
+                        }),
+                        issue_id=str(issue.id),
+                        actor_id=str(request.user.id),
+                        project_id=str(project_id),
+                        epoch=epoch,
+                        notification=True,  # 알림 활성화
+                    )
 
         print(f"[BulkOperationsEndpoint] Update completed successfully")
 

@@ -399,6 +399,7 @@ export const ProjectCustomFieldsSettings = observer(() => {
               <label className="text-sm font-medium text-custom-text-300">필드 타입</label>
               <CustomSelect
                 value={newField.field_type}
+                label={FIELD_TYPES.find(t => t.value === newField.field_type)?.label || "필드 타입 선택"}
                 onChange={(val: string) => setNewField({ ...newField, field_type: val })}
                 buttonClassName="w-full text-left"
               >
