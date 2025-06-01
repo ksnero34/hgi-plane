@@ -142,6 +142,7 @@ export interface IPublicIssue
     | "priority"
     | "state_id"
     | "project_id"
+    | "parent_id"
     | "sequence_id"
     | "sort_order"
     | "start_date"

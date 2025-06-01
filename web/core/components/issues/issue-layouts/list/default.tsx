@@ -88,6 +88,8 @@ export const List: React.FC<IList> = observer((props) => {
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     isEpic: isEpic,
+    groupedIssueIds: groupedIssueIds,
+    issuesMap: issuesMap,
   });
 
   // Enable Auto Scroll for Main Kanban

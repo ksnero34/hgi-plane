@@ -40,18 +40,18 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
   const { workspaceSlug, projectId } = useParams();
   
   // 디버깅: useParams 값 확인
-  console.log("ModuleFiltersSelection - useParams() 전체 값:", useParams());
-  console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
-  console.log("ModuleFiltersSelection - projectId:", projectId);
+  // console.log("ModuleFiltersSelection - useParams() 전체 값:", useParams());
+  // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
+  // console.log("ModuleFiltersSelection - projectId:", projectId);
 
   // 커스텀 필드 가져오기
   useEffect(() => {
     const fetchCustomFields = async () => {
       if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
       
-      console.log("ModuleFiltersSelection - Fetching custom fields...");
-      console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
-      console.log("ModuleFiltersSelection - projectId:", projectId);
+      // console.log("ModuleFiltersSelection - Fetching custom fields...");
+      // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
+      // console.log("ModuleFiltersSelection - projectId:", projectId);
       
       try {
         setIsLoadingCustomFields(true);
@@ -61,15 +61,15 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
             credentials: "include",
           }
         );
-        console.log("ModuleFiltersSelection - API response status:", response.status);
-        console.log("ModuleFiltersSelection - API response ok:", response.ok);
+        // console.log("ModuleFiltersSelection - API response status:", response.status);
+        // console.log("ModuleFiltersSelection - API response ok:", response.ok);
         
         if (response.ok) {
           const data = await response.json();
-          console.log("ModuleFiltersSelection - Custom fields data:", data);
+          // console.log("ModuleFiltersSelection - Custom fields data:", data);
           setCustomFields(data);
         } else {
-          console.error("ModuleFiltersSelection - API response not ok:", response.statusText);
+          // console.error("ModuleFiltersSelection - API response not ok:", response.statusText);
         }
       } catch (error) {
         console.error("커스텀 필드 로드 중 오류:", error);
@@ -215,11 +215,11 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
         {/* custom fields */}
         <div className="py-2">
           {(() => {
-            console.log("ModuleFiltersSelection - About to render FilterCustomFields");
-            console.log("ModuleFiltersSelection - customFields state:", customFields);
-            console.log("ModuleFiltersSelection - customFields length:", customFields?.length);
-            console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
-            console.log("ModuleFiltersSelection - projectId:", projectId);
+            // console.log("ModuleFiltersSelection - About to render FilterCustomFields");
+            // console.log("ModuleFiltersSelection - customFields state:", customFields);
+            // console.log("ModuleFiltersSelection - customFields length:", customFields?.length);
+            // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
+            // console.log("ModuleFiltersSelection - projectId:", projectId);
             
             return (
               <FilterCustomFields

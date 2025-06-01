@@ -76,6 +76,11 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
   const { isMobile } = usePlatformOS();
   const { workspaceSlug } = useParams();
   const { moduleId, cycleId } = useParams();
+  const routerProjectId = useParams().projectId;
+  
+  // 효과적인 projectId 계산 (props로 받은 projectId를 우선 사용)
+  const effectiveProjectId = projectId || (routerProjectId as string);
+  
   const {
     project: { getProjectMemberDetails },
   } = useMember();
@@ -84,8 +89,8 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
 
   // filter guests from assignees
   const assigneeIds = memberIds?.filter((id) => {
-    if (projectId) {
-      const memeberDetails = getProjectMemberDetails(id, projectId);
+    if (effectiveProjectId) {
+      const memeberDetails = getProjectMemberDetails(id, effectiveProjectId);
       const isGuest = (memeberDetails?.role || EUserPermissions.GUEST) === EUserPermissions.GUEST;
       if (isGuest && memeberDetails) return false;
     }
@@ -271,7 +276,7 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
             searchQuery={filtersSearchQuery}
             customFields={customFields || []}
             workspaceSlug={workspaceSlug as string}
-            projectId={projectId as string}
+            projectId={effectiveProjectId as string}
           />
         )}
 

@@ -23,6 +23,7 @@ export enum EIssueGroupByToServerOptions {
   "project" = "project_id",
   "created_by" = "created_by",
   "team_project" = "project_id",
+  "parent_child" = "parent_child",
 }
 
 export enum EIssueGroupBYServerToProperty {
@@ -36,6 +37,7 @@ export enum EIssueGroupBYServerToProperty {
   "target_date" = "target_date",
   "project_id" = "project_id",
   "created_by" = "created_by",
+  "parent_child" = "parent_child",
 }
 
 export enum EIssueServiceType {
@@ -131,6 +133,7 @@ export const ISSUE_GROUP_BY_OPTIONS: {
   { key: "labels", titleTranslationKey: "common.labels" },
   { key: "assignees", titleTranslationKey: "common.assignees" },
   { key: "created_by", titleTranslationKey: "common.created_by" },
+  { key: "parent_child", titleTranslationKey: "common.order_by.parent_child" },
   { key: null, titleTranslationKey: "common.none" },
 ];
 

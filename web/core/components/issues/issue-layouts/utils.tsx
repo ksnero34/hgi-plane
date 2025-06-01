@@ -25,6 +25,8 @@ import {
   IProjectView,
   TGroupedIssues,
   IWorkspaceView,
+  TIssueMap,
+  TSubGroupedIssues,
 } from "@plane/types";
 // plane ui
 import { Avatar, CycleGroupIcon, DiceIcon, ISvgIcons, PriorityIcon, StateGroupIcon } from "@plane/ui";
@@ -66,6 +68,8 @@ type TGetGroupByColumns = {
   includeNone: boolean;
   isWorkspaceLevel: boolean;
   isEpic?: boolean;
+  groupedIssueIds?: TGroupedIssues | TSubGroupedIssues;
+  issuesMap?: TIssueMap;
 };
 
 // NOTE: Type of groupBy is different compared to what's being passed from the components.
@@ -76,6 +80,8 @@ export const getGroupByColumns = ({
   includeNone,
   isWorkspaceLevel,
   isEpic = false,
+  groupedIssueIds,
+  issuesMap,
 }: TGetGroupByColumns): IGroupByColumn[] | undefined => {
   // If no groupBy is specified and includeNone is true, return "All Issues" group
   if (!groupBy && includeNone) {
@@ -104,6 +110,7 @@ export const getGroupByColumns = ({
     assignees: getAssigneeColumns,
     created_by: getCreatedByColumns,
     team_project: getTeamProjectColumns,
+    parent_child: () => getParentChildColumns(groupedIssueIds, issuesMap),
   };
 
   // Get and return the columns for the specified group by option
@@ -286,6 +293,47 @@ const getCreatedByColumns = (): IGroupByColumn[] | undefined => {
       payload: {},
     };
   });
+};
+
+const getParentChildColumns = (groupedIssueIds?: TGroupedIssues | TSubGroupedIssues, issuesMap?: TIssueMap): IGroupByColumn[] => {
+  if (!groupedIssueIds) {
+    // 기본 구조로 최상단 작업항목 그룹만 제공
+    return [
+      {
+        id: "None",
+        name: "최상단 작업항목",
+        icon: undefined,
+        payload: { parent_id: null },
+      }
+    ];
+  }
+
+  const columns: IGroupByColumn[] = [];
+  
+  // 그룹 키들을 순회하면서 컬럼 생성
+  Object.keys(groupedIssueIds).forEach(groupKey => {
+    if (groupKey === "None") {
+      columns.push({
+        id: "None",
+        name: "최상단 작업항목",
+        icon: undefined,
+        payload: { parent_id: null },
+      });
+    } else {
+      // 실제 부모 이슈 ID가 그룹 키인 경우
+      const parentIssue = issuesMap?.[groupKey];
+      const parentIssueName = parentIssue?.name || `이슈 ${groupKey.slice(0, 8)}...`;
+      
+      columns.push({
+        id: groupKey,
+        name: `${parentIssueName}의 하위 이슈`,
+        icon: undefined,
+        payload: { parent_id: groupKey },
+      });
+    }
+  });
+
+  return columns;
 };
 
 export const getDisplayPropertiesCount = (

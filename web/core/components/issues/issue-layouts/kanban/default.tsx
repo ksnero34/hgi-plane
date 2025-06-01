@@ -105,14 +105,16 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
 
   const { getIsWorkflowWorkItemCreationDisabled } = useWorkFlowFDragNDrop(group_by, sub_group_by);
 
-  const list = getGroupByColumns({
+  const groups = getGroupByColumns({
     groupBy: group_by as GroupByColumnTypes,
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     isEpic: isEpic,
+    groupedIssueIds: groupedIssueIds,
+    issuesMap: issuesMap,
   });
 
-  if (!list) return null;
+  if (!groups) return null;
 
   const visibilityGroupBy = (_list: IGroupByColumn): { showGroup: boolean; showIssues: boolean } => {
     if (sub_group_by) {
@@ -144,9 +146,9 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
 
   return (
     <ContentWrapper className={`flex-row relative gap-4 !pt-2 !pb-0`}>
-      {list &&
-        list.length > 0 &&
-        list.map((subList: IGroupByColumn, groupIndex) => {
+      {groups &&
+        groups.length > 0 &&
+        groups.map((subList: IGroupByColumn, groupIndex) => {
           const groupByVisibilityToggle = visibilityGroupBy(subList);
 
           if (groupByVisibilityToggle.showGroup === false) return <></>;

@@ -16,6 +16,7 @@ export type TIssueGroupByOptions =
   | "module"
   | "target_date"
   | "team_project"
+  | "parent_child"
   | null;
 
 export type TIssueOrderByOptions =
@@ -69,6 +70,7 @@ export type TIssueParams =
   | "target_date"
   | "project"
   | "team_project"
+  | "parent_id"
   | "group_by"
   | "sub_group_by"
   | "order_by"
@@ -94,6 +96,7 @@ export interface IIssueFilterOptions {
   module?: string[] | null;
   project?: string[] | null;
   team_project?: string[] | null;
+  parent_id?: string[] | null;
   start_date?: string[] | null;
   state?: string[] | null;
   state_group?: string[] | null;

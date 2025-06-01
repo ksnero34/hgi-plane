@@ -96,8 +96,8 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
     const filteredParams = handleIssueQueryParamsByLayout(userFilters?.displayFilters?.layout, "issues");
     if (!filteredParams) return undefined;
 
-    console.log('getAppliedFilters - userFilters.filters:', userFilters?.filters);
-    console.log('getAppliedFilters - filteredParams:', filteredParams);
+    // console.log('getAppliedFilters - userFilters.filters:', userFilters?.filters);
+    // console.log('getAppliedFilters - filteredParams:', filteredParams);
 
     const filteredRouteParams: Partial<Record<TIssueParams, string | boolean>> = this.computedFilteredParams(
       userFilters?.filters as IIssueFilterOptions,
@@ -105,7 +105,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       filteredParams
     );
 
-    console.log('getAppliedFilters - filteredRouteParams:', filteredRouteParams);
+    // console.log('getAppliedFilters - filteredRouteParams:', filteredRouteParams);
 
     return filteredRouteParams;
   }
@@ -118,10 +118,10 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       groupId: string | undefined,
       subGroupId: string | undefined
     ): Partial<Record<TIssueParams, string | boolean>> => {
-      console.log("getFilterParams called with projectId:", projectId);
+      // console.log("getFilterParams called with projectId:", projectId);
 
       const filterParams = this.getAppliedFilters(projectId);
-      console.log("getFilterParams - filterParams from getAppliedFilters:", filterParams);
+      // console.log("getFilterParams - filterParams from getAppliedFilters:", filterParams);
       
       const paginationParams = this.getPaginationParams(filterParams, options, cursor, groupId, subGroupId);
 
@@ -145,7 +145,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
       }
       */
 
-      console.log("Final Pagination Params:", paginationParams);
+      // console.log("Final Pagination Params:", paginationParams);
       return paginationParams;
     }
   );
@@ -193,7 +193,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
     filters: IIssueFilterOptions | IIssueDisplayFilterOptions | IIssueDisplayProperties | TIssueKanbanFilters
   ) => {
     try {
-      console.log("updateFilters called with:", { workspaceSlug, projectId, type, filters });
+      // console.log("updateFilters called with:", { workspaceSlug, projectId, type, filters });
       
       if (isEmpty(this.filters) || isEmpty(this.filters[projectId]) || isEmpty(filters)) return;
 
@@ -206,11 +206,11 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
 
       switch (type) {
         case EIssueFilterType.FILTERS: {
-          console.log("Processing FILTERS type update");
+          // console.log("Processing FILTERS type update");
           const updatedFilters = filters as IIssueFilterOptions;
           _filters.filters = { ..._filters.filters, ...updatedFilters };
 
-          console.log("Updated _filters.filters:", _filters.filters);
+          // console.log("Updated _filters.filters:", _filters.filters);
 
           runInAction(() => {
             Object.keys(updatedFilters).forEach((_key) => {
@@ -218,7 +218,7 @@ export class ProjectIssuesFilter extends IssueFilterHelperStore implements IProj
             });
           });
 
-          console.log("Calling fetchIssuesWithExistingPagination");
+          // console.log("Calling fetchIssuesWithExistingPagination");
           this.rootIssueStore.projectIssues.fetchIssuesWithExistingPagination(workspaceSlug, projectId, "mutation");
           await this.issueFilterService.patchProjectIssueFilters(workspaceSlug, projectId, {
             filters: _filters.filters,

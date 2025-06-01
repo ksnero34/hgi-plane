@@ -130,6 +130,7 @@ const ISSUE_GROUP_BY_KEY: Record<TIssueDisplayFilterOptions, keyof TIssue> = {
   cycle: "cycle_id",
   module: "module_ids",
   team_project: "project_id",
+  parent_child: "parent_id",
 };
 
 export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof TIssue> = {
@@ -144,6 +145,7 @@ export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof
   assignees: "assignee_ids",
   target_date: "target_date",
   team_project: "project_id",
+  parent_child: "parent_id",
 };
 
 // This constant maps the order by keys to the respective issue property that the key relies on

@@ -100,6 +100,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       target_date: filters?.target_date || undefined,
       project: filters?.project || undefined,
       team_project: filters?.team_project || undefined,
+      parent_id: filters?.parent_id || undefined,
       subscriber: filters?.subscriber || undefined,
       issue_type: filters?.issue_type || undefined,
       custom_fields: filters?.custom_fields || undefined,
@@ -148,11 +149,11 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       const _value: string | boolean | string[] | { [field_id: string]: string[]; } | undefined = computedFilters[_key];
       const nonEmptyArrayValue = Array.isArray(_value) && _value.length === 0 ? undefined : _value;
       
-      console.log(`Processing filter ${_key}:`, {
-        value: _value,
-        nonEmptyArrayValue,
-        isAcceptable: acceptableParamsByLayout.includes(_key)
-      });
+      // console.log(`Processing filter ${_key}:`, {
+      //   value: _value,
+      //   nonEmptyArrayValue,
+      //   isAcceptable: acceptableParamsByLayout.includes(_key)
+      // });
       
       if (nonEmptyArrayValue != undefined && acceptableParamsByLayout.includes(_key)) {
         // custom_fields는 특별한 처리가 필요 (객체를 JSON 문자열로 변환)
@@ -196,6 +197,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     target_date: filters?.target_date || null,
     project: filters?.project || null,
     team_project: filters?.team_project || null,
+    parent_id: filters?.parent_id || null,
     subscriber: filters?.subscriber || null,
     issue_type: filters?.issue_type || null,
     custom_fields: filters?.custom_fields || null,

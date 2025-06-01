@@ -57,6 +57,7 @@ export interface IIssue
     | "sub_issues_count"
     | "link_count"
     | "estimate_point"
+    | "parent_id"
   > {
   comments: TIssuePublicComment[];
   reaction_items: IIssueReaction[];

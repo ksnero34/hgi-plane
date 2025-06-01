@@ -297,6 +297,7 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                           memberIds={projectMemberIds ?? undefined}
                           states={projectStates}
                           customFields={customFields}
+                          projectId={projectId?.toString()}
                           cycleViewDisabled={!currentProjectDetails?.cycle_view}
                           moduleViewDisabled={!currentProjectDetails?.module_view}
                         />

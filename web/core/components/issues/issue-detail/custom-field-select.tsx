@@ -73,7 +73,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
 
   // 필드 값 업데이트 (peek-overview 방식 적용)
   const updateFieldValue = (fieldId: string, value: any) => {
-    console.log("[IssueCustomFieldSelect] Updating field:", fieldId, "with value:", value);
+    // console.log("[IssueCustomFieldSelect] Updating field:", fieldId, "with value:", value);
     
     const field = customFields.find(f => f.id === fieldId);
     if (!field) {
@@ -92,7 +92,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
       }
     );
 
-    console.log("[IssueCustomFieldSelect] Final update values:", updatedValues);
+    // console.log("[IssueCustomFieldSelect] Final update values:", updatedValues);
 
     // 이슈 업데이트
     issueOperations.update(workspaceSlug, projectId, issueId, {

@@ -26,11 +26,11 @@ type Props = {
 export const FilterCustomFields: React.FC<Props> = observer((props) => {
   const { appliedFilters, handleUpdate, searchQuery, customFields, workspaceSlug, projectId } = props;
   
-  console.log("FilterCustomFields - Received props:");
-  console.log("FilterCustomFields - customFields:", customFields);
-  console.log("FilterCustomFields - customFields length:", customFields?.length);
-  console.log("FilterCustomFields - workspaceSlug:", workspaceSlug);
-  console.log("FilterCustomFields - projectId:", projectId);
+  // console.log("FilterCustomFields - Received props:");
+  // console.log("FilterCustomFields - customFields:", customFields);
+  // console.log("FilterCustomFields - customFields length:", customFields?.length);
+  // console.log("FilterCustomFields - workspaceSlug:", workspaceSlug);
+  // console.log("FilterCustomFields - projectId:", projectId);
   
   // states
   const [previewEnabled, setPreviewEnabled] = useState(true);
