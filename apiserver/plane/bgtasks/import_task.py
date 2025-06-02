@@ -205,7 +205,11 @@ def process_custom_field_value(field, value_str):
     field_type = field.field_type
     
     try:
-        if field_type == "select":
+        if field_type == "text":
+            # 텍스트 필드: 문자열 그대로 반환
+            return value_str
+            
+        elif field_type == "select":
             # 선택 필드: 옵션 중 하나여야 함
             if value_str in field.options:
                 return value_str
@@ -258,7 +262,7 @@ def process_custom_field_value(field, value_str):
                 print(f"Warning: No valid users found in '{value_str}' for project members field '{field.name}'. Skipping.")
                 return None
         else:
-            # 기타 필드 타입은 문자열로 처리
+            # 기타 필드 타입은 문자열로 처리 (기존 text 타입 포함)
             return value_str
             
     except Exception as e:

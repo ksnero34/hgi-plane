@@ -892,6 +892,7 @@ class CustomField(ProjectBaseModel):
     field_type = models.CharField(
         max_length=20,
         choices=(
+            ("text", "텍스트"),
             ("select", "선택"),
             ("multiselect", "다중선택"),
             ("date", "날짜"),
@@ -930,6 +931,10 @@ class CustomField(ProjectBaseModel):
             
             if not self.options:
                 raise ValidationError({"options": "선택 타입의 필드는 최소 하나의 옵션이 필요합니다."})
+        
+        elif self.field_type == "text":
+            # 텍스트 타입은 추가 검증 필요 없음
+            pass
         
         elif self.field_type == "date":
             # 날짜 타입은 추가 검증 필요 없음
@@ -978,7 +983,11 @@ class CustomFieldValue(ProjectBaseModel):
             raise ValidationError("이 필드는 필수입니다.")
 
         if value is not None:
-            if field_type == "date":
+            if field_type == "text":
+                # text 필드: 문자열 타입 검증
+                if not isinstance(value, str):
+                    raise ValidationError("텍스트 필드는 문자열이어야 합니다.")
+            elif field_type == "date":
                 try:
                     datetime.strptime(value, "%Y-%m-%d")
                 except (TypeError, ValueError):

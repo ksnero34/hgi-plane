@@ -1,7 +1,7 @@
 "use client";
 
 import { observer } from "mobx-react";
-import { X, Calendar, Tag as TagIcon, User, Users } from "lucide-react";
+import { X, Calendar, Tag as TagIcon, User, Users, MessageSquare } from "lucide-react";
 import { TCustomField } from "@plane/types";
 // hooks
 import { useMember } from "@/hooks/store";
@@ -38,6 +38,8 @@ export const AppliedCustomFieldFilters: React.FC<Props> = observer((props) => {
         return <User className="h-3 w-3 flex-shrink-0" />;
       case "project_members":
         return <Users className="h-3 w-3 flex-shrink-0" />;
+      case "text":
+        return <MessageSquare className="h-3 w-3 flex-shrink-0" />;
       default:
         return <TagIcon className="h-3 w-3 flex-shrink-0" />;
     }

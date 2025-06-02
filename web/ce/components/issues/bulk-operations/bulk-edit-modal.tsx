@@ -3,10 +3,11 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Button, ModalCore, EModalWidth, EModalPosition, DoubleCircleIcon } from "@plane/ui";
 import { useTranslation } from "@plane/i18n";
-import { TIssue, TCustomField } from "@plane/types";
-import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings, AlertTriangle, Signal } from "lucide-react";
+import { TIssue, TCustomField, ISearchIssueResponse } from "@plane/types";
+import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings, AlertTriangle, Signal, Calendar, LayoutPanelTop, Type } from "lucide-react";
 import { useProject, useProjectState, useMember, useUser, useUserPermissions } from "@/hooks/store";
 import { DateDropdown, MemberDropdown, CustomFieldDropdown, StateDropdown, PriorityDropdown } from "@/components/dropdowns";
+import { ParentIssuesListModal } from "@/components/issues";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 
@@ -27,6 +28,8 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   const [customFields, setCustomFields] = useState<TCustomField[]>([]);
   const [customFieldUpdates, setCustomFieldUpdates] = useState<{[fieldId: string]: any}>({});
   const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
+  const [isParentIssueModalOpen, setIsParentIssueModalOpen] = useState(false);
+  const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | null>(null);
 
   // Store hooks
   const { currentProjectDetails } = useProject();
@@ -41,6 +44,9 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   // Get project data
   const projectStatesList = projectStates;
   const projectMemberIds = getProjectMemberIds(projectId, true);
+
+  // text 필드의 로컬 상태 관리
+  const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
 
   // 권한 체크 함수
   const checkIssueEditPermission = (issue: TIssue): boolean => {
@@ -104,9 +110,9 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   }, [workspaceSlug, projectId, isOpen]);
 
   const handleUpdate = async () => {
-    console.log("[BulkEditModal] handleUpdate called");
-    console.log("[BulkEditModal] Updates state:", updates);
-    console.log("[BulkEditModal] Custom field updates state:", customFieldUpdates);
+    // console.log("[BulkEditModal] handleUpdate called");
+    // console.log("[BulkEditModal] Updates state:", updates);
+    // console.log("[BulkEditModal] Custom field updates state:", customFieldUpdates);
 
     // 실제로 변경할 데이터가 있는지 검증
     const hasRegularUpdates = Object.entries(updates).some(([key, value]) => {
@@ -119,17 +125,17 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
              !(Array.isArray(value) && value.length === 0);
     });
 
-    console.log("[BulkEditModal] Has regular updates:", hasRegularUpdates);
-    console.log("[BulkEditModal] Has custom field updates:", hasCustomFieldUpdates);
+    // console.log("[BulkEditModal] Has regular updates:", hasRegularUpdates);
+    // console.log("[BulkEditModal] Has custom field updates:", hasCustomFieldUpdates);
 
     if (!hasRegularUpdates && !hasCustomFieldUpdates) {
-      console.log("[BulkEditModal] No valid updates found, closing modal");
+      // console.log("[BulkEditModal] No valid updates found, closing modal");
       onClose();
       return;
     }
 
     if (editableIssues.length === 0) {
-      console.log("[BulkEditModal] No editable issues, closing modal");
+      // console.log("[BulkEditModal] No editable issues, closing modal");
       onClose();
       return;
     }
@@ -172,7 +178,7 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
 
       // 실제로 업데이트할 속성이 있는지 최종 확인
       if (Object.keys(properties).length === 0) {
-        console.log("[BulkEditModal] No valid properties to update after filtering");
+        //  console.log("[BulkEditModal] No valid properties to update after filtering");
         onClose();
         return;
       }
@@ -183,9 +189,9 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
         properties: properties
       };
 
-      console.log("[BulkEditModal] Final bulk update payload:", JSON.stringify(bulkUpdatePayload, null, 2));
-      console.log("[BulkEditModal] Properties to update:", Object.keys(properties));
-      console.log("[BulkEditModal] Custom field values count:", customFieldValues.length);
+      // console.log("[BulkEditModal] Final bulk update payload:", JSON.stringify(bulkUpdatePayload, null, 2));
+      // console.log("[BulkEditModal] Properties to update:", Object.keys(properties));
+      // console.log("[BulkEditModal] Custom field values count:", customFieldValues.length);
 
       // 부모 컴포넌트의 onBulkUpdate 함수 사용 (이슈 목록 새로고침 포함)
       await onBulkUpdate(bulkUpdatePayload);
@@ -202,9 +208,28 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   };
 
   const handleFieldChange = (field: keyof TIssue, value: any) => {
+    // 배열 타입 필드 (assignee_ids 등) 처리
+    if (field === 'assignee_ids') {
+      // 빈 배열이나 null이 아닌 경우에만 업데이트
+      if (value && (!Array.isArray(value) || value.length > 0)) {
+        setUpdates(prev => ({
+          ...prev,
+          [field]: value
+        }));
+      } else {
+        // 빈 배열이나 null인 경우 해당 필드 제거
+        setUpdates(prev => {
+          const newUpdates = { ...prev };
+          delete newUpdates[field];
+          return newUpdates;
+        });
+      }
+      return;
+    }
+
+    // 일반 필드 처리
     if (value === null || value === undefined || value === "" || 
         (Array.isArray(value) && value.length === 0)) {
-      // 값이 비어있으면 updates에서 제거
       setUpdates(prev => {
         const newUpdates = { ...prev };
         delete newUpdates[field];
@@ -235,15 +260,30 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
     });
   };
 
+  const handleParentIssueChange = (issue: ISearchIssueResponse | null) => {
+    handleFieldChange('parent_id', issue?.id || null);
+    setSelectedParentIssue(issue);
+    setIsParentIssueModalOpen(false);
+  };
+
+  const handleRemoveParentIssue = () => {
+    handleFieldChange('parent_id', null);
+    setSelectedParentIssue(null);
+  };
+
   const handleClose = () => {
     setUpdates({});
     setCustomFieldUpdates({});
+    setIsParentIssueModalOpen(false);
+    setSelectedParentIssue(null);
     onClose();
   };
 
   // 커스텀 필드 타입에 따른 아이콘 반환
   const getCustomFieldIcon = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return Type;
       case "select":
       case "multiselect":
         return Tag;
@@ -260,10 +300,62 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
 
   // 커스텀 필드 렌더링
   const renderCustomFieldInput = (field: TCustomField) => {
-    const FieldIcon = getCustomFieldIcon(field.field_type);
     const fieldValue = customFieldUpdates[field.id];
 
     switch (field.field_type) {
+      case "text":
+        const currentTextValue = textFieldValues[field.id] !== undefined 
+          ? textFieldValues[field.id] 
+          : (fieldValue || "");
+        
+        return (
+          <div className="w-3/5 flex-grow">
+            <input
+              type="text"
+              value={currentTextValue}
+              onChange={(e) => {
+                // 로컬 상태만 업데이트 (UI 반응성)
+                setTextFieldValues(prev => ({
+                  ...prev,
+                  [field.id]: e.target.value
+                }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  // 엔터키로 업데이트했음을 먼저 표시
+                  e.currentTarget.dataset.updatedByEnter = "true";
+                  const value = e.currentTarget.value.trim();
+                  handleCustomFieldChange(field.id, value || null);
+                  e.currentTarget.blur();
+                  // 로컬 상태 초기화
+                  setTextFieldValues(prev => {
+                    const newState = { ...prev };
+                    delete newState[field.id];
+                    return newState;
+                  });
+                }
+              }}
+              onBlur={(e) => {
+                // 엔터키로 이미 업데이트했다면 onBlur에서는 실행하지 않음
+                if (e.currentTarget.dataset.updatedByEnter === "true") {
+                  e.currentTarget.dataset.updatedByEnter = "false";
+                  return;
+                }
+                const value = e.currentTarget.value.trim();
+                handleCustomFieldChange(field.id, value || null);
+                // 로컬 상태 초기화
+                setTextFieldValues(prev => {
+                  const newState = { ...prev };
+                  delete newState[field.id];
+                  return newState;
+                });
+              }}
+              placeholder="변경하지 않음"
+              className="w-full px-3 py-2 text-sm bg-transparent border-0 text-custom-text-200 placeholder:text-custom-text-400 focus:outline-none"
+            />
+          </div>
+        );
+        
       case "select":
       case "multiselect":
         return (
@@ -306,7 +398,7 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
           <MemberDropdown
             projectId={projectId}
             value={fieldValue}
-            onChange={(value) => handleCustomFieldChange(field.id, value)}
+            onChange={(val) => handleCustomFieldChange(field.id, val)}
             buttonVariant="transparent-with-text"
             className="w-3/5 flex-grow group"
             buttonContainerClassName="w-full text-left"
@@ -316,6 +408,7 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
             dropdownArrow
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
             multiple={false}
+            showUserDetails={true}
           />
         );
 
@@ -451,6 +544,91 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
                 />
               </div>
 
+              {/* 시작일 변경 */}
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
+                  <span>시작일</span>
+                </div>
+                <DateDropdown
+                  value={updates.start_date || null}
+                  onChange={(date) => handleFieldChange('start_date', date ? renderFormattedPayloadDate(date) : null)}
+                  buttonVariant="transparent-with-text"
+                  className="w-3/5 flex-grow group"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-sm ${updates.start_date ? "" : "text-custom-text-400"}`}
+                  placeholder="변경하지 않음"
+                  hideIcon
+                  clearIconClassName="h-3 w-3 hidden group-hover:inline"
+                />
+              </div>
+
+              {/* 종료일 변경 */}
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <CalendarCheck2 className="h-4 w-4 flex-shrink-0" />
+                  <span>종료일</span>
+                </div>
+                <DateDropdown
+                  value={updates.target_date || null}
+                  onChange={(date) => handleFieldChange('target_date', date ? renderFormattedPayloadDate(date) : null)}
+                  buttonVariant="transparent-with-text"
+                  className="w-3/5 flex-grow group"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-sm ${updates.target_date ? "" : "text-custom-text-400"}`}
+                  placeholder="변경하지 않음"
+                  hideIcon
+                  clearIconClassName="h-3 w-3 hidden group-hover:inline"
+                />
+              </div>
+
+              {/* 상위항목 변경 */}
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <LayoutPanelTop className="h-4 w-4 flex-shrink-0" />
+                  <span>상위항목</span>
+                </div>
+                <div className="w-3/5 flex-grow group">
+                  {selectedParentIssue ? (
+                    <div 
+                      className="flex items-center justify-between gap-2 px-3 py-2 text-sm rounded hover:bg-custom-background-80 cursor-pointer"
+                      onClick={() => setIsParentIssueModalOpen(true)}
+                    >
+                      <div className="flex items-center gap-2 flex-grow min-w-0">
+                        <span
+                          className="block h-1.5 w-1.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: selectedParentIssue.state__color }}
+                        />
+                        <span className="text-custom-text-200 flex-shrink-0">
+                          {selectedParentIssue.project__identifier}-{selectedParentIssue.sequence_id}
+                        </span>
+                        <span className="truncate text-custom-text-100">
+                          {selectedParentIssue.name}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveParentIssue();
+                        }}
+                        className="flex-shrink-0 p-1 hover:bg-custom-background-90 rounded"
+                      >
+                        <X className="h-3 w-3 text-custom-text-300" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsParentIssueModalOpen(true)}
+                      className="w-full text-left px-3 py-2 text-sm text-custom-text-400 rounded hover:bg-custom-background-80"
+                    >
+                      변경하지 않음
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* 커스텀 필드들 */}
               {customFields.length > 0 && (
                 <>
@@ -495,6 +673,15 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
           </>
         )}
       </div>
+
+      {/* 상위항목 선택 모달 */}
+      <ParentIssuesListModal
+        isOpen={isParentIssueModalOpen}
+        handleClose={() => setIsParentIssueModalOpen(false)}
+        onChange={handleParentIssueChange}
+        projectId={projectId}
+        searchEpic
+      />
     </ModalCore>
   );
 }); 

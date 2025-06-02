@@ -116,6 +116,8 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
 
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return <TagIcon className="h-3 w-3" />;
       case "select":
       case "multiselect":
         return <TagIcon className="h-3 w-3" />;
@@ -182,6 +184,48 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
         <div>
           {filteredCustomFields.length > 0 ? (
             filteredCustomFields.map((field) => {
+              // Text 필드 - 검색 입력 필드
+              if (field.field_type === "text") {
+                return (
+                  <div key={field.id} className="mb-2">
+                    <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
+                      {getFieldIcon(field.field_type)}
+                      {field.name}
+                    </div>
+                    <div className="px-2">
+                      <input
+                        type="text"
+                        placeholder="검색어 입력..."
+                        className="w-full px-2 py-1 text-xs border border-custom-border-200 rounded focus:outline-none focus:border-custom-primary-100"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const value = (e.target as HTMLInputElement).value.trim();
+                            if (value) {
+                              handleUpdate(field.id, value);
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                      />
+                      {appliedFilters?.[field.id] && appliedFilters[field.id].length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {appliedFilters[field.id].map((value, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-custom-background-80 text-custom-text-200 rounded cursor-pointer hover:bg-custom-background-90"
+                              onClick={() => handleUpdate(field.id, value)}
+                            >
+                              {value}
+                              <span className="text-custom-text-400">×</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              
               // Select/Multiselect 필드
               if (field.field_type === "select" || field.field_type === "multiselect") {
                 return (

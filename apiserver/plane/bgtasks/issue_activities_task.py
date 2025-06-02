@@ -636,14 +636,19 @@ def track_custom_field_values(
 ):
     """커스텀 필드 값 변경을 추적하고 알림을 생성하는 함수"""
     
+    if not requested_data or not isinstance(requested_data, dict):
+        return
+
+    # 현재 값과 요청된 값 추출
     requested_custom_fields = requested_data.get("custom_field_values", [])
-    current_custom_fields = current_instance.get("custom_field_values", [])
+    current_cf_dict = {}
     
-    # 현재 값들을 딕셔너리로 변환 (custom_field_id를 키로 사용)
-    current_cf_dict = {
-        str(cf.get("custom_field_id") if isinstance(cf, dict) else cf.custom_field_id): cf
-        for cf in current_custom_fields
-    }
+    if current_instance and isinstance(current_instance, dict):
+        current_custom_fields = current_instance.get("custom_field_values", [])
+        for cf_data in current_custom_fields:
+            if isinstance(cf_data, dict):
+                custom_field_id = str(cf_data.get("custom_field_id"))
+                current_cf_dict[custom_field_id] = cf_data
     
     # project_member 타입의 필드에서 추가된 멤버들을 구독자로 등록할 리스트
     new_subscribers = []
@@ -653,36 +658,32 @@ def track_custom_field_values(
         if not value:
             return value
             
-        try:
-            if field_type == "project_member":
-                # 단일 멤버 ID를 이름으로 변환
-                if isinstance(value, str) and is_valid_uuid(value):
-                    user = User.objects.filter(id=value).first()
-                    return user.display_name if user else value
-            elif field_type == "project_members":
-                # 멤버 ID 배열을 이름 배열로 변환
+        if field_type in ["project_member", "project_members"]:
+            try:
                 if isinstance(value, list):
-                    user_names = []
+                    # project_members 타입
+                    member_names = []
                     for member_id in value:
-                        if isinstance(member_id, str) and is_valid_uuid(member_id):
-                            user = User.objects.filter(id=member_id).first()
-                            user_names.append(user.display_name if user else member_id)
-                        else:
-                            user_names.append(str(member_id))
-                    return user_names
-        except Exception:
-            # 오류 발생 시 원본 값 반환
-            pass
-            
+                        member = User.objects.get(id=member_id)
+                        member_names.append(member.display_name)
+                    return member_names
+                else:
+                    # project_member 타입
+                    member = User.objects.get(id=value)
+                    return member.display_name
+            except User.DoesNotExist:
+                return value
         return value
     
     for cf_data in requested_custom_fields:
         if isinstance(cf_data, dict):
             custom_field_id = str(cf_data.get("custom_field_id"))
             new_value = cf_data.get("value")
+            field_type = cf_data.get("field_type", "text")  # 기본값은 text
         else:
             custom_field_id = str(cf_data.custom_field_id)
             new_value = cf_data.value
+            field_type = "text"  # 기본값
         
         # 커스텀 필드 정보 가져오기
         try:
@@ -691,7 +692,9 @@ def track_custom_field_values(
                 project_id=project_id,
                 deleted_at__isnull=True
             )
+            field_type = custom_field.field_type
         except CustomField.DoesNotExist:
+            # print(f"[BulkOperationsEndpoint] Custom field {custom_field_id} not found")
             continue
         
         # 현재 값 가져오기
@@ -700,13 +703,22 @@ def track_custom_field_values(
         
         # 값이 변경된 경우에만 활동 추가
         if old_value != new_value:
+            # print(f"[BulkOperationsEndpoint] Processing custom field {custom_field_id} with value {new_value}")
+            
             # 멤버 타입인 경우 UUID를 사용자 이름으로 변환
-            display_old_value = convert_member_values_to_names(old_value, custom_field.field_type, project_id)
-            display_new_value = convert_member_values_to_names(new_value, custom_field.field_type, project_id)
+            display_old_value = convert_member_values_to_names(old_value, field_type, project_id)
+            display_new_value = convert_member_values_to_names(new_value, field_type, project_id)
             
             # 값을 문자열로 변환 (표시용)
-            old_value_str = json.dumps(display_old_value, ensure_ascii=False) if display_old_value is not None else ""
-            new_value_str = json.dumps(display_new_value, ensure_ascii=False) if display_new_value is not None else ""
+            if isinstance(display_old_value, list):
+                old_value_str = ", ".join(str(v) for v in display_old_value) if display_old_value else ""
+            else:
+                old_value_str = str(display_old_value) if display_old_value is not None else ""
+                
+            if isinstance(display_new_value, list):
+                new_value_str = ", ".join(str(v) for v in display_new_value) if display_new_value else ""
+            else:
+                new_value_str = str(display_new_value) if display_new_value is not None else ""
             
             issue_activities.append(
                 IssueActivity(
@@ -715,10 +727,10 @@ def track_custom_field_values(
                     verb="updated",
                     old_value=old_value_str,
                     new_value=new_value_str,
-                    field="custom_field",
+                    field=f"custom_field_{custom_field.name}",
                     project_id=project_id,
                     workspace_id=workspace_id,
-                    comment=f"updated custom field {custom_field.name}",
+                    comment=f"{custom_field.name} 필드를 {old_value_str}에서 {new_value_str}로 변경했습니다.",
                     old_identifier=custom_field_id,
                     new_identifier=custom_field_id,
                     epoch=epoch,

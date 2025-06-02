@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { observer } from "mobx-react";
-import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings } from "lucide-react";
+import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings, Type, MessageSquare } from "lucide-react";
 // types
 import { TIssue, TCustomField } from "@plane/types";
 // components
@@ -27,31 +27,41 @@ type Props = {
 export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) => {
   const { issue, customField, onChange, disabled, onClose } = props;
   const { isMobile } = usePlatformOS();
+  
+  // text 필드의 로컬 상태 관리
+  const [textValue, setTextValue] = useState<string>("");
+  const [isTextEditing, setIsTextEditing] = useState(false);
 
-  // 해당 커스텀 필드의 현재 값 가져오기
+  // 필드 값 가져오기
   const getFieldValue = () => {
-    return getCustomFieldValue(issue?.custom_field_values || [], customField.id);
+    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === customField.id);
+    return fieldValue?.value;
   };
 
-  // 커스텀 필드 값 업데이트 (공통 유틸리티 사용)
+  // 필드 값 업데이트
   const updateFieldValue = (value: any) => {
-    console.log("[SpreadsheetCustomFieldColumn] Updating field:", customField.id, "with value:", value);
+    const existingValues = (issue?.custom_field_values || []).filter(cfv => cfv.custom_field_id !== customField.id);
     
-    // 공통 유틸리티 함수 사용 (peek-overview 방식)
-    const updatedValues = updateCustomFieldValueSafely(
-      issue?.custom_field_values || [],
-      customField.id,
-      value,
-      {
-        name: customField.name,
+    const updatedValues = [...existingValues];
+    
+    if (value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
+      const newFieldValue = {
+        custom_field_id: customField.id,
+        value: value,
+        field_name: customField.name,
         field_type: customField.field_type
+      };
+      updatedValues.push(newFieldValue);
+    }
+    
+    onChange(issue, { custom_field_values: updatedValues }, {
+      changed_property: "custom_field_values",
+      change_details: {
+        field_id: customField.id,
+        field_name: customField.name,
+        new_value: value
       }
-    );
-
-    console.log("[SpreadsheetCustomFieldColumn] Final update values:", updatedValues);
-
-    // 이슈 업데이트
-    onChange(issue, { custom_field_values: updatedValues }, {});
+    });
   };
 
   const fieldValue = getFieldValue();
@@ -59,6 +69,8 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
   // 필드 타입에 따른 아이콘 가져오기
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return <MessageSquare className="h-3 w-3 flex-shrink-0" strokeWidth={2} />;
       case "select":
         return <Tag className="h-3 w-3 flex-shrink-0" strokeWidth={2} />;
       case "multiselect":
@@ -136,9 +148,61 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
 
   // 필드 타입에 따른 입력 컴포넌트 렌더링
   const renderFieldInput = () => {
-    const buttonClassName = "text-left rounded-none group-[.selected-issue-row]:bg-custom-primary-100/5 group-[.selected-issue-row]:hover:bg-custom-primary-100/10 px-page-x w-full h-full";
+    const fieldValue = getFieldValue();
+    const buttonClassName = "h-full w-full px-page-x py-1 text-xs bg-transparent border-none outline-none";
 
     switch (customField.field_type) {
+      case "text":
+        const currentValue = isTextEditing ? textValue : (fieldValue || "");
+        
+        return (
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => {
+              setTextValue(e.target.value);
+              if (!isTextEditing) {
+                setIsTextEditing(true);
+                setTextValue(e.target.value);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                // 엔터키로 업데이트했음을 먼저 표시
+                e.currentTarget.dataset.updatedByEnter = "true";
+                const value = e.currentTarget.value.trim();
+                updateFieldValue(value || null);
+                e.currentTarget.blur();
+                onClose();
+                setIsTextEditing(false);
+              }
+            }}
+            onBlur={(e) => {
+              // 엔터키로 이미 업데이트했다면 onBlur에서는 실행하지 않음
+              if (e.currentTarget.dataset.updatedByEnter === "true") {
+                e.currentTarget.dataset.updatedByEnter = "false";
+                setIsTextEditing(false);
+                return;
+              }
+              const value = e.currentTarget.value.trim();
+              updateFieldValue(value || null);
+              setIsTextEditing(false);
+            }}
+            onFocus={() => {
+              if (!isTextEditing) {
+                setTextValue(fieldValue || "");
+                setIsTextEditing(true);
+              }
+            }}
+            placeholder={customField.name}
+            disabled={disabled}
+            className={cn(
+              "h-full w-full px-page-x py-1 text-xs bg-transparent border-none outline-none",
+              buttonClassName
+            )}
+          />
+        );
+        
       case "select":
         const hasSelectValue = fieldValue && fieldValue !== "";
         

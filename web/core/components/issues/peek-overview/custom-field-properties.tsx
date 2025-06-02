@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react";
-import { Tag, CalendarCheck2, UserCircle2, Users } from "lucide-react";
+import { Tag, CalendarCheck2, UserCircle2, Users, MessageSquare } from "lucide-react";
 
 // ui
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
@@ -87,7 +87,9 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
           custom_field_id: fieldId,
           value: value,
           field_name: field.name,
-          field_type: field.field_type
+          field_type: field.field_type,
+          // 강제 리렌더링을 위한 타임스탬프
+          _updated_at: Date.now()
         };
         updatedValues.push(newFieldValue);
       }
@@ -96,14 +98,18 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
     console.log("[CustomFieldProperties] Sending field update:", updatedValues);
     
     // 모든 커스텀 필드 값 전송 (기존 값들 + 변경된 값)
+    // updated_at도 함께 업데이트하여 MobX 반응성 보장
     issueOperations.update(workspaceSlug, projectId, issueId, {
-      custom_field_values: updatedValues
+      custom_field_values: updatedValues,
+      updated_at: new Date().toISOString()
     });
   };
 
   // 필드 타입에 따른 아이콘 선택
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return MessageSquare;
       case "select":
       case "multiselect":
         return Tag;
@@ -123,6 +129,37 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
     const fieldValue = getFieldValue(field.id);
 
     switch (field.field_type) {
+      case "text":
+        return (
+          <div className="w-3/4 flex-grow">
+            <input
+              type="text"
+              defaultValue={fieldValue || ""}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  // 엔터키로 업데이트했음을 먼저 표시
+                  e.currentTarget.dataset.updatedByEnter = "true";
+                  const value = e.currentTarget.value.trim();
+                  updateFieldValue(field.id, value || null);
+                  e.currentTarget.blur();
+                }
+              }}
+              onBlur={(e) => {
+                // 엔터키로 이미 업데이트했다면 onBlur에서는 실행하지 않음
+                if (e.currentTarget.dataset.updatedByEnter === "true") {
+                  e.currentTarget.dataset.updatedByEnter = "false";
+                  return;
+                }
+                const value = e.currentTarget.value.trim();
+                updateFieldValue(field.id, value || null);
+              }}
+              placeholder={field.name}
+              disabled={disabled}
+              className="w-full px-2 py-0.5 text-sm bg-transparent border border-custom-border-200 rounded focus:outline-none focus:border-custom-primary-100 text-custom-text-200 placeholder:text-custom-text-400"
+            />
+          </div>
+        );
+
       case "date":
         return (
           <DateDropdown

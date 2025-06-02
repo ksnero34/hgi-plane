@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { observer } from "mobx-react";
-import { Tag, CalendarDays, Users, User } from "lucide-react";
+import { Tag, CalendarDays, Users, User, MessageSquareIcon } from "lucide-react";
 // hooks
 import { useIssueDetail, useMember } from "@/hooks/store";
 import { useParams } from "next/navigation";
@@ -49,6 +49,8 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
     const fieldType = getFieldType();
     
     switch (fieldType) {
+      case "text":
+        return <MessageSquareIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />;
       case "date":
         return <CalendarDays className="h-4 w-4 flex-shrink-0 text-custom-text-200" />;
       case "project_member":

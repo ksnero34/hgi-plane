@@ -112,6 +112,8 @@ const LabelPill = observer(({ labelId, workspaceSlug }: { labelId: string; works
 // 커스텀 필드 타입별 아이콘 반환
 const getCustomFieldIcon = (fieldType: string) => {
   switch (fieldType) {
+    case "text":
+      return <MessageSquareIcon size={12} className="text-custom-text-200" aria-hidden="true" />; // text 아이콘
     case "date":
       return <Calendar size={12} className="text-custom-text-200" aria-hidden="true" />; // due date 아이콘
     case "project_member":

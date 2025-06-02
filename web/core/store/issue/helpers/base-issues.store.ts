@@ -33,7 +33,7 @@ import {
 // components
 import { IBlockUpdateDependencyData } from "@/components/gantt-chart";
 // helpers
-import { convertToISODateString } from "@/helpers/date-time.helper";
+import { convertToISODateString, getCurrentDateTimeInISO } from "@/helpers/date-time.helper";
 // local-db
 import { SPECIAL_ORDER_BY } from "@/local-db/utils/query-constructor";
 import { updatePersistentLayer } from "@/local-db/utils/utils";
@@ -591,6 +591,23 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     try {
       // Update the Respective Stores
       this.rootIssueStore.issues.updateIssue(issueId, data);
+      
+      // 커스텀 필드 업데이트 시 강제로 리액티브 업데이트 트리거
+      if (data.custom_field_values) {
+        // MobX가 변경을 감지하도록 강제로 observable 업데이트
+        runInAction(() => {
+          const currentIssue = this.rootIssueStore.issues.getIssueById(issueId);
+          if (currentIssue) {
+            // 기존 이슈 객체를 새로운 객체로 교체하여 반응성 트리거
+            this.rootIssueStore.issues.updateIssue(issueId, {
+              ...currentIssue,
+              custom_field_values: data.custom_field_values,
+              updated_at: getCurrentDateTimeInISO()
+            });
+          }
+        });
+      }
+      
       this.updateIssueList({ ...issueBeforeUpdate, ...data } as TIssue, issueBeforeUpdate);
 
       // Check if should Sync

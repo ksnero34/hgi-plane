@@ -1,8 +1,8 @@
 "use client";
 
-import React, { SyntheticEvent } from "react";
+import React, { SyntheticEvent, useMemo, useState } from "react";
 import { observer } from "mobx-react";
-import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings } from "lucide-react";
+import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings, MessageSquare } from "lucide-react";
 // types
 import { TIssue, TCustomField, IIssueDisplayProperties } from "@plane/types";
 // ui
@@ -32,26 +32,31 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   const { isMobile } = usePlatformOS();
   const { getUserDetails } = useMember();
   
+  // text 필드의 로컬 상태 관리
+  const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
+  
   if (!customFields || customFields.length === 0 || !displayProperties?.custom_fields) return null;
+
+  // MobX 반응성을 위해 computed 값 사용
+  const customFieldValues = useMemo(() => {
+    return issue?.custom_field_values || [];
+  }, [issue?.custom_field_values, issue?.updated_at]); // updated_at을 의존성에 추가
 
   // 특정 필드의 현재 값 가져오기
   const getFieldValue = (fieldId: string) => {
-    return getCustomFieldValue(issue?.custom_field_values || [], fieldId);
+    return getCustomFieldValue(customFieldValues, fieldId);
   };
 
-  // 커스텀 필드 값 업데이트 함수 (공통 유틸리티 사용)
+  // 커스텀 필드 값 업데이트 함수
   const updateFieldValue = (fieldId: string, value: any) => {
-    console.log("[IssueCustomFieldProperties] Updating field:", fieldId, "with value:", value);
-    
-    const field = customFields.find(f => f.id === fieldId);
-    if (!field) {
-      console.error("[IssueCustomFieldProperties] Field not found:", fieldId);
-      return;
-    }
+    if (!updateIssue || !issue?.project_id) return;
 
-    // 공통 유틸리티 함수 사용 (peek-overview 방식)
+    const field = customFields.find(f => f.id === fieldId);
+    if (!field) return;
+
+    // 안전한 업데이트 함수 사용
     const updatedValues = updateCustomFieldValueSafely(
-      issue?.custom_field_values || [],
+      customFieldValues,
       fieldId,
       value,
       {
@@ -60,19 +65,16 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
       }
     );
 
-    console.log("[IssueCustomFieldProperties] Final update values:", updatedValues);
-
-    // 이슈 업데이트
-    if (updateIssue) {
-      updateIssue(issue.project_id, issue.id, {
-        custom_field_values: updatedValues
-      });
-    }
+    updateIssue(issue.project_id, issue.id, {
+      custom_field_values: updatedValues
+    });
   };
 
   // 필드 타입에 따른 아이콘 선택
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return MessageSquare;
       case "select":
         return Tag;
       case "multiselect":
@@ -131,12 +133,68 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   // 필드 타입에 따른 입력 컴포넌트 렌더링
   const renderFieldDropdown = (field: TCustomField) => {
     const fieldValue = getFieldValue(field.id);
-    const formattedValue = formatFieldValue(field, fieldValue);
+    const hasValue = fieldValue !== null && fieldValue !== undefined && fieldValue !== "";
     const FieldIcon = getFieldIcon(field.field_type);
-    const hasValue = fieldValue !== null && fieldValue !== undefined && fieldValue !== "" && 
-                     !(Array.isArray(fieldValue) && fieldValue.length === 0);
+    const formattedValue = formatFieldValue(field, fieldValue);
 
     switch (field.field_type) {
+      case "text":
+        const currentTextValue = textFieldValues[field.id] !== undefined 
+          ? textFieldValues[field.id] 
+          : (fieldValue || "");
+        
+        return (
+          <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
+            <input
+              type="text"
+              value={currentTextValue}
+              onChange={(e) => {
+                // 로컬 상태만 업데이트 (UI 반응성)
+                setTextFieldValues(prev => ({
+                  ...prev,
+                  [field.id]: e.target.value
+                }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  // 엔터키로 업데이트했음을 먼저 표시
+                  e.currentTarget.dataset.updatedByEnter = "true";
+                  const value = e.currentTarget.value.trim();
+                  updateFieldValue(field.id, value || null);
+                  e.currentTarget.blur();
+                  // 로컬 상태 초기화
+                  setTextFieldValues(prev => {
+                    const newState = { ...prev };
+                    delete newState[field.id];
+                    return newState;
+                  });
+                }
+              }}
+              onBlur={(e) => {
+                // 엔터키로 이미 업데이트했다면 onBlur에서는 실행하지 않음
+                if (e.currentTarget.dataset.updatedByEnter === "true") {
+                  e.currentTarget.dataset.updatedByEnter = "false";
+                  return;
+                }
+                const value = e.currentTarget.value.trim();
+                updateFieldValue(field.id, value || null);
+                // 로컬 상태 초기화
+                setTextFieldValues(prev => {
+                  const newState = { ...prev };
+                  delete newState[field.id];
+                  return newState;
+                });
+              }}
+              placeholder={field.name}
+              disabled={isReadOnly}
+              className={cn(
+                "h-5 text-xs border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 rounded flex items-center bg-transparent outline-none",
+                hasValue ? "px-1.5 min-w-20" : "px-1.5 min-w-20 text-custom-text-400"
+              )}
+            />
+          </div>
+        );
+        
       case "select":
       case "multiselect":
         return (

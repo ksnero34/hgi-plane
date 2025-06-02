@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ChevronDown, Search, Tag, CalendarCheck2, UserCircle2, Users, Settings } from "lucide-react";
+import { ChevronDown, Search, Tag, CalendarCheck2, UserCircle2, Users, Settings, Type, MessageSquare } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 import { usePopper } from "react-popper";
 import { useTranslation } from "@plane/i18n";
@@ -170,7 +170,9 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           >
             {!hideIcon && !hasValue && (
               <div className="flex items-center justify-center">
-              {field.field_type === "select" || field.field_type === "multiselect" ? (
+              {field.field_type === "text" ? (
+                <Type className="h-3 w-3 text-custom-text-400" />
+              ) : field.field_type === "select" || field.field_type === "multiselect" ? (
                 <Tag className="h-3 w-3 text-custom-text-400" />
               ) : field.field_type === "date" ? (
                 <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
@@ -194,7 +196,9 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
                 <div className="flex items-center gap-1.5">
                   {!hideIcon && (
                     <>
-                      {field.field_type === "select" || field.field_type === "multiselect" ? (
+                      {field.field_type === "text" ? (
+                        <Type className="h-3 w-3 text-custom-text-400" />
+                      ) : field.field_type === "select" || field.field_type === "multiselect" ? (
                         <Tag className="h-3 w-3 text-custom-text-400" />
                       ) : field.field_type === "date" ? (
                         <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />

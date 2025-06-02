@@ -309,13 +309,17 @@ export const updateCustomFieldValueSafely = (
       custom_field_id: fieldId,
       value: newValue,
       field_name: fieldInfo.name,
-      field_type: fieldInfo.field_type
+      field_type: fieldInfo.field_type,
+      // MobX 반응성을 위한 타임스탬프 추가
+      _updated_at: Date.now()
     };
+    // 완전히 새로운 배열 생성하여 MobX 반응성 보장
     return [...existingValues, newFieldValue];
   }
   
   // 값이 무효하면 해당 필드 제거된 상태로 반환
-  return existingValues;
+  // 빈 배열이라도 새로운 배열 인스턴스 생성
+  return [...existingValues];
 };
 
 /**

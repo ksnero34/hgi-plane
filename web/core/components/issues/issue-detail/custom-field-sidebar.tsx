@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Tag, CalendarCheck2, UserCircle2, Users } from "lucide-react";
+import { Tag, CalendarCheck2, UserCircle2, Users, MessageSquare } from "lucide-react";
 
 // ui
 import { DateDropdown, MemberDropdown } from "@/components/dropdowns";
@@ -102,6 +102,8 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
         return UserCircle2;
       case "project_members":
         return Users;
+      case "text":
+        return MessageSquare;
       default:
         return Tag;
     }

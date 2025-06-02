@@ -28,6 +28,7 @@ interface ICustomField {
 }
 
 const FIELD_TYPES = [
+  { value: "text", label: "텍스트", description: "사용자가 자유롭게 텍스트를 입력할 수 있습니다." },
   { value: "select", label: "선택", description: "미리 정의된 옵션 중 하나를 선택할 수 있습니다." },
   { value: "multiselect", label: "다중선택", description: "미리 정의된 옵션 중 여러 개를 선택할 수 있습니다." },
   { value: "date", label: "날짜", description: "날짜를 선택할 수 있습니다." },
@@ -309,6 +310,8 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const getFieldPlaceholder = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return "예: 자유 텍스트";
       case "select":
       case "multiselect":
         return "예: 선택 옵션";
@@ -324,6 +327,8 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const getFieldHelperText = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return "사용자가 자유롭게 텍스트를 입력할 수 있습니다.";
       case "select":
         return "미리 정의된 옵션 중 하나를 선택할 수 있습니다.";
       case "multiselect":
@@ -341,6 +346,8 @@ export const ProjectCustomFieldsSettings = observer(() => {
 
   const getKeyPlaceholder = (fieldType: string) => {
     switch (fieldType) {
+      case "text":
+        return "예: description";
       case "select":
       case "multiselect":
         return "예: status";

@@ -31,6 +31,9 @@ export const IssueCustomField: FC<Props> = observer((props) => {
   // store hooks
   const { t } = useTranslation();
 
+  // text 필드의 로컬 상태 관리
+  const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
+
   useEffect(() => {
     const fetchCustomFields = async () => {
       if (!projectId || !workspaceSlug) return;
@@ -52,9 +55,68 @@ export const IssueCustomField: FC<Props> = observer((props) => {
   if (isLoading || !customFields || customFields.length === 0) return null;
 
   const renderFieldInput = (field: TCustomField, value: any, onChange: (value: any) => void) => {
-    const fieldValue = value?.value;
+    const fieldValue = value?.value || "";
     
     switch (field.field_type) {
+      case "text":
+        const currentTextValue = textFieldValues[field.id] !== undefined 
+          ? textFieldValues[field.id] 
+          : (fieldValue || "");
+        
+        return (
+          <input
+            type="text"
+            value={currentTextValue}
+            onChange={(e) => {
+              // 로컬 상태만 업데이트 (UI 반응성)
+              setTextFieldValues(prev => ({
+                ...prev,
+                [field.id]: e.target.value
+              }));
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                // 엔터키로 업데이트했음을 먼저 표시
+                e.currentTarget.dataset.updatedByEnter = "true";
+                const value = e.currentTarget.value.trim();
+                onChange({
+                  custom_field_id: field.id,
+                  value: value || null
+                });
+                handleFormChange();
+                e.currentTarget.blur();
+                // 로컬 상태 초기화
+                setTextFieldValues(prev => {
+                  const newState = { ...prev };
+                  delete newState[field.id];
+                  return newState;
+                });
+              }
+            }}
+            onBlur={(e) => {
+              // 엔터키로 이미 업데이트했다면 onBlur에서는 실행하지 않음
+              if (e.currentTarget.dataset.updatedByEnter === "true") {
+                e.currentTarget.dataset.updatedByEnter = "false";
+                return;
+              }
+              const value = e.currentTarget.value.trim();
+              onChange({
+                custom_field_id: field.id,
+                value: value || null
+              });
+              handleFormChange();
+              // 로컬 상태 초기화
+              setTextFieldValues(prev => {
+                const newState = { ...prev };
+                delete newState[field.id];
+                return newState;
+              });
+            }}
+            placeholder={field.name}
+            className="w-full px-3 py-2 text-sm border border-custom-border-200 rounded-md bg-transparent text-custom-text-200 placeholder:text-custom-text-400 focus:outline-none focus:border-custom-primary-100"
+          />
+        );
+
       case "date":
         return (
           <DateDropdown

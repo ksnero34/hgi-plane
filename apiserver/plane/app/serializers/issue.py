@@ -188,7 +188,11 @@ class IssueCreateSerializer(BaseSerializer):
             # 타입별 유효성 검사
             field_value = value.get("value")
             if field_value is not None:
-                if field.field_type == "number":
+                if field.field_type == "text":
+                    # text 필드: 문자열 타입 검증
+                    if not isinstance(field_value, str):
+                        raise serializers.ValidationError(f"필드 {field.name}는 문자열이어야 합니다.")
+                elif field.field_type == "number":
                     try:
                         float(field_value)
                     except (TypeError, ValueError):
@@ -366,6 +370,7 @@ class IssueCreateSerializer(BaseSerializer):
 
         if custom_field_values:
             for field_value in custom_field_values:
+                # 커스텀 필드 값 생성
                 CustomFieldValue.objects.create(
                     custom_field_id=field_value["custom_field_id"],
                     issue=issue,
@@ -377,25 +382,39 @@ class IssueCreateSerializer(BaseSerializer):
                 )
 
                 # 활동 로그 생성
-                field = CustomField.objects.get(id=field_value["custom_field_id"])
-                
-                # project_member 타입인 경우 identifier에 멤버 ID 저장
-                new_identifier = None
-                if field.field_type == "project_member":
-                    new_identifier = field_value["value"]
-                # project_members 타입은 identifier에 저장하지 않음 (UUID 필드이므로)
-                
-                IssueActivity.objects.create(
-                    issue=issue,
-                    project_id=project_id,
-                    workspace_id=workspace_id,
-                    actor_id=created_by_id,
-                    verb="created",
-                    field=f"custom_field_{field.name}",
-                    new_value=format_custom_field_value_for_activity(field, field_value["value"]),
-                    new_identifier=new_identifier,
-                    comment=f"커스텀 필드 '{field.name}' 값을 '{format_custom_field_value_for_activity(field, field_value['value'])}'로 설정했습니다."
-                )
+                try:
+                    # 필드 정보 가져오기
+                    field = CustomField.objects.get(id=field_value["custom_field_id"])
+                    
+                    # issue_activity.delay 호출
+                    from plane.bgtasks.issue_activities_task import issue_activity
+                    import json
+                    from django.utils import timezone
+                    
+                    # 값 변환
+                    new_value_str = format_custom_field_value_for_activity(field, field_value["value"])
+                    
+                    # project_member 타입인 경우 identifier에 멤버 ID 저장
+                    new_identifier = field_value["value"] if field.field_type == "project_member" else None
+                    
+                    issue_activity.delay(
+                        type="issue.activity.created",
+                        requested_data=json.dumps({
+                            "field": f"custom_field_{field.name}",
+                            "old_value": "",
+                            "new_value": new_value_str,
+                            "new_identifier": new_identifier,
+                            "custom_field_id": str(field.id)
+                        }),
+                        current_instance=None,
+                        issue_id=str(issue.id),
+                        actor_id=str(created_by_id),
+                        project_id=str(project_id),
+                        epoch=int(timezone.now().timestamp()),
+                        notification=True
+                    )
+                except Exception as e:
+                    print(f"Error creating activity log for custom field: {e}")
 
         return issue
 
@@ -503,24 +522,36 @@ class IssueCreateSerializer(BaseSerializer):
                         print(f"[IssueCreateSerializer] Successfully updated field {field_id}")
                         
                         # 활동 로그 생성
-                        old_identifier = None
-                        new_identifier = None
-                        if field.field_type == "project_member":
-                            old_identifier = previous_value
-                            new_identifier = new_value
+                        # IssueActivity 객체를 직접 생성하지 않고 issue_activity.delay 호출
+                        # (issue_activity.delay는 메인 HTTP 요청 처리 후 별도 워커에서 수행됨)
+                        from plane.bgtasks.issue_activities_task import issue_activity
+                        import json
+                        from django.utils import timezone
                         
-                        IssueActivity.objects.create(
-                            issue=instance,
-                            project_id=project_id,
-                            workspace_id=workspace_id,
-                            actor_id=updated_by_id,
-                            verb="updated",
-                            field=f"custom_field_{field.name}",
-                            old_value=format_custom_field_value_for_activity(field, previous_value),
-                            new_value=format_custom_field_value_for_activity(field, new_value),
-                            old_identifier=old_identifier,
-                            new_identifier=new_identifier,
-                            comment=f"커스텀 필드 '{field.name}' 값을 '{format_custom_field_value_for_activity(field, previous_value)}'에서 '{format_custom_field_value_for_activity(field, new_value)}'로 변경했습니다."
+                        # 값 변환
+                        old_value_str = format_custom_field_value_for_activity(field, previous_value)
+                        new_value_str = format_custom_field_value_for_activity(field, new_value)
+                        
+                        # 활동 로그 생성 - identifier는 project_member 타입만 사용
+                        old_identifier = previous_value if field.field_type == "project_member" else None
+                        new_identifier = new_value if field.field_type == "project_member" else None
+                        
+                        issue_activity.delay(
+                            type="issue.activity.updated",
+                            requested_data=json.dumps({
+                                "field": f"custom_field_{field.name}",
+                                "old_value": old_value_str,
+                                "new_value": new_value_str,
+                                "old_identifier": old_identifier,
+                                "new_identifier": new_identifier,
+                                "custom_field_id": field_id
+                            }),
+                            current_instance=None,
+                            issue_id=str(instance.id),
+                            actor_id=str(updated_by_id),
+                            project_id=str(project_id),
+                            epoch=int(timezone.now().timestamp()),
+                            notification=True
                         )
                     else:
                         print(f"[IssueCreateSerializer] Field {field_id} value unchanged: {new_value}")
@@ -540,6 +571,9 @@ class IssueCreateSerializer(BaseSerializer):
                     
                     print(f"[IssueCreateSerializer] Successfully created field {field_id}")
                     
+                    # 이중 활동 로그 생성 방지를 위해 주석 처리
+                    # 활동 로그는 issue_activity.delay를 통해 처리됨
+                    """
                     # 활동 로그 생성
                     new_identifier = None
                     if field.field_type == "project_member":
@@ -556,6 +590,7 @@ class IssueCreateSerializer(BaseSerializer):
                         new_identifier=new_identifier,
                         comment=f"커스텀 필드 '{field.name}' 값을 '{format_custom_field_value_for_activity(field, new_value)}'로 설정했습니다."
                     )
+                    """
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
@@ -1022,16 +1057,20 @@ class CustomFieldValueSerializer(BaseSerializer):
         if value is not None:
             field_type = custom_field.field_type
             
-            if field_type == "number":
+            if field_type == "text":
+                # text 필드: 문자열 타입 검증
+                if not isinstance(value, str):
+                    raise serializers.ValidationError(f"필드 {custom_field.name}는 문자열이어야 합니다.")
+            elif field_type == "number":
                 try:
                     float(value)
                 except (TypeError, ValueError):
-                    raise serializers.ValidationError("숫자 형식이 아닙니다.")
+                    raise serializers.ValidationError(f"필드 {custom_field.name}는 숫자여야 합니다.")
             elif field_type == "date":
                 try:
                     datetime.strptime(value, "%Y-%m-%d")
                 except (TypeError, ValueError):
-                    raise serializers.ValidationError("날짜 형식이 아닙니다.")
+                    raise serializers.ValidationError(f"필드 {custom_field.name}는 YYYY-MM-DD 형식이어야 합니다.")
             elif field_type in ["select", "multiselect"]:
                 options = custom_field.options
                 if field_type == "select":

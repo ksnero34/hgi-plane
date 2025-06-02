@@ -82,7 +82,7 @@ export const ProjectExports = observer(() => {
   };
 
   const hasProjects = workspaceProjectIds && workspaceProjectIds.length > 0;
-  const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
+  const canExport = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -135,7 +135,7 @@ export const ProjectExports = observer(() => {
                         <Button
                           variant="primary"
                           className="capitalize"
-                          disabled={!isAdmin}
+                          disabled={!canExport}
                         >
                           {t(service.type)}
                         </Button>
