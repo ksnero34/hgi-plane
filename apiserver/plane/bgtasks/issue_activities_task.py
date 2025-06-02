@@ -624,6 +624,29 @@ def create_issue_activity(
         )
 
 
+def convert_member_values_to_names(value, field_type, project_id):
+    """멤버 UUID를 사용자 이름으로 변환하는 헬퍼 함수"""
+    if not value:
+        return value
+        
+    if field_type in ["project_member", "project_members"]:
+        try:
+            if isinstance(value, list):
+                # project_members 타입
+                member_names = []
+                for member_id in value:
+                    member = User.objects.get(id=member_id)
+                    member_names.append(member.display_name)
+                return member_names
+            else:
+                # project_member 타입
+                member = User.objects.get(id=value)
+                return member.display_name
+        except User.DoesNotExist:
+            return value
+    return value
+
+
 def track_custom_field_values(
     requested_data,
     current_instance,
@@ -636,74 +659,34 @@ def track_custom_field_values(
 ):
     """커스텀 필드 값 변경을 추적하고 알림을 생성하는 함수"""
     
-    if not requested_data or not isinstance(requested_data, dict):
-        return
-
-    # 현재 값과 요청된 값 추출
-    requested_custom_fields = requested_data.get("custom_field_values", [])
-    current_cf_dict = {}
+    # 현재 값과 요청된 값 가져오기
+    current_values = current_instance.get("custom_field_values", []) if current_instance else []
+    requested_values = requested_data.get("custom_field_values", []) if requested_data else []
     
-    if current_instance and isinstance(current_instance, dict):
-        current_custom_fields = current_instance.get("custom_field_values", [])
-        for cf_data in current_custom_fields:
-            if isinstance(cf_data, dict):
-                custom_field_id = str(cf_data.get("custom_field_id"))
-                current_cf_dict[custom_field_id] = cf_data
+    # 현재 값을 딕셔너리로 변환
+    current_values_dict = {str(val.get("custom_field_id")): val.get("value") for val in current_values}
     
     # project_member 타입의 필드에서 추가된 멤버들을 구독자로 등록할 리스트
     new_subscribers = []
     
-    def convert_member_values_to_names(value, field_type, project_id):
-        """멤버 UUID를 사용자 이름으로 변환하는 헬퍼 함수"""
-        if not value:
-            return value
-            
-        if field_type in ["project_member", "project_members"]:
-            try:
-                if isinstance(value, list):
-                    # project_members 타입
-                    member_names = []
-                    for member_id in value:
-                        member = User.objects.get(id=member_id)
-                        member_names.append(member.display_name)
-                    return member_names
-                else:
-                    # project_member 타입
-                    member = User.objects.get(id=value)
-                    return member.display_name
-            except User.DoesNotExist:
-                return value
-        return value
-    
-    for cf_data in requested_custom_fields:
-        if isinstance(cf_data, dict):
-            custom_field_id = str(cf_data.get("custom_field_id"))
-            new_value = cf_data.get("value")
-            field_type = cf_data.get("field_type", "text")  # 기본값은 text
-        else:
-            custom_field_id = str(cf_data.custom_field_id)
-            new_value = cf_data.value
-            field_type = "text"  # 기본값
+    # 요청된 값 처리
+    for new_field_data in requested_values:
+        custom_field_id = str(new_field_data.get("custom_field_id"))
+        new_value = new_field_data.get("value")
         
-        # 커스텀 필드 정보 가져오기
+        # 필드 정보 가져오기
         try:
-            custom_field = CustomField.objects.get(
-                id=custom_field_id,
-                project_id=project_id,
-                deleted_at__isnull=True
-            )
-            field_type = custom_field.field_type
+            custom_field = CustomField.objects.get(pk=custom_field_id, project_id=project_id)
         except CustomField.DoesNotExist:
-            # print(f"[BulkOperationsEndpoint] Custom field {custom_field_id} not found")
             continue
-        
+            
         # 현재 값 가져오기
-        current_cf = current_cf_dict.get(custom_field_id)
-        old_value = current_cf.get("value") if isinstance(current_cf, dict) else (current_cf.value if current_cf else None)
+        old_value = current_values_dict.get(custom_field_id)
         
-        # 값이 변경된 경우에만 활동 추가
+        # 값이 실제로 변경되었는지 확인
         if old_value != new_value:
-            # print(f"[BulkOperationsEndpoint] Processing custom field {custom_field_id} with value {new_value}")
+            # 필드 타입 가져오기
+            field_type = custom_field.field_type
             
             # 멤버 타입인 경우 UUID를 사용자 이름으로 변환
             display_old_value = convert_member_values_to_names(old_value, field_type, project_id)
@@ -720,17 +703,28 @@ def track_custom_field_values(
             else:
                 new_value_str = str(display_new_value) if display_new_value is not None else ""
             
+            # 동작 결정 (생성/수정/삭제)
+            if old_value is None and new_value is not None:
+                verb = "created"
+                comment = f"{custom_field.name} 필드에 {new_value_str} 값을 설정했습니다."
+            elif new_value is None and old_value is not None:
+                verb = "deleted"
+                comment = f"{custom_field.name} 필드의 {old_value_str} 값을 삭제했습니다."
+            else:
+                verb = "updated"
+                comment = f"{custom_field.name} 필드를 {old_value_str}에서 {new_value_str}로 변경했습니다."
+            
             issue_activities.append(
                 IssueActivity(
                     issue_id=issue_id,
                     actor_id=actor_id,
-                    verb="updated",
+                    verb=verb,
                     old_value=old_value_str,
                     new_value=new_value_str,
                     field=f"custom_field_{custom_field.name}",
                     project_id=project_id,
                     workspace_id=workspace_id,
-                    comment=f"{custom_field.name} 필드를 {old_value_str}에서 {new_value_str}로 변경했습니다.",
+                    comment=comment,
                     old_identifier=custom_field_id,
                     new_identifier=custom_field_id,
                     epoch=epoch,
@@ -1087,7 +1081,7 @@ def create_module_issue_activity(
         IssueActivity(
             issue_id=issue_id,
             actor_id=actor_id,
-            verb="created",
+            verb="생성했습니다",
             old_value="",
             new_value=module.name if module else "",
             field="modules",

@@ -297,6 +297,7 @@ class IssueCreateSerializer(BaseSerializer):
         assignees = validated_data.pop("assignee_ids", None)
         labels = validated_data.pop("label_ids", None)
 
+        # Get project_id from context
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
@@ -381,41 +382,6 @@ class IssueCreateSerializer(BaseSerializer):
                     updated_by_id=updated_by_id,
                 )
 
-                # 활동 로그 생성
-                try:
-                    # 필드 정보 가져오기
-                    field = CustomField.objects.get(id=field_value["custom_field_id"])
-                    
-                    # issue_activity.delay 호출
-                    from plane.bgtasks.issue_activities_task import issue_activity
-                    import json
-                    from django.utils import timezone
-                    
-                    # 값 변환
-                    new_value_str = format_custom_field_value_for_activity(field, field_value["value"])
-                    
-                    # project_member 타입인 경우 identifier에 멤버 ID 저장
-                    new_identifier = field_value["value"] if field.field_type == "project_member" else None
-                    
-                    issue_activity.delay(
-                        type="issue.activity.created",
-                        requested_data=json.dumps({
-                            "field": f"custom_field_{field.name}",
-                            "old_value": "",
-                            "new_value": new_value_str,
-                            "new_identifier": new_identifier,
-                            "custom_field_id": str(field.id)
-                        }),
-                        current_instance=None,
-                        issue_id=str(issue.id),
-                        actor_id=str(created_by_id),
-                        project_id=str(project_id),
-                        epoch=int(timezone.now().timestamp()),
-                        notification=True
-                    )
-                except Exception as e:
-                    print(f"Error creating activity log for custom field: {e}")
-
         return issue
 
     def update(self, instance, validated_data):
@@ -472,7 +438,7 @@ class IssueCreateSerializer(BaseSerializer):
                 pass
 
         if custom_field_values is not None:
-            print(f"[IssueCreateSerializer] Processing custom field values: {custom_field_values}")
+            # print(f"[IssueCreateSerializer] Processing custom field values: {custom_field_values}")
             
             # 중복된 custom_field_id 제거 - 마지막 값만 사용
             unique_custom_fields = {}
@@ -480,7 +446,7 @@ class IssueCreateSerializer(BaseSerializer):
                 field_id = field_value["custom_field_id"]
                 unique_custom_fields[field_id] = field_value
             
-            print(f"[IssueCreateSerializer] After deduplication: {list(unique_custom_fields.values())}")
+            # print(f"[IssueCreateSerializer] After deduplication: {list(unique_custom_fields.values())}")
             
             # 커스텀 필드 정보 가져오기
             custom_fields = CustomField.objects.filter(
@@ -496,10 +462,10 @@ class IssueCreateSerializer(BaseSerializer):
                 field = custom_field_map.get(str(field_id))
                 
                 if not field:
-                    print(f"[IssueCreateSerializer] Field {field_id} not found, skipping")
+                    # print(f"[IssueCreateSerializer] Field {field_id} not found, skipping")
                     continue
                 
-                print(f"[IssueCreateSerializer] Processing field {field_id} ({field.field_type}) with value {new_value}")
+                # print(f"[IssueCreateSerializer] Processing field {field_id} ({field.field_type}) with value {new_value}")
                 
                 # 모든 타입 동일 처리: 하나의 custom_field_id에 하나의 값 (단일값 또는 JSON 배열)
                 existing_value = CustomFieldValue.objects.filter(
@@ -512,21 +478,17 @@ class IssueCreateSerializer(BaseSerializer):
                     # 기존 값 업데이트
                     previous_value = existing_value.value
                     
-                    print(f"[IssueCreateSerializer] Updating existing field {field_id}: {previous_value} -> {new_value}")
+                    # print(f"[IssueCreateSerializer] Updating existing field {field_id}: {previous_value} -> {new_value}")
                     
                     if existing_value.value != new_value:
                         existing_value.value = new_value
                         existing_value.updated_by_id = updated_by_id
                         existing_value.save()
                         
-                        print(f"[IssueCreateSerializer] Successfully updated field {field_id}")
-                        
                         # 활동 로그 생성
                         # IssueActivity 객체를 직접 생성하지 않고 issue_activity.delay 호출
                         # (issue_activity.delay는 메인 HTTP 요청 처리 후 별도 워커에서 수행됨)
                         from plane.bgtasks.issue_activities_task import issue_activity
-                        import json
-                        from django.utils import timezone
                         
                         # 값 변환
                         old_value_str = format_custom_field_value_for_activity(field, previous_value)
@@ -554,10 +516,11 @@ class IssueCreateSerializer(BaseSerializer):
                             notification=True
                         )
                     else:
-                        print(f"[IssueCreateSerializer] Field {field_id} value unchanged: {new_value}")
+                        # print(f"[IssueCreateSerializer] Field {field_id} value unchanged: {new_value}")
+                        pass
                 else:
                     # 새로운 값 생성
-                    print(f"[IssueCreateSerializer] Creating new field {field_id} with value {new_value}")
+                    # print(f"[IssueCreateSerializer] Creating new field {field_id} with value {new_value}")
                     
                     CustomFieldValue.objects.create(
                         custom_field_id=field_id,
@@ -569,7 +532,7 @@ class IssueCreateSerializer(BaseSerializer):
                         updated_by_id=updated_by_id,
                     )
                     
-                    print(f"[IssueCreateSerializer] Successfully created field {field_id}")
+                    # print(f"[IssueCreateSerializer] Successfully created field {field_id}")
                     
                     # 이중 활동 로그 생성 방지를 위해 주석 처리
                     # 활동 로그는 issue_activity.delay를 통해 처리됨
@@ -1127,7 +1090,8 @@ class IssueSerializer(DynamicBaseSerializer):
         """커스텀 필드 값을 간소화된 형태로 반환"""
         custom_field_values = CustomFieldValue.objects.filter(
             issue=obj,
-            deleted_at__isnull=True
+            deleted_at__isnull=True,
+            custom_field__deleted_at__isnull=True  # 삭제된 커스텀 필드 제외
         ).select_related('custom_field')
         
         return [

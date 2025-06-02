@@ -130,29 +130,29 @@ def issue_on_results(
             current_id = str(issue_id)
             visited = set()  # 무한 루프 방지
             
-            print(f"[DEBUG] find_root_parent 시작 - issue_id: {issue_id}")
+            # print(f"[DEBUG] find_root_parent 시작 - issue_id: {issue_id}")
             
             while current_id and current_id not in visited:
                 visited.add(current_id)
                 
                 if current_id not in all_issues_dict:
-                    print(f"[DEBUG] {current_id}가 all_issues_dict에 없음")
+                    # print(f"[DEBUG] {current_id}가 all_issues_dict에 없음")
                     break
                     
                 parent_id = all_issues_dict[current_id]["parent_id"]
-                print(f"[DEBUG] {current_id}의 parent_id: {parent_id}")
+                # print(f"[DEBUG] {current_id}의 parent_id: {parent_id}")
                 
                 if parent_id is None:
                     # 현재 이슈가 최상단 부모
-                    print(f"[DEBUG] 최상단 부모 찾음: {current_id}")
+                    # print(f"[DEBUG] 최상단 부모 찾음: {current_id}")
                     return current_id
                 
                 # 부모로 이동
                 current_id = str(parent_id)
-                print(f"[DEBUG] 부모로 이동: {current_id}")
+                # print(f"[DEBUG] 부모로 이동: {current_id}")
             
             # 최상단 부모를 찾지 못한 경우
-            print(f"[DEBUG] 최상단 부모를 찾지 못함 - visited: {visited}")
+            # print(f"[DEBUG] 최상단 부모를 찾지 못함 - visited: {visited}")
             return None
         
         # 빠른 lookup을 위한 딕셔너리 생성

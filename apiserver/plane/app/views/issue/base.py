@@ -1090,9 +1090,9 @@ class IssueViewSet(BaseViewSet):
         model=Issue
     )
     def partial_update(self, request, slug, project_id, pk=None):
-        print(f"[IssueViewSet] partial_update called for issue {pk}")
-        print(f"[IssueViewSet] Request data: {request.data}")
-        print(f"[IssueViewSet] User: {request.user.email}")
+        # print(f"[IssueViewSet] partial_update called for issue {pk}")
+        # print(f"[IssueViewSet] Request data: {request.data}")
+        # print(f"[IssueViewSet] User: {request.user.email}")
         
         issue = (
             self.get_queryset()
@@ -1150,7 +1150,7 @@ class IssueViewSet(BaseViewSet):
         
         # 사용될 시리얼라이저 확인
         serializer_class = self.get_serializer_class()
-        print(f"[IssueViewSet] Using serializer: {serializer_class.__name__}")
+        # print(f"[IssueViewSet] Using serializer: {serializer_class.__name__}")
         
         serializer = serializer_class(
             issue,
@@ -1162,15 +1162,15 @@ class IssueViewSet(BaseViewSet):
             partial=True,
         )
         
-        print(f"[IssueViewSet] Serializer is_valid check...")
+        # print(f"[IssueViewSet] Serializer is_valid check...")
         
         if serializer.is_valid():
-            print(f"[IssueViewSet] Serializer is valid, saving...")
-            print(f"[IssueViewSet] Validated data: {serializer.validated_data}")
+            # print(f"[IssueViewSet] Serializer is valid, saving...")
+            # print(f"[IssueViewSet] Validated data: {serializer.validated_data}")
             
             serializer.save()
             
-            print(f"[IssueViewSet] Issue saved successfully")
+            # print(f"[IssueViewSet] Issue saved successfully")
 
             issue_activity.delay(
                 type="issue.activity.updated",
@@ -1200,7 +1200,8 @@ class IssueViewSet(BaseViewSet):
             )
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            print(f"[IssueViewSet] Serializer errors: {serializer.errors}")
+            # print(f"[IssueViewSet] Serializer errors: {serializer.errors}")
+            pass
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission([ROLE.ADMIN], creator=True, model=Issue)
