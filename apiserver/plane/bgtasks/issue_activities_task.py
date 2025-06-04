@@ -396,14 +396,15 @@ def track_assignees(
             IssueActivity(
                 issue_id=issue_id,
                 actor_id=actor_id,
-                verb="updated",
+                verb="assigned",
                 old_value="",
                 new_value=assignee.display_name,
                 field="assignees",
                 project_id=project_id,
                 workspace_id=workspace_id,
-                comment="added assignee ",
+                comment=f"담당자로 '{assignee.display_name}' 님을 지정했습니다.",
                 new_identifier=assignee.id,
+                old_identifier=None,
                 epoch=epoch,
             )
         )
@@ -433,14 +434,15 @@ def track_assignees(
             IssueActivity(
                 issue_id=issue_id,
                 actor_id=actor_id,
-                verb="updated",
+                verb="unassigned",
                 old_value=assignee.display_name,
                 new_value="",
                 field="assignees",
                 project_id=project_id,
                 workspace_id=workspace_id,
-                comment="removed assignee ",
+                comment=f"담당자에서 '{assignee.display_name}' 님을 제외했습니다.",
                 old_identifier=assignee.id,
+                new_identifier=None,
                 epoch=epoch,
             )
         )
