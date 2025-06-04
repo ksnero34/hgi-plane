@@ -1739,6 +1739,22 @@ def create_intake_activity(
         )
 
 
+# 핸들러 함수 추가
+def handle_bulk_notify_activity(
+    requested_data,
+    current_instance,
+    issue_id,
+    project_id,
+    workspace_id,
+    actor_id,
+    issue_activities,
+    epoch,
+):
+    # 이 함수는 실제 활동을 생성하지 않습니다.
+    # 알림을 위한 활동 데이터는 requested_data에 이미 직렬화되어 전달됩니다.
+    pass
+
+
 # Receive message from room group
 @shared_task
 def issue_activity(
@@ -1753,6 +1769,7 @@ def issue_activity(
     notification=False,
     origin=None,
     intake=None,
+    create_activity_record=True,
 ):
     try:
         issue_activities = []
@@ -1805,6 +1822,7 @@ def issue_activity(
             "issue_draft.activity.updated": update_draft_issue_activity,
             "issue_draft.activity.deleted": delete_draft_issue_activity,
             "intake.activity.created": create_intake_activity,
+            "issue.activity.bulk_notify": handle_bulk_notify_activity, # 새 핸들러 매핑
         }
 
         func = ACTIVITY_MAPPER.get(type)
@@ -1820,59 +1838,82 @@ def issue_activity(
                 epoch=epoch,
             )
 
-        # Save all the values to database
-        issue_activities_created = IssueActivity.objects.bulk_create(issue_activities)
-        # Post the updates to segway for integrations and webhooks
-        if len(issue_activities_created):
-            for activity in issue_activities_created:
+        issue_activities_created = []
+        if create_activity_record:
+            if issue_activities:
+                issue_activities_created = IssueActivity.objects.bulk_create(issue_activities)
+        
+        if issue_activities_created:
+            for activity_obj in issue_activities_created:
                 webhook_activity.delay(
                     event=(
                         "issue_comment"
-                        if activity.field == "comment"
+                        if activity_obj.field == "comment"
                         else "intake_issue"
                         if intake
                         else "issue"
                     ),
                     event_id=(
-                        activity.issue_comment_id
-                        if activity.field == "comment"
+                        activity_obj.issue_comment_id
+                        if activity_obj.field == "comment"
                         else intake
                         if intake
-                        else activity.issue_id
+                        else activity_obj.issue_id
                     ),
-                    verb=activity.verb,
+                    verb=activity_obj.verb,
                     field=(
-                        "description" if activity.field == "comment" else activity.field
+                        "description" if activity_obj.field == "comment" else activity_obj.field
                     ),
                     old_value=(
-                        activity.old_value if activity.old_value != "" else None
+                        activity_obj.old_value if activity_obj.old_value != "" else None
                     ),
                     new_value=(
-                        activity.new_value if activity.new_value != "" else None
+                        activity_obj.new_value if activity_obj.new_value != "" else None
                     ),
-                    actor_id=activity.actor_id,
+                    actor_id=activity_obj.actor_id,
                     current_site=origin,
-                    slug=activity.workspace.slug,
-                    old_identifier=activity.old_identifier,
-                    new_identifier=activity.new_identifier,
+                    slug=project.workspace.slug,
+                    old_identifier=activity_obj.old_identifier,
+                    new_identifier=activity_obj.new_identifier,
                 )
 
         if notification:
+            serialized_payload = None
+            request_data_for_notification = requested_data
+            current_instance_for_notification = current_instance
+
+            if type == "issue.activity.bulk_notify":
+                # type이 bulk_notify인 경우, requested_data는 이미 직렬화된 활동 목록임
+                serialized_payload = requested_data
+                request_data_for_notification = None # 중복 전달 방지
+                current_instance_for_notification = None # 중복 전달 방지
+            else:
+                activities_for_notification_payload = []
+                if issue_activities_created: # 이 태스크 실행으로 DB에 생성된 활동이 있는 경우
+                    activities_for_notification_payload = issue_activities_created
+                elif not create_activity_record and issue_activities: # DB에 생성은 안했지만, issue_activities 리스트가 채워진 경우
+                    activities_for_notification_payload = issue_activities
+                
+                if activities_for_notification_payload:
+                    serialized_payload = json.dumps(
+                        IssueActivitySerializer(activities_for_notification_payload, many=True).data,
+                        cls=DjangoJSONEncoder,
+                    )
+                else:
+                    serialized_payload = json.dumps([])
+
             notifications.delay(
                 type=type,
                 issue_id=issue_id,
                 actor_id=actor_id,
                 project_id=project_id,
                 subscriber=subscriber,
-                issue_activities_created=json.dumps(
-                    IssueActivitySerializer(issue_activities_created, many=True).data,
-                    cls=DjangoJSONEncoder,
-                ),
-                requested_data=requested_data,
-                current_instance=current_instance,
+                issue_activities_created=serialized_payload, # 실제로는 알림을 위한 직렬화된 페이로드
+                requested_data=request_data_for_notification,
+                current_instance=current_instance_for_notification,
             )
 
         return
     except Exception as e:
-        log_exception(e)
+        print(f"Error in issue_activity task: {e}")
         return

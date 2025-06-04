@@ -396,19 +396,36 @@ const activityDetails: {
 } = {
   assignees: {
     message: (activity, showIssue) => {
-      if (activity.old_value === "")
+      let isAddOperation = false;
+      let isRemoveOperation = false;
+
+      if (activity.verb === "assigned") {
+        isAddOperation = true;
+      } else if (activity.verb === "unassigned") {
+        isRemoveOperation = true;
+      } else if (activity.verb === "updated") {
+        // 단일 이슈 업데이트 (track_assignees)의 경우 verb가 "updated"로 설정됨
+        if (activity.old_value === "" && activity.new_value !== "") {
+          isAddOperation = true; // old_value가 비어있고 new_value가 있으면 추가로 간주
+        } else if (activity.old_value !== "" && activity.new_value === "") {
+          isRemoveOperation = true; // old_value가 있고 new_value가 비어있으면 제거로 간주
+        }
+      }
+
+      if (isAddOperation) {
         return (
           <>
             새로운 담당자 <UserLink activity={activity} />
             {showIssue && (
               <>
                 {" "}
-                님 을 <IssueLink activity={activity} /> 에 추가했습니다.
+                님을 <IssueLink activity={activity} /> 에 추가했습니다.
               </>
             )}
+            {!showIssue && " 님을 추가했습니다."}
           </>
         );
-      else
+      } else if (isRemoveOperation) {
         return (
           <>
             담당자 <UserLink activity={activity} />
@@ -418,8 +435,23 @@ const activityDetails: {
                 님을 <IssueLink activity={activity} /> 에서 제외했습니다.
               </>
             )}
+            {!showIssue && " 님을 제외했습니다."}
           </>
         );
+      }
+      
+      // 위의 조건에 해당하지 않거나, "updated" verb가 명확한 추가/제거 패턴이 아닌 경우
+      return (
+        <>
+          담당자 정보가 <UserLink activity={activity} /> (으)로 변경되었습니다.
+          {showIssue && (
+            <>
+              {" "}
+              <IssueLink activity={activity} /> 에서
+            </>
+          )}
+        </>
+      );
     },
     icon: <Users2Icon size={12} className="text-custom-text-200" aria-hidden="true" />,
   },

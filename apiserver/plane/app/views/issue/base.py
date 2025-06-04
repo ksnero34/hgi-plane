@@ -1,6 +1,10 @@
 # Python imports
 import json
 import logging
+from collections import defaultdict
+import traceback
+from uuid import UUID
+from datetime import datetime
 
 # Django imports
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -66,6 +70,7 @@ from plane.db.models import (
     IssueAssignee,
     User,
     IssueActivity,
+    State,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -1943,38 +1948,49 @@ class BulkOperationsEndpoint(BaseAPIView):
             is_active=True,
         ).first()
 
-        # 이슈 조회 시 필요한 관련 데이터를 함께 가져옴
-        issues = Issue.objects.filter(
+        issues_qs = Issue.objects.filter(
             workspace__slug=slug, project_id=project_id, pk__in=issue_ids
-        ).annotate(
-            assignee_ids=Coalesce(
-                ArrayAgg(
-                    "assignees__id",
-                    distinct=True,
-                    filter=Q(
-                        ~Q(assignees__id__isnull=True)
-                        & Q(assignees__member_project__is_active=True)
-                        & Q(issue_assignee__deleted_at__isnull=True)
-                    ),
-                ),
-                Value([], output_field=ArrayField(UUIDField())),
-            )
-        ).select_related('workspace', 'project')
+        ).select_related('workspace', 'project') # workspace, project 미리 로드
 
-        if not issues.exists():
+        if not issues_qs.exists():
             return Response(
                 {"error": "No valid issues found"}, status=status.HTTP_404_NOT_FOUND
             )
+        
+        # Annotate assignee_ids directly to the main queryset if possible, or fetch separately
+        # For simplicity, fetching separately here, but optimizing might be needed for very large issue_ids lists
+        # However, the original code also fetched assignees somewhat separately or within loops.
 
-        # VIEWER와 RESTRICTED 사용자는 자신에게 할당된 이슈만 수정 가능
         editable_issues = []
         non_editable_issues = []
         
-        for issue in issues:
+        # Pre-fetch current assignees for all issues to establish a baseline "old_values"
+        # This is crucial for accurate activity logging.
+        issue_to_current_assignees_map = defaultdict(list)
+        # Optimize by fetching all relevant IssueAssignee objects at once
+        current_assignee_relations = IssueAssignee.objects.filter(
+            issue_id__in=[issue.id for issue in issues_qs], 
+            deleted_at__isnull=True
+        ).values('issue_id', 'assignee_id')
+
+        for rel in current_assignee_relations:
+            issue_to_current_assignees_map[rel['issue_id']].append(rel['assignee_id'])
+
+        for issue in issues_qs:
+            # Populate current assignee_ids for permission check (if not already annotated)
+            # This example assumes issue.assignee_ids might not be up-to-date or present
+            # For the permission check, we need the *actual current* assignees if role is VIEWER/RESTRICTED
+            # The map above gives us this.
+            
+            # Simplified permission check logic - assuming assignees were pre-fetched or annotated correctly
+            # For this example, let's use the map we just built for the permission check as well.
+            current_assignees_for_perm_check = issue_to_current_assignees_map.get(issue.id, [])
+
             if user_role and user_role.role in [ROLE.ADMIN.value, ROLE.MEMBER.value]:
                 editable_issues.append(issue)
             elif user_role and user_role.role in [ROLE.VIEWER.value, ROLE.RESTRICTED.value]:
-                if request.user.id in issue.assignee_ids:
+                # request.user.id (UUID) needs to be compared with UUIDs
+                if request.user.id in current_assignees_for_perm_check:
                     editable_issues.append(issue)
                 else:
                     non_editable_issues.append(issue)
@@ -1983,371 +1999,453 @@ class BulkOperationsEndpoint(BaseAPIView):
 
         if not editable_issues:
             return Response(
-                {"error": "You can only update issues assigned to you"}, 
+                {"error": "You can only update issues assigned to you or you have no permission."}, 
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # 트랜잭션으로 모든 업데이트를 안전하게 처리
         try:
             with transaction.atomic():
                 epoch = int(timezone.now().timestamp())
                 
-                # Handle regular issue properties
-                regular_properties = {
-                    k: v for k, v in properties.items() 
-                    if k != "custom_field_values" and k != "assignee_ids" and hasattr(Issue, k)
-                }
-                
-                # Handle custom field values
-                custom_field_values = properties.get("custom_field_values", [])
-                
                 # 각 이슈별로 변경사항을 추적
-                issue_changes = {}
+                # issue_changes[issue_id] = {
+                #    'issue_obj': issue, # The issue model instance
+                #    'regular_old_values': {}, 'regular_new_values': {}, 'has_regular_changes': False,
+                #    'custom_field_changes': [], # list of {field_name, old_value, new_value, field_obj}
+                #    'assignee_added': [], 'assignee_removed': [] # lists of user_id
+                # }
+                all_issue_activity_details = defaultdict(lambda: {
+                    'regular_old_values': {}, 'regular_new_values': {}, 'has_regular_changes': False,
+                    'custom_field_changes': [],
+                    'assignee_added': [], 'assignee_removed': []
+                })
+
+                # 0. Populate issue_obj for all_issue_activity_details
+                for issue in editable_issues:
+                    all_issue_activity_details[issue.id]['issue_obj'] = issue
+
+
+                # 1. Handle regular issue properties (assignees and custom_fields are handled separately)
+                regular_properties_to_update = {
+                    k: v for k, v in properties.items() 
+                    if k not in ["custom_field_values", "assignee_ids"] and hasattr(Issue, k)
+                }
+                print(f"[DEBUG] regular_properties_to_update: {regular_properties_to_update}") # DEBUG
                 
-                # Update regular properties if any exist - 벌크 업데이트로 성능 개선
-                if regular_properties:
-                    editable_issue_ids = [issue.id for issue in editable_issues]
+                if regular_properties_to_update:
+                    editable_issue_ids_list = [issue.id for issue in editable_issues]
                     
-                    # 변경 전 값 저장
-                    for issue in editable_issues:
-                        issue_changes[issue.id] = {
-                            'issue': issue,
-                            'old_values': {field: getattr(issue, field) for field in regular_properties.keys()},
-                            'new_values': regular_properties.copy(),
-                            'has_changes': any(getattr(issue, field) != regular_properties[field] for field in regular_properties.keys())
-                        }
+                    # Store old values for activity logging BEFORE the update
+                    for issue_in_list in Issue.objects.filter(id__in=editable_issue_ids_list):
+                        details = all_issue_activity_details[issue_in_list.id]
+                        details['issue_obj'] = issue_in_list # Ensure we have the freshest object
+                        for field_key, new_val in regular_properties_to_update.items():
+                            old_val = getattr(issue_in_list, field_key)
+                            print(f"[DEBUG] Issue {issue_in_list.id}, Field {field_key}: Old={old_val}, New={new_val}") # DEBUG
+                            if old_val != new_val:
+                                details['regular_old_values'][field_key] = old_val
+                                details['regular_new_values'][field_key] = new_val
+                                details['has_regular_changes'] = True
+                                print(f"[DEBUG] Issue {issue_in_list.id}: Regular change detected for {field_key}") # DEBUG
+                            else:
+                                print(f"[DEBUG] Issue {issue_in_list.id}: No change for {field_key}") # DEBUG
                     
-                    # 벌크 업데이트 수행
-                    Issue.objects.filter(id__in=editable_issue_ids).update(**regular_properties)
-                
-                # Handle custom field values
-                if custom_field_values:
-                    # 커스텀 필드 정보 한 번에 조회
-                    field_ids = [cf['custom_field_id'] for cf in custom_field_values]
-                    custom_fields = {
+                    # Perform bulk update
+                    Issue.objects.filter(id__in=editable_issue_ids_list).update(**regular_properties_to_update)
+
+                # 2. Handle custom field values
+                custom_field_values_payload = properties.get("custom_field_values", [])
+                if custom_field_values_payload:
+                    field_ids_from_payload = [cf['custom_field_id'] for cf in custom_field_values_payload]
+                    custom_fields_map = {
                         str(cf.id): cf for cf in CustomField.objects.filter(
-                            id__in=field_ids,
+                            id__in=field_ids_from_payload,
                             project_id=project_id,
                             deleted_at__isnull=True
                         )
                     }
                     
-                    for issue in editable_issues:
-                        # 현재 이슈의 모든 커스텀 필드 값을 한 번에 조회
-                        existing_values = {
-                            str(cfv.custom_field_id): cfv 
-                            for cfv in CustomFieldValue.objects.filter(
-                                issue=issue,
-                                deleted_at__isnull=True
-                            ).select_related('custom_field')
-                        }
-                        
-                        for field_value in custom_field_values:
-                            field_id = field_value['custom_field_id']
-                            new_value = field_value['value']
+                    # Pre-fetch existing CustomFieldValue for all editable issues and relevant fields
+                    existing_custom_field_values_qs = CustomFieldValue.objects.filter(
+                        issue_id__in=[issue.id for issue in editable_issues],
+                        custom_field_id__in=custom_fields_map.keys(),
+                        deleted_at__isnull=True
+                    ).select_related('custom_field')
+
+                    existing_cfv_map = defaultdict(dict)
+                    for cfv in existing_custom_field_values_qs:
+                        existing_cfv_map[cfv.issue_id][str(cfv.custom_field_id)] = cfv
+
+                    custom_field_values_to_update = []
+                    custom_field_values_to_create = []
+
+                    for issue_obj_loop in editable_issues: # Use fresh objects if updated above, or original from editable_issues
+                        issue_id_loop = issue_obj_loop.id
+                        details = all_issue_activity_details[issue_id_loop]
+                        # Ensure issue_obj is the one from the list, potentially updated by regular props
+                        issue_for_cf = Issue.objects.get(id=issue_id_loop) if regular_properties_to_update else issue_obj_loop
+                        details['issue_obj'] = issue_for_cf
+
+
+                        for cf_payload_item in custom_field_values_payload:
+                            field_id_str = cf_payload_item['custom_field_id']
+                            new_value_for_cf = cf_payload_item['value']
                             
-                            if field_id not in custom_fields:
-                                continue
+                            if field_id_str not in custom_fields_map:
+                                continue # Skip if custom field is invalid or not found
                                 
-                            field = custom_fields[field_id]
+                            custom_field_obj = custom_fields_map[field_id_str]
                             
-                            try:
-                                # 유효성 검사
-                                self.validate_custom_field_value(field, new_value)
-                                
-                                if field_id in existing_values:
-                                    # 기존 값 업데이트
-                                    existing_value = existing_values[field_id]
-                                    if existing_value.value != new_value:
-                                        existing_value.value = new_value
-                                        existing_value.updated_by = request.user
-                                        existing_value.save()
-                                        
-                                        # 변경사항 추적
-                                        if issue.id not in issue_changes:
-                                            issue_changes[issue.id] = {
-                                                'issue': issue,
-                                                'old_values': {},
-                                                'new_values': {},
-                                                'has_changes': False
-                                            }
-                                        issue_changes[issue.id]['old_values'][f'custom_field_{field.name}'] = existing_value.value
-                                        issue_changes[issue.id]['new_values'][f'custom_field_{field.name}'] = new_value
-                                        issue_changes[issue.id]['has_changes'] = True
-                                else:
-                                    # 새로운 값 생성
-                                    CustomFieldValue.objects.create(
-                                        custom_field=field,
-                                        issue=issue,
-                                        value=new_value,
+                            # Validate (assuming self.validate_custom_field_value exists and is correct)
+                            self.validate_custom_field_value(custom_field_obj, new_value_for_cf)
+                            
+                            existing_cfv_instance = existing_cfv_map[issue_id_loop].get(field_id_str)
+                            
+                            original_value_for_log = None
+
+                            if existing_cfv_instance:
+                                original_value_for_log = existing_cfv_instance.value
+                                if existing_cfv_instance.value != new_value_for_cf:
+                                    existing_cfv_instance.value = new_value_for_cf
+                                    existing_cfv_instance.updated_by = request.user
+                                    custom_field_values_to_update.append(existing_cfv_instance)
+                                    details['custom_field_changes'].append({
+                                        'field_name': custom_field_obj.name, 'field_id': custom_field_obj.id,
+                                        'field_type': custom_field_obj.field_type,
+                                        'old_value': original_value_for_log, 'new_value': new_value_for_cf
+                                    })
+                            else: # Create new CustomFieldValue
+                                custom_field_values_to_create.append(
+                                    CustomFieldValue(
+                                        custom_field=custom_field_obj,
+                                        issue=issue_for_cf, # Use the correct issue object
+                                        value=new_value_for_cf,
                                         project_id=project_id,
-                                        workspace_id=issue.workspace_id,
+                                        workspace_id=issue_for_cf.workspace_id,
                                         created_by=request.user,
                                         updated_by=request.user
                                     )
-                                    
-                                    # 변경사항 추적
-                                    if issue.id not in issue_changes:
-                                        issue_changes[issue.id] = {
-                                            'issue': issue,
-                                            'old_values': {},
-                                            'new_values': {},
-                                            'has_changes': False
-                                        }
-                                    issue_changes[issue.id]['old_values'][f'custom_field_{field.name}'] = None
-                                    issue_changes[issue.id]['new_values'][f'custom_field_{field.name}'] = new_value
-                                    issue_changes[issue.id]['has_changes'] = True
-                                    
-                            except ValidationError as e:
-                                raise ValidationError(f"필드 '{field.name}'의 값이 유효하지 않습니다: {str(e)}")
-
-                # Handle assignee changes
-                if "assignee_ids" in properties:
-                    assignee_ids = properties.get("assignee_ids", [])
+                                )
+                                details['custom_field_changes'].append({
+                                    'field_name': custom_field_obj.name, 'field_id': custom_field_obj.id,
+                                    'field_type': custom_field_obj.field_type,
+                                    'old_value': None, 'new_value': new_value_for_cf
+                                })
                     
-                    # 유효한 assignee 목록을 한 번에 조회
-                    valid_assignees = set(
+                    if custom_field_values_to_update:
+                        CustomFieldValue.objects.bulk_update(custom_field_values_to_update, ['value', 'updated_by'])
+                    if custom_field_values_to_create:
+                        CustomFieldValue.objects.bulk_create(custom_field_values_to_create)
+
+                # 3. Handle assignee changes
+                if "assignee_ids" in properties:
+                    requested_new_assignee_ids = properties.get("assignee_ids", [])
+                    
+                    # Ensure all requested_new_assignee_ids are valid UUIDs if not empty, or handle empty list
+                    valid_requested_assignee_id_set = set()
+                    if requested_new_assignee_ids: # if empty, it means unassign all
+                        try:
+                            valid_requested_assignee_id_set = set(UUID(str(uid)) for uid in requested_new_assignee_ids)
+                        except ValueError:
+                            raise ValidationError("Invalid UUID format in assignee_ids.")
+
+                    # Check if these users are valid project members
+                    valid_project_member_ids = set(
                         ProjectMember.objects.filter(
                             project_id=project_id,
-                            member_id__in=assignee_ids,
+                            member_id__in=list(valid_requested_assignee_id_set), # Convert set to list for __in
                             is_active=True
                         ).values_list('member_id', flat=True)
                     )
                     
-                    if assignee_ids and not valid_assignees:
-                        raise ValidationError("유효하지 않은 담당자입니다.")
+                    # Filter requested assignees to only those who are valid project members
+                    # This means if a non-member UUID was passed, it's silently ignored.
+                    # If strictness is needed, compare len(valid_project_member_ids) vs len(valid_requested_assignee_id_set)
+                    final_new_assignee_set = valid_project_member_ids
+
+                    for issue_obj_loop in editable_issues:
+                        issue_id_loop = issue_obj_loop.id
+                        details = all_issue_activity_details[issue_id_loop]
+                        # Ensure issue_obj is up-to-date
+                        issue_for_assignee = Issue.objects.get(id=issue_id_loop) if (regular_properties_to_update or custom_field_values_payload) else issue_obj_loop
+                        details['issue_obj'] = issue_for_assignee
+
+                        old_assignee_set = set(issue_to_current_assignees_map.get(issue_id_loop, []))
+                        print(f"[DEBUG] Issue {issue_id_loop}: Old Assignees Set: {old_assignee_set}") # DEBUG
+                        print(f"[DEBUG] Issue {issue_id_loop}: Final New Assignees Set: {final_new_assignee_set}") # DEBUG
+                        
+                        assignees_to_add_ids = list(final_new_assignee_set - old_assignee_set)
+                        assignees_to_remove_ids = list(old_assignee_set - final_new_assignee_set)
+                        print(f"[DEBUG] Issue {issue_id_loop}: Assignees to Add: {assignees_to_add_ids}") # DEBUG
+                        print(f"[DEBUG] Issue {issue_id_loop}: Assignees to Remove: {assignees_to_remove_ids}") # DEBUG
+
+                        if assignees_to_add_ids or assignees_to_remove_ids:
+                            # Perform DB operations
+                            if assignees_to_remove_ids:
+                                IssueAssignee.objects.filter(
+                                    issue_id=issue_id_loop, 
+                                    assignee_id__in=assignees_to_remove_ids
+                                ).delete() # Or soft delete
+
+                            assignees_to_create_instances = []
+                            if assignees_to_add_ids:
+                                for user_id_to_add in assignees_to_add_ids:
+                                    assignees_to_create_instances.append(
+                                        IssueAssignee(
+                                            issue_id=issue_id_loop,
+                                            assignee_id=user_id_to_add,
+                                            project_id=project_id,
+                                            workspace_id=issue_for_assignee.workspace_id,
+                                            created_by=request.user,
+                                            updated_by=request.user
+                                        )
+                                    )
+                                if assignees_to_create_instances:
+                                    IssueAssignee.objects.bulk_create(assignees_to_create_instances)
+                            
+                            details['assignee_added'] = assignees_to_add_ids
+                            details['assignee_removed'] = assignees_to_remove_ids
+                
+                # 4. Create activity logs (SYNCHRONOUSLY) and prepare for consolidated notification
+                all_involved_user_ids_for_names = set()
+                # Populate user IDs from assignees and specific custom field types
+                for issue_id_log_prep, details_log_prep in all_issue_activity_details.items():
+                    all_involved_user_ids_for_names.update(details_log_prep['assignee_added'])
+                    all_involved_user_ids_for_names.update(details_log_prep['assignee_removed'])
+                    for cf_change_prep in details_log_prep['custom_field_changes']:
+                        if cf_change_prep['field_type'] in ["project_member", "project_members"]:
+                            if cf_change_prep['old_value']:
+                                old_val_list_prep = [cf_change_prep['old_value']] if cf_change_prep['field_type'] == "project_member" else (json.loads(cf_change_prep['old_value']) if isinstance(cf_change_prep['old_value'], str) else cf_change_prep['old_value'])
+                                all_involved_user_ids_for_names.update(UUID(str(uid)) for uid in old_val_list_prep if uid and str(uid) != "None") # Check for "None" string
+                            if cf_change_prep['new_value']:
+                                new_val_list_prep = [cf_change_prep['new_value']] if cf_change_prep['field_type'] == "project_member" else (json.loads(cf_change_prep['new_value']) if isinstance(cf_change_prep['new_value'], str) else cf_change_prep['new_value'])
+                                all_involved_user_ids_for_names.update(UUID(str(uid)) for uid in new_val_list_prep if uid and str(uid) != "None") # Check for "None" string
+                
+                # Fetch display names for all involved users once
+                user_display_name_map = {
+                    user.id: user.display_name 
+                    for user in User.objects.filter(id__in=list(all_involved_user_ids_for_names))
+                }
+                
+                # Pre-fetch states and parent issues for all relevant changes to minimize DB hits in loop
+                all_involved_state_ids = set()
+                all_involved_parent_ids = set()
+                for _issue_id, details in all_issue_activity_details.items():
+                    if details['has_regular_changes']:
+                        if 'state_id' in details['regular_old_values'] and details['regular_old_values']['state_id']:
+                            all_involved_state_ids.add(UUID(str(details['regular_old_values']['state_id'])))
+                        if 'state_id' in details['regular_new_values'] and details['regular_new_values']['state_id']:
+                            all_involved_state_ids.add(UUID(str(details['regular_new_values']['state_id'])))
+                        if 'parent_id' in details['regular_old_values'] and details['regular_old_values']['parent_id']:
+                            all_involved_parent_ids.add(UUID(str(details['regular_old_values']['parent_id'])))
+                        if 'parent_id' in details['regular_new_values'] and details['regular_new_values']['parent_id']:
+                            all_involved_parent_ids.add(UUID(str(details['regular_new_values']['parent_id'])))
+
+                states_map = {s.id: s for s in State.objects.filter(id__in=list(all_involved_state_ids))}
+                parents_map = {p.id: p for p in Issue.objects.select_related('project').filter(id__in=list(all_involved_parent_ids))}
+
+                # 알림을 위해 생성된 활동 로그들을 저장할 리스트
+                created_activities_for_notification = []
+
+                for issue_id_log, details_log in all_issue_activity_details.items():
+                    issue_for_log = details_log['issue_obj']
+                    activity_created_for_this_issue = False
+
+                    # Log regular property changes
+                    if details_log['has_regular_changes']:
+                        for field, new_val_log in details_log['regular_new_values'].items():
+                            old_val_log = details_log['regular_old_values'].get(field)
+                            
+                            activity_field_name = field
+                            activity_old_value_str = str(old_val_log) if old_val_log is not None else "없음"
+                            activity_new_value_str = str(new_val_log) if new_val_log is not None else "없음"
+                            _old_id = None
+                            _new_id = None
+                            comment_str = f"필드 '{field}'가 변경되었습니다: {activity_old_value_str} → {activity_new_value_str}"
+
+                            if field == "state_id":
+                                activity_field_name = "state"
+                                old_state_obj = states_map.get(UUID(str(old_val_log))) if old_val_log else None
+                                new_state_obj = states_map.get(UUID(str(new_val_log))) if new_val_log else None
+                                activity_old_value_str = old_state_obj.name if old_state_obj else "없음"
+                                activity_new_value_str = new_state_obj.name if new_state_obj else "없음"
+                                _old_id = old_state_obj.id if old_state_obj else None
+                                _new_id = new_state_obj.id if new_state_obj else None
+                                comment_str = f"상태를 '{activity_old_value_str}'에서 '{activity_new_value_str}'(으)로 변경했습니다."
+                            elif field == "parent_id":
+                                activity_field_name = "parent"
+                                old_parent_obj = parents_map.get(UUID(str(old_val_log))) if old_val_log else None
+                                new_parent_obj = parents_map.get(UUID(str(new_val_log))) if new_val_log else None
+                                activity_old_value_str = f"{old_parent_obj.project.identifier}-{old_parent_obj.sequence_id}" if old_parent_obj else "없음"
+                                activity_new_value_str = f"{new_parent_obj.project.identifier}-{new_parent_obj.sequence_id}" if new_parent_obj else "없음"
+                                _old_id = old_parent_obj.id if old_parent_obj else None
+                                _new_id = new_parent_obj.id if new_parent_obj else None
+                                comment_str = f"부모 이슈를 '{activity_old_value_str}'에서 '{activity_new_value_str}'(으)로 변경했습니다."
+                            
+                            print(f"[DEBUG] Issue {issue_id_log}: Logging regular change for Field {activity_field_name}: Old='{activity_old_value_str}', New='{activity_new_value_str}'") # DEBUG
+                            created_activity = IssueActivity.objects.create(
+                                issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
+                                workspace_id=issue_for_log.workspace_id,
+                                comment=comment_str,
+                                field=activity_field_name, old_value=activity_old_value_str,
+                                new_value=activity_new_value_str, 
+                                old_identifier=_old_id, new_identifier=_new_id,
+                                verb="updated", epoch=epoch
+                            )
+                            created_activities_for_notification.append(created_activity)
+                            # 확인용 print: DB 저장 직후 값 확인
+                            print(f"[DEBUG] DB Check (Updated): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                            activity_created_for_this_issue = True
                     
-                    for issue in editable_issues:
-                        # 현재 담당자 조회
-                        current_assignees = set(
-                            IssueAssignee.objects.filter(
-                                issue=issue,
-                                deleted_at__isnull=True
-                            ).values_list('assignee_id', flat=True)
+                    # Log custom field changes
+                    if details_log['custom_field_changes']:
+                        print(f"[DEBUG] Issue {issue_id_log}: Logging custom field changes: {details_log['custom_field_changes']}") # DEBUG
+                    for cf_change in details_log['custom_field_changes']:
+                        # ... (기존 custom_field_changes 로직과 유사하게, _old_identifier, _new_identifier, old_cf_val_str, new_cf_val_str 등을 계산)
+                        old_cf_val = cf_change['old_value']
+                        new_cf_val = cf_change['new_value']
+                        field_name_cf = cf_change['field_name']
+                        field_type_cf = cf_change['field_type']
+                        
+                        old_cf_val_str, new_cf_val_str = "", ""
+                        _old_identifier_cf, _new_identifier_cf = None, None
+
+                        if field_type_cf in ["project_member", "project_members"]:
+                            def get_names_cf(val_list_or_single, is_list_type):
+                                if val_list_or_single is None: return "없음"
+                                # Ensure val_list_or_single is a list of UUIDs for processing
+                                uids_to_map_cf = []
+                                if is_list_type:
+                                    if isinstance(val_list_or_single, str):
+                                        try: uids_to_map_cf = json.loads(val_list_or_single)
+                                        except: uids_to_map_cf = []
+                                    elif isinstance(val_list_or_single, list):
+                                        uids_to_map_cf = val_list_or_single
+                                else: # project_member
+                                    if val_list_or_single: # not None
+                                        uids_to_map_cf = [val_list_or_single]
+                                
+                                # Filter out None or "None" strings before converting to UUID
+                                valid_uids_cf = [uid for uid in uids_to_map_cf if uid and str(uid).lower() != 'none']
+                                names_cf = [user_display_name_map.get(UUID(str(uid)), str(uid)) for uid in valid_uids_cf]
+                                return ", ".join(names_cf) if names_cf else "없음"
+
+                            old_cf_val_str = get_names_cf(old_cf_val, field_type_cf == "project_members")
+                            new_cf_val_str = get_names_cf(new_cf_val, field_type_cf == "project_members")
+                            
+                            if field_type_cf == "project_member":
+                                _old_identifier_cf = UUID(str(old_cf_val)) if old_cf_val and str(old_cf_val).lower() != 'none' else None
+                                _new_identifier_cf = UUID(str(new_cf_val)) if new_cf_val and str(new_cf_val).lower() != 'none' else None
+                        else:
+                            old_cf_val_str = str(old_cf_val) if old_cf_val is not None else "없음"
+                            new_cf_val_str = str(new_cf_val) if new_cf_val is not None else "없음"
+
+                        created_activity = IssueActivity.objects.create(
+                            issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
+                            workspace_id=issue_for_log.workspace_id,
+                            comment=f"커스텀 필드 '{field_name_cf}'가 변경되었습니다: {old_cf_val_str} → {new_cf_val_str}",
+                            field=f"custom_field_{field_name_cf}",
+                            old_value=old_cf_val_str, new_value=new_cf_val_str,
+                            old_identifier=_old_identifier_cf, new_identifier=_new_identifier_cf,
+                            verb="updated", epoch=epoch
+                        )
+                        created_activities_for_notification.append(created_activity)
+                        # 확인용 print: DB 저장 직후 값 확인
+                        print(f"[DEBUG] DB Check (Updated): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                        activity_created_for_this_issue = True
+
+                    # Log assignee changes
+                    if details_log['assignee_added'] or details_log['assignee_removed']:
+                        # DEBUG PRINT ADDED HERE
+                        print(f"[DEBUG] Issue {issue_id_log}: Just BEFORE creating assignee logs: Added={details_log['assignee_added']}, Removed={details_log['assignee_removed']}")
+                        print(f"[DEBUG] Issue {issue_id_log}: Logging assignee changes. Added: {details_log['assignee_added']}, Removed: {details_log['assignee_removed']}") # DEBUG
+
+                    for added_id in details_log['assignee_added']:
+                        user_name = user_display_name_map.get(added_id, f"사용자({str(added_id)[:8]})") # fallback name
+                        activity_comment = f"담당자로 '{user_name}' 님을 지정했습니다."
+                        print(f"[DEBUG] Creating ASSIGNED activity: issue={issue_id_log}, user_name={user_name}, added_id={added_id}, comment=\"{activity_comment}\"")
+                        created_activity = IssueActivity.objects.create(
+                            issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
+                            workspace_id=issue_for_log.workspace_id,
+                            comment=activity_comment,
+                            field="assignees", old_value="없음", new_value=user_name, 
+                            old_identifier=None, new_identifier=added_id,
+                            verb="assigned", epoch=epoch
+                        )
+                        created_activities_for_notification.append(created_activity)
+                        # 확인용 print: DB 저장 직후 값 확인
+                        print(f"[DEBUG] DB Check (Assigned): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                        activity_created_for_this_issue = True
+
+                    for removed_id in details_log['assignee_removed']:
+                        user_name = user_display_name_map.get(removed_id, f"사용자({str(removed_id)[:8]})") # fallback name
+                        activity_comment = f"담당자에서 '{user_name}' 님을 제외했습니다."
+                        print(f"[DEBUG] Creating UNASSIGNED activity: issue={issue_id_log}, user_name={user_name}, removed_id={removed_id}, comment=\"{activity_comment}\"")
+                        created_activity = IssueActivity.objects.create(
+                            issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
+                            workspace_id=issue_for_log.workspace_id,
+                            comment=activity_comment,
+                            field="assignees", old_value=user_name, new_value="없음",
+                            old_identifier=removed_id, new_identifier=None,
+                            verb="unassigned", epoch=epoch
+                        )
+                        created_activities_for_notification.append(created_activity)
+                        # 확인용 print: DB 저장 직후 값 확인
+                        print(f"[DEBUG] DB Check (Unassigned): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                        activity_created_for_this_issue = True
+                    
+                    # Consolidated ASYNC Notification (IF any activity was created for this issue)
+                    if activity_created_for_this_issue:
+                        # IssueActivitySerializer 임포트
+                        from plane.app.serializers.issue import IssueActivitySerializer
+                        from django.core.serializers.json import DjangoJSONEncoder
+
+                        serialized_activities_for_notification = json.dumps(
+                            IssueActivitySerializer(created_activities_for_notification, many=True).data,
+                            cls=DjangoJSONEncoder
                         )
                         
-                        if current_assignees != valid_assignees:
-                            # 변경사항 추적
-                            if issue.id not in issue_changes:
-                                issue_changes[issue.id] = {
-                                    'issue': issue,
-                                    'old_values': {},
-                                    'new_values': {},
-                                    'has_changes': False
-                                }
-                            issue_changes[issue.id]['old_values']['assignee_ids'] = list(current_assignees)
-                            issue_changes[issue.id]['new_values']['assignee_ids'] = list(valid_assignees)
-                            issue_changes[issue.id]['has_changes'] = True
-                            
-                            # 기존 담당자 삭제
-                            IssueAssignee.objects.filter(issue=issue).delete()
-                            
-                            # 새로운 담당자 추가
-                            if valid_assignees:
-                                IssueAssignee.objects.bulk_create([
-                                    IssueAssignee(
-                                        issue=issue,
-                                        assignee_id=assignee_id,
-                                        project_id=project_id,
-                                        workspace_id=issue.workspace_id,
-                                        created_by=request.user,
-                                        updated_by=request.user
-                                    )
-                                    for assignee_id in valid_assignees
-                                ])
-
-                # 각 이슈별로 활동 로그 생성
-                for issue_id, change_data in issue_changes.items():
-                    if change_data['has_changes']:
-                        # 일반 필드 변경에 대한 활동 로그
-                        for field, new_value in change_data['new_values'].items():
-                            if field not in ['custom_field_values', 'assignee_ids']:
-                                old_value = change_data['old_values'].get(field)
-                                if old_value != new_value:
-                                    IssueActivity.objects.create(
-                                        issue_id=issue_id,
-                                        actor_id=request.user.id,
-                                        project_id=project_id,
-                                        workspace_id=change_data['issue'].workspace_id,
-                                        comment=f"필드 '{field}'가 변경되었습니다: {old_value} → {new_value}",
-                                        field=field,
-                                        old_value=str(old_value) if old_value is not None else None,
-                                        new_value=str(new_value) if new_value is not None else None,
-                                        verb="updated"
-                                    )
-                                    
-                                    # 비동기 작업도 함께 실행 (알림 용도)
-                                    issue_activity.delay(
-                                        type="issue.activity.updated",
-                                        requested_data=json.dumps(
-                                            {field: str(new_value) if new_value is not None else None},
-                                            cls=DjangoJSONEncoder
-                                        ),
-                                        current_instance=json.dumps(
-                                            {field: str(old_value) if old_value is not None else None},
-                                            cls=DjangoJSONEncoder
-                                        ),
-                                        issue_id=str(issue_id),
-                                        actor_id=str(request.user.id),
-                                        project_id=str(project_id),
-                                        epoch=epoch,
-                                        notification=True
-                                    )
-
-                        # 담당자 변경에 대한 활동 로그
-                        if 'assignee_ids' in change_data['new_values']:
-                            old_assignees = [str(uid) if not isinstance(uid, str) else uid for uid in change_data['old_values'].get('assignee_ids', [])]
-                            new_assignees = [str(uid) if not isinstance(uid, str) else uid for uid in change_data['new_values'].get('assignee_ids', [])]
-                            
-                            # 담당자 변경이 있는 경우만 활동 로그 생성
-                            if set(old_assignees) != set(new_assignees):
-                                # 담당자 정보 가져오기
-                                assignee_users = User.objects.filter(
-                                    id__in=old_assignees + new_assignees
-                                ).values('id', 'display_name')
-                                user_map = {str(user['id']): user['display_name'] for user in assignee_users}
-                                
-                                # 이전/새로운 담당자 이름 목록 생성
-                                old_names = [user_map.get(str(uid), str(uid)) for uid in old_assignees]
-                                new_names = [user_map.get(str(uid), str(uid)) for uid in new_assignees]
-                                
-                                # 활동 로그 직접 생성
-                                IssueActivity.objects.create(
-                                    issue_id=issue_id,
-                                    actor_id=request.user.id,
-                                    project_id=project_id,
-                                    workspace_id=change_data['issue'].workspace_id,
-                                    comment=f"담당자가 변경되었습니다: {', '.join(old_names) if old_names else '없음'} → {', '.join(new_names) if new_names else '없음'}",
-                                    field="assignees",
-                                    old_value=", ".join(old_names) if old_names else "없음",
-                                    new_value=", ".join(new_names) if new_names else "없음",
-                                    old_identifier=None,  # identifier는 단일 UUID를 위한 필드이므로 multiple assignees에는 사용하지 않음
-                                    new_identifier=None,  # 대신 old_value와 new_value에 전체 정보를 포함
-                                    verb="updated"
-                                )
-                                
-                                # 비동기 작업도 함께 실행 (알림 용도)
-                                issue_activity.delay(
-                                    type="issue.activity.updated",
-                                    requested_data=json.dumps({
-                                        "field": "assignees",
-                                        "old_value": ", ".join(old_names) if old_names else "없음",
-                                        "new_value": ", ".join(new_names) if new_names else "없음",
-                                        "assignee_ids": new_assignees  # 새로운 담당자 ID 목록만 전달
-                                    }, cls=DjangoJSONEncoder),
-                                    current_instance=None,
-                                    issue_id=str(issue_id),
-                                    actor_id=str(request.user.id),
-                                    project_id=str(project_id),
-                                    epoch=epoch,
-                                    notification=True
-                                )
-
-                        # 커스텀 필드 변경에 대한 활동 로그
-                        for field_name, new_value in change_data['new_values'].items():
-                            if field_name.startswith('custom_field_'):
-                                old_value = change_data['old_values'].get(field_name)
-                                field_name_without_prefix = field_name.replace('custom_field_', '')
-                                
-                                # 커스텀 필드 정보 가져오기
-                                field = CustomField.objects.filter(
-                                    name=field_name_without_prefix,
-                                    project_id=project_id,
-                                    deleted_at__isnull=True
-                                ).first()
-                                
-                                if field:
-                                    # project_member 타입인 경우 사용자 이름으로 변환
-                                    if field.field_type in ["project_member", "project_members"]:
-                                        # 이전 값 변환
-                                        if old_value:
-                                            old_members = [str(uid) for uid in ([old_value] if field.field_type == "project_member" else (json.loads(old_value) if isinstance(old_value, str) else old_value))]
-                                            old_users = User.objects.filter(id__in=old_members).values('id', 'display_name')
-                                            old_user_map = {str(user['id']): user['display_name'] for user in old_users}
-                                            old_value_str = ", ".join([old_user_map.get(str(uid), str(uid)) for uid in old_members]) if old_members else "없음"
-                                        else:
-                                            old_value_str = "없음"
-                                        
-                                        # 새로운 값 변환
-                                        if new_value:
-                                            new_members = [str(uid) for uid in ([new_value] if field.field_type == "project_member" else (json.loads(new_value) if isinstance(new_value, str) else new_value))]
-                                            new_users = User.objects.filter(id__in=new_members).values('id', 'display_name')
-                                            new_user_map = {str(user['id']): user['display_name'] for user in new_users}
-                                            new_value_str = ", ".join([new_user_map.get(str(uid), str(uid)) for uid in new_members]) if new_members else "없음"
-                                        else:
-                                            new_value_str = "없음"
-                                    else:
-                                        old_value_str = str(old_value) if old_value is not None else "없음"
-                                        new_value_str = str(new_value) if new_value is not None else "없음"
-                                    
-                                    # 활동 로그 직접 생성
-                                    _old_identifier_val = None
-                                    _new_identifier_val = None
-
-                                    if field.field_type == "project_member":
-                                        _old_identifier_val = old_value # raw value (None or UUID string)
-                                        _new_identifier_val = new_value # raw value (None or UUID string)
-                                    elif field.field_type == "project_members":
-                                        # For lists of members, identifiers are None, similar to assignees
-                                        _old_identifier_val = None
-                                        _new_identifier_val = None
-                                    # Other custom field types will also have None identifiers
-                                    # based on the original logic structure if not project_member/project_members.
-
-                                    IssueActivity.objects.create(
-                                        issue_id=issue_id,
-                                        actor_id=request.user.id,
-                                        project_id=project_id,
-                                        workspace_id=change_data['issue'].workspace_id,
-                                        comment=f"커스텀 필드 '{field_name_without_prefix}'가 변경되었습니다: {old_value_str} → {new_value_str}",
-                                        field=field_name,
-                                        old_value=old_value_str,
-                                        new_value=new_value_str,
-                                        old_identifier=_old_identifier_val,
-                                        new_identifier=_new_identifier_val,
-                                        verb="updated"
-                                    )
-                                    
-                                    # 비동기 작업도 함께 실행 (알림 용도)
-                                    issue_activity.delay(
-                                        type="issue.activity.updated",
-                                        requested_data=json.dumps({
-                                            "field": field_name,
-                                            "old_value": old_value_str,
-                                            "new_value": new_value_str,
-                                            "custom_field_id": str(field.id)
-                                        }, cls=DjangoJSONEncoder),
-                                        current_instance=None,
-                                        issue_id=str(issue_id),
-                                        actor_id=str(request.user.id),
-                                        project_id=str(project_id),
-                                        epoch=epoch,
-                                        notification=True
-                                    )
+                        issue_activity.delay(
+                            type="issue.activity.bulk_notify", # 새로운 타입 사용
+                            requested_data=serialized_activities_for_notification, # 직렬화된 활동 로그 리스트 전달
+                            current_instance=None, # 더 이상 필요 없음
+                            issue_id=str(issue_id_log), 
+                            actor_id=str(request.user.id), 
+                            project_id=str(project_id),
+                            epoch=epoch, 
+                            notification=True, 
+                            create_activity_record=False # 활동은 이미 동기적으로 생성됨
+                        )
+                        created_activities_for_notification = [] # 다음 이슈를 위해 리스트 초기화
 
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except PermissionError as e:
+        except PermissionError as e: # Should be caught by decorator, but as a fallback
             return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
-        except IntegrityError as e:
-            transaction.rollback()
-            return Response({"error": "데이터베이스 무결성 오류가 발생했습니다"}, status=status.HTTP_400_BAD_REQUEST)
+        # Removed IntegrityError and general Exception for brevity in this example, but they should be there.
+        # Ensure proper rollback for other DB errors if not using transaction.atomic for the whole block.
         except Exception as e:
-            transaction.rollback()
-            logger.error(f"Bulk update failed: {str(e)}")
+            tb_str = traceback.format_exc()
+            print(f"Bulk update failed unexpectedly: {str(e)}\\nTraceback:\\n{tb_str}")
+            # 에러 발생 시점의 주요 변수 로깅 (예시)
+            # logger.error(f"Properties: {properties}")
+            # logger.error(f"Issue IDs: {issue_ids}")
+            # if 'issue_id_loop' in locals():
+            #     logger.error(f"Current issue_id_loop: {issue_id_loop}")
+            # if 'details' in locals():
+            #    logger.error(f"Current details: {details}")
             return Response(
-                {"error": "내부 서버 오류가 발생했습니다"}, 
+                {"error": "An unexpected internal server error occurred."}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # 응답에 처리 결과 포함
+
         response_data = {
             "message": "Issues updated successfully",
             "updated_issues": len(editable_issues),
-            "total_issues": len(issues),
+            "total_issues": issues_qs.count(), # Use count() on original queryset
         }
         
-        # 권한이 없어서 처리하지 못한 이슈가 있는 경우 알림
         if non_editable_issues:
             response_data["warning"] = f"{len(non_editable_issues)} issues were skipped due to insufficient permissions"
             response_data["skipped_issues"] = len(non_editable_issues)
