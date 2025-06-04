@@ -351,7 +351,7 @@ def notifications(
         comment_mention_subscribers = []
 
         # 이슈 설명에서 새로운 멘션 추출
-        if requested_data and type != "issue.activity.bulk_notify" :
+        if requested_data:
             new_mentions = get_new_mentions(requested_data, current_instance)
             removed_mention = get_removed_mentions(requested_data, current_instance)
             
