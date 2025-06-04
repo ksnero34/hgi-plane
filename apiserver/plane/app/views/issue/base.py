@@ -2030,7 +2030,7 @@ class BulkOperationsEndpoint(BaseAPIView):
                     k: v for k, v in properties.items() 
                     if k not in ["custom_field_values", "assignee_ids"] and hasattr(Issue, k)
                 }
-                print(f"[DEBUG] regular_properties_to_update: {regular_properties_to_update}") # DEBUG
+                # print(f"[DEBUG] regular_properties_to_update: {regular_properties_to_update}") # DEBUG
                 
                 if regular_properties_to_update:
                     editable_issue_ids_list = [issue.id for issue in editable_issues]
@@ -2041,14 +2041,15 @@ class BulkOperationsEndpoint(BaseAPIView):
                         details['issue_obj'] = issue_in_list # Ensure we have the freshest object
                         for field_key, new_val in regular_properties_to_update.items():
                             old_val = getattr(issue_in_list, field_key)
-                            print(f"[DEBUG] Issue {issue_in_list.id}, Field {field_key}: Old={old_val}, New={new_val}") # DEBUG
+                            # print(f"[DEBUG] Issue {issue_in_list.id}, Field {field_key}: Old={old_val}, New={new_val}") # DEBUG
                             if old_val != new_val:
                                 details['regular_old_values'][field_key] = old_val
                                 details['regular_new_values'][field_key] = new_val
                                 details['has_regular_changes'] = True
-                                print(f"[DEBUG] Issue {issue_in_list.id}: Regular change detected for {field_key}") # DEBUG
+                                # print(f"[DEBUG] Issue {issue_in_list.id}: Regular change detected for {field_key}") # DEBUG
                             else:
-                                print(f"[DEBUG] Issue {issue_in_list.id}: No change for {field_key}") # DEBUG
+                                # print(f"[DEBUG] Issue {issue_in_list.id}: No change for {field_key}") # DEBUG
+                                pass
                     
                     # Perform bulk update
                     Issue.objects.filter(id__in=editable_issue_ids_list).update(**regular_properties_to_update)
@@ -2171,13 +2172,13 @@ class BulkOperationsEndpoint(BaseAPIView):
                         details['issue_obj'] = issue_for_assignee
 
                         old_assignee_set = set(issue_to_current_assignees_map.get(issue_id_loop, []))
-                        print(f"[DEBUG] Issue {issue_id_loop}: Old Assignees Set: {old_assignee_set}") # DEBUG
-                        print(f"[DEBUG] Issue {issue_id_loop}: Final New Assignees Set: {final_new_assignee_set}") # DEBUG
+                        # print(f"[DEBUG] Issue {issue_id_loop}: Old Assignees Set: {old_assignee_set}") # DEBUG
+                        # print(f"[DEBUG] Issue {issue_id_loop}: Final New Assignees Set: {final_new_assignee_set}") # DEBUG
                         
                         assignees_to_add_ids = list(final_new_assignee_set - old_assignee_set)
                         assignees_to_remove_ids = list(old_assignee_set - final_new_assignee_set)
-                        print(f"[DEBUG] Issue {issue_id_loop}: Assignees to Add: {assignees_to_add_ids}") # DEBUG
-                        print(f"[DEBUG] Issue {issue_id_loop}: Assignees to Remove: {assignees_to_remove_ids}") # DEBUG
+                        # print(f"[DEBUG] Issue {issue_id_loop}: Assignees to Add: {assignees_to_add_ids}") # DEBUG
+                        # print(f"[DEBUG] Issue {issue_id_loop}: Assignees to Remove: {assignees_to_remove_ids}") # DEBUG
 
                         if assignees_to_add_ids or assignees_to_remove_ids:
                             # Perform DB operations
@@ -2282,7 +2283,7 @@ class BulkOperationsEndpoint(BaseAPIView):
                                 _new_id = new_parent_obj.id if new_parent_obj else None
                                 comment_str = f"부모 이슈를 '{activity_old_value_str}'에서 '{activity_new_value_str}'(으)로 변경했습니다."
                             
-                            print(f"[DEBUG] Issue {issue_id_log}: Logging regular change for Field {activity_field_name}: Old='{activity_old_value_str}', New='{activity_new_value_str}'") # DEBUG
+                            # print(f"[DEBUG] Issue {issue_id_log}: Logging regular change for Field {activity_field_name}: Old='{activity_old_value_str}', New='{activity_new_value_str}'") # DEBUG
                             created_activity = IssueActivity.objects.create(
                                 issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
                                 workspace_id=issue_for_log.workspace_id,
@@ -2294,12 +2295,13 @@ class BulkOperationsEndpoint(BaseAPIView):
                             )
                             created_activities_for_notification.append(created_activity)
                             # 확인용 print: DB 저장 직후 값 확인
-                            print(f"[DEBUG] DB Check (Updated): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                            # print(f"[DEBUG] DB Check (Updated): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
                             activity_created_for_this_issue = True
                     
                     # Log custom field changes
                     if details_log['custom_field_changes']:
-                        print(f"[DEBUG] Issue {issue_id_log}: Logging custom field changes: {details_log['custom_field_changes']}") # DEBUG
+                        # print(f"[DEBUG] Issue {issue_id_log}: Logging custom field changes: {details_log['custom_field_changes']}") # DEBUG
+                        pass
                     for cf_change in details_log['custom_field_changes']:
                         # ... (기존 custom_field_changes 로직과 유사하게, _old_identifier, _new_identifier, old_cf_val_str, new_cf_val_str 등을 계산)
                         old_cf_val = cf_change['old_value']
@@ -2351,19 +2353,20 @@ class BulkOperationsEndpoint(BaseAPIView):
                         )
                         created_activities_for_notification.append(created_activity)
                         # 확인용 print: DB 저장 직후 값 확인
-                        print(f"[DEBUG] DB Check (Updated): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                        # print(f"[DEBUG] DB Check (Updated): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
                         activity_created_for_this_issue = True
 
                     # Log assignee changes
                     if details_log['assignee_added'] or details_log['assignee_removed']:
                         # DEBUG PRINT ADDED HERE
-                        print(f"[DEBUG] Issue {issue_id_log}: Just BEFORE creating assignee logs: Added={details_log['assignee_added']}, Removed={details_log['assignee_removed']}")
-                        print(f"[DEBUG] Issue {issue_id_log}: Logging assignee changes. Added: {details_log['assignee_added']}, Removed: {details_log['assignee_removed']}") # DEBUG
+                        # print(f"[DEBUG] Issue {issue_id_log}: Just BEFORE creating assignee logs: Added={details_log['assignee_added']}, Removed={details_log['assignee_removed']}")
+                        # print(f"[DEBUG] Issue {issue_id_log}: Logging assignee changes. Added: {details_log['assignee_added']}, Removed: {details_log['assignee_removed']}") # DEBUG
+                        pass
 
                     for added_id in details_log['assignee_added']:
                         user_name = user_display_name_map.get(added_id, f"사용자({str(added_id)[:8]})") # fallback name
                         activity_comment = f"담당자로 '{user_name}' 님을 지정했습니다."
-                        print(f"[DEBUG] Creating ASSIGNED activity: issue={issue_id_log}, user_name={user_name}, added_id={added_id}, comment=\"{activity_comment}\"")
+                        # print(f"[DEBUG] Creating ASSIGNED activity: issue={issue_id_log}, user_name={user_name}, added_id={added_id}, comment=\"{activity_comment}\"")
                         created_activity = IssueActivity.objects.create(
                             issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
                             workspace_id=issue_for_log.workspace_id,
@@ -2374,13 +2377,13 @@ class BulkOperationsEndpoint(BaseAPIView):
                         )
                         created_activities_for_notification.append(created_activity)
                         # 확인용 print: DB 저장 직후 값 확인
-                        print(f"[DEBUG] DB Check (Assigned): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                        # print(f"[DEBUG] DB Check (Assigned): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
                         activity_created_for_this_issue = True
 
                     for removed_id in details_log['assignee_removed']:
                         user_name = user_display_name_map.get(removed_id, f"사용자({str(removed_id)[:8]})") # fallback name
                         activity_comment = f"담당자에서 '{user_name}' 님을 제외했습니다."
-                        print(f"[DEBUG] Creating UNASSIGNED activity: issue={issue_id_log}, user_name={user_name}, removed_id={removed_id}, comment=\"{activity_comment}\"")
+                        # print(f"[DEBUG] Creating UNASSIGNED activity: issue={issue_id_log}, user_name={user_name}, removed_id={removed_id}, comment=\"{activity_comment}\"")
                         created_activity = IssueActivity.objects.create(
                             issue_id=issue_id_log, actor_id=request.user.id, project_id=project_id,
                             workspace_id=issue_for_log.workspace_id,
@@ -2391,7 +2394,7 @@ class BulkOperationsEndpoint(BaseAPIView):
                         )
                         created_activities_for_notification.append(created_activity)
                         # 확인용 print: DB 저장 직후 값 확인
-                        print(f"[DEBUG] DB Check (Unassigned): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
+                        # print(f"[DEBUG] DB Check (Unassigned): ID={created_activity.id}, Verb='{created_activity.verb}', Comment='{created_activity.comment}'")
                         activity_created_for_this_issue = True
                     
                     # Consolidated ASYNC Notification (IF any activity was created for this issue)
