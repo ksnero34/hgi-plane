@@ -2281,6 +2281,19 @@ class BulkOperationsEndpoint(BaseAPIView):
                                         new_value_str = str(new_value) if new_value is not None else "없음"
                                     
                                     # 활동 로그 직접 생성
+                                    _old_identifier_val = None
+                                    _new_identifier_val = None
+
+                                    if field.field_type == "project_member":
+                                        _old_identifier_val = old_value # raw value (None or UUID string)
+                                        _new_identifier_val = new_value # raw value (None or UUID string)
+                                    elif field.field_type == "project_members":
+                                        # For lists of members, identifiers are None, similar to assignees
+                                        _old_identifier_val = None
+                                        _new_identifier_val = None
+                                    # Other custom field types will also have None identifiers
+                                    # based on the original logic structure if not project_member/project_members.
+
                                     IssueActivity.objects.create(
                                         issue_id=issue_id,
                                         actor_id=request.user.id,
@@ -2290,8 +2303,8 @@ class BulkOperationsEndpoint(BaseAPIView):
                                         field=field_name,
                                         old_value=old_value_str,
                                         new_value=new_value_str,
-                                        old_identifier=json.dumps(old_value, cls=DjangoJSONEncoder) if field.field_type in ["project_member", "project_members"] else None,
-                                        new_identifier=json.dumps(new_value, cls=DjangoJSONEncoder) if field.field_type in ["project_member", "project_members"] else None,
+                                        old_identifier=_old_identifier_val,
+                                        new_identifier=_new_identifier_val,
                                         verb="updated"
                                     )
                                     
