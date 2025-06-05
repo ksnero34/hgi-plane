@@ -26,7 +26,34 @@ def user_timezone_converter(queryset, datetime_fields, user_timezone):
         for field in datetime_fields:
             # Convert the datetime field to the user's timezone
             if field in item and item[field]:
-                item[field] = item[field].astimezone(user_tz)
+                field_value = item[field]
+                dt_object = None
+
+                if isinstance(field_value, str):
+                    try:
+                        # Handle 'Z' for UTC explicitly for fromisoformat
+                        if field_value.endswith('Z'):
+                            dt_object = datetime.fromisoformat(field_value.replace('Z', '+00:00'))
+                        else:
+                            dt_object = datetime.fromisoformat(field_value)
+                    except ValueError:
+                        # Optional: Log a warning if parsing fails
+                        # import logging
+                        # logger = logging.getLogger(__name__)
+                        # logger.warning(f"Could not parse date string '{field_value}' for field '{field}'. Skipping timezone conversion for this field.")
+                        continue  # Skip to the next field if parsing fails
+                elif isinstance(field_value, datetime):
+                    dt_object = field_value
+                else:
+                    # If it's not a string or datetime, skip (or log/raise error)
+                    continue
+
+                # Ensure the datetime object is timezone-aware
+                if dt_object.tzinfo is None or dt_object.tzinfo.utcoffset(dt_object) is None:
+                    # Assume naive datetime is UTC
+                    dt_object = pytz.utc.localize(dt_object)
+                
+                item[field] = dt_object.astimezone(user_tz)
 
     # If queryset was a single item, return a single item
     if isinstance(queryset, dict):
