@@ -18,6 +18,7 @@ import { useIssues, useUserPermissions } from "@/hooks/store";
 import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // components
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { List } from "./default";
@@ -72,9 +73,14 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   const { allowPermissions } = useUserPermissions();
   const { issueMap } = useIssues();
 
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
+  const { workspaceSlug, projectId } = useParams();
+  const { customFields, error: customFieldsError } = useCustomField();
+
+  useEffect(() => {
+    if (customFieldsError) {
+      console.error("Error fetching custom fields:", customFieldsError);
+    }
+  }, [customFieldsError]);
 
   const displayFilters = issuesFilter?.issueFilters?.displayFilters;
   const displayProperties = issuesFilter?.issueFilters?.displayProperties;
@@ -83,37 +89,9 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   const group_by = (displayFilters?.group_by || null) as GroupByColumnTypes | null;
   const showEmptyGroup = displayFilters?.show_empty_groups ?? false;
 
-  const { workspaceSlug, projectId } = useParams();
   const { updateFilters } = useIssuesActions(storeType);
   const collapsedGroups =
     issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   useEffect(() => {
     fetchIssues("init-loader", { canGroup: true, perPageCount: group_by ? 50 : 100 }, viewId);
