@@ -10,7 +10,7 @@ import { TCustomField } from "@plane/types";
 import type { TIssueOperations } from "@/components/issues";
 
 // hooks
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail, useCustomField } from "@/hooks/store";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 // helpers
 import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
@@ -31,40 +31,10 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
   const {
     issue: { getIssueById },
   } = useIssueDetail();
-  
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { customFields, isLoading } = useCustomField(projectId);
   
   // derived values
   const issue = getIssueById(issueId);
-
-  // 커스텀 필드 목록 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (workspaceSlug && projectId) {
-      fetchCustomFields();
-    }
-  }, [workspaceSlug, projectId]);
 
   // 특정 필드의 현재 값 가져오기
   const getFieldValue = (fieldId: string) => {

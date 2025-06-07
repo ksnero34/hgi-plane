@@ -49,6 +49,7 @@ import {
   useCommandPalette,
   useUserPermissions,
   useMultipleSelectStore,
+  useCustomField,
 } from "@/hooks/store";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
@@ -63,9 +64,8 @@ export const CycleIssuesHeader: React.FC = observer(() => {
   const parentRef = useRef<HTMLDivElement>(null);
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   // router
   const router = useRouter();
   const { workspaceSlug, projectId, cycleId } = useParams() as {
@@ -96,6 +96,7 @@ export const CycleIssuesHeader: React.FC = observer(() => {
   } = useMember();
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
+  const { customFields } = useCustomField(projectId as string);
 
   const activeLayout = issueFilters?.displayFilters?.layout;
 
@@ -161,33 +162,6 @@ export const CycleIssuesHeader: React.FC = observer(() => {
     .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
 
   const workItemsCount = getGroupIssueCount(undefined, undefined, false);
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data || []);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   // 일괄변경을 위한 핸들러 함수
   const handleBulkUpdate = async (bulkUpdatePayload: any) => {

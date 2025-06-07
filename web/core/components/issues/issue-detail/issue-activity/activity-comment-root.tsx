@@ -5,7 +5,7 @@ import { E_SORT_ORDER, TActivityFilters, filterActivityOnSelectedFilters } from 
 // hooks
 import { TCommentsOperations, TCustomField } from "@plane/types";
 import { CommentCard } from "@/components/comments/comment-card";
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail, useCustomField } from "@/hooks/store";
 // plane web components
 import { IssueAdditionalPropertiesActivity } from "@/plane-web/components/issues";
 import { IssueActivityWorklog } from "@/plane-web/components/issues/worklog/activity/root";
@@ -35,36 +35,12 @@ export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer(
     sortOrder,
   } = props;
   
-  // 커스텀 필드 상태
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [customFieldsLoaded, setCustomFieldsLoaded] = useState(false);
-  
   // hooks
+  const { customFields } = useCustomField(projectId);
   const {
     activity: { getActivityCommentByIssueId },
     comment: { getCommentById },
   } = useIssueDetail();
-
-  // 커스텀 필드 한 번만 로드
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || customFieldsLoaded) return;
-      
-      try {
-        const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`);
-        if (response.ok) {
-          const fields = await response.json();
-          setCustomFields(fields);
-        }
-      } catch (error) {
-        console.error("Failed to fetch custom fields:", error);
-      } finally {
-        setCustomFieldsLoaded(true);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId, customFieldsLoaded]);
 
   const activityComments = getActivityCommentByIssueId(issueId, sortOrder);
 

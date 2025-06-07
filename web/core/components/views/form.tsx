@@ -22,7 +22,7 @@ import { getComputedDisplayFilters, getComputedDisplayProperties } from "@/helpe
 import { getTabIndex } from "@/helpers/tab-indices.helper";
 import { calculateFilterValue, calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 // hooks
-import { useLabel, useMember, useProject, useProjectState } from "@/hooks/store";
+import { useLabel, useMember, useProject, useProjectState, useCustomField } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
 import { AccessController } from "@/plane-web/components/views/access-controller";
@@ -51,8 +51,6 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
   const { workspaceSlug, projectId } = useParams();
   // state
   const [isOpen, setIsOpen] = useState(false);
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const { currentProjectDetails } = useProject();
   const { projectStates } = useProjectState();
@@ -61,33 +59,7 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
     project: { projectMemberIds },
   } = useMember();
   const { isMobile } = usePlatformOS();
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
+  const { customFields } = useCustomField(projectId as string);
 
   // form info
   const {

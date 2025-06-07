@@ -34,9 +34,6 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
   const { cursor, perPage, updateResultsCount, updateTotalPages, updateEmptyState } = props;
   // store hooks
   const { data: currentUser } = useUser();
-  
-  // 커스텀 필드 상태
-  const [customFieldsByProject, setCustomFieldsByProject] = useState<{ [projectId: string]: TCustomField[] }>({});
 
   const { data: userProfileActivity } = useSWR(
     USER_ACTIVITY({
@@ -59,33 +56,29 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
     updateResultsCount(userProfileActivity.results.length);
   }, [updateResultsCount, updateTotalPages, userProfileActivity, updateEmptyState]);
 
-  // 프로젝트별 커스텀 필드 조회
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!userProfileActivity?.results) return;
-      
-      // 활동에서 고유한 프로젝트 ID들과 워크스페이스 슬러그 추출
+  // 프로젝트별 커스텀 필드 조회 with useSWR
+  const { data: customFieldsByProject } = useSWR(
+    userProfileActivity?.results?.length ? ["custom-fields-activity", userProfileActivity] : null,
+    async () => {
       const projectData = userProfileActivity.results.reduce((acc: any, activity: any) => {
         if (activity.project && activity.workspace_detail?.slug) {
           acc[activity.project] = activity.workspace_detail.slug;
         }
         return acc;
       }, {});
-      
+
       const customFieldsMap: { [projectId: string]: TCustomField[] } = {};
-      
       await Promise.all(
         Object.entries(projectData).map(async ([projectId, workspaceSlug]) => {
           try {
             const response = await fetch(
               `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-              {
-                credentials: "include",
-              }
+              { credentials: "include" }
             );
             if (response.ok) {
-              const data = await response.json();
-              customFieldsMap[projectId] = data;
+              customFieldsMap[projectId] = await response.json();
+            } else {
+              customFieldsMap[projectId] = [];
             }
           } catch (error) {
             console.error(`커스텀 필드 로드 중 오류 (프로젝트 ${projectId}):`, error);
@@ -93,14 +86,9 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
           }
         })
       );
-      
-      setCustomFieldsByProject(customFieldsMap);
-    };
-
-    if (userProfileActivity?.results && userProfileActivity.results.length > 0) {
-      fetchCustomFields();
+      return customFieldsMap;
     }
-  }, [userProfileActivity]);
+  );
 
   // TODO: refactor this component
   return (
@@ -108,7 +96,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
       {userProfileActivity ? (
         <ul role="list">
           {userProfileActivity.results.map((activityItem: any) => {
-            const projectCustomFields = customFieldsByProject[activityItem.project] || [];
+            const projectCustomFields = customFieldsByProject?.[activityItem.project] || [];
             
             if (activityItem.field === "comment")
               return (

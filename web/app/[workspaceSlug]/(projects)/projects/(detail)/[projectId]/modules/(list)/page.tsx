@@ -10,13 +10,12 @@ import { TModuleFilters, TCustomField } from "@plane/types";
 // components
 import { PageHead } from "@/components/core";
 import { DetailedEmptyState } from "@/components/empty-state";
-import { ModuleAppliedFiltersList, ModulesListView } from "@/components/modules";
+import { ModuleAppliedFiltersList } from "@/components/modules";
+import { ModulesListView } from "@/components/modules/list-view";
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
-import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterRemovalValue, calculateTotalFilters } from "@/helpers/filter.helper";
 // hooks
-import { useModuleFilter, useProject, useUserPermissions } from "@/hooks/store";
+import { useModuleFilter, useProject, useUserPermissions, useCustomField } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -26,42 +25,25 @@ const ProjectModulesPage = observer(() => {
   const { workspaceSlug, projectId } = useParams();
   // plane hooks
   const { t } = useTranslation();
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
   // store
   const { getProjectById, currentProjectDetails } = useProject();
-  const { currentProjectFilters, currentProjectDisplayFilters, clearAllFilters, updateFilters, updateDisplayFilters } =
-    useModuleFilter();
+  const {
+    filters: {
+      currentProjectFilters,
+      currentProjectDisplayFilters,
+      clearAllFilters,
+      updateFilters,
+      updateDisplayFilters,
+    },
+  } = useModuleFilter();
   const { allowPermissions } = useUserPermissions();
+  const { customFields } = useCustomField(projectId as string);
+
   // derived values
   const project = projectId ? getProjectById(projectId.toString()) : undefined;
   const pageTitle = project?.name ? `${project?.name} - Modules` : undefined;
   const canPerformEmptyStateActions = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/modules" });
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId) return;
-
-      try {
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   const handleRemoveFilter = useCallback(
     (key: keyof TModuleFilters, value: string | null) => {

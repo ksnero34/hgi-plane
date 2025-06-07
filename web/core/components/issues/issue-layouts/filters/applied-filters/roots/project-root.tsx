@@ -13,6 +13,7 @@ import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 import { useLabel, useProjectState, useUserPermissions } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
 import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web constants
 
 type TProjectAppliedFiltersRootProps = {
@@ -23,10 +24,8 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
   const { storeType = EIssuesStoreType.PROJECT } = props;
   // router
   const { workspaceSlug, projectId } = useParams();
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
+  const { customFields } = useCustomField();
   const { projectLabels } = useLabel();
   const {
     issuesFilter: { issueFilters, updateFilters },
@@ -34,33 +33,6 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
   const { allowPermissions } = useUserPermissions();
 
   const { projectStates } = useProjectState();
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   // derived values
   const isEditingAllowed = allowPermissions(

@@ -1,12 +1,12 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { EIssueFilterType, EIssuesStoreType } from "@plane/constants";
-import { IIssueFilterOptions, TCustomField } from "@plane/types";
+import { IIssueFilterOptions } from "@plane/types";
 // hooks
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
-import { useIssues, useLabel, useProjectState } from "@/hooks/store";
+import { useIssues, useLabel, useProjectState, useCustomField } from "@/hooks/store";
 import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 // components
 // types
@@ -14,46 +14,21 @@ import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 export const CycleAppliedFiltersRoot: React.FC = observer(() => {
   // router
   const { workspaceSlug, projectId, cycleId } = useParams();
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
+
   // store hooks
   const {
-    issuesFilter: { issueFilters, updateFilters },
+    issuesFilter,
+    updateFilters,
   } = useIssues(EIssuesStoreType.CYCLE);
-
   const { projectLabels } = useLabel();
   const { projectStates } = useProjectState();
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
+  const { customFields } = useCustomField(projectId as string);
 
   // derived values
-  const userFilters = issueFilters?.filters;
+  const userFilters = issuesFilter?.issueFilters?.filters;
+  const displayFilters = issuesFilter?.issueFilters?.displayFilters;
+  const displayProperties = issuesFilter?.issueFilters?.displayProperties;
+
   // filters whose value not null or empty array
   const appliedFilters: IIssueFilterOptions = {};
   Object.entries(userFilters ?? {}).forEach(([key, value]) => {
@@ -65,19 +40,8 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId || !cycleId) return;
 
-    if (!value) {
-      updateFilters(
-        workspaceSlug.toString(),
-        projectId.toString(),
-        EIssueFilterType.FILTERS,
-        { [key]: null },
-        cycleId.toString()
-      );
-      return;
-    }
-
     // calculateFilterRemovalValue 함수를 사용하여 모든 필터를 통일된 방식으로 처리
-    const updatedValue = calculateFilterRemovalValue(key, value, issueFilters?.filters ?? {});
+    const updatedValue = calculateFilterRemovalValue(key, value, userFilters ?? {});
     updateFilters(
       workspaceSlug.toString(),
       projectId.toString(),
@@ -126,8 +90,8 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
         projectId={projectId.toString()}
         filterParams={{
           filters: { ...appliedFilters, cycle: [cycleId?.toString()] },
-          display_filters: issueFilters?.displayFilters,
-          display_properties: issueFilters?.displayProperties,
+          display_filters: displayFilters,
+          display_properties: displayProperties,
         }}
       />
     </Header>

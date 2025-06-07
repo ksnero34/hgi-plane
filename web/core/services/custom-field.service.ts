@@ -3,7 +3,7 @@ import { TCustomField, TCustomFieldValue } from "@plane/types";
 
 export class CustomFieldService {
   private getEndpoint(workspaceSlug: string, projectId: string) {
-    return `${API_BASE_URL}/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields`;
+    return `${API_BASE_URL}/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`;
   }
 
   async getCustomFields(workspaceSlug: string, projectId: string): Promise<TCustomField[]> {
@@ -21,12 +21,11 @@ export class CustomFieldService {
     issueId: string
   ): Promise<{ [key: string]: TCustomFieldValue }> {
     const response = await fetch(
-      `${this.getEndpoint(workspaceSlug, projectId)}/${issueId}/values`,
+      `${this.getEndpoint(workspaceSlug, projectId)}${issueId}/values`,
       {
         credentials: "include",
       }
     );
-
     if (!response.ok) throw new Error("Failed to fetch custom field values");
     return response.json();
   }
@@ -55,7 +54,7 @@ export class CustomFieldService {
     fieldId: string,
     data: Partial<TCustomField>
   ): Promise<TCustomField> {
-    const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}/${fieldId}`, {
+    const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}${fieldId}/`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -69,7 +68,7 @@ export class CustomFieldService {
   }
 
   async deleteCustomField(workspaceSlug: string, projectId: string, fieldId: string): Promise<void> {
-    const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}/${fieldId}`, {
+    const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}${fieldId}/`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -78,5 +77,19 @@ export class CustomFieldService {
     });
 
     if (!response.ok) throw new Error("Failed to delete custom field");
+  }
+
+  async reorderCustomField(workspaceSlug: string, projectId: string, data: any): Promise<any> {
+    const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}reorder/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) throw new Error("Failed to reorder custom fields");
+    return response.json();
   }
 } 

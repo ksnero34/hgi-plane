@@ -10,6 +10,7 @@ import { DateDropdown, MemberDropdown, CustomFieldDropdown, StateDropdown, Prior
 import { ParentIssuesListModal } from "@/components/issues";
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 
 type TBulkEditModalProps = {
   isOpen: boolean;
@@ -25,9 +26,8 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [updates, setUpdates] = useState<Partial<TIssue>>({});
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
+  const { customFields } = useCustomField();
   const [customFieldUpdates, setCustomFieldUpdates] = useState<{[fieldId: string]: any}>({});
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   const [isParentIssueModalOpen, setIsParentIssueModalOpen] = useState(false);
   const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | null>(null);
 
@@ -79,35 +79,6 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
   // 수정 가능한 이슈들과 불가능한 이슈들 분리
   const editableIssues = selectedIssues.filter(issue => checkIssueEditPermission(issue));
   const nonEditableIssues = selectedIssues.filter(issue => !checkIssueEditPermission(issue));
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data || []);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    if (isOpen) {
-      fetchCustomFields();
-    }
-  }, [workspaceSlug, projectId, isOpen]);
 
   const handleUpdate = async () => {
     // console.log("[BulkEditModal] handleUpdate called");

@@ -74,7 +74,7 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   const { issueMap } = useIssues();
 
   const { workspaceSlug, projectId } = useParams();
-  const { customFields, error: customFieldsError } = useCustomField();
+  const { customFields, error: customFieldsError } = useCustomField(projectId as string);
 
   useEffect(() => {
     if (customFieldsError) {

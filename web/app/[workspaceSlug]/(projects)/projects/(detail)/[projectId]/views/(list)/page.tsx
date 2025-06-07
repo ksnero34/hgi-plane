@@ -14,10 +14,10 @@ import { ProjectViewsList } from "@/components/views";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
 // constants
 // helpers
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
+
 // hooks
-import { useProject, useProjectView, useUserPermissions } from "@/hooks/store";
+import { useProject, useProjectView, useUserPermissions, useCustomField } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -25,59 +25,39 @@ const ProjectViewsPage = observer(() => {
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
-  // plane hooks
   const { t } = useTranslation();
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store
+  const {
+    filters: { filters, clearAllFilters, updateFilters },
+  } = useProjectView();
   const { getProjectById, currentProjectDetails } = useProject();
-  const { filters, updateFilters, clearAllFilters } = useProjectView();
   const { allowPermissions } = useUserPermissions();
+  const { customFields } = useCustomField(projectId as string);
+
   // derived values
   const project = projectId ? getProjectById(projectId.toString()) : undefined;
-  const pageTitle = project?.name ? `${project?.name} - Views` : undefined;
+  const pageTitle = project?.name ? `${project?.name} - Views` : t("PAGES.PROJECT_VIEWS");
   const canPerformEmptyStateActions = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/views" });
 
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
-
   const handleRemoveFilter = useCallback(
-    (key: keyof TViewFilterProps, value: string | EViewAccess | null) => {
-      if (key === "favorites") {
-        updateFilters("filters", { [key]: !!value });
-        return;
+    (key: keyof TViewFilterProps, value: string | null) => {
+      const _filters = { ...(filters.filters ?? {}) };
+      if (value === null) {
+        // remove the key
+        delete _filters[key];
+      } else {
+        const newValues = _filters[key]?.filter((v) => v !== value) ?? [];
+        if (newValues.length === 0) {
+          delete _filters[key];
+        } else {
+          _filters[key] = newValues;
+        }
       }
 
-      const updatedValue = calculateFilterRemovalValue(key as any, value?.toString() || null, filters.filters ?? {});
-      updateFilters("filters", { [key]: updatedValue });
+      updateFilters(_filters);
     },
-    [filters.filters, updateFilters]
+    [filters, updateFilters]
   );
 
   const isFiltersApplied = calculateTotalFilters(filters?.filters ?? {}) !== 0;

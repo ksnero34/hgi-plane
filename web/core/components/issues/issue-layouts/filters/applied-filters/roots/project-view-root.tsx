@@ -21,16 +21,21 @@ import { CreateUpdateProjectViewModal } from "@/components/views";
 import { UpdateViewComponent } from "@/components/views/update-view-component";
 // constants
 // hooks
-import { useIssues, useLabel, useProjectState, useProjectView, useUser, useUserPermissions } from "@/hooks/store";
+import {
+  useIssues,
+  useLabel,
+  useProjectState,
+  useProjectView,
+  useUser,
+  useUserPermissions,
+  useCustomField,
+} from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
 import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
 export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   // router
   const { workspaceSlug, projectId, viewId } = useParams();
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const {
     issuesFilter: { issueFilters, updateFilters },
@@ -40,35 +45,9 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   const { viewMap, updateView } = useProjectView();
   const { data } = useUser();
   const { allowPermissions } = useUserPermissions();
+  const { customFields } = useCustomField();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   // derived values
   const viewDetails = viewId ? viewMap[viewId.toString()] : null;

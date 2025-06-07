@@ -16,6 +16,7 @@ import { calculateTimeAgo } from "@/helpers/date-time.helper";
 import { getFileURL } from "@/helpers/file.helper";
 // hooks
 import { useDashboard, useUser } from "@/hooks/store";
+import useSWR from "swr";
 
 const WIDGET_KEY = "recent_activity";
 
@@ -28,9 +29,6 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
   const widgetStats = getWidgetStats<TRecentActivityWidgetResponse[]>(workspaceSlug, dashboardId, WIDGET_KEY);
   const redirectionLink = `/${workspaceSlug}/profile/${currentUser?.id}/activity`;
 
-  // 커스텀 필드 상태
-  const [customFieldsByProject, setCustomFieldsByProject] = useState<{ [projectId: string]: TCustomField[] }>({});
-
   useEffect(() => {
     fetchWidgetStats(workspaceSlug, dashboardId, {
       widget_key: WIDGET_KEY,
@@ -38,34 +36,24 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 프로젝트별 커스텀 필드 조회
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!widgetStats) return;
-      
-      // 활동에서 고유한 프로젝트 ID들 추출
-      const projectIdsSet: { [key: string]: boolean } = {};
-      widgetStats.forEach(activity => {
-        if (activity.project) {
-          projectIdsSet[activity.project] = true;
-        }
-      });
-      const projectIds = Object.keys(projectIdsSet);
-      
+  // 프로젝트별 커스텀 필드 조회 with useSWR
+  const projectIds = widgetStats ? Array.from(new Set(widgetStats.map(activity => activity.project).filter(Boolean))) : [];
+
+  const { data: customFieldsByProject } = useSWR(
+    workspaceSlug && projectIds.length > 0 ? [`custom-fields`, workspaceSlug, ...projectIds] : null,
+    async () => {
       const customFieldsMap: { [projectId: string]: TCustomField[] } = {};
-      
       await Promise.all(
         projectIds.map(async (projectId) => {
           try {
             const response = await fetch(
               `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-              {
-                credentials: "include",
-              }
+              { credentials: "include" }
             );
             if (response.ok) {
-              const data = await response.json();
-              customFieldsMap[projectId] = data;
+              customFieldsMap[projectId] = await response.json();
+            } else {
+              customFieldsMap[projectId] = [];
             }
           } catch (error) {
             console.error(`커스텀 필드 로드 중 오류 (프로젝트 ${projectId}):`, error);
@@ -73,14 +61,9 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
           }
         })
       );
-      
-      setCustomFieldsByProject(customFieldsMap);
-    };
-
-    if (widgetStats && widgetStats.length > 0) {
-      fetchCustomFields();
+      return customFieldsMap;
     }
-  }, [widgetStats, workspaceSlug]);
+  );
 
   if (!widgetStats) return <WidgetLoader widgetKey={WIDGET_KEY} />;
 
@@ -92,7 +75,7 @@ export const RecentActivityWidget: React.FC<WidgetProps> = observer((props) => {
       {widgetStats.length > 0 ? (
         <div className="mt-4 space-y-6">
           {widgetStats.map((activity) => {
-            const projectCustomFields = customFieldsByProject[activity.project] || [];
+            const projectCustomFields = customFieldsByProject?.[activity.project] || [];
             
             return (
               <div key={activity.id} className="flex gap-5">

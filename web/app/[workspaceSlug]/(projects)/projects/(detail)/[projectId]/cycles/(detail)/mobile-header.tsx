@@ -25,7 +25,18 @@ import { DisplayFiltersSelection, FilterSelection, IssueLayoutIcon, FiltersDropd
 import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
-import { useIssues, useCycle, useProjectState, useLabel, useMember, useProject } from "@/hooks/store";
+import {
+  useAppContext,
+  useCycle,
+  useIssues,
+  useIssuesView,
+  useProject,
+  useProjectState,
+  useLabel,
+  useUserPermissions,
+  useCustomField,
+  useMember,
+} from "@/hooks/store";
 
 export const CycleIssuesMobileHeader = () => {
   // i18n
@@ -33,17 +44,8 @@ export const CycleIssuesMobileHeader = () => {
 
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
-
-  const { getCycleById } = useCycle();
-  const layouts = [
-    { key: "list", titleTranslationKey: "issue.layouts.list", icon: List },
-    { key: "kanban", titleTranslationKey: "issue.layouts.kanban", icon: Kanban },
-    { key: "calendar", titleTranslationKey: "issue.layouts.calendar", icon: Calendar },
-  ];
-
   const { workspaceSlug, projectId, cycleId } = useParams();
+  const { getCycleById } = useCycle();
   const cycleDetails = cycleId ? getCycleById(cycleId.toString()) : undefined;
 
   // store hooks
@@ -51,6 +53,19 @@ export const CycleIssuesMobileHeader = () => {
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.CYCLE);
+  const { projectLabels } = useLabel();
+  const { projectStates } = useProjectState();
+  const {
+    project: { projectMemberIds },
+  } = useMember();
+  const { customFields } = useCustomField(projectId as string);
+
+  const layouts = [
+    { key: "list", titleTranslationKey: "issue.layouts.list", icon: List },
+    { key: "kanban", titleTranslationKey: "issue.layouts.kanban", icon: Kanban },
+    { key: "calendar", titleTranslationKey: "issue.layouts.calendar", icon: Calendar },
+  ];
+
   const activeLayout = issueFilters?.displayFilters?.layout;
 
   const handleLayoutChange = useCallback(
@@ -66,12 +81,6 @@ export const CycleIssuesMobileHeader = () => {
     },
     [workspaceSlug, projectId, cycleId, updateFilters]
   );
-
-  const { projectStates } = useProjectState();
-  const { projectLabels } = useLabel();
-  const {
-    project: { projectMemberIds },
-  } = useMember();
 
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
@@ -110,33 +119,6 @@ export const CycleIssuesMobileHeader = () => {
     },
     [workspaceSlug, projectId, cycleId, updateFilters]
   );
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data || []);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   return (
     <>
@@ -182,7 +164,7 @@ export const CycleIssuesMobileHeader = () => {
             isFiltersApplied={isIssueFilterActive(issueFilters)}
           >
             <FilterSelection
-              filters={issueFilters?.filters ?? {}}
+              filters={issueFilters ?? {}}
               handleFiltersUpdate={handleFiltersUpdate}
               layoutDisplayFiltersOptions={
                 activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[activeLayout] : undefined

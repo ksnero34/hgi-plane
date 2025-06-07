@@ -15,7 +15,7 @@ import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelect
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 import { calculateFilterValue } from "@/helpers/filter-update.helper";
 // hooks
-import { useLabel, useProjectState, useMember, useIssues } from "@/hooks/store";
+import { useLabel, useProjectState, useMember, useIssues, useCustomField } from "@/hooks/store";
 // plane web types
 import { TProject } from "@/plane-web/types";
 import { ProjectAnalyticsModal } from "../analytics";
@@ -39,8 +39,6 @@ const HeaderFilters = observer((props: Props) => {
   const { t } = useTranslation();
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store hooks
   const {
     project: { projectMemberIds },
@@ -50,36 +48,10 @@ const HeaderFilters = observer((props: Props) => {
   } = useIssues(storeType);
   const { projectStates } = useProjectState();
   const { projectLabels } = useLabel();
+  const { customFields } = useCustomField(projectId);
   // derived values
   const activeLayout = issueFilters?.displayFilters?.layout;
   const layoutDisplayFiltersOptions = ISSUE_STORE_TO_FILTERS_MAP[storeType]?.[activeLayout];
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {

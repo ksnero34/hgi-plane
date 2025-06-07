@@ -11,6 +11,7 @@ import { FilterOption } from "@/components/issues";
 import { FilterCustomFields } from "@/components/issues";
 import { FilterLead, FilterMembers, FilterStartDate, FilterStatus, FilterTargetDate } from "@/components/modules";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useCustomField } from "@/hooks/store";
 // types
 
 type Props = {
@@ -33,53 +34,15 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
   } = props;
   // states
   const [filtersSearchQuery, setFiltersSearchQuery] = useState("");
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store
   const { isMobile } = usePlatformOS();
   const { workspaceSlug, projectId } = useParams();
+  const { customFields } = useCustomField();
   
   // 디버깅: useParams 값 확인
   // console.log("ModuleFiltersSelection - useParams() 전체 값:", useParams());
   // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
   // console.log("ModuleFiltersSelection - projectId:", projectId);
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      // console.log("ModuleFiltersSelection - Fetching custom fields...");
-      // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
-      // console.log("ModuleFiltersSelection - projectId:", projectId);
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        // console.log("ModuleFiltersSelection - API response status:", response.status);
-        // console.log("ModuleFiltersSelection - API response ok:", response.ok);
-        
-        if (response.ok) {
-          const data = await response.json();
-          // console.log("ModuleFiltersSelection - Custom fields data:", data);
-          setCustomFields(data);
-        } else {
-          // console.error("ModuleFiltersSelection - API response not ok:", response.statusText);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   // 커스텀 필드 필터 업데이트 핸들러
   const handleCustomFieldUpdate = (fieldId: string, value: string) => {

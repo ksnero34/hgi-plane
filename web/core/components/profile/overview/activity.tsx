@@ -31,11 +31,6 @@ export const ProfileActivity = observer(() => {
   // store hooks
   const { data: currentUser } = useUser();
   const { t } = useTranslation();
-  
-  // 커스텀 필드 상태
-  const [customFieldsByProject, setCustomFieldsByProject] = useState<{ [projectId: string]: TCustomField[] }>({});
-  // 프로젝트별 멤버 정보 상태
-  const [membersByProject, setMembersByProject] = useState<{ [projectId: string]: any[] }>({});
 
   const { data: userProfileActivity } = useSWR(
     workspaceSlug && userId ? USER_PROFILE_ACTIVITY(workspaceSlug.toString(), userId.toString(), {}) : null,
@@ -47,32 +42,26 @@ export const ProfileActivity = observer(() => {
       : null
   );
 
-  // 프로젝트별 커스텀 필드와 멤버 정보 조회
-  useEffect(() => {
-    const fetchProjectData = async () => {
-      if (!userProfileActivity?.results) return;
-      
-      // 활동에서 고유한 프로젝트 ID들과 워크스페이스 슬러그 추출
+  // 프로젝트별 커스텀 필드와 멤버 정보 동시 조회 with useSWR
+  const { data: projectDetails } = useSWR(
+    userProfileActivity?.results?.length ? ["project-details", userProfileActivity] : null,
+    async () => {
       const projectData = userProfileActivity.results.reduce((acc: any, activity: any) => {
         if (activity.project && activity.workspace_detail?.slug) {
           acc[activity.project] = activity.workspace_detail.slug;
         }
         return acc;
       }, {});
-      
+
       const customFieldsMap: { [projectId: string]: TCustomField[] } = {};
       let workspaceMembers: any[] = [];
-      
-      // 워크스페이스 멤버는 한 번만 가져오기
+
       const workspaceSlugValue = Object.values(projectData)[0] as string;
       if (workspaceSlugValue) {
         try {
-          const membersResponse = await fetch(
-            `/api/workspaces/${workspaceSlugValue}/members/`,
-            {
-              credentials: "include",
-            }
-          );
+          const membersResponse = await fetch(`/api/workspaces/${workspaceSlugValue}/members/`, {
+            credentials: "include",
+          });
           if (membersResponse.ok) {
             workspaceMembers = await membersResponse.json();
           }
@@ -80,20 +69,18 @@ export const ProfileActivity = observer(() => {
           console.error(`워크스페이스 멤버 로드 중 오류:`, error);
         }
       }
-      
+
       await Promise.all(
-        Object.entries(projectData).map(async ([projectId, workspaceSlug]) => {
+        Object.entries(projectData).map(async ([projectId, wsSlug]) => {
           try {
-            // 커스텀 필드 조회
             const customFieldsResponse = await fetch(
-              `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-              {
-                credentials: "include",
-              }
+              `/api/workspaces/${wsSlug}/projects/${projectId}/custom-fields/`,
+              { credentials: "include" }
             );
             if (customFieldsResponse.ok) {
-              const customFieldsData = await customFieldsResponse.json();
-              customFieldsMap[projectId] = customFieldsData;
+              customFieldsMap[projectId] = await customFieldsResponse.json();
+            } else {
+              customFieldsMap[projectId] = [];
             }
           } catch (error) {
             console.error(`프로젝트 데이터 로드 중 오류 (프로젝트 ${projectId}):`, error);
@@ -102,23 +89,18 @@ export const ProfileActivity = observer(() => {
         })
       );
       
-      setCustomFieldsByProject(customFieldsMap);
-      // 모든 프로젝트에 동일한 워크스페이스 멤버 설정
       const membersMap: { [projectId: string]: any[] } = {};
-      Object.keys(projectData).forEach(projectId => {
+      Object.keys(projectData).forEach((projectId) => {
         membersMap[projectId] = workspaceMembers;
       });
-      setMembersByProject(membersMap);
-    };
 
-    if (userProfileActivity?.results && userProfileActivity.results.length > 0) {
-      fetchProjectData();
+      return { customFieldsByProject: customFieldsMap, membersByProject: membersMap };
     }
-  }, [userProfileActivity]);
+  );
 
   // 프로젝트별 멤버 정보를 제공하는 mock hook 생성
   const createMemberHook = (projectId: string) => {
-    const projectMembers = membersByProject[projectId] || [];
+    const projectMembers = projectDetails?.membersByProject?.[projectId] || [];
     
     return {
       project: {
@@ -142,7 +124,7 @@ export const ProfileActivity = observer(() => {
           userProfileActivity.results.length > 0 ? (
             <div className="space-y-5">
               {userProfileActivity.results.map((activity) => {
-                const projectCustomFields = customFieldsByProject[activity.project] || [];
+                const projectCustomFields = projectDetails?.customFieldsByProject?.[activity.project] || [];
                 const memberHook = createMemberHook(activity.project);
                 
                 return (

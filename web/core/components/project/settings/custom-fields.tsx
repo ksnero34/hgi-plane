@@ -7,7 +7,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { attachInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { Button, Input, CustomSelect, ToggleSwitch, TOAST_TYPE, setToast, DropIndicator } from "@plane/ui";
-import { useProject } from "@/hooks/store";
+import { useCustomField } from "@/hooks/store";
 
 interface ICustomField {
   id: string;
@@ -28,45 +28,45 @@ interface ICustomField {
 }
 
 const FIELD_TYPES = [
-  { value: "text", label: "텍스트", description: "사용자가 자유롭게 텍스트를 입력할 수 있습니다." },
-  { value: "select", label: "선택", description: "미리 정의된 옵션 중 하나를 선택할 수 있습니다." },
-  { value: "multiselect", label: "다중선택", description: "미리 정의된 옵션 중 여러 개를 선택할 수 있습니다." },
-  { value: "date", label: "날짜", description: "날짜를 선택할 수 있습니다." },
-  { value: "project_member", label: "프로젝트 멤버", description: "프로젝트 멤버 중 한 명을 선택할 수 있습니다." },
-  { value: "project_members", label: "프로젝트 멤버(다중)", description: "프로젝트 멤버 중 여러 명을 선택할 수 있습니다." },
+  { value: "text", label: "Text", description: "일반 텍스트 필드" },
+  { value: "number", label: "Number", description: "숫자 값 필드" },
+  { value: "date", label: "Date", description: "날짜 선택 필드" },
+  { value: "select", label: "Select", description: "단일 선택 드롭다운" },
+  { value: "multiselect", label: "Multi-select", description: "다중 선택 드롭다운" },
+  { value: "project_member", label: "Project Member", description: "프로젝트 멤버 단일 선택" },
+  { value: "project_members", label: "Project Members", description: "프로젝트 멤버 다중 선택" },
 ];
 
-const CustomFieldItem = observer(({ field, index, onDelete, onEdit }: { field: ICustomField; index: number; onDelete: (id: string) => void; onEdit: (field: ICustomField) => void }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [instruction, setInstruction] = useState<string | undefined>();
+const CustomFieldItem: React.FC<{
+  field: ICustomField;
+  index: number;
+  onEdit: (field: ICustomField) => void;
+  onDelete: (fieldId: string) => void;
+}> = ({ field, index, onEdit, onDelete }) => {
   const elementRef = useRef<HTMLDivElement>(null);
+  const [instruction, setInstruction] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    const element = elementRef.current;
-    if (!element) return;
-
-    const initialData = { id: field.id, index };
+    const el = elementRef.current;
+    if (!el) return;
 
     return combine(
       draggable({
-        element,
-        dragHandle: element,
-        getInitialData: () => initialData,
+        element: el,
+        getInitialData: () => ({ index, id: field.id, type: "custom-field" }),
         onDragStart: () => setIsDragging(true),
         onDrop: () => setIsDragging(false),
       }),
       dropTargetForElements({
-        element,
-        getData: ({ input, element }) => 
-          attachInstruction(initialData, {
-            input,
-            element,
-            currentLevel: 1,
-            indentPerLevel: 0,
-            mode: "standard",
-          }),
-        onDragEnter: () => setInstruction("DRAG_OVER"),
-        onDragLeave: () => setInstruction(undefined),
+        element: el,
+        getData: () => ({ id: field.id, type: "custom-field" }),
+        canDrop: ({ source }) => source.data.type === "custom-field",
+        getIsSticky: () => true,
+        onDragEnter: (args) => setInstruction(args.source.data.id === field.id ? null : { type: "reorder-above" }),
+        onDrag: (args) => setInstruction(args.source.data.id === field.id ? null : { type: "reorder-above" }),
+        onDragLeave: () => setInstruction(null),
+        onDrop: () => setInstruction(null),
       })
     );
   }, [field.id, index]);
@@ -107,108 +107,57 @@ const CustomFieldItem = observer(({ field, index, onDelete, onEdit }: { field: I
       </div>
     </div>
   );
-});
+};
 
-export const ProjectCustomFieldsSettings = observer(() => {
+export const CustomFields: React.FC = observer(() => {
   const { workspaceSlug, projectId } = useParams();
-  const { currentProjectDetails } = useProject();
+  const { customFields, createCustomField, updateCustomField, deleteCustomField, mutateCustomFields } = useCustomField(projectId as string);
 
-  const [isLoading, setIsLoading] = useState(false);
   const [fields, setFields] = useState<ICustomField[]>([]);
+  const [newField, setNewField] = useState<Partial<ICustomField>>({});
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
-  const [newField, setNewField] = useState<Partial<ICustomField>>({
-    name: "",
-    key: "",
-    field_type: "",
-    is_required: false,
-    options: [],
-  });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchCustomFields();
-  }, [projectId, workspaceSlug]);
-
-  const fetchCustomFields = async () => {
-    try {
-      const response = await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-        {
-          credentials: "include",
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setFields(data);
-      }
-    } catch (error) {
-      console.error("커스텀 필드 로드 중 오류:", error);
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "오류",
-        message: "커스텀 필드를 불러오는데 실패했습니다.",
-      });
+    if (customFields) {
+      setFields(customFields as ICustomField[]);
     }
-  };
+  }, [customFields]);
 
   const handleCreateOrUpdateField = async () => {
     if (!newField.name || !newField.key) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "필수 필드를 입력해주세요",
-        message: "필드명과 식별자는 필수입니다.",
-      });
-      return;
-    }
-
-    // 선택/다중선택 타입의 경우 옵션이 필요
-    if ((newField.field_type === "select" || newField.field_type === "multiselect") && (!newField.options || newField.options.length === 0)) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "옵션을 추가해주세요",
-        message: "선택 타입의 필드는 최소 하나의 옵션이 필요합니다.",
+        title: "오류",
+        message: "필드 이름과 고유 식별자는 필수입니다.",
       });
       return;
     }
 
     setIsLoading(true);
+
     try {
-      const url = isEditMode && editingFieldId 
-        ? `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/${editingFieldId}/`
-        : `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`;
-      
-      const method = isEditMode ? "PATCH" : "POST";
-      
-      const requestData = {
-        ...newField,
-        options: (newField.field_type === "select" || newField.field_type === "multiselect") 
-          ? newField.options?.filter(v => v.trim() !== "") || []
-          : undefined,
-      };
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      if (!response.ok) throw new Error("Failed to save custom field");
-
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: isEditMode ? "커스텀 필드 수정 완료" : "커스텀 필드 생성 완료",
-        message: isEditMode ? "커스텀 필드가 수정되었습니다." : "새로운 커스텀 필드가 추가되었습니다.",
-      });
-
-      await fetchCustomFields();
+      if (isEditMode && newField.id) {
+        await updateCustomField(newField.id, newField);
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: "성공",
+          message: "커스텀 필드가 수정되었습니다.",
+        });
+      } else {
+        await createCustomField(newField);
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: "성공",
+          message: "새 커스텀 필드가 추가되었습니다.",
+        });
+      }
       resetForm();
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: isEditMode ? "커스텀 필드 수정 실패" : "커스텀 필드 생성 실패",
-        message: "커스텀 필드를 저장하는 중 오류가 발생했습니다.",
+        title: "오류",
+        message: "필드 처리 중 오류가 발생했습니다.",
       });
     } finally {
       setIsLoading(false);
@@ -216,50 +165,28 @@ export const ProjectCustomFieldsSettings = observer(() => {
   };
 
   const resetForm = () => {
-    setNewField({
-      name: "",
-      key: "",
-      field_type: "",
-      is_required: false,
-      options: [],
-    });
+    setNewField({});
     setIsEditMode(false);
-    setEditingFieldId(null);
   };
 
   const handleEditField = (field: ICustomField) => {
-    setNewField({
-      ...field,
-      options: field.options || [],
-    });
+    setNewField(field);
     setIsEditMode(true);
-    setEditingFieldId(field.id);
   };
 
   const handleDeleteField = async (fieldId: string) => {
     try {
-      const response = await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/${fieldId}/`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
-
-      if (response.ok) {
-        setFields(fields.filter((f) => f.id !== fieldId));
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "성공",
-          message: "커스텀 필드가 삭제되었습니다.",
-        });
-      }
+      await deleteCustomField(fieldId);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "성공",
+        message: "커스텀 필드가 삭제되었습니다.",
+      });
     } catch (error) {
-      console.error("커스텀 필드 삭제 중 오류:", error);
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "오류",
-        message: "커스텀 필드 삭제에 실패했습니다.",
+        message: "필드 삭제 중 오류가 발생했습니다.",
       });
     }
   };
@@ -274,90 +201,61 @@ export const ProjectCustomFieldsSettings = observer(() => {
     const [reorderedItem] = items.splice(sourceIndex, 1);
     items.splice(destinationIndex, 0, reorderedItem);
 
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      sort_order: index * 1000,
-    }));
-
-    setFields(updatedItems);
+    setFields(items);
 
     try {
-      await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/reorder/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            field_orders: updatedItems.map((item) => ({
-              id: item.id,
-              sort_order: item.sort_order,
-            })),
-          }),
-        }
+      await Promise.all(
+        items.map((field, index) =>
+          fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/${field.id}/`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sort_order: index }),
+          })
+        )
       );
+      mutateCustomFields(items as TCustomField[], false);
     } catch (error) {
-      console.error("필드 순서 변경 중 오류:", error);
+      setFields(fields);
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "오류",
-        message: "필드 순서 변경에 실패했습니다.",
+        title: "Error",
+        message: "Failed to reorder fields.",
       });
     }
   };
 
   const getFieldPlaceholder = (fieldType: string) => {
-    switch (fieldType) {
-      case "text":
-        return "예: 자유 텍스트";
-      case "select":
-      case "multiselect":
-        return "예: 선택 옵션";
-      case "date":
-        return "예: 2024-03-21";
-      case "project_member":
-      case "project_members":
-        return "예: 담당자";
-      default:
-        return "";
+    switch(fieldType) {
+      case 'text': return '예: 버그 설명';
+      case 'number': return '예: 스토리 포인트';
+      case 'date': return '예: 출시일';
+      case 'select':
+      case 'multiselect':
+        return '예: 우선순위';
+      default: return '필드 이름';
     }
   };
 
   const getFieldHelperText = (fieldType: string) => {
-    switch (fieldType) {
-      case "text":
-        return "사용자가 자유롭게 텍스트를 입력할 수 있습니다.";
-      case "select":
-        return "미리 정의된 옵션 중 하나를 선택할 수 있습니다.";
-      case "multiselect":
-        return "미리 정의된 옵션 중 여러 개를 선택할 수 있습니다.";
-      case "date":
-        return "날짜를 선택할 수 있습니다.";
-      case "project_member":
-        return "프로젝트 멤버 중 한 명을 선택할 수 있습니다.";
-      case "project_members":
-        return "프로젝트 멤버 중 여러 명을 선택할 수 있습니다.";
-      default:
-        return "";
+    switch(fieldType) {
+      case 'text': return '이슈에 대한 자세한 설명을 추가할 수 있습니다.';
+      case 'number': return '숫자 값을 입력하여 측정 항목을 관리합니다.';
+      case 'date': return '마감일, 출시일 등 중요한 날짜를 추적합니다.';
+      case 'select': return '하나의 옵션을 선택할 수 있는 드롭다운 목록입니다.';
+      case 'multiselect': return '여러 옵션을 선택할 수 있는 드롭다운 목록입니다.';
+      default: return '필드의 용도를 입력하세요.';
     }
   };
 
   const getKeyPlaceholder = (fieldType: string) => {
-    switch (fieldType) {
-      case "text":
-        return "예: description";
-      case "select":
-      case "multiselect":
-        return "예: status";
-      case "date":
-        return "예: due_date";
-      case "project_member":
-      case "project_members":
-        return "예: assignee";
-      default:
-        return "예: field_key";
+    switch(fieldType) {
+      case 'text': return 'bug_description';
+      case 'number': return 'story_points';
+      case 'date': return 'release_date';
+      case 'select':
+      case 'multiselect':
+        return 'priority';
+      default: return 'field_key';
     }
   };
 

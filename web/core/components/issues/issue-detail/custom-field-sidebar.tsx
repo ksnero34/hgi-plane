@@ -11,7 +11,7 @@ import { CustomFieldDropdown } from "@/components/dropdowns/custom-field";
 import { TCustomField } from "@plane/types";
 
 // hooks
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail, useCustomField } from "@/hooks/store";
 import type { TIssueOperations } from "./root";
 // helpers
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
@@ -27,34 +27,12 @@ type Props = {
 
 export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
   const { workspaceSlug, projectId, issueId, issueOperations, isEditable } = props;
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
   const {
     issue: { getIssueById },
   } = useIssueDetail();
+  const { customFields } = useCustomField(projectId);
 
   const issue = getIssueById(issueId);
-
-  // 커스텀 필드 목록 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      try {
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   // 현재 이슈의 커스텀 필드 값 가져오기
   const getFieldValue = (fieldId: string) => {

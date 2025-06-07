@@ -10,9 +10,8 @@ import { TIssue, TCustomField } from "@plane/types";
 // ui
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // services
-import { CustomFieldService } from "@/services/custom-field.service";
-// helpers
 import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { useCustomField } from "@/hooks/store";
 
 type Props = {
   control: Control<TIssue>;
@@ -21,47 +20,20 @@ type Props = {
   handleFormChange: () => void;
 };
 
-const customFieldService = new CustomFieldService();
-
 export const IssueCustomField: FC<Props> = observer((props) => {
   const { control, projectId, workspaceSlug, handleFormChange } = props;
-  // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  // store hooks
   const { t } = useTranslation();
 
-  // text 필드의 로컬 상태 관리
-  const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!projectId || !workspaceSlug) return;
-      
-      try {
-        setIsLoading(true);
-        const fields = await customFieldService.getCustomFields(workspaceSlug, projectId);
-        setCustomFields(fields);
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [projectId, workspaceSlug]);
-
-  if (isLoading || !customFields || customFields.length === 0) return null;
+  const { customFields, isLoading } = useCustomField({ projectId });
+  const [textFieldValues, setTextFieldValues] = useState<{ [key: string]: string }>({});
 
   const renderFieldInput = (field: TCustomField, value: any, onChange: (value: any) => void) => {
-    const fieldValue = value?.value || "";
-    
+    const fieldValue = value?.value;
+
+    const currentTextValue = textFieldValues[field.id] ?? fieldValue ?? "";
+
     switch (field.field_type) {
       case "text":
-        const currentTextValue = textFieldValues[field.id] !== undefined 
-          ? textFieldValues[field.id] 
-          : (fieldValue || "");
         
         return (
           <input
@@ -220,6 +192,8 @@ export const IssueCustomField: FC<Props> = observer((props) => {
         );
     }
   };
+
+  if (isLoading) return <div>{t("common.loading")}</div>;
 
   return (
     <>

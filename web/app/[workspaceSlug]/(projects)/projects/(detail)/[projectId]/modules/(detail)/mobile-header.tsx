@@ -31,12 +31,18 @@ import {
 import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
-import { useIssues, useLabel, useMember, useModule, useProject, useProjectState } from "@/hooks/store";
+import {
+  useIssues,
+  useModule,
+  useProject,
+  useProjectState,
+  useLabel,
+  useMember,
+  useCustomField,
+} from "@/hooks/store";
 
 export const ModuleIssuesMobileHeader = observer(() => {
   const [analyticsModal, setAnalyticsModal] = useState(false);
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   const { currentProjectDetails } = useProject();
   const { getModuleById } = useModule();
   const { t } = useTranslation();
@@ -61,6 +67,7 @@ export const ModuleIssuesMobileHeader = observer(() => {
   const {
     project: { projectMemberIds },
   } = useMember();
+  const { customFields } = useCustomField(projectId as string);
 
   const handleLayoutChange = useCallback(
     (layout: EIssueLayoutTypes) => {
@@ -90,38 +97,11 @@ export const ModuleIssuesMobileHeader = observer(() => {
 
   const handleDisplayProperties = useCallback(
     (property: Partial<IIssueDisplayProperties>) => {
-      if (!workspaceSlug || !projectId) return;
-      updateFilters(workspaceSlug, projectId, EIssueFilterType.DISPLAY_PROPERTIES, property, moduleId);
+      if (!workspaceSlug || !projectId || !moduleId) return;
+      updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.DISPLAY_PROPERTIES, property, moduleId.toString());
     },
     [workspaceSlug, projectId, moduleId, updateFilters]
   );
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data || []);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
 
   return (
     <div className="block md:hidden">

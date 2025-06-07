@@ -24,7 +24,7 @@ import { CreateUpdateWorkspaceViewModal } from "@/components/workspace";
 // helpers
 import { cn } from "@/helpers/common.helper";
 // hooks
-import { useEventTracker, useGlobalView, useIssues, useLabel, useUser, useUserPermissions } from "@/hooks/store";
+import { useEventTracker, useGlobalView, useIssues, useLabel, useUser, useUserPermissions, useCustomField } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
 import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 
@@ -49,35 +49,10 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
   const { captureEvent } = useEventTracker();
   const { data } = useUser();
   const { allowPermissions } = useUserPermissions();
+  const { trackEvent } = useEventTracker();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // 워크스페이스 레벨 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || isLoadingCustomFields) return;
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCustomFields(data);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug]);
+  const { customFields: customFieldsFromHook, isLoading: isLoadingCustomFieldsFromHook } = useCustomField({ workspaceLevel: true });
 
   // derived values
   const issueFilters = filters?.[globalViewId];
@@ -205,7 +180,7 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
           appliedFilters={appliedFilters ?? {}}
           handleClearAllFilters={handleClearAllFilters}
           handleRemoveFilter={handleRemoveFilter}
-          customFields={customFields}
+          customFields={customFieldsFromHook}
           disableEditing={isLocked}
           alwaysAllowEditing
         />

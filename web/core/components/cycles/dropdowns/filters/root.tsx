@@ -7,6 +7,7 @@ import { TCycleFilters, TCycleGroups, TCustomField } from "@plane/types";
 import { FilterEndDate, FilterStartDate, FilterStatus } from "@/components/cycles";
 import { FilterCustomFields } from "@/components/issues";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useCustomField } from "@/hooks/store";
 // types
 
 type Props = {
@@ -19,48 +20,10 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
   const { filters, handleFiltersUpdate, isArchived = false } = props;
   // states
   const [filtersSearchQuery, setFiltersSearchQuery] = useState("");
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // hooks
   const { isMobile } = usePlatformOS();
   const { workspaceSlug, projectId } = useParams();
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId || isLoadingCustomFields) return;
-      
-      // console.log("CycleFiltersSelection - Fetching custom fields...");
-      // console.log("CycleFiltersSelection - workspaceSlug:", workspaceSlug);
-      // console.log("CycleFiltersSelection - projectId:", projectId);
-      
-      try {
-        setIsLoadingCustomFields(true);
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-          {
-            credentials: "include",
-          }
-        );
-        // console.log("CycleFiltersSelection - API response status:", response.status);
-        // console.log("CycleFiltersSelection - API response ok:", response.ok);
-        
-        if (response.ok) {
-          const data = await response.json();
-          // console.log("CycleFiltersSelection - Custom fields data:", data);
-          setCustomFields(data);
-        } else {
-          // console.error("CycleFiltersSelection - API response not ok:", response.statusText);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-      } finally {
-        setIsLoadingCustomFields(false);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
+  const { customFields } = useCustomField();
 
   // 커스텀 필드 필터 업데이트 핸들러
   const handleCustomFieldUpdate = (fieldId: string, value: string) => {
@@ -162,12 +125,6 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
         {/* custom fields */}
         <div className="py-2">
           {(() => {
-            // console.log("CycleFiltersSelection - About to render FilterCustomFields");
-            // console.log("CycleFiltersSelection - customFields state:", customFields);
-            // console.log("CycleFiltersSelection - customFields length:", customFields?.length);
-            // console.log("CycleFiltersSelection - workspaceSlug:", workspaceSlug);
-            // console.log("CycleFiltersSelection - projectId:", projectId);
-            
             return (
               <FilterCustomFields
                 appliedFilters={

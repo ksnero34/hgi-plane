@@ -11,6 +11,7 @@ import { FilterCustomFields } from "@/components/issues";
 // constants
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useCustomField } from "@/hooks/store";
 // plane web components
 import { FilterByAccess } from "@/plane-web/components/views/filters/access-filter";
 
@@ -31,76 +32,16 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
   
   // states
   const [filtersSearchQuery, setFiltersSearchQuery] = useState("");
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
-  const [isLoadingCustomFields, setIsLoadingCustomFields] = useState(false);
   // store
   const { isMobile } = usePlatformOS();
   const { workspaceSlug, projectId } = useParams();
 
   // 실제 사용할 projectId 결정 (뷰가 프로젝트 레벨인 경우 viewProjectId 사용, 아니면 URL의 projectId 사용)
   const effectiveProjectId = isProjectLevel ? viewProjectId : (projectId as string);
+  const { customFields, isLoading: isLoadingCustomFields } = useCustomField({ projectId: isProjectLevel ? effectiveProjectId : undefined });
   
   // console.log("ViewFiltersSelection - URL params:", { workspaceSlug, projectId });
   // console.log("ViewFiltersSelection - effectiveProjectId:", effectiveProjectId);
-
-  // 커스텀 필드 가져오기 - 프로젝트 레벨인 경우에만
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      // console.log("ViewFiltersSelection - fetchCustomFields called");
-      // console.log("ViewFiltersSelection - workspaceSlug:", workspaceSlug);
-      // console.log("ViewFiltersSelection - effectiveProjectId:", effectiveProjectId);
-      // console.log("ViewFiltersSelection - isProjectLevel:", isProjectLevel);
-      // console.log("ViewFiltersSelection - isLoadingCustomFields:", isLoadingCustomFields);
-      
-      // 프로젝트 레벨이 아니거나 필요한 정보가 없으면 커스텀 필드를 가져오지 않음
-      if (!isProjectLevel || !workspaceSlug || !effectiveProjectId || isLoadingCustomFields) {
-        // console.log("ViewFiltersSelection - fetchCustomFields early return");
-        if (!isProjectLevel) {
-          // console.log("ViewFiltersSelection - Not project level, clearing custom fields");
-          setCustomFields([]);
-        }
-        return;
-      }
-      
-      try {
-        setIsLoadingCustomFields(true);
-        // console.log("ViewFiltersSelection - Starting API call for custom fields");
-        const apiUrl = `/api/workspaces/${workspaceSlug}/projects/${effectiveProjectId}/custom-fields/`;
-        // console.log("ViewFiltersSelection - API URL:", apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          credentials: "include",
-        });
-        
-        // console.log("ViewFiltersSelection - API response received");
-        // console.log("ViewFiltersSelection - API response status:", response.status);
-        // console.log("ViewFiltersSelection - API response ok:", response.ok);
-        // console.log("ViewFiltersSelection - API response headers:", Object.fromEntries(response.headers.entries()));
-        
-        if (response.ok) {
-          const data = await response.json();
-          // console.log("ViewFiltersSelection - API response data:", data);
-          // console.log("ViewFiltersSelection - API response data type:", typeof data);
-          // console.log("ViewFiltersSelection - API response data length:", Array.isArray(data) ? data.length : 'not array');
-          // console.log("ViewFiltersSelection - Setting customFields to:", data || []);
-          setCustomFields(data || []);
-        } else {
-          const errorText = await response.text();
-          // console.error("ViewFiltersSelection - API response not ok:", response.status, response.statusText);
-          // console.error("ViewFiltersSelection - API error response:", errorText);
-          setCustomFields([]);
-        }
-      } catch (error) {
-        // console.error("ViewFiltersSelection - 커스텀 필드 로드 중 오류:", error);
-        setCustomFields([]);
-      } finally {
-        setIsLoadingCustomFields(false);
-        // console.log("ViewFiltersSelection - fetchCustomFields completed, isLoadingCustomFields set to false");
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, effectiveProjectId, isProjectLevel]);
 
   // handles filter update
   const handleFilters = (key: keyof TViewFilterProps, value: boolean | string | EViewAccess | string[]) => {

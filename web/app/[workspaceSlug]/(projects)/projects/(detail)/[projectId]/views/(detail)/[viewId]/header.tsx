@@ -46,6 +46,7 @@ import {
   useProjectView,
   useUserPermissions,
   useMultipleSelectStore,
+  useCustomField,
 } from "@/hooks/store";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -58,7 +59,6 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // refs
   const parentRef = useRef(null);
   // states
-  const [customFields, setCustomFields] = useState<TCustomField[]>([]);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   // router
   const { workspaceSlug, projectId, viewId } = useParams();
@@ -84,33 +84,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   const {
     project: { projectMemberIds },
   } = useMember();
-
-  // 커스텀 필드 가져오기
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!workspaceSlug || !projectId) return;
-
-      try {
-        // console.log("ProjectViewIssuesHeader - Fetching custom fields");
-        const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`, {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // console.log("ProjectViewIssuesHeader - Custom fields loaded:", data);
-          setCustomFields(data || []);
-        } else {
-          setCustomFields([]);
-        }
-      } catch (error) {
-        console.error("커스텀 필드 로드 중 오류:", error);
-        setCustomFields([]);
-      }
-    };
-
-    fetchCustomFields();
-  }, [workspaceSlug, projectId]);
+  const { customFields } = useCustomField();
 
   const activeLayout = issueFilters?.displayFilters?.layout;
 
