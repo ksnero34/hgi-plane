@@ -3,21 +3,19 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-// icons
-import { ArchiveRestoreIcon, ExternalLink, Link, Trash2 } from "lucide-react";
 // ui
 import { EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { ContextMenu, CustomMenu, TContextMenuItem, TOAST_TYPE, setToast } from "@plane/ui";
-import { copyUrlToClipboard } from "@plane/utils";
+import { ContextMenu, CustomMenu } from "@plane/ui";
 // components
 import { DeleteIssueModal } from "@/components/issues";
-// constants
 // helpers
 import { cn } from "@/helpers/common.helper";
 // hooks
 import { useEventTracker, useIssues, useUserPermissions } from "@/hooks/store";
 // types
 import { IQuickActionProps } from "../list/list-view-types";
+// helper
+import { useArchivedIssueMenuItems, MenuItemFactoryProps } from "./helper";
 
 export const ArchivedIssueQuickActions: React.FC<IQuickActionProps> = observer((props) => {
   const {
@@ -47,76 +45,34 @@ export const ArchivedIssueQuickActions: React.FC<IQuickActionProps> = observer((
   const isRestoringAllowed =
     handleRestore && allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
 
-  const issueLink = `${workspaceSlug}/projects/${issue.project_id}/archives/issues/${issue.id}`;
-
-  const handleOpenInNewTab = () => window.open(`/${issueLink}`, "_blank");
-  const handleCopyIssueLink = () =>
-    copyUrlToClipboard(issueLink).then(() =>
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: "링크가 복사되었습니다.",
-        message: "작업 항목 링크가 클립보드에 복사되었습니다.",
-      })
-    );
-  const handleIssueRestore = async () => {
-    if (!handleRestore) return;
-    await handleRestore()
-      .then(() => {
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "복원 성공",
-          message: "작업항목을 프로젝트에서 다시 확인할 수 있습니다 .",
-        });
-      })
-      .catch(() => {
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "작업 항목을 복원할 수 없습니다. 다시 시도해주세요.",
-        });
-      });
+  // Menu items and modals using helper
+  const menuItemProps: MenuItemFactoryProps = {
+    issue,
+    workspaceSlug: workspaceSlug?.toString(),
+    activeLayout,
+    isEditingAllowed,
+    isDeletingAllowed: isEditingAllowed,
+    isRestoringAllowed: !!isRestoringAllowed,
+    setTrackElement,
+    setIssueToEdit: () => {},
+    setCreateUpdateIssueModal: () => {},
+    setDeleteIssueModal,
+    handleRestore,
+    handleDelete,
   };
 
-  const MENU_ITEMS: TContextMenuItem[] = [
-    {
-      key: "restore",
-      title: "Restore",
-      icon: ArchiveRestoreIcon,
-      action: handleIssueRestore,
-      shouldRender: isRestoringAllowed,
-    },
-    {
-      key: "open-in-new-tab",
-      title: "Open in new tab",
-      icon: ExternalLink,
-      action: handleOpenInNewTab,
-    },
-    {
-      key: "copy-link",
-      title: "Copy link",
-      icon: Link,
-      action: handleCopyIssueLink,
-    },
-    {
-      key: "delete",
-      title: "Delete",
-      icon: Trash2,
-      action: () => {
-        setTrackElement(activeLayout);
-        setDeleteIssueModal(true);
-      },
-      shouldRender: isEditingAllowed,
-    },
-  ];
+  const MENU_ITEMS = useArchivedIssueMenuItems(menuItemProps);
 
   return (
     <>
+      {/* Modals */}
       <DeleteIssueModal
         data={issue}
         isOpen={deleteIssueModal}
         handleClose={() => setDeleteIssueModal(false)}
         onSubmit={handleDelete}
       />
+
       <ContextMenu parentRef={parentRef} items={MENU_ITEMS} />
       <CustomMenu
         ellipsis

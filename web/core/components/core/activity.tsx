@@ -23,7 +23,7 @@ import {
   Users,
   User,
 } from "lucide-react";
-import { IIssueActivity, TCustomField } from "@plane/types";
+import { IIssueActivity } from "@plane/types";
 import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, LayersIcon, DiceIcon, Intake } from "@plane/ui";
 // helpers
 import { renderFormattedDate } from "@/helpers/date-time.helper";
@@ -477,8 +477,15 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            새로운 첨부파일
-            을
+            uploaded a new{" "}
+            <a
+              href={`${activity.new_value}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
+            >
+              attachment
+            </a>
             {showIssue && (
               <>
                 {" "}
@@ -652,6 +659,12 @@ const activityDetails: {
             <IssueLink activity={activity} /> 을 생성했습니다.
           </>
         );
+      else if (activity.verb === "converted")
+        return (
+          <>
+            converted <IssueLink activity={activity} /> to an epic
+          </>
+        );
       else
         return (
           <>
@@ -660,6 +673,29 @@ const activityDetails: {
         );
     },
     icon: <LayersIcon width={12} height={12} className="text-custom-text-200" aria-hidden="true" />,
+  },
+  epic: {
+    message: (activity) => {
+      if (activity.verb === "created")
+        return (
+          <>
+            created <IssueLink activity={activity} />
+          </>
+        );
+      else if (activity.verb === "converted")
+        return (
+          <>
+            converted <IssueLink activity={activity} /> to a work item
+          </>
+        );
+      else
+        return (
+          <>
+            deleted <IssueLink activity={activity} />
+          </>
+        );
+    },
+    icon: <EpicIcon width={12} height={12} className="text-custom-text-200" aria-hidden="true" />,
   },
   labels: {
     message: (activity, showIssue, workspaceSlug) => {
@@ -1137,27 +1173,10 @@ type ActivityMessageProps = {
 export const ActivityMessage = ({ activity, showIssue = false, customFields = [] }: ActivityMessageProps) => {
   // router params
   const { workspaceSlug } = useParams();
-  // member hook
-  const memberHook = useMember();
-
-  // 커스텀 필드 activity 처리
-  if (activity.field?.startsWith("custom_field_")) {
-    return (
-      <>
-        {getCustomFieldActivityMessage(
-          activity,
-          showIssue,
-          workspaceSlug ? workspaceSlug.toString() : (activity.workspace_detail?.slug ?? ""),
-          memberHook,
-          customFields
-        )}
-      </>
-    );
-  }
 
   return (
     <>
-      {activityDetails[activity.field as keyof typeof activityDetails]?.message(
+      {activityDetails[activityField as keyof typeof activityDetails]?.message(
         activity,
         showIssue,
         workspaceSlug ? workspaceSlug.toString() : (activity.workspace_detail?.slug ?? "")

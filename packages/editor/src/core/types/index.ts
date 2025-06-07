@@ -5,7 +5,6 @@ export * from "./editor";
 export * from "./embed";
 export * from "./extensions";
 export * from "./file";
-export * from "./image";
 export * from "./mention";
 export * from "./slash-commands-suggestion";
 export * from "@/plane-editor/types";

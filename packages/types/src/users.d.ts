@@ -1,3 +1,4 @@
+import { EStartOfTheWeek } from "@plane/constants";
 import { IIssueActivity, TIssuePriorities, TStateGroups } from ".";
 import { TUserPermissions } from "./enums";
 
@@ -11,6 +12,7 @@ export interface IUserLite {
   id: string;
   is_bot: boolean;
   last_name: string;
+  joining_date?: string;
 }
 export interface IUser extends IUserLite {
   // only for uploading the cover image
@@ -66,6 +68,7 @@ export type TUserProfile = {
   language: string;
   created_at: Date | string;
   updated_at: Date | string;
+  start_of_the_week: EStartOfTheWeek;
 };
 
 export interface IInstanceAdminStatus {
@@ -82,6 +85,8 @@ export interface IUserSettings {
   workspace: {
     last_workspace_id: string | undefined;
     last_workspace_slug: string | undefined;
+    last_workspace_name: string | undefined;
+    last_workspace_logo: string | undefined;
     fallback_workspace_id: string | undefined;
     fallback_workspace_slug: string | undefined;
     invites: number | undefined;
@@ -161,14 +166,7 @@ export interface IUserProfileProjectSegregation {
     id: string;
     pending_issues: number;
   }[];
-  user_data: Pick<
-    IUser,
-    | "avatar_url"
-    | "cover_image_url"
-    | "display_name"
-    | "first_name"
-    | "last_name"
-  > & {
+  user_data: Pick<IUser, "avatar_url" | "cover_image_url" | "display_name" | "first_name" | "last_name"> & {
     date_joined: Date;
     user_timezone: string;
   };

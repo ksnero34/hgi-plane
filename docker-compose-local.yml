@@ -34,7 +34,15 @@ services:
     #restart: unless-stopped
     networks:
       - dev_env
-    command: server /export --console-address ":9090"
+    entrypoint: >
+      /bin/sh -c "
+      mkdir -p /export/${AWS_S3_BUCKET_NAME} &&
+      minio server /export --console-address ':9090' &
+      sleep 5 &&
+      mc alias set myminio http://localhost:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} &&
+      mc mb myminio/${AWS_S3_BUCKET_NAME} -p || true
+      && tail -f /dev/null
+      "
     volumes:
       - ./data/uploads:/export
     env_file:
@@ -62,7 +70,7 @@ services:
     build:
       context: .
       dockerfile: ./web/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/web:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/web:1.1.0
     # restart: unless-stopped
     networks:
       - dev_env
@@ -79,7 +87,7 @@ services:
     build:
       context: .
       dockerfile: ./space/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/space:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/space:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env
@@ -95,7 +103,7 @@ services:
     build:
       context: .
       dockerfile: ./admin/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/admin:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/admin:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env
@@ -111,7 +119,7 @@ services:
     build:
       context: .
       dockerfile: ./live/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/live:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/live:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env
@@ -130,7 +138,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env
@@ -151,7 +159,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env
@@ -172,7 +180,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env
@@ -194,7 +202,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.0
     #restart: "no"
     networks:
       - dev_env
@@ -212,7 +220,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/proxy:1.0.0
+    image: harbor.hwgeneralins.com/plane-dev/proxy:1.1.0
     #restart: unless-stopped
     networks:
       - dev_env

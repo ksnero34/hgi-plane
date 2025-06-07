@@ -3,6 +3,7 @@ import csv
 import io
 import os
 from datetime import date
+import uuid
 
 from dateutil.relativedelta import relativedelta
 from django.db import IntegrityError
@@ -35,6 +36,7 @@ from plane.db.models import (
     Workspace,
     WorkspaceMember,
     WorkspaceTheme,
+    Profile,
 )
 from plane.app.permissions import ROLE, allow_permission
 from django.utils.decorators import method_decorator
@@ -46,6 +48,9 @@ from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.cache import cache_response
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
+from plane.bgtasks.workspace_seed_task import workspace_seed
+from plane.utils.url import contains_url
+
 
 class WorkSpaceViewSet(BaseViewSet):
     model = Workspace
@@ -145,6 +150,12 @@ class WorkSpaceViewSet(BaseViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            if contains_url(name):
+                return Response(
+                    {"error": "Name cannot contain a URL"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             if serializer.is_valid(raise_exception=True):
                 serializer.save(owner=request.user)
                 # Create Workspace member
@@ -167,6 +178,8 @@ class WorkSpaceViewSet(BaseViewSet):
                 
                 cache.delete_pattern("/api/instances/workspaces/*")
                 
+                workspace_seed.delay(serializer.data["id"])
+
                 return Response(data, status=status.HTTP_201_CREATED)
             return Response(
                 [serializer.errors[error][0] for error in serializer.errors],
@@ -251,8 +264,18 @@ class WorkSpaceViewSet(BaseViewSet):
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
+    def remove_last_workspace_ids_from_user_settings(self, id: uuid.UUID) -> None:
+        """
+        Remove the last workspace id from the user settings
+        """
+        Profile.objects.filter(last_workspace_id=id).update(last_workspace_id=None)
+        return
+
     @allow_permission([ROLE.ADMIN], level="WORKSPACE")
     def destroy(self, request, *args, **kwargs):
+        # Get the workspace
+        workspace = self.get_object()
+        self.remove_last_workspace_ids_from_user_settings(workspace.id)
         return super().destroy(request, *args, **kwargs)
 
 
@@ -260,8 +283,6 @@ class UserWorkSpacesEndpoint(BaseAPIView):
     search_fields = ["name"]
     filterset_fields = ["owner"]
 
-    @method_decorator(cache_control(private=True, max_age=12))
-    @method_decorator(vary_on_cookie)
     def get(self, request):
         fields = [field for field in request.GET.get("fields", "").split(",") if field]
         member_count = (

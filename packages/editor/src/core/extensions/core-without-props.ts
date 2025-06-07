@@ -3,25 +3,25 @@ import TaskList from "@tiptap/extension-task-list";
 import TextStyle from "@tiptap/extension-text-style";
 import TiptapUnderline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
-// extensions
 // helpers
 import { isValidHttpUrl } from "@/helpers/common";
+// plane editor imports
+import { CoreEditorAdditionalExtensionsWithoutProps } from "@/plane-editor/extensions/core/without-props";
+// extensions
+import { CustomCalloutExtensionConfig } from "./callout/extension-config";
 import { CustomCodeBlockExtensionWithoutProps } from "./code/without-props";
 import { CustomCodeInlineExtension } from "./code-inline";
+import { CustomColorExtension } from "./custom-color";
 import { CustomLinkExtension } from "./custom-link";
 import { CustomHorizontalRule } from "./horizontal-rule";
 import { ImageExtensionWithoutProps } from "./image";
 import { CustomImageComponentWithoutProps } from "./image/image-component-without-props";
-import { IssueWidgetWithoutProps } from "./issue-embed/issue-embed-without-props";
 import { CustomMentionExtensionConfig } from "./mentions/extension-config";
 import { CustomQuoteExtension } from "./quote";
 import { TableHeader, TableCell, TableRow, Table } from "./table";
 import { CustomTextAlignExtension } from "./text-align";
-import { CustomCalloutExtensionConfig } from "./callout/extension-config";
-import { CustomColorExtension } from "./custom-color";
+import { WorkItemEmbedExtensionConfig } from "./work-item-embed/extension-config";
 import { CustomReadOnlyFileExtension } from "./custom-file/read-only-custom-file";
-// plane editor extensions
-import { CoreEditorAdditionalExtensionsWithoutProps } from "@/plane-editor/extensions/core/without-props";
 
 export const CoreEditorExtensionsWithoutProps = [
   StarterKit.configure({
@@ -73,12 +73,12 @@ export const CoreEditorExtensionsWithoutProps = [
         "text-custom-primary-300 underline underline-offset-[3px] hover:text-custom-primary-500 transition-colors cursor-pointer",
     },
   }),
-  ImageExtensionWithoutProps().configure({
+  ImageExtensionWithoutProps.configure({
     HTMLAttributes: {
       class: "rounded-md",
     },
   }),
-  CustomImageComponentWithoutProps(),
+  CustomImageComponentWithoutProps,
   TiptapUnderline,
   TextStyle,
   TaskList.configure({
@@ -106,7 +106,7 @@ export const CoreEditorExtensionsWithoutProps = [
 ];
 
 export const DocumentEditorExtensionsWithoutProps = [
-  IssueWidgetWithoutProps(),
+  WorkItemEmbedExtensionConfig,
   CustomReadOnlyFileExtension({ 
     getAssetSrc: async () => Promise.resolve("") 
   }),

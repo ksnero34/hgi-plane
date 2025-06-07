@@ -33,3 +33,4 @@ export * from "./user";
 export * from "./use-transient";
 export * from "./workspace-draft";
 export * from "./custom-field.store";
+export * from "./use-analytics";

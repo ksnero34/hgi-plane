@@ -39,14 +39,14 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   const { checkIssueEditPermission } = useUserPermissions();
   const { currentTab, fetchInboxIssueById, getIssueInboxByIssueId, getIsIssueAvailable } = useProjectInbox();
   const inboxIssue = getIssueInboxByIssueId(inboxIssueId);
-  const { allowPermissions, projectPermissionsByWorkspaceSlugAndProjectId } = useUserPermissions();
+  const { allowPermissions, getProjectRoleByWorkspaceSlugAndProjectId } = useUserPermissions();
 
   // derived values
   const isIssueAvailable = getIsIssueAvailable(inboxIssueId?.toString() || "");
 
   useEffect(() => {
     if (!isIssueAvailable && inboxIssueId && !isNotificationEmbed) {
-      router.replace(`/${workspaceSlug}/projects/${projectId}/inbox?currentTab=${currentTab}`);
+      router.replace(`/${workspaceSlug}/projects/${projectId}/intake?currentTab=${currentTab}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isIssueAvailable, isNotificationEmbed]);
@@ -92,7 +92,7 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   // });
 
 
-  const isGuest = projectPermissionsByWorkspaceSlugAndProjectId(workspaceSlug, projectId) === EUserPermissions.GUEST;
+  const isGuest = getProjectRoleByWorkspaceSlugAndProjectId(workspaceSlug, projectId) === EUserPermissions.GUEST;
   const isOwner = inboxIssue?.issue.created_by === currentUser?.id;
   const readOnly = !isOwner && isGuest;
 

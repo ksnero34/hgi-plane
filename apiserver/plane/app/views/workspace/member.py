@@ -1,5 +1,6 @@
 # Django imports
 from django.db.models import Count, Q, OuterRef, Subquery, IntegerField
+from django.utils import timezone
 from django.db.models.functions import Coalesce
 
 # Third party modules
@@ -152,7 +153,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
         # Deactivate the users from the projects where the user is part of
         _ = ProjectMember.objects.filter(
             workspace__slug=slug, member_id=workspace_member.member_id, is_active=True
-        ).update(is_active=False)
+        ).update(is_active=False, updated_at=timezone.now())
 
         # 감사 로그 추가
         log_audit(
@@ -228,7 +229,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
         # # Deactivate the users from the projects where the user is part of
         _ = ProjectMember.objects.filter(
             workspace__slug=slug, member_id=workspace_member.member_id, is_active=True
-        ).update(is_active=False)
+        ).update(is_active=False, updated_at=timezone.now())
 
         # # Deactivate the user
         workspace_member.is_active = False

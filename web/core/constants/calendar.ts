@@ -1,3 +1,4 @@
+import { EStartOfTheWeek } from "@plane/constants";
 import { TCalendarLayouts } from "@plane/types";
 
 export const MONTHS_LIST: {
@@ -60,35 +61,43 @@ export const DAYS_LIST: {
   [dayIndex: number]: {
     shortTitle: string;
     title: string;
+    value: EStartOfTheWeek;
   };
 } = {
   1: {
     shortTitle: "일",
     title: "일요일",
+    value: EStartOfTheWeek.SUNDAY,
   },
   2: {
     shortTitle: "월",
     title: "월요일",
+    value: EStartOfTheWeek.MONDAY,
   },
   3: {
     shortTitle: "화",
     title: "화요일",
+    value: EStartOfTheWeek.TUESDAY,
   },
   4: {
     shortTitle: "수",
     title: "수요일",
+    value: EStartOfTheWeek.WEDNESDAY,
   },
   5: {
     shortTitle: "목",
     title: "목요일",
+    value: EStartOfTheWeek.THURSDAY,
   },
   6: {
     shortTitle: "금",
     title: "금요일",
+    value: EStartOfTheWeek.FRIDAY,
   },
   7: {
     shortTitle: "토",
     title: "토요일",
+    value: EStartOfTheWeek.SATURDAY,
   },
 };
 

@@ -6,6 +6,7 @@ from django.conf import settings
 from plane.utils.host import base_host
 from plane.utils.ip_address import get_client_ip
 
+
 def user_login(request, user, is_app=False, is_admin=False, is_space=False):
     # 기존 세션 삭제 (중복 로그인 방지)
     from plane.db.models.session import Session

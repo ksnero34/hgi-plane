@@ -28,15 +28,12 @@ export const useEditorConfig = () => {
     (args: Pick<TArgs, "projectId" | "workspaceId" | "workspaceSlug">): TReadOnlyFileHandler => {
       const { projectId, workspaceId, workspaceSlug } = args;
 
-      // console.log("[getReadOnlyEditorFileHandlers] Creating handler with:", {
-      //   projectId,
-      //   workspaceId,
-      //   workspaceSlug
-      // });
-
-      const handler = {
-        getAssetSrc: async (path: any) => {
-          // console.log("[getReadOnlyEditorFileHandlers] getAssetSrc called with:", path);
+      return {
+        checkIfAssetExists: async (assetId: string) => {
+          const res = await fileService.checkIfAssetExists(workspaceSlug, assetId);
+          return res?.exists ?? false;
+        },
+        getAssetSrc: async (path) => {
           if (!path) return "";
           if (path?.startsWith("http")) {
             // console.log("[getReadOnlyEditorFileHandlers] Returning direct URL:", path);

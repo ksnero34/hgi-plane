@@ -35,6 +35,12 @@ class S3Storage(S3Boto3Storage):
         if os.environ.get("USE_MINIO") == "1":
             # 항상 환경 변수에서 설정된 엔드포인트 사용
             # request.get_host()를 사용하지 않음
+            # Determine protocol based on environment variable
+            if os.environ.get("MINIO_ENDPOINT_SSL") == "1":
+                endpoint_protocol = "https"
+            else:
+                endpoint_protocol = request.scheme if request else "http"
+            # Create an S3 client for MinIO
             self.s3_client = boto3.client(
                 "s3",
                 aws_access_key_id=self.aws_access_key_id,

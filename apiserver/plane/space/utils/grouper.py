@@ -130,6 +130,108 @@ def issue_on_results(
         "issue_module__module_id": "module_ids",
     }
 
+    original_list = ["assignee_ids", "label_ids", "module_ids"]
+
+    required_fields = [
+        "id",
+        "name",
+        "state_id",
+        "sort_order",
+        "estimate_point",
+        "priority",
+        "start_date",
+        "target_date",
+        "sequence_id",
+        "project_id",
+        "parent_id",
+        "cycle_id",
+        "created_by",
+        "state__group",
+    ]
+
+    if group_by in FIELD_MAPPER:
+        original_list.remove(FIELD_MAPPER[group_by])
+        original_list.append(group_by)
+
+    if sub_group_by in FIELD_MAPPER:
+        original_list.remove(FIELD_MAPPER[sub_group_by])
+        original_list.append(sub_group_by)
+
+    required_fields.extend(original_list)
+
+    issues = issues.annotate(
+        vote_items=ArrayAgg(
+            Case(
+                When(
+                    votes__isnull=False,
+                    votes__deleted_at__isnull=True,
+                    then=JSONObject(
+                        vote=F("votes__vote"),
+                        actor_details=JSONObject(
+                            id=F("votes__actor__id"),
+                            first_name=F("votes__actor__first_name"),
+                            last_name=F("votes__actor__last_name"),
+                            avatar=F("votes__actor__avatar"),
+                            avatar_url=Case(
+                                When(
+                                    votes__actor__avatar_asset__isnull=False,
+                                    then=Concat(
+                                        Value("/api/assets/v2/static/"),
+                                        F("votes__actor__avatar_asset"),
+                                        Value("/"),
+                                    ),
+                                ),
+                                default=F("votes__actor__avatar"),
+                                output_field=CharField(),
+                            ),
+                            display_name=F("votes__actor__display_name"),
+                        ),
+                    ),
+                ),
+                default=None,
+                output_field=JSONField(),
+            ),
+            filter=Q(votes__isnull=False, votes__deleted_at__isnull=True),
+            distinct=True,
+        ),
+        reaction_items=ArrayAgg(
+            Case(
+                When(
+                    issue_reactions__isnull=False,
+                    issue_reactions__deleted_at__isnull=True,
+                    then=JSONObject(
+                        reaction=F("issue_reactions__reaction"),
+                        actor_details=JSONObject(
+                            id=F("issue_reactions__actor__id"),
+                            first_name=F("issue_reactions__actor__first_name"),
+                            last_name=F("issue_reactions__actor__last_name"),
+                            avatar=F("issue_reactions__actor__avatar"),
+                            avatar_url=Case(
+                                When(
+                                    issue_reactions__actor__avatar_asset__isnull=False,
+                                    then=Concat(
+                                        Value("/api/assets/v2/static/"),
+                                        F("issue_reactions__actor__avatar_asset"),
+                                        Value("/"),
+                                    ),
+                                ),
+                                default=F("issue_reactions__actor__avatar"),
+                                output_field=CharField(),
+                            ),
+                            display_name=F("issue_reactions__actor__display_name"),
+                        ),
+                    ),
+                ),
+                default=None,
+                output_field=JSONField(),
+            ),
+            filter=Q(
+                issue_reactions__isnull=False, issue_reactions__deleted_at__isnull=True
+            ),
+            distinct=True,
+        ),
+    ).values(*required_fields, "vote_items", "reaction_items")
+
     # IssuePublicSerializer를 사용하여 커스텀 필드 값들을 포함한 데이터 반환
     serializer = IssuePublicSerializer(issues, many=True)
     serialized_data = serializer.data
@@ -195,6 +297,8 @@ def issue_on_results(
                     result["sub_parent_child"] = parent_child_value
     
     return serialized_data
+
+    # return issues
 
 
 def issue_group_values(

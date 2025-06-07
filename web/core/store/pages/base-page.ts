@@ -587,7 +587,6 @@ export class BasePage implements TBasePage {
   };
 
   setEditorRef = (editorRef: EditorRefApi | null) => {
-    console.log("store editorRef", editorRef);
     runInAction(() => {
       this.editorRef = editorRef;
     });
