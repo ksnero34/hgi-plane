@@ -47,6 +47,7 @@ class Page(BaseModel):
         blank=True,
         related_name="child_page",
     )
+    is_folder = models.BooleanField(default=False)
     archived_at = models.DateField(null=True)
     is_locked = models.BooleanField(default=False)
     view_props = models.JSONField(default=get_view_props)

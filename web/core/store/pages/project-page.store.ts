@@ -47,7 +47,8 @@ export interface IProjectPageStore {
   fetchPagesList: (
     workspaceSlug: string,
     projectId: string,
-    pageType?: TPageNavigationTabs
+    pageType?: TPageNavigationTabs,
+    parent?: string
   ) => Promise<TPage[] | undefined>;
   fetchPageDetails: (workspaceSlug: string, projectId: string, pageId: string) => Promise<TPage | undefined>;
   createPage: (pageData: Partial<TPage>) => Promise<TPage | undefined>;
@@ -194,7 +195,12 @@ export class ProjectPageStore implements IProjectPageStore {
   /**
    * @description fetch all the pages
    */
-  fetchPagesList = async (workspaceSlug: string, projectId: string, pageType?: TPageNavigationTabs) => {
+  fetchPagesList = async (
+    workspaceSlug: string,
+    projectId: string,
+    pageType?: TPageNavigationTabs,
+    parent?: string
+  ) => {
     try {
       if (!workspaceSlug || !projectId) return undefined;
 
@@ -204,7 +210,7 @@ export class ProjectPageStore implements IProjectPageStore {
         this.error = undefined;
       });
 
-      const pages = await this.service.fetchAll(workspaceSlug, projectId);
+      const pages = await this.service.fetchAll(workspaceSlug, projectId, parent);
       runInAction(() => {
         for (const page of pages) {
           if (page?.id) {
