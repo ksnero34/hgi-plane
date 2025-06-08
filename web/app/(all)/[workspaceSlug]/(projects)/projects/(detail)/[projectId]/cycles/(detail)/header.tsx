@@ -57,7 +57,7 @@ import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
-import { BulkEditModal } from "../../../../../../../../ce/components/issues/bulk-operations/bulk-edit-modal";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const CycleIssuesHeader: React.FC = observer(() => {
   // refs

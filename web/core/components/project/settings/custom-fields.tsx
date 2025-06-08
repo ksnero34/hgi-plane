@@ -7,14 +7,15 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { attachInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { Button, Input, CustomSelect, ToggleSwitch, TOAST_TYPE, setToast, DropIndicator } from "@plane/ui";
-import { useCustomField } from "@/hooks/store";
+import { TCustomField, TCustomFieldType } from "@plane/types";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 
 interface ICustomField {
   id: string;
   name: string;
   key: string;
   description?: string;
-  field_type: string;
+  field_type: TCustomFieldType;
   options?: string[];
   is_required: boolean;
   default_value?: any;
@@ -27,7 +28,7 @@ interface ICustomField {
   sort_order: number;
 }
 
-const FIELD_TYPES = [
+const FIELD_TYPES: { value: TCustomFieldType; label: string; description: string }[] = [
   { value: "text", label: "Text", description: "일반 텍스트 필드" },
   { value: "number", label: "Number", description: "숫자 값 필드" },
   { value: "date", label: "Date", description: "날짜 선택 필드" },
@@ -213,7 +214,7 @@ export const CustomFields: React.FC = observer(() => {
           })
         )
       );
-      mutateCustomFields(items as TCustomField[], false);
+      mutateCustomFields(items as TCustomField[]);
     } catch (error) {
       setFields(fields);
       setToast({
@@ -224,7 +225,7 @@ export const CustomFields: React.FC = observer(() => {
     }
   };
 
-  const getFieldPlaceholder = (fieldType: string) => {
+  const getFieldPlaceholder = (fieldType: TCustomFieldType) => {
     switch(fieldType) {
       case 'text': return '예: 버그 설명';
       case 'number': return '예: 스토리 포인트';
@@ -236,7 +237,7 @@ export const CustomFields: React.FC = observer(() => {
     }
   };
 
-  const getFieldHelperText = (fieldType: string) => {
+  const getFieldHelperText = (fieldType: TCustomFieldType) => {
     switch(fieldType) {
       case 'text': return '이슈에 대한 자세한 설명을 추가할 수 있습니다.';
       case 'number': return '숫자 값을 입력하여 측정 항목을 관리합니다.';
@@ -247,7 +248,7 @@ export const CustomFields: React.FC = observer(() => {
     }
   };
 
-  const getKeyPlaceholder = (fieldType: string) => {
+  const getKeyPlaceholder = (fieldType: TCustomFieldType) => {
     switch(fieldType) {
       case 'text': return 'bug_description';
       case 'number': return 'story_points';
@@ -305,7 +306,7 @@ export const CustomFields: React.FC = observer(() => {
               <CustomSelect
                 value={newField.field_type}
                 label={FIELD_TYPES.find(t => t.value === newField.field_type)?.label || "필드 타입 선택"}
-                onChange={(val: string) => setNewField({ ...newField, field_type: val })}
+                onChange={(val: string) => setNewField({ ...newField, field_type: val as TCustomFieldType })}
                 buttonClassName="w-full text-left"
               >
                 {FIELD_TYPES.map((option) => (

@@ -38,7 +38,9 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
 
   // 실제 사용할 projectId 결정 (뷰가 프로젝트 레벨인 경우 viewProjectId 사용, 아니면 URL의 projectId 사용)
   const effectiveProjectId = isProjectLevel ? viewProjectId : (projectId as string);
-  const { customFields, isLoading: isLoadingCustomFields } = useCustomField({ projectId: isProjectLevel ? effectiveProjectId : undefined });
+  const { customFields, isLoading: isLoadingCustomFields } = useCustomField(
+    isProjectLevel && effectiveProjectId ? effectiveProjectId : undefined
+  );
   
   // console.log("ViewFiltersSelection - URL params:", { workspaceSlug, projectId });
   // console.log("ViewFiltersSelection - effectiveProjectId:", effectiveProjectId);

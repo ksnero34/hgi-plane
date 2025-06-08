@@ -7,7 +7,7 @@ import { AccountTypeColumn, NameColumn } from "@/components/project/settings/mem
 // hooks
 import { useUser, useUserPermissions } from "@/hooks/store";
 
-export interface RowData extends Pick<TProjectMembership, "original_role"> {
+export interface RowData extends Pick<TProjectMembership, "original_role" | "role"> {
   member: IWorkspaceMember;
 }
 

@@ -14,6 +14,7 @@ import { ProjectViewsList } from "@/components/views";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
 // constants
 // helpers
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
 import { calculateTotalFilters } from "@/helpers/filter.helper";
 
 // hooks
@@ -27,9 +28,7 @@ const ProjectViewsPage = observer(() => {
   const { workspaceSlug, projectId } = useParams();
   const { t } = useTranslation();
   // store
-  const {
-    filters: { filters, clearAllFilters, updateFilters },
-  } = useProjectView();
+  const { filters, clearAllFilters, updateFilters } = useProjectView();
   const { getProjectById, currentProjectDetails } = useProject();
   const { allowPermissions } = useUserPermissions();
   const { customFields } = useCustomField(projectId as string);
@@ -41,21 +40,14 @@ const ProjectViewsPage = observer(() => {
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/views" });
 
   const handleRemoveFilter = useCallback(
-    (key: keyof TViewFilterProps, value: string | null) => {
-      const _filters = { ...(filters.filters ?? {}) };
-      if (value === null) {
-        // remove the key
-        delete _filters[key];
-      } else {
-        const newValues = _filters[key]?.filter((v) => v !== value) ?? [];
-        if (newValues.length === 0) {
-          delete _filters[key];
-        } else {
-          _filters[key] = newValues;
-        }
+    (key: keyof TViewFilterProps, value: string | EViewAccess | null) => {
+      if (!value) {
+        updateFilters("filters", { ...filters?.filters, [key]: [] });
+        return;
       }
 
-      updateFilters(_filters);
+      const updatedValue = calculateFilterRemovalValue<TViewFilterProps>(key as string, value as string, filters?.filters ?? {});
+      updateFilters("filters", { ...filters?.filters, [key]: updatedValue });
     },
     [filters, updateFilters]
   );
@@ -89,7 +81,7 @@ const ProjectViewsPage = observer(() => {
       {isFiltersApplied && (
         <Header variant={EHeaderVariant.TERNARY}>
           <ViewAppliedFiltersList
-            appliedFilters={filters.filters ?? {}}
+            appliedFilters={filters?.filters ?? {}}
             handleClearAllFilters={clearAllFilters}
             handleRemoveFilter={handleRemoveFilter}
             alwaysAllowEditing

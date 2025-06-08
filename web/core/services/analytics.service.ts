@@ -1,6 +1,14 @@
 import { API_BASE_URL } from "@plane/constants";
-import { IAnalyticsResponse, TAnalyticsTabsBase, TAnalyticsGraphsBase, TAnalyticsFilterParams, IExportAnalyticsFormData } from "@plane/types";
+import { IAnalyticsResponse, TAnalyticsTabsBase, TAnalyticsGraphsBase, TAnalyticsFilterParams } from "@plane/types";
 import { APIService } from "./api.service";
+
+// Analytics export form data type
+interface IExportAnalyticsFormData {
+  x_axis: string;
+  y_axis: string;
+  segment?: string;
+  [key: string]: any; // for additional filter parameters
+}
 
 export class AnalyticsService extends APIService {
   constructor() {

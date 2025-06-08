@@ -17,17 +17,16 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
 
   // store hooks
   const {
-    issuesFilter,
-    updateFilters,
+    issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.CYCLE);
   const { projectLabels } = useLabel();
   const { projectStates } = useProjectState();
   const { customFields } = useCustomField(projectId as string);
 
   // derived values
-  const userFilters = issuesFilter?.issueFilters?.filters;
-  const displayFilters = issuesFilter?.issueFilters?.displayFilters;
-  const displayProperties = issuesFilter?.issueFilters?.displayProperties;
+  const userFilters = issueFilters?.filters;
+  const displayFilters = issueFilters?.displayFilters;
+  const displayProperties = issueFilters?.displayProperties;
 
   // filters whose value not null or empty array
   const appliedFilters: IIssueFilterOptions = {};
@@ -41,7 +40,7 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
     if (!workspaceSlug || !projectId || !cycleId) return;
 
     // calculateFilterRemovalValue 함수를 사용하여 모든 필터를 통일된 방식으로 처리
-    const updatedValue = calculateFilterRemovalValue(key, value, userFilters ?? {});
+    const updatedValue = calculateFilterRemovalValue(key as string, value, userFilters ?? {});
     updateFilters(
       workspaceSlug.toString(),
       projectId.toString(),
@@ -56,7 +55,7 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
       // calculateFilterRemovalValue로 null 처리를 통일
-      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      const clearedValue = calculateFilterRemovalValue(key as string, null, userFilters ?? {});
       (newFilters as any)[key] = clearedValue;
     });
     updateFilters(

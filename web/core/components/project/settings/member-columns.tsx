@@ -4,7 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 import { CircleMinus } from "lucide-react";
 import { Disclosure } from "@headlessui/react";
 // plane imports
-import { ROLE, EUserPermissions, EUserProjectRoles } from "@plane/constants";
+import { ROLE, EUserPermissions, EUserProjectRoles, TUserPermissions } from "@plane/constants";
 import { IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
 import { CustomMenu, CustomSelect, TOAST_TYPE, setToast } from "@plane/ui";
 import { getFileURL } from "@plane/utils";
@@ -14,7 +14,7 @@ import { useMember, useUser, useUserPermissions } from "@/hooks/store";
 // import { EUserPermissions } from "@/plane-web/constants/user-permissions";
 import { useState } from "react";
 
-export interface RowData extends Pick<TProjectMembership, "original_role"> {
+export interface RowData extends Pick<TProjectMembership, "original_role" | "role"> {
   member: IWorkspaceMember;
 }
 
@@ -136,7 +136,7 @@ export const AccountTypeColumn: React.FC<AccountTypeProps> = observer((props) =>
     );
   };
 
-  const [currentRole, setCurrentRole] = useState<EUserPermissions>(rowData.role);
+  const [currentRole, setCurrentRole] = useState<TUserPermissions | EUserProjectRoles>(rowData.role);
 
   return (
     <>

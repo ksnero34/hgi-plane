@@ -25,7 +25,7 @@ export const useEditorConfig = () => {
   const { maxFileSize } = useFileSize();
 
   const getReadOnlyEditorFileHandlers = useCallback(
-    (args: Pick<TArgs, "projectId" | "workspaceId" | "workspaceSlug">): TReadOnlyFileHandler => {
+    (args: Pick<TArgs, "projectId" | "workspaceId" | "workspaceSlug">): TReadOnlyFileHandler & { validateFile?: (file: File) => Promise<boolean>; fileTypes?: string[]; maxFileSize?: number } => {
       const { projectId, workspaceId, workspaceSlug } = args;
 
       return {
@@ -64,9 +64,6 @@ export const useEditorConfig = () => {
         fileTypes: ["*"],
         maxFileSize: 50 * 1024 * 1024, // 50MB
       };
-
-      // console.log("[getReadOnlyEditorFileHandlers] Created handler:", handler);
-      return handler;
     },
     []
   );

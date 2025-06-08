@@ -24,7 +24,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
   const { control, projectId, workspaceSlug, handleFormChange } = props;
   const { t } = useTranslation();
 
-  const { customFields, isLoading } = useCustomField({ projectId });
+  const { customFields, isLoading } = useCustomField(projectId);
   const [textFieldValues, setTextFieldValues] = useState<{ [key: string]: string }>({});
 
   const renderFieldInput = (field: TCustomField, value: any, onChange: (value: any) => void) => {

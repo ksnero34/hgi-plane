@@ -29,7 +29,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
     issue: { getIssueById },
   } = useIssueDetail();
 
-  const { customFields, isLoading: customFieldsLoading } = useCustomField({ projectId });
+  const { customFields, isLoading: customFieldsLoading } = useCustomField(projectId);
   
   // derived values
   const issue = getIssueById(issueId);
@@ -40,10 +40,17 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
   };
 
   const updateFieldValue = (fieldId: string, value: any) => {
+    const fieldArray = customFields.filter(f => f.id === fieldId);
+    const field = fieldArray.length > 0 ? fieldArray[0] : null;
     issueOperations.update(workspaceSlug, projectId, issueId, {
       custom_field_values: [
         ...(issue?.custom_field_values || []).filter(cfv => cfv.custom_field_id !== fieldId),
-        { custom_field_id: fieldId, value: value }
+        { 
+          custom_field_id: fieldId, 
+          value: value,
+          field_name: field?.name || '',
+          field_type: field?.field_type || ''
+        }
       ],
       updated_at: new Date().toISOString()
     });

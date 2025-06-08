@@ -1,3 +1,5 @@
+"use client";
+
 import { ProjectNotificationSettings } from "@/components/project/settings/notifications";
 
 const ProjectNotificationsSettingsPage = () => (

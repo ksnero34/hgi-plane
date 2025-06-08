@@ -57,7 +57,7 @@ import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
-import { BulkEditModal } from "../../../../../../../../ce/components/issues/bulk-operations/bulk-edit-modal";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const ModuleIssuesHeader: React.FC = observer(() => {
   // refs
@@ -66,7 +66,10 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
   const [analyticsModal, setAnalyticsModal] = useState(false);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useLocalStorage("is_sidebar_collapsed", true);
+  const { storedValue: isSidebarCollapsed, setValue: setIsSidebarCollapsed } = useLocalStorage(
+    "is_sidebar_collapsed",
+    true
+  );
   // router
   const router = useRouter();
   const { workspaceSlug, projectId, moduleId } = useParams() as {

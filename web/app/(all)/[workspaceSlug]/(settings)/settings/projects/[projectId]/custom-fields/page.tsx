@@ -1,4 +1,6 @@
-import { ProjectCustomFieldsSettings } from "@/components/project/settings/custom-fields";
+"use client";
+
+import { CustomFields } from "@/components/project/settings/custom-fields";
 
 const ProjectCustomFieldsSettingsPage = () => (
   <div className="flex flex-col gap-8">
@@ -8,7 +10,7 @@ const ProjectCustomFieldsSettingsPage = () => (
         이 프로젝트의 이슈에서 사용할 수 있는 커스텀 필드를 관리합니다.
       </p>
     </div>
-    <ProjectCustomFieldsSettings />
+    <CustomFields />
   </div>
 );
 

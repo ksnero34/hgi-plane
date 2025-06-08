@@ -23,8 +23,8 @@ import {
   Users,
   User,
 } from "lucide-react";
-import { IIssueActivity } from "@plane/types";
-import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, LayersIcon, DiceIcon, Intake } from "@plane/ui";
+import { IIssueActivity, TCustomField } from "@plane/types";
+import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, EpicIcon, LayersIcon, DiceIcon, Intake } from "@plane/ui";
 // helpers
 import { renderFormattedDate } from "@/helpers/date-time.helper";
 import { generateWorkItemLink } from "@/helpers/issue.helper";
@@ -1173,10 +1173,27 @@ type ActivityMessageProps = {
 export const ActivityMessage = ({ activity, showIssue = false, customFields = [] }: ActivityMessageProps) => {
   // router params
   const { workspaceSlug } = useParams();
+  // member hook
+  const memberHook = useMember();
+
+  // 커스텀 필드 activity 처리
+  if (activity.field?.startsWith("custom_field_")) {
+  return (
+    <>
+        {getCustomFieldActivityMessage(
+          activity,
+          showIssue,
+          workspaceSlug ? workspaceSlug.toString() : (activity.workspace_detail?.slug ?? ""),
+          memberHook,
+          customFields
+        )}
+      </>
+    );
+  }
 
   return (
     <>
-      {activityDetails[activityField as keyof typeof activityDetails]?.message(
+      {activityDetails[activity.field as keyof typeof activityDetails]?.message(
         activity,
         showIssue,
         workspaceSlug ? workspaceSlug.toString() : (activity.workspace_detail?.slug ?? "")

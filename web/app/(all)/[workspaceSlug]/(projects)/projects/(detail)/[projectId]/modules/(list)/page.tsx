@@ -10,10 +10,10 @@ import { TModuleFilters, TCustomField } from "@plane/types";
 // components
 import { PageHead } from "@/components/core";
 import { DetailedEmptyState } from "@/components/empty-state";
-import { ModuleAppliedFiltersList } from "@/components/modules";
-import { ModulesListView } from "@/components/modules/list-view";
+import { ModuleAppliedFiltersList,ModulesListView } from "@/components/modules";
 // helpers
-import { calculateFilterRemovalValue, calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { calculateTotalFilters } from "@/helpers/filter.helper";
 // hooks
 import { useModuleFilter, useProject, useUserPermissions, useCustomField } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -27,15 +27,8 @@ const ProjectModulesPage = observer(() => {
   const { t } = useTranslation();
   // store
   const { getProjectById, currentProjectDetails } = useProject();
-  const {
-    filters: {
-      currentProjectFilters,
-      currentProjectDisplayFilters,
-      clearAllFilters,
-      updateFilters,
-      updateDisplayFilters,
-    },
-  } = useModuleFilter();
+  const { currentProjectFilters, currentProjectDisplayFilters, clearAllFilters, updateDisplayFilters, updateFilters } =
+    useModuleFilter();
   const { allowPermissions } = useUserPermissions();
   const { customFields } = useCustomField(projectId as string);
 

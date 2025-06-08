@@ -26,10 +26,8 @@ import { calculateFilterValue } from "@/helpers/filter-update.helper";
 import { isIssueFilterActive } from "@/helpers/filter.helper";
 // hooks
 import {
-  useAppContext,
   useCycle,
   useIssues,
-  useIssuesView,
   useProject,
   useProjectState,
   useLabel,
@@ -165,7 +163,7 @@ export const CycleIssuesMobileHeader = () => {
             isFiltersApplied={isIssueFilterActive(issueFilters)}
           >
             <FilterSelection
-              filters={issueFilters ?? {}}
+              filters={issueFilters?.filters ?? {}}
               handleFiltersUpdate={handleFiltersUpdate}
               layoutDisplayFiltersOptions={
                 activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[activeLayout] : undefined

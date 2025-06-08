@@ -49,10 +49,8 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
   const { captureEvent } = useEventTracker();
   const { data } = useUser();
   const { allowPermissions } = useUserPermissions();
-  const { trackEvent } = useEventTracker();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { customFields: customFieldsFromHook, isLoading: isLoadingCustomFieldsFromHook } = useCustomField({ workspaceLevel: true });
 
   // derived values
   const issueFilters = filters?.[globalViewId];
@@ -101,7 +99,7 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
     if (!workspaceSlug) return;
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
-      const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});
+      const clearedValue = calculateFilterRemovalValue(key as string, null, userFilters ?? {});
       (newFilters as any)[key] = clearedValue;
     });
     updateFilters(
@@ -180,7 +178,7 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
           appliedFilters={appliedFilters ?? {}}
           handleClearAllFilters={handleClearAllFilters}
           handleRemoveFilter={handleRemoveFilter}
-          customFields={customFieldsFromHook}
+          customFields={[]}
           disableEditing={isLocked}
           alwaysAllowEditing
         />

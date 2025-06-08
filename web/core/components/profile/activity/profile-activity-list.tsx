@@ -60,6 +60,8 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
   const { data: customFieldsByProject } = useSWR(
     userProfileActivity?.results?.length ? ["custom-fields-activity", userProfileActivity] : null,
     async () => {
+      if (!userProfileActivity) return {};
+      
       const projectData = userProfileActivity.results.reduce((acc: any, activity: any) => {
         if (activity.project && activity.workspace_detail?.slug) {
           acc[activity.project] = activity.workspace_detail.slug;
