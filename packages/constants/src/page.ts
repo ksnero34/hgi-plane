@@ -6,9 +6,11 @@ export enum EPageAccess {
 export type TCreatePageModal = {
   isOpen: boolean;
   pageAccess?: EPageAccess;
+  isFolder?: boolean;
 };
 
 export const DEFAULT_CREATE_PAGE_MODAL_DATA: TCreatePageModal = {
   isOpen: false,
   pageAccess: EPageAccess.PUBLIC,
+  isFolder: false,
 };

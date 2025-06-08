@@ -199,11 +199,13 @@ export abstract class BaseCommandPaletteStore implements IBaseCommandPaletteStor
       this.createPageModal = {
         isOpen: value.isOpen,
         pageAccess: value.pageAccess || EPageAccess.PUBLIC,
+        isFolder: value.isFolder ?? false,
       };
     } else {
       this.createPageModal = {
         isOpen: !this.createPageModal.isOpen,
         pageAccess: EPageAccess.PUBLIC,
+        isFolder: false,
       };
     }
   };

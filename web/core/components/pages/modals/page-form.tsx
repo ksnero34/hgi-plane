@@ -9,7 +9,14 @@ import { ETabIndices, EPageAccess } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { TPage } from "@plane/types";
 // ui
-import { Button, EmojiIconPicker, EmojiIconPickerTypes, Input } from "@plane/ui";
+import {
+  Button,
+  EmojiIconPicker,
+  EmojiIconPickerTypes,
+  Input,
+  CustomSearchSelect,
+} from "@plane/ui";
+import type { ICustomSearchSelectOption } from "@plane/types";
 import { Logo } from "@/components/common";
 // constants
 import { AccessField } from "@/components/common/access-field";
@@ -18,6 +25,8 @@ import { convertHexEmojiToDecimal } from "@/helpers/emoji.helper";
 import { getTabIndex } from "@/helpers/tab-indices.helper";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// plane web hooks
+import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
 
 type Props = {
   formData: Partial<TPage>;
@@ -40,6 +49,7 @@ export const PageForm: React.FC<Props> = (props) => {
   // hooks
   const { isMobile } = usePlatformOS();
   const { t } = useTranslation();
+  const { getFolderPages } = usePageStore(EPageStoreType.PROJECT);
   // state
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,11 +120,11 @@ export const PageForm: React.FC<Props> = (props) => {
             }
           />
           <div className="space-y-1 flew-grow w-full">
-            <Input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleFormData("name", e.target.value)}
+          <Input
+            id="name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleFormData("name", e.target.value)}
               placeholder="Title"
               className="w-full resize-none text-base"
               tabIndex={getIndex("name")}
@@ -125,6 +135,29 @@ export const PageForm: React.FC<Props> = (props) => {
               <span className="text-xs text-red-500">Max length of the name should be less than 255 characters</span>
             )}
           </div>
+        </div>
+        {/* folder selection */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-custom-text-200">Folder</span>
+          <CustomSearchSelect
+            value={formData.parent ?? null}
+            onChange={(val: string | null) => handleFormData("parent", val)}
+            options={
+              [{ value: null, query: "root", content: "Root" },
+              ...getFolderPages()
+                ?.map((folder) => ({
+                  value: folder.id,
+                  query: folder.name || "",
+                  content: folder.name || "Untitled",
+                }))] as ICustomSearchSelectOption[]
+            }
+            label={
+              getFolderPages()
+                ?.find((f) => f.id === formData.parent)?.name || "Root"
+            }
+            optionsClassName="max-w-48"
+            placement="bottom-end"
+          />
         </div>
       </div>
       <div className="px-5 py-4 flex items-center justify-between gap-2 border-t-[0.5px] border-custom-border-200">

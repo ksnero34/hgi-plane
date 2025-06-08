@@ -87,6 +87,8 @@ export class BasePage implements TBasePage {
   anchor?: string | null | undefined;
   is_favorite: boolean;
   is_locked: boolean;
+  is_folder: boolean;
+  parent: string | null | undefined;
   archived_at: string | null | undefined;
   workspace: string | undefined;
   project_ids?: string[] | undefined;
@@ -120,6 +122,8 @@ export class BasePage implements TBasePage {
     this.anchor = page?.anchor || undefined;
     this.is_favorite = page?.is_favorite || false;
     this.is_locked = page?.is_locked || false;
+    this.is_folder = page?.is_folder || false;
+    this.parent = page?.parent || undefined;
     this.archived_at = page?.archived_at || undefined;
     this.workspace = page?.workspace || undefined;
     this.project_ids = page?.project_ids || undefined;
@@ -147,6 +151,8 @@ export class BasePage implements TBasePage {
       anchor: observable.ref,
       is_favorite: observable.ref,
       is_locked: observable.ref,
+      is_folder: observable.ref,
+      parent: observable.ref,
       archived_at: observable.ref,
       workspace: observable.ref,
       project_ids: observable,
@@ -223,6 +229,8 @@ export class BasePage implements TBasePage {
       logo_props: this.logo_props,
       is_favorite: this.is_favorite,
       is_locked: this.is_locked,
+      is_folder: this.is_folder,
+      parent: this.parent,
       archived_at: this.archived_at,
       workspace: this.workspace,
       project_ids: this.project_ids,
@@ -573,6 +581,25 @@ export class BasePage implements TBasePage {
    * @description duplicate the page
    */
   duplicate = async () => await this.services.duplicate();
+
+  /**
+   * @description 페이지를 다른 폴더로 이동
+   */
+  moveToFolder = async (parentId: string | null) => {
+    if (!this.id) return;
+    const originalParent = this.parent;
+    runInAction(() => {
+      this.parent = parentId;
+    });
+    try {
+      await this.services.update({ parent: parentId });
+    } catch (error) {
+      runInAction(() => {
+        this.parent = originalParent;
+      });
+      throw error;
+    }
+  };
 
   /**
    * @description mutate multiple properties at once

@@ -13,7 +13,7 @@ import { Breadcrumbs, Button, Header, setToast, TOAST_TYPE } from "@plane/ui";
 // helpers
 import { BreadcrumbLink } from "@/components/common";
 // hooks
-import { useEventTracker, useProject } from "@/hooks/store";
+import { useEventTracker, useProject, useCommandPalette } from "@/hooks/store";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
 // plane web hooks
@@ -31,6 +31,7 @@ export const PagesListHeader = observer(() => {
   const { currentProjectDetails, loader } = useProject();
   const { canCurrentUserCreatePage, createPage } = usePageStore(EPageStoreType.PROJECT);
   const { setTrackElement } = useEventTracker();
+  const { toggleCreatePageModal } = useCommandPalette();
 
   // handle page create
   const handleCreatePage = async () => {
@@ -73,6 +74,13 @@ export const PagesListHeader = observer(() => {
         <Header.RightItem>
           <Button variant="primary" size="sm" onClick={handleCreatePage} loading={isCreatingPage}>
             {isCreatingPage ? "Adding" : "Add page"}
+          </Button>
+          <Button
+            variant="neutral-primary"
+            size="sm"
+            onClick={() => toggleCreatePageModal({ isOpen: true, isFolder: true })}
+          >
+            Add folder
           </Button>
         </Header.RightItem>
       ) : (

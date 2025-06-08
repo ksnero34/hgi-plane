@@ -13,6 +13,8 @@ export type TPage = {
   id: string | undefined;
   is_favorite: boolean;
   is_locked: boolean;
+  is_folder: boolean;
+  parent?: string | null | undefined;
   label_ids: string[] | undefined;
   name: string | undefined;
   owned_by: string | undefined;

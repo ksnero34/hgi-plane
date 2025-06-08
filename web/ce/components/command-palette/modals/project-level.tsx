@@ -53,6 +53,7 @@ export const ProjectLevelModals = observer((props: TProjectLevelModalsProps) => 
         projectId={projectId.toString()}
         isModalOpen={createPageModal.isOpen}
         pageAccess={createPageModal.pageAccess}
+        isFolder={createPageModal.isFolder}
         handleModalClose={() => toggleCreatePageModal({ isOpen: false })}
         redirectionEnabled
         storeType={EPageStoreType.PROJECT}
