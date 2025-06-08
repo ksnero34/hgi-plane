@@ -47,7 +47,8 @@ export interface IProjectPageStore {
   fetchPagesList: (
     workspaceSlug: string,
     projectId: string,
-    pageType?: TPageNavigationTabs
+    pageType?: TPageNavigationTabs,
+    parent?: string
   ) => Promise<TPage[] | undefined>;
   fetchPageDetails: (workspaceSlug: string, projectId: string, pageId: string) => Promise<TPage | undefined>;
   createPage: (pageData: Partial<TPage>) => Promise<TPage | undefined>;
@@ -177,6 +178,17 @@ export class ProjectPageStore implements IProjectPageStore {
    */
   getPageById = computedFn((pageId: string) => this.data?.[pageId] || undefined);
 
+  /**
+   * @description 현재 프로젝트의 모든 폴더 페이지 반환
+   */
+  getFolderPages = computedFn(() => {
+    const { projectId } = this.store.router;
+    if (!projectId) return [] as TProjectPage[];
+    return Object.values(this.data || {}).filter(
+      (p) => p.project_ids?.includes(projectId) && p.is_folder
+    );
+  });
+
   updateFilters = <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => {
     runInAction(() => {
       set(this.filters, [filterKey], filterValue);
@@ -194,7 +206,12 @@ export class ProjectPageStore implements IProjectPageStore {
   /**
    * @description fetch all the pages
    */
-  fetchPagesList = async (workspaceSlug: string, projectId: string, pageType?: TPageNavigationTabs) => {
+  fetchPagesList = async (
+    workspaceSlug: string,
+    projectId: string,
+    pageType?: TPageNavigationTabs,
+    parent?: string
+  ) => {
     try {
       if (!workspaceSlug || !projectId) return undefined;
 
@@ -204,7 +221,7 @@ export class ProjectPageStore implements IProjectPageStore {
         this.error = undefined;
       });
 
-      const pages = await this.service.fetchAll(workspaceSlug, projectId);
+      const pages = await this.service.fetchAll(workspaceSlug, projectId, parent);
       runInAction(() => {
         for (const page of pages) {
           if (page?.id) {
