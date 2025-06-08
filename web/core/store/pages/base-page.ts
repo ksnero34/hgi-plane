@@ -583,6 +583,25 @@ export class BasePage implements TBasePage {
   duplicate = async () => await this.services.duplicate();
 
   /**
+   * @description 페이지를 다른 폴더로 이동
+   */
+  moveToFolder = async (parentId: string | null) => {
+    if (!this.id) return;
+    const originalParent = this.parent;
+    runInAction(() => {
+      this.parent = parentId;
+    });
+    try {
+      await this.services.update({ parent: parentId });
+    } catch (error) {
+      runInAction(() => {
+        this.parent = originalParent;
+      });
+      throw error;
+    }
+  };
+
+  /**
    * @description mutate multiple properties at once
    * @param data Partial<TPage>
    */
