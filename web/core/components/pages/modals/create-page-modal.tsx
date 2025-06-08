@@ -17,6 +17,7 @@ type Props = {
   projectId: string;
   isModalOpen: boolean;
   pageAccess?: EPageAccess;
+  isFolder?: boolean;
   handleModalClose: () => void;
   redirectionEnabled?: boolean;
   storeType: EPageStoreType;
@@ -28,6 +29,7 @@ export const CreatePageModal: FC<Props> = (props) => {
     projectId,
     isModalOpen,
     pageAccess,
+    isFolder,
     handleModalClose,
     redirectionEnabled = false,
     storeType,
@@ -38,6 +40,7 @@ export const CreatePageModal: FC<Props> = (props) => {
     name: "",
     logo_props: undefined,
     parent: null,
+    is_folder: isFolder,
   });
   // router
   const router = useAppRouter();
@@ -52,8 +55,12 @@ export const CreatePageModal: FC<Props> = (props) => {
     setPageFormData((prev) => ({ ...prev, access: pageAccess }));
   }, [pageAccess]);
 
+  useEffect(() => {
+    setPageFormData((prev) => ({ ...prev, is_folder: isFolder }));
+  }, [isFolder]);
+
   const handleStateClear = () => {
-    setPageFormData({ id: undefined, name: "", access: pageAccess, parent: null });
+    setPageFormData({ id: undefined, name: "", access: pageAccess, parent: null, is_folder: isFolder });
     handleModalClose();
   };
 

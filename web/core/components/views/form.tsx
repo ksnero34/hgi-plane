@@ -183,7 +183,7 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                   : EmojiIconPickerTypes.ICON
               }
             />
-            <div className="space-y-1 flew-grow w-full">
+              <div className="space-y-1 flex-grow w-full">
               <Controller
                 control={control}
                 name="name"
