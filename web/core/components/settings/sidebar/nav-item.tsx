@@ -70,7 +70,7 @@ const SettingsSidebarNavItem = observer((props: TSettingsSidebarNavItemProps) =>
         {renderChildren ? (
           <div className={buttonClass}>{titleElement}</div>
         ) : (
-          <Link href={`/${workspaceSlug}/${setting.href}`} className={buttonClass} onClick={() => toggleSidebar(true)}>
+          <Link href={`/${workspaceSlug}${setting.href}`} className={buttonClass} onClick={() => toggleSidebar(true)}>
             {titleElement}
           </Link>
         )}
