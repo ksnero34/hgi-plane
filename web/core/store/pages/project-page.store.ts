@@ -178,6 +178,17 @@ export class ProjectPageStore implements IProjectPageStore {
    */
   getPageById = computedFn((pageId: string) => this.data?.[pageId] || undefined);
 
+  /**
+   * @description 현재 프로젝트의 모든 폴더 페이지 반환
+   */
+  getFolderPages = computedFn(() => {
+    const { projectId } = this.store.router;
+    if (!projectId) return [] as TProjectPage[];
+    return Object.values(this.data || {}).filter(
+      (p) => p.project_ids?.includes(projectId) && p.is_folder
+    );
+  });
+
   updateFilters = <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => {
     runInAction(() => {
       set(this.filters, [filterKey], filterValue);

@@ -37,6 +37,7 @@ export const CreatePageModal: FC<Props> = (props) => {
     id: undefined,
     name: "",
     logo_props: undefined,
+    parent: null,
   });
   // router
   const router = useAppRouter();
@@ -52,7 +53,7 @@ export const CreatePageModal: FC<Props> = (props) => {
   }, [pageAccess]);
 
   const handleStateClear = () => {
-    setPageFormData({ id: undefined, name: "", access: pageAccess });
+    setPageFormData({ id: undefined, name: "", access: pageAccess, parent: null });
     handleModalClose();
   };
 
