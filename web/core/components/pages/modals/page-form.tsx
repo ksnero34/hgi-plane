@@ -119,7 +119,7 @@ export const PageForm: React.FC<Props> = (props) => {
                 : EmojiIconPickerTypes.ICON
             }
           />
-          <div className="space-y-1 flew-grow w-full">
+          <div className="space-y-1 flex-grow w-full">
           <Input
             id="name"
             type="text"
