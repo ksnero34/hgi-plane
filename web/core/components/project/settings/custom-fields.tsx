@@ -114,16 +114,11 @@ export const CustomFields: React.FC = observer(() => {
   const { workspaceSlug, projectId } = useParams();
   const { customFields, createCustomField, updateCustomField, deleteCustomField, mutateCustomFields } = useCustomField(projectId as string);
 
-  const [fields, setFields] = useState<ICustomField[]>([]);
   const [newField, setNewField] = useState<Partial<ICustomField>>({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (customFields) {
-      setFields(customFields as ICustomField[]);
-    }
-  }, [customFields]);
+  const fields = customFields || [];
 
   const handleCreateOrUpdateField = async () => {
     if (!newField.name || !newField.key) {
@@ -202,7 +197,8 @@ export const CustomFields: React.FC = observer(() => {
     const [reorderedItem] = items.splice(sourceIndex, 1);
     items.splice(destinationIndex, 0, reorderedItem);
 
-    setFields(items);
+    // 낙관적 업데이트
+    mutateCustomFields(items as TCustomField[]);
 
     try {
       await Promise.all(
@@ -214,9 +210,9 @@ export const CustomFields: React.FC = observer(() => {
           })
         )
       );
-      mutateCustomFields(items as TCustomField[]);
     } catch (error) {
-      setFields(fields);
+      // 에러 시 원래 상태로 되돌리기
+      mutateCustomFields(customFields as TCustomField[]);
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "Error",
