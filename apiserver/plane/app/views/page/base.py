@@ -125,6 +125,19 @@ class PageViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def create(self, request, slug, project_id):
+        # parent 검증 로직 추가
+        parent = request.data.get("parent", None)
+        if parent:
+            try:
+                _ = Page.objects.get(
+                    pk=parent, workspace__slug=slug, projects__id=project_id
+                )
+            except Page.DoesNotExist:
+                return Response(
+                    {"error": "Parent page not found"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         serializer = PageSerializer(
             data=request.data,
             context={
@@ -140,9 +153,66 @@ class PageViewSet(BaseViewSet):
             serializer.save()
             # capture the page transaction
             page_transaction.delay(request.data, None, serializer.data["id"])
-            page = self.get_queryset().get(pk=serializer.data["id"])
-            serializer = PageDetailSerializer(page)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            # 생성된 페이지를 parent 필터 없이 직접 조회
+            page = (
+                Page.objects
+                .filter(pk=serializer.data["id"], workspace__slug=slug)
+                .filter(
+                    projects__project_projectmember__member=request.user,
+                    projects__project_projectmember__is_active=True,
+                    projects__archived_at__isnull=True,
+                )
+                .filter(Q(owned_by=request.user) | Q(access=0))
+                .prefetch_related("projects")
+                .select_related("workspace")
+                .select_related("owned_by")
+                .annotate(
+                    is_favorite=Exists(
+                        UserFavorite.objects.filter(
+                            user=request.user,
+                            entity_type="page",
+                            entity_identifier=serializer.data["id"],
+                            workspace__slug=slug,
+                        )
+                    )
+                )
+                .prefetch_related("labels")
+                .annotate(
+                    project=Exists(
+                        ProjectPage.objects.filter(
+                            page_id=serializer.data["id"], project_id=project_id
+                        )
+                    )
+                )
+                .annotate(
+                    label_ids=Coalesce(
+                        ArrayAgg(
+                            "page_labels__label_id",
+                            distinct=True,
+                            filter=~Q(page_labels__label_id__isnull=True),
+                        ),
+                        Value([], output_field=ArrayField(UUIDField())),
+                    ),
+                    project_ids=Coalesce(
+                        ArrayAgg(
+                            "projects__id", distinct=True, filter=~Q(projects__id=True)
+                        ),
+                        Value([], output_field=ArrayField(UUIDField())),
+                    ),
+                )
+                .filter(project=True)
+                .first()
+            )
+            
+            if page:
+                serializer = PageDetailSerializer(page)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(
+                    {"error": "Failed to retrieve created page"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
@@ -210,7 +280,55 @@ class PageViewSet(BaseViewSet):
         ]
     )
     def retrieve(self, request, slug, project_id, pk=None):
-        page = self.get_queryset().filter(pk=pk).first()
+        # retrieve에서는 parent 필터를 적용하지 않고 직접 페이지를 조회
+        subquery = UserFavorite.objects.filter(
+            user=request.user,
+            entity_type="page",
+            entity_identifier=pk,
+            workspace__slug=slug,
+        )
+        
+        page = (
+            Page.objects
+            .filter(pk=pk, workspace__slug=slug)
+            .filter(
+                projects__project_projectmember__member=request.user,
+                projects__project_projectmember__is_active=True,
+                projects__archived_at__isnull=True,
+            )
+            .filter(Q(owned_by=request.user) | Q(access=0))
+            .prefetch_related("projects")
+            .select_related("workspace")
+            .select_related("owned_by")
+            .annotate(is_favorite=Exists(subquery))
+            .prefetch_related("labels")
+            .annotate(
+                project=Exists(
+                    ProjectPage.objects.filter(
+                        page_id=pk, project_id=project_id
+                    )
+                )
+            )
+            .annotate(
+                label_ids=Coalesce(
+                    ArrayAgg(
+                        "page_labels__label_id",
+                        distinct=True,
+                        filter=~Q(page_labels__label_id__isnull=True),
+                    ),
+                    Value([], output_field=ArrayField(UUIDField())),
+                ),
+                project_ids=Coalesce(
+                    ArrayAgg(
+                        "projects__id", distinct=True, filter=~Q(projects__id=True)
+                    ),
+                    Value([], output_field=ArrayField(UUIDField())),
+                ),
+            )
+            .filter(project=True)
+            .first()
+        )
+        
         project = Project.objects.get(pk=project_id)
 
         """

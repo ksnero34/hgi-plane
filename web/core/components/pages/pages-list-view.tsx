@@ -12,16 +12,17 @@ type TPageView = {
   projectId: string;
   storeType: EPageStoreType;
   workspaceSlug: string;
+  folderId?: string | null;
 };
 
 export const PagesListView: React.FC<TPageView> = observer((props) => {
-  const { children, pageType, projectId, storeType, workspaceSlug } = props;
+  const { children, pageType, projectId, storeType, workspaceSlug, folderId } = props;
   // store hooks
   const { isAnyPageAvailable, fetchPagesList } = usePageStore(storeType);
   // fetching pages list
   useSWR(
-    workspaceSlug && projectId && pageType ? `PROJECT_PAGES_${projectId}` : null,
-    workspaceSlug && projectId && pageType ? () => fetchPagesList(workspaceSlug, projectId, pageType) : null
+    workspaceSlug && projectId && pageType ? `PROJECT_PAGES_${projectId}_${folderId || 'root'}` : null,
+    workspaceSlug && projectId && pageType ? () => fetchPagesList(workspaceSlug, projectId, pageType, folderId || undefined) : null
   );
 
   // pages loader
@@ -34,9 +35,10 @@ export const PagesListView: React.FC<TPageView> = observer((props) => {
           projectId={projectId}
           storeType={storeType}
           workspaceSlug={workspaceSlug}
+          folderId={folderId}
         />
       )}
-      <PagesListMainContent pageType={pageType} storeType={storeType}>
+      <PagesListMainContent pageType={pageType} storeType={storeType} folderId={folderId}>
         {children}
       </PagesListMainContent>
     </div>

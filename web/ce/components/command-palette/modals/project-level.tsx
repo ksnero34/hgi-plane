@@ -1,4 +1,5 @@
 import { observer } from "mobx-react";
+import { useSearchParams } from "next/navigation";
 // components
 import { CycleCreateUpdateModal } from "@/components/cycles";
 import { CreateUpdateModuleModal } from "@/components/modules";
@@ -16,6 +17,9 @@ export type TProjectLevelModalsProps = {
 
 export const ProjectLevelModals = observer((props: TProjectLevelModalsProps) => {
   const { workspaceSlug, projectId } = props;
+  // router
+  const searchParams = useSearchParams();
+  const currentFolderId = searchParams.get("folder");
   // store hooks
   const {
     isCreateCycleModalOpen,
@@ -49,13 +53,14 @@ export const ProjectLevelModals = observer((props: TProjectLevelModalsProps) => 
         projectId={projectId.toString()}
       />
       <CreatePageModal
-        workspaceSlug={workspaceSlug.toString()}
-        projectId={projectId.toString()}
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
         isModalOpen={createPageModal.isOpen}
         pageAccess={createPageModal.pageAccess}
         isFolder={createPageModal.isFolder}
+        parentFolderId={createPageModal.parentFolderId ?? currentFolderId}
+        redirectionEnabled={createPageModal.redirectionEnabled}
         handleModalClose={() => toggleCreatePageModal({ isOpen: false })}
-        redirectionEnabled
         storeType={EPageStoreType.PROJECT}
       />
     </>

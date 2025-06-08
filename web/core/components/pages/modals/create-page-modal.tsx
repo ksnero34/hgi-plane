@@ -18,6 +18,7 @@ type Props = {
   isModalOpen: boolean;
   pageAccess?: EPageAccess;
   isFolder?: boolean;
+  parentFolderId?: string | null;
   handleModalClose: () => void;
   redirectionEnabled?: boolean;
   storeType: EPageStoreType;
@@ -30,6 +31,7 @@ export const CreatePageModal: FC<Props> = (props) => {
     isModalOpen,
     pageAccess,
     isFolder,
+    parentFolderId,
     handleModalClose,
     redirectionEnabled = false,
     storeType,
@@ -39,7 +41,7 @@ export const CreatePageModal: FC<Props> = (props) => {
     id: undefined,
     name: "",
     logo_props: undefined,
-    parent: null,
+    parent: parentFolderId || null,
     is_folder: isFolder,
   });
   // router
@@ -78,7 +80,17 @@ export const CreatePageModal: FC<Props> = (props) => {
           },
         });
         handleStateClear();
-        if (redirectionEnabled) router.push(`/${workspaceSlug}/projects/${projectId}/pages/${pageData.id}`);
+        
+        // 폴더인 경우와 페이지인 경우 다른 리다이렉션 처리
+        if (redirectionEnabled) {
+          if (pageData.is_folder) {
+            // 폴더인 경우 해당 폴더 내부로 이동
+            router.push(`/${workspaceSlug}/projects/${projectId}/pages/?folder=${pageData.id}`);
+          } else {
+            // 페이지인 경우 페이지 편집 화면으로 이동
+            router.push(`/${workspaceSlug}/projects/${projectId}/pages/${pageData.id}`);
+          }
+        }
       }
     } catch {
       capturePageEvent({

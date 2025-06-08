@@ -19,10 +19,11 @@ type Props = {
   children: React.ReactNode;
   pageType: TPageNavigationTabs;
   storeType: EPageStoreType;
+  folderId?: string | null;
 };
 
 export const PagesListMainContent: React.FC<Props> = observer((props) => {
-  const { children, pageType, storeType } = props;
+  const { children, pageType, storeType, folderId } = props;
   // plane hooks
   const { t } = useTranslation();
   // store hooks

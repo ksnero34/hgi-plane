@@ -22,6 +22,7 @@ const ProjectPagesPage = observer(() => {
   const router = useAppRouter();
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
+  const folderId = searchParams.get("folder");
   const { workspaceSlug, projectId } = useParams();
   // plane hooks
   const { t } = useTranslation();
@@ -69,8 +70,13 @@ const ProjectPagesPage = observer(() => {
         projectId={projectId.toString()}
         storeType={EPageStoreType.PROJECT}
         workspaceSlug={workspaceSlug.toString()}
+        folderId={folderId}
       >
-        <PagesListRoot pageType={currentPageType()} storeType={EPageStoreType.PROJECT} />
+        <PagesListRoot 
+          pageType={currentPageType()} 
+          storeType={EPageStoreType.PROJECT} 
+          folderId={folderId}
+        />
       </PagesListView>
     </>
   );

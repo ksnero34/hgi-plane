@@ -200,12 +200,16 @@ export abstract class BaseCommandPaletteStore implements IBaseCommandPaletteStor
         isOpen: value.isOpen,
         pageAccess: value.pageAccess || EPageAccess.PUBLIC,
         isFolder: value.isFolder ?? false,
+        redirectionEnabled: value.redirectionEnabled ?? false,
+        parentFolderId: value.parentFolderId ?? null,
       };
     } else {
       this.createPageModal = {
         isOpen: !this.createPageModal.isOpen,
         pageAccess: EPageAccess.PUBLIC,
         isFolder: false,
+        redirectionEnabled: false,
+        parentFolderId: null,
       };
     }
   };

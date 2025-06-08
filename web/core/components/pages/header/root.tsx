@@ -26,10 +26,11 @@ type Props = {
   projectId: string;
   storeType: EPageStoreType;
   workspaceSlug: string;
+  folderId?: string | null;
 };
 
 export const PagesListHeaderRoot: React.FC<Props> = observer((props) => {
-  const { pageType, projectId, storeType, workspaceSlug } = props;
+  const { pageType, projectId, storeType, workspaceSlug, folderId } = props;
   const { t } = useTranslation();
   // store hooks
   const { filters, updateFilters, clearAllFilters } = usePageStore(storeType);

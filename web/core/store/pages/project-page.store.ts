@@ -1,7 +1,6 @@
 import set from "lodash/set";
 import unset from "lodash/unset";
 import { makeObservable, observable, runInAction, action, reaction, computed } from "mobx";
-import { computedFn } from "mobx-utils";
 // types
 import { EUserPermissions, EUserProjectRoles } from "@plane/constants";
 import { TPage, TPageFilters, TPageNavigationTabs } from "@plane/types";
@@ -39,7 +38,7 @@ export interface IProjectPageStore {
   // helper actions
   getCurrentProjectPageIdsByTab: (pageType: TPageNavigationTabs) => string[] | undefined;
   getCurrentProjectPageIds: (projectId: string) => string[];
-  getCurrentProjectFilteredPageIdsByTab: (pageType: TPageNavigationTabs) => string[] | undefined;
+  getCurrentProjectFilteredPageIdsByTab: (pageType: TPageNavigationTabs, folderId?: string | null) => string[] | undefined;
   getPageById: (pageId: string) => TProjectPage | undefined;
   updateFilters: <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => void;
   clearAllFilters: () => void;
@@ -127,7 +126,7 @@ export class ProjectPageStore implements IProjectPageStore {
    * @description get the current project page ids based on the pageType
    * @param {TPageNavigationTabs} pageType
    */
-  getCurrentProjectPageIdsByTab = computedFn((pageType: TPageNavigationTabs) => {
+  getCurrentProjectPageIdsByTab = (pageType: TPageNavigationTabs) => {
     const { projectId } = this.store.router;
     if (!projectId) return undefined;
     // helps to filter pages based on the pageType
@@ -137,57 +136,57 @@ export class ProjectPageStore implements IProjectPageStore {
     const pages = (pagesByType.map((page) => page.id) as string[]) || undefined;
 
     return pages ?? undefined;
-  });
+  };
 
   /**
    * @description get the current project page ids
    * @param {string} projectId
    */
-  getCurrentProjectPageIds = computedFn((projectId: string) => {
+  getCurrentProjectPageIds = (projectId: string) => {
     if (!projectId) return [];
     const pages = Object.values(this?.data || {}).filter((page) => page.project_ids?.includes(projectId));
     return pages.map((page) => page.id) as string[];
-  });
+  };
 
   /**
-   * @description get the current project filtered page ids based on the pageType
+   * @description get current project filtered page ids by tab
    * @param {TPageNavigationTabs} pageType
+   * @param {string | null} folderId
    */
-  getCurrentProjectFilteredPageIdsByTab = computedFn((pageType: TPageNavigationTabs) => {
+  getCurrentProjectFilteredPageIdsByTab = (pageType: TPageNavigationTabs, folderId?: string | null) => {
     const { projectId } = this.store.router;
     if (!projectId) return undefined;
 
-    // helps to filter pages based on the pageType
-    const pagesByType = filterPagesByPageType(pageType, Object.values(this?.data || {}));
-    let filteredPages = pagesByType.filter(
+    let filteredPages = filterPagesByPageType(
+      pageType,
+      Object.values(this.data || {})
+    ).filter(
       (p) =>
         p.project_ids?.includes(projectId) &&
         getPageName(p.name).toLowerCase().includes(this.filters.searchQuery.toLowerCase()) &&
-        shouldFilterPage(p, this.filters.filters)
+        shouldFilterPage(p, this.filters.filters) &&
+        (folderId ? p.parent === folderId : p.parent === null || p.parent === undefined)
     );
     filteredPages = orderPages(filteredPages, this.filters.sortKey, this.filters.sortBy);
-
-    const pages = (filteredPages.map((page) => page.id) as string[]) || undefined;
-
-    return pages ?? undefined;
-  });
+    return filteredPages.map((p) => p.id);
+  };
 
   /**
    * @description get the page store by id
    * @param {string} pageId
    */
-  getPageById = computedFn((pageId: string) => this.data?.[pageId] || undefined);
+  getPageById = (pageId: string) => this.data?.[pageId] || undefined;
 
   /**
    * @description 현재 프로젝트의 모든 폴더 페이지 반환
    */
-  getFolderPages = computedFn(() => {
+  getFolderPages = () => {
     const { projectId } = this.store.router;
     if (!projectId) return [] as TProjectPage[];
     return Object.values(this.data || {}).filter(
       (p) => p.project_ids?.includes(projectId) && p.is_folder
     );
-  });
+  };
 
   updateFilters = <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => {
     runInAction(() => {

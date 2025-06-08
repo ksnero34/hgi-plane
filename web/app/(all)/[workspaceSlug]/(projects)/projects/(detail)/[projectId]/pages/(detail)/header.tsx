@@ -1,7 +1,7 @@
 "use client";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { FileText } from "lucide-react";
+import { FileText, Folder } from "lucide-react";
 // types
 import { ICustomSearchSelectOption } from "@plane/types";
 // ui
@@ -37,20 +37,63 @@ export const PageDetailsHeader = observer(() => {
     pageId: pageId?.toString() ?? "",
     storeType,
   });
+  
+  // 페이지의 부모 경로 생성
+  const getPagePath = (pageId: string): string[] => {
+    const path = [];
+    let current = getPageById(pageId);
+    while (current) {
+      path.unshift(current.name || "Untitled");
+      current = current.parent ? getPageById(current.parent) : null;
+    }
+    return path;
+  };
+
+  // 현재 페이지의 부모 폴더 경로
+  const getCurrentPageFolderPath = () => {
+    if (!page?.parent) return [];
+    const path = [];
+    let current = getPageById(page.parent);
+    while (current) {
+      path.unshift(current);
+      current = current.parent ? getPageById(current.parent) : null;
+    }
+    return path;
+  };
+
+  // 폴더로 이동하는 함수
+  const getFolderUrl = (targetFolderId: string | null) => {
+    if (targetFolderId) {
+      return `/${workspaceSlug}/projects/${projectId}/pages/?folder=${targetFolderId}`;
+    } else {
+      return `/${workspaceSlug}/projects/${projectId}/pages/`;
+    }
+  };
+
   // derived values
   const projectPageIds = getCurrentProjectPageIds(projectId?.toString());
+  const currentPageFolderPath = getCurrentPageFolderPath();
 
   const switcherOptions = projectPageIds
     .map((id) => {
       const _page = id === pageId ? page : getPageById(id);
       if (!_page) return;
+      
+      // 페이지의 전체 경로 생성
+      const pagePath = getPagePath(id);
+      const displayName = pagePath.length > 1 ? pagePath.join(" / ") : (getPageName(_page.name) || "Untitled");
+      
       return {
         value: _page.id,
-        query: _page.name,
+        query: displayName,
         content: (
           <div className="flex gap-2 items-center justify-between">
-            <SwitcherLabel logo_props={_page.logo_props} name={getPageName(_page.name)} LabelIcon={FileText} />
-            <PageAccessIcon {..._page} />
+            <SwitcherLabel 
+              logo_props={_page.logo_props} 
+              name={displayName}
+              LabelIcon={_page.is_folder ? Folder : FileText} 
+            />
+            {!_page.is_folder && <PageAccessIcon {..._page} />}
           </div>
         ),
       };
@@ -85,12 +128,28 @@ export const PageDetailsHeader = observer(() => {
               type="text"
               link={
                 <BreadcrumbLink
-                  href={`/${workspaceSlug}/projects/${currentProjectDetails?.id}/pages`}
+                  href={getFolderUrl(null)}
                   label="Pages"
                   icon={<FileText className="h-4 w-4 text-custom-text-300" />}
                 />
               }
             />
+            
+            {/* 현재 페이지의 부모 폴더 경로 브레드크럼 */}
+            {currentPageFolderPath.map((folder, index) => (
+              <Breadcrumbs.BreadcrumbItem
+                key={folder.id}
+                type="text"
+                link={
+                  <BreadcrumbLink
+                    href={getFolderUrl(folder.id)}
+                    label={folder.name || "Untitled"}
+                    icon={<Folder className="h-4 w-4 text-custom-text-300" />}
+                  />
+                }
+              />
+            ))}
+            
             <Breadcrumbs.BreadcrumbItem
               type="component"
               component={
@@ -98,10 +157,21 @@ export const PageDetailsHeader = observer(() => {
                   value={pageId}
                   options={switcherOptions}
                   label={
-                    <SwitcherLabel logo_props={page.logo_props} name={getPageName(page.name)} LabelIcon={FileText} />
+                    <SwitcherLabel 
+                      logo_props={page.logo_props} 
+                      name={getPageName(page.name)} 
+                      LabelIcon={page.is_folder ? Folder : FileText} 
+                    />
                   }
                   onChange={(value: string) => {
-                    router.push(`/${workspaceSlug}/projects/${projectId}/pages/${value}`);
+                    const selectedPage = getPageById(value);
+                    if (selectedPage?.is_folder) {
+                      // 디렉토리인 경우 디렉토리 내부로 이동
+                      router.push(getFolderUrl(value));
+                    } else {
+                      // 페이지인 경우 페이지 편집 화면으로 이동
+                      router.push(`/${workspaceSlug}/projects/${projectId}/pages/${value}`);
+                    }
                   }}
                 />
               }

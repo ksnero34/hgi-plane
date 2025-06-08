@@ -33,18 +33,41 @@ export const orderPages = (
   let orderedPages: TPage[] = [];
   if (pages.length === 0 || !sortByKey) return [];
 
+  // 폴더와 페이지를 분리
+  const folders = pages.filter(page => page.is_folder);
+  const regularPages = pages.filter(page => !page.is_folder);
+
+  // 각각 정렬
+  let orderedFolders: TPage[] = [];
+  let orderedRegularPages: TPage[] = [];
+
   if (sortByKey === "name") {
-    orderedPages = sortBy(pages, [(m) => m.name?.toLowerCase()]);
-    if (sortByOrder === "desc") orderedPages = orderedPages.reverse();
+    orderedFolders = sortBy(folders, [(m) => m.name?.toLowerCase()]);
+    orderedRegularPages = sortBy(regularPages, [(m) => m.name?.toLowerCase()]);
+    if (sortByOrder === "desc") {
+      orderedFolders = orderedFolders.reverse();
+      orderedRegularPages = orderedRegularPages.reverse();
+    }
   }
   if (sortByKey === "created_at") {
-    orderedPages = sortBy(pages, [(m) => m.created_at]);
-    if (sortByOrder === "desc") orderedPages = orderedPages.reverse();
+    orderedFolders = sortBy(folders, [(m) => m.created_at]);
+    orderedRegularPages = sortBy(regularPages, [(m) => m.created_at]);
+    if (sortByOrder === "desc") {
+      orderedFolders = orderedFolders.reverse();
+      orderedRegularPages = orderedRegularPages.reverse();
+    }
   }
   if (sortByKey === "updated_at") {
-    orderedPages = sortBy(pages, [(m) => m.updated_at]);
-    if (sortByOrder === "desc") orderedPages = orderedPages.reverse();
+    orderedFolders = sortBy(folders, [(m) => m.updated_at]);
+    orderedRegularPages = sortBy(regularPages, [(m) => m.updated_at]);
+    if (sortByOrder === "desc") {
+      orderedFolders = orderedFolders.reverse();
+      orderedRegularPages = orderedRegularPages.reverse();
+    }
   }
+
+  // 폴더를 먼저, 그 다음 일반 페이지 순으로 결합
+  orderedPages = [...orderedFolders, ...orderedRegularPages];
 
   return orderedPages;
 };
@@ -56,6 +79,11 @@ export const orderPages = (
  * @returns {boolean}
  */
 export const shouldFilterPage = (page: TPage, filters: TPageFilterProps | undefined): boolean => {
+  // 디렉토리는 필터링에서 제외하고 항상 표시
+  if (page.is_folder) {
+    return true;
+  }
+
   let fallsInFilters = true;
   Object.keys(filters ?? {}).forEach((key) => {
     const filterKey = key as keyof TPageFilterProps;

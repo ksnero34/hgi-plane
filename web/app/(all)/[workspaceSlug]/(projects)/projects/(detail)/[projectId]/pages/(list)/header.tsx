@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { FileText } from "lucide-react";
+import { FileText, Folder, ChevronRight } from "lucide-react";
 // constants
 import { EPageAccess } from "@plane/constants";
 // plane types
@@ -24,14 +24,40 @@ export const PagesListHeader = observer(() => {
   const [isCreatingPage, setIsCreatingPage] = useState(false);
   // router
   const router = useRouter();
-  const { workspaceSlug } = useParams();
+  const { workspaceSlug, projectId } = useParams();
   const searchParams = useSearchParams();
   const pageType = searchParams.get("type");
+  const folderId = searchParams.get("folder");
   // store hooks
   const { currentProjectDetails, loader } = useProject();
-  const { canCurrentUserCreatePage, createPage } = usePageStore(EPageStoreType.PROJECT);
+  const { canCurrentUserCreatePage, createPage, getPageById } = usePageStore(EPageStoreType.PROJECT);
   const { setTrackElement } = useEventTracker();
   const { toggleCreatePageModal } = useCommandPalette();
+
+  // 현재 폴더 정보 가져오기
+  const currentFolder = folderId ? getPageById(folderId) : null;
+
+  // 폴더 경로 생성
+  const getFolderPath = () => {
+    const path = [];
+    let current = currentFolder;
+    while (current) {
+      path.unshift(current);
+      current = current.parent ? getPageById(current.parent) : null;
+    }
+    return path;
+  };
+
+  // 폴더로 이동하는 함수
+  const getFolderUrl = (targetFolderId: string | null) => {
+    const currentUrl = new URL(window.location.href);
+    if (targetFolderId) {
+      currentUrl.searchParams.set('folder', targetFolderId);
+    } else {
+      currentUrl.searchParams.delete('folder');
+    }
+    return currentUrl.pathname + currentUrl.search;
+  };
 
   // handle page create
   const handleCreatePage = async () => {
@@ -40,6 +66,7 @@ export const PagesListHeader = observer(() => {
 
     const payload: Partial<TPage> = {
       access: pageType === "private" ? EPageAccess.PRIVATE : EPageAccess.PUBLIC,
+      parent: folderId || null, // 현재 폴더를 부모로 설정
     };
 
     await createPage(payload)
@@ -57,6 +84,8 @@ export const PagesListHeader = observer(() => {
       .finally(() => setIsCreatingPage(false));
   };
 
+  const folderPath = getFolderPath();
+
   return (
     <Header>
       <Header.LeftItem>
@@ -65,8 +94,28 @@ export const PagesListHeader = observer(() => {
             <ProjectBreadcrumb />
             <Breadcrumbs.BreadcrumbItem
               type="text"
-              link={<BreadcrumbLink label="Pages" icon={<FileText className="h-4 w-4 text-custom-text-300" />} />}
+              link={
+                <BreadcrumbLink 
+                  label="Pages" 
+                  icon={<FileText className="h-4 w-4 text-custom-text-300" />}
+                  href={getFolderUrl(null)}
+                />
+              }
             />
+            {/* 폴더 경로 브레드크럼 */}
+            {folderPath.map((folder, index) => (
+              <Breadcrumbs.BreadcrumbItem
+                key={folder.id}
+                type="text"
+                link={
+                  <BreadcrumbLink
+                    label={folder.name || "Untitled"}
+                    icon={<Folder className="h-4 w-4 text-custom-text-300" />}
+                    href={getFolderUrl(folder.id)}
+                  />
+                }
+              />
+            ))}
           </Breadcrumbs>
         </div>
       </Header.LeftItem>
@@ -78,7 +127,12 @@ export const PagesListHeader = observer(() => {
           <Button
             variant="neutral-primary"
             size="sm"
-            onClick={() => toggleCreatePageModal({ isOpen: true, isFolder: true })}
+            onClick={() => toggleCreatePageModal({ 
+              isOpen: true, 
+              isFolder: true,
+              redirectionEnabled: true,
+              parentFolderId: folderId || null
+            })}
           >
             Add folder
           </Button>

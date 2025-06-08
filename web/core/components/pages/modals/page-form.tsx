@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 // types
-import { FileText, Globe2, Lock, LucideIcon } from "lucide-react";
+import { FileText, Globe2, Lock, LucideIcon, Folder } from "lucide-react";
 // plane imports
 import { ETabIndices, EPageAccess } from "@plane/constants";
 // i18n
@@ -70,62 +70,72 @@ export const PageForm: React.FC<Props> = (props) => {
   };
 
   const isTitleLengthMoreThan255Character = formData.name ? formData.name.length > 255 : false;
+  const isFolder = formData.is_folder;
 
   return (
     <form onSubmit={handlePageFormSubmit}>
       <div className="space-y-5 p-5">
-        <h3 className="text-xl font-medium text-custom-text-200">Create page</h3>
+        <h3 className="text-xl font-medium text-custom-text-200">
+          {isFolder ? "Create folder" : "Create page"}
+        </h3>
         <div className="flex items-start gap-2 h-9 w-full">
-          <EmojiIconPicker
-            isOpen={isOpen}
-            handleToggle={(val: boolean) => setIsOpen(val)}
-            className="flex items-center justify-center flex-shrink0"
-            buttonClassName="flex items-center justify-center"
-            label={
-              <span className="grid h-9 w-9 place-items-center rounded-md bg-custom-background-90">
-                <>
-                  {formData?.logo_props?.in_use ? (
-                    <Logo logo={formData?.logo_props} size={18} type="lucide" />
-                  ) : (
-                    <FileText className="h-4 w-4 text-custom-text-300" />
-                  )}
-                </>
-              </span>
-            }
-            onChange={(val: any) => {
-              let logoValue = {};
+          {!isFolder && (
+            <EmojiIconPicker
+              isOpen={isOpen}
+              handleToggle={(val: boolean) => setIsOpen(val)}
+              className="flex items-center justify-center flex-shrink0"
+              buttonClassName="flex items-center justify-center"
+              label={
+                <span className="grid h-9 w-9 place-items-center rounded-md bg-custom-background-90">
+                  <>
+                    {formData?.logo_props?.in_use ? (
+                      <Logo logo={formData?.logo_props} size={18} type="lucide" />
+                    ) : (
+                      <FileText className="h-4 w-4 text-custom-text-300" />
+                    )}
+                  </>
+                </span>
+              }
+              onChange={(val: any) => {
+                let logoValue = {};
 
-              if (val?.type === "emoji")
-                logoValue = {
-                  value: convertHexEmojiToDecimal(val.value.unified),
-                  // url: val.value.imageUrl,
-                };
-              else if (val?.type === "icon") logoValue = val.value;
+                if (val?.type === "emoji")
+                  logoValue = {
+                    value: convertHexEmojiToDecimal(val.value.unified),
+                    // url: val.value.imageUrl,
+                  };
+                else if (val?.type === "icon") logoValue = val.value;
 
-              handleFormData("logo_props", {
-                in_use: val?.type,
-                [val?.type]: logoValue,
-              });
-              setIsOpen(false);
-            }}
-            defaultIconColor={
-              formData?.logo_props?.in_use && formData?.logo_props?.in_use === "icon"
-                ? formData?.logo_props?.icon?.color
-                : undefined
-            }
-            defaultOpen={
-              formData?.logo_props?.in_use && formData?.logo_props?.in_use === "emoji"
-                ? EmojiIconPickerTypes.EMOJI
-                : EmojiIconPickerTypes.ICON
-            }
-          />
+                handleFormData("logo_props", {
+                  in_use: val?.type,
+                  [val?.type]: logoValue,
+                });
+                setIsOpen(false);
+              }}
+              defaultIconColor={
+                formData?.logo_props?.in_use && formData?.logo_props?.in_use === "icon"
+                  ? formData?.logo_props?.icon?.color
+                  : undefined
+              }
+              defaultOpen={
+                formData?.logo_props?.in_use && formData?.logo_props?.in_use === "emoji"
+                  ? EmojiIconPickerTypes.EMOJI
+                  : EmojiIconPickerTypes.ICON
+              }
+            />
+          )}
+          {isFolder && (
+            <span className="grid h-9 w-9 place-items-center rounded-md bg-custom-background-90 flex-shrink-0">
+              <Folder className="h-4 w-4 text-custom-text-300" />
+            </span>
+          )}
           <div className="space-y-1 flex-grow w-full">
-          <Input
-            id="name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleFormData("name", e.target.value)}
-              placeholder="Title"
+            <Input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleFormData("name", e.target.value)}
+              placeholder={isFolder ? "Folder name" : "Title"}
               className="w-full resize-none text-base"
               tabIndex={getIndex("name")}
               required
@@ -182,7 +192,7 @@ export const PageForm: React.FC<Props> = (props) => {
             disabled={isTitleLengthMoreThan255Character}
             tabIndex={getIndex("submit")}
           >
-            {isSubmitting ? "Creating" : "Create Page"}
+            {isSubmitting ? "Creating" : isFolder ? "Create Folder" : "Create Page"}
           </Button>
         </div>
       </div>
