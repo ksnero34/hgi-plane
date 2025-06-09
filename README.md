@@ -75,8 +75,16 @@ Meet [Plane](https://plane.so/), an open-source project management tool to track
 - oidc 로 사용자 생성 시 비밀번호 입력칸 안나오게 세팅
 - oidc id_token에 picture로 이미지 세팅, 검증기능 추가
 - 엑셀 등 스프레드 시트의 셀 복사 붙여넣기시 테이블형태로 들어가도록 수정
+- 에디터에서 테이블의 셀 드래그로 선택시 merge 및 split 기능 추가
 - 추가 한글화(activity, 알림 등)
 - 프로젝트를 다른 워크스페이스 이동하는 기능 추가
+- page에 디렉토리 구조 구현
+- 로그인한 사람의 이슈만 보기 기능 추가
+- 커스텀 속성을 동적으로 추가가능하도록 구현 및 필터 기능에도 커스텀 속성 추가
+- pagenation 요청 시 작업항목 몇개 요청할지 조정기능 추가
+- 일괄변경 기능 추가
+- mattermost 알림기능 추가
+- 프로젝트 설정에서 작업항목 내보내기 기능 추가가
 - 이 외 계속 추가중...
 
 
