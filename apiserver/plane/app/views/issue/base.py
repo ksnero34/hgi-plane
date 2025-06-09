@@ -572,19 +572,6 @@ class IssueViewSet(BaseViewSet):
                 assignees__id=request.user.id,
                 issue_assignee__deleted_at__isnull=True
             ).distinct()
-            # print(f"[DEBUG] My Issues Only - Filtering by assignee: {request.user.id}")
-            # print(f"[DEBUG] Queryset count after my_issues_only filter: {issue_queryset.count()}")
-            
-            # 실제 반환되는 이슈들의 현재 담당자 확인 (삭제되지 않은 관계만)
-        #     sample_issues = issue_queryset[:10]
-        #     for issue in sample_issues:
-        #         # 현재 활성 담당자만 가져오기
-        #         current_assignees = issue.assignees.filter(
-        #             issue_assignee__deleted_at__isnull=True
-        #         ).values_list('id', flat=True)
-        #         print(f"[DEBUG] Issue {issue.id} ({issue.name}): current_assignee_ids = {list(current_assignees)}")
-        # else:
-        #     print(f"[DEBUG] my_issues_only is false or not set, showing all issues")
 
         # 기본 필터와 extra 필터 적용
         issue_queryset = issue_queryset.filter(**filters, **extra_filters)

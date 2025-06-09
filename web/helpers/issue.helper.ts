@@ -109,14 +109,6 @@ export const handleIssueQueryParamsByLayout = (
     queryParams.push(option);
   });
 
-  // 캘린더 레이아웃인 경우 start_date와 target_date만 포함
-  /* 자동 필터 추가 주석 처리
-  if (layout === "calendar") {
-    queryParams.push("start_date");
-    queryParams.push("target_date");
-  }
-  */
-
   // add display filters query params
   Object.keys(layoutOptions.display_filters).forEach((option) => {
     queryParams.push(option as TIssueParams);

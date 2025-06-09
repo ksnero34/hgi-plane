@@ -471,12 +471,12 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         updated_count += 1
                         
                         # 관계 데이터만 삭제 후 재생성
-                        IssueLabel.objects.filter(issue=issue).delete()
-                        IssueAssignee.objects.filter(issue=issue).delete()
-                        ModuleIssue.objects.filter(issue=issue).delete()
-                        CycleIssue.objects.filter(issue=issue).delete()
-                        # 커스텀 필드 값도 삭제 후 재생성
-                        CustomFieldValue.objects.filter(issue=issue).delete()
+                        IssueLabel.objects.filter(issue=issue).delete(soft=False)
+                        IssueAssignee.objects.filter(issue=issue).delete(soft=False)
+                        ModuleIssue.objects.filter(issue=issue).delete(soft=False)
+                        CycleIssue.objects.filter(issue=issue).delete(soft=False)
+                        # 커스텀 필드 값도 삭제 후 재생성 (hard delete 사용)
+                        CustomFieldValue.objects.filter(issue=issue).delete(soft=False)
                     else:
                         # print("\n[Debug] 새 이슈 생성:")
                         # UUID 문자열을 UUID 객체로 변환

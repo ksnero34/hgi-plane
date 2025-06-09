@@ -82,9 +82,6 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     displayFilters: IIssueDisplayFilterOptions,
     acceptableParamsByLayout: TIssueParams[]
   ) => {
-    // console.log('computedFilteredParams - acceptableParamsByLayout:', acceptableParamsByLayout);
-    // console.log('computedFilteredParams - filters.custom_fields:', filters?.custom_fields);
-    
     const computedFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string | { [field_id: string]: string[]; }>> = {
       // issue filters
       priority: filters?.priority || undefined,
@@ -159,7 +156,6 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       if (nonEmptyArrayValue != undefined && acceptableParamsByLayout.includes(_key)) {
         // custom_fields는 특별한 처리가 필요 (객체를 JSON 문자열로 변환)
         if (_key === "custom_fields" && typeof nonEmptyArrayValue === "object" && !Array.isArray(nonEmptyArrayValue)) {
-          // console.log('Converting custom_fields to JSON:', nonEmptyArrayValue);
           issueFiltersParams[_key] = JSON.stringify(nonEmptyArrayValue);
         } else {
           issueFiltersParams[_key] = Array.isArray(nonEmptyArrayValue)
@@ -168,8 +164,6 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
         }
       }
     });
-
-    // console.log('computedFilteredParams - final issueFiltersParams:', issueFiltersParams);
 
     if (displayFilters?.layout) issueFiltersParams.layout = displayFilters?.layout;
 
@@ -324,12 +318,16 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
    * @returns
    */
   getShouldReFetchIssues = (displayFilters: IIssueDisplayFilterOptions) => {
-    const NON_SERVER_DISPLAY_FILTERS = ["order_by", "sub_issue", "type", "my_issues_only"];
+    // 클라이언트에서만 처리하는 필터들 (서버 재요청 불필요)
+    const NON_SERVER_DISPLAY_FILTERS = ["show_empty_groups"];
     const displayFilterKeys = Object.keys(displayFilters);
 
-    return NON_SERVER_DISPLAY_FILTERS.some((serverDisplayfilter: string) =>
-      displayFilterKeys.includes(serverDisplayfilter)
+    // 서버에서 처리해야 하는 필터(NON_SERVER_DISPLAY_FILTERS에 없는 필터)가 변경되었는지 확인
+    const hasServerSideFilters = displayFilterKeys.some((filterKey: string) =>
+      NON_SERVER_DISPLAY_FILTERS.indexOf(filterKey) === -1
     );
+
+    return hasServerSideFilters;
   };
 
   /**
@@ -342,7 +340,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     const displayFilterKeys = Object.keys(displayFilters);
 
     return NON_SERVER_DISPLAY_FILTERS.some((serverDisplayfilter: string) =>
-      displayFilterKeys.includes(serverDisplayfilter)
+      displayFilterKeys.indexOf(serverDisplayfilter) !== -1
     );
   };
 

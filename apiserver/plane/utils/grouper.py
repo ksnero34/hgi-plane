@@ -8,8 +8,11 @@ from django.db.models.functions import Coalesce, Cast
 from plane.db.models import (
     Cycle,
     Issue,
+    IssueAssignee,
+    IssueLabel,
     Label,
     Module,
+    ModuleIssue,
     Project,
     ProjectMember,
     State,
@@ -51,32 +54,44 @@ def issue_queryset_grouper(
         if group_key in GROUP_FILTER_MAPPER:
             queryset = queryset.filter(GROUP_FILTER_MAPPER[group_key])
 
-    annotations_map: Dict[str, Tuple[str, Q]] = {
-        "assignee_ids": (
-            "assignees__id",
-            ~Q(assignees__id__isnull=True) & Q(issue_assignee__deleted_at__isnull=True),
-        ),
-        "label_ids": (
-            "labels__id",
-            ~Q(labels__id__isnull=True) & Q(label_issue__deleted_at__isnull=True),
-        ),
-        "module_ids": (
-            "issue_module__module_id",
-            (
-                ~Q(issue_module__module_id__isnull=True)
-                & Q(issue_module__module__archived_at__isnull=True)
-                & Q(issue_module__deleted_at__isnull=True)
-            ),
-        ),
-    }
-
+    # Subquery를 사용하여 필터링에 영향받지 않는 독립적인 어노테이션 정의
+    
     default_annotations: Dict[str, Any] = {
-        key: Coalesce(
-            ArrayAgg(field, distinct=True, filter=condition),
+        "assignee_ids": Coalesce(
+            Subquery(
+                IssueAssignee.objects.filter(
+                    issue=OuterRef("id"),
+                    deleted_at__isnull=True,
+                    assignee__member_project__is_active=True
+                ).values("issue").annotate(
+                    ids=ArrayAgg("assignee_id", distinct=True)
+                ).values("ids")[:1]
+            ),
             Value([], output_field=ArrayField(UUIDField())),
-        )
-        for key, (field, condition) in annotations_map.items()
-        if FIELD_MAPPER.get(key) != group_by and FIELD_MAPPER.get(key) != sub_group_by
+        ),
+        "label_ids": Coalesce(
+            Subquery(
+                IssueLabel.objects.filter(
+                    issue=OuterRef("id"),
+                    deleted_at__isnull=True
+                ).values("issue").annotate(
+                    ids=ArrayAgg("label_id", distinct=True)
+                ).values("ids")[:1]
+            ),
+            Value([], output_field=ArrayField(UUIDField())),
+        ),
+        "module_ids": Coalesce(
+            Subquery(
+                ModuleIssue.objects.filter(
+                    issue=OuterRef("id"),
+                    deleted_at__isnull=True,
+                    module__archived_at__isnull=True
+                ).values("issue").annotate(
+                    ids=ArrayAgg("module_id", distinct=True)
+                ).values("ids")[:1]
+            ),
+            Value([], output_field=ArrayField(UUIDField())),
+        ),
     }
 
     # parent_child 그룹화인 경우 특별 처리
