@@ -36,6 +36,7 @@ export type TBasePage = TPage & {
   addAttachment: (attachmentId: string) => Promise<void>;
   removeAttachment: (attachmentId: string) => Promise<void>;
   duplicate: () => Promise<TPage | undefined>;
+  moveToFolder: (parentId: string | null) => Promise<void>;
   mutateProperties: (data: Partial<TPage>, shouldUpdateName?: boolean) => void;
   setEditorRef: (editorRef: EditorRefApi | null) => void;
 };
@@ -184,6 +185,7 @@ export class BasePage implements TBasePage {
       addAttachment: action,
       removeAttachment: action,
       duplicate: action,
+      moveToFolder: action,
       mutateProperties: action,
       setEditorRef: action,
     });

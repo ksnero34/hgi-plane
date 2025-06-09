@@ -37,12 +37,12 @@ export const PageDetailsHeader = observer(() => {
     pageId: pageId?.toString() ?? "",
     storeType,
   });
-  
+
   // 현재 페이지의 부모 폴더 경로
   const getCurrentPageFolderPath = () => {
     if (!page?.parent) return [];
     const path: any[] = [];
-    let current = getPageById(page.parent);
+    let current: any = getPageById(page.parent);
     while (current) {
       path.unshift(current);
       current = current.parent ? getPageById(current.parent) : null;
@@ -64,7 +64,7 @@ export const PageDetailsHeader = observer(() => {
     const currentFolderPageIds = getCurrentProjectFilteredPageIdsByTab("public", parentFolderId) || [];
     const currentFolderPrivatePageIds = getCurrentProjectFilteredPageIdsByTab("private", parentFolderId) || [];
     const currentFolderArchivedPageIds = getCurrentProjectFilteredPageIdsByTab("archived", parentFolderId) || [];
-    
+
     const allCurrentFolderPageIds = [
       ...currentFolderPageIds,
       ...currentFolderPrivatePageIds,
@@ -75,16 +75,16 @@ export const PageDetailsHeader = observer(() => {
       .map((id) => {
         const _page = getPageById(id);
         if (!_page) return;
-        
+
         return {
           value: _page.id,
           query: getPageName(_page.name) || "Untitled",
           content: (
             <div className="flex gap-2 items-center justify-between">
-              <SwitcherLabel 
-                logo_props={_page.logo_props} 
+              <SwitcherLabel
+                logo_props={_page.logo_props}
                 name={getPageName(_page.name) || "Untitled"}
-                LabelIcon={_page.is_folder ? Folder : FileText} 
+                LabelIcon={_page.is_folder ? Folder : FileText}
               />
               {!_page.is_folder && <PageAccessIcon {..._page} />}
             </div>
@@ -96,7 +96,7 @@ export const PageDetailsHeader = observer(() => {
 
   // derived values
   const currentPageFolderPath = getCurrentPageFolderPath();
-  
+
   // 현재 페이지가 위치한 폴더의 페이지들만 가져오기
   const currentFolderId = page?.parent || null;
   const switcherOptions = getFolderLevelOptions(currentFolderId);
@@ -135,13 +135,13 @@ export const PageDetailsHeader = observer(() => {
                 />
               }
             />
-            
+
             {/* 현재 페이지의 부모 폴더 경로 브레드크럼 - 각 폴더를 드롭다운으로 */}
             {currentPageFolderPath.map((folder, index) => {
               // 현재 폴더의 부모 폴더 ID 계산
               const parentFolderId = index === 0 ? null : currentPageFolderPath[index - 1]?.id;
               const folderLevelOptions = getFolderLevelOptions(parentFolderId);
-              
+
               return (
                 <Breadcrumbs.BreadcrumbItem
                   key={folder.id}
@@ -151,10 +151,10 @@ export const PageDetailsHeader = observer(() => {
                       value={folder.id}
                       options={folderLevelOptions}
                       label={
-                        <SwitcherLabel 
-                          logo_props={folder.logo_props} 
+                        <SwitcherLabel
+                          logo_props={folder.logo_props}
                           name={folder.name || "Untitled"}
-                          LabelIcon={Folder} 
+                          LabelIcon={Folder}
                         />
                       }
                       onChange={(value: string) => {
@@ -172,7 +172,7 @@ export const PageDetailsHeader = observer(() => {
                 />
               );
             })}
-            
+
             <Breadcrumbs.BreadcrumbItem
               type="component"
               component={
@@ -180,10 +180,10 @@ export const PageDetailsHeader = observer(() => {
                   value={pageId}
                   options={switcherOptions}
                   label={
-                    <SwitcherLabel 
-                      logo_props={page.logo_props} 
-                      name={getPageName(page.name)} 
-                      LabelIcon={page.is_folder ? Folder : FileText} 
+                    <SwitcherLabel
+                      logo_props={page.logo_props}
+                      name={getPageName(page.name)}
+                      LabelIcon={page.is_folder ? Folder : FileText}
                     />
                   }
                   onChange={(value: string) => {

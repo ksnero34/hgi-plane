@@ -99,7 +99,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
 
   // 순환 참조 확인 함수 - 드래그된 항목이 타겟 폴더의 조상인지 확인
   const isCircularReference = (draggedPageId: string, targetFolderId: string): boolean => {
-    let currentParent = targetFolderId;
+    let currentParent: string | null = targetFolderId;
     while (currentParent) {
       if (currentParent === draggedPageId) {
         return true;

@@ -72,9 +72,9 @@ const ProjectPagesPage = observer(() => {
         workspaceSlug={workspaceSlug.toString()}
         folderId={folderId}
       >
-        <PagesListRoot 
-          pageType={currentPageType()} 
-          storeType={EPageStoreType.PROJECT} 
+        <PagesListRoot
+          pageType={currentPageType()}
+          storeType={EPageStoreType.PROJECT}
           folderId={folderId}
         />
       </PagesListView>

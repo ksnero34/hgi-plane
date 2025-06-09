@@ -83,7 +83,8 @@ export type TIssueParams =
   | "issue_type"
   | "layout"
   | "expand"
-  | "custom_fields";
+  | "custom_fields"
+  | "my_issues_only";
 
 export type TCalendarLayouts = "month" | "week";
 

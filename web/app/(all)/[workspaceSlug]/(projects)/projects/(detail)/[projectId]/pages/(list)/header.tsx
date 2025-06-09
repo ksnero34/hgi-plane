@@ -39,8 +39,8 @@ export const PagesListHeader = observer(() => {
 
   // 폴더 경로 생성
   const getFolderPath = () => {
-    const path = [];
-    let current = currentFolder;
+    const path: any[] = [];
+    let current: any = currentFolder;
     while (current) {
       path.unshift(current);
       current = current.parent ? getPageById(current.parent) : null;
@@ -95,8 +95,8 @@ export const PagesListHeader = observer(() => {
             <Breadcrumbs.BreadcrumbItem
               type="text"
               link={
-                <BreadcrumbLink 
-                  label="Pages" 
+                <BreadcrumbLink
+                  label="Pages"
                   icon={<FileText className="h-4 w-4 text-custom-text-300" />}
                   href={getFolderUrl(null)}
                 />
@@ -111,7 +111,7 @@ export const PagesListHeader = observer(() => {
                   <BreadcrumbLink
                     label={folder.name || "Untitled"}
                     icon={<Folder className="h-4 w-4 text-custom-text-300" />}
-                    href={getFolderUrl(folder.id)}
+                    href={getFolderUrl(folder.id || null)}
                   />
                 }
               />
@@ -127,8 +127,8 @@ export const PagesListHeader = observer(() => {
           <Button
             variant="neutral-primary"
             size="sm"
-            onClick={() => toggleCreatePageModal({ 
-              isOpen: true, 
+            onClick={() => toggleCreatePageModal({
+              isOpen: true,
               isFolder: true,
               redirectionEnabled: true,
               parentFolderId: folderId || null

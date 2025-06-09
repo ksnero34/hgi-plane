@@ -22,6 +22,7 @@ export enum EServerGroupByToFilterOptions {
   "project_id" = "project",
   "created_by" = "created_by",
   "parent_child" = "parent_id",
+  "top_level_only" = "parent_id",
 }
 
 export enum EIssueFilterType {

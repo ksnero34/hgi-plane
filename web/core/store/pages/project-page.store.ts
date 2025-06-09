@@ -40,6 +40,7 @@ export interface IProjectPageStore {
   getCurrentProjectPageIds: (projectId: string) => string[];
   getCurrentProjectFilteredPageIdsByTab: (pageType: TPageNavigationTabs, folderId?: string | null) => string[] | undefined;
   getPageById: (pageId: string) => TProjectPage | undefined;
+  getFolderPages: () => TProjectPage[];
   updateFilters: <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => void;
   clearAllFilters: () => void;
   // actions
@@ -168,7 +169,7 @@ export class ProjectPageStore implements IProjectPageStore {
         (folderId ? p.parent === folderId : p.parent === null || p.parent === undefined)
     );
     filteredPages = orderPages(filteredPages, this.filters.sortKey, this.filters.sortBy);
-    return filteredPages.map((p) => p.id);
+    return filteredPages.map((p) => p.id).filter((id): id is string => id !== undefined);
   };
 
   /**

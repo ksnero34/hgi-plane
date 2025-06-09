@@ -30,6 +30,7 @@ const ParentFolderItem: FC<{
 }> = ({ folderId, getPageById, getParentFolderUrl }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const dragOverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
 
   // 현재 폴더의 부모 폴더 ID 계산
   const currentFolder = getPageById(folderId);
@@ -122,7 +123,7 @@ const ParentFolderItem: FC<{
         itemLink={getParentFolderUrl()}
         actionableItems={<></>}
         isMobile={false}
-        parentRef={null}
+        parentRef={parentRef}
         disableLink={isDragOver} // 드래그 오버 시 링크 비활성화
       />
     </div>
