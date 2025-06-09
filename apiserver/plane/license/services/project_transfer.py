@@ -273,19 +273,86 @@ class ProjectTransferService:
                 # 모듈 이슈 업데이트
                 ModuleIssue.objects.filter(module=module).update(workspace=target_workspace)
             
-            # 페이지 업데이트 (프로젝트 페이지만)
-            project_pages = ProjectPage.objects.filter(project=project)
+            # 페이지 업데이트 (프로젝트 페이지만) - 디렉토리 구조 고려
+            project_pages = ProjectPage.objects.filter(project=project).select_related('page')
+            
+            # 페이지들을 parent 관계에 따라 정렬 (부모 먼저, 자식 나중에)
+            pages_to_process = []
             for pp in project_pages:
+                pages_to_process.append(pp)
+            
+            # 부모-자식 관계를 고려한 정렬 함수
+            def sort_pages_by_hierarchy(pages):
+                """부모 페이지가 먼저 오도록 정렬"""
+                sorted_pages = []
+                processed_ids = set()
+                
+                def add_page_and_children(page_project_page):
+                    if page_project_page.page.id in processed_ids:
+                        return
+                    
+                    # 부모가 있고 아직 처리되지 않았다면 부모부터 처리
+                    if page_project_page.page.parent and page_project_page.page.parent.id not in processed_ids:
+                        # 같은 프로젝트 내에서 부모 찾기
+                        parent_pp = next((pp for pp in pages if pp.page.id == page_project_page.page.parent.id), None)
+                        if parent_pp:
+                            add_page_and_children(parent_pp)
+                    
+                    # 현재 페이지 추가
+                    if page_project_page.page.id not in processed_ids:
+                        sorted_pages.append(page_project_page)
+                        processed_ids.add(page_project_page.page.id)
+                
+                # 모든 페이지 처리
+                for pp in pages:
+                    add_page_and_children(pp)
+                
+                return sorted_pages
+            
+            # 계층 구조에 따라 정렬
+            sorted_project_pages = sort_pages_by_hierarchy(pages_to_process)
+            
+            # 페이지 ID 매핑 (이동 후 parent 관계 업데이트용)
+            page_id_mapping = {}
+            
+            for pp in sorted_project_pages:
+                # ProjectPage 워크스페이스 업데이트
                 pp.workspace = target_workspace
                 pp.save()
                 
                 page = pp.page
-                # 프로젝트 페이지의 워크스페이스도 업데이트
-                if not Page.objects.filter(
-                    ~Q(id=page.id), workspace=target_workspace, name=page.name, deleted_at__isnull=True
-                ).exists():
+                
+                # 이름 중복 확인 및 처리
+                existing_page = Page.objects.filter(
+                    ~Q(id=page.id), 
+                    workspace=target_workspace, 
+                    name=page.name, 
+                    deleted_at__isnull=True
+                ).first()
+                
+                if not existing_page:
+                    # 페이지 워크스페이스 업데이트
                     page.workspace = target_workspace
+                    
+                    # parent 관계 업데이트 - 같은 프로젝트 내의 페이지만 참조하도록
+                    if page.parent:
+                        # 부모 페이지가 같은 프로젝트에 속하는지 확인
+                        parent_in_same_project = ProjectPage.objects.filter(
+                            project=project, 
+                            page=page.parent,
+                            deleted_at__isnull=True
+                        ).exists()
+                        
+                        if not parent_in_same_project:
+                            # 부모가 같은 프로젝트에 없으면 루트로 이동
+                            page.parent = None
+                    
                     page.save()
+                    page_id_mapping[page.id] = page.id
+                else:
+                    # 이름이 중복되는 경우 처리 (필요시 이름 변경 등)
+                    # 현재는 기존 페이지를 유지하고 새 페이지는 스킵
+                    pass
             
             # 이슈 뷰 업데이트
             issue_views = IssueView.objects.filter(project=project)
@@ -347,10 +414,54 @@ class ProjectTransferService:
             }
         )
         
+        # 페이지 계층 구조 검증
+        is_valid_hierarchy, hierarchy_message = ProjectTransferService.validate_page_hierarchy_after_transfer(project)
+        if not is_valid_hierarchy:
+            # 경고 로그 기록 (실패로 처리하지는 않음)
+            log_audit(
+                action="project_transfer_page_hierarchy_warning",
+                user_id=str(admin_user.id),
+                user_email=admin_user.email,
+                resource_type="project",
+                resource_id=str(project.id),
+                details={
+                    "project_id": str(project.id),
+                    "warning_message": hierarchy_message,
+                }
+            )
+        
         # 이동이 완료되었습니다.
         return {
             "success": True, 
             "project": project,
             "source_workspace": old_workspace,
-            "target_workspace": target_workspace
+            "target_workspace": target_workspace,
+            "page_hierarchy_valid": is_valid_hierarchy,
+            "page_hierarchy_message": hierarchy_message
         } 
+
+    @staticmethod
+    def validate_page_hierarchy_after_transfer(project):
+        """프로젝트 이동 후 페이지 계층 구조가 올바른지 검증"""
+        project_pages = ProjectPage.objects.filter(project=project, deleted_at__isnull=True)
+        
+        for pp in project_pages:
+            page = pp.page
+            
+            # parent가 있는 경우 검증
+            if page.parent:
+                # 부모 페이지가 같은 프로젝트에 속하는지 확인
+                parent_in_same_project = ProjectPage.objects.filter(
+                    project=project,
+                    page=page.parent,
+                    deleted_at__isnull=True
+                ).exists()
+                
+                if not parent_in_same_project:
+                    return False, f"페이지 '{page.name}'의 부모 페이지가 같은 프로젝트에 없습니다."
+                
+                # 부모와 자식이 같은 워크스페이스에 있는지 확인
+                if page.parent.workspace_id != page.workspace_id:
+                    return False, f"페이지 '{page.name}'과 부모 페이지가 다른 워크스페이스에 있습니다."
+        
+        return True, "페이지 계층 구조가 올바릅니다." 
