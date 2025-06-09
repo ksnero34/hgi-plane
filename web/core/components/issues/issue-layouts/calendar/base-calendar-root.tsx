@@ -100,11 +100,13 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
 
   useEffect(() => {
     if (startDate && endDate && layout) {
+      const perPageFromFilter = displayFilters?.per_page || (layout === "month" ? 4 : 30);
       fetchIssues(
         "init-loader",
         {
           canGroup: true,
           perPageCount: layout === "month" ? 4 : 30,
+          perPageFromDisplayFilter: perPageFromFilter,
           before: endDate,
           after: startDate,
           groupedBy: EIssueGroupByToServerOptions["target_date"],
@@ -112,7 +114,7 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
         viewId
       );
     }
-  }, [fetchIssues, storeType, startDate, endDate, layout, viewId]);
+  }, [fetchIssues, storeType, startDate, endDate, layout, viewId, displayFilters?.per_page]);
 
   const handleDragAndDrop = async (
     issueId: string | undefined,

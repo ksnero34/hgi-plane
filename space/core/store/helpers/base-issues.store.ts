@@ -66,6 +66,7 @@ export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof
   assignees: "assignee_ids",
   target_date: "target_date",
   parent_child: "parent_id",
+  top_level_only: "parent_id",
 };
 
 export abstract class BaseIssuesStore implements IBaseIssuesStore {

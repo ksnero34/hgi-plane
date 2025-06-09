@@ -61,6 +61,11 @@ export const CreatePageModal: FC<Props> = (props) => {
     setPageFormData((prev) => ({ ...prev, is_folder: isFolder }));
   }, [isFolder]);
 
+  // update parent folder in form data when parentFolderId changes
+  useEffect(() => {
+    setPageFormData((prev) => ({ ...prev, parent: parentFolderId || null }));
+  }, [parentFolderId]);
+
   const handleStateClear = () => {
     setPageFormData({ id: undefined, name: "", access: pageAccess, parent: null, is_folder: isFolder });
     handleModalClose();

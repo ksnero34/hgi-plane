@@ -560,6 +560,7 @@
       "desc": "Descending",
       "updated_on": "Updated on"
     },
+    "top_level_only": "Top-level items only",
     "sort": {
       "asc": "Ascending",
       "desc": "Descending",
@@ -848,7 +849,8 @@
       },
       "extra": {
         "show_sub_issues": "Show sub-work items",
-        "show_empty_groups": "Show empty groups"
+        "show_empty_groups": "Show empty groups",
+        "my_issues_only": "My issues only"
       }
     },
     "layouts": {

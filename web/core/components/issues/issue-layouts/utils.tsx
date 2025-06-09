@@ -124,6 +124,7 @@ export const getGroupByColumns = ({
     created_by: getCreatedByColumns,
     team_project: getTeamProjectColumns,
     parent_child: () => getParentChildColumns(groupedIssueIds, issuesMap),
+    top_level_only: getTopLevelOnlyColumns,
   };
 
   // Get and return the columns for the specified group by option
@@ -366,6 +367,17 @@ const getParentChildColumns = (groupedIssueIds?: TGroupedIssues | TSubGroupedIss
   });
 
   return columns;
+};
+
+const getTopLevelOnlyColumns = (): IGroupByColumn[] => {
+  return [
+    {
+      id: "top_level_only",
+      name: "최상위 작업항목만",
+      icon: undefined,
+      payload: { parent_id: null },
+    }
+  ];
 };
 
 export const getDisplayPropertiesCount = (

@@ -727,23 +727,29 @@ def issue_export_task(
         # 이슈 ID 목록
         issue_ids = list(issues_data.keys())
         
-        # 담당자 정보 가져오기
-        assignees = Issue.objects.filter(id__in=issue_ids).values("id", "assignees__email").exclude(assignees__email=None)
-        for assignee in assignees:
-            issue_id = assignee["id"]
-            email = assignee["assignees__email"]
-            if email and issue_id in issues_data:
-                if email not in issues_data[issue_id]["assignees__email"]:
-                    issues_data[issue_id]["assignees__email"].append(email)
+        # 담당자 정보 가져오기 - 현재 할당된 담당자만 가져오기
+        issues_with_assignees = Issue.objects.filter(id__in=issue_ids).prefetch_related(
+            Prefetch('assignees', queryset=User.objects.only('id', 'email'))
+        ).only('id')
         
-        # 라벨 정보 가져오기
-        labels = Issue.objects.filter(id__in=issue_ids).values("id", "labels__name").exclude(labels__name=None)
-        for label in labels:
-            issue_id = label["id"]
-            name = label["labels__name"]
-            if name and issue_id in issues_data:
-                if name not in issues_data[issue_id]["labels__name"]:
-                    issues_data[issue_id]["labels__name"].append(name)
+        for issue in issues_with_assignees:
+            issue_id = issue.id
+            if issue_id in issues_data:
+                # 현재 할당된 담당자들의 이메일만 가져오기
+                assignee_emails = [assignee.email for assignee in issue.assignees.all() if assignee.email]
+                issues_data[issue_id]["assignees__email"] = assignee_emails
+        
+        # 라벨 정보 가져오기 - 현재 할당된 라벨만 가져오기
+        issues_with_labels = Issue.objects.filter(id__in=issue_ids).prefetch_related(
+            Prefetch('labels', queryset=Label.objects.only('id', 'name'))
+        ).only('id')
+        
+        for issue in issues_with_labels:
+            issue_id = issue.id
+            if issue_id in issues_data:
+                # 현재 할당된 라벨들의 이름만 가져오기
+                label_names = [label.name for label in issue.labels.all() if label.name]
+                issues_data[issue_id]["labels__name"] = label_names
         
         # 커스텀 필드 값 가져오기
         if custom_fields_map:

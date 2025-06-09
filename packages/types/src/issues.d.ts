@@ -219,7 +219,8 @@ export type GroupByColumnTypes =
   | "assignees"
   | "created_by"
   | "team_project"
-  | "parent_child";
+  | "parent_child"
+  | "top_level_only";
 
 export interface IGroupByColumn {
   id: string;
@@ -251,6 +252,7 @@ export interface ILayoutDisplayFiltersOptions {
     sub_group_by?: TIssueGroupByOptions[];
     order_by?: TIssueOrderByOptions[];
     type?: TIssueGroupingFilters[];
+    per_page?: number[];
   };
   extra_options: {
     access: boolean;

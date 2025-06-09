@@ -15,7 +15,7 @@ import { getPageName } from "@/helpers/page.helper";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web hooks
-import { EPageStoreType, usePage } from "@/plane-web/hooks/store";
+import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";
 
 type TPageListBlock = {
   pageId: string;
@@ -37,6 +37,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     pageId,
     storeType,
   });
+  const { getPageById } = usePageStore(storeType);
   const { isMobile } = usePlatformOS();
   
   // handle page check
@@ -57,10 +58,6 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
 
   // 드래그 시작 핸들러
   const handleDragStart = (e: React.DragEvent) => {
-    if (is_folder) {
-      e.preventDefault();
-      return;
-    }
     e.dataTransfer.setData('text/plain', pageId);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -100,6 +97,19 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     }, 100);
   };
 
+  // 순환 참조 확인 함수 - 드래그된 항목이 타겟 폴더의 조상인지 확인
+  const isCircularReference = (draggedPageId: string, targetFolderId: string): boolean => {
+    let currentParent = targetFolderId;
+    while (currentParent) {
+      if (currentParent === draggedPageId) {
+        return true;
+      }
+      const parentPage = getPageById(currentParent);
+      currentParent = parentPage?.parent || null;
+    }
+    return false;
+  };
+
   // 드롭 핸들러 (폴더에만 적용)
   const handleDrop = async (e: React.DragEvent) => {
     if (!is_folder) return;
@@ -114,44 +124,41 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     setIsDragOver(false);
     
     const draggedPageId = e.dataTransfer.getData('text/plain');
-    if (!draggedPageId || draggedPageId === pageId) return; // 자기 자신에게 드롭하는 경우 무시
+    if (!draggedPageId || draggedPageId === pageId) return;
     
     try {
       // 드래그된 페이지를 현재 폴더로 이동
-      const draggedPage = page.store.getPageById(draggedPageId);
+      const draggedPage = getPageById(draggedPageId);
       if (!draggedPage) {
         throw new Error("드래그된 페이지를 찾을 수 없습니다.");
       }
       
-      // 순환 참조 방지 - 부모를 자식으로 이동하려는 경우
-      let currentParent = page.parent;
-      while (currentParent) {
-        if (currentParent === draggedPageId) {
-          throw new Error("폴더를 자신의 하위 폴더로 이동할 수 없습니다.");
-        }
-        const parentPage = page.store.getPageById(currentParent);
-        currentParent = parentPage?.parent;
+      // 순환 참조 방지 - 폴더를 자신의 하위 폴더로 이동하려는 경우
+      if (draggedPage.is_folder && isCircularReference(draggedPageId, pageId)) {
+        throw new Error("폴더를 자신의 하위 폴더로 이동할 수 없습니다.");
       }
       
       await draggedPage.moveToFolder(pageId);
+      
+      const itemType = draggedPage.is_folder ? "폴더" : "페이지";
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "성공!",
-        message: `"${getPageName(draggedPage.name)}"이(가) "${getPageName(name)}" 폴더로 이동되었습니다.`,
+        message: `"${getPageName(draggedPage.name)}" ${itemType}이(가) "${getPageName(name)}" 폴더로 이동되었습니다.`,
       });
     } catch (error) {
       console.error("페이지 이동 오류:", error);
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "오류가 발생했습니다!",
-        message: error instanceof Error ? error.message : "페이지를 이동할 수 없습니다. 다시 시도해주세요.",
+        message: error instanceof Error ? error.message : "항목을 이동할 수 없습니다. 다시 시도해주세요.",
       });
     }
   };
 
   return (
     <div
-      draggable={!is_folder} // 폴더는 드래그 불가, 페이지만 드래그 가능
+      draggable={true} // 모든 항목(페이지와 폴더) 드래그 가능
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}

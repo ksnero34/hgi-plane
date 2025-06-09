@@ -112,6 +112,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       order_by: displayFilters?.order_by || undefined,
       type: displayFilters?.type || undefined,
       sub_issue: displayFilters?.sub_issue ?? true,
+      my_issues_only: displayFilters?.my_issues_only ?? false,
     };
 
     // console.log('computedFilteredParams - computedFilters.custom_fields:', computedFilters.custom_fields);
@@ -361,14 +362,17 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     groupId?: string,
     subGroupId?: string
   ) {
+    // Use perPageFromDisplayFilter if available, otherwise use perPageCount
+    const perPage = options.perPageFromDisplayFilter || options.perPageCount;
+    
     // if cursor exists, use the cursor. If it doesn't exist construct the cursor based on per page count
-    const pageCursor = cursor ? cursor : groupId ? `${options.perPageCount}:1:0` : `${options.perPageCount}:0:0`;
+    const pageCursor = cursor ? cursor : groupId ? `${perPage}:1:0` : `${perPage}:0:0`;
 
     // pagination params
     const paginationParams: Partial<Record<TIssueParams, string | boolean>> = {
       ...filterParams,
       cursor: pageCursor,
-      per_page: options.perPageCount.toString(),
+      per_page: perPage.toString(),
     };
 
     // If group by is specifically sent through options, like that for calendar layout, use that to group

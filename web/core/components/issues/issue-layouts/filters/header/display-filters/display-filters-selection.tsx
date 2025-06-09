@@ -13,6 +13,7 @@ import {
   FilterExtraOptions,
   FilterGroupBy,
   FilterOrderBy,
+  FilterPerPage,
   FilterSubGroupBy,
 } from "@/components/issues";
 
@@ -117,6 +118,21 @@ export const DisplayFiltersSelection: React.FC<Props> = observer((props) => {
         </div>
       )}
 
+      {/* per page */}
+      {isDisplayFilterEnabled("per_page") && !isEmpty(layoutDisplayFiltersOptions?.display_filters?.per_page) && (
+        <div className="py-2">
+          <FilterPerPage
+            selectedPerPage={displayFilters?.per_page}
+            handleUpdate={(val) =>
+              handleDisplayFiltersUpdate({
+                per_page: val,
+              })
+            }
+            perPageOptions={layoutDisplayFiltersOptions?.display_filters.per_page ?? []}
+          />
+        </div>
+      )}
+
       {/* Options */}
       {layoutDisplayFiltersOptions?.extra_options.access && (
         <div className="py-2">
@@ -124,6 +140,7 @@ export const DisplayFiltersSelection: React.FC<Props> = observer((props) => {
             selectedExtraOptions={{
               show_empty_groups: displayFilters?.show_empty_groups ?? true,
               sub_issue: displayFilters?.sub_issue ?? true,
+              my_issues_only: displayFilters?.my_issues_only ?? false,
             }}
             handleUpdate={(key, val) =>
               handleDisplayFiltersUpdate({

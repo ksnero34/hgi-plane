@@ -18,12 +18,17 @@ const ISSUE_EXTRA_OPTIONS: {
     key: "show_empty_groups",
     titleTranslationKey: "issue.display.extra.show_empty_groups",
   }, // filter on front-end
+  {
+    key: "my_issues_only",
+    titleTranslationKey: "issue.display.extra.my_issues_only",
+  },
 ];
 
 type Props = {
   selectedExtraOptions: {
     sub_issue: boolean;
     show_empty_groups: boolean;
+    my_issues_only: boolean;
   };
   handleUpdate: (key: keyof IIssueDisplayFilterOptions, val: boolean) => void;
   enabledExtraOptions: TIssueExtraOptions[];

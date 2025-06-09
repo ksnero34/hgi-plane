@@ -17,6 +17,7 @@ export type TIssueGroupByOptions =
   | "target_date"
   | "team_project"
   | "parent_child"
+  | "top_level_only"
   | null;
 
 export type TIssueOrderByOptions =
@@ -53,7 +54,7 @@ export type TIssueOrderByOptions =
 
 export type TIssueGroupingFilters = "active" | "backlog" | null;
 
-export type TIssueExtraOptions = "show_empty_groups" | "sub_issue";
+export type TIssueExtraOptions = "show_empty_groups" | "sub_issue" | "my_issues_only";
 
 export type TIssueParams =
   | "priority"
@@ -118,6 +119,8 @@ export interface IIssueDisplayFilterOptions {
   show_empty_groups?: boolean;
   sub_issue?: boolean;
   type?: TIssueGroupingFilters;
+  per_page?: number;
+  my_issues_only?: boolean;
 }
 export interface IIssueDisplayProperties {
   assignee?: boolean;
@@ -218,6 +221,7 @@ export interface IWorkspaceGlobalViewProps {
 export interface IssuePaginationOptions {
   canGroup: boolean;
   perPageCount: number;
+  perPageFromDisplayFilter?: number;
   before?: string;
   after?: string;
   groupedBy?: TIssueGroupByOptions;

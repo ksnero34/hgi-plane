@@ -564,6 +564,12 @@ class IssueViewSet(BaseViewSet):
             issue_queryset = issue_queryset.filter(assignees__id=request.user.id)
             # print("Restricted User - Filtering by assignee:", request.user.id)
 
+        # my_issues_only 옵션 처리
+        my_issues_only = request.GET.get("my_issues_only", "false")
+        if my_issues_only == "true":
+            issue_queryset = issue_queryset.filter(assignees__id=request.user.id)
+            # print("My Issues Only - Filtering by assignee:", request.user.id)
+
         # 기본 필터와 extra 필터 적용
         issue_queryset = issue_queryset.filter(**filters, **extra_filters)
         

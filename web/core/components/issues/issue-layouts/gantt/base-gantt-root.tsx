@@ -63,8 +63,13 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
   targetDate.setDate(targetDate.getDate() + 1);
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
-  }, [fetchIssues, storeType, viewId]);
+    const perPageFromFilter = appliedDisplayFilters?.per_page || 100;
+    fetchIssues("init-loader", { 
+      canGroup: false, 
+      perPageCount: 100,
+      perPageFromDisplayFilter: perPageFromFilter
+    }, viewId);
+  }, [fetchIssues, storeType, viewId, appliedDisplayFilters?.per_page]);
 
   useEffect(() => {
     initGantt();

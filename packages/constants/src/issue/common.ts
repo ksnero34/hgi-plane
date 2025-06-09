@@ -30,6 +30,7 @@ export enum EIssueGroupByToServerOptions {
   "created_by" = "created_by",
   "team_project" = "project_id",
   "parent_child" = "parent_child",
+  "top_level_only" = "top_level_only",
 }
 
 export enum EIssueGroupBYServerToProperty {
@@ -44,6 +45,7 @@ export enum EIssueGroupBYServerToProperty {
   "project_id" = "project_id",
   "created_by" = "created_by",
   "parent_child" = "parent_child",
+  "top_level_only" = "top_level_only",
 }
 
 export enum EIssueServiceType {
@@ -140,6 +142,7 @@ export const ISSUE_GROUP_BY_OPTIONS: {
   { key: "assignees", titleTranslationKey: "common.assignees" },
   { key: "created_by", titleTranslationKey: "common.created_by" },
   { key: "parent_child", titleTranslationKey: "common.order_by.parent_child" },
+  { key: "top_level_only", titleTranslationKey: "common.top_level_only" },
   { key: null, titleTranslationKey: "common.none" },
 ];
 
@@ -396,3 +399,19 @@ export const FILTER_TO_ISSUE_MAP: Partial<Record<keyof IIssueFilterOptions, keyo
   issue_type: "type_id",
   state_group: "state__group",
 } as const;
+
+export const PER_PAGE_OPTIONS: {
+  key: number;
+  titleTranslationKey: string;
+}[] = [
+  { key: 25, titleTranslationKey: "common.per_page_options.25" },
+  { key: 50, titleTranslationKey: "common.per_page_options.50" },
+  { key: 100, titleTranslationKey: "common.per_page_options.100" },
+  { key: 200, titleTranslationKey: "common.per_page_options.200" },
+  { key: 500, titleTranslationKey: "common.per_page_options.500" },
+  { key: 1000, titleTranslationKey: "common.per_page_options.1000" },
+  { key: 3000, titleTranslationKey: "common.per_page_options.3000" },
+  { key: 5000, titleTranslationKey: "common.per_page_options.5000" },
+];
+
+export const DEFAULT_PER_PAGE = 50;

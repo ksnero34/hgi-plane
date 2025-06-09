@@ -43,6 +43,10 @@ def issue_queryset_grouper(
         "issue_module__module_id": Q(issue_module__deleted_at__isnull=True),
     }
 
+    # top_level_only 그룹화인 경우 부모가 없는 이슈들만 필터링
+    if group_by == "top_level_only" or sub_group_by == "top_level_only":
+        queryset = queryset.filter(parent_id__isnull=True)
+
     for group_key in [group_by, sub_group_by]:
         if group_key in GROUP_FILTER_MAPPER:
             queryset = queryset.filter(GROUP_FILTER_MAPPER[group_key])
@@ -76,7 +80,7 @@ def issue_queryset_grouper(
     }
 
     # parent_child 그룹화인 경우 특별 처리
-    if group_by == "parent_child" or sub_group_by == "parent_child":
+    if group_by == "parent_child" or sub_group_by == "parent_child" or group_by == "top_level_only" or sub_group_by == "top_level_only":
         # 이 경우에는 Django 어노테이션 대신 Python 레벨에서 처리
         # 일단 기본 어노테이션만 추가하고, 실제 그룹화는 issue_on_results에서 처리
         pass
@@ -120,7 +124,7 @@ def issue_on_results(
     serialized_data = serializer.data
     
     # parent_child 그룹화인 경우 특별 처리
-    if group_by == "parent_child" or sub_group_by == "parent_child":
+    if group_by == "parent_child" or sub_group_by == "parent_child" or group_by == "top_level_only" or sub_group_by == "top_level_only":
         # 모든 이슈의 parent_id를 가져와서 최상단 부모를 찾기
         issue_values = list(issues.values("id", "parent_id"))
         
@@ -164,20 +168,32 @@ def issue_on_results(
                 issue_id = str(issue_value["id"])
                 parent_id = issue_value.get("parent_id")
                 
-                # 최상단 부모 찾기
-                if parent_id is None:
-                    # 부모가 없으면 최상단 이슈
-                    parent_child_value = "None"
-                else:
-                    # 부모가 있으면 최상단 부모 찾기
-                    root_parent = find_root_parent(issue_id, all_issues_dict)
-                    parent_child_value = root_parent if root_parent is not None else str(parent_id)
+                # parent_child 그룹화 처리
+                if group_by == "parent_child" or sub_group_by == "parent_child":
+                    # 최상단 부모 찾기
+                    if parent_id is None:
+                        # 부모가 없으면 최상단 이슈
+                        parent_child_value = "None"
+                    else:
+                        # 부모가 있으면 최상단 부모 찾기
+                        root_parent = find_root_parent(issue_id, all_issues_dict)
+                        parent_child_value = root_parent if root_parent is not None else str(parent_id)
+                    
+                    # parent_child 그룹 값을 설정 (리스트가 아닌 단순 값으로)
+                    if group_by == "parent_child":
+                        result["parent_child"] = parent_child_value
+                    if sub_group_by == "parent_child":
+                        result["sub_parent_child"] = parent_child_value
                 
-                # parent_child 그룹 값을 설정 (리스트가 아닌 단순 값으로)
-                if group_by == "parent_child":
-                    result["parent_child"] = parent_child_value
-                if sub_group_by == "parent_child":
-                    result["sub_parent_child"] = parent_child_value
+                # top_level_only 그룹화 처리
+                if group_by == "top_level_only" or sub_group_by == "top_level_only":
+                    # 최상위 작업항목만 표시 (parent_id가 null인 것만)
+                    top_level_value = "top_level_only" if parent_id is None else None
+                    
+                    if group_by == "top_level_only":
+                        result["top_level_only"] = top_level_value
+                    if sub_group_by == "top_level_only":
+                        result["sub_top_level_only"] = top_level_value
     
     # many-to-many 필드로 그룹화하는 경우, 해당 필드를 결과에 추가
     # 이는 paginator에서 group_by_field_name을 찾을 수 있도록 하기 위함
@@ -352,5 +368,9 @@ def issue_group_values(
         result.append("None")
         
         return result
+
+    if field == "top_level_only":
+        # 최상위 작업항목만 그룹화
+        return ["top_level_only"]
 
     return []

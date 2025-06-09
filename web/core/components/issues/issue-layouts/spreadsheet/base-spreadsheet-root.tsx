@@ -60,8 +60,13 @@ export const BaseSpreadsheetRoot = observer((props: IBaseSpreadsheetRoot) => {
   );
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
-  }, [fetchIssues, storeType, viewId]);
+    const perPageFromFilter = issuesFilter?.issueFilters?.displayFilters?.per_page || 100;
+    fetchIssues("init-loader", { 
+      canGroup: false, 
+      perPageCount: 100,
+      perPageFromDisplayFilter: perPageFromFilter
+    }, viewId);
+  }, [fetchIssues, storeType, viewId, issuesFilter?.issueFilters?.displayFilters?.per_page]);
 
   const canEditProperties = useCallback(
     (projectId: string | undefined) => {

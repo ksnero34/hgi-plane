@@ -94,8 +94,13 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
     issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: true, perPageCount: group_by ? 50 : 100 }, viewId);
-  }, [fetchIssues, storeType, group_by, viewId]);
+    const perPageFromFilter = displayFilters?.per_page || (group_by ? 50 : 100);
+    fetchIssues("init-loader", { 
+      canGroup: true, 
+      perPageCount: group_by ? 50 : 100,
+      perPageFromDisplayFilter: perPageFromFilter
+    }, viewId);
+  }, [fetchIssues, storeType, group_by, viewId, displayFilters?.per_page]);
 
   const groupedIssueIds = issues?.groupedIssueIds as TGroupedIssues | undefined;
   // auth

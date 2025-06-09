@@ -101,8 +101,13 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
   const orderBy = displayFilters?.order_by;
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: true, perPageCount: sub_group_by ? 10 : 30 }, viewId);
-  }, [fetchIssues, storeType, group_by, sub_group_by, viewId]);
+    const perPageFromFilter = displayFilters?.per_page || (sub_group_by ? 10 : 30);
+    fetchIssues("init-loader", { 
+      canGroup: true, 
+      perPageCount: sub_group_by ? 10 : 30,
+      perPageFromDisplayFilter: perPageFromFilter
+    }, viewId);
+  }, [fetchIssues, storeType, group_by, sub_group_by, viewId, displayFilters?.per_page]);
 
   const fetchMoreIssues = useCallback(
     (groupId?: string, subgroupId?: string) => {

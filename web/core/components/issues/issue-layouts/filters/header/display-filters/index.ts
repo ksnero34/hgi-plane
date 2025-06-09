@@ -4,4 +4,5 @@ export * from "./extra-options";
 export * from "./group-by";
 export * from "./issue-grouping";
 export * from "./order-by";
+export * from "./per-page";
 export * from "./sub-group-by";

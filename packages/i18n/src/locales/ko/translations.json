@@ -712,14 +712,26 @@
     "order_by": {
       "label": "정렬 기준",
       "manual": "수동",
-      "parent_child": "상위/하위 작업 함께 보기",
-      "last_created": "마지막 생성",
-      "last_updated": "마지막 업데이트",
+      "parent_child": "상위/하위 작업항목 그룹화",
+      "last_created": "최근 생성",
+      "last_updated": "최근 업데이트",
       "start_date": "시작 날짜",
-      "due_date": "마감일",
+      "due_date": "마감 날짜",
       "asc": "오름차순",
       "desc": "내림차순",
-      "updated_on": "업데이트일"
+      "updated_on": "업데이트 날짜"
+    },
+    "top_level_only": "최상위 작업항목만",
+    "per_page": "한번에 보일 작업항목 수",
+    "per_page_options": {
+      "25": "25개",
+      "50": "50개", 
+      "100": "100개",
+      "200": "200개",
+      "500": "500개",
+      "1000": "1000개",
+      "3000": "3000개",
+      "5000": "5000개"
     },
     "sort": {
       "asc": "오름차순",
@@ -1019,7 +1031,8 @@
       },
       "extra": {
         "show_sub_issues": "하위 작업 항목 표시",
-        "show_empty_groups": "빈 그룹 표시"
+        "show_empty_groups": "빈 그룹 표시",
+        "my_issues_only": "내가 담당인 작업항목만"
       }
     },
     "layouts": {

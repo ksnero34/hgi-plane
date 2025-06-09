@@ -32,27 +32,16 @@ export const PageDetailsHeader = observer(() => {
   const { workspaceSlug, pageId, projectId } = useParams();
   // store hooks
   const { currentProjectDetails, loader } = useProject();
-  const { getPageById, getCurrentProjectPageIds } = usePageStore(storeType);
+  const { getPageById, getCurrentProjectFilteredPageIdsByTab } = usePageStore(storeType);
   const page = usePage({
     pageId: pageId?.toString() ?? "",
     storeType,
   });
   
-  // 페이지의 부모 경로 생성
-  const getPagePath = (pageId: string): string[] => {
-    const path = [];
-    let current = getPageById(pageId);
-    while (current) {
-      path.unshift(current.name || "Untitled");
-      current = current.parent ? getPageById(current.parent) : null;
-    }
-    return path;
-  };
-
   // 현재 페이지의 부모 폴더 경로
   const getCurrentPageFolderPath = () => {
     if (!page?.parent) return [];
-    const path = [];
+    const path: any[] = [];
     let current = getPageById(page.parent);
     while (current) {
       path.unshift(current);
@@ -70,35 +59,47 @@ export const PageDetailsHeader = observer(() => {
     }
   };
 
-  // derived values
-  const projectPageIds = getCurrentProjectPageIds(projectId?.toString());
-  const currentPageFolderPath = getCurrentPageFolderPath();
+  // 특정 폴더 레벨의 옵션들을 생성하는 함수
+  const getFolderLevelOptions = (parentFolderId: string | null) => {
+    const currentFolderPageIds = getCurrentProjectFilteredPageIdsByTab("public", parentFolderId) || [];
+    const currentFolderPrivatePageIds = getCurrentProjectFilteredPageIdsByTab("private", parentFolderId) || [];
+    const currentFolderArchivedPageIds = getCurrentProjectFilteredPageIdsByTab("archived", parentFolderId) || [];
+    
+    const allCurrentFolderPageIds = [
+      ...currentFolderPageIds,
+      ...currentFolderPrivatePageIds,
+      ...currentFolderArchivedPageIds
+    ];
 
-  const switcherOptions = projectPageIds
-    .map((id) => {
-      const _page = id === pageId ? page : getPageById(id);
-      if (!_page) return;
-      
-      // 페이지의 전체 경로 생성
-      const pagePath = getPagePath(id);
-      const displayName = pagePath.length > 1 ? pagePath.join(" / ") : (getPageName(_page.name) || "Untitled");
-      
-      return {
-        value: _page.id,
-        query: displayName,
-        content: (
-          <div className="flex gap-2 items-center justify-between">
-            <SwitcherLabel 
-              logo_props={_page.logo_props} 
-              name={displayName}
-              LabelIcon={_page.is_folder ? Folder : FileText} 
-            />
-            {!_page.is_folder && <PageAccessIcon {..._page} />}
-          </div>
-        ),
-      };
-    })
-    .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
+    return allCurrentFolderPageIds
+      .map((id) => {
+        const _page = getPageById(id);
+        if (!_page) return;
+        
+        return {
+          value: _page.id,
+          query: getPageName(_page.name) || "Untitled",
+          content: (
+            <div className="flex gap-2 items-center justify-between">
+              <SwitcherLabel 
+                logo_props={_page.logo_props} 
+                name={getPageName(_page.name) || "Untitled"}
+                LabelIcon={_page.is_folder ? Folder : FileText} 
+              />
+              {!_page.is_folder && <PageAccessIcon {..._page} />}
+            </div>
+          ),
+        };
+      })
+      .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
+  };
+
+  // derived values
+  const currentPageFolderPath = getCurrentPageFolderPath();
+  
+  // 현재 페이지가 위치한 폴더의 페이지들만 가져오기
+  const currentFolderId = page?.parent || null;
+  const switcherOptions = getFolderLevelOptions(currentFolderId);
 
   if (!page) return null;
 
@@ -135,20 +136,42 @@ export const PageDetailsHeader = observer(() => {
               }
             />
             
-            {/* 현재 페이지의 부모 폴더 경로 브레드크럼 */}
-            {currentPageFolderPath.map((folder, index) => (
-              <Breadcrumbs.BreadcrumbItem
-                key={folder.id}
-                type="text"
-                link={
-                  <BreadcrumbLink
-                    href={getFolderUrl(folder.id)}
-                    label={folder.name || "Untitled"}
-                    icon={<Folder className="h-4 w-4 text-custom-text-300" />}
-                  />
-                }
-              />
-            ))}
+            {/* 현재 페이지의 부모 폴더 경로 브레드크럼 - 각 폴더를 드롭다운으로 */}
+            {currentPageFolderPath.map((folder, index) => {
+              // 현재 폴더의 부모 폴더 ID 계산
+              const parentFolderId = index === 0 ? null : currentPageFolderPath[index - 1]?.id;
+              const folderLevelOptions = getFolderLevelOptions(parentFolderId);
+              
+              return (
+                <Breadcrumbs.BreadcrumbItem
+                  key={folder.id}
+                  type="component"
+                  component={
+                    <CustomSearchSelect
+                      value={folder.id}
+                      options={folderLevelOptions}
+                      label={
+                        <SwitcherLabel 
+                          logo_props={folder.logo_props} 
+                          name={folder.name || "Untitled"}
+                          LabelIcon={Folder} 
+                        />
+                      }
+                      onChange={(value: string) => {
+                        const selectedPage = getPageById(value);
+                        if (selectedPage?.is_folder) {
+                          // 디렉토리인 경우 디렉토리 내부로 이동
+                          router.push(getFolderUrl(value));
+                        } else {
+                          // 페이지인 경우 페이지 편집 화면으로 이동
+                          router.push(`/${workspaceSlug}/projects/${projectId}/pages/${value}`);
+                        }
+                      }}
+                    />
+                  }
+                />
+              );
+            })}
             
             <Breadcrumbs.BreadcrumbItem
               type="component"

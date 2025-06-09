@@ -58,7 +58,7 @@ export const ProjectLevelModals = observer((props: TProjectLevelModalsProps) => 
         isModalOpen={createPageModal.isOpen}
         pageAccess={createPageModal.pageAccess}
         isFolder={createPageModal.isFolder}
-        parentFolderId={createPageModal.parentFolderId ?? currentFolderId}
+        parentFolderId={createPageModal.parentFolderId || currentFolderId}
         redirectionEnabled={createPageModal.redirectionEnabled}
         handleModalClose={() => toggleCreatePageModal({ isOpen: false })}
         storeType={EPageStoreType.PROJECT}

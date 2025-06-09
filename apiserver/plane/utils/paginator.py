@@ -191,9 +191,9 @@ class GroupedOffsetPaginator(OffsetPaginator):
         "parent_id": "parent_child",
     }
     
-    # parent_child 그룹화를 위한 필드 매핑
+    # parent_child와 top_level_only 그룹화를 위한 필드 매핑
     GROUP_BY_FIELD_MAPPER = {
-        # parent_child는 issue_on_results에서 처리되므로 parent_id로 매핑하지 않음
+        # parent_child와 top_level_only는 issue_on_results에서 처리되므로 parent_id로 매핑하지 않음
     }
 
     def __init__(
@@ -239,7 +239,7 @@ class GroupedOffsetPaginator(OffsetPaginator):
             raise BadPaginationError("Pagination offset cannot be negative")
 
         # parent_child 그룹화인 경우 특별 처리
-        if self.group_by_field_name == "parent_child":
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
             # parent_child는 Python 레벨에서만 처리 가능하므로 일반 페이지네이션 사용
             if self.key:
                 queryset = queryset.order_by(
@@ -305,7 +305,7 @@ class GroupedOffsetPaginator(OffsetPaginator):
         # Optionally, calculate the total count and max_hits if needed
         # This might require adjustments based on specific use cases
         if results:
-            if self.group_by_field_name == "parent_child":
+            if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
                 max_hits = math.ceil(count / limit)
             else:
                 max_hits = math.ceil(
@@ -326,8 +326,8 @@ class GroupedOffsetPaginator(OffsetPaginator):
 
     def __get_total_queryset(self):
         # Get total items for each group
-        if self.group_by_field_name == "parent_child":
-            # parent_child 그룹화는 Python 레벨에서 처리하므로 빈 쿼리셋 반환
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
+            # parent_child와 top_level_only 그룹화는 Python 레벨에서 처리하므로 빈 쿼리셋 반환
             return []
         return (
             self.queryset.values(self.group_by_field_name)
@@ -337,8 +337,8 @@ class GroupedOffsetPaginator(OffsetPaginator):
 
     def __get_total_dict(self):
         # Convert the total into dictionary of keys as group name and value as the total
-        if self.group_by_field_name == "parent_child":
-            # parent_child 그룹화는 Python 레벨에서 처리하므로 빈 딕셔너리 반환
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
+            # parent_child와 top_level_only 그룹화는 Python 레벨에서 처리하므로 빈 딕셔너리 반환
             return {}
         total_group_dict = {}
         for group in self.__get_total_queryset():
@@ -350,8 +350,8 @@ class GroupedOffsetPaginator(OffsetPaginator):
 
     def __get_field_dict(self):
         # Create a field dictionary
-        if self.group_by_field_name == "parent_child":
-            # parent_child 그룹화는 동적으로 그룹이 생성되므로 빈 딕셔너리 반환
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
+            # parent_child와 top_level_only 그룹화는 동적으로 그룹이 생성되므로 빈 딕셔너리 반환
             return {}
         total_group_dict = self.__get_total_dict()
         return {
@@ -411,8 +411,8 @@ class GroupedOffsetPaginator(OffsetPaginator):
 
     def __query_grouper(self, results):
         # Grouping for values that are not m2m
-        if self.group_by_field_name == "parent_child":
-            # parent_child 그룹화는 Python 레벨에서 동적으로 처리
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
+            # parent_child와 top_level_only 그룹화는 Python 레벨에서 동적으로 처리
             processed_results = {}
             for result in results:
                 group_value = str(result.get(self.group_by_field_name, "None"))
@@ -453,9 +453,9 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
         "parent_id": "parent_child",
     }
     
-    # parent_child 그룹화를 위한 필드 매핑
+    # parent_child와 top_level_only 그룹화를 위한 필드 매핑
     GROUP_BY_FIELD_MAPPER = {
-        # parent_child는 issue_on_results에서 처리되므로 parent_id로 매핑하지 않음
+        # parent_child와 top_level_only는 issue_on_results에서 처리되므로 parent_id로 매핑하지 않음
     }
 
     def __init__(
@@ -579,7 +579,7 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
         # Optionally, calculate the total count and max_hits if needed
         # This might require adjustments based on specific use cases
         if results:
-            if self.group_by_field_name == "parent_child" or self.sub_group_by_field_name == "parent_child":
+            if self.group_by_field_name == "parent_child" or self.sub_group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only" or self.sub_group_by_field_name == "top_level_only":
                 max_hits = math.ceil(count / limit)
             else:
                 max_hits = math.ceil(
