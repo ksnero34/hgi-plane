@@ -3,52 +3,38 @@ import csv
 import io
 import json
 import zipfile
-from typing import List
+
 import boto3
 from botocore.client import Config
-from uuid import UUID
-from datetime import datetime, date
 
 # Third party imports
 from celery import shared_task
-
 
 # Django imports
 from django.conf import settings
 from django.utils import timezone
 from openpyxl import Workbook
-from django.db.models import F, Prefetch
-
-from collections import defaultdict
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, Label, User, IssueComment
+from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User
 from plane.utils.exception_logger import log_exception
 from plane.settings.storage import S3Storage
 
 
-def dateTimeConverter(time: datetime) -> str | None:
-    """
-    Convert a datetime object to a formatted string.
-    """
+def dateTimeConverter(time):
     if time:
         # 날짜 형식을 ISO 형식(YYYY-MM-DD HH:MM:SS)으로 변경
         return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def dateConverter(time: date) -> str | None:
-    """
-    Convert a date object to a formatted string.
-    """
+def dateConverter(time):
     if time:
         # 날짜 형식을 ISO 형식(YYYY-MM-DD)으로 변경
         return time.strftime("%Y-%m-%d")
 
 
-def create_csv_file(data: List[List[str]]) -> str:
-    """
-    Create a CSV file from the provided data.
-    """
+def create_csv_file(data):
+    # UTF-8 with BOM 인코딩을 사용하여 한글이 깨지지 않도록 함
     csv_buffer = io.StringIO()
     # BOM 추가
     csv_buffer.write('\ufeff')
@@ -61,17 +47,11 @@ def create_csv_file(data: List[List[str]]) -> str:
     return csv_buffer.getvalue()
 
 
-def create_json_file(data: List[dict]) -> str:
-    """
-    Create a JSON file from the provided data.
-    """
+def create_json_file(data):
     return json.dumps(data)
 
 
-def create_xlsx_file(data: List[List[str]]) -> bytes:
-    """
-    Create an XLSX file from the provided data.
-    """
+def create_xlsx_file(data):
     workbook = Workbook()
     sheet = workbook.active
 
@@ -84,10 +64,7 @@ def create_xlsx_file(data: List[List[str]]) -> bytes:
     return xlsx_buffer.getvalue()
 
 
-def create_zip_file(files: List[tuple[str, str | bytes]]) -> io.BytesIO:
-    """
-    Create a ZIP file from the provided files.
-    """
+def create_zip_file(files):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         for filename, file_content in files:
@@ -292,8 +269,8 @@ def generate_table_row(issue, custom_fields_map=None, custom_fields_info=None):
         # 부모 이슈 ID 추가
         f"""{parent_issue["project__identifier"]}-{parent_issue["sequence_id"]}""" if parent_issue else "",
         issue["name"],
-        issue["description"],
-        issue["state_name"],
+        issue["description_stripped"],
+        issue["state__name"],
         dateConverter(issue["start_date"]),
         dateConverter(issue["target_date"]),
         priority,  # 수정된 priority 값 사용
@@ -313,22 +290,6 @@ def generate_table_row(issue, custom_fields_map=None, custom_fields_info=None):
         dateTimeConverter(issue["updated_at"]),
         dateTimeConverter(issue["completed_at"]),
         dateTimeConverter(issue["archived_at"]),
-        (
-            ", ".join(
-                [
-                    f"{comment['comment']} ({comment['created_at']} by {comment['created_by']})"
-                    for comment in issue["comments"]
-                ]
-            )
-            if issue["comments"]
-            else ""
-        ),
-        issue["estimate"] if issue["estimate"] else "",
-        ", ".join(issue["link"]) if issue["link"] else "",
-        ", ".join(issue["assignees"]) if issue["assignees"] else "",
-        issue["subscribers_count"] if issue["subscribers_count"] else "",
-        issue["attachment_count"] if issue["attachment_count"] else "",
-        ", ".join(issue["attachment_links"]) if issue["attachment_links"] else "",
     ]
     
     # 커스텀 필드 값 추가
@@ -374,8 +335,8 @@ def generate_json_row(issue, custom_fields_map=None, custom_fields_info=None):
         "Project": issue["project__name"],
         "Parent Issue": f"""{parent_issue["project__identifier"]}-{parent_issue["sequence_id"]}""" if parent_issue else "",
         "Name": issue["name"],
-        "Description": issue["description"],
-        "State": issue["state_name"],
+        "Description": issue["description_stripped"],
+        "State": issue["state__name"],
         "Start Date": dateConverter(issue["start_date"]),
         "Target Date": dateConverter(issue["target_date"]),
         "Priority": priority,  # 수정된 priority 값 사용
@@ -395,12 +356,6 @@ def generate_json_row(issue, custom_fields_map=None, custom_fields_info=None):
         "Updated At": dateTimeConverter(issue["updated_at"]),
         "Completed At": dateTimeConverter(issue["completed_at"]),
         "Archived At": dateTimeConverter(issue["archived_at"]),
-        "Comments": issue["comments"],
-        "Estimate": issue["estimate"],
-        "Link": issue["link"],
-        "Subscribers Count": issue["subscribers_count"],
-        "Attachment Count": issue["attachment_count"],
-        "Attachment Links": issue["attachment_links"],
     }
     
     # 커스텀 필드 값 추가
@@ -414,10 +369,7 @@ def generate_json_row(issue, custom_fields_map=None, custom_fields_info=None):
     return json_data
 
 
-def update_json_row(rows: List[dict], row: dict) -> None:
-    """
-    Update the json row with the new assignee and label.
-    """
+def update_json_row(rows, row):
     matched_index = next(
         (
             index
@@ -478,10 +430,7 @@ def update_json_row(rows: List[dict], row: dict) -> None:
         rows.append(row)
 
 
-def update_table_row(rows: List[List[str]], row: List[str]) -> None:
-    """
-    Update the table row with the new assignee and label.
-    """
+def update_table_row(rows, row):
     matched_index = next(
         (index for index, existing_row in enumerate(rows) if existing_row[0] == row[0]),
         None,
@@ -603,30 +552,8 @@ def generate_xlsx(header, project_id, issues, files, custom_fields_map=None, cus
     files.append((filename, xlsx_file))
 
 
-def get_created_by(obj: Issue | IssueComment) -> str:
-    """
-    Get the created by user for the given object.
-    """
-    if obj.created_by:
-        return f"{obj.created_by.first_name} {obj.created_by.last_name}"
-    return ""
-
-
 @shared_task
-def issue_export_task(
-    provider: str,
-    workspace_id: UUID,
-    project_ids: List[str],
-    token_id: str,
-    multiple: bool,
-    slug: str,
-):
-    """
-    Export issues from the workspace.
-    provider (str): The provider to export the issues to csv | json | xlsx.
-    token_id (str): The export object token id.
-    multiple (bool): Whether to export the issues to multiple files per project.
-    """
+def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, slug):
     try:
         exporter_instance = ExporterHistory.objects.get(token=token_id)
         exporter_instance.status = "processing"
@@ -727,29 +654,23 @@ def issue_export_task(
         # 이슈 ID 목록
         issue_ids = list(issues_data.keys())
         
-        # 담당자 정보 가져오기 - 현재 할당된 담당자만 가져오기
-        issues_with_assignees = Issue.objects.filter(id__in=issue_ids).prefetch_related(
-            Prefetch('assignees', queryset=User.objects.only('id', 'email'))
-        ).only('id')
+        # 담당자 정보 가져오기
+        assignees = Issue.objects.filter(id__in=issue_ids).values("id", "assignees__email").exclude(assignees__email=None)
+        for assignee in assignees:
+            issue_id = assignee["id"]
+            email = assignee["assignees__email"]
+            if email and issue_id in issues_data:
+                if email not in issues_data[issue_id]["assignees__email"]:
+                    issues_data[issue_id]["assignees__email"].append(email)
         
-        for issue in issues_with_assignees:
-            issue_id = issue.id
-            if issue_id in issues_data:
-                # 현재 할당된 담당자들의 이메일만 가져오기
-                assignee_emails = [assignee.email for assignee in issue.assignees.all() if assignee.email]
-                issues_data[issue_id]["assignees__email"] = assignee_emails
-        
-        # 라벨 정보 가져오기 - 현재 할당된 라벨만 가져오기
-        issues_with_labels = Issue.objects.filter(id__in=issue_ids).prefetch_related(
-            Prefetch('labels', queryset=Label.objects.only('id', 'name'))
-        ).only('id')
-        
-        for issue in issues_with_labels:
-            issue_id = issue.id
-            if issue_id in issues_data:
-                # 현재 할당된 라벨들의 이름만 가져오기
-                label_names = [label.name for label in issue.labels.all() if label.name]
-                issues_data[issue_id]["labels__name"] = label_names
+        # 라벨 정보 가져오기
+        labels = Issue.objects.filter(id__in=issue_ids).values("id", "labels__name").exclude(labels__name=None)
+        for label in labels:
+            issue_id = label["id"]
+            name = label["labels__name"]
+            if name and issue_id in issues_data:
+                if name not in issues_data[issue_id]["labels__name"]:
+                    issues_data[issue_id]["labels__name"].append(name)
         
         # 커스텀 필드 값 가져오기
         if custom_fields_map:
@@ -798,22 +719,18 @@ def issue_export_task(
             "Target Date",
             "Priority",
             "Created By",
+            "Assignee",
             "Labels",
             "Cycle Name",
             "Cycle Start Date",
             "Cycle End Date",
             "Module Name",
+            "Module Start Date",
+            "Module Target Date",
             "Created At",
             "Updated At",
             "Completed At",
             "Archived At",
-            "Comments",
-            "Estimate",
-            "Link",
-            "Assignees",
-            "Subscribers Count",
-            "Attachment Count",
-            "Attachment Links",
         ]
         
         # 커스텀 필드 헤더 추가
@@ -821,7 +738,6 @@ def issue_export_task(
             for field_name in custom_fields_map.values():
                 header.append(field_name)
 
-        # Map the provider to the function
         EXPORTER_MAPPER = {
             "csv": generate_csv,
             "json": generate_json,
@@ -830,10 +746,6 @@ def issue_export_task(
 
         files = []
         if multiple:
-            project_dict = defaultdict(list)
-            for issue in issues_data:
-                project_dict[str(issue["project_id"])].append(issue)
-
             for project_id in project_ids:
                 project_issues = [
                     issue for issue in final_issues 

@@ -77,7 +77,11 @@ export const Exporter: React.FC<Props> = observer((props) => {
         .csvExport(workspaceSlug as string, payload)
         .then(() => {
           mutateServices();
-          router.push(`/${workspaceSlug}/settings/exports`);
+          if (projectId) {
+            handleClose();
+          } else {
+            router.push(`/${workspaceSlug}/settings/exports`);
+          }
           setExportLoading(false);
           setToast({
             type: TOAST_TYPE.SUCCESS,

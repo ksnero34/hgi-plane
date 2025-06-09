@@ -457,12 +457,20 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   );
 
   /**
-   * Gets the next page cursor based on number of issues currently available
+   * Gets the next page cursor based on stored pagination data from backend response
    * @param groupId groupId for the cursor
    * @param subGroupId subgroupId for cursor
    * @returns next page cursor or undefined
    */
   getNextCursor = (groupId: string | undefined, subGroupId: string | undefined): string | undefined => {
+    const paginationData = this.getPaginationData(groupId, subGroupId);
+    
+    // 백엔드에서 받은 next_cursor를 사용
+    if (paginationData?.nextCursor) {
+      return paginationData.nextCursor;
+    }
+
+    // 백엔드 응답이 없는 경우에만 fallback으로 계산
     const groupedIssues = this.getIssueIds(groupId, subGroupId) ?? [];
     const currentIssueCount = groupedIssues.length;
 

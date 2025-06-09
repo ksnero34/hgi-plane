@@ -324,23 +324,12 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
    * @returns
    */
   getShouldReFetchIssues = (displayFilters: IIssueDisplayFilterOptions) => {
-    const NON_SERVER_DISPLAY_FILTERS = ["order_by", "sub_issue", "type"];
-    const SERVER_DISPLAY_FILTERS = ["my_issues_only", "group_by", "sub_group_by", "layout"];
+    const NON_SERVER_DISPLAY_FILTERS = ["order_by", "sub_issue", "type", "my_issues_only"];
     const displayFilterKeys = Object.keys(displayFilters);
 
-    // Check if any server-side filters are being updated
-    const hasServerFilters = SERVER_DISPLAY_FILTERS.some((serverDisplayfilter: string) =>
+    return NON_SERVER_DISPLAY_FILTERS.some((serverDisplayfilter: string) =>
       displayFilterKeys.includes(serverDisplayfilter)
     );
-
-    // Also check for non-server filters (original logic for backward compatibility)
-    const hasNonServerFilters = NON_SERVER_DISPLAY_FILTERS.some((serverDisplayfilter: string) =>
-      displayFilterKeys.includes(serverDisplayfilter)
-    );
-
-    // Return true if there are server filters OR if there are non-server filters
-    // This ensures my_issues_only and other server filters trigger a refetch
-    return hasServerFilters || hasNonServerFilters;
   };
 
   /**

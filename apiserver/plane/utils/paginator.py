@@ -149,10 +149,13 @@ class OffsetPaginator:
 
         results = queryset[offset:stop]
         if cursor.value != limit:
-            results = results[-(limit + 1) :]
+            # negative indexing 에러 방지: results 길이가 충분한지 확인
+            results_count = len(results)
+            slice_start = max(0, results_count - (limit + 1))
+            results = results[slice_start:]
 
         # Adjust cursors based on the results for pagination
-        next_cursor = Cursor(limit, page + 1, False, results.count() > limit)
+        next_cursor = Cursor(limit, page + 1, False, len(results) > limit)
         # If the page is greater than 0, then set the previous cursor
         prev_cursor = Cursor(limit, page - 1, True, page > 0)
 
@@ -253,10 +256,13 @@ class GroupedOffsetPaginator(OffsetPaginator):
             
             results = queryset[offset:stop]
             if cursor.value != limit:
-                results = results[-(limit + 1) :]
+                # negative indexing 에러 방지: results 길이가 충분한지 확인
+                results_count = len(results)
+                slice_start = max(0, results_count - (limit + 1))
+                results = results[slice_start:]
 
             # Adjust cursors based on the results for pagination
-            next_cursor = Cursor(limit, page + 1, False, results.count() > limit)
+            next_cursor = Cursor(limit, page + 1, False, len(results) > limit)
             prev_cursor = Cursor(limit, page - 1, True, page > 0)
 
             # Process the results
@@ -524,10 +530,13 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
             
             results = queryset[offset:stop]
             if cursor.value != limit:
-                results = results[-(limit + 1) :]
+                # negative indexing 에러 방지: results 길이가 충분한지 확인
+                results_count = len(results)
+                slice_start = max(0, results_count - (limit + 1))
+                results = results[slice_start:]
 
             # Adjust cursors based on the results for pagination
-            next_cursor = Cursor(limit, page + 1, False, results.count() > limit)
+            next_cursor = Cursor(limit, page + 1, False, len(results) > limit)
             prev_cursor = Cursor(limit, page - 1, True, page > 0)
 
             # Process the results
