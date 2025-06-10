@@ -137,8 +137,9 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
     sql += `LEFT JOIN states ON i.state_id = states.id `;
   }
   filterJoinFields.forEach((field: string) => {
-    const value = otherProps[field] || "";
-    sql += ` INNER JOIN issue_meta ${field} ON i.id = ${field}.issue_id AND ${field}.key = '${field}' AND ${field}.value  IN ('${value.split(",").join("','")}')
+    const fieldValue = otherProps[field] || "";
+    const safeValue = String(fieldValue);
+    sql += ` INNER JOIN issue_meta ${field} ON i.id = ${field}.issue_id AND ${field}.key = '${field}' AND ${field}.value  IN ('${safeValue.split(",").join("','")}')
     `;
   });
 

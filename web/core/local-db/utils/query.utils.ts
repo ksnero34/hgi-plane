@@ -201,7 +201,9 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
     sql += `LEFT JOIN states ON i.state_id = states.id `;
   }
   filterJoinFields.forEach((field: string) => {
-    sql += ` INNER JOIN issue_meta ${field} ON i.id = ${field}.issue_id AND ${field}.key = '${field}' AND ${field}.value  IN ('${otherProps[field].split(",").join("','")}')
+    const fieldValue = otherProps[field] || "";
+    const safeValue = String(fieldValue);
+    sql += ` INNER JOIN issue_meta ${field} ON i.id = ${field}.issue_id AND ${field}.key = '${field}' AND ${field}.value  IN ('${safeValue.split(",").join("','")}')
     `;
   });
 
@@ -259,7 +261,27 @@ export const singleFilterConstructor = (queries: any) => {
   const keys = Object.keys(filters);
 
   keys.forEach((key) => {
-    const value = filters[key] ? filters[key].split(",") : "";
+    const filterValue = filters[key];
+    // 문자열이 아닌 경우 처리
+    if (filterValue === null || filterValue === undefined) {
+      if (!ARRAY_FIELDS.includes(key)) {
+        sql += ` AND ${key} IS NULL`;
+      }
+      return;
+    }
+    
+    // boolean 값인 경우 처리
+    if (typeof filterValue === 'boolean') {
+      if (!ARRAY_FIELDS.includes(key)) {
+        sql += ` AND ${key} = ${filterValue ? 1 : 0}`;
+      }
+      return;
+    }
+    
+    // 문자열로 변환 후 split 처리
+    const stringValue = String(filterValue);
+    const value = stringValue ? stringValue.split(",") : "";
+    
     if (!ARRAY_FIELDS.includes(key)) {
       if (!value) {
         sql += ` AND ${key} IS NULL`;
