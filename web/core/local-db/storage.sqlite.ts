@@ -327,12 +327,9 @@ export class Storage {
     const sanitizedQueries = sanitizeWorkItemQueries(workspaceSlug, projectId, queries);
     const { cursor, group_by, sub_group_by } = sanitizedQueries || {};
 
-    // Get current user ID for my_issues_only filter
-    const currentUserId = rootStore.user.data?.id;
-
-    const query = issueFilterQueryConstructor(this.workspaceSlug, projectId, sanitizedQueries, currentUserId);
+    const query = issueFilterQueryConstructor(this.workspaceSlug, projectId, sanitizedQueries);
     log("#### Query", query);
-    const countQuery = issueFilterCountQueryConstructor(this.workspaceSlug, projectId, sanitizedQueries, currentUserId);
+    const countQuery = issueFilterCountQueryConstructor(this.workspaceSlug, projectId, sanitizedQueries);
     const start = performance.now();
     let issuesRaw: any[] = [];
     let count: any[];

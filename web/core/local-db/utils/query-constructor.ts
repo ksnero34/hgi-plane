@@ -21,7 +21,7 @@ export const SPECIAL_ORDER_BY = {
   estimate_point__key: "estimate_point",
   "-estimate_point__key": "estimate_point",
 };
-export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: string, queries: any, currentUserId?: string) => {
+export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: string, queries: any) => {
   const {
     cursor,
     per_page,
@@ -31,10 +31,7 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
     ...otherProps
   } = translateQueryParams(queries);
 
-  const [pageSizeStr, pageStr, offsetStr] = cursor && typeof cursor === "string" ? cursor.split(":") : ["50", "0", "0"];
-  const pageSize = parseInt(pageSizeStr) || 50;
-  const page = parseInt(pageStr) || 0;
-  const offset = parseInt(offsetStr) || 0;
+  const [pageSize, page, offset] = cursor.split(":");
 
   let sql = "";
 
@@ -42,7 +39,7 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
 
   if (sub_group_by) {
     const orderByString = getOrderByFragment(order_by);
-    sql = getFilteredRowsForGrouping(projectId, queries, currentUserId);
+    sql = getFilteredRowsForGrouping(projectId, queries);
     sql += `, ranked_issues AS ( SELECT fi.*,
     ROW_NUMBER() OVER (PARTITION BY group_id, sub_group_id ${orderByString}) as rank,
     COUNT(*) OVER (PARTITION by group_id, sub_group_id) as total_issues from fi) 
@@ -57,7 +54,7 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
   }
   if (group_by) {
     const orderByString = getOrderByFragment(order_by);
-    sql = getFilteredRowsForGrouping(projectId, queries, currentUserId);
+    sql = getFilteredRowsForGrouping(projectId, queries);
     sql += `, ranked_issues AS ( SELECT fi.*,
     ROW_NUMBER() OVER (PARTITION BY group_id ${orderByString}) as rank,
     COUNT(*) OVER (PARTITION by group_id) as total_issues FROM fi)
@@ -75,7 +72,7 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
     const orderByString = getOrderByFragment(order_by, "i.");
 
     sql = `WITH sorted_issues AS (`;
-    sql += getFilteredRowsForGrouping(projectId, queries, currentUserId);
+    sql += getFilteredRowsForGrouping(projectId, queries);
     sql += `SELECT fi.* , `;
     if (order_by.includes("assignee")) {
       sql += ` s.first_name as ${name} `;
@@ -149,7 +146,7 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
   if (projectId) {
     sql += ` AND i.project_id = '${projectId}'    `;
   }
-  sql += ` ${singleFilterConstructor(otherProps, currentUserId)} group by i.id  `;
+  sql += ` ${singleFilterConstructor(otherProps)} group by i.id  `;
   sql += orderByString;
 
   // Add offset and paging to query
@@ -158,11 +155,11 @@ export const issueFilterQueryConstructor = (workspaceSlug: string, projectId: st
   return sql;
 };
 
-export const issueFilterCountQueryConstructor = (workspaceSlug: string, projectId: string, queries: any, currentUserId?: string) => {
+export const issueFilterCountQueryConstructor = (workspaceSlug: string, projectId: string, queries: any) => {
   //@todo Very crude way to extract count from the actual query. Needs to be refactored
   // Remove group by from the query to fallback to non group query
   const { group_by, sub_group_by, order_by, ...otherProps } = queries;
-  let sql = issueFilterQueryConstructor(workspaceSlug, projectId, otherProps, currentUserId);
+  let sql = issueFilterQueryConstructor(workspaceSlug, projectId, otherProps);
   const fieldsFragment = getIssueFieldsFragment();
 
   sql = sql.replace(`SELECT ${fieldsFragment}`, "SELECT COUNT(DISTINCT i.id) as total_count");
