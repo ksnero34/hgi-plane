@@ -16,7 +16,7 @@ from django.utils import timezone
 from openpyxl import Workbook
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User
+from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel
 from plane.utils.exception_logger import log_exception
 from plane.settings.storage import S3Storage
 
@@ -654,20 +654,28 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
         # 이슈 ID 목록
         issue_ids = list(issues_data.keys())
         
-        # 담당자 정보 가져오기
-        assignees = Issue.objects.filter(id__in=issue_ids).values("id", "assignees__email").exclude(assignees__email=None)
+        # 담당자 정보 가져오기 - 삭제된 담당자 관계 제외
+        assignees = IssueAssignee.objects.filter(
+            issue_id__in=issue_ids,
+            deleted_at__isnull=True
+        ).select_related("assignee").values("issue_id", "assignee__email")
+        
         for assignee in assignees:
-            issue_id = assignee["id"]
-            email = assignee["assignees__email"]
+            issue_id = assignee["issue_id"]
+            email = assignee["assignee__email"]
             if email and issue_id in issues_data:
                 if email not in issues_data[issue_id]["assignees__email"]:
                     issues_data[issue_id]["assignees__email"].append(email)
         
-        # 라벨 정보 가져오기
-        labels = Issue.objects.filter(id__in=issue_ids).values("id", "labels__name").exclude(labels__name=None)
+        # 라벨 정보 가져오기 - 삭제된 라벨 관계 제외
+        labels = IssueLabel.objects.filter(
+            issue_id__in=issue_ids,
+            deleted_at__isnull=True
+        ).select_related("label").values("issue_id", "label__name")
+        
         for label in labels:
-            issue_id = label["id"]
-            name = label["labels__name"]
+            issue_id = label["issue_id"]
+            name = label["label__name"]
             if name and issue_id in issues_data:
                 if name not in issues_data[issue_id]["labels__name"]:
                     issues_data[issue_id]["labels__name"].append(name)
