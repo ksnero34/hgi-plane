@@ -12,6 +12,9 @@ export const GROUP_BY_MAP = {
   labels__id: "label_ids",
   assignees__id: "assignee_ids",
   target_date: "target_date",
+  // Parent-Child grouping
+  parent_child: "parent_id",
+  top_level_only: "parent_id",
 };
 
 export const PRIORITY_MAP = {

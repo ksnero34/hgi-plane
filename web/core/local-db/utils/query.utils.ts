@@ -16,6 +16,7 @@ export const translateQueryParams = (queries: any) => {
     priority,
     type,
     issue_type,
+    my_issues_only,
     ...otherProps
   } = queries;
 
@@ -27,6 +28,7 @@ export const translateQueryParams = (queries: any) => {
   if (assignees) otherProps.assignee_ids = assignees;
   if (group_by) otherProps.group_by = GROUP_BY_MAP[group_by as keyof typeof GROUP_BY_MAP];
   if (sub_group_by) otherProps.sub_group_by = GROUP_BY_MAP[sub_group_by as keyof typeof GROUP_BY_MAP];
+  if (my_issues_only) otherProps.my_issues_only = my_issues_only;
   if (priority) {
     otherProps.priority_proxy = priority
       .split(",")
@@ -134,7 +136,7 @@ const areJoinsRequired = (queries: any) => {
 };
 
 // Apply filters to the query
-export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
+export const getFilteredRowsForGrouping = (projectId: string, queries: any, currentUserId?: string) => {
   const { group_by, sub_group_by, ...otherProps } = translateQueryParams(queries);
 
   const filterJoinFields = getMetaKeys(otherProps);
@@ -145,19 +147,72 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
   const joinsRequired = areJoinsRequired(queries);
 
   let sql = "";
+  
+  // parent_child 그룹화를 위한 WITH RECURSIVE CTE 생성
+  const needsParentChildGrouping = (group_by === "parent_id" && queries.group_by === "parent_child") || 
+                                   (sub_group_by === "parent_id" && queries.sub_group_by === "parent_child");
+  
+  if (needsParentChildGrouping) {
+    // 최상위 부모를 찾기 위한 재귀 CTE
+    sql += `WITH RECURSIVE issue_hierarchy AS (
+      -- Base case: issues with their immediate parent_id
+      SELECT id, parent_id, id as root_parent_id, 0 as depth
+      FROM issues 
+      WHERE parent_id IS NULL
+      ${projectId ? `AND project_id = '${projectId}'` : ''}
+      
+      UNION ALL
+      
+      -- Recursive case: find parent of parent
+      SELECT i.id, i.parent_id, h.root_parent_id, h.depth + 1
+      FROM issues i
+      INNER JOIN issue_hierarchy h ON i.parent_id = h.id
+      WHERE h.depth < 10  -- Prevent infinite recursion
+      ${projectId ? `AND i.project_id = '${projectId}'` : ''}
+    ), `;
+  }
+  
   if (!joinsRequired) {
-    sql = `WITH fi as (SELECT i.id,i.created_at, i.sequence_id ${issueTableFilterFields}`;
+    sql += `fi as (SELECT i.id,i.created_at, i.sequence_id ${issueTableFilterFields}`;
     if (group_by) {
       if (group_by === "target_date") {
         sql += `, date(i.${group_by}) as group_id`;
+      } else if (group_by === "parent_id") {
+        // Special handling for parent_child and top_level_only
+        if (queries.group_by === "top_level_only") {
+          sql += `, CASE WHEN i.parent_id IS NULL THEN 'top_level_only' ELSE 'None' END as group_id`;
+        } else if (queries.group_by === "parent_child") {
+          // Use recursive CTE to find root parent
+          sql += `, COALESCE(h.root_parent_id, 'None') as group_id`;
+        } else {
+          sql += `, COALESCE(i.${group_by}, 'None') as group_id`;
+        }
       } else {
         sql += `, i.${group_by} as group_id`;
       }
     }
     if (sub_group_by) {
-      sql += `, i.${sub_group_by} as sub_group_id`;
+      if (sub_group_by === "parent_id") {
+        // Special handling for parent_child and top_level_only in sub_group_by
+        if (queries.sub_group_by === "top_level_only") {
+          sql += `, CASE WHEN i.parent_id IS NULL THEN 'top_level_only' ELSE 'None' END as sub_group_id`;
+        } else if (queries.sub_group_by === "parent_child") {
+          // Use recursive CTE to find root parent
+          sql += `, COALESCE(h.root_parent_id, 'None') as sub_group_id`;
+        } else {
+          sql += `, COALESCE(i.${sub_group_by}, 'None') as sub_group_id`;
+        }
+      } else {
+        sql += `, i.${sub_group_by} as sub_group_id`;
+      }
     }
     sql += ` FROM issues i `;
+    
+    // parent_child 그룹화 시 hierarchy 테이블 조인
+    if (needsParentChildGrouping) {
+      sql += `LEFT JOIN issue_hierarchy h ON i.id = h.id `;
+    }
+    
     if (otherProps.state_group) {
       sql += `LEFT JOIN states ON i.state_id = states.id `;
     }
@@ -166,12 +221,16 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
       sql += ` AND i.project_id = '${projectId}'
       `;
     }
-    sql += `${singleFilterConstructor(otherProps)}) 
+    // Special filtering for top_level_only
+    if (queries.group_by === "top_level_only" || queries.sub_group_by === "top_level_only") {
+      sql += ` AND i.parent_id IS NULL `;
+    }
+    sql += `${singleFilterConstructor(otherProps,currentUserId)}) 
     `;
     return sql;
   }
 
-  sql = `WITH fi AS (`;
+  sql += `fi AS (`;
   sql += `SELECT i.id,i.created_at,i.sequence_id ${issueTableFilterFields} `;
   if (group_by) {
     if (ARRAY_FIELDS.includes(group_by)) {
@@ -180,6 +239,19 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
     } else if (group_by === "target_date") {
       sql += `, date(i.${group_by}) as group_id
       `;
+    } else if (group_by === "parent_id") {
+      // Special handling for parent_child and top_level_only
+      if (queries.group_by === "top_level_only") {
+        sql += `, CASE WHEN i.parent_id IS NULL THEN 'top_level_only' ELSE 'None' END as group_id
+        `;
+      } else if (queries.group_by === "parent_child") {
+        // Use recursive CTE to find root parent
+        sql += `, COALESCE(h.root_parent_id, 'None') as group_id
+        `;
+      } else {
+        sql += `, COALESCE(i.${group_by}, 'None') as group_id
+        `;
+      }
     } else {
       sql += `, i.${group_by} as group_id
       `;
@@ -189,6 +261,19 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
     if (ARRAY_FIELDS.includes(sub_group_by)) {
       sql += `, ${sub_group_by}.value as sub_group_id
       `;
+    } else if (sub_group_by === "parent_id") {
+      // Special handling for parent_child and top_level_only in sub_group_by
+      if (queries.sub_group_by === "top_level_only") {
+        sql += `, CASE WHEN i.parent_id IS NULL THEN 'top_level_only' ELSE 'None' END as sub_group_id
+        `;
+      } else if (queries.sub_group_by === "parent_child") {
+        // Use recursive CTE to find root parent
+        sql += `, COALESCE(h.root_parent_id, 'None') as sub_group_id
+        `;
+      } else {
+        sql += `, COALESCE(i.${sub_group_by}, 'None') as sub_group_id
+        `;
+      }
     } else {
       sql += `, i.${sub_group_by} as sub_group_id
       `;
@@ -197,6 +282,12 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
 
   sql += ` from issues i
   `;
+  
+  // parent_child 그룹화 시 hierarchy 테이블 조인
+  if (needsParentChildGrouping) {
+    sql += `LEFT JOIN issue_hierarchy h ON i.id = h.id `;
+  }
+  
   if (otherProps.state_group) {
     sql += `LEFT JOIN states ON i.state_id = states.id `;
   }
@@ -220,14 +311,18 @@ export const getFilteredRowsForGrouping = (projectId: string, queries: any) => {
     sql += ` AND i.project_id = '${projectId}'
     `;
   }
-  sql += singleFilterConstructor(otherProps);
+  // Special filtering for top_level_only
+  if (queries.group_by === "top_level_only" || queries.sub_group_by === "top_level_only") {
+    sql += ` AND i.parent_id IS NULL `;
+  }
+  sql += singleFilterConstructor(otherProps, currentUserId);
 
   sql += `)
   `;
   return sql;
 };
 
-export const singleFilterConstructor = (queries: any) => {
+export const singleFilterConstructor = (queries: any, currentUserId?: string) => {
   const {
     order_by,
     cursor,
@@ -238,6 +333,7 @@ export const singleFilterConstructor = (queries: any) => {
     sub_issue,
     target_date,
     start_date,
+    my_issues_only,
     ...filters
   } = translateQueryParams(queries);
 
@@ -245,6 +341,12 @@ export const singleFilterConstructor = (queries: any) => {
   if (!sub_issue) {
     sql += ` AND parent_id IS NULL 
     `;
+  }
+  if (my_issues_only && currentUserId) {
+    sql += ` AND i.id IN (
+      SELECT issue_id FROM issue_meta 
+      WHERE key = 'assignee_ids' AND value = '${currentUserId}'
+    )`;
   }
   if (target_date) {
     sql += createDateFilter("target_date", target_date);

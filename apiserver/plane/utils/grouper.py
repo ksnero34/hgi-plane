@@ -134,14 +134,42 @@ def issue_on_results(
         "issue_module__module_id": "module_ids",
     }
 
-    # IssueSerializer를 사용하여 커스텀 필드 값들을 포함한 데이터 반환
-    serializer = IssueSerializer(issues, many=True)
-    serialized_data = serializer.data
+    # issues의 타입에 따라 처리 방식 결정
+    if hasattr(issues, 'model') and hasattr(issues, 'query'):
+        # QuerySet인 경우
+        serializer = IssueSerializer(issues, many=True)
+        serialized_data = serializer.data
+        is_queryset = True
+    elif isinstance(issues, list) and len(issues) > 0:
+        if isinstance(issues[0], dict):
+            # 이미 직렬화된 딕셔너리들의 리스트인 경우
+            serialized_data = issues
+            is_queryset = False
+        else:
+            # Django 모델 인스턴스들의 리스트인 경우
+            serializer = IssueSerializer(issues, many=True)
+            serialized_data = serializer.data
+            is_queryset = False
+    else:
+        # 빈 리스트이거나 다른 경우
+        serialized_data = []
+        is_queryset = False
     
     # parent_child 그룹화인 경우 특별 처리
     if group_by == "parent_child" or sub_group_by == "parent_child" or group_by == "top_level_only" or sub_group_by == "top_level_only":
-        # 모든 이슈의 parent_id를 가져와서 최상단 부모를 찾기
-        issue_values = list(issues.values("id", "parent_id"))
+        # issues의 타입에 따라 id와 parent_id 추출 방식 결정
+        if is_queryset:
+            # QuerySet에서 values() 사용
+            issue_values = list(issues.values("id", "parent_id"))
+        elif isinstance(issues, list) and len(issues) > 0:
+            if isinstance(issues[0], dict):
+                # 이미 직렬화된 데이터에서 id와 parent_id 추출
+                issue_values = [{"id": item.get("id"), "parent_id": item.get("parent_id")} for item in issues]
+            else:
+                # Django 모델 인스턴스에서 속성 접근
+                issue_values = [{"id": item.id, "parent_id": item.parent_id} for item in issues]
+        else:
+            issue_values = []
         
         # 최상단 부모를 찾는 헬퍼 함수
         def find_root_parent(issue_id, all_issues_dict):
@@ -220,8 +248,29 @@ def issue_on_results(
         if sub_group_by in FIELD_MAPPER:
             fields_to_include.append(sub_group_by)
             
-        # values()를 사용하여 필요한 필드들 가져오기
-        issue_values = list(issues.values(*fields_to_include))
+        # issues의 타입에 따라 필요한 필드들 추출 방식 결정
+        if is_queryset:
+            # QuerySet에서 values() 사용
+            issue_values = list(issues.values(*fields_to_include))
+        elif isinstance(issues, list) and len(issues) > 0:
+            if isinstance(issues[0], dict):
+                # 이미 직렬화된 데이터에서 필요한 필드들 추출
+                issue_values = []
+                for item in issues:
+                    item_dict = {"id": item.get("id")}
+                    for field in fields_to_include[1:]:  # "id"는 이미 추가했으므로 제외
+                        item_dict[field] = item.get(field)
+                    issue_values.append(item_dict)
+            else:
+                # Django 모델 인스턴스에서 속성 접근
+                issue_values = []
+                for item in issues:
+                    item_dict = {"id": item.id}
+                    for field in fields_to_include[1:]:  # "id"는 이미 추가했으므로 제외
+                        item_dict[field] = getattr(item, field, None)
+                    issue_values.append(item_dict)
+        else:
+            issue_values = []
         
         # 결과 딕셔너리에 필드 추가
         for i, result in enumerate(serialized_data):
