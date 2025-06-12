@@ -303,6 +303,7 @@ export class Storage {
     log("#### Queries", queries);
 
     const currentProjectStatus = this.getStatus(projectId);
+    
     if (
       !currentProjectStatus ||
       this.status !== "ready" ||
@@ -313,6 +314,7 @@ export class Storage {
       if (rootStore.user.localDBEnabled) {
         log(`Project ${projectId} is loading, falling back to server`);
       }
+      
       const issueService = new IssueService();
 
       // Ignore projectStatus if projectId is not provided
@@ -338,6 +340,7 @@ export class Storage {
     } catch (e) {
       log("Unable to get work items from local db, falling back to server");
       logError(e);
+      
       const issueService = new IssueService();
       return await issueService.getIssuesFromServer(workspaceSlug, projectId, queries, config);
     }
@@ -391,6 +394,7 @@ export class Storage {
       next_page_results,
       total_pages,
     };
+    
     return out;
   };
 

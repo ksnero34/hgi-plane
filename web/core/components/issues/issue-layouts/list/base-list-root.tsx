@@ -19,6 +19,7 @@ import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useCustomField } from "@/hooks/store/use-custom-field";
+import { useUserSettings } from "@/hooks/store";
 // components
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { List } from "./default";
@@ -72,6 +73,7 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   // mobx store
   const { allowPermissions } = useUserPermissions();
   const { issueMap } = useIssues();
+  const { canUseLocalDB } = useUserSettings();
 
   const { workspaceSlug, projectId } = useParams();
   const { customFields, error: customFieldsError } = useCustomField(projectId as string);
@@ -94,15 +96,27 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
     issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
 
   useEffect(() => {
-    const perPageFromFilter = displayFilters?.per_page || (group_by ? 50 : 100);
+    // 사용자가 지정한 per_page 값을 우선적으로 사용
+    const userPerPage = displayFilters?.per_page;
+    
+    // 사용자 지정 값이 없을 때만 하이퍼 모드에 따른 기본값 사용
+    const defaultPerPage = canUseLocalDB ? 
+      (group_by ? 500 : 1000) : // 하이퍼 모드일 때
+      (group_by ? 50 : 100);    // 일반 모드일 때
+    
+    // 사용자 지정 값이 있으면 그것을 우선 사용, 없으면 기본값 사용
+    const finalPerPage = userPerPage || defaultPerPage;
+    
     fetchIssues("init-loader", { 
       canGroup: true, 
-      perPageCount: group_by ? 50 : 100,
-      perPageFromDisplayFilter: perPageFromFilter
+      perPageCount: finalPerPage,
+      perPageFromDisplayFilter: finalPerPage // 동일한 값으로 설정하여 일관성 유지
     }, viewId);
   }, [fetchIssues, storeType, group_by, viewId, displayFilters?.per_page]);
 
   const groupedIssueIds = issues?.groupedIssueIds as TGroupedIssues | undefined;
+  const groupByFields = issues?.groupByFields;
+  
   // auth
   const isEditingAllowed = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
@@ -188,6 +202,7 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
           collapsedGroups={collapsedGroups}
           isEpic={isEpic}
           customFields={customFields}
+          groupByFields={groupByFields}
         />
       </div>
     </IssueLayoutHOC>

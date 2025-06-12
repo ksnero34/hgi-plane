@@ -68,6 +68,7 @@ export interface IBaseIssuesStore {
   groupedIssueIds: TGroupedIssues | TSubGroupedIssues | undefined; // object to store Issue Ids based on group or subgroup
   groupedIssueCount: TGroupedIssueCount; // map of groupId/subgroup and issue count of that particular group/subgroup
   issuePaginationData: TIssuePaginationData; // map of groupId/subgroup and pagination Data of that particular group/subgroup
+  groupByFields: any[] | undefined; // group by fields from backend
 
   //actions
   removeIssue: (workspaceSlug: string, projectId: string, issueId: string) => Promise<void>;
@@ -185,13 +186,16 @@ const ISSUE_ORDERBY_KEY: Record<TIssueOrderByOptions, keyof TIssue> = {
 };
 
 export abstract class BaseIssuesStore implements IBaseIssuesStore {
+  // observables
   loader: Record<string, TLoader> = {};
   groupedIssueIds: TIssues | undefined = undefined;
   issuePaginationData: TIssuePaginationData = {};
-
+  // grouped issue count
   groupedIssueCount: TGroupedIssueCount = {};
-  //
+  // pagination options
   paginationOptions: IssuePaginationOptions | undefined = undefined;
+  // group by fields from backend
+  groupByFields: any[] | undefined = undefined;
 
   isArchived: boolean;
 
@@ -1361,6 +1365,11 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     groupedIssues: TIssues;
     groupedIssueCount: TGroupedIssueCount;
   } {
+    // Set group by fields from response
+    runInAction(() => {
+      this.groupByFields = issueResponse.group_by_fields;
+    });
+
     const issueResult = issueResponse?.results;
 
     // if undefined return empty objects

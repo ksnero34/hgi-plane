@@ -63,7 +63,7 @@ export const BaseSpreadsheetRoot = observer((props: IBaseSpreadsheetRoot) => {
     const perPageFromFilter = issuesFilter?.issueFilters?.displayFilters?.per_page || 100;
     fetchIssues("init-loader", { 
       canGroup: false, 
-      perPageCount: 100,
+      perPageCount: perPageFromFilter,
       perPageFromDisplayFilter: perPageFromFilter
     }, viewId);
   }, [fetchIssues, storeType, viewId, issuesFilter?.issueFilters?.displayFilters?.per_page]);

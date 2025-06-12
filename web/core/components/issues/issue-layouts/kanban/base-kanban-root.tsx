@@ -104,7 +104,7 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
     const perPageFromFilter = displayFilters?.per_page || (sub_group_by ? 10 : 30);
     fetchIssues("init-loader", { 
       canGroup: true, 
-      perPageCount: sub_group_by ? 10 : 30,
+      perPageCount: perPageFromFilter,
       perPageFromDisplayFilter: perPageFromFilter
     }, viewId);
   }, [fetchIssues, storeType, group_by, sub_group_by, viewId, displayFilters?.per_page]);

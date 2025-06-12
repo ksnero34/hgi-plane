@@ -218,7 +218,7 @@ class GroupedOffsetPaginator(OffsetPaginator):
         # Set the count filter - this are extra filters that need to be passed to calculate the counts with the filters
         self.count_filter = count_filter
 
-    def get_result(self, limit=50, cursor=None):
+    def get_result(self, limit=100, cursor=None):
         # offset is page #
         # value is page limit
         if cursor is None:
@@ -267,43 +267,54 @@ class GroupedOffsetPaginator(OffsetPaginator):
 
             # Process the results
             results = results[:limit]
-        else:
-            # Compute the results
-            results = {}
-            # Create window for all the groups
-            queryset = queryset.annotate(
-                row_number=Window(
-                    expression=RowNumber(),
-                    partition_by=[F(self.group_by_field_name)],
-                    order_by=(
-                        (
-                            F(*self.key).desc(
-                                nulls_last=True
-                            )  # order by desc if desc is set
-                            if self.desc
-                            else F(*self.key).asc(nulls_last=True)  # Order by asc if set
-                        ),
-                        F("created_at").desc(),
-                    ),
-                )
+
+            # Process the results
+            if self.on_results:
+                results = self.on_results(results)
+
+            # Count the queryset
+            count = queryset.count()
+
+            # Optionally, calculate the total count and max_hits if needed
+            max_hits = math.ceil(count / limit) if count > 0 else 0
+            
+            return CursorResult(
+                results=results,
+                next=next_cursor,
+                prev=prev_cursor,
+                hits=count,
+                max_hits=max_hits,
             )
-            # Filter the results by row number
-            results = queryset.filter(row_number__gt=offset, row_number__lt=stop).order_by(
+
+        # 일반 그룹화 처리
+        if self.key:
+            queryset = queryset.order_by(
                 (
                     F(*self.key).desc(nulls_last=True)
                     if self.desc
                     else F(*self.key).asc(nulls_last=True)
                 ),
-                F("created_at").desc(),
+                "-created_at",
             )
 
-            # Adjust cursors based on the grouped results for pagination
-            next_cursor = Cursor(
-                limit, page + 1, False, queryset.filter(row_number__gte=stop).exists()
-            )
+        results = queryset[offset:stop]
+        if cursor.value != limit:
+            # negative indexing 에러 방지: results 길이가 충분한지 확인
+            results_count = len(results)
+            slice_start = max(0, results_count - (limit + 1))
+            results = results[slice_start:]
 
-            # Add previous cursors
-            prev_cursor = Cursor(limit, page - 1, True, page > 0)
+        # Adjust cursors based on the results for pagination
+        next_cursor = Cursor(limit, page + 1, False, len(results) > limit)
+        # If the page is greater than 0, then set the previous cursor
+        prev_cursor = Cursor(limit, page - 1, True, page > 0)
+
+        # Process the results
+        results = results[:limit]
+
+        # Process the results
+        if self.on_results:
+            results = self.on_results(results)
 
         # Count the queryset
         count = queryset.count()
@@ -489,7 +500,7 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
         # Set the count filter - this are extra filters that need to be passed to calculate the counts with the filters
         self.count_filter = count_filter
 
-    def get_result(self, limit=30, cursor=None):
+    def get_result(self, limit=100, cursor=None):
         # offset is page #
         # value is page limit
         if cursor is None:
@@ -843,6 +854,8 @@ class BasePaginator:
             {
                 "grouped_by": group_by_field_name,
                 "sub_grouped_by": sub_group_by_field_name,
+                "group_by_fields": group_by_fields if group_by_field_name else None,
+                "sub_group_by_fields": sub_group_by_fields if sub_group_by_field_name else None,
                 "total_count": (cursor_result.hits),
                 "next_cursor": str(cursor_result.next),
                 "prev_cursor": str(cursor_result.prev),

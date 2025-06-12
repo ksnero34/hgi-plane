@@ -62,6 +62,7 @@ export class IssueService extends APIService {
       (queries.expand as string)?.includes("issue_relation") && !queries.group_by
         ? `/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}-detail/`
         : `/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/`;
+        
     return this.get(
       path,
       {
@@ -69,7 +70,9 @@ export class IssueService extends APIService {
       },
       config
     )
-      .then((response) => response?.data)
+      .then((response) => {
+        return response?.data;
+      })
       .catch((error) => {
         throw error?.response?.data;
       });
@@ -151,6 +154,7 @@ export class IssueService extends APIService {
       }
     }
 
+    // console.log('[DEBUG] IssueService.getIssues - 로컬 persistence 사용');
     const response = await persistence.getIssues(workspaceSlug, projectId, queries, config);
     return response as TIssuesResponse;
   }

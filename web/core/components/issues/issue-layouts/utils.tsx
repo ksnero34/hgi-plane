@@ -79,6 +79,7 @@ type TGetGroupByColumns = {
   groupedIssueIds?: TGroupedIssues | TSubGroupedIssues;
   issuesMap?: TIssueMap;
   projectId?: string;
+  groupByFields?: any[];
 };
 
 // NOTE: Type of groupBy is different compared to what's being passed from the components.
@@ -92,6 +93,7 @@ export const getGroupByColumns = ({
   groupedIssueIds,
   issuesMap,
   projectId,
+  groupByFields,
 }: TGetGroupByColumns): IGroupByColumn[] | undefined => {
   // If no groupBy is specified and includeNone is true, return "All Issues" group
   if (!groupBy && includeNone) {
@@ -123,7 +125,7 @@ export const getGroupByColumns = ({
     assignees: getAssigneeColumns,
     created_by: getCreatedByColumns,
     team_project: getTeamProjectColumns,
-    parent_child: () => getParentChildColumns(groupedIssueIds, issuesMap),
+    parent_child: () => getParentChildColumns(groupedIssueIds, issuesMap, groupByFields),
     top_level_only: getTopLevelOnlyColumns,
   };
 
@@ -328,9 +330,12 @@ const getCreatedByColumns = (): IGroupByColumn[] | undefined => {
   });
 };
 
-const getParentChildColumns = (groupedIssueIds?: TGroupedIssues | TSubGroupedIssues, issuesMap?: TIssueMap): IGroupByColumn[] => {
-  if (!groupedIssueIds) {
-    // 기본 구조로 최상단 작업항목 그룹만 제공
+const getParentChildColumns = (
+  groupedIssueIds?: TGroupedIssues | TSubGroupedIssues, 
+  issuesMap?: TIssueMap,
+  groupByFields?: any[]
+): IGroupByColumn[] => {
+  if (!groupedIssueIds || Object.keys(groupedIssueIds).length === 0) {
     return [
       {
         id: "None",
@@ -343,6 +348,16 @@ const getParentChildColumns = (groupedIssueIds?: TGroupedIssues | TSubGroupedIss
 
   const columns: IGroupByColumn[] = [];
   
+  // groupByFields를 ID로 매핑하여 빠른 조회 가능하도록 함
+  const groupByFieldsMap: Record<string, any> = {};
+  if (groupByFields && Array.isArray(groupByFields)) {
+    groupByFields.forEach(field => {
+      if (field && field.id) {
+        groupByFieldsMap[field.id] = field;
+      }
+    });
+  }
+  
   // 그룹 키들을 순회하면서 컬럼 생성
   Object.keys(groupedIssueIds).forEach(groupKey => {
     if (groupKey === "None") {
@@ -353,19 +368,48 @@ const getParentChildColumns = (groupedIssueIds?: TGroupedIssues | TSubGroupedIss
         payload: { parent_id: null },
       });
     } else {
-      // 실제 부모 이슈 ID가 그룹 키인 경우
-      const parentIssue = issuesMap?.[groupKey];
-      const parentIssueName = parentIssue?.name || `이슈 ${groupKey.slice(0, 8)}...`;
+      let displayName = `이슈 ${groupKey.slice(0, 8)}...`;
+      
+      // 1. 먼저 groupByFields에서 정확한 ID 매칭으로 찾기
+      const foundField = groupByFieldsMap[groupKey];
+      
+      if (foundField && foundField.display_name) {
+        displayName = foundField.display_name;
+      } else if (foundField && foundField.name) {
+        displayName = foundField.name;
+      } else {
+        // 2. groupByFields에서 찾지 못했다면 issuesMap에서 찾기
+        const issueFromMap = issuesMap?.[groupKey];
+        
+        if (issueFromMap) {
+          if (issueFromMap.display_name) {
+            displayName = issueFromMap.display_name;
+          } else if (issueFromMap.name) {
+            displayName = issueFromMap.name;
+          } else if (issueFromMap.project_identifier && issueFromMap.sequence_id) {
+            displayName = `${issueFromMap.project_identifier}-${issueFromMap.sequence_id} ${issueFromMap.name || ''}`;
+          }
+        } else {
+          // 3. 마지막으로 UUID 패턴 감지하여 의미있는 이름 생성
+          const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (uuidPattern.test(groupKey)) {
+            displayName = `상위 이슈 (${groupKey.slice(0, 8)})`;
+          }
+        }
+      }
+      
+      // parent_child 그룹화에서는 "의 하위 이슈" 접미사 추가
+      const finalName = `${displayName}의 하위 이슈`;
       
       columns.push({
         id: groupKey,
-        name: `${parentIssueName}의 하위 이슈`,
+        name: finalName,
         icon: undefined,
-        payload: { parent_id: groupKey },
+        payload: { parent_id: groupKey === "None" ? null : groupKey },
       });
     }
   });
-
+  
   return columns;
 };
 

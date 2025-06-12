@@ -189,7 +189,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
           "mutation",
           {
             canGroup: true,
-            perPageCount: 100
+            perPageCount: issueFilters?.displayFilters?.per_page || 100
           }
         );
 

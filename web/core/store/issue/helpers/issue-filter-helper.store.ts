@@ -319,7 +319,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
    */
   getShouldReFetchIssues = (displayFilters: IIssueDisplayFilterOptions) => {
     // 클라이언트에서만 처리하는 필터들 (서버 재요청 불필요)
-    const NON_SERVER_DISPLAY_FILTERS = ["show_empty_groups"];
+    const NON_SERVER_DISPLAY_FILTERS = ["show_empty_groups", "per_page"];
     const displayFilterKeys = Object.keys(displayFilters);
 
     // 서버에서 처리해야 하는 필터(NON_SERVER_DISPLAY_FILTERS에 없는 필터)가 변경되었는지 확인

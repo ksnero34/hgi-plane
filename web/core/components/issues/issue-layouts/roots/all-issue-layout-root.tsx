@@ -116,7 +116,7 @@ export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
           groupedIssueIds ? "mutation" : "init-loader",
           {
             canGroup: false,
-            perPageCount: 100,
+            perPageCount: issueFilters?.displayFilters?.per_page || 100,
           }
         );
         routerFilterParams();

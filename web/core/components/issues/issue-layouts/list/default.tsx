@@ -51,6 +51,7 @@ export interface IList {
   collapsedGroups: TIssueKanbanFilters;
   isEpic?: boolean;
   customFields?: TCustomField[];
+  groupByFields?: any[];
 }
 
 export const List: React.FC<IList> = observer((props) => {
@@ -75,6 +76,7 @@ export const List: React.FC<IList> = observer((props) => {
     collapsedGroups,
     isEpic = false,
     customFields,
+    groupByFields,
   } = props;
 
   const storeType = useIssueStoreType();
@@ -90,6 +92,7 @@ export const List: React.FC<IList> = observer((props) => {
     isEpic: isEpic,
     groupedIssueIds: groupedIssueIds,
     issuesMap: issuesMap,
+    groupByFields: groupByFields,
   });
 
   // Enable Auto Scroll for Main Kanban

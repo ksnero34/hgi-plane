@@ -817,6 +817,7 @@ class IssueViewSet(BaseViewSet):
                             archived_at__isnull=True,
                             is_draft=False,
                         ),
+                        max_per_page=10000,
                     )
             else:
                 # Group paginate
@@ -847,6 +848,7 @@ class IssueViewSet(BaseViewSet):
                         archived_at__isnull=True,
                         is_draft=False,
                     ),
+                    max_per_page=10000,
                 )
         else:
             # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
@@ -860,6 +862,7 @@ class IssueViewSet(BaseViewSet):
                 on_results=lambda issues: issue_on_results(
                     group_by=group_by, issues=issues, sub_group_by=sub_group_by
                 ),
+                max_per_page=10000,
             )
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])

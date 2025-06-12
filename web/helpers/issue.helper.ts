@@ -308,6 +308,10 @@ export const getIssuesShouldFallbackToServer = (queries: any) => {
   if (!isEmpty(queries.expand as string) && !queries.group_by) return true;
   // If query has mentions then fallback to server
   if (!isEmpty(queries.mentions)) return true;
+  // If group_by is parent_child or top_level_only, fallback to server
+  if (queries.group_by === "parent_child" || queries.group_by === "top_level_only") return true;
+  // If sub_group_by is parent_child or top_level_only, fallback to server
+  if (queries.sub_group_by === "parent_child" || queries.sub_group_by === "top_level_only") return true;
 
   return false;
 };

@@ -106,6 +106,8 @@ export type TIssuesResponse = {
   extra_stats: null;
   results: TIssueResponseResults;
   total_results: number;
+  group_by_fields?: any[];
+  sub_group_by_fields?: any[];
 };
 
 export type TBulkIssueProperties = Pick<

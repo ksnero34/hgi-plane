@@ -66,7 +66,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
     const perPageFromFilter = appliedDisplayFilters?.per_page || 100;
     fetchIssues("init-loader", { 
       canGroup: false, 
-      perPageCount: 100,
+      perPageCount: perPageFromFilter,
       perPageFromDisplayFilter: perPageFromFilter
     }, viewId);
   }, [fetchIssues, storeType, viewId, appliedDisplayFilters?.per_page]);

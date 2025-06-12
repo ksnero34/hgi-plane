@@ -64,6 +64,7 @@ export interface IKanBan {
   subGroupIndex?: number;
   isEpic?: boolean;
   customFields?: TCustomField[];
+  groupByFields?: any[];
 }
 
 export const KanBan: React.FC<IKanBan> = observer((props) => {
@@ -94,6 +95,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
     subGroupIndex = 0,
     isEpic = false,
     customFields = [],
+    groupByFields = [],
   } = props;
   // i18n
   const { t } = useTranslation();
@@ -112,6 +114,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
     isEpic: isEpic,
     groupedIssueIds: groupedIssueIds,
     issuesMap: issuesMap,
+    groupByFields: groupByFields,
   });
 
   if (!groups) return null;

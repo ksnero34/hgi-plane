@@ -430,16 +430,26 @@ def issue_group_values(
     if field == "parent_child":
         # 부모-자식 관계 그룹화를 위한 그룹 값들
         
-        # 모든 이슈를 가져와서 실제로 그룹화될 최상위 부모들을 찾기
+        # 필터링된 이슈들을 가져와서 실제로 그룹화될 부모들을 찾기
+        filtered_issues = IssueModel.issue_objects.filter(workspace__slug=slug)
+        if project_id:
+            filtered_issues = filtered_issues.filter(project_id=project_id)
+        
+        # 필터 적용
+        if filters:
+            filtered_issues = filtered_issues.filter(**filters)
+        
+        # 필터링된 이슈들의 id와 parent_id 정보 가져오기
+        filtered_issues_data = list(filtered_issues.values('id', 'parent_id'))
+        
+        # 모든 이슈들의 parent 관계를 파악하기 위해 전체 이슈 데이터도 필요
         all_issues = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
             all_issues = all_issues.filter(project_id=project_id)
-        
-        # 이슈들의 id와 parent_id 정보 가져오기
-        issues_data = list(all_issues.values('id', 'parent_id'))
+        all_issues_data = list(all_issues.values('id', 'parent_id'))
         
         # 빠른 lookup을 위한 딕셔너리 생성
-        all_issues_dict = {str(issue["id"]): issue for issue in issues_data}
+        all_issues_dict = {str(issue["id"]): issue for issue in all_issues_data}
         
         # 최상단 부모를 찾는 헬퍼 함수 (issue_on_results와 동일)
         def find_root_parent(issue_id, all_issues_dict):
@@ -461,19 +471,46 @@ def issue_group_values(
             
             return None
         
-        # 실제로 하위 이슈들이 그룹화될 최상위 부모들 찾기
-        root_parents = set()
-        for issue in issues_data:
+        # 필터링된 이슈들에서 실제로 그룹화될 최상위 부모들 찾기
+        # 이는 issue_on_results에서 사용되는 로직과 동일해야 함
+        group_parent_ids = set()
+        for issue in filtered_issues_data:
             if issue["parent_id"] is not None:  # 부모가 있는 이슈들만
                 root_parent = find_root_parent(issue["id"], all_issues_dict)
                 if root_parent:
-                    root_parents.add(root_parent)
+                    group_parent_ids.add(root_parent)
+            # 부모가 없는 이슈들은 "None" 그룹에 속함
         
-        # 최상위 부모들을 그룹으로 반환
-        result = list(root_parents)
+        # 최상위 부모들의 상세 정보를 가져와서 그룹으로 반환
+        result = []
+        
+        if group_parent_ids:
+            # parent 이슈들의 상세 정보를 한 번에 가져오기 (전체 workspace에서)
+            parent_issues = IssueModel.issue_objects.filter(
+                id__in=group_parent_ids,
+                workspace__slug=slug
+            ).select_related('project').values(
+                'id', 'name', 'project__identifier', 'sequence_id'
+            )
+            
+            # 각 부모 이슈에 대해 딕셔너리 형태로 추가
+            for parent in parent_issues:
+                result.append({
+                    'id': str(parent['id']),
+                    'name': parent['name'],
+                    'project_identifier': parent['project__identifier'],
+                    'sequence_id': parent['sequence_id'],
+                    'display_name': f"{parent['project__identifier']}-{parent['sequence_id']} {parent['name']}"
+                })
         
         # "None" 그룹 추가 (부모가 없는 이슈들)
-        result.append("None")
+        result.append({
+            'id': 'None',
+            'name': '최상단 작업항목',
+            'project_identifier': '',
+            'sequence_id': 0,
+            'display_name': '최상단 작업항목'
+        })
         
         return result
 
