@@ -115,7 +115,7 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   }, [fetchIssues, storeType, group_by, viewId, displayFilters?.per_page]);
 
   const groupedIssueIds = issues?.groupedIssueIds as TGroupedIssues | undefined;
-  const groupByFields = issues?.groupByFields;
+  const groupByFields = (issues as any)?.groupByFields;
   
   // auth
   const isEditingAllowed = allowPermissions(

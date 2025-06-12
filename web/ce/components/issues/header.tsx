@@ -38,6 +38,7 @@ export const IssuesHeader = observer(() => {
   // store hooks
   const {
     issues: { getGroupIssueCount },
+    issuesFilter,
   } = useIssues(EIssuesStoreType.PROJECT);
   const { fetchIssues, updateIssue } = useIssuesActions(EIssuesStoreType.PROJECT);
   const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
@@ -91,7 +92,7 @@ export const IssuesHeader = observer(() => {
         "mutation",
         {
           canGroup: true,
-          perPageCount: issueFilters?.displayFilters?.per_page || 100
+          perPageCount: issuesFilter?.issueFilters?.displayFilters?.per_page || 100
         }
       );
       
@@ -138,7 +139,7 @@ export const IssuesHeader = observer(() => {
           "mutation",
           {
             canGroup: true,
-            perPageCount: issueFilters?.displayFilters?.per_page || 100
+            perPageCount: issuesFilter?.issueFilters?.displayFilters?.per_page || 100
           }
         );
 

@@ -382,12 +382,8 @@ const getParentChildColumns = (
         const issueFromMap = issuesMap?.[groupKey];
         
         if (issueFromMap) {
-          if (issueFromMap.display_name) {
-            displayName = issueFromMap.display_name;
-          } else if (issueFromMap.name) {
+          if (issueFromMap.name) {
             displayName = issueFromMap.name;
-          } else if (issueFromMap.project_identifier && issueFromMap.sequence_id) {
-            displayName = `${issueFromMap.project_identifier}-${issueFromMap.sequence_id} ${issueFromMap.name || ''}`;
           }
         } else {
           // 3. 마지막으로 UUID 패턴 감지하여 의미있는 이름 생성
