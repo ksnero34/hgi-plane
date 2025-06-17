@@ -1083,7 +1083,7 @@ def create_module_issue_activity(
         IssueActivity(
             issue_id=issue_id,
             actor_id=actor_id,
-            verb="생성했습니다",
+            verb="created",
             old_value="",
             new_value=module.name if module else "",
             field="modules",

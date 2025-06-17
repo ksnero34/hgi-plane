@@ -16,7 +16,7 @@ from django.utils import timezone
 from openpyxl import Workbook
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel
+from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel, IssueComment
 from plane.utils.exception_logger import log_exception
 from plane.settings.storage import S3Storage
 
@@ -290,6 +290,9 @@ def generate_table_row(issue, custom_fields_map=None, custom_fields_info=None):
         dateTimeConverter(issue["updated_at"]),
         dateTimeConverter(issue["completed_at"]),
         dateTimeConverter(issue["archived_at"]),
+        # 가장 최근 댓글 추가
+        issue.get("last_comment__comment_stripped", ""),
+        issue.get("last_comment__actor__email", ""),
     ]
     
     # 커스텀 필드 값 추가
@@ -356,6 +359,9 @@ def generate_json_row(issue, custom_fields_map=None, custom_fields_info=None):
         "Updated At": dateTimeConverter(issue["updated_at"]),
         "Completed At": dateTimeConverter(issue["completed_at"]),
         "Archived At": dateTimeConverter(issue["archived_at"]),
+        # 가장 최근 댓글 추가
+        "Last Comment": issue.get("last_comment__comment_stripped", ""),
+        "Last Comment By": issue.get("last_comment__actor__email", ""),
     }
     
     # 커스텀 필드 값 추가
@@ -407,12 +413,18 @@ def update_json_row(rows, row):
                 # 라벨이 없는 경우 새 라벨로 설정
                 rows[matched_index]["Labels"] = label
                 
+        # 댓글 업데이트 (가장 최근 댓글로 업데이트)
+        if row.get("Last Comment") and row["Last Comment"].strip():
+            rows[matched_index]["Last Comment"] = row["Last Comment"]
+            rows[matched_index]["Last Comment By"] = row["Last Comment By"]
+                
         # 커스텀 필드 값들도 업데이트 (기본 필드가 아닌 모든 필드)
         basic_fields = {"ID", "Project", "Parent Issue", "Name", "Description", "State", 
                        "Start Date", "Target Date", "Priority", "Created By", "Assignee", 
                        "Labels", "Cycle Name", "Cycle Start Date", "Cycle End Date", 
                        "Module Name", "Module Start Date", "Module Target Date", 
-                       "Created At", "Updated At", "Completed At", "Archived At"}
+                       "Created At", "Updated At", "Completed At", "Archived At",
+                       "Last Comment", "Last Comment By"}
         
         for field_name, field_value in row.items():
             if field_name not in basic_fields:
@@ -464,8 +476,13 @@ def update_table_row(rows, row):
                 # 라벨이 없는 경우 새 라벨로 설정
                 rows[matched_index][11] = label
                 
+        # 댓글 업데이트 (가장 최근 댓글로 업데이트) - 인덱스 22, 23이 Last Comment와 Last Comment By
+        if len(row) > 23 and row[22] and str(row[22]).strip():
+            rows[matched_index][22] = row[22]  # Last Comment
+            rows[matched_index][23] = row[23]  # Last Comment By
+                
         # 커스텀 필드 값들도 업데이트 (기본 필드 이후의 모든 필드)
-        basic_field_count = 22  # 기본 필드 개수
+        basic_field_count = 24  # 기본 필드 개수 (댓글 필드 포함)
         for i in range(basic_field_count, len(row)):
             if i < len(rows[matched_index]):
                 existing_value = rows[matched_index][i]
@@ -649,6 +666,8 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 "assignees__email": [],  # 담당자 이메일 목록
                 "labels__name": [],      # 라벨 목록
                 "custom_field_values": {},  # 커스텀 필드 값들
+                "last_comment__comment_stripped": "",  # 가장 최근 댓글
+                "last_comment__actor__email": "",      # 가장 최근 댓글 작성자
             }
         
         # 이슈 ID 목록
@@ -679,6 +698,17 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
             if name and issue_id in issues_data:
                 if name not in issues_data[issue_id]["labels__name"]:
                     issues_data[issue_id]["labels__name"].append(name)
+        
+        # 가장 최근 댓글 정보 가져오기
+        for issue_id in issue_ids:
+            latest_comment = IssueComment.objects.filter(
+                issue_id=issue_id,
+                deleted_at__isnull=True
+            ).select_related("actor").order_by('-created_at').first()
+            
+            if latest_comment and issue_id in issues_data:
+                issues_data[issue_id]["last_comment__comment_stripped"] = latest_comment.comment_stripped or ""
+                issues_data[issue_id]["last_comment__actor__email"] = latest_comment.actor.email if latest_comment.actor else ""
         
         # 커스텀 필드 값 가져오기
         if custom_fields_map:
@@ -739,6 +769,8 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
             "Updated At",
             "Completed At",
             "Archived At",
+            "Last Comment",     # 가장 최근 댓글 컬럼 추가
+            "Last Comment By",  # 가장 최근 댓글 작성자 컬럼 추가
         ]
         
         # 커스텀 필드 헤더 추가
