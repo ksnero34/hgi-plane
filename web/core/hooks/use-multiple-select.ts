@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // hooks
 import { useMultipleSelectStore } from "@/hooks/store";
 //
 import useReloadConfirmations from "./use-reload-confirmation";
+// types
+import { TBulkOperationsPayload } from "@plane/types";
+// helpers
+import { isEditorFocused } from "@/helpers/editor.helper";
 
 export type TEntityDetails = {
   entityID: string;
@@ -35,7 +39,7 @@ export type TSelectionHelper = {
 export const useMultipleSelect = (props: Props) => {
   const { containerRef, disabled, entities } = props;
   // router
-  // const router = useAppRouter();
+  // const router = useRouter();
   // store hooks
   const {
     selectedEntityIds,
@@ -290,38 +294,58 @@ export const useMultipleSelect = (props: Props) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!e.shiftKey) return;
 
+      // 에디터가 포커스되었는지 확인
+      if (isEditorFocused()) return;
+
       const activeEntityDetails = getActiveEntityDetails();
-      const nextActiveEntity = getNextActiveEntity();
-      const previousActiveEntity = getPreviousActiveEntity();
+      
+      if (!activeEntityDetails) return;
 
-      if (e.key === "ArrowDown" && activeEntityDetails) {
-        if (!nextActiveEntity) return;
-        handleEntitySelection(nextActiveEntity);
+      // 현재 활성 엔티티를 기준으로 이전/다음 엔티티 가져오기
+      const { previousEntity, nextEntity } = getPreviousAndNextEntities(activeEntityDetails.entityID);
+      
+      let targetEntity: TEntityDetails | null = null;
+      
+      if (e.key === "ArrowUp" && previousEntity) {
+        targetEntity = previousEntity;
+      } else if (e.key === "ArrowDown" && nextEntity) {
+        targetEntity = nextEntity;
       }
-      if (e.key === "ArrowUp" && activeEntityDetails) {
-        if (!previousActiveEntity) return;
-        handleEntitySelection(previousActiveEntity);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
+      
+      if (!targetEntity) return;
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      // 타겟 엔티티가 이미 선택되어 있다면 현재 활성 엔티티를 선택 해제
+      if (getIsEntitySelected(targetEntity.entityID)) {
+        updateSelectedEntityDetails(activeEntityDetails, "remove");
+      } else {
+        // 타겟 엔티티를 선택에 추가
+        updateSelectedEntityDetails(targetEntity, "add");
+      }
+
+      // 활성 엔티티를 타겟 엔티티로 변경
+      handleActiveEntityChange(targetEntity);
     };
-  }, [
-    disabled,
-    getActiveEntityDetails,
-    handleEntitySelection,
-    getLastSelectedEntityDetails,
-    getNextActiveEntity,
-    getPreviousActiveEntity,
-  ]);
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [disabled, getActiveEntityDetails, getPreviousAndNextEntities, getIsEntitySelected, updateSelectedEntityDetails, handleActiveEntityChange]);
 
   useEffect(() => {
     if (disabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.shiftKey) return;
+      
+      // 에디터가 포커스되었는지 확인
+      const editorFocused = document.activeElement?.classList.contains("tiptap") || 
+                           document.activeElement?.closest(".tiptap") ||
+                           document.activeElement?.closest(".ProseMirror") ||
+                           document.activeElement?.id === "title-input" ||
+                           document.querySelector(".tiptap:focus-within") ||
+                           document.querySelector(".ProseMirror:focus-within");
+      
+      if (editorFocused) return;
+      
       const activeEntityDetails = getActiveEntityDetails();
       // set active entity id to the first entity
       if (["ArrowUp", "ArrowDown"].includes(e.key) && !activeEntityDetails) {

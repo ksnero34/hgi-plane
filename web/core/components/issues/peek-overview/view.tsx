@@ -19,6 +19,7 @@ import {
 } from "@/components/issues";
 // helpers
 import { cn } from "@/helpers/common.helper";
+import { isEditorFocused } from "@/helpers/editor.helper";
 // hooks
 import { useIssueDetail } from "@/hooks/store";
 import useKeypress from "@/hooks/use-keypress";
@@ -92,7 +93,8 @@ export const IssueView: FC<IIssueView> = observer((props) => {
   const handleKeyDown = () => {
     const slashCommandDropdownElement = document.querySelector("#slash-command");
     const dropdownElement = document.activeElement?.tagName === "INPUT";
-    if (!isAnyModalOpen && !slashCommandDropdownElement && !dropdownElement) {
+    
+    if (!isAnyModalOpen && !slashCommandDropdownElement && !dropdownElement && !isEditorFocused()) {
       removeRoutePeekId();
       const issueElement = document.getElementById(`issue-${issueId}`);
       if (issueElement) issueElement?.focus();

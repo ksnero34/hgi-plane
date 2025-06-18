@@ -125,6 +125,8 @@ def issue_on_results(
     issues: QuerySet[Issue],
     group_by: Optional[str],
     sub_group_by: Optional[str],
+    group_by_fields: Optional[List] = None,
+    per_group_limit: int = 10,
 ) -> List[Dict[str, Any]]:
     from plane.app.serializers import IssueSerializer
     
@@ -225,9 +227,9 @@ def issue_on_results(
                     else:
                         # 부모가 있으면 최상단 부모 찾기
                         root_parent = find_root_parent(issue_id, all_issues_dict)
-                        parent_child_value = root_parent if root_parent is not None else str(parent_id)
+                        parent_child_value = str(root_parent) if root_parent is not None else str(parent_id)
                     
-                    # parent_child 그룹 값을 설정 (리스트가 아닌 단순 값으로)
+                    # parent_child 그룹 값을 설정 (문자열로 안전하게)
                     if group_by == "parent_child":
                         result["parent_child"] = parent_child_value
                     if sub_group_by == "parent_child":
@@ -287,6 +289,157 @@ def issue_on_results(
                     result[sub_group_by] = issue_value[sub_group_by]
     
     return serialized_data
+
+
+def _handle_parent_child_grouping(
+    issues: QuerySet[Issue], 
+    group_by_fields: Optional[List], 
+    per_group_limit: int = 10
+) -> Dict[str, Any]:
+    """
+    parent_child 그룹화를 위한 특별한 처리 함수
+    그룹별로 제한된 수의 이슈만 반환하여 pagination 효과 구현
+    """
+    from plane.app.serializers import IssueSerializer
+    from plane.db.models import Issue as IssueModel
+    
+    # 모든 그룹 정보 가져오기
+    if not group_by_fields:
+        group_by_fields = []
+    
+    # 그룹별 결과를 저장할 딕셔너리
+    grouped_results = {}
+    
+    # 필터링된 이슈들의 ID 집합 (실제 결과에 포함될 이슈들)
+    filtered_issue_ids = set(str(issue_id) for issue_id in issues.values_list('id', flat=True))
+    
+    # workspace와 project 정보를 추출하여 전체 이슈 쿼리 생성
+    sample_issue = issues.first()
+    if not sample_issue:
+        # 이슈가 없으면 빈 결과 반환
+        for group in group_by_fields:
+            group_id = str(group.get("id", "None")) if isinstance(group, dict) else str(group)
+            grouped_results[group_id] = {
+                "results": [],
+                "total_results": 0,
+                "has_more": False
+            }
+        return grouped_results
+    
+    # 전체 이슈들을 workspace와 project만으로 필터링해서 가져오기
+    base_queryset = IssueModel.issue_objects.filter(
+        workspace_id=sample_issue.workspace_id,
+        project_id=sample_issue.project_id
+    )
+    
+    # print(f"[_handle_parent_child_grouping] filtered_issue_ids count: {len(filtered_issue_ids)}")
+    # print(f"[_handle_parent_child_grouping] Sample filtered IDs: {list(filtered_issue_ids)[:5]}")
+    
+    # 각 그룹에 대해 처리
+    for group in group_by_fields:
+        group_id = str(group.get("id", "None")) if isinstance(group, dict) else str(group)
+        
+        if group_id == "None":
+            # None 그룹 처리: 최상위 이슈들 중 필터링된 것들
+            # 전체 이슈들에서 그룹 구성을 위한 정보 가져오기
+            all_issues_values = list(base_queryset.values('id', 'parent_id'))
+            all_issues_dict = {str(issue["id"]): issue for issue in all_issues_values}
+            
+            # 최상위 이슈들 중 필터링된 것들 찾기
+            group_issue_ids = []
+            for issue_id in filtered_issue_ids:
+                if issue_id not in all_issues_dict:
+                    continue
+                    
+                issue_data = all_issues_dict[issue_id]
+                parent_id = issue_data.get("parent_id")
+                
+                if parent_id is None:
+                    # 최상위 이슈
+                    group_issue_ids.append(issue_id)
+            
+            # print(f"[_handle_parent_child_grouping] Group None: found {len(group_issue_ids)} top-level issues")
+            
+        else:
+            # 특정 부모 그룹 처리
+            # 전체 이슈들에서 그룹 구성을 위한 정보 가져오기
+            all_issues_values = list(base_queryset.values('id', 'parent_id'))
+            all_issues_dict = {str(issue["id"]): issue for issue in all_issues_values}
+            
+            # 최상단 부모를 찾는 헬퍼 함수
+            def find_root_parent(issue_id, all_issues_dict):
+                current_id = str(issue_id)
+                visited = set()
+                
+                while current_id and current_id not in visited:
+                    visited.add(current_id)
+                    
+                    if current_id not in all_issues_dict:
+                        break
+                        
+                    parent_id = all_issues_dict[current_id]["parent_id"]
+                    
+                    if parent_id is None:
+                        return current_id
+                    
+                    current_id = str(parent_id)
+                
+                return None
+            
+            # 이 그룹에 속하면서 필터링 조건도 만족하는 이슈 ID들 찾기
+            group_issue_ids = []
+            for issue_id in filtered_issue_ids:
+                if issue_id not in all_issues_dict:
+                    continue
+                    
+                issue_data = all_issues_dict[issue_id]
+                parent_id = issue_data.get("parent_id")
+                
+                if parent_id is None:
+                    # 최상단 이슈인 경우, 자기 자신이 그룹 ID와 같은지 확인
+                    if issue_id == group_id:
+                        group_issue_ids.append(issue_id)
+                        # print(f"[_handle_parent_child_grouping] Group {group_id}: found top-level issue {issue_id}")
+                else:
+                    # 하위 이슈인 경우, 최상단 부모가 그룹 ID와 같은지 확인
+                    root_parent = find_root_parent(issue_id, all_issues_dict)
+                    if root_parent == group_id:
+                        group_issue_ids.append(issue_id)
+                        # print(f"[_handle_parent_child_grouping] Group {group_id}: found child issue {issue_id} with root parent {root_parent}")
+            
+            # print(f"[_handle_parent_child_grouping] Group {group_id}: found {len(group_issue_ids)} issues total")
+            
+            # 찾은 이슈 ID들로 queryset 필터링
+            if group_issue_ids:
+                group_issues = issues.filter(id__in=group_issue_ids)
+            else:
+                # 빈 쿼리셋 생성
+                group_issues = issues.none()
+        
+        # 그룹당 제한된 수의 이슈만 가져오기
+        limited_issues = list(group_issues[:per_group_limit + 1])  # +1 for checking if more exist
+        
+        # 더 많은 이슈가 있는지 확인
+        has_more = len(limited_issues) > per_group_limit
+        if has_more:
+            limited_issues = limited_issues[:per_group_limit]
+        
+        # 이슈들을 직렬화
+        serializer = IssueSerializer(limited_issues, many=True)
+        serialized_issues = serializer.data
+        
+        # parent_child 값을 각 이슈에 추가 (문자열로 안전하게)
+        for issue_data in serialized_issues:
+            issue_data["parent_child"] = str(group_id)
+        
+        # 그룹 결과 저장
+        grouped_results[group_id] = {
+            "results": serialized_issues,
+            "total_results": group_issues.count(),
+            "has_more": has_more
+        }
+    
+    return grouped_results
 
 
 def issue_group_values(
@@ -391,28 +544,18 @@ def issue_group_values(
     if field == "parent_child":
         # 부모-자식 관계 그룹화를 위한 그룹 값들
         
-        # 필터링된 이슈들을 가져와서 실제로 그룹화될 부모들을 찾기
-        filtered_issues = IssueModel.issue_objects.filter(workspace__slug=slug)
-        if project_id:
-            filtered_issues = filtered_issues.filter(project_id=project_id)
-        
-        # 필터 적용
-        if filters:
-            filtered_issues = filtered_issues.filter(**filters)
-        
-        # 필터링된 이슈들의 id와 parent_id 정보 가져오기
-        filtered_issues_data = list(filtered_issues.values('id', 'parent_id'))
-        
-        # 모든 이슈들의 parent 관계를 파악하기 위해 전체 이슈 데이터도 필요
+        # 모든 이슈들을 가져와서 그룹화될 부모들을 찾기 (필터링 없이)
         all_issues = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
             all_issues = all_issues.filter(project_id=project_id)
-        all_issues_data = list(all_issues.values('id', 'parent_id'))
+        
+        # 모든 이슈들의 id와 parent_id 정보 가져오기
+        all_issues_data = list(all_issues.values('id', 'parent_id', 'name', 'sequence_id'))
         
         # 빠른 lookup을 위한 딕셔너리 생성
         all_issues_dict = {str(issue["id"]): issue for issue in all_issues_data}
         
-        # 최상단 부모를 찾는 헬퍼 함수 (issue_on_results와 동일)
+        # 최상단 부모를 찾는 헬퍼 함수
         def find_root_parent(issue_id, all_issues_dict):
             current_id = str(issue_id)
             visited = set()
@@ -432,12 +575,19 @@ def issue_group_values(
             
             return None
         
-        # 필터링된 이슈들에서 실제로 그룹화될 최상위 부모들 찾기
-        # 이는 issue_on_results에서 사용되는 로직과 동일해야 함
+        # 모든 이슈들에서 실제로 그룹화될 최상위 부모들 찾기
         group_parent_ids = set()
-        for issue in filtered_issues_data:
-            if issue["parent_id"] is not None:  # 부모가 있는 이슈들만
-                root_parent = find_root_parent(issue["id"], all_issues_dict)
+        
+        for issue in all_issues_data:
+            issue_id = str(issue["id"])
+            parent_id = issue.get("parent_id")
+            
+            if parent_id is None:
+                # 부모가 없는 이슈는 자기 자신이 그룹의 대표
+                group_parent_ids.add(issue_id)
+            else:
+                # 부모가 있는 이슈는 최상위 부모를 찾아서 그룹에 추가
+                root_parent = find_root_parent(issue_id, all_issues_dict)
                 if root_parent:
                     group_parent_ids.add(root_parent)
         
@@ -463,7 +613,7 @@ def issue_group_values(
                     'display_name': f"{parent['project__identifier']}-{parent['sequence_id']} {parent['name']}"
                 })
         
-        # "None" 그룹 추가 (부모가 없는 이슈들)
+        # 모든 최상위 이슈들을 위한 "None" 그룹 추가
         result.append({
             'id': 'None',
             'name': '최상단 작업항목',

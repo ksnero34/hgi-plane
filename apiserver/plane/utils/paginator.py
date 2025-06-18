@@ -185,6 +185,322 @@ class OffsetPaginator:
         raise NotImplementedError
 
 
+class ParentChildOffsetPaginator(OffsetPaginator):
+    """
+    parent_child 그룹화를 위한 특별한 paginator
+    그룹 단위로 pagination을 처리합니다.
+    """
+
+    def __init__(
+        self,
+        queryset,
+        group_by_fields,
+        count_filter,
+        items_per_group=20,  # 각 그룹당 최대 아이템 수
+        parent_id=None,  # 더보기 요청을 위한 parent_id 파라미터 (단일 그룹)
+        parent_pages=None,  # 여러 그룹의 페이지 정보 (예: "group1:2,group2:3,None:1")
+        *args,
+        **kwargs,
+    ):
+        # parent_child 전용 파라미터들을 별도로 저장
+        self.group_by_fields = group_by_fields
+        self.count_filter = count_filter
+        self.items_per_group = items_per_group
+        self.parent_id = parent_id  # 단일 그룹 더보기 (하위 호환성)
+        self.parent_pages = parent_pages  # 여러 그룹 페이지 정보
+        
+        # parent_pages 파싱: "group1:2,group2:3,None:1" -> {"group1": 2, "group2": 3, "None": 1}
+        self.group_pages = {}
+        if parent_pages:
+            try:
+                for group_page in parent_pages.split(','):
+                    group_id, page = group_page.split(':')
+                    self.group_pages[group_id] = int(page)
+            except (ValueError, AttributeError):
+                # print(f"[ParentChildOffsetPaginator] Invalid parent_pages format: {parent_pages}")
+                self.group_pages = {}
+        
+        # 부모 클래스가 받지 않는 파라미터들 제거
+        parent_kwargs = kwargs.copy()
+        parent_kwargs.pop('group_by_field_name', None)
+        parent_kwargs.pop('group_by_fields', None)
+        parent_kwargs.pop('count_filter', None)
+        
+        super().__init__(queryset, *args, **parent_kwargs)
+
+    def get_result(self, limit=100, cursor=None):
+        if cursor is None:
+            cursor = Cursor(0, 0, 0)
+
+        limit = min(limit, self.max_limit)
+        page = cursor.offset
+        
+        # 모든 그룹 정보 가져오기
+        all_groups = self.group_by_fields
+        total_groups = len(all_groups)
+        
+        # 필터링된 이슈들의 ID 집합 (실제 결과에 포함될 이슈들)
+        filtered_issue_ids = set(str(issue_id) for issue_id in self.queryset.values_list('id', flat=True))
+        
+        # 전체 이슈들의 parent 관계를 파악하기 위해 workspace와 project만으로 필터링된 전체 이슈 데이터 가져오기
+        # self.queryset에서 workspace와 project 정보 추출
+        sample_issue = self.queryset.first()
+        if not sample_issue:
+            # 이슈가 없으면 빈 결과 반환
+            return CursorResult(
+                results=[],
+                next=Cursor(limit, page + 1, False, False),
+                prev=Cursor(limit, page - 1, True, page > 0),
+                hits=0,
+                max_hits=1,
+            )
+        
+        # 전체 이슈들을 workspace와 project만으로 필터링해서 가져오기
+        from plane.db.models import Issue as IssueModel
+        base_queryset = IssueModel.issue_objects.filter(
+            workspace_id=sample_issue.workspace_id,
+            project_id=sample_issue.project_id
+        )
+        
+        all_issues_data = list(base_queryset.values('id', 'parent_id'))
+        all_issues_dict = {str(issue["id"]): issue for issue in all_issues_data}
+        
+        # print(f"[ParentChildOffsetPaginator] Total issues in project: {len(all_issues_data)}")
+        # print(f"[ParentChildOffsetPaginator] Filtered issues count: {len(filtered_issue_ids)}")
+        # print(f"[ParentChildOffsetPaginator] Sample filtered IDs: {list(filtered_issue_ids)[:5]}")
+        
+        # 최상단 부모를 찾는 헬퍼 함수
+        def find_root_parent(issue_id, all_issues_dict):
+            current_id = str(issue_id)
+            visited = set()
+            
+            while current_id and current_id not in visited:
+                visited.add(current_id)
+                
+                if current_id not in all_issues_dict:
+                    break
+                    
+                parent_id = all_issues_dict[current_id]["parent_id"]
+                
+                if parent_id is None:
+                    return current_id
+                
+                current_id = str(parent_id)
+            
+            return None
+        
+        # 각 그룹에 대해 이슈들 찾기
+        all_group_issues = []
+        group_issue_counts = {}
+        group_has_more = {}
+        
+        for group in all_groups:
+            group_id = group.get('id', 'None')
+            
+            if group_id == 'None':
+                # None 그룹: 최상위 이슈들 (parent_id가 None인 이슈들)
+                group_issue_ids = [
+                    issue_id for issue_id, issue_data in all_issues_dict.items()
+                    if issue_data.get('parent_id') is None
+                ]
+            else:
+                # 특정 부모 그룹: 해당 부모의 하위 이슈들만 포함 (부모 자체는 제외)
+                group_issue_ids = [
+                    issue_id for issue_id, issue_data in all_issues_dict.items()
+                    if issue_data.get('parent_id') is not None and 
+                    find_root_parent(issue_data.get('parent_id'), all_issues_dict) == group_id and
+                    issue_id != group_id  # 부모 이슈 자체는 제외
+                ]
+            
+            # print(f"[ParentChildOffsetPaginator] Group {group_id}: found {len(group_issue_ids)} candidate issues")
+            
+            # 필터링된 이슈들과 교집합 구하기
+            filtered_group_issue_ids = [
+                issue_id for issue_id in group_issue_ids 
+                if issue_id in filtered_issue_ids
+            ]
+            
+            # print(f"[ParentChildOffsetPaginator] Group {group_id}: {len(filtered_group_issue_ids)} issues after filtering")
+            
+            # 해당 그룹의 이슈들을 쿼리셋으로 필터링
+            if filtered_group_issue_ids:
+                group_queryset = self.queryset.filter(id__in=filtered_group_issue_ids)
+            else:
+                group_queryset = self.queryset.none()
+            
+            # 정렬 적용
+            group_queryset = group_queryset.order_by(
+                    (
+                        F(*self.key).desc(nulls_last=True)
+                        if self.desc
+                        else F(*self.key).asc(nulls_last=True)
+                    ),
+                    "-created_at",
+                )
+            
+            # 그룹 전체 이슈 수 저장 (실제 필터링된 결과 기준)
+            group_total_count = group_queryset.count()
+            group_issue_counts[group_id] = group_total_count
+            
+            # 디버깅: 그룹별 이슈 수 로그
+            # print(f"[ParentChildOffsetPaginator] Group {group_id}: {group_total_count} total issues (after filtering)")
+            # print(f"[ParentChildOffsetPaginator] Group {group_id}: found {len(group_issue_ids)} issue IDs, but {group_total_count} after queryset filtering")
+            
+            # 그룹별 페이지 정보 확인
+            current_page = 1  # 기본값
+            if self.group_pages and group_id in self.group_pages:
+                # 여러 그룹 더보기: parent_pages에서 해당 그룹의 페이지 정보 사용
+                current_page = self.group_pages[group_id]
+                # print(f"[ParentChildOffsetPaginator] Group {group_id}: using page {current_page} from parent_pages")
+            elif self.parent_id is not None and group_id == self.parent_id:
+                # 단일 그룹 더보기: 페이지 2로 설정 (하위 호환성)
+                current_page = 2
+                # print(f"[ParentChildOffsetPaginator] Group {group_id}: using page 2 from parent_id")
+            
+            # 페이지에 따른 아이템 수 계산
+            items_to_show = self.items_per_group * current_page
+            items_to_fetch = items_to_show + 1  # has_more 체크용
+            
+            group_issues = list(group_queryset[:items_to_fetch])
+            # print(f"[ParentChildOffsetPaginator] Group {group_id}: page {current_page}, fetched {len(group_issues)} issues (showing {items_to_show})")
+            
+            # has_more 체크
+            has_more = len(group_issues) > items_to_show
+            actual_items = group_issues[:items_to_show]
+            
+            group_has_more[group_id] = has_more
+            
+            # print(f"[ParentChildOffsetPaginator] Group {group_id}: has_more = {has_more}")
+            
+            # 각 이슈에 그룹 정보 추가 (나중에 그룹화할 때 사용)
+            for issue in actual_items:
+                issue._group_id = group_id
+                issue._has_more = has_more
+                issue._group_total = group_total_count
+                all_group_issues.append(issue)
+        
+        # 전체 이슈 수 계산
+        total_issues = sum(group_issue_counts.values())
+        
+        # 그룹별 has_more 정보를 전역적으로 저장
+        self._group_has_more = group_has_more
+        self._group_issue_counts = group_issue_counts
+        
+        # cursor 설정 (그룹 기반이므로 단순화)
+        next_cursor = Cursor(limit, page + 1, False, False)  # 그룹화에서는 단순한 페이지네이션
+        prev_cursor = Cursor(limit, page - 1, True, page > 0)
+
+        return CursorResult(
+            results=all_group_issues,
+            next=next_cursor,
+            prev=prev_cursor,
+            hits=total_issues,
+            max_hits=1,  # 그룹화에서는 페이지가 1개
+        )
+
+    def process_results(self, results):
+        # parent_child 그룹화를 위한 처리
+        from plane.app.serializers import IssueSerializer
+        
+        # print(f"[ParentChildOffsetPaginator] process_results: received {len(results)} results")
+        
+        # 결과가 이미 직렬화된 딕셔너리인지 확인
+        if isinstance(results, list) and len(results) > 0 and isinstance(results[0], dict):
+            # 이미 직렬화된 결과
+            serialized_data = results
+            # 직렬화된 데이터에서 그룹 정보 추출 (Django 모델 속성이 없으므로 parent_child 값 사용)
+            grouped_results = {}
+            for result in serialized_data:
+                parent_child_value = result.get("parent_child", "None")
+                if parent_child_value not in grouped_results:
+                    grouped_results[parent_child_value] = {
+                        "results": [],
+                        "total_results": 0,
+                        "has_more": False,
+                    }
+                grouped_results[parent_child_value]["results"].append(result)
+            
+            # total_results는 각 그룹의 실제 이슈 수로 설정 (별도 계산 필요)
+            for group_id in grouped_results:
+                grouped_results[group_id]["total_results"] = len(grouped_results[group_id]["results"])
+                # print(f"[ParentChildOffsetPaginator] Serialized data - Group {group_id}: {len(grouped_results[group_id]['results'])} results")
+                
+        else:
+            # Django 모델 인스턴스들을 직렬화
+            serializer = IssueSerializer(results, many=True)
+            serialized_data = serializer.data
+            
+            # print(f"[ParentChildOffsetPaginator] Serialized {len(results)} Django instances to {len(serialized_data)} data items")
+            
+            # 그룹화 수행 (Django 모델 인스턴스의 추가 속성 사용)
+            grouped_results = {}
+            
+            for i, result in enumerate(serialized_data):
+                # Django 모델 인스턴스에서 그룹 정보 가져오기
+                if i < len(results):
+                    django_instance = results[i]
+                    group_id = getattr(django_instance, '_group_id', 'None')
+                    has_more = getattr(django_instance, '_has_more', False)
+                    group_total = getattr(django_instance, '_group_total', 0)
+                    
+                    # print(f"[ParentChildOffsetPaginator] Issue {i}: {result.get('name', 'Unknown')} -> Group {group_id}")
+                else:
+                    # fallback: parent_child 값 사용
+                    group_id = result.get("parent_child", "None")
+                    has_more = False
+                    group_total = 0
+                    # print(f"[ParentChildOffsetPaginator] Issue {i}: {result.get('name', 'Unknown')} -> Group {group_id} (fallback)")
+                
+                if group_id not in grouped_results:
+                    grouped_results[group_id] = {
+                        "results": [],
+                        "total_results": group_total,
+                        "has_more": has_more,
+                    }
+                
+                # parent_child 값을 결과에 추가
+                result["parent_child"] = group_id
+                grouped_results[group_id]["results"].append(result)
+        
+        # get_result에서 저장한 그룹별 정보 사용
+        if hasattr(self, '_group_has_more') and hasattr(self, '_group_issue_counts'):
+            for group_id in grouped_results:
+                grouped_results[group_id]["has_more"] = self._group_has_more.get(group_id, False)
+                grouped_results[group_id]["total_results"] = self._group_issue_counts.get(group_id, 0)
+                # print(f"[ParentChildOffsetPaginator] Final - Group {group_id}: {len(grouped_results[group_id]['results'])} results, total_results: {grouped_results[group_id]['total_results']}, has_more: {grouped_results[group_id]['has_more']}")
+        
+        # 모든 예상 그룹이 결과에 포함되도록 보장
+        # 더보기 요청 시에는 빈 그룹을 생성하지 않고, 기존 그룹만 유지
+        for group in self.group_by_fields:
+            group_id = group.get('id', 'None')
+            if group_id not in grouped_results:
+                # 더보기 요청인 경우
+                if self.parent_id is not None:
+                    # 더보기 요청에서 해당 그룹에 데이터가 없다면 빈 그룹을 생성하지 않음
+                    # 대신 기존 상태를 유지하기 위해 전체 이슈 수 정보만 포함한 빈 그룹 생성
+                    total_results = self._group_issue_counts.get(group_id, 0) if hasattr(self, '_group_issue_counts') else 0
+                    has_more = self._group_has_more.get(group_id, False) if hasattr(self, '_group_has_more') else False
+                    
+                    # 데이터가 실제로 있는 그룹이어야 빈 그룹 생성 (완전히 비어있는 그룹은 제외)
+                    if total_results > 0:
+                        grouped_results[group_id] = {
+                            "results": [],
+                            "total_results": total_results,
+                            "has_more": has_more,
+                        }
+                        # print(f"[ParentChildOffsetPaginator] Empty group with data {group_id}: total_results: {total_results}, has_more: {has_more}")
+                else:
+                    # 초기 요청인 경우: 빈 그룹도 표시
+                    grouped_results[group_id] = {
+                        "results": [],
+                        "total_results": self._group_issue_counts.get(group_id, 0) if hasattr(self, '_group_issue_counts') else 0,
+                        "has_more": self._group_has_more.get(group_id, False) if hasattr(self, '_group_has_more') else False,
+                    }
+                    # print(f"[ParentChildOffsetPaginator] Initial empty group {group_id}: total_results: {grouped_results[group_id]['total_results']}, has_more: {grouped_results[group_id]['has_more']}")
+        
+        return grouped_results
+
+
 class GroupedOffsetPaginator(OffsetPaginator):
     # Field mappers - list m2m fields here
     FIELD_MAPPER = {
@@ -241,7 +557,7 @@ class GroupedOffsetPaginator(OffsetPaginator):
         if offset < 0:
             raise BadPaginationError("Pagination offset cannot be negative")
 
-        # parent_child 그룹화인 경우 특별 처리
+        # parent_child 그룹화인 경우 ParentChildOffsetPaginator 사용 권장
         if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
             # parent_child는 Python 레벨에서만 처리 가능하므로 일반 페이지네이션 사용
             if self.key:
@@ -268,9 +584,10 @@ class GroupedOffsetPaginator(OffsetPaginator):
             # Process the results
             results = results[:limit]
 
+            # parent_child 그룹화의 경우 on_results는 BasePaginator.paginate()에서 처리하도록 함
             # Process the results
-            if self.on_results:
-                results = self.on_results(results)
+            # if self.on_results:
+            #     results = self.on_results(results)
 
             # Count the queryset
             count = queryset.count()
@@ -368,16 +685,24 @@ class GroupedOffsetPaginator(OffsetPaginator):
     def __get_field_dict(self):
         # Create a field dictionary
         if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
-            # parent_child와 top_level_only 그룹화는 동적으로 그룹이 생성되므로 빈 딕셔너리 반환
-            return {}
-        total_group_dict = self.__get_total_dict()
-        return {
-            str(field): {
-                "results": [],
-                "total_results": total_group_dict.get(str(field), 0),
+            # parent_child와 top_level_only 그룹화는 동적으로 그룹이 생성되므로
+            # group_by_fields를 기반으로 딕셔너리 생성
+            return {
+                str(field.get('id', field) if isinstance(field, dict) else field): {
+                    "results": [],
+                    "total_results": 0,
+                }
+                for field in self.group_by_fields
             }
-            for field in self.group_by_fields
-        }
+        else:
+            total_group_dict = self.__get_total_dict()
+            return {
+                str(field): {
+                    "results": [],
+                    "total_results": total_group_dict.get(str(field), 0),
+                }
+                for field in self.group_by_fields
+            }
 
     def __result_already_added(self, result, group):
         # Check if the result is already added then add it
@@ -667,24 +992,25 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
 
     def __get_field_dict(self):
         # Create a field dictionary
-        total_group_dict, total_sub_group_dict = self.__get_total_dict()
-
-        # Create a dictionary of group and sub group
-        return {
-            str(group): {
-                "results": {
-                    str(sub_group): {
-                        "results": [],
-                        "total_results": total_sub_group_dict.get(str(group)).get(
-                            str(sub_group), 0
-                        ),
-                    }
-                    for sub_group in total_sub_group_dict.get(str(group), [])
-                },
-                "total_results": total_group_dict.get(str(group), 0),
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
+            # parent_child와 top_level_only 그룹화는 동적으로 그룹이 생성되므로
+            # group_by_fields를 기반으로 딕셔너리 생성
+            return {
+                str(field.get('id', field) if isinstance(field, dict) else field): {
+                    "results": [],
+                    "total_results": 0,
+                }
+                for field in self.group_by_fields
             }
-            for group in self.group_by_fields
-        }
+        else:
+            total_group_dict = self.__get_total_dict()
+            return {
+                str(field): {
+                    "results": [],
+                    "total_results": total_group_dict.get(str(field), 0),
+                }
+                for field in self.group_by_fields
+            }
 
     def __query_multi_grouper(self, results):
         # Multi grouper
@@ -739,16 +1065,27 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
         return processed_results
 
     def __query_grouper(self, results):
-        # Single grouper
-        processed_results = self.__get_field_dict()
-        for result in results:
-            group_value = str(result.get(self.group_by_field_name))
-            sub_group_value = str(result.get(self.sub_group_by_field_name))
-            processed_results[group_value]["results"][sub_group_value][
-                "results"
-            ].append(result)
-
-        return processed_results
+        # Grouping for values that are not m2m
+        if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
+            # parent_child와 top_level_only 그룹화는 Python 레벨에서 동적으로 처리
+            processed_results = {}
+            for result in results:
+                group_value = str(result.get(self.group_by_field_name, "None"))
+                if group_value not in processed_results:
+                    processed_results[group_value] = {
+                        "results": [],
+                        "total_results": 0,
+                    }
+                processed_results[group_value]["results"].append(result)
+                processed_results[group_value]["total_results"] += 1
+            return processed_results
+        else:
+            processed_results = self.__get_field_dict()
+            for result in results:
+                group_value = str(result.get(self.group_by_field_name))
+                if group_value in processed_results:
+                    processed_results[str(group_value)]["results"].append(result)
+            return processed_results
 
     def process_results(self, results):
         if results:
@@ -821,6 +1158,12 @@ class BasePaginator:
                 paginator_kwargs["group_by_field_name"] = group_by_field_name
                 paginator_kwargs["group_by_fields"] = group_by_fields
                 paginator_kwargs["count_filter"] = count_filter
+
+                # parent_child 그룹화인 경우 ParentChildOffsetPaginator 사용 (강제)
+                if group_by_field_name == "parent_child":
+                    paginator_cls = ParentChildOffsetPaginator
+                    # per_page 값을 items_per_group으로 전달
+                    paginator_kwargs["items_per_group"] = per_page
 
                 if sub_group_by_field_name:
                     paginator_kwargs["sub_group_by_field_name"] = (

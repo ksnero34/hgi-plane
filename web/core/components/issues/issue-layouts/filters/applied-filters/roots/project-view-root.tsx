@@ -151,6 +151,8 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
           states={projectStates}
           customFields={customFields}
           disableEditing={isLocked}
+          workspaceSlug={workspaceSlug?.toString()}
+          projectId={projectId?.toString()}
         />
       </Header.LeftItem>
       <Header.RightItem>

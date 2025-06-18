@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { TCustomField, TCustomFieldValue } from "@plane/types";
 
 // hooks
-import { useProject } from "@/hooks/store";
+import { useProject, useMember } from "@/hooks/store";
 
 type Props = {
   customFields: TCustomField[];
@@ -17,9 +17,12 @@ type Props = {
 
 export const IssueDetailCustomFields: React.FC<Props> = observer((props) => {
   const { customFields, customFieldValues } = props;
-  const { workspaceSlug } = useParams();
+  const { workspaceSlug, projectId } = useParams();
 
   const { getProjectById } = useProject();
+  const {
+    project: { getProjectMemberDetails },
+  } = useMember();
 
   if (!customFields || customFields.length === 0) return null;
 
@@ -38,10 +41,27 @@ export const IssueDetailCustomFields: React.FC<Props> = observer((props) => {
         return Array.isArray(fieldValue.value) ? fieldValue.value.join(", ") : "-";
 
       case "project_member":
-        return fieldValue.value ? "TODO: Show member name" : "-";
+        if (fieldValue.value && projectId) {
+          const memberDetails = getProjectMemberDetails(fieldValue.value, projectId as string);
+          return memberDetails?.member?.display_name || 
+                 memberDetails?.member?.first_name || 
+                 memberDetails?.member?.email || 
+                 fieldValue.value;
+        }
+        return "-";
 
       case "project_members":
-        return Array.isArray(fieldValue.value) ? "TODO: Show member names" : "-";
+        if (Array.isArray(fieldValue.value) && fieldValue.value.length > 0 && projectId) {
+          const memberNames = fieldValue.value.map(memberId => {
+            const memberDetails = getProjectMemberDetails(memberId, projectId as string);
+            return memberDetails?.member?.display_name || 
+                   memberDetails?.member?.first_name || 
+                   memberDetails?.member?.email || 
+                   memberId;
+          });
+          return memberNames.join(", ");
+        }
+        return "-";
 
       default:
         return "-";

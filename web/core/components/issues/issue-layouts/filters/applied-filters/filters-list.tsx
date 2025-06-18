@@ -60,6 +60,13 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
   const { allowPermissions } = useUserPermissions();
   const { t } = useTranslation();
 
+  // 디버깅을 위한 콘솔로그 추가
+  // console.log("AppliedFiltersList - Component rendered");
+  // console.log("AppliedFiltersList - appliedFilters:", appliedFilters);
+  // console.log("AppliedFiltersList - customFields:", customFields?.length);
+  // console.log("AppliedFiltersList - workspaceSlug:", workspaceSlug);
+  // console.log("AppliedFiltersList - projectId:", projectId);
+
   if (!appliedFilters) return null;
 
   if (Object.keys(appliedFilters).length === 0) return null;
@@ -103,7 +110,12 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
 
         // 커스텀 필드의 경우 새로운 헬퍼 함수 사용
         if (filterKey === "custom_fields" && customFields) {
+          // console.log("AppliedFiltersList - Processing custom_fields");
+          // console.log("AppliedFiltersList - custom_fields value:", value);
+          // console.log("AppliedFiltersList - customFields available:", customFields.length);
+          
           const customFieldsForRender = prepareCustomFieldFiltersForRender(value, customFields);
+          // console.log("AppliedFiltersList - customFieldsForRender:", customFieldsForRender);
           
           return customFieldsForRender.map(({ fieldId, field, fieldValues }) => (
             <Tag key={`${filterKey}-${fieldId}`}>
@@ -114,6 +126,7 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
                   customFields={customFields}
                   editable={isEditingAllowed ?? false}
                   handleRemove={(fieldId, val) => {
+                    // console.log("AppliedFiltersList - handleRemove called:", fieldId, val);
                     const newValue = removeCustomFieldFilterValue(
                       typeof appliedFilters.custom_fields === 'string' 
                         ? appliedFilters.custom_fields 

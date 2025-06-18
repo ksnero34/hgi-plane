@@ -25,6 +25,16 @@ export const CoreEditorProps = (props: TCoreEditorProps): EditorProps => {
             return true;
           }
         }
+        
+        // 에디터 내에서 화살표 키 사용 시 이벤트 전파 방지
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+          // 이벤트가 에디터 내부에서 발생했는지 확인
+          const target = event.target as HTMLElement;
+          if (target?.closest(".tiptap") || target?.closest(".ProseMirror")) {
+            // 이벤트 전파를 중단하여 외부 리스너들이 반응하지 않도록 함
+            event.stopPropagation();
+          }
+        }
       },
     },
     transformPastedHTML(html) {

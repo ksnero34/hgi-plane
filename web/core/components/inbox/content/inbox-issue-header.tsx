@@ -34,6 +34,7 @@ import { CreateUpdateIssueModal, NameDescriptionUpdateStatus } from "@/component
 import { findHowManyDaysLeft } from "@/helpers/date-time.helper";
 import { EInboxIssueStatus } from "@/helpers/inbox.helper";
 import { generateWorkItemLink } from "@/helpers/issue.helper";
+import { isEditorFocused } from "@/helpers/editor.helper";
 // hooks
 import { useUser, useProjectInbox, useProject, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -184,8 +185,9 @@ export const InboxIssueActionsHeader: FC<TInboxIssueActionsHeader> = observer((p
   const handleInboxIssueNavigation = useCallback(
     (direction: "next" | "prev") => {
       if (!filteredInboxIssueIds || !currentInboxIssueId) return;
-      const activeElement = document.activeElement as HTMLElement;
-      if (activeElement && (activeElement.classList.contains("tiptap") || activeElement.id === "title-input")) return;
+      
+      if (isEditorFocused()) return;
+      
       const nextIssueIndex =
         direction === "next"
           ? (currentIssueIndex + 1) % filteredInboxIssueIds.length

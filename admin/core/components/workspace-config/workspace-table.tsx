@@ -135,13 +135,13 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
           excluded_user_groups: currentGroups // 현재 제외된 그룹 값도 함께 전송
         };
         
-        console.log("업데이트할 데이터:", workspaceToUpdate);
+        // console.log("업데이트할 데이터:", workspaceToUpdate);
         
         await handleEditWorkspace(workspaceToUpdate);
         
         // API 호출 성공 후 상태 업데이트
         setWorkspaceRoles((prev) => ({ ...prev, [workspaceId]: role }));
-        console.log("역할 변경 성공:", { workspaceId, newRole: role });
+        // console.log("역할 변경 성공:", { workspaceId, newRole: role });
       } else {
         // 기본 워크스페이스가 아닌 경우 로컬 상태만 업데이트
         setWorkspaceRoles((prev) => ({ ...prev, [workspaceId]: role }));
@@ -163,7 +163,7 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
         const currentRole = workspaceRoles[workspaceId] || 15;
         
         // 디버깅을 위한 로그 추가
-        console.log("제외 그룹 변경 시도:", { workspaceId, groups: JSON.stringify(groups), role: currentRole });
+        // console.log("제외 그룹 변경 시도:", { workspaceId, groups: JSON.stringify(groups), role: currentRole });
         
         // API 호출을 위한 데이터 준비
         const updateData = {
@@ -174,14 +174,14 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
           excluded_user_groups: groups
         } as IWorkspaceConfig; // IWorkspaceConfig로 타입 단언
         
-        console.log("업데이트할 데이터:", JSON.stringify(updateData));
+        // console.log("업데이트할 데이터:", JSON.stringify(updateData));
         
         // API 호출
         await handleEditWorkspace(updateData);
         
         // API 호출 성공 후 상태 업데이트
         setExcludedUserGroups((prev) => ({ ...prev, [workspaceId]: groups }));
-        console.log("제외 그룹 변경 성공:", { workspaceId, groups: JSON.stringify(groups) });
+        // console.log("제외 그룹 변경 성공:", { workspaceId, groups: JSON.stringify(groups) });
       }
     } catch (error) {
       console.error("Error updating excluded user groups:", error);
@@ -240,7 +240,7 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
 
   // 기본 워크스페이스 설정 변경 처리
   const handleDefaultChange = async (checked: boolean, workspace: IWorkspaceConfig) => {
-    console.log("기본 워크스페이스 설정 변경:", checked, workspace);
+    // console.log("기본 워크스페이스 설정 변경:", checked, workspace);
     
     try {
       setSelectedDefault((workspace as any).id || "");
@@ -250,15 +250,15 @@ export const WorkspaceTable: FC<IWorkspaceTableProps> = observer((props) => {
         await handleWorkspaceChange(workspace);
       } else {
         // 기본 워크스페이스에서 제거 (삭제)
-        console.log("워크스페이스 삭제 시도:", workspace);
+        // console.log("워크스페이스 삭제 시도:", workspace);
         
         if (workspace.config_id) {
-          console.log("삭제할 config_id:", workspace.config_id);
+          // console.log("삭제할 config_id:", workspace.config_id);
           try {
             await handleDeleteWorkspace(workspace.config_id);
-            console.log("워크스페이스 설정 삭제 성공");
+            // console.log("워크스페이스 설정 삭제 성공");
           } catch (error) {
-            console.error("워크스페이스 설정 삭제 실패:", error);
+            // console.error("워크스페이스 설정 삭제 실패:", error);
             alert("설정 삭제 중 오류가 발생했습니다. 다시 시도해주세요.");
             
             // 삭제 실패 시 토글 상태 원복

@@ -3,8 +3,12 @@
 import { observer } from "mobx-react";
 import { X, Calendar, Tag as TagIcon, User, Users, MessageSquare } from "lucide-react";
 import { TCustomField } from "@plane/types";
+// ui
+import { Avatar } from "@plane/ui";
 // hooks
 import { useMember } from "@/hooks/store";
+// helpers
+import { getFileURL } from "@/helpers/file.helper";
 
 type Props = {
   appliedFilters: { [field_id: string]: string[] };
@@ -72,15 +76,46 @@ export const AppliedCustomFieldFilters: React.FC<Props> = observer((props) => {
     }
     
     // project_member나 project_members의 경우 ID를 이름으로 변환
-    if ((field.field_type === "project_member" || field.field_type === "project_members") && projectId) {
-      const memberDetails = getProjectMemberDetails(value, projectId);
-      if (memberDetails?.member?.display_name) {
-        return memberDetails.member.display_name;
+    if ((field.field_type === "project_member" || field.field_type === "project_members")) {
+      // projectId가 없으면 UUID 축약 형태로 반환
+      if (!projectId) {
+        return `${value.substring(0, 8)}...`;
       }
-      return value; // 멤버 정보를 찾을 수 없으면 ID 그대로 표시
+      
+      // 프로젝트 멤버에서 찾기
+      const projectMemberDetails = getProjectMemberDetails(value, projectId);
+      if (projectMemberDetails?.member?.display_name) {
+        return projectMemberDetails.member.display_name;
+      }
+      if (projectMemberDetails?.member?.first_name) {
+        return projectMemberDetails.member.first_name;
+      }
+      if (projectMemberDetails?.member?.email) {
+        return projectMemberDetails.member.email;
+      }
+      
+      // 찾지 못한 경우 UUID를 짧게 표시
+      return `${value.substring(0, 8)}...`;
     }
     
     return value;
+  };
+
+  // 멤버 아바타를 렌더링하는 함수
+  const renderMemberAvatar = (value: string, field: TCustomField) => {
+    if (!projectId) return null;
+    
+    const projectMemberDetails = getProjectMemberDetails(value, projectId);
+    if (!projectMemberDetails?.member) return null;
+    
+    return (
+      <Avatar
+        name={projectMemberDetails.member.display_name || projectMemberDetails.member.first_name || "Unknown"}
+        src={getFileURL(projectMemberDetails.member.avatar_url ?? "")}
+        showTooltip={false}
+        size="sm"
+      />
+    );
   };
 
   return (
@@ -96,7 +131,12 @@ export const AppliedCustomFieldFilters: React.FC<Props> = observer((props) => {
             key={`${fieldId}-${value}`}
             className="flex items-center gap-1 rounded bg-custom-background-80 px-1 py-0.5 text-xs"
           >
-            {getFieldIcon(field.field_type)}
+            {/* 멤버 필드인 경우 아바타로 표시, 아니면 아이콘 표시 */}
+            {(field.field_type === "project_member" || field.field_type === "project_members") ? (
+              renderMemberAvatar(value, field) || getFieldIcon(field.field_type)
+            ) : (
+              getFieldIcon(field.field_type)
+            )}
             <span className="text-custom-text-200">
               {formatValue(value, field)}
             </span>

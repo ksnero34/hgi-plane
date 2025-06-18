@@ -101,15 +101,31 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
       if (!field) return;
       
       const fieldName = field.name;
-      if (values.length === 1) {
-        details.push(`${fieldName}: ${values[0]}`);
+      
+      // project_member나 project_members 필드인 경우 UUID를 멤버 이름으로 변환
+      if (field.field_type === "project_member" || field.field_type === "project_members") {
+        if (values.length === 1) {
+          const memberDetails = getProjectMemberDetails(values[0], projectId);
+          const displayName = memberDetails?.member?.display_name || 
+                             memberDetails?.member?.first_name || 
+                             memberDetails?.member?.email ||
+                             `${values[0].substring(0, 8)}...`;
+          details.push(`${fieldName}: ${displayName}`);
+        } else {
+          details.push(`${fieldName}: ${values.length}개 선택`);
+        }
       } else {
-        details.push(`${fieldName}: ${values.length}개 선택`);
+        // 다른 필드 타입의 경우 기존 로직 유지
+        if (values.length === 1) {
+          details.push(`${fieldName}: ${values[0]}`);
+        } else {
+          details.push(`${fieldName}: ${values.length}개 선택`);
+        }
       }
     });
     
     return details.length > 0 ? ` - ${details.join(", ")}` : "";
-  }, [appliedFilters, appliedFiltersCount, customFields]);
+  }, [appliedFilters, appliedFiltersCount, customFields, getProjectMemberDetails, projectId]);
 
   // 커스텀 필드가 없어도 헤더는 표시
   const shouldShowHeader = customFields && customFields.length > 0;

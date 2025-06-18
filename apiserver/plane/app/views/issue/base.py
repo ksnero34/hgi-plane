@@ -79,7 +79,7 @@ from plane.utils.grouper import (
 )
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
-from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
+from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator, ParentChildOffsetPaginator
 from .. import BaseAPIView, BaseViewSet
 from plane.utils.timezone_converter import user_timezone_converter
 from plane.bgtasks.recent_visited_task import recent_visited_task
@@ -735,6 +735,24 @@ class IssueViewSet(BaseViewSet):
         # Group by
         group_by = request.GET.get("group_by", False)
         sub_group_by = request.GET.get("sub_group_by", False)
+        
+        # parent_id가 있는 경우 특별 처리 (더보기 요청)
+        parent_id = request.GET.get("parent_id", None)
+        # 여러 그룹의 더보기를 지원하기 위해 parent_pages 파라미터 추가
+        parent_pages = request.GET.get("parent_pages", None)
+        
+        if parent_id is not None or parent_pages is not None:
+            # parent_child 그룹화인 경우에는 group_by를 유지하고 필터링은 paginator에서 처리
+            if not group_by:
+                group_by = "parent_child"
+            
+            # parent_child 그룹화가 아닌 경우에만 parent_id 필터 적용
+            if group_by != "parent_child":
+                if parent_id == "None":
+                    issue_queryset = issue_queryset.filter(parent_id__isnull=True)
+                else:
+                    # 특정 부모 ID의 하위 이슈들
+                    issue_queryset = issue_queryset.filter(parent_id=parent_id)
 
         # issue queryset
         issue_queryset = issue_queryset_grouper(
@@ -821,35 +839,77 @@ class IssueViewSet(BaseViewSet):
                     )
             else:
                 # Group paginate
-                # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
-                # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경
-                pagination_order_by = "id" if order_by_param == "parent_child" else order_by_param
-                
-                return self.paginate(
-                    request=request,
-                    order_by=pagination_order_by,
-                    queryset=issue_queryset,
-                    on_results=lambda issues: issue_on_results(
-                        group_by=group_by, issues=issues, sub_group_by=sub_group_by
-                    ),
-                    paginator_cls=GroupedOffsetPaginator,
-                    group_by_fields=issue_group_values(
-                        field=group_by,
-                        slug=slug,
-                        project_id=project_id,
-                        filters=filters,
-                    ),
-                    group_by_field_name=group_by,
-                    count_filter=Q(
-                        Q(issue_intake__status=1)
-                        | Q(issue_intake__status=-1)
-                        | Q(issue_intake__status=2)
-                        | Q(issue_intake__isnull=True),
-                        archived_at__isnull=True,
-                        is_draft=False,
-                    ),
-                    max_per_page=10000,
-                )
+                # parent_child 그룹화는 ParentChildOffsetPaginator 사용
+                if group_by == "parent_child":
+                    # per_page 값을 가져와서 items_per_group으로 사용
+                    try:
+                        per_page = int(request.GET.get("per_page", 100))
+                    except ValueError:
+                        per_page = 100
+                    
+                    # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
+                    # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경
+                    pagination_order_by = "id" if order_by_param == "parent_child" else order_by_param
+                    
+                    return self.paginate(
+                        request=request,
+                        order_by=pagination_order_by,
+                        queryset=issue_queryset,
+                        on_results=lambda issues: issue_on_results(
+                            group_by=group_by, issues=issues, sub_group_by=sub_group_by
+                        ),
+                        paginator_cls=ParentChildOffsetPaginator,
+                        group_by_field_name=group_by,
+                        group_by_fields=issue_group_values(
+                            field=group_by,
+                            slug=slug,
+                            project_id=project_id,
+                            filters=filters,
+                        ),
+                        count_filter=Q(
+                            Q(issue_intake__status=1)
+                            | Q(issue_intake__status=-1)
+                            | Q(issue_intake__status=2)
+                            | Q(issue_intake__isnull=True),
+                            archived_at__isnull=True,
+                            is_draft=False,
+                        ),
+                        parent_id=parent_id,  # 더보기 요청을 위한 parent_id 전달
+                        parent_pages=parent_pages,  # 여러 그룹 더보기를 위한 parent_pages 전달
+                        items_per_group=per_page,  # per_page 값을 items_per_group으로 전달
+                        max_per_page=10000,
+                    )
+                else:
+                    # 일반 그룹화는 GroupedOffsetPaginator 사용
+                    # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
+                    # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경
+                    pagination_order_by = "id" if order_by_param == "parent_child" else order_by_param
+                    
+                    return self.paginate(
+                        request=request,
+                        order_by=pagination_order_by,
+                        queryset=issue_queryset,
+                        on_results=lambda issues: issue_on_results(
+                            group_by=group_by, issues=issues, sub_group_by=sub_group_by
+                        ),
+                        paginator_cls=GroupedOffsetPaginator,
+                        group_by_fields=issue_group_values(
+                            field=group_by,
+                            slug=slug,
+                            project_id=project_id,
+                            filters=filters,
+                        ),
+                        group_by_field_name=group_by,
+                        count_filter=Q(
+                            Q(issue_intake__status=1)
+                            | Q(issue_intake__status=-1)
+                            | Q(issue_intake__status=2)
+                            | Q(issue_intake__isnull=True),
+                            archived_at__isnull=True,
+                            is_draft=False,
+                        ),
+                        max_per_page=10000,
+                    )
         else:
             # parent_child 정렬 옵션은 pagination에서 직접 사용할 수 없으므로
             # paginate 메서드 호출 전에 안전한 기본값('id')으로 변경

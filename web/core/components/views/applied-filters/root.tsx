@@ -45,11 +45,21 @@ export const ViewAppliedFiltersList: React.FC<Props> = observer((props) => {
   } = props;
   const { t } = useTranslation();
 
+  // 디버깅을 위한 콘솔로그 추가
+  // console.log("ViewAppliedFiltersList - Component rendered");
+  // console.log("ViewAppliedFiltersList - appliedFilters:", appliedFilters);
+  // console.log("ViewAppliedFiltersList - customFields:", customFields?.length);
+  // console.log("ViewAppliedFiltersList - isProjectLevel:", isProjectLevel);
+  // console.log("ViewAppliedFiltersList - projectId:", projectId);
+  // console.log("ViewAppliedFiltersList - viewProjectId:", viewProjectId);
+
   if (!appliedFilters) return null;
   if (Object.keys(appliedFilters).length === 0) return null;
 
   const isEditingAllowed = alwaysAllowEditing;
   const effectiveProjectId = isProjectLevel ? projectId : viewProjectId;
+
+  // console.log("ViewAppliedFiltersList - effectiveProjectId:", effectiveProjectId);
 
   // 필터 키에 따라 한글 이름을 반환하는 함수
   const getFilterKeyLabel = (key: keyof TViewFilterProps) => {

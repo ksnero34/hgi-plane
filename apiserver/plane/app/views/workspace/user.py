@@ -93,13 +93,47 @@ class WorkspaceUserProfileIssuesEndpoint(BaseAPIView):
 
     def get(self, request, slug, user_id):
         filters = issue_filters(request.query_params, "GET")
+        
+        # Check if specific assignees filter is requested
+        assignees_param = request.GET.get("assignees")
+        
+        # Remove assignees filter to avoid duplicate filtering
+        # We'll handle assignees filtering manually based on the request
+        if 'assignees__in' in filters:
+            del filters['assignees__in']
+        if 'assignees__isnull' in filters:
+            del filters['assignees__isnull']
+        if 'issue_assignee__deleted_at__isnull' in filters:
+            del filters['issue_assignee__deleted_at__isnull']
 
         order_by_param = request.GET.get("order_by", "-created_at")
-        issue_queryset = (
-            Issue.issue_objects.filter(
+        
+        # Build the main filter condition based on whether specific assignees are requested
+        if assignees_param and assignees_param == user_id:
+            # If assignees parameter matches the user_id, filter only by assignees
+            main_filter = Q(assignees__in=[user_id]) & Q(issue_assignee__deleted_at__isnull=True)
+        elif assignees_param and assignees_param != user_id:
+            # If assignees parameter is different from user_id, filter by the specific assignee
+            # but still within the context of user_id (created_by, subscribed, or assigned)
+            main_filter = (
+                Q(assignees__in=[assignees_param]) & Q(issue_assignee__deleted_at__isnull=True) &
+                (
+                    Q(assignees__in=[user_id])
+                    | Q(created_by_id=user_id)
+                    | Q(issue_subscribers__subscriber_id=user_id)
+                )
+            )
+        else:
+            # If no assignees parameter, use the original OR condition
+            main_filter = (
                 Q(assignees__in=[user_id])
                 | Q(created_by_id=user_id)
-                | Q(issue_subscribers__subscriber_id=user_id),
+                | Q(issue_subscribers__subscriber_id=user_id)
+            )
+        
+        issue_queryset = (
+            Issue.issue_objects.filter(
+                main_filter,
                 workspace__slug=slug,
                 project__project_projectmember__member=request.user,
                 project__project_projectmember__is_active=True,
@@ -135,7 +169,6 @@ class WorkspaceUserProfileIssuesEndpoint(BaseAPIView):
                 .annotate(count=Func(F("id"), function="Count"))
                 .values("count")
             )
-            .order_by("created_at")
         ).distinct()
 
         # Issue queryset
