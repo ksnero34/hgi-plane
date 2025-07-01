@@ -31,10 +31,14 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
   const {
     issue: { getIssueById },
   } = useIssueDetail();
-  const { customFields, isLoading } = useCustomField(projectId);
   
   // derived values
   const issue = getIssueById(issueId);
+  
+  // 이슈에서 실제 프로젝트 ID 가져오기 (워크스페이스 레벨에서도 작동)
+  const actualProjectId = issue?.project_id || projectId;
+  
+  const { customFields, isLoading } = useCustomField(actualProjectId);
 
   // 특정 필드의 현재 값 가져오기
   const getFieldValue = (fieldId: string) => {
@@ -43,36 +47,26 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
 
   // 필드 값 업데이트
   const updateFieldValue = (fieldId: string, value: any) => {
-    console.log("[CustomFieldSelect] Updating field:", fieldId, "with value:", value);
-    
-    // 기존 커스텀 필드 값들을 가져오되, 변경할 필드는 제외
-    const existingValues = (issue?.custom_field_values || []).filter(cfv => cfv.custom_field_id !== fieldId);
-    
-    // 새 값이 유효한 경우에만 추가
-    const updatedValues = [...existingValues];
-    
-    if (value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
-      const field = customFields.find(f => f.id === fieldId);
-      if (field) {
-        const newFieldValue = {
-          custom_field_id: fieldId,
-          value: value,
-          field_name: field.name,
-          field_type: field.field_type,
-          // 강제 리렌더링을 위한 타임스탬프
-          _updated_at: Date.now()
-        };
-        updatedValues.push(newFieldValue);
-      }
+    const field = customFields.find(f => f.id === fieldId);
+    if (!field) {
+      console.error("[IssueCustomFieldSelect] Field not found:", fieldId);
+      return;
     }
-    
-    console.log("[CustomFieldSelect] Sending field update:", updatedValues);
-    
-    // 모든 커스텀 필드 값 전송 (기존 값들 + 변경된 값)
-    // updated_at도 함께 업데이트하여 MobX 반응성 보장
-    issueOperations.update(workspaceSlug, projectId, issueId, {
-      custom_field_values: updatedValues,
-      updated_at: new Date().toISOString()
+
+    // 공통 유틸리티 함수 사용
+    const updatedValues = updateCustomFieldValueSafely(
+      issue?.custom_field_values || [],
+      fieldId,
+      value,
+      {
+        name: field.name,
+        field_type: field.field_type
+      }
+    );
+
+    // 이슈 업데이트 - 실제 프로젝트 ID 사용
+    issueOperations.update(workspaceSlug, actualProjectId, issueId, {
+      custom_field_values: updatedValues
     });
   };
 
@@ -176,7 +170,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
               const newValue = fieldValue === val ? null : val;
               updateFieldValue(field.id, newValue);
             }}
-            projectId={projectId}
+            projectId={actualProjectId}
             placeholder={`${field.name} 선택`}
             disabled={disabled}
             multiple={false}
@@ -196,7 +190,7 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
           <MemberDropdown
             value={fieldValue}
             onChange={(val: string[]) => updateFieldValue(field.id, val)}
-            projectId={projectId}
+            projectId={actualProjectId}
             placeholder={`${field.name} 선택`}
             disabled={disabled}
             multiple={true}
@@ -210,12 +204,35 @@ export const IssueCustomFieldSelect: React.FC<TIssueCustomFieldSelect> = observe
             showUserDetails={true}
           />
         );
+
+      default:
+        return <span className="text-sm text-custom-text-400">지원하지 않는 필드 타입</span>;
     }
   };
 
+  // 커스텀 필드가 없으면 아무것도 렌더링하지 않음
+  if (!customFields || customFields.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
-      {/* 커스텀 필드 목록 렌더링 */}
-    </div>
+    <>
+      {customFields.map((field) => {
+        const FieldIcon = getFieldIcon(field.field_type);
+        
+        return (
+          <div key={field.id} className="flex h-8 items-center gap-2">
+            <div className="flex w-2/5 flex-shrink-0 items-center gap-1 text-sm text-custom-text-300">
+              <FieldIcon className="h-4 w-4 flex-shrink-0" />
+              <span>
+                {field.name}
+                {field.is_required && <span className="text-red-500">*</span>}
+              </span>
+            </div>
+            <div className="w-3/5 flex-grow">{renderFieldInput(field)}</div>
+          </div>
+        );
+      })}
+    </>
   );
 });

@@ -40,6 +40,7 @@ RUN apk add --no-cache --virtual .build-deps \
 COPY manage.py manage.py
 COPY fix_issue_sequence.py fix_issue_sequence.py
 COPY fix_issue_creater_safe.py fix_issue_creater.py
+COPY restore_deleted_issues.py restore_deleted_issues.py
 COPY plane plane/
 COPY templates templates/
 COPY package.json package.json

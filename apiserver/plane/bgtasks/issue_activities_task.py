@@ -1757,6 +1757,478 @@ def handle_bulk_notify_activity(
     pass
 
 
+def create_imported_issue_activity(
+    requested_data,
+    current_instance,
+    issue_id,
+    project_id,
+    workspace_id,
+    actor_id,
+    issue_activities,
+    epoch,
+):
+    """CSV import로 생성된 이슈에 대한 Activity 생성"""
+    issue_activities.append(
+        IssueActivity(
+            issue_id=issue_id,
+            project_id=project_id,
+            workspace_id=workspace_id,
+            comment="imported the issue via CSV",
+            verb="created",
+            actor_id=actor_id,
+            epoch=epoch,
+        )
+    )
+
+
+def update_imported_issue_activity(
+    requested_data,
+    current_instance,
+    issue_id,
+    project_id,
+    workspace_id,
+    actor_id,
+    issue_activities,
+    epoch,
+):
+    """CSV import로 업데이트된 이슈에 대한 Activity 생성 - 각 필드별 변경사항 추적"""
+    
+    # 기존 update_issue_activity와 동일한 매퍼를 사용하되, 댓글에 "via CSV import" 추가
+    def track_name_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        if current_instance.get("name") != requested_data.get("name"):
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=current_instance.get("name"),
+                    new_value=requested_data.get("name"),
+                    field="name",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="updated the name via CSV import to",
+                    epoch=epoch,
+                )
+            )
+
+    def track_description_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        if current_instance.get("description_html") != requested_data.get("description_html"):
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=current_instance.get("description_html"),
+                    new_value=requested_data.get("description_html"),
+                    field="description",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="updated the description via CSV import to",
+                    epoch=epoch,
+                )
+            )
+
+    def track_priority_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        if current_instance.get("priority") != requested_data.get("priority"):
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=current_instance.get("priority"),
+                    new_value=requested_data.get("priority"),
+                    field="priority",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="updated the priority via CSV import to",
+                    epoch=epoch,
+                )
+            )
+
+    def track_state_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        if current_instance.get("state_id") != requested_data.get("state_id"):
+            new_state = State.objects.get(pk=requested_data.get("state_id", None))
+            old_state = State.objects.get(pk=current_instance.get("state_id", None))
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=old_state.name,
+                    new_value=new_state.name,
+                    field="state",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="updated the state via CSV import to",
+                    old_identifier=old_state.id,
+                    new_identifier=new_state.id,
+                    epoch=epoch,
+                )
+            )
+
+    def track_target_date_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        if current_instance.get("target_date") != requested_data.get("target_date"):
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=(
+                        current_instance.get("target_date")
+                        if current_instance.get("target_date") is not None
+                        else ""
+                    ),
+                    new_value=(
+                        requested_data.get("target_date")
+                        if requested_data.get("target_date") is not None
+                        else ""
+                    ),
+                    field="target_date",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="updated the target date via CSV import to",
+                    epoch=epoch,
+                )
+            )
+
+    def track_start_date_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        if current_instance.get("start_date") != requested_data.get("start_date"):
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=(
+                        current_instance.get("start_date")
+                        if current_instance.get("start_date") is not None
+                        else ""
+                    ),
+                    new_value=(
+                        requested_data.get("start_date")
+                        if requested_data.get("start_date") is not None
+                        else ""
+                    ),
+                    field="start_date",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="updated the start date via CSV import to",
+                    epoch=epoch,
+                )
+            )
+
+    def track_labels_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        requested_labels = set([str(lab) for lab in requested_data.get("label_ids", [])])
+        current_labels = set([str(lab) for lab in current_instance.get("label_ids", [])])
+
+        added_labels = requested_labels - current_labels
+        dropped_labels = current_labels - requested_labels
+
+        # Set of newly added labels
+        for added_label in added_labels:
+            # validate uuids
+            if not is_valid_uuid(added_label):
+                continue
+
+            label = Label.objects.get(pk=added_label)
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    verb="updated",
+                    field="labels",
+                    comment="added label via CSV import ",
+                    old_value="",
+                    new_value=label.name,
+                    new_identifier=label.id,
+                    old_identifier=None,
+                    epoch=epoch,
+                )
+            )
+
+        # Set of dropped labels
+        for dropped_label in dropped_labels:
+            # validate uuids
+            if not is_valid_uuid(dropped_label):
+                continue
+
+            label = Label.objects.get(pk=dropped_label)
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="updated",
+                    old_value=label.name,
+                    new_value="",
+                    field="labels",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment="removed label via CSV import ",
+                    old_identifier=label.id,
+                    new_identifier=None,
+                    epoch=epoch,
+                )
+            )
+
+    def track_assignees_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
+        requested_assignees = (
+            set([str(asg) for asg in requested_data.get("assignee_ids", [])])
+            if requested_data is not None
+            else set()
+        )
+        current_assignees = (
+            set([str(asg) for asg in current_instance.get("assignee_ids", [])])
+            if current_instance is not None
+            else set()
+        )
+
+        added_assignees = requested_assignees - current_assignees
+        dropped_assginees = current_assignees - requested_assignees
+
+        bulk_subscribers = []
+        for added_asignee in added_assignees:
+            # validate uuids
+            if not is_valid_uuid(added_asignee):
+                continue
+
+            assignee = User.objects.get(pk=added_asignee)
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="assigned",
+                    old_value="",
+                    new_value=assignee.display_name,
+                    field="assignees",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment=f"CSV import로 담당자 '{assignee.display_name}' 님을 지정했습니다.",
+                    new_identifier=assignee.id,
+                    old_identifier=None,
+                    epoch=epoch,
+                )
+            )
+            bulk_subscribers.append(
+                IssueSubscriber(
+                    subscriber_id=assignee.id,
+                    issue_id=issue_id,
+                    workspace_id=workspace_id,
+                    project_id=project_id,
+                    created_by_id=assignee.id,
+                    updated_by_id=assignee.id,
+                )
+            )
+
+        # Create assignees subscribers to the issue and ignore if already
+        IssueSubscriber.objects.bulk_create(
+            bulk_subscribers, batch_size=10, ignore_conflicts=True
+        )
+
+        for dropped_assignee in dropped_assginees:
+            # validate uuids
+            if not is_valid_uuid(dropped_assignee):
+                continue
+
+            assignee = User.objects.get(pk=dropped_assignee)
+            issue_activities.append(
+                IssueActivity(
+                    issue_id=issue_id,
+                    actor_id=actor_id,
+                    verb="unassigned",
+                    old_value=assignee.display_name,
+                    new_value="",
+                    field="assignees",
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    comment=f"CSV import로 담당자에서 '{assignee.display_name}' 님을 제외했습니다.",
+                    old_identifier=assignee.id,
+                    new_identifier=None,
+                    epoch=epoch,
+                )
+            )
+
+    def track_custom_field_values_import(
+        requested_data,
+        current_instance,
+        issue_id,
+        project_id,
+        workspace_id,
+        actor_id,
+        issue_activities,
+        epoch,
+    ):
+        """커스텀 필드 값 변경을 추적하고 알림을 생성하는 함수 (Import용)"""
+        
+        # 현재 값과 요청된 값 가져오기
+        current_values = current_instance.get("custom_field_values", []) if current_instance else []
+        requested_values = requested_data.get("custom_field_values", []) if requested_data else []
+        
+        # 현재 값을 딕셔너리로 변환
+        current_values_dict = {str(val.get("custom_field_id")): val.get("value") for val in current_values}
+        
+        # project_member 타입의 필드에서 추가된 멤버들을 구독자로 등록할 리스트
+        new_subscribers = []
+        
+        # 요청된 값 처리
+        for new_field_data in requested_values:
+            custom_field_id = str(new_field_data.get("custom_field_id"))
+            new_value = new_field_data.get("value")
+            
+            # 필드 정보 가져오기
+            try:
+                custom_field = CustomField.objects.get(pk=custom_field_id, project_id=project_id)
+            except CustomField.DoesNotExist:
+                continue
+                
+            # 현재 값 가져오기
+            old_value = current_values_dict.get(custom_field_id)
+            
+            # 값이 실제로 변경되었는지 확인
+            if old_value != new_value:
+                # 필드 타입 가져오기
+                field_type = custom_field.field_type
+                
+                # 멤버 타입인 경우 UUID를 사용자 이름으로 변환
+                display_old_value = convert_member_values_to_names(old_value, field_type, project_id)
+                display_new_value = convert_member_values_to_names(new_value, field_type, project_id)
+                
+                # 값을 문자열로 변환 (표시용)
+                if isinstance(display_old_value, list):
+                    old_value_str = ", ".join(str(v) for v in display_old_value) if display_old_value else ""
+                else:
+                    old_value_str = str(display_old_value) if display_old_value is not None else ""
+                    
+                if isinstance(display_new_value, list):
+                    new_value_str = ", ".join(str(v) for v in display_new_value) if display_new_value else ""
+                else:
+                    new_value_str = str(display_new_value) if display_new_value is not None else ""
+                
+                # 동작 결정 (생성/수정/삭제)
+                if old_value is None and new_value is not None:
+                    verb = "created"
+                    comment = f"CSV import로 {custom_field.name} 필드에 {new_value_str} 값을 설정했습니다."
+                elif new_value is None and old_value is not None:
+                    verb = "deleted"
+                    comment = f"CSV import로 {custom_field.name} 필드의 {old_value_str} 값을 삭제했습니다."
+                else:
+                    verb = "updated"
+                    comment = f"CSV import로 {custom_field.name} 필드를 {old_value_str}에서 {new_value_str}로 변경했습니다."
+                
+                issue_activities.append(
+                    IssueActivity(
+                        issue_id=issue_id,
+                        actor_id=actor_id,
+                        verb=verb,
+                        old_value=old_value_str,
+                        new_value=new_value_str,
+                        field=f"custom_field_{custom_field.name}",
+                        project_id=project_id,
+                        workspace_id=workspace_id,
+                        comment=comment,
+                        old_identifier=custom_field_id,
+                        new_identifier=custom_field_id,
+                        epoch=epoch,
+                    )
+                )
+                
+                # project_member 또는 project_members 타입인 경우 자동 구독 처리
+                if custom_field.field_type in ["project_member", "project_members"]:
+                    member_ids = []
+                    
+                    if custom_field.field_type == "project_member" and new_value:
+                        # 단일 멤버
+                        member_ids = [new_value]
+                    elif custom_field.field_type == "project_members" and new_value:
+                        # 다중 멤버 (배열)
+                        if isinstance(new_value, list):
+                            member_ids = new_value
+                    
+                    # 새로 추가된 멤버들을 구독자로 등록
+                    for member_id in member_ids:
+                        if member_id and member_id != actor_id:  # 작업자 본인은 제외
+                            try:
+                                # 프로젝트 멤버인지 확인
+                                if ProjectMember.objects.filter(
+                                    project_id=project_id,
+                                    member_id=member_id,
+                                    is_active=True
+                                ).exists():
+                                    new_subscribers.append(
+                                        IssueSubscriber(
+                                            issue_id=issue_id,
+                                            subscriber_id=member_id,
+                                            project_id=project_id,
+                                            workspace_id=workspace_id,
+                                            created_by_id=actor_id,
+                                            updated_by_id=actor_id,
+                                        )
+                                    )
+                            except Exception:
+                                # 오류 발생 시 무시하고 계속 진행
+                                pass
+        
+        # 새 구독자들을 한 번에 생성 (중복 무시)
+        if new_subscribers:
+            try:
+                IssueSubscriber.objects.bulk_create(
+                    new_subscribers, 
+                    batch_size=10, 
+                    ignore_conflicts=True
+                )
+            except Exception:
+                # 오류 발생 시 무시
+                pass
+
+    IMPORT_ACTIVITY_MAPPER = {
+        "name": track_name_import,
+        "priority": track_priority_import,
+        "state_id": track_state_import,
+        "description_html": track_description_import,
+        "target_date": track_target_date_import,
+        "start_date": track_start_date_import,
+        "label_ids": track_labels_import,
+        "assignee_ids": track_assignees_import,
+        "custom_field_values": track_custom_field_values_import,
+        # 필요한 경우 더 많은 필드를 추가할 수 있음
+    }
+
+    requested_data = json.loads(requested_data) if requested_data is not None else None
+    current_instance = json.loads(current_instance) if current_instance is not None else None
+
+    # 변경된 필드가 있는지 확인
+    has_changes = False
+    if requested_data and current_instance:
+        for key in requested_data:
+            func = IMPORT_ACTIVITY_MAPPER.get(key)
+            if func is not None:
+                func(
+                    requested_data=requested_data,
+                    current_instance=current_instance,
+                    issue_id=issue_id,
+                    project_id=project_id,
+                    workspace_id=workspace_id,
+                    actor_id=actor_id,
+                    issue_activities=issue_activities,
+                    epoch=epoch,
+                )
+                has_changes = True
+
+    # 변경된 필드가 없는 경우 일반적인 import 업데이트 메시지 추가
+    if not has_changes:
+        issue_activities.append(
+            IssueActivity(
+                issue_id=issue_id,
+                project_id=project_id,
+                workspace_id=workspace_id,
+                comment="updated the issue via CSV import",
+                verb="updated",
+                actor_id=actor_id,
+                epoch=epoch,
+            )
+        )
+
+
 # Receive message from room group
 @shared_task
 def issue_activity(
@@ -1799,6 +2271,8 @@ def issue_activity(
         ACTIVITY_MAPPER = {
             "issue.activity.created": create_issue_activity,
             "issue.activity.updated": update_issue_activity,
+            "issue.activity.imported": create_imported_issue_activity,  # 추가
+            "issue.activity.imported_updated": update_imported_issue_activity,  # 새로 추가
             "issue.activity.deleted": delete_issue_activity,
             "comment.activity.created": create_comment_activity,
             "comment.activity.updated": update_comment_activity,

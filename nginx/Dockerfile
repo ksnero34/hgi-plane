@@ -1,6 +1,74 @@
-# FROM nginx:1.25.0-alpine
+# Step 1: Base image for build stage
+FROM ubuntu:24.04 as builder
 
-FROM hgi-nginx:1.26.2
+# Step 2: Install dependencies
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    apt-get update --fix-missing && \
+    apt-get install -y \
+    build-essential \
+    libpcre3 \
+    libpcre3-dev \
+    zlib1g \
+    zlib1g-dev \
+    libssl-dev \
+    wget \
+    curl \
+    gnupg2 \
+    make \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Step 3: Download NGINX source
+ENV NGINX_VERSION=1.26.2
+RUN wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+    tar -zxvf nginx-${NGINX_VERSION}.tar.gz
+
+# Step 4-1: Download and extract the headers-more module in /tmp
+RUN wget https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v0.37.tar.gz -P /tmp && \
+    tar zxvf /tmp/v0.37.tar.gz -C /tmp
+
+# Step 4-2: Build NGINX from source
+WORKDIR /nginx-${NGINX_VERSION}
+RUN ./configure --prefix=/usr/share/nginx --sbin-path=/usr/sbin/nginx \
+    --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log \
+    --http-log-path=/var/log/nginx/access.log --with-pcre \
+    --with-http_ssl_module \
+    --add-module=/tmp/headers-more-nginx-module-0.37 && \
+    make && make install
+
+# Step 5: Prepare a runtime stage
+FROM ubuntu:24.04
+LABEL maintainer="Jongmin Lee <minpaper@hawha.com>"
+
+# Step 6: Install runtime dependencies
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    apt-get update --fix-missing && \
+    apt-get install -y \
+    libpcre3 zlib1g libssl3 nano net-tools && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Step 8: Create log directory for NGINX and set permissions
+RUN mkdir -p /var/log/nginx && \
+    chown -R www-data:www-data /var/log/nginx
+
+# Step 7: Copy NGINX binary from build stage
+COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=builder /etc/nginx /etc/nginx
+COPY --from=builder /usr/share/nginx /usr/share/nginx
+
+#RUN echo "server_tokens off;" >> /etc/nginx/nginx.conf
+#RUN echo "more_set_headers 'Server: MIN';" >> /etc/nginx/nginx.conf
+
+# Step 8: Expose port and entrypoint
+# EXPOSE 80
+# EXPOSE 443
+# ENTRYPOINT ["/usr/sbin/nginx", "-g", "daemon off;"]
+
+# FROM nginx:1.25.0
+# FROM hgi-nginx:1.26.2
+
 
 RUN apt-get update && apt-get install -y gettext curl
 #RUN rm /etc/nginx/conf.d/default.conf

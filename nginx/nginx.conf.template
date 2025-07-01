@@ -60,6 +60,12 @@ http {
             proxy_set_header X-Real-IP ${dollar}remote_addr;
             proxy_set_header X-Forwarded-For ${dollar}proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto ${dollar}scheme;
+            
+            # Import 작업을 위한 timeout 설정
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 3600s;  # 1시간
+            proxy_read_timeout 3600s;  # 1시간
+            
             proxy_pass http://api:8000/api/;
         }
 

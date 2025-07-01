@@ -16,7 +16,8 @@ from plane.db.models import (
     User,
     Cycle,
     CustomField,
-    CustomFieldValue
+    CustomFieldValue,
+    ProjectMember
 )
 from plane.utils.exception_logger import log_exception
 from plane.app.serializers import IssueSerializer, IssueCreateSerializer
@@ -331,39 +332,53 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
             
             # 엑셀 파일의 모든 ID 수집
             all_sequence_ids = set()
+            parent_sequence_ids = set()  # 부모 이슈 ID는 별도 관리
+            
             for row in reader:
                 issue_id = clean_id_field(row.get("ID", ""))
                 if issue_id:
                     try:
                         sequence_id = int(issue_id.split('-')[1])
-                        all_sequence_ids.add(sequence_id)
+                        all_sequence_ids.add(sequence_id)  # 직접 업데이트할 이슈만
                     except (IndexError, ValueError):
                         #print(f"Warning: Invalid issue ID format: {issue_id}")
                         continue
                 
-                # 부모 이슈 ID도 수집
+                # 부모 이슈 ID는 별도 수집 (관계 설정용으로만 사용)
                 parent_id = clean_id_field(row.get("Parent Issue", ""))
                 if parent_id:
                     try:
                         parent_sequence_id = int(parent_id.split('-')[1])
-                        all_sequence_ids.add(parent_sequence_id)
+                        parent_sequence_ids.add(parent_sequence_id)
                     except (IndexError, ValueError):
                         #print(f"Warning: Invalid parent issue ID format: {parent_id}")
                         continue
             
-            #print(f"Found {len(all_sequence_ids)} unique sequence IDs in the file")
-            #print(f"Sequence IDs found: {list(all_sequence_ids)}")
+            #print(f"Found {len(all_sequence_ids)} unique sequence IDs for update in the file")
+            #print(f"Found {len(parent_sequence_ids)} unique parent sequence IDs in the file")
             
-            # 모든 관련 이슈 조회 (엑셀 파일의 ID와 부모 ID 모두 포함)
+            # 업데이트할 이슈들만 조회 (부모 이슈는 제외)
             for issue in Issue.objects.filter(
-                sequence_id__in=list(all_sequence_ids),
+                sequence_id__in=list(all_sequence_ids),  # 직접 업데이트할 이슈만
                 project=project
             ):
                 existing_issues[issue.sequence_id] = issue
                 id_mapping[issue.sequence_id] = issue
-                #print(f"Found existing issue - ID: {issue.id}, Sequence ID: {issue.sequence_id}, Name: {issue.name}")
+                #print(f"Found existing issue for update - ID: {issue.id}, Sequence ID: {issue.sequence_id}, Name: {issue.name}")
             
-            #print(f"Found {len(existing_issues)} existing issues with matching IDs")
+            # 부모 이슈들은 관계 설정을 위해서만 별도 조회
+            parent_issues = {}
+            if parent_sequence_ids:
+                for parent_issue in Issue.objects.filter(
+                    sequence_id__in=list(parent_sequence_ids),
+                    project=project
+                ):
+                    parent_issues[parent_issue.sequence_id] = parent_issue
+                    id_mapping[parent_issue.sequence_id] = parent_issue  # 관계 설정용
+                    #print(f"Found parent issue - ID: {parent_issue.id}, Sequence ID: {parent_issue.sequence_id}, Name: {parent_issue.name}")
+            
+            #print(f"Found {len(existing_issues)} existing issues for update")
+            #print(f"Found {len(parent_issues)} parent issues for relationship setup")
             
             parent_relations = []
             imported_count = 0
@@ -455,12 +470,40 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         # User 객체를 조회
                         user = User.objects.get(id=UUID(user_id))
                         
-                        # created_by는 제외하고 업데이트
+                        # description 관련 필드 업데이트 여부 확인
+                        should_update_description = (
+                            not existing_issue.description_stripped or 
+                            existing_issue.description_stripped.strip() == ""
+                        ) and description_data["description_stripped"]
+                        
+                        # created_by는 제외하고 업데이트 (빈 값 방지 로직 추가)
                         created_by = existing_issue.created_by  # 기존 created_by 저장
                         for key, value in issue_data.items():
-                            # created_by_id와 description 관련 필드들은 업데이트하지 않음
-                            if key not in ['created_by_id', 'description', 'description_html', 'description_stripped']:
-                                setattr(existing_issue, key, value)
+                            # created_by_id는 업데이트하지 않음
+                            if key == 'created_by_id':
+                                continue
+                            
+                            # description 관련 필드는 조건부 업데이트
+                            if key in ['description', 'description_html', 'description_stripped']:
+                                if should_update_description:
+                                    setattr(existing_issue, key, value)
+                                continue
+                            
+                            # 빈 값으로 덮어쓰기 방지 로직
+                            if key == 'name' and (not value or value.strip() == ""):
+                                continue  # 이름이 비어있으면 업데이트하지 않음
+                            if key == 'priority' and value == 'none':
+                                # Priority가 none이고 기존 값이 있으면 유지
+                                current_priority = getattr(existing_issue, key, None)
+                                if current_priority and current_priority != 'none':
+                                    continue
+                            if key in ['start_date', 'target_date'] and value is None:
+                                # 날짜가 None이고 기존 값이 있으면 유지
+                                current_date = getattr(existing_issue, key, None)
+                                if current_date is not None:
+                                    continue
+                            
+                            setattr(existing_issue, key, value)
                         existing_issue.created_by = created_by  # 기존 created_by 복원
                         existing_issue.updated_by = user  # updated_by는 현재 사용자로 설정
                         existing_issue.save()
@@ -470,13 +513,159 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         issue = existing_issue
                         updated_count += 1
                         
-                        # 관계 데이터만 삭제 후 재생성
-                        IssueLabel.objects.filter(issue=issue).delete(soft=False)
-                        IssueAssignee.objects.filter(issue=issue).delete(soft=False)
-                        ModuleIssue.objects.filter(issue=issue).delete(soft=False)
-                        CycleIssue.objects.filter(issue=issue).delete(soft=False)
-                        # 커스텀 필드 값도 삭제 후 재생성 (hard delete 사용)
-                        CustomFieldValue.objects.filter(issue=issue).delete(soft=False)
+                        # 관계 데이터 처리 - 빈 값이 아닌 경우에만 삭제 후 재생성
+                        # CSV에 실제 데이터가 있는 경우에만 기존 관계를 삭제하고 새로 생성
+                        should_update_labels = not pd.isna(row.get("Labels")) and str(row.get("Labels", "")).strip()
+                        should_update_assignees = not pd.isna(row.get("Assignee")) and str(row.get("Assignee", "")).strip()
+                        should_update_modules = not pd.isna(row.get("Module Name")) and str(row.get("Module Name", "")).strip()
+                        should_update_cycles = not pd.isna(row.get("Cycle Name")) and str(row.get("Cycle Name", "")).strip()
+                        should_update_custom_fields = bool(custom_field_values)
+                        
+                        # Activity 보존을 위해 관계 데이터 업데이트 방식 개선
+                        # 기존 관계를 삭제하는 대신 중복 체크 후 새로운 관계만 생성
+                        if should_update_labels:
+                            # 기존 라벨 관계 삭제하지 않고, 새로운 라벨만 추가하는 방식으로 변경
+                            existing_label_ids = set(IssueLabel.objects.filter(
+                                issue=issue, deleted_at__isnull=True
+                            ).values_list('label_id', flat=True))
+                            
+                            # CSV의 라벨들을 처리
+                            csv_labels = str(row["Labels"]).split(",")
+                            csv_label_ids = set()
+                            for label_name in csv_labels:
+                                label_name = label_name.strip()
+                                if label_name:
+                                    label = Label.objects.filter(project=project, name=label_name).first()
+                                    if label:
+                                        csv_label_ids.add(label.id)
+                            
+                            # 제거해야 할 라벨들 (기존에 있지만 CSV에 없는 것들)
+                            labels_to_remove = existing_label_ids - csv_label_ids
+                            if labels_to_remove:
+                                # activity 생성을 방지하기 위해 직접 SQL로 삭제
+                                with connection.cursor() as cursor:
+                                    if len(labels_to_remove) == 1:
+                                        cursor.execute(
+                                            "DELETE FROM issue_labels WHERE issue_id = %s AND label_id = %s",
+                                            [str(issue.id), list(labels_to_remove)[0]]
+                                        )
+                                    else:
+                                        cursor.execute(
+                                            "DELETE FROM issue_labels WHERE issue_id = %s AND label_id IN %s",
+                                            [str(issue.id), tuple(labels_to_remove)]
+                                        )
+                        else:
+                            # CSV에 라벨 데이터가 없으면 기존 라벨 유지
+                            pass
+                        
+                        if should_update_assignees:
+                            # 기존 담당자 관계 삭제하지 않고, 새로운 담당자만 추가하는 방식으로 변경
+                            existing_assignee_ids = set(IssueAssignee.objects.filter(
+                                issue=issue, deleted_at__isnull=True
+                            ).values_list('assignee_id', flat=True))
+                            
+                            # CSV의 담당자들을 처리
+                            csv_assignees = str(row["Assignee"]).split(",")
+                            csv_assignee_ids = set()
+                            for assignee_email in csv_assignees:
+                                assignee_email = assignee_email.strip()
+                                if assignee_email:
+                                    member = find_user_by_email(assignee_email, project)
+                                    if member:
+                                        csv_assignee_ids.add(member.id)
+                            
+                            # 제거해야 할 담당자들
+                            assignees_to_remove = existing_assignee_ids - csv_assignee_ids
+                            if assignees_to_remove:
+                                # activity 생성을 방지하기 위해 직접 SQL로 삭제
+                                with connection.cursor() as cursor:
+                                    if len(assignees_to_remove) == 1:
+                                        cursor.execute(
+                                            "DELETE FROM issue_assignees WHERE issue_id = %s AND assignee_id = %s",
+                                            [str(issue.id), list(assignees_to_remove)[0]]
+                                        )
+                                    else:
+                                        cursor.execute(
+                                            "DELETE FROM issue_assignees WHERE issue_id = %s AND assignee_id IN %s",
+                                            [str(issue.id), tuple(assignees_to_remove)]
+                                        )
+                        else:
+                            # CSV에 담당자 데이터가 없으면 기존 담당자 유지
+                            pass
+                        
+                        if should_update_modules:
+                            # 기존 모듈 관계 삭제하지 않고, 새로운 모듈만 추가하는 방식으로 변경
+                            existing_module_ids = set(ModuleIssue.objects.filter(
+                                issue=issue, deleted_at__isnull=True
+                            ).values_list('module_id', flat=True))
+                            
+                            # CSV의 모듈 처리
+                            module_name = safe_str(row.get("Module Name"))
+                            csv_module_ids = set()
+                            if module_name:
+                                module = Module.objects.filter(project=project, name=module_name).first()
+                                if module:
+                                    csv_module_ids.add(module.id)
+                            
+                            # 제거해야 할 모듈들 (기존에 있지만 CSV에 없는 것들)
+                            modules_to_remove = existing_module_ids - csv_module_ids
+                            if modules_to_remove:
+                                # activity 생성을 방지하기 위해 직접 SQL로 삭제
+                                with connection.cursor() as cursor:
+                                    if len(modules_to_remove) == 1:
+                                        cursor.execute(
+                                            "DELETE FROM module_issues WHERE issue_id = %s AND module_id = %s",
+                                            [str(issue.id), list(modules_to_remove)[0]]
+                                        )
+                                    else:
+                                        cursor.execute(
+                                            "DELETE FROM module_issues WHERE issue_id = %s AND module_id IN %s",
+                                            [str(issue.id), tuple(modules_to_remove)]
+                                        )
+                        else:
+                            # CSV에 모듈 데이터가 없으면 기존 모듈 유지
+                            pass
+                        
+                        if should_update_cycles:
+                            # 기존 사이클 관계 삭제하지 않고, 새로운 사이클만 추가하는 방식으로 변경
+                            existing_cycle_ids = set(CycleIssue.objects.filter(
+                                issue=issue, deleted_at__isnull=True
+                            ).values_list('cycle_id', flat=True))
+                            
+                            # CSV의 사이클 처리
+                            cycle_name = safe_str(row.get("Cycle Name"))
+                            csv_cycle_ids = set()
+                            if cycle_name:
+                                cycle = Cycle.objects.filter(project=project, name=cycle_name).first()
+                                if cycle:
+                                    csv_cycle_ids.add(cycle.id)
+                            
+                            # 제거해야 할 사이클들 (기존에 있지만 CSV에 없는 것들)
+                            cycles_to_remove = existing_cycle_ids - csv_cycle_ids
+                            if cycles_to_remove:
+                                # activity 생성을 방지하기 위해 직접 SQL로 삭제
+                                with connection.cursor() as cursor:
+                                    if len(cycles_to_remove) == 1:
+                                        cursor.execute(
+                                            "DELETE FROM cycle_issues WHERE issue_id = %s AND cycle_id = %s",
+                                            [str(issue.id), list(cycles_to_remove)[0]]
+                                        )
+                                    else:
+                                        cursor.execute(
+                                            "DELETE FROM cycle_issues WHERE issue_id = %s AND cycle_id IN %s",
+                                            [str(issue.id), tuple(cycles_to_remove)]
+                                        )
+                        else:
+                            # CSV에 사이클 데이터가 없으면 기존 사이클 유지
+                            pass
+                        
+                        if should_update_custom_fields:
+                            # 커스텀 필드 값도 activity 생성을 방지하기 위해 직접 SQL로 삭제
+                            with connection.cursor() as cursor:
+                                cursor.execute(
+                                    "DELETE FROM custom_field_values WHERE issue_id = %s",
+                                    [str(issue.id)]
+                                )
                     else:
                         # print("\n[Debug] 새 이슈 생성:")
                         # UUID 문자열을 UUID 객체로 변환
@@ -535,7 +724,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     # 이슈 활동 로그 생성
                     requested_data = json.dumps(row, cls=DjangoJSONEncoder)
                     issue_activity.delay(
-                        type="issue.activity.imported" if not existing_issue else "issue.activity.updated",
+                        type="issue.activity.imported" if not existing_issue else "issue.activity.imported_updated",
                         requested_data=requested_data,
                         actor_id=str(user_id),
                         issue_id=str(issue.id),
@@ -588,21 +777,52 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
 
 def process_related_data(issue, row, project, workspace_id, creator_user):
     # User 객체 조회
-    created_by = issue.created_by or creator_user
-    updated_by = issue.updated_by
+    creator_user_obj = User.objects.get(pk=creator_user)
     
-    # updated_by가 None인 경우 creator_user 사용
-    if updated_by is None:
-        updated_by = creator_user
-    
-    # 모두 None인 경우 실행하지 않음
-    if created_by is None and updated_by is None:
-        print("Warning: No creator or updater found for issue relationships")
-        return
-    
-    # 사용할 created_by_id와 updated_by_id 준비
-    created_by_id = created_by.id if created_by else None
-    updated_by_id = updated_by.id if updated_by else None
+    # 기존 관련 데이터 삭제 (직접 SQL 사용)
+    with connection.cursor() as cursor:
+        # 라벨 삭제
+        existing_labels = list(IssueLabel.objects.filter(issue=issue).values_list('label_id', flat=True))
+        if existing_labels:
+            if len(existing_labels) == 1:
+                cursor.execute("DELETE FROM issue_labels WHERE issue_id = %s AND label_id = %s", [str(issue.id), str(existing_labels[0])])
+            else:
+                label_ids_tuple = tuple(str(lid) for lid in existing_labels)
+                cursor.execute("DELETE FROM issue_labels WHERE issue_id = %s AND label_id IN %s", [str(issue.id), label_ids_tuple])
+        
+        # 담당자 삭제
+        existing_assignees = list(IssueAssignee.objects.filter(issue=issue).values_list('assignee_id', flat=True))
+        if existing_assignees:
+            if len(existing_assignees) == 1:
+                cursor.execute("DELETE FROM issue_assignees WHERE issue_id = %s AND assignee_id = %s", [str(issue.id), str(existing_assignees[0])])
+            else:
+                assignee_ids_tuple = tuple(str(aid) for aid in existing_assignees)
+                cursor.execute("DELETE FROM issue_assignees WHERE issue_id = %s AND assignee_id IN %s", [str(issue.id), assignee_ids_tuple])
+        
+        # 모듈 관계 삭제
+        existing_modules = list(ModuleIssue.objects.filter(issue=issue).values_list('module_id', flat=True))
+        if existing_modules:
+            if len(existing_modules) == 1:
+                cursor.execute("DELETE FROM module_issues WHERE issue_id = %s AND module_id = %s", [str(issue.id), str(existing_modules[0])])
+            else:
+                module_ids_tuple = tuple(str(mid) for mid in existing_modules)
+                cursor.execute("DELETE FROM module_issues WHERE issue_id = %s AND module_id IN %s", [str(issue.id), module_ids_tuple])
+        
+        # 사이클 관계 삭제
+        existing_cycles = list(CycleIssue.objects.filter(issue=issue).values_list('cycle_id', flat=True))
+        if existing_cycles:
+            if len(existing_cycles) == 1:
+                cursor.execute("DELETE FROM cycle_issues WHERE issue_id = %s AND cycle_id = %s", [str(issue.id), str(existing_cycles[0])])
+            else:
+                cycle_ids_tuple = tuple(str(cid) for cid in existing_cycles)
+                cursor.execute("DELETE FROM cycle_issues WHERE issue_id = %s AND cycle_id IN %s", [str(issue.id), cycle_ids_tuple])
+        
+        # 커스텀 필드 값 삭제
+        cursor.execute("DELETE FROM custom_field_values WHERE issue_id = %s", [str(issue.id)])
+
+    # 새로운 관련 데이터 추가
+    created_by_id = creator_user_obj.id
+    updated_by_id = creator_user_obj.id
     
     # 라벨 처리
     if not pd.isna(row.get("Labels")):
@@ -625,8 +845,8 @@ def process_related_data(issue, row, project, workspace_id, creator_user):
                             "UPDATE issue_labels SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
                             [created_by_id, updated_by_id, label_relation.id]
                         )
-    
-    # 담당자 처리 - 이메일로 검색하도록 변경
+
+    # 담당자 처리 - 이메일로 검색
     if not pd.isna(row.get("Assignee")):
         for assignee_email in str(row["Assignee"]).split(","):
             assignee_email = assignee_email.strip()
@@ -649,11 +869,12 @@ def process_related_data(issue, row, project, workspace_id, creator_user):
                             "UPDATE issue_assignees SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
                             [created_by_id, updated_by_id, assignee_relation.id]
                         )
-    
+
     # 모듈 처리
     module_name = safe_str(row.get("Module Name"))
     if module_name:
-        module = Module.objects.filter(project=project, name=module_name).first()  # Module 모델을 직접 사용
+        from plane.db.models import Module  # 여기서 임포트
+        module = Module.objects.filter(project=project, name=module_name).first()
         if module:
             # 객체 생성
             module_relation = ModuleIssue.objects.create(
@@ -669,10 +890,11 @@ def process_related_data(issue, row, project, workspace_id, creator_user):
                     "UPDATE module_issues SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
                     [created_by_id, updated_by_id, module_relation.id]
                 )
-    
+
     # 사이클 처리
     cycle_name = safe_str(row.get("Cycle Name"))
     if cycle_name:
+        from plane.db.models import Cycle  # 여기서 임포트
         cycle = Cycle.objects.filter(project=project, name=cycle_name).first()
         if cycle:
             # 객체 생성
