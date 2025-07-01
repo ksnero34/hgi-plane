@@ -11,10 +11,16 @@
 6. 이미 복구된 이슈의 누락된 관련 데이터 복구 (담당자/커스텀필드는 최신만): python restore_deleted_issues.py --workspace YOUR_WORKSPACE --project YOUR_PROJECT --restore-data-latest ISSUE_ID
 7. 특정 이슈의 복구 가능한 활동/댓글 데이터 확인: python restore_deleted_issues.py --workspace YOUR_WORKSPACE --project YOUR_PROJECT --check-issue-data ISSUE_ID
 8. 생성자 이메일 지정하여 복구: python restore_deleted_issues.py --workspace YOUR_WORKSPACE --project YOUR_PROJECT --restore-data ISSUE_ID --creator-email USER@EXAMPLE.COM
+9. 담당자/커스텀필드 데이터 상세 분석: python restore_deleted_issues.py --workspace YOUR_WORKSPACE --project YOUR_PROJECT --analyze-assignees ISSUE_ID
 
 추가 옵션:
 - --admin-email: 복구 작업을 수행할 관리자 이메일 지정
 - --creator-email: 누락된 created_by 필드에 설정할 생성자 이메일 지정 (--restore-data, --restore-data-latest와 함께 사용)
+
+주의사항:
+- 담당자/커스텀필드는 같은 사용자/필드가 여러 번 할당/해제되면서 중복 레코드가 생성될 수 있습니다
+- --restore-data-latest 옵션은 각 담당자/커스텀필드별로 가장 최신 레코드만 복구합니다
+- --analyze-assignees 옵션으로 실제 복구 전에 데이터 상황을 상세히 확인할 수 있습니다
 """
 
 import os
@@ -383,27 +389,15 @@ def check_issue_activities_and_comments(issue):
     except Exception as e:
         print(f"   ⚠️  관련활동 확인 중 오류: {str(e)}")
     
-    # 6. 삭제된 담당자들 확인
-    deleted_assignees = IssueAssignee.all_objects.filter(
-        issue=issue,
-        deleted_at__isnull=False
-    )
+    print()
     
-    if deleted_assignees.exists():
-        assignee_count = deleted_assignees.count()
-        print(f"   👥 소프트삭제 담당자: {assignee_count}개")
-        total_available += assignee_count
+    # 6. 상세 담당자 분석
+    unique_assignees = analyze_issue_assignees(issue)
+    total_available += unique_assignees
     
-    # 7. 삭제된 커스텀 필드들 확인
-    deleted_custom_fields = CustomFieldValue.all_objects.filter(
-        issue=issue,
-        deleted_at__isnull=False
-    )
-    
-    if deleted_custom_fields.exists():
-        cf_count = deleted_custom_fields.count()
-        print(f"   🔧 소프트삭제 커스텀필드: {cf_count}개")
-        total_available += cf_count
+    # 7. 상세 커스텀 필드 분석
+    unique_custom_fields = analyze_issue_custom_fields(issue)
+    total_available += unique_custom_fields
     
     print(f"   📊 총 복구 가능: {total_available}개")
     print()
@@ -791,16 +785,12 @@ def restore_issue_and_children_full(workspace_slug, project_identifier, issue_id
             
             # 모든 이슈 복구
             for issue in all_issues:
-                # 생성자가 비어있는 경우 설정
-                if not issue.created_by:
-                    print(f"⚠️  이슈 생성자가 비어있습니다. 관리자로 설정합니다: {user.email if user else 'None'}")
-                    issue.created_by = user
-                if not issue.updated_by:
-                    issue.updated_by = user
-                    
-                issue.deleted_at = None
-                issue.updated_at = timezone.now()
-                issue.save()
+                print(f"🔄 처리중: {project.identifier}-{issue.sequence_id} | {issue.name}")
+                
+                # created_by 복구 (가장 먼저)
+                creator_restored = restore_issue_created_by(issue, user, None)
+                if creator_restored:
+                    total_restored_creators += 1
                 
                 # 관련 데이터 복구
                 activities_restored = restore_issue_activities(issue)
@@ -811,12 +801,12 @@ def restore_issue_and_children_full(workspace_slug, project_identifier, issue_id
                 total_restored_assignees += assignees_restored
                 total_restored_custom_fields += custom_fields_restored
                 
-                # 복구 활동 로그 생성
-                if user:
-                    comment = "삭제된 이슈 완전 복구 (활동, 담당자, 커스텀필드 포함)"
+                # 복구 활동 로그 생성 (데이터가 실제로 복구된 경우만)
+                if (activities_restored > 0 or assignees_restored > 0 or custom_fields_restored > 0 or creator_restored) and user:
+                    comment = f"누락된 관련 데이터 복구 (생성자:{1 if creator_restored else 0}, 활동:{activities_restored}, 담당자:{assignees_restored}, 커스텀필드:{custom_fields_restored})"
                     IssueActivity.objects.create(
                         issue=issue,
-                        verb='restored',
+                        verb='data_restored',
                         comment=comment,
                         actor=user,
                         project=project,
@@ -951,6 +941,105 @@ def check_orphaned_activities(workspace_slug, project_identifier):
         return 0, 0
 
 
+def analyze_issue_assignees(issue):
+    """이슈의 담당자 데이터 상세 분석"""
+    print(f"🔍 [{issue.project.identifier}-{issue.sequence_id}] 담당자 분석:")
+    
+    # 현재 활성 담당자들
+    active_assignees = IssueAssignee.objects.filter(
+        issue=issue,
+        deleted_at__isnull=True
+    )
+    
+    # 삭제된 담당자들 (전체)
+    deleted_assignees = IssueAssignee.all_objects.filter(
+        issue=issue,
+        deleted_at__isnull=False
+    ).order_by('assignee', '-updated_at')
+    
+    print(f"   ✅ 현재 활성 담당자: {active_assignees.count()}개")
+    for assignee in active_assignees:
+        print(f"      └─ {assignee.assignee.email} (생성: {assignee.created_at.strftime('%Y-%m-%d %H:%M')})")
+    
+    if deleted_assignees.exists():
+        print(f"   🗑️  삭제된 담당자 레코드: {deleted_assignees.count()}개")
+        
+        # 담당자별로 그룹화
+        assignee_groups = {}
+        for deleted_assignee in deleted_assignees:
+            email = deleted_assignee.assignee.email
+            if email not in assignee_groups:
+                assignee_groups[email] = []
+            assignee_groups[email].append(deleted_assignee)
+        
+        print(f"   👥 고유 담당자 수: {len(assignee_groups)}명")
+        
+        for email, records in assignee_groups.items():
+            latest_record = records[0]  # 이미 최신순으로 정렬됨
+            print(f"      └─ {email}: {len(records)}개 레코드 (최신 삭제: {latest_record.deleted_at.strftime('%Y-%m-%d %H:%M')})")
+            
+            # 상세 레코드 (최대 3개만 표시)
+            for i, record in enumerate(records[:3]):
+                status = "최신" if i == 0 else f"{i+1}번째"
+                print(f"         • {status}: 생성 {record.created_at.strftime('%Y-%m-%d %H:%M')} → 삭제 {record.deleted_at.strftime('%Y-%m-%d %H:%M')}")
+            
+            if len(records) > 3:
+                print(f"         • ... 외 {len(records) - 3}개 더")
+    
+    print()
+    return len(assignee_groups) if deleted_assignees.exists() else 0
+
+
+def analyze_issue_custom_fields(issue):
+    """이슈의 커스텀 필드 데이터 상세 분석"""
+    print(f"🔍 [{issue.project.identifier}-{issue.sequence_id}] 커스텀 필드 분석:")
+    
+    # 현재 활성 커스텀 필드들
+    active_custom_fields = CustomFieldValue.objects.filter(
+        issue=issue,
+        deleted_at__isnull=True
+    )
+    
+    # 삭제된 커스텀 필드들 (전체)
+    deleted_custom_fields = CustomFieldValue.all_objects.filter(
+        issue=issue,
+        deleted_at__isnull=False
+    ).order_by('custom_field', '-updated_at')
+    
+    print(f"   ✅ 현재 활성 커스텀 필드: {active_custom_fields.count()}개")
+    for cf in active_custom_fields:
+        print(f"      └─ {cf.custom_field.name}: {cf.value} (생성: {cf.created_at.strftime('%Y-%m-%d %H:%M')})")
+    
+    if deleted_custom_fields.exists():
+        print(f"   🗑️  삭제된 커스텀 필드 레코드: {deleted_custom_fields.count()}개")
+        
+        # 커스텀 필드별로 그룹화
+        cf_groups = {}
+        for deleted_cf in deleted_custom_fields:
+            field_name = deleted_cf.custom_field.name
+            if field_name not in cf_groups:
+                cf_groups[field_name] = []
+            cf_groups[field_name].append(deleted_cf)
+        
+        print(f"   🔧 고유 커스텀 필드 수: {len(cf_groups)}개")
+        
+        for field_name, records in cf_groups.items():
+            latest_record = records[0]  # 이미 최신순으로 정렬됨
+            print(f"      └─ {field_name}: {len(records)}개 레코드 (최신 삭제: {latest_record.deleted_at.strftime('%Y-%m-%d %H:%M')})")
+            
+            # 상세 레코드 (최대 3개만 표시)
+            for i, record in enumerate(records[:3]):
+                status = "최신" if i == 0 else f"{i+1}번째"
+                value = str(record.value)[:50] + "..." if len(str(record.value)) > 50 else str(record.value)
+                print(f"         • {status}: {value} (생성 {record.created_at.strftime('%Y-%m-%d %H:%M')} → 삭제 {record.deleted_at.strftime('%Y-%m-%d %H:%M')})")
+            
+            if len(records) > 3:
+                print(f"         • ... 외 {len(records) - 3}개 더")
+    
+    print()
+    return len(cf_groups) if deleted_custom_fields.exists() else 0
+
+
 def restore_active_issue_data(workspace_slug, project_identifier, issue_id, user=None, creator_email=None):
     """이미 복구된(활성) 이슈의 누락된 관련 데이터들을 복구"""
     try:
@@ -975,10 +1064,10 @@ def restore_active_issue_data(workspace_slug, project_identifier, issue_id, user
         if child_issues.exists():
             print(f"   📄 하위이슈: {child_issues.count()}개")
         
-        # 복구할 관련 데이터 개수 미리 확인
+        # 복구할 관련 데이터 개수 미리 확인 (개선된 카운팅)
         total_activities = 0
-        total_assignees = 0
-        total_custom_fields = 0
+        total_unique_assignees = 0
+        total_unique_custom_fields = 0
         missing_creators = 0
         
         for issue in all_issues:
@@ -1001,33 +1090,42 @@ def restore_active_issue_data(workspace_slug, project_identifier, issue_id, user
                 deleted_at__isnull=False
             ).count()
             
+            # 고유 담당자 수 계산
             deleted_assignees = IssueAssignee.all_objects.filter(
                 issue=issue,
                 deleted_at__isnull=False
-            ).count()
+            ).values('assignee').distinct()
+            unique_assignee_count = deleted_assignees.count()
             
+            # 고유 커스텀 필드 수 계산
             deleted_custom_fields = CustomFieldValue.all_objects.filter(
                 issue=issue,
                 deleted_at__isnull=False
-            ).count()
+            ).values('custom_field').distinct()
+            unique_cf_count = deleted_custom_fields.count()
             
             # created_by 누락 확인
             if not issue.created_by:
                 missing_creators += 1
             
             total_activities += (orphaned_activities + soft_deleted_activities + soft_deleted_comments)
-            total_assignees += deleted_assignees
-            total_custom_fields += deleted_custom_fields
+            total_unique_assignees += unique_assignee_count
+            total_unique_custom_fields += unique_cf_count
         
         print(f"   🔗 복구할 활동/댓글: {total_activities}개")
-        print(f"   🔗 복구할 담당자: {total_assignees}개")
-        print(f"   🔗 복구할 커스텀필드: {total_custom_fields}개")
+        print(f"   🔗 복구할 고유 담당자: {total_unique_assignees}명 (전체 레코드 복구)")
+        print(f"   🔗 복구할 고유 커스텀필드: {total_unique_custom_fields}개 (전체 레코드 복구)")
         print(f"   👤 누락된 생성자: {missing_creators}개")
         
         if creator_email:
             print(f"   📧 지정된 생성자 이메일: {creator_email}")
         
-        if total_activities == 0 and total_assignees == 0 and total_custom_fields == 0 and missing_creators == 0:
+        # 상세 분석 옵션 제공
+        if total_unique_assignees > 0 or total_unique_custom_fields > 0:
+            print(f"\n💡 상세 분석을 원하시면 다음 명령을 사용하세요:")
+            print(f"   python restore_deleted_issues.py --workspace {workspace_slug} --project {project_identifier} --check-issue-data {issue_id}")
+        
+        if total_activities == 0 and total_unique_assignees == 0 and total_unique_custom_fields == 0 and missing_creators == 0:
             print("\n✅ 복구할 누락된 데이터가 없습니다!")
             return target_issue, list(child_issues)
         
@@ -1084,8 +1182,8 @@ def restore_active_issue_data(workspace_slug, project_identifier, issue_id, user
         print(f"\n🎉 관련 데이터 복구 완료!")
         print(f"   📊 복구된 생성자: {total_restored_creators}개")
         print(f"   📊 복구된 활동: {total_restored_activities}개")
-        print(f"   📊 복구된 담당자: {total_restored_assignees}개")
-        print(f"   📊 복구된 커스텀필드: {total_restored_custom_fields}개")
+        print(f"   📊 복구된 담당자 레코드: {total_restored_assignees}개")
+        print(f"   📊 복구된 커스텀필드 레코드: {total_restored_custom_fields}개")
         
         return target_issue, list(child_issues)
         
@@ -1122,10 +1220,10 @@ def restore_active_issue_data_latest_only(workspace_slug, project_identifier, is
         if child_issues.exists():
             print(f"   📄 하위이슈: {child_issues.count()}개")
         
-        # 복구할 관련 데이터 개수 미리 확인
+        # 복구할 관련 데이터 개수 미리 확인 (개선된 카운팅)
         total_activities = 0
-        total_assignees = 0
-        total_custom_fields = 0
+        total_unique_assignees = 0
+        total_unique_custom_fields = 0
         missing_creators = 0
         
         for issue in all_issues:
@@ -1148,33 +1246,42 @@ def restore_active_issue_data_latest_only(workspace_slug, project_identifier, is
                 deleted_at__isnull=False
             ).count()
             
+            # 고유 담당자 수 계산
             deleted_assignees = IssueAssignee.all_objects.filter(
                 issue=issue,
                 deleted_at__isnull=False
-            ).count()
+            ).values('assignee').distinct()
+            unique_assignee_count = deleted_assignees.count()
             
+            # 고유 커스텀 필드 수 계산
             deleted_custom_fields = CustomFieldValue.all_objects.filter(
                 issue=issue,
                 deleted_at__isnull=False
-            ).count()
+            ).values('custom_field').distinct()
+            unique_cf_count = deleted_custom_fields.count()
             
             # created_by 누락 확인
             if not issue.created_by:
                 missing_creators += 1
             
             total_activities += (orphaned_activities + soft_deleted_activities + soft_deleted_comments)
-            total_assignees += deleted_assignees
-            total_custom_fields += deleted_custom_fields
+            total_unique_assignees += unique_assignee_count
+            total_unique_custom_fields += unique_cf_count
         
         print(f"   🔗 복구할 활동/댓글: {total_activities}개")
-        print(f"   🔗 복구할 담당자: {total_assignees}개 (최신만)")
-        print(f"   🔗 복구할 커스텀필드: {total_custom_fields}개 (최신만)")
+        print(f"   🔗 복구할 고유 담당자: {total_unique_assignees}명 (최신 레코드만)")
+        print(f"   🔗 복구할 고유 커스텀필드: {total_unique_custom_fields}개 (최신 레코드만)")
         print(f"   👤 누락된 생성자: {missing_creators}개")
         
         if creator_email:
             print(f"   📧 지정된 생성자 이메일: {creator_email}")
         
-        if total_activities == 0 and total_assignees == 0 and total_custom_fields == 0 and missing_creators == 0:
+        # 상세 분석 옵션 제공
+        if total_unique_assignees > 0 or total_unique_custom_fields > 0:
+            print(f"\n💡 상세 분석을 원하시면 다음 명령을 사용하세요:")
+            print(f"   python restore_deleted_issues.py --workspace {workspace_slug} --project {project_identifier} --check-issue-data {issue_id}")
+        
+        if total_activities == 0 and total_unique_assignees == 0 and total_unique_custom_fields == 0 and missing_creators == 0:
             print("\n✅ 복구할 누락된 데이터가 없습니다!")
             return target_issue, list(child_issues)
         
@@ -1231,8 +1338,8 @@ def restore_active_issue_data_latest_only(workspace_slug, project_identifier, is
         print(f"\n🎉 관련 데이터 복구 완료 (최신만)!")
         print(f"   📊 복구된 생성자: {total_restored_creators}개")
         print(f"   📊 복구된 활동: {total_restored_activities}개")
-        print(f"   📊 복구된 담당자: {total_restored_assignees}개")
-        print(f"   📊 복구된 커스텀필드: {total_restored_custom_fields}개")
+        print(f"   📊 복구된 담당자 레코드: {total_restored_assignees}개")
+        print(f"   📊 복구된 커스텀필드 레코드: {total_restored_custom_fields}개")
         
         return target_issue, list(child_issues)
         
@@ -1258,6 +1365,7 @@ def main():
     parser.add_argument('--check-activities', '-ca', action='store_true', help='고아 활동 현황 확인')
     parser.add_argument('--restore-activities', '-ra', action='store_true', help='고아 활동들 복구')
     parser.add_argument('--check-issue-data', '-cid', help='특정 이슈의 복구 가능한 활동/댓글 데이터 확인 (이슈 ID)')
+    parser.add_argument('--analyze-assignees', '-aa', help='특정 이슈의 담당자 데이터 상세 분석 (이슈 ID)')
     parser.add_argument('--admin-email', help='복구 작업을 수행할 관리자 이메일')
     parser.add_argument('--creator-email', help='누락된 created_by 필드에 설정할 생성자 이메일 (--restore-data, --restore-data-latest와 함께 사용)')
     
@@ -1318,6 +1426,32 @@ def main():
             print(f"❌ 워크스페이스 '{args.workspace}'를 찾을 수 없습니다.")
         except Project.DoesNotExist:
             print(f"❌ 프로젝트 '{args.project}'를 찾을 수 없습니다.")
+    elif args.analyze_assignees:
+        # 새로운 기능: 특정 이슈의 담당자 데이터 상세 분석
+        try:
+            workspace = Workspace.objects.get(slug=args.workspace)
+            project = Project.objects.get(identifier=args.project, workspace=workspace)
+            
+            # 먼저 삭제된 이슈에서 찾아보기
+            try:
+                issue = Issue.all_objects.get(id=args.analyze_assignees, project=project, deleted_at__isnull=False)
+                print(f"🔍 삭제된 이슈 담당자 분석: {project.identifier}-{issue.sequence_id} | {issue.name}")
+            except Issue.DoesNotExist:
+                # 활성 이슈에서 찾아보기
+                try:
+                    issue = Issue.objects.get(id=args.analyze_assignees, project=project)
+                    print(f"🔍 활성 이슈 담당자 분석: {project.identifier}-{issue.sequence_id} | {issue.name}")
+                except Issue.DoesNotExist:
+                    print(f"❌ 이슈 ID '{args.analyze_assignees}'를 찾을 수 없습니다.")
+                    return
+            
+            analyze_issue_assignees(issue)
+            analyze_issue_custom_fields(issue)
+            
+        except Workspace.DoesNotExist:
+            print(f"❌ 워크스페이스 '{args.workspace}'를 찾을 수 없습니다.")
+        except Project.DoesNotExist:
+            print(f"❌ 프로젝트 '{args.project}'를 찾을 수 없습니다.")
     else:
         print("❌ 다음 옵션 중 하나를 선택해주세요:")
         print("   --list: 삭제된 이슈 목록 보기")
@@ -1329,6 +1463,7 @@ def main():
         print("   --check-activities: 고아 활동 현황 확인")
         print("   --restore-activities: 고아 활동들 복구")
         print("   --check-issue-data: 특정 이슈의 복구 가능한 활동/댓글 데이터 확인")
+        print("   --analyze-assignees: 특정 이슈의 담당자 데이터 상세 분석")
         print("   --creator-email: 생성자 이메일 지정 (--restore-data와 함께 사용)")
         parser.print_help()
 

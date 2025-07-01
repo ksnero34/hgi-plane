@@ -280,14 +280,20 @@ def process_custom_fields(row, project, creator_user):
         deleted_at__isnull=True
     )
     
+    #print(f"[DEBUG] Found {custom_fields.count()} existing custom fields in project")
+    
     # 각 커스텀 필드에 대해 값 확인
     for field in custom_fields:
         # 행에서 필드 이름으로 값 찾기
         field_value_str = safe_str(row.get(field.name, ""))
         
+        #print(f"[DEBUG] Checking custom field '{field.name}': value = '{field_value_str}'")
+        
         if field_value_str:
             # 필드 타입에 맞게 값 처리
             processed_value = process_custom_field_value(field, field_value_str)
+            
+            #print(f"[DEBUG] Processed value for '{field.name}': {processed_value}")
             
             if processed_value is not None:
                 custom_field_values.append({
@@ -296,7 +302,9 @@ def process_custom_fields(row, project, creator_user):
                     "field_name": field.name,
                     "field_type": field.field_type
                 })
+                #print(f"[DEBUG] Added custom field value: {field.name} = {processed_value}")
     
+    #print(f"[DEBUG] Total custom field values to process: {len(custom_field_values)}")
     return custom_field_values
 
 @shared_task
@@ -776,8 +784,11 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
         }
 
 def process_related_data(issue, row, project, workspace_id, creator_user):
-    # User 객체 조회
-    creator_user_obj = User.objects.get(pk=creator_user)
+    # creator_user가 이미 User 객체인지 확인
+    if isinstance(creator_user, User):
+        creator_user_obj = creator_user
+    else:
+        creator_user_obj = User.objects.get(pk=creator_user)
     
     # 기존 관련 데이터 삭제 (직접 SQL 사용)
     with connection.cursor() as cursor:
@@ -846,29 +857,55 @@ def process_related_data(issue, row, project, workspace_id, creator_user):
                             [created_by_id, updated_by_id, label_relation.id]
                         )
 
-    # 담당자 처리 - 이메일로 검색
+    # 담당자 처리 - 이메일로 검색 (이메일 파싱 개선)
     if not pd.isna(row.get("Assignee")):
-        for assignee_email in str(row["Assignee"]).split(","):
-            assignee_email = assignee_email.strip()
-            if assignee_email:
-                # 이메일로 사용자 검색
-                member = find_user_by_email(assignee_email, project)
+        assignee_raw = str(row["Assignee"]).strip()
+        if assignee_raw:
+            # 여러 형태의 이메일 형식 처리
+            assignee_emails = []
+            
+            # 쉼표로 구분된 이메일들 처리
+            for email_part in assignee_raw.split(","):
+                email_part = email_part.strip()
+                if not email_part:
+                    continue
                 
-                if member:
-                    # 객체 생성
-                    assignee_relation = IssueAssignee.objects.create(
-                        issue=issue,
-                        assignee=member,
-                        project_id=project.id,
-                        workspace_id=workspace_id,
-                    )
+                # "name <email>" 형식에서 이메일 추출
+                if "<" in email_part and ">" in email_part:
+                    # "8b6c0b4846644595a21e3ad083987578 <8094310@hanwha.com>" 형식
+                    start = email_part.find("<")
+                    end = email_part.find(">")
+                    if start != -1 and end != -1 and end > start:
+                        email = email_part[start+1:end].strip()
+                        if email:
+                            assignee_emails.append(email)
+                elif "@" in email_part:
+                    # 직접 이메일 주소인 경우
+                    assignee_emails.append(email_part)
+            
+            # 추출된 이메일들로 담당자 할당
+            for assignee_email in assignee_emails:
+                if assignee_email:
+                    # 이메일로 사용자 검색
+                    member = find_user_by_email(assignee_email, project)
                     
-                    # 직접 SQL로 created_by_id와 updated_by_id 설정
-                    with connection.cursor() as cursor:
-                        cursor.execute(
-                            "UPDATE issue_assignees SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
-                            [created_by_id, updated_by_id, assignee_relation.id]
+                    if member:
+                        # 객체 생성
+                        assignee_relation = IssueAssignee.objects.create(
+                            issue=issue,
+                            assignee=member,
+                            project_id=project.id,
+                            workspace_id=workspace_id,
                         )
+                        
+                        # 직접 SQL로 created_by_id와 updated_by_id 설정
+                        with connection.cursor() as cursor:
+                            cursor.execute(
+                                "UPDATE issue_assignees SET created_by_id = %s, updated_by_id = %s WHERE id = %s",
+                                [created_by_id, updated_by_id, assignee_relation.id]
+                            )
+                    else:
+                        print(f"Warning: Assignee email '{assignee_email}' not found or not a project member.")
 
     # 모듈 처리
     module_name = safe_str(row.get("Module Name"))
@@ -914,12 +951,20 @@ def process_related_data(issue, row, project, workspace_id, creator_user):
 
 def process_custom_field_values(issue, custom_field_values, project, workspace_id, creator_user):
     """커스텀 필드 값들을 데이터베이스에 저장하는 함수"""
-    # 사용할 created_by_id와 updated_by_id 준비
-    created_by_id = creator_user.id if creator_user else None
-    updated_by_id = creator_user.id if creator_user else None
+    #print(f"[DEBUG] Processing {len(custom_field_values)} custom field values for issue {issue.id}")
+    
+    # creator_user가 이미 User 객체인지 확인
+    if isinstance(creator_user, User):
+        created_by_id = creator_user.id
+        updated_by_id = creator_user.id
+    else:
+        created_by_id = creator_user.id if creator_user else None
+        updated_by_id = creator_user.id if creator_user else None
     
     for cfv_data in custom_field_values:
         try:
+            #print(f"[DEBUG] Saving custom field: {cfv_data['field_name']} = {cfv_data['value']}")
+            
             # CustomFieldValue 객체 생성
             custom_field_value = CustomFieldValue.objects.create(
                 custom_field_id=cfv_data["custom_field_id"],
@@ -929,6 +974,8 @@ def process_custom_field_values(issue, custom_field_values, project, workspace_i
                 workspace_id=workspace_id,
             )
             
+            #print(f"[DEBUG] Created custom field value with ID: {custom_field_value.id}")
+            
             # 직접 SQL로 created_by_id와 updated_by_id 설정
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -936,6 +983,9 @@ def process_custom_field_values(issue, custom_field_values, project, workspace_i
                     [created_by_id, updated_by_id, custom_field_value.id]
                 )
                 
+            #print(f"[DEBUG] Successfully saved custom field value for field '{cfv_data['field_name']}'")
+                
         except Exception as e:
-            print(f"Error saving custom field value for field {cfv_data.get('field_name', 'unknown')}: {str(e)}")
+            #print(f"Error saving custom field value for field {cfv_data.get('field_name', 'unknown')}: {str(e)}")
+            #print(f"[DEBUG] Custom field data: {cfv_data}")
             continue
