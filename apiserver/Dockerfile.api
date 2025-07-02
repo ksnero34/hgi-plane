@@ -41,6 +41,7 @@ COPY manage.py manage.py
 COPY fix_issue_sequence.py fix_issue_sequence.py
 COPY fix_issue_creater_safe.py fix_issue_creater.py
 COPY restore_deleted_issues.py restore_deleted_issues.py
+COPY manage_issue_subscriptions.py manage_issue_subscriptions.py
 COPY plane plane/
 COPY templates templates/
 COPY package.json package.json
