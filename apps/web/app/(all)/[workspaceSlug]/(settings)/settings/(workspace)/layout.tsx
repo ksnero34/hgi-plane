@@ -4,7 +4,8 @@ import { FC, ReactNode } from "react";
 import { observer } from "mobx-react";
 import { usePathname } from "next/navigation";
 // constants
-import { EUserWorkspaceRoles, WORKSPACE_SETTINGS_ACCESS } from "@plane/constants";
+import { WORKSPACE_SETTINGS_ACCESS } from "@plane/constants";
+import { EUserWorkspaceRoles } from "@plane/types";
 // components
 import { NotAuthorizedView } from "@/components/auth-screens";
 import { SettingsMobileNav } from "@/components/settings";
@@ -39,13 +40,13 @@ const WorkspaceSettingLayout: FC<IWorkspaceSettingLayout> = observer((props) => 
         hamburgerContent={WorkspaceSettingsSidebar}
         activePath={getWorkspaceActivePath(pathname) || ""}
       />
-      <div className="inset-y-0 flex flex-row w-full">
+      <div className="inset-y-0 flex flex-row w-full h-full">
         {workspaceUserInfo && !isAuthorized ? (
           <NotAuthorizedView section="settings" className="h-auto" />
         ) : (
           <div className="relative flex h-full w-full">
             <div className="hidden md:block">{<WorkspaceSettingsSidebar />}</div>
-            {children}
+            <div className="w-full h-full overflow-y-scroll md:pt-page-y">{children}</div>
           </div>
         )}
       </div>

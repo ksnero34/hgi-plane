@@ -4,8 +4,7 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 // images
 import OIDCLogo from "/public/logos/oidc-logo.svg";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+import { API_BASE_URL } from "@plane/constants";
 
 export type OIDCOAuthButtonProps = {
   text: string;

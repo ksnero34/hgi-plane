@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import isEmpty from "lodash/isEmpty";
+import { isEmpty } from "lodash";
 import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "next/navigation";
 import useSWR from "swr";
@@ -8,10 +8,11 @@ import {
   ALL_ISSUES,
   EIssueLayoutTypes,
   EIssueFilterType,
-  EIssuesStoreType,
-  ISSUE_DISPLAY_FILTERS_BY_PAGE
-,EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { IIssueDisplayFilterOptions } from "@plane/types";
+  ISSUE_DISPLAY_FILTERS_BY_PAGE,
+  EUserPermissions, 
+  EUserPermissionsLevel 
+} from "@plane/constants";
+import { IIssueDisplayFilterOptions, EIssuesStoreType } from "@plane/types";
 // hooks
 // components
 import { EmptyState } from "@/components/common";
@@ -38,19 +39,24 @@ type Props = {
 
 export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
   const { isDefaultView, isLoading = false, toggleLoading } = props;
-  // router
+  
+  // Router hooks
   const { workspaceSlug, globalViewId } = useParams();
   const router = useAppRouter();
   const searchParams = useSearchParams();
+  
+  // Route filters
   const routeFilters: {
     [key: string]: string;
   } = {};
   searchParams.forEach((value: string, key: string) => {
     routeFilters[key] = value;
   });
-  //swr hook for fetching issue properties
+  
+  // Custom hooks
   useWorkspaceIssueProperties(workspaceSlug);
-  // store
+  
+  // Store hooks
   const {
     issuesFilter: { filters, fetchFilters, updateFilters },
     issues: { clear, getIssueLoader, getPaginationData, groupedIssueIds, fetchIssues, fetchNextIssues },
@@ -61,9 +67,10 @@ export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
 
   const { fetchAllGlobalViews, getViewDetailsById } = useGlobalView();
 
+  // Derived values
   const viewDetails = getViewDetailsById(globalViewId?.toString());
-  // filter init from the query params
-
+  
+  // Apply route filters to store
   const routerFilterParams = () => {
     if (
       workspaceSlug &&
@@ -89,10 +96,12 @@ export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
     }
   };
 
+  // Fetch next pages callback
   const fetchNextPages = useCallback(() => {
     if (workspaceSlug && globalViewId) fetchNextIssues(workspaceSlug.toString(), globalViewId.toString());
   }, [fetchNextIssues, workspaceSlug, globalViewId]);
 
+  // Fetch global views
   const { isLoading: globalViewsLoading } = useSWR(
     workspaceSlug ? `WORKSPACE_GLOBAL_VIEWS_${workspaceSlug}` : null,
     async () => {
@@ -103,6 +112,7 @@ export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
     { revalidateIfStale: false, revalidateOnFocus: false }
   );
 
+  // Fetch issues
   const { isLoading: issuesLoading } = useSWR(
     workspaceSlug && globalViewId ? `WORKSPACE_GLOBAL_VIEW_ISSUES_${workspaceSlug}_${globalViewId}` : null,
     async () => {
@@ -136,7 +146,7 @@ export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
         projectId
       );
     },
-    [workspaceSlug]
+    [allowPermissions, workspaceSlug]
   );
 
   const issueFilters = globalViewId ? filters?.[globalViewId.toString()] : undefined;
@@ -173,7 +183,7 @@ export const AllIssueLayoutRoot: React.FC<Props> = observer((props: Props) => {
     [canEditProperties, removeIssue, updateIssue, archiveIssue]
   );
 
-  // when the call is not loading and the view does not exist and the view is not a default view, show empty state
+  // Empty state - when the call is not loading and the view does not exist and the view is not a default view, show empty state
   if (!isLoading && !globalViewsLoading && !issuesLoading && !viewDetails && !isDefaultView) {
     return (
       <EmptyState

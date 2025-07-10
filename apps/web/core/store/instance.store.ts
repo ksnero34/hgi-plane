@@ -5,7 +5,6 @@ import { IInstance, IInstanceConfig, IFileSettings } from "@plane/types";
 // services
 import { InstanceService } from "@/services/instance.service";
 
-// 에러 타입 정의 추가
 type TError = {
   status: string;
   message: string;

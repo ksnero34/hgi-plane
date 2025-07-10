@@ -6,18 +6,17 @@ import Link from "next/link";
 // icons
 import { Eye, EyeOff, Info, X, XCircle } from "lucide-react";
 // plane imports
-import { FORGOT_PASSWORD, SIGN_IN_WITH_CODE, SIGN_IN_WITH_PASSWORD, SIGN_UP_WITH_PASSWORD } from "@plane/constants";
+import { API_BASE_URL, E_PASSWORD_STRENGTH, AUTH_TRACKER_EVENTS, AUTH_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button, Input, Spinner } from "@plane/ui";
+import { getPasswordStrength } from "@plane/utils";
 // components
 import { ForgotPasswordPopover, PasswordStrengthMeter } from "@/components/account";
 // constants
 // helpers
 import { EAuthModes, EAuthSteps } from "@/helpers/authentication.helper";
-import { API_BASE_URL } from "@/helpers/common.helper";
-import { E_PASSWORD_STRENGTH, getPasswordStrength } from "@/helpers/password.helper";
 // hooks
-import { useEventTracker } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // services
 import { AuthService } from "@/services/auth.service";
 
@@ -47,8 +46,6 @@ export const AuthPasswordForm: React.FC<Props> = observer((props: Props) => {
   const { email, isSMTPConfigured, handleAuthStep, handleEmailClear, mode, nextPath } = props;
   // plane imports
   const { t } = useTranslation();
-  // hooks
-  const { captureEvent } = useEventTracker();
   // ref
   const formRef = useRef<HTMLFormElement>(null);
   // states
@@ -78,7 +75,6 @@ export const AuthPasswordForm: React.FC<Props> = observer((props: Props) => {
 
   const redirectToUniqueCodeSignIn = async () => {
     handleAuthStep(EAuthSteps.UNIQUE_CODE);
-    captureEvent(SIGN_IN_WITH_CODE);
   };
 
   const passwordSupport =
@@ -86,7 +82,7 @@ export const AuthPasswordForm: React.FC<Props> = observer((props: Props) => {
       <div className="w-full">
         {isSMTPConfigured ? (
           <Link
-            onClick={() => captureEvent(FORGOT_PASSWORD)}
+            data-ph-element={AUTH_TRACKER_ELEMENTS.FORGOT_PASSWORD_FROM_SIGNIN}
             href={`/accounts/forgot-password?email=${encodeURIComponent(email)}`}
             className="text-xs font-medium text-custom-primary-100"
           >
@@ -155,13 +151,32 @@ export const AuthPasswordForm: React.FC<Props> = observer((props: Props) => {
               : true;
           if (isPasswordValid) {
             setIsSubmitting(true);
-            captureEvent(mode === EAuthModes.SIGN_IN ? SIGN_IN_WITH_PASSWORD : SIGN_UP_WITH_PASSWORD);
+            captureSuccess({
+              eventName:
+                mode === EAuthModes.SIGN_IN
+                  ? AUTH_TRACKER_EVENTS.sign_in_with_password
+                  : AUTH_TRACKER_EVENTS.sign_up_with_password,
+              payload: {
+                email: passwordFormData.email,
+              },
+            });
             if (formRef.current) formRef.current.submit(); // Manually submit the form if the condition is met
           } else {
             setBannerMessage(true);
           }
         }}
-        onError={() => setIsSubmitting(false)}
+        onError={() => {
+          setIsSubmitting(false);
+          captureError({
+            eventName:
+              mode === EAuthModes.SIGN_IN
+                ? AUTH_TRACKER_EVENTS.sign_in_with_password
+                : AUTH_TRACKER_EVENTS.sign_up_with_password,
+            payload: {
+              email: passwordFormData.email,
+            },
+          });
+        }}
       >
         <input type="hidden" name="csrfmiddlewaretoken" />
         <input type="hidden" value={passwordFormData.email} name="email" />
@@ -289,6 +304,7 @@ export const AuthPasswordForm: React.FC<Props> = observer((props: Props) => {
               {isSMTPConfigured && (
                 <Button
                   type="button"
+                  data-ph-element={AUTH_TRACKER_ELEMENTS.SIGN_IN_WITH_UNIQUE_CODE}
                   onClick={redirectToUniqueCodeSignIn}
                   variant="outline-primary"
                   className="w-full"

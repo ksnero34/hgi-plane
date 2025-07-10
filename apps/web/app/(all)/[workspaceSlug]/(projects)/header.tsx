@@ -7,18 +7,17 @@ import { Home } from "lucide-react";
 import githubBlackImage from "/public/logos/github-black.png";
 import githubWhiteImage from "/public/logos/github-white.png";
 // ui
-import { GITHUB_REDIRECTED } from "@plane/constants";
+import { GITHUB_REDIRECTED_TRACKER_EVENT, HEADER_GITHUB_ICON } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common";
 // constants
 // hooks
-import { useEventTracker } from "@/hooks/store";
+import { captureElementAndEvent } from "@/helpers/event-tracker.helper";
 
 export const WorkspaceDashboardHeader = () => {
   // hooks
-  const { captureEvent } = useEventTracker();
   const { resolvedTheme } = useTheme();
   const { t } = useTranslation();
 
@@ -28,9 +27,8 @@ export const WorkspaceDashboardHeader = () => {
         <Header.LeftItem>
           <div>
             <Breadcrumbs>
-              <Breadcrumbs.BreadcrumbItem
-                type="text"
-                link={
+              <Breadcrumbs.Item
+                component={
                   <BreadcrumbLink label={t("home.title")} icon={<Home className="h-4 w-4 text-custom-text-300" />} />
                 }
               />
@@ -42,8 +40,14 @@ export const WorkspaceDashboardHeader = () => {
           {/* GitHub Star 버튼 */}
           {/* <a
             onClick={() =>
-              captureEvent(GITHUB_REDIRECTED, {
-                element: "navbar",
+              captureElementAndEvent({
+                element: {
+                  elementName: HEADER_GITHUB_ICON,
+                },
+                event: {
+                  eventName: GITHUB_REDIRECTED_TRACKER_EVENT,
+                  state: "SUCCESS",
+                },
               })
             }
             className="flex flex-shrink-0 items-center gap-1.5 rounded bg-custom-background-80 px-3 py-1.5"

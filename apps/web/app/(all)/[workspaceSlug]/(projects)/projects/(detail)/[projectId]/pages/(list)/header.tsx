@@ -5,7 +5,7 @@ import { observer } from "mobx-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FileText, Folder, ChevronRight } from "lucide-react";
 // constants
-import { EPageAccess } from "@plane/constants";
+import { EPageAccess, EProjectFeatureKey, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 // plane types
 import { TPage } from "@plane/types";
 // plane ui
@@ -15,7 +15,7 @@ import { BreadcrumbLink } from "@/components/common";
 // hooks
 import { useEventTracker, useProject, useCommandPalette } from "@/hooks/store";
 // plane web
-import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 // plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
 
@@ -91,7 +91,11 @@ export const PagesListHeader = observer(() => {
       <Header.LeftItem>
         <div>
           <Breadcrumbs isLoading={loader === "init-loader"}>
-            <ProjectBreadcrumb />
+            <CommonProjectBreadcrumbs
+              workspaceSlug={workspaceSlug?.toString() ?? ""}
+              projectId={projectId?.toString() ?? ""}
+              featureKey={EProjectFeatureKey.PAGES}
+            />
             <Breadcrumbs.BreadcrumbItem
               type="text"
               link={
@@ -121,7 +125,13 @@ export const PagesListHeader = observer(() => {
       </Header.LeftItem>
       {canCurrentUserCreatePage ? (
         <Header.RightItem>
-          <Button variant="primary" size="sm" onClick={handleCreatePage} loading={isCreatingPage}>
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={handleCreatePage} 
+            loading={isCreatingPage}
+            data-ph-element={PROJECT_TRACKER_ELEMENTS.CREATE_HEADER_BUTTON}
+          >
             {isCreatingPage ? "Adding" : "Add page"}
           </Button>
           <Button

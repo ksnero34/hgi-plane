@@ -1,13 +1,10 @@
 import { useMemo } from "react";
 import { Copy, ExternalLink, Link, Pencil, Trash2, XCircle, ArchiveRestoreIcon } from "lucide-react";
 // plane imports
-import { EIssuesStoreType } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TIssue } from "@plane/types";
+import { EIssuesStoreType, TIssue } from "@plane/types";
 import { ArchiveIcon, TContextMenuItem, TOAST_TYPE, setToast } from "@plane/ui";
-import { copyUrlToClipboard } from "@plane/utils";
-// helpers
-import { generateWorkItemLink } from "@/helpers/issue.helper";
+import { copyUrlToClipboard, generateWorkItemLink } from "@plane/utils";
 // types
 import { createCopyMenuWithDuplication } from "@/plane-web/components/issues/issue-layouts/quick-action-dropdowns";
 
@@ -59,7 +56,6 @@ export interface MenuItemFactoryProps {
   issueTypeDetail?: { is_active?: boolean };
   isDraftIssue?: boolean;
   // Action handlers
-  setTrackElement: (element: string) => void;
   setIssueToEdit: (issue: TIssue | undefined) => void;
   setCreateUpdateIssueModal: (open: boolean) => void;
   setDeleteIssueModal: (open: boolean) => void;
@@ -147,7 +143,6 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     isRestoringAllowed = false,
     isInArchivableGroup = false,
     issueTypeDetail,
-    setTrackElement,
     setIssueToEdit,
     setCreateUpdateIssueModal,
     setDeleteIssueModal,
@@ -163,7 +158,6 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     action:
       customEditAction ||
       (() => {
-        setTrackElement(activeLayout);
         setIssueToEdit(issue);
         setCreateUpdateIssueModal(true);
       }),
@@ -176,7 +170,6 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
       title: t("common.actions.make_a_copy"),
       icon: Copy,
       action: () => {
-        setTrackElement(activeLayout);
         setCreateUpdateIssueModal(true);
       },
       shouldRender: isEditingAllowed && (issueTypeDetail?.is_active ?? true),
@@ -185,7 +178,6 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     return createCopyMenuWithDuplication({
       baseItem,
       activeLayout,
-      setTrackElement,
       setCreateUpdateIssueModal,
       setDuplicateWorkItemModal,
     });
@@ -246,7 +238,6 @@ export const useMenuItemFactory = (props: MenuItemFactoryProps) => {
     title: t("common.actions.delete"),
     icon: Trash2,
     action: () => {
-      setTrackElement(activeLayout);
       setDeleteIssueModal(true);
     },
     shouldRender: isDeletingAllowed,
@@ -307,7 +298,6 @@ export const useCycleIssueMenuItems = (props: MenuItemFactoryProps): TContextMen
       ...props.issue,
       cycle_id: props.cycleId ?? null,
     });
-    props.setTrackElement(props.activeLayout || "");
     props.setCreateUpdateIssueModal(true);
   };
 
@@ -333,7 +323,6 @@ export const useModuleIssueMenuItems = (props: MenuItemFactoryProps): TContextMe
       ...props.issue,
       module_ids: props.moduleId ? [props.moduleId] : [],
     });
-    props.setTrackElement(props.activeLayout || "");
     props.setCreateUpdateIssueModal(true);
   };
 

@@ -4,7 +4,7 @@ import { Paperclip } from "lucide-react";
 // hooks
 import { useIssueDetail } from "@/hooks/store";
 // components
-import { IssueActivityBlockComponent, IssueLink } from ".";
+import { IssueActivityBlockComponent, IssueLink } from "./";
 
 type TIssueAttachmentActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 

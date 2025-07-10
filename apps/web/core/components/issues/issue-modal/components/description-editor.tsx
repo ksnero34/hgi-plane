@@ -6,21 +6,15 @@ import { Control, Controller } from "react-hook-form";
 import { Sparkle } from "lucide-react";
 // plane imports
 import { ETabIndices } from "@plane/constants";
-// editor
-import { EditorRefApi } from "@plane/editor";
-// i18n
+import type { EditorRefApi } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
-// types
-import { TIssue } from "@plane/types";
-import { EFileAssetType } from "@plane/types/src/enums";
-// ui
+import { EFileAssetType, TIssue } from "@plane/types";
 import { Loader, setToast, TOAST_TYPE } from "@plane/ui";
+import { getDescriptionPlaceholderI18n, getTabIndex } from "@plane/utils";
 // components
 import { GptAssistantPopover } from "@/components/core";
 import { RichTextEditor } from "@/components/editor";
 // helpers
-import { getDescriptionPlaceholderI18n } from "@/helpers/issue.helper";
-import { getTabIndex } from "@/helpers/tab-indices.helper";
 // hooks
 import { useEditorAsset, useInstance, useWorkspace } from "@/hooks/store";
 import useKeypress from "@/hooks/use-keypress";
@@ -181,6 +175,7 @@ export const IssueDescriptionEditor: React.FC<TIssueDescriptionEditorProps> = ob
             control={control}
             render={({ field: { value, onChange } }) => (
               <RichTextEditor
+                editable
                 id="issue-modal-editor"
                 initialValue={value ?? ""}
                 value={descriptionHtmlData}

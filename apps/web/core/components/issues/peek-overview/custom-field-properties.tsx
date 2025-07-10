@@ -11,7 +11,7 @@ import type { TIssueOperations } from "@/components/issues";
 
 // hooks
 import { useCustomField, useIssueDetail } from "@/hooks/store";
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
 
 type TCustomFieldProperties = {
   workspaceSlug: string;

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from "react";
 import { observer } from "mobx-react";
-// plane imports
+import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
 import {
   CollaborativeDocumentEditorWithRef,
   EditorRefApi,
@@ -10,15 +10,14 @@ import {
   TRealtimeConfig,
   TServerHandler,
 } from "@plane/editor";
+import { useTranslation } from "@plane/i18n";
 import { TSearchEntityRequestPayload, TSearchResponse, TWebhookConnectionQueryParams } from "@plane/types";
 import { ERowVariant, Row } from "@plane/ui";
-import { cn } from "@plane/utils";
+import { cn, generateRandomColor, hslToHex } from "@plane/utils";
 // components
 import { EditorMentionsRoot } from "@/components/editor";
 import { PageContentBrowser, PageContentLoader, PageEditorTitle } from "@/components/pages";
 // helpers
-import { LIVE_BASE_PATH, LIVE_BASE_URL } from "@/helpers/common.helper";
-import { generateRandomColor } from "@/helpers/string.helper";
 // hooks
 import { useEditorMention } from "@/hooks/editor";
 import { useUser, useWorkspace, useMember } from "@/hooks/store";
@@ -47,7 +46,9 @@ type Props = {
   editorForwardRef: React.RefObject<EditorRefApi>;
   handleConnectionStatus: Dispatch<SetStateAction<boolean>>;
   handleEditorReady: (status: boolean) => void;
+  handleOpenNavigationPane: () => void;
   handlers: TEditorBodyHandlers;
+  isNavigationPaneOpen: boolean;
   page: TPageInstance;
   webhookConnectionParams: TWebhookConnectionQueryParams;
   workspaceSlug: string;
@@ -59,7 +60,9 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     editorForwardRef,
     handleConnectionStatus,
     handleEditorReady,
+    handleOpenNavigationPane,
     handlers,
+    isNavigationPaneOpen,
     page,
     webhookConnectionParams,
     workspaceSlug,
@@ -68,9 +71,14 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
   const { data: currentUser } = useUser();
   const { getWorkspaceBySlug } = useWorkspace();
   const { getUserDetails } = useMember();
-
   // derived values
-  const { id: pageId, name: pageTitle, isContentEditable, updateTitle, editorRef } = page;
+  const {
+    id: pageId,
+    name: pageTitle,
+    isContentEditable,
+    updateTitle,
+    editor: { editorRef, updateAssetsList },
+  } = page;
   const workspaceId = getWorkspaceBySlug(workspaceSlug)?.id ?? "";
   // issue-embed
   const { issueEmbedProps } = useIssueEmbed({
@@ -82,9 +90,11 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     searchEntity: handlers.fetchEntity,
   });
   // editor flaggings
-  const { documentEditor: disabledExtensions } = useEditorFlagging(workspaceSlug);
+  const { document: documentEditorExtensions } = useEditorFlagging(workspaceSlug);
   // page filters
   const { fontSize, fontStyle, isFullWidth } = usePageFilters();
+  // translation
+  const { t } = useTranslation();
   // derived values
   const displayConfig: TDisplayConfig = useMemo(
     () => ({
@@ -147,7 +157,7 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     () => ({
       id: currentUser?.id ?? "",
       name: currentUser?.display_name ?? "",
-      color: generateRandomColor(currentUser?.id ?? ""),
+      color: hslToHex(generateRandomColor(currentUser?.id ?? "")),
     }),
     [currentUser?.display_name, currentUser?.id]
   );
@@ -168,18 +178,25 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
     >
       <div id="page-content-container" className="relative w-full flex-shrink-0">
         {/* table of content */}
-        <div className="page-summary-container absolute h-full right-0 top-[64px] z-[5]">
-          <div className="sticky top-[72px]">
-            <div className="group/page-toc relative px-page-x">
-              <div className="cursor-pointer max-h-[50vh] overflow-hidden">
-                <PageContentBrowser editorRef={editorRef} showOutline />
-              </div>
-              <div className="absolute top-0 right-0 opacity-0 translate-x-1/2 pointer-events-none group-hover/page-toc:opacity-100 group-hover/page-toc:-translate-x-1/4 group-hover/page-toc:pointer-events-auto transition-all duration-300 w-52 max-h-[70vh] overflow-y-scroll vertical-scrollbar scrollbar-sm whitespace-nowrap bg-custom-background-90 p-4 rounded">
-                <PageContentBrowser editorRef={editorRef} />
+        {!isNavigationPaneOpen && (
+          <div className="page-summary-container absolute h-full right-0 top-[64px] z-[5]">
+            <div className="sticky top-[72px]">
+              <div className="group/page-toc relative px-page-x">
+                <div
+                  className="!cursor-pointer max-h-[50vh] overflow-hidden"
+                  role="button"
+                  aria-label={t("page_navigation_pane.outline_floating_button")}
+                  onClick={handleOpenNavigationPane}
+                >
+                  <PageContentBrowser editorRef={editorRef} showOutline />
+                </div>
+                <div className="absolute top-0 right-0 opacity-0 translate-x-1/2 pointer-events-none group-hover/page-toc:opacity-100 group-hover/page-toc:-translate-x-1/4 group-hover/page-toc:pointer-events-auto transition-all duration-300 w-52 max-h-[70vh] overflow-y-scroll vertical-scrollbar scrollbar-sm whitespace-nowrap bg-custom-background-90 p-4 rounded">
+                  <PageContentBrowser editorRef={editorRef} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
         <div className="page-header-container group/page-header">
           <div className={blockWidthClassName}>
             <PageEditorHeaderRoot page={page} />
@@ -214,10 +231,12 @@ export const PageEditorBody: React.FC<Props> = observer((props) => {
           realtimeConfig={realtimeConfig}
           serverHandler={serverHandler}
           user={userConfig}
-          disabledExtensions={disabledExtensions}
+          disabledExtensions={documentEditorExtensions.disabled}
+          flaggedExtensions={documentEditorExtensions.flagged}
           aiHandler={{
             menu: getAIMenu,
           }}
+          onAssetChange={updateAssetsList}
         />
       </div>
     </Row>

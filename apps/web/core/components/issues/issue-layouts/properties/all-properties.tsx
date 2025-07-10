@@ -3,33 +3,39 @@
 import { useCallback, useMemo, SyntheticEvent, useState, useEffect } from "react";
 import xor from "lodash/xor";
 import { observer } from "mobx-react";
-import { useParams, usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 // icons
 import { CalendarCheck2, CalendarClock, Layers, Link, Paperclip } from "lucide-react";
 // types
-import { ISSUE_UPDATED } from "@plane/constants";
+import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 import { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
 // ui
 import { Tooltip } from "@plane/ui";
+import {
+  cn,
+  getDate,
+  renderFormattedPayloadDate,
+  generateWorkItemLink,
+  shouldHighlightIssueDueDate,
+} from "@plane/utils";
 // components
 import {
-  DateDropdown,
   EstimateDropdown,
   PriorityDropdown,
   MemberDropdown,
   ModuleDropdown,
   CycleDropdown,
   StateDropdown,
+  DateRangeDropdown,
+  DateDropdown,
 } from "@/components/dropdowns";
 // constants
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { getDate, renderFormattedPayloadDate } from "@/helpers/date-time.helper";
-import { generateWorkItemLink, shouldHighlightIssueDueDate } from "@/helpers/issue.helper";
 // hooks
-import { useEventTracker, useLabel, useIssues, useProjectState, useProject, useProjectEstimates } from "@/hooks/store";
+import { captureSuccess } from "@/helpers/event-tracker.helper";
+import { useLabel, useIssues, useProjectState, useProject, useProjectEstimates } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -52,13 +58,12 @@ export interface IIssueProperties {
 }
 
 export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, updateIssue, displayProperties, activeLayout, isReadOnly, className, isEpic = false, customFields } = props;
+  const { issue, updateIssue, displayProperties, isReadOnly, className, activeLayout, isEpic = false, customFields } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
   const { getProjectById } = useProject();
   const { labelMap } = useLabel();
-  const { captureIssueEvent } = useEventTracker();
   const storeType = useIssueStoreType();
   const {
     issues: { changeModulesInIssue },
@@ -74,8 +79,6 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
-  const pathname = usePathname();
-  const currentLayout = `${activeLayout} layout`;
   // derived values
   const stateDetails = getStateById(issue.state_id);
   const subIssueCount = issue?.sub_issues_count ?? 0;
@@ -105,14 +108,9 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   const handleState = (stateId: string) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { state_id: stateId }).then(() => {
-        captureIssueEvent({
-          eventName: ISSUE_UPDATED,
-          payload: { ...issue, state: "SUCCESS", element: currentLayout },
-          path: pathname,
-          updates: {
-            changed_property: "state",
-            change_details: stateId,
-          },
+        captureSuccess({
+          eventName: WORK_ITEM_TRACKER_EVENTS.update,
+          payload: { id: issue.id },
         });
       });
   };
@@ -120,14 +118,9 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   const handlePriority = (value: TIssuePriorities) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { priority: value }).then(() => {
-        captureIssueEvent({
-          eventName: ISSUE_UPDATED,
-          payload: { ...issue, state: "SUCCESS", element: currentLayout },
-          path: pathname,
-          updates: {
-            changed_property: "priority",
-            change_details: value,
-          },
+        captureSuccess({
+          eventName: WORK_ITEM_TRACKER_EVENTS.update,
+          payload: { id: issue.id },
         });
       });
   };
@@ -135,14 +128,9 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   const handleLabel = (ids: string[]) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { label_ids: ids }).then(() => {
-        captureIssueEvent({
-          eventName: ISSUE_UPDATED,
-          payload: { ...issue, state: "SUCCESS", element: currentLayout },
-          path: pathname,
-          updates: {
-            changed_property: "labels",
-            change_details: ids,
-          },
+        captureSuccess({
+          eventName: WORK_ITEM_TRACKER_EVENTS.update,
+          payload: { id: issue.id },
         });
       });
   };
@@ -150,14 +138,9 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   const handleAssignee = (ids: string[]) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { assignee_ids: ids }).then(() => {
-        captureIssueEvent({
-          eventName: ISSUE_UPDATED,
-          payload: { ...issue, state: "SUCCESS", element: currentLayout },
-          path: pathname,
-          updates: {
-            changed_property: "assignees",
-            change_details: ids,
-          },
+        captureSuccess({
+          eventName: WORK_ITEM_TRACKER_EVENTS.update,
+          payload: { id: issue.id },
         });
       });
   };
@@ -175,14 +158,12 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
       if (modulesToAdd.length > 0) issueOperations.addModulesToIssue(modulesToAdd);
       if (modulesToRemove.length > 0) issueOperations.removeModulesFromIssue(modulesToRemove);
 
-      captureIssueEvent({
-        eventName: ISSUE_UPDATED,
-        payload: { ...issue, state: "SUCCESS", element: currentLayout },
-        path: pathname,
-        updates: { changed_property: "module_ids", change_details: { module_ids: moduleIds } },
+      captureSuccess({
+        eventName: WORK_ITEM_TRACKER_EVENTS.update,
+        payload: { id: issue.id },
       });
     },
-    [issueOperations, captureIssueEvent, currentLayout, pathname, issue]
+    [issueOperations, issue]
   );
 
   const handleCycle = useCallback(
@@ -191,28 +172,21 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
       if (cycleId) issueOperations.addIssueToCycle?.(cycleId);
       else issueOperations.removeIssueFromCycle?.();
 
-      captureIssueEvent({
-        eventName: ISSUE_UPDATED,
-        payload: { ...issue, state: "SUCCESS", element: currentLayout },
-        path: pathname,
-        updates: { changed_property: "cycle", change_details: { cycle_id: cycleId } },
+      captureSuccess({
+        eventName: WORK_ITEM_TRACKER_EVENTS.update,
+        payload: { id: issue.id },
       });
     },
-    [issue, issueOperations, captureIssueEvent, currentLayout, pathname]
+    [issue, issueOperations]
   );
 
   const handleStartDate = (date: Date | null) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { start_date: date ? renderFormattedPayloadDate(date) : null }).then(
         () => {
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { ...issue, state: "SUCCESS", element: currentLayout },
-            path: pathname,
-            updates: {
-              changed_property: "start_date",
-              change_details: date ? renderFormattedPayloadDate(date) : null,
-            },
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issue.id },
           });
         }
       );
@@ -222,14 +196,9 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { target_date: date ? renderFormattedPayloadDate(date) : null }).then(
         () => {
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { ...issue, state: "SUCCESS", element: currentLayout },
-            path: pathname,
-            updates: {
-              changed_property: "target_date",
-              change_details: date ? renderFormattedPayloadDate(date) : null,
-            },
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issue.id },
           });
         }
       );
@@ -238,14 +207,9 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   const handleEstimate = (value: string | undefined) => {
     if (updateIssue)
       updateIssue(issue.project_id, issue.id, { estimate_point: value }).then(() => {
-        captureIssueEvent({
-          eventName: ISSUE_UPDATED,
-          payload: { ...issue, state: "SUCCESS", element: currentLayout },
-          path: pathname,
-          updates: {
-            changed_property: "estimate_point",
-            change_details: value,
-          },
+        captureSuccess({
+          eventName: WORK_ITEM_TRACKER_EVENTS.update,
+          payload: { id: issue.id },
         });
       });
   };
@@ -264,13 +228,15 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
 
   if (!displayProperties || !issue.project_id) return null;
 
+  // date range is enabled only when both dates are available and both dates are enabled
+  const isDateRangeEnabled: boolean = Boolean(
+    issue.start_date && issue.target_date && displayProperties.start_date && displayProperties.due_date
+  );
+
   const defaultLabelOptions = issue?.label_ids?.map((id) => labelMap[id]) || [];
 
   const minDate = getDate(issue.start_date);
-  minDate?.setDate(minDate.getDate());
-
   const maxDate = getDate(issue.target_date);
-  maxDate?.setDate(maxDate.getDate());
 
   const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -311,8 +277,45 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
         </div>
       </WithDisplayPropertiesHOC>
 
+      {/* merged dates */}
+      <WithDisplayPropertiesHOC
+        displayProperties={displayProperties}
+        displayPropertyKey={["start_date", "due_date"]}
+        shouldRenderProperty={() => isDateRangeEnabled}
+      >
+        <div className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
+          <DateRangeDropdown
+            value={{
+              from: getDate(issue.start_date) || undefined,
+              to: getDate(issue.target_date) || undefined,
+            }}
+            onSelect={(range) => {
+              handleStartDate(range?.from ?? null);
+              handleTargetDate(range?.to ?? null);
+            }}
+            hideIcon={{
+              from: false,
+            }}
+            isClearable
+            mergeDates
+            buttonVariant={issue.start_date || issue.target_date ? "border-with-text" : "border-without-text"}
+            buttonClassName={shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group) ? "text-red-500" : ""}
+            clearIconClassName="!text-custom-text-100"
+            disabled={isReadOnly}
+            renderByDefault={isMobile}
+            showTooltip
+            renderPlaceholder={false}
+            customTooltipHeading="Date Range"
+          />
+        </div>
+      </WithDisplayPropertiesHOC>
+
       {/* start date */}
-      <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="start_date">
+      <WithDisplayPropertiesHOC
+        displayProperties={displayProperties}
+        displayPropertyKey="start_date"
+        shouldRenderProperty={() => !isDateRangeEnabled}
+      >
         <div className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
           <DateDropdown
             value={issue.start_date ?? null}
@@ -330,7 +333,11 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
       </WithDisplayPropertiesHOC>
 
       {/* target/due date */}
-      <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="due_date">
+      <WithDisplayPropertiesHOC
+        displayProperties={displayProperties}
+        displayPropertyKey="due_date"
+        shouldRenderProperty={() => !isDateRangeEnabled}
+      >
         <div className="h-5" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
           <DateDropdown
             value={issue?.target_date ?? null}
@@ -528,7 +535,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
       <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="labels">
         <IssuePropertyLabels
           projectId={issue?.project_id || null}
-          value={issue?.label_ids || null}
+          value={issue?.label_ids || []}
           defaultOptions={defaultLabelOptions}
           onChange={handleLabel}
           disabled={isReadOnly}

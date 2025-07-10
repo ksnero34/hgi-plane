@@ -4,7 +4,7 @@ import { FC } from "react";
 import { isEmpty } from "lodash";
 import { observer } from "mobx-react";
 // ui
-import { WORKSPACE_MEMBER_LEAVE } from "@plane/constants";
+import { MEMBER_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { IWorkspaceMember } from "@plane/types";
 import { TOAST_TYPE, Table, setToast } from "@plane/ui";
@@ -13,7 +13,8 @@ import { MembersLayoutLoader } from "@/components/ui/loader/layouts/members-layo
 import { ConfirmWorkspaceMemberRemove } from "@/components/workspace";
 // constants
 // hooks
-import { useEventTracker, useMember, useUser, useUserPermissions, useUserSettings, useWorkspace } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useMember, useUser, useUserPermissions, useUserSettings, useWorkspace } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useMemberColumns } from "@/plane-web/components/workspace/settings/useMemberColumns";
 
@@ -32,7 +33,6 @@ export const WorkspaceMembersListItem: FC<Props> = observer((props) => {
     workspace: { removeMemberFromWorkspace },
   } = useMember();
   const { leaveWorkspace } = useUserPermissions();
-  const { captureEvent } = useEventTracker();
   const { getWorkspaceRedirectionUrl } = useWorkspace();
   const { fetchCurrentUserSettings } = useUserSettings();
   const { t } = useTranslation();
@@ -45,18 +45,27 @@ export const WorkspaceMembersListItem: FC<Props> = observer((props) => {
       .then(async () => {
         await fetchCurrentUserSettings();
         router.push(getWorkspaceRedirectionUrl());
-        captureEvent(WORKSPACE_MEMBER_LEAVE, {
-          state: "SUCCESS",
-          element: "Workspace settings members page",
+        captureSuccess({
+          eventName: MEMBER_TRACKER_EVENTS.workspace.leave,
+          payload: {
+            workspace: workspaceSlug,
+          },
         });
       })
-      .catch((err: any) =>
+      .catch((err: any) => {
+        captureError({
+          eventName: MEMBER_TRACKER_EVENTS.workspace.leave,
+          payload: {
+            workspace: workspaceSlug,
+          },
+          error: err,
+        });
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "Error!",
           message: err?.error || t("something_went_wrong_please_try_again"),
-        })
-      );
+        });
+      });
   };
 
   const handleRemoveMember = async (memberId: string) => {

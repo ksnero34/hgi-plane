@@ -3,9 +3,9 @@
 import { observer } from "mobx-react";
 import { CalendarCheck2 } from "lucide-react";
 import { Tooltip } from "@plane/ui";
+import { cn } from "@plane/utils";
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { renderFormattedDate } from "@/helpers/date-time.helper";
+import { renderFormattedDate } from "@plane/utils";
 import { shouldHighlightIssueDueDate } from "@/helpers/issue.helper";
 // hooks
 import { useStates } from "@/hooks/store";

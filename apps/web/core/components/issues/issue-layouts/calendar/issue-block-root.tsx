@@ -9,6 +9,7 @@ import { CalendarIssueBlock } from "@/components/issues";
 import { useIssueDetail } from "@/hooks/store";
 import { TRenderQuickActions } from "../list/list-view-types";
 import { HIGHLIGHT_CLASS } from "../utils";
+// types
 
 type Props = {
   issueId: string;

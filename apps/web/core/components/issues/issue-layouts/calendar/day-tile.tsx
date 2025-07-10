@@ -8,21 +8,15 @@ import { observer } from "mobx-react";
 // MobX 관련 임포트 추가
 import { runInAction, transaction } from "mobx";
 // types
-import { TGroupedIssues, TIssue, TIssueMap, TPaginationData } from "@plane/types";
+import { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate } from "@plane/types";
 // ui
 import { TOAST_TYPE, setToast } from "@plane/ui";
 // components
-import { CalendarIssueBlocks, ICalendarDate } from "@/components/issues";
+import { cn, renderFormattedPayloadDate } from "@plane/utils";
+import { CalendarIssueBlocks, CalendarIssueBlockRoot, CalendarQuickAddIssueActions } from "@/components/issues";
 import { highlightIssueOnDrop } from "@/components/issues/issue-layouts/utils";
-// utils 파일에서 handleDragAndDrop 함수 임포트
-import { handleDragAndDrop } from "./utils";
 // helpers
 import { MONTHS_LIST } from "@/constants/calendar";
-// helpers
-import { cn } from "@/helpers/common.helper";
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
-// 추가 import
-import { CalendarIssueBlockRoot, CalendarQuickAddIssueActions } from "@/components/issues";
 // types
 import { IProjectEpicsFilter } from "@/plane-web/store/issue/epic";
 import { ICycleIssuesFilter } from "@/store/issue/cycle";
@@ -144,21 +138,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
       processedEvents.current.delete(eventId);
     }, 5000);
     
-    // 시작일과 종료일이 같은 경우에만 로그 출력
-    if (updatedIssue && updatedIssue.start_date && updatedIssue.target_date) {
-      const startDate = new Date(updatedIssue.start_date).toDateString();
-      const targetDate = new Date(updatedIssue.target_date).toDateString();
-      
-      // if (startDate === targetDate) {
-      //   console.log("[중요] day-tile - 이슈 업데이트 이벤트:", {
-      //     issueId,
-      //     start_date: updatedIssue.start_date,
-      //     target_date: updatedIssue.target_date,
-      //     forceRender
-      //   });
-      // }
-    }
-    
     // 로컬 이슈 객체 업데이트
     if (updatedIssue && issues && issues[issueId]) {
       // MobX 트랜잭션으로 이슈 객체 업데이트
@@ -217,35 +196,13 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
           const newDate = new Date(destinationData.date);
 
-          // console.log("Drop Event:", {
-          //   sourceData,
-          //   destinationData,
-          //   issueDetails: {
-          //     id: issueDetails.id,
-          //     name: issueDetails.name,
-          //     start_date: issueDetails.start_date,
-          //     target_date: issueDetails.target_date
-          //   }
-          // });
-
           // 시작일과 종료일이 같은 경우 특별 처리
           const hasBothDates = !!(issueDetails.start_date && issueDetails.target_date);
           const datesAreEqual = hasBothDates && 
             new Date(issueDetails.start_date!).toDateString() === new Date(issueDetails.target_date!).toDateString();
 
-          // console.log("Date equality check:", {
-          //   hasBothDates,
-          //   datesAreEqual,
-          //   start_date: issueDetails.start_date ? new Date(issueDetails.start_date).toDateString() : null,
-          //   target_date: issueDetails.target_date ? new Date(issueDetails.target_date).toDateString() : null,
-          //   isStartDate: sourceData.isStartDate,
-          //   isEqualDatesCase: sourceData.isEqualDatesCase
-          // });
-
           // 시작일과 종료일이 같은 경우 특별 처리
           if ((sourceData.isEqualDatesCase === true) || (datesAreEqual && sourceData.isStartDate === null)) {
-            // console.log("[중요] 시작일과 종료일이 같은 경우 처리");
-            
             // 날짜 비교를 위해 Date 객체로 변환
             const sourceDateObj = new Date(sourceData.date);
             const destinationDateObj = new Date(destinationData.date);
@@ -258,17 +215,14 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             if (destinationDateObj < sourceDateObj) {
               updateData = { start_date: destinationData.date };
               isStartDateFlag = true;
-              // console.log("[중요] 날짜가 같음, 목적지가 소스보다 이전 - 시작일 업데이트:", destinationData.date);
             } 
             // 드롭 위치가 소스 날짜보다 이후이면 종료일 업데이트
             else if (destinationDateObj > sourceDateObj) {
               updateData = { target_date: destinationData.date };
               isStartDateFlag = false;
-              // console.log("[중요] 날짜가 같음, 목적지가 소스보다 이후 - 종료일 업데이트:", destinationData.date);
             }
             // 같은 날짜로 드롭한 경우는 아무것도 하지 않음
             else {
-              // console.log("[중요] 날짜가 같음, 소스와 목적지가 동일 - 업데이트 불필요");
               return;
             }
             
@@ -309,7 +263,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
-              // console.log("[중요] API 호출 완료 - 날짜 업데이트 성공");
               
               // API 호출 성공 후 최종 상태 업데이트
               if (Object.keys(updateData).length > 0) {
@@ -329,7 +282,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               }
             })
             .catch((error) => {
-              // console.error("[중요] API 오류 - 날짜 업데이트 실패:", error);
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: "오류가 발생했습니다!",
@@ -341,12 +293,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
           // start_date를 변경하는 경우
           if (sourceData.isStartDate) {
-            // console.log("[중요] 시작일 업데이트", {
-            //   from: issueDetails.start_date,
-            //   to: destinationData.date,
-            //   isStartDate: sourceData.isStartDate
-            // });
-            
             const targetDate = issueDetails.target_date ? new Date(issueDetails.target_date) : null;
 
             // target_date가 있고, 새로운 start_date가 target_date보다 이후인 경우
@@ -364,7 +310,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               try {
                 // 명시적으로 start_date만 업데이트
                 const updateData = { start_date: destinationData.date };
-                // console.log("[중요] 시작일 업데이트 데이터:", updateData);
                 
                 // 로컬 상태 업데이트 전에 이슈 객체 복사
                 const updatedIssue = { ...issueDetails, start_date: destinationData.date };
@@ -380,8 +325,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                   }
                 });
                 
-                // console.log("[중요] 로컬 상태 업데이트 완료 - 시작일");
-                
                 // 모든 날짜 타일에 대해 issueInfoMap 재계산을 위한 트리거
                 window.dispatchEvent(new CustomEvent('calendar-issue-updated', { 
                   detail: { 
@@ -394,7 +337,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 // 강제 재렌더링 트리거
                 setUpdateTrigger(Date.now());
               } catch (error) {
-                // console.error("[중요] 로컬 상태 업데이트 오류 - 시작일:", error);
+                console.error("로컬 상태 업데이트 오류 - 시작일:", error);
               }
             });
 
@@ -408,7 +351,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
-              // console.log("[중요] API 호출 완료 - 시작일 업데이트 성공");
               
               // API 호출 성공 후 최종 상태 업데이트
               transaction(() => {
@@ -433,7 +375,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               });
             })
             .catch((error) => {
-              console.error("[중요] API 오류 - 시작일 업데이트 실패:", error);
+              console.error("API 오류 - 시작일 업데이트 실패:", error);
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: "오류가 발생했습니다!",
@@ -441,27 +383,23 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               });
             });
             
-            // 이미 처리했으므로 여기서 종료
             return;
           } 
           // target_date(due date)를 변경하는 경우
           else {
-            // console.log("[중요] 종료일 업데이트", {
-            //   from: issueDetails.target_date,
-            //   to: destinationData.date,
-            //   isStartDate: sourceData.isStartDate
-            // });
-            
-            const startDate = issueDetails.start_date ? new Date(issueDetails.start_date) : null;
-
-            // start_date가 있고, 새로운 target_date가 start_date보다 이전인 경우
-            if (startDate && newDate < startDate) {
-              setToast({
-                type: TOAST_TYPE.ERROR,
-                title: "오류가 발생했습니다!",
-                message: "종료일은 작업 항목의 시작일보다 이전일 수 없습니다.",
-              });
-              return;
+            // 신규 버전의 날짜 검증 로직 통합
+            if (issueDetails?.start_date) {
+              const issueStartDate = new Date(issueDetails.start_date);
+              const targetDate = new Date(destinationData?.date);
+              const diffInDays = differenceInCalendarDays(targetDate, issueStartDate);
+              if (diffInDays < 0) {
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: "오류가 발생했습니다!",
+                  message: "종료일은 작업 항목의 시작일보다 이전일 수 없습니다.",
+                });
+                return;
+              }
             }
 
             // MobX transaction을 사용하여 모든 상태 업데이트를 한 번에 처리
@@ -469,7 +407,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               try {
                 // 명시적으로 target_date만 업데이트
                 const updateData = { target_date: destinationData.date };
-                // console.log("[중요] 종료일 업데이트 데이터:", updateData);
                 
                 // 로컬 상태 업데이트 전에 이슈 객체 복사
                 const updatedIssue = { ...issueDetails, target_date: destinationData.date };
@@ -485,8 +422,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                   }
                 });
                 
-                // console.log("[중요] 로컬 상태 업데이트 완료 - 종료일");
-                
                 // 모든 날짜 타일에 대해 issueInfoMap 재계산을 위한 트리거
                 window.dispatchEvent(new CustomEvent('calendar-issue-updated', { 
                   detail: { 
@@ -499,7 +434,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 // 강제 재렌더링 트리거
                 setUpdateTrigger(Date.now());
               } catch (error) {
-                console.error("[중요] 로컬 상태 업데이트 오류 - 종료일:", error);
+                console.error("로컬 상태 업데이트 오류 - 종료일:", error);
               }
             });
 
@@ -513,7 +448,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
-              // console.log("[중요] API 호출 완료 - 종료일 업데이트 성공");
               
               // API 호출 성공 후 최종 상태 업데이트
               transaction(() => {
@@ -538,7 +472,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               });
             })
             .catch((error) => {
-              console.error("[중요] API 오류 - 종료일 업데이트 실패:", error);
+              console.error("API 오류 - 종료일 업데이트 실패:", error);
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: "오류가 발생했습니다!",
@@ -546,12 +480,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               });
             });
             
-            // 이미 처리했으므로 여기서 종료
             return;
           }
-          
-          // 여기까지 도달하면 이슈 이동 처리 함수 호출 (위의 조건문에서 처리되지 않은 경우)
-          handleIssueDrop(sourceData, destinationData, issueDetails);
         },
       })
     );
@@ -623,12 +553,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
         }
       }
       
-      // 상태 그룹 필터 확인
-      if (passesFilters && appliedFilters.state_group && appliedFilters.state_group.length > 0) {
-        // issue의 state 객체에 직접 접근할 수 없으므로, 
-        // 여기서는 이 필터를 적용하지 않음 (API 호출 시 이미 적용됨)
-      }
-      
       // 담당자 필터 확인
       if (passesFilters && appliedFilters.assignees && appliedFilters.assignees.length > 0) {
         if (!issue.assignee_ids || !issue.assignee_ids.some(id => appliedFilters.assignees!.includes(id))) {
@@ -642,8 +566,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           passesFilters = false;
         }
       }
-      
-      // 멘션 필터 확인 (이 필터는 API 단에서 처리됨)
       
       // 레이블 필터 확인
       if (passesFilters && appliedFilters.labels && appliedFilters.labels.length > 0) {
@@ -665,10 +587,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           passesFilters = false;
         }
       }
-      
-      // 모듈 필터 확인 (여기서는 module_ids가 없어서 적용 불가능)
-      
-      // 주기 필터 확인 (여기서는 cycle_id가 없어서 적용 불가능)
       
       // 모든 필터를 통과했으면 이슈 ID 추가
       if (passesFilters) {
@@ -723,45 +641,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
   // 표시할 실제 이슈 ID 목록
   const issueIds = getIssuesForDate();
   
-  // 빈 공간을 포함한 전체 아이템 배열 생성
-  const getDisplayItemsWithEmptySpaces = () => {
-    // 현재 날짜에 표시할 이슈가 없고, 전역 순서도 없는 경우 빈 배열 반환
-    if (!issueIds.length && (!globalIssueOrder || !globalIssueOrder.length)) {
-      return [];
-    }
-    
-    // 전역 순서가 없는 경우 현재 이슈만 표시
-    if (!globalIssueOrder || !globalIssueOrder.length) {
-      return issueIds.map(id => ({ type: 'issue', id }));
-    }
-    
-    // 결과 배열 (이슈와 빈 공간을 모두 포함)
-    const result = [];
-    
-    // 전역 이슈 순서 기준으로 아이템 생성
-    for (const id of globalIssueOrder) {
-      // 현재 날짜에 표시되어야 하는 이슈인지 확인
-      if (issueIds.includes(id)) {
-        // 이슈 아이템 추가
-        result.push({ type: 'issue', id });
-      } else {
-        // 다른 날짜에 표시되는 이슈 확인
-        const issue = issues?.[id];
-        
-        // 해당 이슈가 존재하고 날짜 정보가 있는 경우만 빈 공간 추가
-        if (issue && (issue.start_date || issue.target_date)) {
-          // 빈 공간 아이템 추가
-          result.push({ type: 'empty', id });
-        }
-      }
-    }
-    
-    return result;
-  };
-
-  // 빈 공간을 포함한 표시 아이템
-  const displayItems = getDisplayItemsWithEmptySpaces();
-
   // 빈 공간 포함된 이슈 ID 배열 생성
   // 실제 이슈는 원래 ID를 가지고, 빈 공간은 "empty-id" 형태로 ID를 가짐
   const getEmptySpaceAwareIssueIds = () => {
@@ -855,20 +734,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
         
         // 현재 날짜가 시작일과 종료일 사이에 있는 경우
         isContinuous = currentTime > startTime && currentTime < targetTime;
-        
-        // console.log(`Issue ${id} continuous check:`, {
-        //   currentDate: currentDate.toISOString(),
-        //   startDate: startDate.toISOString(),
-        //   targetDate: targetDate.toISOString(),
-        //   isContinuous,
-        //   timeComparison: {
-        //     currentTime,
-        //     startTime,
-        //     targetTime,
-        //     isAfterStart: currentTime > startTime,
-        //     isBeforeTarget: currentTime < targetTime
-        //   }
-        // });
       }
       
       // 새 정보 생성
@@ -903,19 +768,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     // 또는 컴포넌트가 처음 마운트될 때(prevIssueInfoMapRef.current.size === 0)
     // 또는 강제 업데이트가 필요할 때
     if (hasChanges || prevIssueInfoMapRef.current.size === 0 || forceUpdate) {
-      // console.log("Updating issueInfoMap:", {
-      //   date: date.date.toISOString(),
-      //   hasChanges,
-      //   forceUpdate,
-      //   prevSize: prevIssueInfoMapRef.current.size,
-      //   newSize: newIssueInfoMap.size,
-      //   trigger: updateTrigger,
-      //   newIssueInfoMap: Array.from(newIssueInfoMap.entries()).map(([id, info]) => ({
-      //     id,
-      //     ...info
-      //   }))
-      // });
-      
       // 상태 업데이트
       setIssueInfoMap(newIssueInfoMap);
       
@@ -938,90 +790,11 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
   const isToday = date.date.toDateString() === new Date().toDateString();
   const isSelectedDate = date.date.toDateString() == selectedDate.toDateString();
 
-  const isWeekend = [0, 6].indexOf(date.date.getDay()) !== -1;
+  const isWeekend = [0, 6].includes(date.date.getDay());
   const isMonthLayout = calendarLayout === "month";
 
   const normalBackground = isWeekend ? "bg-custom-background-90" : "bg-custom-background-100";
   const draggingOverBackground = isWeekend ? "bg-custom-background-80" : "bg-custom-background-90";
-
-  // 이슈 이동 처리 함수
-  const handleIssueDrop = (sourceData: any, destinationData: any, issueDetails: any) => {
-    if (!sourceData || !destinationData || !issueDetails) return;
-
-    // 드래그 중인 이슈 하이라이트 제거
-    if (sourceData.element) {
-      sourceData.element.classList.remove("highlight-issue");
-    }
-
-    // 소스 날짜와 목적지 날짜가 같으면 아무 작업도 하지 않음
-    const sourceDate = sourceData.date;
-    const destinationDate = destinationData.date;
-    if (sourceDate === destinationDate) return;
-
-    // console.log("Drop Event:", {
-    //   sourceData,
-    //   destinationData,
-    //   issueDetails
-    // });
-
-    // 이슈 ID와 프로젝트 ID 가져오기
-    const issueId = sourceData.id;
-    const projectId = issueDetails?.project_id;
-
-    // 시작일과 종료일이 같은지 확인
-    const hasBothDates = !!(issueDetails?.start_date && issueDetails?.target_date);
-    const datesAreEqual = hasBothDates && 
-      new Date(issueDetails.start_date!).toDateString() === new Date(issueDetails.target_date!).toDateString();
-    
-    // console.log("Date equality check:", {
-    //   hasBothDates,
-    //   datesAreEqual,
-    //   start_date: issueDetails?.start_date ? new Date(issueDetails.start_date).toDateString() : null,
-    //   target_date: issueDetails?.target_date ? new Date(issueDetails.target_date).toDateString() : null,
-    //   isStartDate: sourceData.isStartDate,
-    //   isEqualDatesCase: sourceData.isEqualDatesCase
-    // });
-
-    // 소스 날짜와 목적지 날짜를 Date 객체로 변환하여 비교
-    const sourceDateTime = new Date(sourceDate);
-    const destinationDateTime = new Date(destinationDate);
-    
-    // isStartDate 결정
-    let isStartDate;
-    
-    // 시작일과 종료일이 같은 경우 (isEqualDatesCase가 true인 경우)
-    if (datesAreEqual || sourceData.isEqualDatesCase) {
-      // console.log("Updating both start_date and target_date (dates were equal)");
-      
-      // 두 날짜가 같은 경우 null로 설정하여 두 날짜 모두 업데이트
-      isStartDate = null;
-      // console.log("Dates are equal - setting isStartDate to null to update both dates to:", destinationDate);
-    } else {
-      // 시작일과 종료일이 다른 경우 소스 날짜로 판단
-      const isSourceStartDate = issueDetails?.start_date && 
-        new Date(issueDetails.start_date!).toDateString() === new Date(sourceDate).toDateString();
-      
-      isStartDate = isSourceStartDate;
-    }
-
-    // console.log("[중요] handleIssueDrop - 최종 isStartDate 값:", isStartDate);
-
-    // 로컬 변수를 명시적으로 전달하기 위해 변수 선언
-    const finalIsStartDate = isStartDate;
-    // console.log("[중요] handleIssueDrop - finalIsStartDate 값:", finalIsStartDate);
-
-    // 원본 이슈 객체 복사 (API 호출 전에 변경되지 않도록)
-    const originalIssue = { ...issueDetails };
-
-    // API 호출로 서버에 반영
-    handleDragAndDrop(
-      issueId,
-      projectId ?? undefined,
-      sourceDate,
-      destinationDate,
-      finalIsStartDate // 명시적으로 선언한 변수 사용
-    );
-  };
 
   return (
     <>
@@ -1120,29 +893,6 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           >
             {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
           </div>
-        </div>
-
-        {/* mobile view */}
-        <div
-          className={`flex md:hidden items-center justify-between p-1.5 ${
-            isMonthLayout // if month layout, highlight current month days
-              ? date.is_current_month
-                ? "font-medium"
-                : "text-custom-text-300"
-              : "font-medium" // if week layout, highlight all days
-          } ${isWeekend ? "bg-custom-background-90" : "bg-custom-background-100"}`}
-        >
-          <div className="flex h-6 w-6 items-center justify-center rounded-full">
-            {date.date.getDate() === 1 && MONTHS_LIST[date.date.getMonth() + 1].shortTitle + " "}
-            {isToday ? (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-custom-primary-100 text-white">
-                {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
-              </span>
-            ) : (
-              <>{date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}</>
-            )}
-          </div>
-          {/* ... */}
         </div>
       </div>
     </>

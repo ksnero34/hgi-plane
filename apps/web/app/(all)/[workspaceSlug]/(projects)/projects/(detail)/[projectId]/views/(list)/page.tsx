@@ -4,18 +4,18 @@ import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // components
-import { EUserPermissionsLevel, EUserProjectRoles, EViewAccess } from "@plane/constants";
+import { EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TViewFilterProps, TCustomField } from "@plane/types";
+import { EUserProjectRoles, EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
-import { PageHead } from "@/components/core";
+import { calculateTotalFilters } from "@plane/utils";
+import { PageHead } from "@/components/core/page-title";
 import { DetailedEmptyState } from "@/components/empty-state";
 import { ProjectViewsList } from "@/components/views";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
 // constants
 // helpers
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
-import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@plane/utils";
 
 // hooks
 import { useProject, useProjectView, useUserPermissions, useCustomField } from "@/hooks/store";

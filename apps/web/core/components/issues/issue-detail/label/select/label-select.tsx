@@ -4,11 +4,11 @@ import { usePopper } from "react-popper";
 import { Check, Loader, Search, Tag } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 // plane imports
-import { EUserPermissionsLevel, EUserProjectRoles, getRandomLabelColor } from "@plane/constants";
+import { EUserPermissionsLevel, getRandomLabelColor } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IIssueLabel } from "@plane/types";
+import { EUserProjectRoles, IIssueLabel } from "@plane/types";
 // helpers
-import { getTabIndex } from "@/helpers/tab-indices.helper";
+import { getTabIndex } from "@plane/utils";
 // hooks
 import { useLabel, useUserPermissions } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -99,7 +99,7 @@ export const IssueLabelSelect: React.FC<IIssueLabelSelect> = observer((props) =>
       setQuery("");
     }
 
-    if (query !== "" && e.key === "Enter" && canCreateLabel) {
+    if (query !== "" && e.key === "Enter" && !e.nativeEvent.isComposing && canCreateLabel) {
       e.stopPropagation();
       e.preventDefault();
       await handleAddLabel(query);

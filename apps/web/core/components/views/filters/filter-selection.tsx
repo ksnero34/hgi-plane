@@ -1,13 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { EViewAccess } from "@plane/constants";
-import { TViewFilterProps, TViewFilters, TCustomField } from "@plane/types";
+import { EViewAccess, TViewFilterProps, TViewFilters, TCustomField } from "@plane/types";
 // components
 import { FilterCreatedBy, FilterCreatedDate } from "@/components/common/filters";
 import { FilterOption } from "@/components/issues";
-import { FilterCustomFields } from "@/components/issues";
 // constants
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";

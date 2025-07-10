@@ -1,7 +1,6 @@
 import React from "react";
-import { observer } from "mobx-react-lite";
-import { TCycleEstimateType } from "@plane/types";
-import { EEstimateSystem } from "@plane/types/src/enums";
+import { observer } from "mobx-react";
+import { EEstimateSystem, TCycleEstimateType } from "@plane/types";
 import { CustomSelect } from "@plane/ui";
 import { useCycle, useProjectEstimates } from "@/hooks/store";
 import { cycleEstimateOptions } from "../analytics-sidebar";

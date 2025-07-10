@@ -12,7 +12,6 @@ import {
   CustomHorizontalRule,
   CustomLinkExtension,
   CustomTypographyExtension,
-  ReadOnlyImageExtension,
   CustomCodeBlockExtension,
   CustomCodeInlineExtension,
   TableHeader,
@@ -20,11 +19,11 @@ import {
   TableRow,
   Table,
   CustomMentionExtension,
-  CustomReadOnlyImageExtension,
   CustomTextAlignExtension,
   CustomCalloutReadOnlyExtension,
   CustomColorExtension,
   UtilityExtension,
+  ImageExtension,
 } from "@/extensions";
 // CustomReadOnlyFileExtension 직접 임포트
 import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
@@ -33,16 +32,14 @@ import { isValidHttpUrl } from "@/helpers/common";
 // plane editor extensions
 import { CoreReadOnlyEditorAdditionalExtensions } from "@/plane-editor/extensions";
 // types
-import { TExtensions, TReadOnlyFileHandler, TReadOnlyMentionHandler } from "@/types";
+import type { IReadOnlyEditorProps } from "@/types";
+// local imports
+import { CustomImageExtension } from "./custom-image/extension";
 
-type Props = {
-  disabledExtensions: TExtensions[];
-  fileHandler: TReadOnlyFileHandler;
-  mentionHandler: TReadOnlyMentionHandler;
-};
+type Props = Pick<IReadOnlyEditorProps, "disabledExtensions" | "flaggedExtensions" | "fileHandler" | "mentionHandler">;
 
 export const CoreReadOnlyEditorExtensions = (props: Props): Extensions => {
-  const { disabledExtensions, fileHandler, mentionHandler } = props;
+  const { disabledExtensions, fileHandler, flaggedExtensions, mentionHandler } = props;
 
   const extensions = [
     StarterKit.configure({
@@ -135,17 +132,19 @@ export const CoreReadOnlyEditorExtensions = (props: Props): Extensions => {
     }),
     ...CoreReadOnlyEditorAdditionalExtensions({
       disabledExtensions,
+      flaggedExtensions,
     }),
   ];
 
   if (!disabledExtensions.includes("image")) {
     extensions.push(
-      ReadOnlyImageExtension(fileHandler).configure({
-        HTMLAttributes: {
-          class: "rounded-md",
-        },
+      ImageExtension({
+        fileHandler,
       }),
-      CustomReadOnlyImageExtension(fileHandler)
+      CustomImageExtension({
+        fileHandler,
+        isEditable: false,
+      })
     );
   }
 

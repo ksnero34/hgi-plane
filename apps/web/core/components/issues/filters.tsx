@@ -3,17 +3,17 @@
 import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 // plane constants
-import { EIssueLayoutTypes, EIssueFilterType, EIssuesStoreType, ISSUE_STORE_TO_FILTERS_MAP } from "@plane/constants";
+import { EIssueLayoutTypes, EIssueFilterType, ISSUE_STORE_TO_FILTERS_MAP } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
-import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions, TCustomField } from "@plane/types";
+import { EIssuesStoreType, IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions, TCustomField } from "@plane/types";
 import { Button } from "@plane/ui";
 // components
+import { isIssueFilterActive } from "@plane/utils";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // helpers
-import { isIssueFilterActive } from "@/helpers/filter.helper";
-import { calculateFilterValue } from "@/helpers/filter-update.helper";
+import { calculateFilterValue } from "@plane/utils";
 // hooks
 import { useLabel, useProjectState, useMember, useIssues, useCustomField } from "@/hooks/store";
 // plane web types

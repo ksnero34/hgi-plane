@@ -8,15 +8,17 @@ import { Layers, Lock, Edit3 } from "lucide-react";
 import {
   EIssueLayoutTypes,
   EIssueFilterType,
-  EIssuesStoreType,
   ISSUE_DISPLAY_FILTERS_BY_PAGE,
-  EViewAccess,
   EUserPermissions,
   EUserPermissionsLevel,
+  EProjectFeatureKey,
+  WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // types
 import {
+  EIssuesStoreType,
+  EViewAccess,
   ICustomSearchSelectOption,
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
@@ -25,19 +27,18 @@ import {
   TIssue,
 } from "@plane/types";
 // ui
-import { Breadcrumbs, Button, Tooltip, Header, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, Tooltip, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
 // components
-import { BreadcrumbLink, SwitcherLabel } from "@/components/common";
+import { isIssueFilterActive } from "@plane/utils";
+import { SwitcherIcon, SwitcherLabel } from "@/components/common";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // constants
 import { ViewQuickActions } from "@/components/views";
 // helpers
-import { calculateFilterValue } from "@/helpers/filter-update.helper";
-import { isIssueFilterActive } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@plane/utils";
 // hooks
 import {
   useCommandPalette,
-  useEventTracker,
   useIssues,
   useLabel,
   useMember,
@@ -52,7 +53,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // plane web
-import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
 import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const ProjectViewIssuesHeader: React.FC = observer(() => {
@@ -67,12 +68,6 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.PROJECT_VIEW);
-  const { fetchIssues } = useIssuesActions(EIssuesStoreType.PROJECT_VIEW);
-  const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
-  const {
-    issue: { getIssueById },
-  } = useIssueDetail();
-  const { setTrackElement } = useEventTracker();
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
   const { t } = useTranslation();
@@ -231,27 +226,27 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
     <Header>
       <Header.LeftItem>
         <Breadcrumbs isLoading={loader === "init-loader"}>
-          <ProjectBreadcrumb />
-          <Breadcrumbs.BreadcrumbItem
-            type="text"
-            link={
-              <BreadcrumbLink
-                href={`/${workspaceSlug}/projects/${currentProjectDetails?.id}/views`}
-                label="Views"
-                icon={<Layers className="h-4 w-4 text-custom-text-300" />}
-              />
-            }
+          <CommonProjectBreadcrumbs
+            workspaceSlug={workspaceSlug?.toString() ?? ""}
+            projectId={projectId?.toString() ?? ""}
+            featureKey={EProjectFeatureKey.VIEWS}
           />
-          <Breadcrumbs.BreadcrumbItem
-            type="component"
+
+          <Breadcrumbs.Item
             component={
-              <CustomSearchSelect
-                options={switcherOptions}
-                value={viewId}
-                label={<SwitcherLabel logo_props={viewDetails.logo_props} name={viewDetails.name} LabelIcon={Layers} />}
+              <BreadcrumbNavigationSearchDropdown
+                selectedItem={viewId?.toString() ?? ""}
+                navigationItems={switcherOptions}
                 onChange={(value: string) => {
                   router.push(`/${workspaceSlug}/projects/${projectId}/views/${value}`);
                 }}
+                title={viewDetails?.name}
+                icon={
+                  <Breadcrumbs.Icon>
+                    <SwitcherIcon logo_props={viewDetails.logo_props} LabelIcon={Layers} size={16} />
+                  </Breadcrumbs.Icon>
+                }
+                isLast
               />
             }
           />
@@ -322,28 +317,18 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
         ) : (
           <></>
         )}
-        {canUserCreateIssue && (
-          <>
-            {isSelectionActive && selectedEntityIds.length > 0 && (
-              <Button
-                onClick={() => setIsBulkEditModalOpen(true)}
-                size="sm"
-                variant="neutral-primary"
-              >
-                <Edit3 className="h-4 w-4 mr-2" />
-                {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
-              </Button>
-            )}
-            <Button
-              onClick={() => {
-                setTrackElement("PROJECT_VIEW_PAGE_HEADER");
-                toggleCreateIssueModal(true, EIssuesStoreType.PROJECT_VIEW);
-              }}
-              size="sm"
-            >
-              Add work item
-            </Button>
-          </>
+        {canUserCreateIssue ? (
+          <Button
+            onClick={() => {
+              toggleCreateIssueModal(true, EIssuesStoreType.PROJECT_VIEW);
+            }}
+            data-ph-element={WORK_ITEM_TRACKER_ELEMENTS.HEADER_ADD_BUTTON.PROJECT_VIEW}
+            size="sm"
+          >
+            Add work item
+          </Button>
+        ) : (
+          <></>
         )}
         <div className="hidden md:block">
           <ViewQuickActions

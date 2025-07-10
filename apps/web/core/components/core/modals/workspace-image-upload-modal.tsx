@@ -7,11 +7,10 @@ import { UserCircle2 } from "lucide-react";
 import { Transition, Dialog } from "@headlessui/react";
 // plane imports
 import { ACCEPTED_AVATAR_IMAGE_MIME_TYPES_FOR_REACT_DROPZONE, MAX_FILE_SIZE } from "@plane/constants";
-import { EFileAssetType } from "@plane/types/src/enums";
+import { EFileAssetType } from "@plane/types";
 import { Button, TOAST_TYPE, setToast } from "@plane/ui";
+import { getAssetIdFromUrl, getFileURL, checkURLValidity } from "@plane/utils";
 // helpers
-import { getAssetIdFromUrl, getFileURL } from "@/helpers/file.helper";
-import { checkURLValidity } from "@/helpers/string.helper";
 // hooks
 import { useWorkspace } from "@/hooks/store";
 // services

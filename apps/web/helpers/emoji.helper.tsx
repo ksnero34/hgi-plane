@@ -7,6 +7,11 @@ export const getRandomEmoji = () => RANDOM_EMOJI_CODES[Math.floor(Math.random() 
 
 export const getRandomIconName = () => LUCIDE_ICONS_LIST[Math.floor(Math.random() * LUCIDE_ICONS_LIST.length)].name;
 
+/**
+ * Renders an emoji or icon
+ * @param {string | { name: string; color: string }} emoji - The emoji or icon to render
+ * @returns {React.ReactNode} The rendered emoji or icon
+ */
 export const renderEmoji = (
   emoji:
     | string
@@ -14,7 +19,7 @@ export const renderEmoji = (
         name: string;
         color: string;
       }
-) => {
+): React.ReactNode => {
   if (!emoji) return;
 
   if (typeof emoji === "object")
@@ -83,4 +88,3 @@ export const emojiCodeToUnicode = (emoji: string) => {
 
   return uniCodeEmoji;
 };
-

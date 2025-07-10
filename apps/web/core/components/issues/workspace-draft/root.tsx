@@ -4,15 +4,16 @@ import { FC, Fragment } from "react";
 import { observer } from "mobx-react";
 import useSWR from "swr";
 // plane imports
-import { EDraftIssuePaginationType } from "@plane/constants";
-import { EUserPermissionsLevel, EUserWorkspaceRoles } from "@plane/constants/src/user";
+import { EUserPermissionsLevel, EDraftIssuePaginationType, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { EUserWorkspaceRoles } from "@plane/types";
 // components
+import { cn } from "@plane/utils";
 import { ComicBoxButton, DetailedEmptyState } from "@/components/empty-state";
+import { captureClick } from "@/helpers/event-tracker.helper";
 // constants
 
 // helpers
-import { cn } from "@/helpers/common.helper";
 // hooks
 import { useCommandPalette, useProject, useUserPermissions, useWorkspaceDraftIssues } from "@/hooks/store";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
@@ -76,6 +77,7 @@ export const WorkspaceDraftIssuesRoot: FC<TWorkspaceDraftIssuesRoot> = observer(
             description={t("workspace_projects.empty_state.no_projects.primary_button.comic.description")}
             onClick={() => {
               toggleCreateProjectModal(true);
+              captureClick({ elementName: PROJECT_TRACKER_ELEMENTS.EMPTY_STATE_CREATE_PROJECT_BUTTON });
             }}
             disabled={!hasMemberLevelPermission}
           />

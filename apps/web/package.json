@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "private": true,
   "license": "AGPL-3.0",
   "scripts": {
@@ -26,6 +26,7 @@
     "@plane/hooks": "*",
     "@plane/i18n": "*",
     "@plane/propel": "*",
+    "@plane/services": "*",
     "@plane/types": "*",
     "@plane/ui": "*",
     "@plane/utils": "*",
@@ -45,7 +46,7 @@
     "mobx": "^6.10.0",
     "mobx-react": "^9.1.1",
     "mobx-utils": "^6.0.8",
-    "next": "^14.2.29",
+    "next": "14.2.30",
     "next-themes": "^0.2.1",
     "nprogress": "^0.2.0",
     "posthog-js": "^1.131.3",
@@ -82,6 +83,6 @@
     "@types/uuid": "^8.3.4",
     "@types/zxcvbn": "^4.4.4",
     "prettier": "^3.2.5",
-    "typescript": "5.3.3"
+    "typescript": "5.8.3"
   }
 }

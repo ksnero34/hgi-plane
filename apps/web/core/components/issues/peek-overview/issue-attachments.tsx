@@ -5,10 +5,14 @@ import { useMemo, useCallback, useEffect } from "react";
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 import { IssueAttachmentUpload, IssueAttachmentsList } from "@/components/issues";
 import { TAttachmentOperations } from "@/components/issues/issue-detail-widgets/attachments/helper";
-import { useEventTracker, useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
+import { useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { MAX_FILE_SIZE } from "@/constants/common";
+// helpers
+import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
+// constants
+import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 
 type Props = {
   disabled: boolean;
@@ -20,7 +24,6 @@ type Props = {
 export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
   const { disabled, issueId, projectId, workspaceSlug } = props;
   // store hooks
-  const { captureIssueEvent } = useEventTracker();
   const {
     attachment: { createAttachment, removeAttachment },
   } = useIssueDetail();
@@ -93,19 +96,16 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
           });
 
           const res = await attachmentUploadPromise;
-          captureIssueEvent({
-            eventName: "Issue attachment added",
-            payload: { id: issueId, state: "SUCCESS", element: "Issue detail page" },
-            updates: {
-              changed_property: "attachment",
-              change_details: res.id,
-            },
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.add,
+            payload: { id: issueId },
           });
         } catch (error) {
           handleUploadError(error);
-          captureIssueEvent({
-            eventName: "Issue attachment added",
-            payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.add,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
@@ -118,22 +118,15 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
             type: TOAST_TYPE.SUCCESS,
             title: "첨부파일 제거",
           });
-          captureIssueEvent({
-            eventName: "Issue attachment deleted",
-            payload: { id: issueId, state: "SUCCESS", element: "Issue detail page" },
-            updates: {
-              changed_property: "attachment",
-              change_details: "",
-            },
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.remove,
+            payload: { id: issueId },
           });
         } catch (error) {
-          captureIssueEvent({
-            eventName: "Issue attachment deleted",
-            payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
-            updates: {
-              changed_property: "attachment",
-              change_details: "",
-            },
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.remove,
+            payload: { id: issueId },
+            error: error as Error,
           });
           setToast({
             message: "첨부파일을 제거할 수 없습니다.",
@@ -143,7 +136,7 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
         }
       },
     }),
-    [workspaceSlug, projectId, issueId, captureIssueEvent, createAttachment, removeAttachment, validateFile, fetchFileSettings]
+    [workspaceSlug, projectId, issueId, createAttachment, removeAttachment, validateFile, fetchFileSettings]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

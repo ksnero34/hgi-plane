@@ -20,7 +20,7 @@ import {
 } from "@/components/issues";
 import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/with-display-properties-HOC";
 // helpers
-import { getDate } from "@/helpers/date-time.helper";
+import { getDate } from "@plane/utils";
 //// hooks
 import { IIssue } from "@/types/issue";
 

@@ -26,10 +26,8 @@ import {
 import { IIssueActivity, TCustomField } from "@plane/types";
 import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, EpicIcon, LayersIcon, DiceIcon, Intake } from "@plane/ui";
 // helpers
-import { renderFormattedDate } from "@/helpers/date-time.helper";
-import { generateWorkItemLink } from "@/helpers/issue.helper";
-import { capitalizeFirstLetter } from "@/helpers/string.helper";
-import { convertMinutesToHoursMinutesString } from "@/helpers/date-time.helper";
+import { renderFormattedDate, generateWorkItemLink, capitalizeFirstLetter } from "@plane/utils";
+import { convertMinutesToHoursMinutesString } from "@plane/utils";
 import { useLabel, useMember } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // types
@@ -869,7 +867,7 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}을(를) 모듈 {" "}
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}을 모듈 {" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.new_identifier}`}
               target="_blank"

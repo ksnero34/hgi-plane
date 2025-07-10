@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 // plane imports
-import { EditorRefApi, IRichTextEditor, RichTextEditorWithRef, TFileHandler } from "@plane/editor";
+import { EditorRefApi, IRichTextEditorProps, RichTextEditorWithRef, TFileHandler } from "@plane/editor";
 import { MakeOptional } from "@plane/types";
 // components
 import { EditorMentionsRoot } from "@/components/editor";
@@ -9,15 +9,24 @@ import { getEditorFileHandlers } from "@/helpers/editor.helper";
 // store hooks
 import { useMember } from "@/hooks/store";
 
-interface RichTextEditorWrapperProps
-  extends MakeOptional<Omit<IRichTextEditor, "fileHandler" | "mentionHandler">, "disabledExtensions"> {
+type RichTextEditorWrapperProps = MakeOptional<
+  Omit<IRichTextEditorProps, "editable" | "fileHandler" | "mentionHandler">,
+  "disabledExtensions" | "flaggedExtensions"
+> & {
   anchor: string;
-  uploadFile: TFileHandler["upload"];
   workspaceId: string;
-}
+} & (
+    | {
+        editable: false;
+      }
+    | {
+        editable: true;
+        uploadFile: TFileHandler["upload"];
+      }
+  );
 
 export const RichTextEditor = forwardRef<EditorRefApi, RichTextEditorWrapperProps>((props, ref) => {
-  const { anchor, containerClassName, uploadFile, workspaceId, disabledExtensions, ...rest } = props;
+  const { anchor, containerClassName, editable, workspaceId, disabledExtensions, flaggedExtensions, ...rest } = props;
   const { getMemberById } = useMember();
   return (
     <RichTextEditorWithRef
@@ -29,11 +38,13 @@ export const RichTextEditor = forwardRef<EditorRefApi, RichTextEditorWrapperProp
       }}
       ref={ref}
       disabledExtensions={disabledExtensions ?? []}
+      editable={editable}
       fileHandler={getEditorFileHandlers({
         anchor,
-        uploadFile,
+        uploadFile: editable ? props.uploadFile : async () => "",
         workspaceId,
       })}
+      flaggedExtensions={flaggedExtensions ?? []}
       {...rest}
       containerClassName={containerClassName}
       editorClassName="min-h-[100px] max-h-[200px] border-[0.5px] border-custom-border-300 rounded-md pl-3 py-2 overflow-hidden"

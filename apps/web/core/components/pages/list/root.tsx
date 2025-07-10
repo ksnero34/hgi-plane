@@ -10,11 +10,11 @@ import { setToast, TOAST_TYPE } from "@plane/ui";
 import { ListLayout } from "@/components/core/list";
 import { ListItem } from "@/components/core/list";
 // helpers
-import { getPageName } from "@/helpers/page.helper";
+import { getPageName } from "@plane/utils";
 // plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
 // components
-import { PageListBlock } from ".";
+import { PageListBlock } from "./";
 
 type TPagesListRoot = {
   pageType: TPageNavigationTabs;

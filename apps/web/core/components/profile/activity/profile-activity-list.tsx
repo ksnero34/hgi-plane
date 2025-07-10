@@ -6,15 +6,14 @@ import useSWR from "swr";
 import { History, MessageSquare } from "lucide-react";
 // types
 import { TCustomField } from "@plane/types";
+import { calculateTimeAgo, getFileURL } from "@plane/utils";
 // hooks
-import { ActivityIcon, ActivityMessage, IssueLink } from "@/components/core";
-import { RichTextReadOnlyEditor } from "@/components/editor/rich-text-editor/rich-text-read-only-editor";
+import { ActivityIcon, ActivityMessage } from "@/components/core";
+import { RichTextEditor } from "@/components/editor";
 import { ActivitySettingsLoader } from "@/components/ui";
 // constants
 import { USER_ACTIVITY } from "@/constants/fetch-keys";
 // helpers
-import { calculateTimeAgo } from "@/helpers/date-time.helper";
-import { getFileURL } from "@/helpers/file.helper";
 // hooks
 import { useUser } from "@/hooks/store";
 // services
@@ -137,7 +136,8 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
                         </p>
                       </div>
                       <div className="issue-comments-section p-0">
-                        <RichTextReadOnlyEditor
+                        <RichTextEditor
+                          editable={false}
                           id={activityItem.id}
                           initialValue={
                             activityItem?.new_value !== "" ? activityItem.new_value : activityItem.old_value

@@ -11,7 +11,7 @@ import { ComboDropDown, Tooltip } from "@plane/ui";
 // types
 import { TCustomField } from "@plane/types";
 // helpers
-import { cn } from "@/helpers/common.helper";
+import { cn } from "@plane/utils";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useDropdown } from "@/hooks/use-dropdown";

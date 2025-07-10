@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 // store
-import { StoreContext } from "@/lib/store-provider";
+import { StoreContext } from "@/app/(all)/store.provider";
 import { IUserStore } from "@/store/user.store";
 import { useInstance } from "./use-instance";
 

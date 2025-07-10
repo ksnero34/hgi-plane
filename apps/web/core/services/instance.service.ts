@@ -1,7 +1,7 @@
 // types
+import { API_BASE_URL } from "@plane/constants";
 import type { IInstanceInfo, IInstance, IInstanceConfig, IFileSettings, ICsrfTokenData, TPage, IInstanceMember } from "@plane/types";
 // helpers
-import { API_BASE_URL } from "@/helpers/common.helper";
 // services
 import { APIService } from "@/services/api.service";
 // constants
@@ -12,17 +12,10 @@ export class InstanceService extends APIService {
     super(API_BASE_URL);
   }
 
-  private async requestCSRFToken(): Promise<ICsrfTokenData> {
-    // console.log("🔄 Requesting CSRF token...");
-    return this.get("/auth/get-csrf-token/", {}, {
-      withCredentials: true
-    })
-      .then((response) => {
-        // console.log("✅ CSRF token response:", response.data);
-        return response.data;
-      })
+  async requestCSRFToken(): Promise<{ csrf_token: string }> {
+    return this.get("/auth/get-csrf-token/")
+      .then((response) => response.data)
       .catch((error) => {
-        // console.error("❌ Failed to get CSRF token:", error);
         throw error;
       });
   }

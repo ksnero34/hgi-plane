@@ -12,7 +12,7 @@ import { Avatar } from "@plane/ui";
 // hooks
 import { useMember } from "@/hooks/store";
 // helpers
-import { getFileURL } from "@/helpers/file.helper";
+import { getFileURL } from "@plane/utils";
 
 type Props = {
   appliedFilters: { [field_id: string]: string[] } | null;

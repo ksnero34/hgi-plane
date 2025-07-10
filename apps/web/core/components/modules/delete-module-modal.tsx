@@ -4,14 +4,16 @@ import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
-import { PROJECT_ERROR_MESSAGES, MODULE_DELETED } from "@plane/constants";
+import { MODULE_TRACKER_EVENTS, PROJECT_ERROR_MESSAGES } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import type { IModule } from "@plane/types";
 // ui
 import { AlertModalCore, TOAST_TYPE, setToast } from "@plane/ui";
 // constants
+// helpers
+import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 // hooks
-import { useEventTracker, useModule } from "@/hooks/store";
+import { useModule } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -28,7 +30,6 @@ export const DeleteModuleModal: React.FC<Props> = observer((props) => {
   const router = useAppRouter();
   const { workspaceSlug, projectId, moduleId, peekModule } = useParams();
   // store hooks
-  const { captureModuleEvent } = useEventTracker();
   const { deleteModule } = useModule();
   const { t } = useTranslation();
 
@@ -51,9 +52,9 @@ export const DeleteModuleModal: React.FC<Props> = observer((props) => {
           title: "Success!",
           message: "Module deleted successfully.",
         });
-        captureModuleEvent({
-          eventName: MODULE_DELETED,
-          payload: { ...data, state: "SUCCESS" },
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.delete,
+          payload: { id: data.id },
         });
       })
       .catch((errors) => {
@@ -66,9 +67,10 @@ export const DeleteModuleModal: React.FC<Props> = observer((props) => {
           type: TOAST_TYPE.ERROR,
           message: currentError.i18n_message && t(currentError.i18n_message),
         });
-        captureModuleEvent({
-          eventName: MODULE_DELETED,
-          payload: { ...data, state: "FAILED" },
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.delete,
+          payload: { id: data.id },
+          error: errors,
         });
       })
       .finally(() => handleClose());

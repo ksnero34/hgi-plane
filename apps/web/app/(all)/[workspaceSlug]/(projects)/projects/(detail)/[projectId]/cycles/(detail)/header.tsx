@@ -8,17 +8,18 @@ import { useParams, useRouter } from "next/navigation";
 import { PanelRight, Edit3 } from "lucide-react";
 // plane constants
 import {
-  EIssueLayoutTypes,
   EIssueFilterType,
-  EIssuesStoreType,
-  ISSUE_DISPLAY_FILTERS_BY_PAGE,
+  EIssueLayoutTypes,
   EUserPermissions,
   EUserPermissionsLevel,
+  EProjectFeatureKey,
+  ISSUE_DISPLAY_FILTERS_BY_PAGE,
+  WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
-// i18n
+import { usePlatformOS } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
-// types
 import {
+  EIssuesStoreType,
   ICustomSearchSelectOption,
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
@@ -27,26 +28,24 @@ import {
   TIssue,
 } from "@plane/types";
 // ui
-import { Breadcrumbs, Button, ContrastIcon, Tooltip, Header, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, ContrastIcon, Tooltip, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
+import { cn, isIssueFilterActive } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
-import { BreadcrumbLink, SwitcherLabel } from "@/components/common";
+import { SwitcherLabel } from "@/components/common";
 import { CycleQuickActions } from "@/components/cycles";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { calculateFilterValue } from "@/helpers/filter-update.helper";
-import { isIssueFilterActive } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@plane/utils";
 // hooks
 import {
-  useEventTracker,
+  useCommandPalette,
   useCycle,
+  useIssues,
   useLabel,
   useMember,
   useProject,
   useProjectState,
-  useIssues,
-  useCommandPalette,
   useUserPermissions,
   useMultipleSelectStore,
   useCustomField,
@@ -54,9 +53,8 @@ import {
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
-import { usePlatformOS } from "@/hooks/use-platform-os";
-// plane web
-import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+// plane web imports
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const CycleIssuesHeader: React.FC = observer(() => {
@@ -87,7 +85,6 @@ export const CycleIssuesHeader: React.FC = observer(() => {
   } = useIssueDetail();
   const { currentProjectCycleIds, getCycleById } = useCycle();
   const { toggleCreateIssueModal } = useCommandPalette();
-  const { setTrackElement } = useEventTracker();
   const { currentProjectDetails, loader } = useProject();
   const { projectStates } = useProjectState();
   const { projectLabels } = useLabel();
@@ -235,63 +232,44 @@ export const CycleIssuesHeader: React.FC = observer(() => {
         <Header.LeftItem>
           <div className="flex items-center gap-2">
             <Breadcrumbs onBack={router.back} isLoading={loader === "init-loader"}>
-              <Breadcrumbs.BreadcrumbItem
-                type="text"
-                link={
-                  <span>
-                    <span className="hidden md:block">
-                      <ProjectBreadcrumb />
-                    </span>
-                    <Link
-                      href={`/${workspaceSlug}/projects/${currentProjectDetails?.id}/issues`}
-                      className="block pl-2 text-custom-text-300 md:hidden"
-                    >
-                      ...
-                    </Link>
-                  </span>
-                }
+              <CommonProjectBreadcrumbs
+                workspaceSlug={workspaceSlug?.toString()}
+                projectId={projectId?.toString()}
+                featureKey={EProjectFeatureKey.CYCLES}
               />
-              <Breadcrumbs.BreadcrumbItem
-                type="text"
-                link={
-                  <BreadcrumbLink
-                    label={t("common.cycles")}
-                    href={`/${workspaceSlug}/projects/${projectId}/cycles`}
-                    icon={<ContrastIcon className="h-4 w-4 text-custom-text-300" />}
-                  />
-                }
-              />
-              <Breadcrumbs.BreadcrumbItem
-                type="component"
+              <Breadcrumbs.Item
                 component={
-                  <CustomSearchSelect
-                    options={switcherOptions}
-                    value={cycleId}
+                  <BreadcrumbNavigationSearchDropdown
+                    selectedItem={cycleId}
+                    navigationItems={switcherOptions}
                     onChange={(value: string) => {
                       router.push(`/${workspaceSlug}/projects/${projectId}/cycles/${value}`);
                     }}
-                    label={
-                      <div className="flex items-center gap-1">
-                        <SwitcherLabel name={cycleDetails?.name} LabelIcon={ContrastIcon} />
-                        {workItemsCount && workItemsCount > 0 ? (
-                          <Tooltip
-                            isMobile={isMobile}
-                            tooltipContent={`There are ${workItemsCount} ${
-                              workItemsCount > 1 ? "work items" : "work item"
-                            } in this cycle`}
-                            position="bottom"
-                          >
-                            <span className="flex flex-shrink-0 cursor-default items-center justify-center rounded-xl bg-custom-primary-100/20 px-2 text-center text-xs font-semibold text-custom-primary-100">
-                              {workItemsCount}
-                            </span>
-                          </Tooltip>
-                        ) : null}
-                      </div>
+                    title={cycleDetails?.name}
+                    icon={
+                      <Breadcrumbs.Icon>
+                        <ContrastIcon className="size-4 flex-shrink-0 text-custom-text-300" />
+                      </Breadcrumbs.Icon>
                     }
+                    isLast
                   />
                 }
+                isLast
               />
             </Breadcrumbs>
+            {workItemsCount && workItemsCount > 0 ? (
+              <Tooltip
+                isMobile={isMobile}
+                tooltipContent={`There are ${workItemsCount} ${
+                  workItemsCount > 1 ? "work items" : "work item"
+                } in this cycle`}
+                position="bottom"
+              >
+                <span className="flex flex-shrink-0 cursor-default items-center justify-center rounded-xl bg-custom-primary-100/20 px-2 text-center text-xs font-semibold text-custom-primary-100">
+                  {workItemsCount}
+                </span>
+              </Tooltip>
+            ) : null}
           </div>
         </Header.LeftItem>
         <Header.RightItem className="items-center">
@@ -363,9 +341,9 @@ export const CycleIssuesHeader: React.FC = observer(() => {
                   <Button
                     className="h-full self-start"
                     onClick={() => {
-                      setTrackElement("Cycle work items page");
                       toggleCreateIssueModal(true, EIssuesStoreType.CYCLE);
                     }}
+                    data-ph-element={WORK_ITEM_TRACKER_ELEMENTS.HEADER_ADD_BUTTON.CYCLE}
                     size="sm"
                   >
                     {t("issue.add.label")}

@@ -11,9 +11,9 @@ import type { TIssueOperations } from "@/components/issues";
 
 // hooks
 import { useIssueDetail, useCustomField } from "@/hooks/store";
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
 // helpers
-import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@plane/utils";
 
 type TIssueCustomFieldSelect = {
   className?: string;

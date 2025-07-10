@@ -6,13 +6,14 @@ import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { Dialog, Transition } from "@headlessui/react";
 // plane imports
-import { ROLE, PROJECT_MEMBER_ADDED, EUserPermissions } from "@plane/constants";
+import { ROLE, EUserPermissions, MEMBER_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Avatar, Button, CustomSelect, CustomSearchSelect, TOAST_TYPE, setToast } from "@plane/ui";
 // helpers
-import { getFileURL } from "@/helpers/file.helper";
+import { getFileURL } from "@plane/utils";
 // hooks
-import { useEventTracker, useMember, useUserPermissions } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useMember, useUserPermissions } from "@/hooks/store";
 
 type Props = {
   isOpen: boolean;
@@ -45,7 +46,6 @@ export const SendProjectInvitationModal: React.FC<Props> = observer((props) => {
   // plane hooks
   const { t } = useTranslation();
   // store hooks
-  const { captureEvent } = useEventTracker();
   const { getProjectRoleByWorkspaceSlugAndProjectId } = useUserPermissions();
   const {
     project: { getProjectMemberDetails, bulkAddMembersToProject },
@@ -86,22 +86,22 @@ export const SendProjectInvitationModal: React.FC<Props> = observer((props) => {
           type: TOAST_TYPE.SUCCESS,
           message: "Members added successfully.",
         });
-        captureEvent(PROJECT_MEMBER_ADDED, {
-          members: [
-            ...payload.members.map((member) => ({
-              member_id: member.member_id,
-              role: ROLE[member.role],
-            })),
-          ],
-          state: "SUCCESS",
-          element: "Project settings members page",
+
+        captureSuccess({
+          eventName: MEMBER_TRACKER_EVENTS.project.add,
+          payload: {
+            members: [...payload.members.map((member) => member.member_id)],
+          },
         });
       })
       .catch((error) => {
         console.error(error);
-        captureEvent(PROJECT_MEMBER_ADDED, {
-          state: "FAILED",
-          element: "Project settings members page",
+        captureError({
+          eventName: MEMBER_TRACKER_EVENTS.project.add,
+          payload: {
+            members: [...payload.members.map((member) => member.member_id)],
+          },
+          error: error,
         });
       })
       .finally(() => {

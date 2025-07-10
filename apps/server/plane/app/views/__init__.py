@@ -112,6 +112,8 @@ from .asset.v2 import (
     ProjectBulkAssetEndpoint,
     PageFileAssetEndpoint,
     AssetCheckEndpoint,
+    WorkspaceAssetDownloadEndpoint,
+    ProjectAssetDownloadEndpoint,
 )
 from .issue.base import (
     IssueListEndpoint,

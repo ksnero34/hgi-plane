@@ -12,9 +12,9 @@ import { Tooltip } from "@plane/ui";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
-import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
+import { cn } from "@plane/utils";
+import { renderFormattedPayloadDate } from "@plane/utils";
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@plane/utils";
 
 type Props = {
   issue: TIssue;

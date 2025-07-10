@@ -4,9 +4,9 @@ import { Triangle } from "lucide-react";
 // hooks
 import { useIssueDetail } from "@/hooks/store";
 // components
-import { IssueActivityBlockComponent, IssueLink } from ".";
+import { IssueActivityBlockComponent, IssueLink } from "./";
 // utilities
-import { convertMinutesToHoursMinutesString } from "@/helpers/date-time.helper";
+import { convertMinutesToHoursMinutesString } from "@plane/utils";
 
 type TIssueEstimateActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
@@ -57,7 +57,7 @@ export const IssueEstimateActivity: FC<TIssueEstimateActivity> = observer((props
       <>
         {activity.new_value ? `님이 ${estimateLabel}을 ` : `님이 ${estimateLabel}을 삭제했습니다`}
         {activity.new_value ? formattedNewValue : formattedOldValue}
-        {activity.new_value ? ` 으으로 변경했습니다` : ``}
+        {activity.new_value ? ` 으로 변경했습니다` : ``}
         {showIssue && (activity.new_value ? ` to ` : ` from `)}
         {showIssue && <IssueLink activityId={activityId} />}.
       </>

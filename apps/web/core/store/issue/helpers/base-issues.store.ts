@@ -13,9 +13,10 @@ import update from "lodash/update";
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { computedFn } from "mobx-utils";
 // plane constants
-import { EIssueLayoutTypes, ALL_ISSUES, EIssueServiceType, ISSUE_PRIORITIES } from "@plane/constants";
+import { EIssueLayoutTypes, ALL_ISSUES, ISSUE_PRIORITIES } from "@plane/constants";
 // types
 import {
+  EIssueServiceType,
   TIssue,
   TIssueGroupByOptions,
   TIssueOrderByOptions,
@@ -29,11 +30,10 @@ import {
   TGroupedIssueCount,
   TPaginationData,
   TBulkOperationsPayload,
+  IBlockUpdateDependencyData,
 } from "@plane/types";
-// components
-import { IBlockUpdateDependencyData } from "@/components/gantt-chart";
 // helpers
-import { convertToISODateString, getCurrentDateTimeInISO } from "@/helpers/date-time.helper";
+import { convertToISODateString, getCurrentDateTimeInISO } from "@plane/utils";
 // local-db
 import { SPECIAL_ORDER_BY } from "@/local-db/utils/query-constructor";
 import { updatePersistentLayer } from "@/local-db/utils/utils";
@@ -115,14 +115,14 @@ export interface IBaseIssuesStore {
     addModuleIds: string[],
     removeModuleIds: string[]
   ): Promise<void>;
-  updateIssueDates(workspaceSlug: string, projectId: string, updates: IBlockUpdateDependencyData[]): Promise<void>;
+  updateIssueDates(workspaceSlug: string, updates: IBlockUpdateDependencyData[], projectId?: string): Promise<void>;
 }
 
 // This constant maps the group by keys to the respective issue property that the key relies on
 export const ISSUE_GROUP_BY_KEY: Record<TIssueDisplayFilterOptions, keyof TIssue> = {
   project: "project_id",
   state: "state_id",
-  "state_detail.group": "state__group" as keyof TIssue, // state_detail.group is only being used for state_group display,
+  "state_detail.group": "state_id", // state_detail.group is only being used for state_group display,
   priority: "priority",
   labels: "label_ids",
   created_by: "created_by",
@@ -140,7 +140,7 @@ export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof
   cycle: "cycle_id",
   module: "module_ids",
   state: "state_id",
-  "state_detail.group": "state_group" as keyof TIssue, // state_detail.group is only being used for state_group display,
+  "state_detail.group": "state__group", // state_detail.group is only being used for state_group display,
   priority: "priority",
   labels: "label_ids",
   created_by: "created_by",
@@ -861,9 +861,10 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
   async updateIssueDates(
     workspaceSlug: string,
-    projectId: string,
-    updates: { id: string; start_date?: string; target_date?: string }[]
+    updates: { id: string; start_date?: string; target_date?: string }[],
+    projectId?: string
   ) {
+    if(!projectId) return;
     const issueDatesBeforeChange: { id: string; start_date?: string; target_date?: string }[] = [];
     try {
       const getIssueById = this.rootIssueStore.issues.getIssueById;
@@ -1633,11 +1634,11 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     // if unGrouped, then return the path as ALL_ISSUES along with orderByUpdates
     if (!this.issueGroupKey) return action ? [{ path: [ALL_ISSUES], action }, ...orderByUpdates] : orderByUpdates;
 
-    const issueGroupKey = issue?.[this.issueGroupKey] as string | string[] | null | undefined;
+    const issueGroupKeyValue = issue?.[this.issueGroupKey] as string | string[] | null | undefined;
     const issueBeforeUpdateGroupKey = issueBeforeUpdate?.[this.issueGroupKey] as string | string[] | null | undefined;
     // if grouped, the get the Difference between the two issue properties (this.issueGroupKey) on which groupBy is performed
     const groupActionsArray = getDifference(
-      this.getArrayStringArray(issue, issueGroupKey, this.groupBy),
+      this.getArrayStringArray(issue, issueGroupKeyValue, this.groupBy),
       this.getArrayStringArray(issueBeforeUpdate, issueBeforeUpdateGroupKey, this.groupBy),
       action
     );
@@ -1671,7 +1672,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         groupActionsArray,
         subGroupActionsArray,
         this.getArrayStringArray(issueBeforeUpdate, issueBeforeUpdateGroupKey, this.groupBy),
-        this.getArrayStringArray(issue, issueGroupKey, this.groupBy),
+        this.getArrayStringArray(issue, issueGroupKeyValue, this.groupBy),
         this.getArrayStringArray(issueBeforeUpdate, issueBeforeUpdateSubGroupKey, this.subGroupBy),
         this.getArrayStringArray(issue, issueSubGroupKey, this.subGroupBy)
       ),
@@ -1729,12 +1730,13 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     return issueKeyActions;
   }
 
-  /**
-   * get the groupByKey issue property on which actions are to be decided in the form of array
-   * @param value
-   * @param groupByKey
-   * @returns an array of issue property values
-   */
+  // /**
+  //  * Normalizes group values into a consistent string array format
+  //  * @param issueObject - The issue object to extract values from
+  //  * @param value - The raw value (string, array, or null/undefined)
+  //  * @param groupByKey - The group by key to handle special cases
+  //  * @returns Normalized array of string values
+  //  */
   getArrayStringArray = (
     issueObject: Partial<TIssue> | undefined,
     value: string | string[] | undefined | null,
@@ -1747,9 +1749,23 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     // if array return the array
     if (Array.isArray(value)) return value;
 
-    // if the groupKey is state group then return the group based on state_id
+    return this.getDefaultGroupValue(issueObject, value, groupByKey);
+  };
+
+  // /**
+  //  * Gets the default value for a group when the primary value is empty
+  //  * @param issueObject - The issue object to extract fallback values from
+  //  * @param groupByKey - The group by key to determine fallback logic
+  //  * @returns Default group value as string array
+  //  */
+  private getDefaultGroupValue = (
+    issueObject: Partial<TIssue>,
+    value: string,
+    groupByKey?: TIssueGroupByOptions
+  ): string[] => {
+    // Handle special case for state group
     if (groupByKey === "state_detail.group") {
-      return [this.rootIssueStore.rootStore.state.stateMap?.[value]?.group];
+      return [this.rootIssueStore.rootStore.state.stateMap?.[value]?.group ?? issueObject.state__group];
     }
 
     return [value];

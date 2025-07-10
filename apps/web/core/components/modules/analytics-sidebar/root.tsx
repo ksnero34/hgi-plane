@@ -6,36 +6,28 @@ import { useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { CalendarClock, ChevronDown, ChevronRight, Info, Plus, SquareUser, Users } from "lucide-react";
 import { Disclosure, Transition } from "@headlessui/react";
-// plane types
 import {
   MODULE_STATUS,
-  MODULE_LINK_CREATED,
-  MODULE_LINK_DELETED,
-  MODULE_LINK_UPDATED,
-  MODULE_UPDATED,
   EUserPermissions,
   EUserPermissionsLevel,
+  EEstimateSystem,
+  MODULE_TRACKER_EVENTS,
+  MODULE_TRACKER_ELEMENTS,
 } from "@plane/constants";
+// plane types
 import { useTranslation } from "@plane/i18n";
 import { ILinkDetails, IModule, ModuleLink } from "@plane/types";
 // plane ui
 import { Loader, LayersIcon, CustomSelect, ModuleStatusIcon, TOAST_TYPE, setToast, TextArea } from "@plane/ui";
 // components
-import { DateRangeDropdown, MemberDropdown } from "@/components/dropdowns";
-import {
-  ArchiveModuleModal,
-  DeleteModuleModal,
-  CreateUpdateModuleLinkModal,
-  ModuleAnalyticsProgress,
-  ModuleLinksList,
-} from "@/components/modules";
 // helpers
-import { getDate, renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { getDate, renderFormattedPayloadDate } from "@plane/utils";
+import { DateRangeDropdown, MemberDropdown } from "@/components/dropdowns";
+import { CreateUpdateModuleLinkModal, ModuleAnalyticsProgress, ModuleLinksList } from "@/components/modules";
+import { captureElementAndEvent, captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 // hooks
-import { useModule, useEventTracker, useProjectEstimates, useUserPermissions } from "@/hooks/store";
+import { useModule, useProjectEstimates, useUserPermissions } from "@/hooks/store";
 // plane web constants
-import { EEstimateSystem } from "@/plane-web/constants/estimates";
-
 const defaultValues: Partial<IModule> = {
   lead_id: "",
   member_ids: [],
@@ -54,8 +46,6 @@ type Props = {
 export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
   const { moduleId, handleClose, isArchived } = props;
   // states
-  const [moduleDeleteModal, setModuleDeleteModal] = useState(false);
-  const [archiveModuleModal, setArchiveModuleModal] = useState(false);
   const [moduleLinkModal, setModuleLinkModal] = useState(false);
   const [selectedLinkToUpdate, setSelectedLinkToUpdate] = useState<ILinkDetails | null>(null);
   // router
@@ -66,7 +56,6 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
   const { allowPermissions } = useUserPermissions();
 
   const { getModuleById, updateModuleDetails, createModuleLink, updateModuleLink, deleteModuleLink } = useModule();
-  const { captureModuleEvent, captureEvent } = useEventTracker();
   const { areEstimateEnabledByProjectId, currentActiveEstimateId, estimateById } = useProjectEstimates();
 
   // derived values
@@ -83,15 +72,22 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
     if (!workspaceSlug || !projectId || !moduleId) return;
     updateModuleDetails(workspaceSlug.toString(), projectId.toString(), moduleId.toString(), data)
       .then((res) => {
-        captureModuleEvent({
-          eventName: MODULE_UPDATED,
-          payload: { ...res, changed_properties: Object.keys(data)[0], element: "Right side-peek", state: "SUCCESS" },
+        captureElementAndEvent({
+          element: {
+            elementName: MODULE_TRACKER_ELEMENTS.RIGHT_SIDEBAR,
+          },
+          event: {
+            eventName: MODULE_TRACKER_EVENTS.update,
+            payload: { id: res.id },
+            state: "SUCCESS",
+          },
         });
       })
-      .catch(() => {
-        captureModuleEvent({
-          eventName: MODULE_UPDATED,
-          payload: { ...data, state: "FAILED" },
+      .catch((error) => {
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.update,
+          payload: { id: moduleId },
+          error,
         });
       });
   };
@@ -101,12 +97,20 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
 
     const payload = { metadata: {}, ...formData };
 
-    await createModuleLink(workspaceSlug.toString(), projectId.toString(), moduleId.toString(), payload).then(() =>
-      captureEvent(MODULE_LINK_CREATED, {
-        module_id: moduleId,
-        state: "SUCCESS",
-      })
-    );
+    await createModuleLink(workspaceSlug.toString(), projectId.toString(), moduleId.toString(), payload)
+      .then(() =>
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.link.create,
+          payload: { id: moduleId },
+        })
+      )
+      .catch((error) => {
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.link.create,
+          payload: { id: moduleId },
+          error,
+        });
+      });
   };
 
   const handleUpdateLink = async (formData: ModuleLink, linkId: string) => {
@@ -114,13 +118,20 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
 
     const payload = { metadata: {}, ...formData };
 
-    await updateModuleLink(workspaceSlug.toString(), projectId.toString(), moduleId.toString(), linkId, payload).then(
-      () =>
-        captureEvent(MODULE_LINK_UPDATED, {
-          module_id: moduleId,
-          state: "SUCCESS",
+    await updateModuleLink(workspaceSlug.toString(), projectId.toString(), moduleId.toString(), linkId, payload)
+      .then(() =>
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.link.update,
+          payload: { id: moduleId },
         })
-    );
+      )
+      .catch((error) => {
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.link.update,
+          payload: { id: moduleId },
+          error,
+        });
+      });
   };
 
   const handleDeleteLink = async (linkId: string) => {
@@ -128,9 +139,9 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
 
     deleteModuleLink(workspaceSlug.toString(), projectId.toString(), moduleId.toString(), linkId)
       .then(() => {
-        captureEvent(MODULE_LINK_DELETED, {
-          module_id: moduleId,
-          state: "SUCCESS",
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.link.delete,
+          payload: { id: moduleId },
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
@@ -143,6 +154,10 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
           type: TOAST_TYPE.ERROR,
           title: "오류가 발생했습니다!",
           message: "모듈 링크를 삭제할 수 없습니다. 다시 시도해주세요.",
+        });
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.link.delete,
+          payload: { id: moduleId },
         });
       });
   };
@@ -217,16 +232,6 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
         createLink={handleCreateLink}
         updateLink={handleUpdateLink}
       />
-      {workspaceSlug && projectId && (
-        <ArchiveModuleModal
-          workspaceSlug={workspaceSlug.toString()}
-          projectId={projectId.toString()}
-          moduleId={moduleId}
-          isOpen={archiveModuleModal}
-          handleClose={() => setArchiveModuleModal(false)}
-        />
-      )}
-      <DeleteModuleModal isOpen={moduleDeleteModal} onClose={() => setModuleDeleteModal(false)} data={moduleDetails} />
       <>
         <div
           className={`sticky z-10 top-0 flex items-center justify-between bg-custom-sidebar-background-100 pb-5 pt-5`}

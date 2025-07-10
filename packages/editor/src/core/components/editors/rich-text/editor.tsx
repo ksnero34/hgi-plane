@@ -7,10 +7,18 @@ import { SideMenuExtension } from "@/extensions";
 // plane editor imports
 import { RichTextEditorAdditionalExtensions } from "@/plane-editor/extensions/rich-text/extensions";
 // types
-import { EditorRefApi, IRichTextEditor } from "@/types";
+import { EditorRefApi, IRichTextEditorProps } from "@/types";
 
-const RichTextEditor = (props: IRichTextEditor) => {
-  const { disabledExtensions, dragDropEnabled, fileHandler, bubbleMenuEnabled = true, extensions: externalExtensions = [], transformContent } = props;
+const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
+  const {
+    bubbleMenuEnabled = true,
+    disabledExtensions,
+    dragDropEnabled,
+    extensions: externalExtensions = [],
+    fileHandler,
+    flaggedExtensions,
+    transformContent,
+  } = props;
 
   const getExtensions = useCallback(() => {
     const extensions = [
@@ -22,11 +30,12 @@ const RichTextEditor = (props: IRichTextEditor) => {
       ...RichTextEditorAdditionalExtensions({
         disabledExtensions,
         fileHandler,
+        flaggedExtensions,
       }),
     ];
 
     return extensions;
-  }, [dragDropEnabled, disabledExtensions, externalExtensions, fileHandler]);
+  }, [dragDropEnabled, disabledExtensions, externalExtensions, fileHandler, flaggedExtensions]);
 
   const handleChange = useCallback((json: object, html: string) => {
     if (transformContent) {
@@ -42,7 +51,7 @@ const RichTextEditor = (props: IRichTextEditor) => {
   );
 };
 
-const RichTextEditorWithRef = forwardRef<EditorRefApi, IRichTextEditor>((props, ref) => (
+const RichTextEditorWithRef = forwardRef<EditorRefApi, IRichTextEditorProps>((props, ref) => (
   <RichTextEditor {...props} forwardedRef={ref as React.MutableRefObject<EditorRefApi | null>} />
 ));
 

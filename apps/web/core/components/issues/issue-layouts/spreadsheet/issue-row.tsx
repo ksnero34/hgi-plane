@@ -5,25 +5,27 @@ import React from "react";
 import { observer } from "mobx-react";
 import { useParams, usePathname } from "next/navigation";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
-import { EIssueServiceType, SPREADSHEET_SELECT_GROUP } from "@plane/constants";
+import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
-import { IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
+import { EIssueServiceType, IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
 // ui
 import { ControlLink, Row, Tooltip } from "@plane/ui";
+import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 // helper
-import { cn } from "@/helpers/common.helper";
-import { generateWorkItemLink } from "@/helpers/issue.helper";
 // hooks
 import { useIssueDetail, useIssues, useProject } from "@/hooks/store";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { usePlatformOS } from "@/hooks/use-platform-os";
-import { useEventTracker } from "@/hooks/store";
+// helpers
+import { captureSuccess } from "@/helpers/event-tracker.helper";
+// constants
+import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues";
 // local components
@@ -199,7 +201,6 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
   const { getIsIssuePeeked, peekIssue } = useIssueDetail(isEpic ? EIssueServiceType.EPICS : EIssueServiceType.ISSUES);
   const { handleRedirection } = useIssuePeekOverviewRedirection(isEpic);
   const { isMobile } = usePlatformOS();
-  const { captureIssueEvent } = useEventTracker();
 
   // handlers
   const handleIssuePeekOverview = (issue: TIssue) =>
@@ -408,15 +409,9 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
                 onChange={(issue: TIssue, data: Partial<TIssue>, updates: any) =>
                   updateIssue &&
                   updateIssue(issue.project_id, issue.id, data).then(() => {
-                    captureIssueEvent({
-                      eventName: "Issue updated",
-                      payload: {
-                        ...issue,
-                        ...data,
-                        element: "Spreadsheet layout",
-                      },
-                      updates: updates,
-                      path: pathname,
+                    captureSuccess({
+                      eventName: WORK_ITEM_TRACKER_EVENTS.update,
+                      payload: { id: issue.id },
                     });
                   })
                 }

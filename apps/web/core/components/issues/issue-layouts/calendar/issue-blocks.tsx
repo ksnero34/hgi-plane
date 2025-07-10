@@ -4,7 +4,7 @@ import { TIssue, TPaginationData } from "@plane/types";
 // components
 import { CalendarQuickAddIssueActions, CalendarIssueBlockRoot } from "@/components/issues";
 // helpers
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
 import { useIssueDetail, useIssues } from "@/hooks/store";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { TRenderQuickActions } from "../list/list-view-types";

@@ -4,25 +4,19 @@ import { FC, RefObject } from "react";
 import { observer } from "mobx-react";
 // plane imports
 import { ETabIndices } from "@plane/constants";
-// editor
 import { EditorRefApi } from "@plane/editor";
-// i18n
 import { useTranslation } from "@plane/i18n";
-// types
-import { TIssue } from "@plane/types";
-import { EFileAssetType } from "@plane/types/src/enums";
-// ui
+import { EFileAssetType, TIssue } from "@plane/types";
 import { Loader } from "@plane/ui";
+import { getDescriptionPlaceholderI18n, getTabIndex } from "@plane/utils";
 // components
 import { RichTextEditor } from "@/components/editor/rich-text-editor/rich-text-editor";
-// helpers
-import { getDescriptionPlaceholderI18n } from "@/helpers/issue.helper";
-import { getTabIndex } from "@/helpers/tab-indices.helper";
 // hooks
 import { useEditorAsset, useProjectInbox } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
-// plane web services
+// services
 import { WorkspaceService } from "@/plane-web/services";
+
 const workspaceService = new WorkspaceService();
 
 type TInboxIssueDescription = {
@@ -68,6 +62,7 @@ export const InboxIssueDescription: FC<TInboxIssueDescription> = observer((props
 
   return (
     <RichTextEditor
+      editable
       id="inbox-modal-editor"
       initialValue={!data?.description_html || data?.description_html === "" ? "<p></p>" : data?.description_html}
       ref={editorRef}

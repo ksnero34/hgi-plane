@@ -6,13 +6,12 @@ import { X } from "lucide-react";
 // plane imports
 import { ROLE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Avatar, CustomSelect, CustomSearchSelect } from "@plane/ui";
+import { Avatar,CustomSelect, Input, CustomSearchSelect } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useUserPermissions, useMember } from "@/hooks/store";
 import { InvitationFormValues } from "@/hooks/use-workspace-invitation";
-// helpers
-import { getFileURL } from "@/helpers/file.helper";
+import { getFileURL } from "@plane/utils";
 import { useEffect, useState } from "react";
 
 type TInvitationFieldsProps = {

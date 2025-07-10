@@ -1,1 +1,1 @@
-export * from "./issue-property-values";
+export * from "./issue-property-values.d";

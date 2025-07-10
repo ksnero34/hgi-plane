@@ -4,16 +4,16 @@ import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
-import { EUserPermissionsLevel, EUserProjectRoles } from "@plane/constants";
+import { EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TModuleFilters, TCustomField } from "@plane/types";
+import { EUserProjectRoles, TModuleFilters, TCustomField  } from "@plane/types";
 // components
-import { PageHead } from "@/components/core";
+import { calculateTotalFilters } from "@plane/utils";
+import { PageHead } from "@/components/core/page-title";
 import { DetailedEmptyState } from "@/components/empty-state";
 import { ModuleAppliedFiltersList,ModulesListView } from "@/components/modules";
 // helpers
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
-import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@plane/utils";
 // hooks
 import { useModuleFilter, useProject, useUserPermissions, useCustomField } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";

@@ -2,7 +2,7 @@
 import { TLogoProps } from "@plane/types";
 import { Emoji, EmojiStyle } from "emoji-picker-react";
 // helpers
-import { cn } from "@/helpers/common.helper";
+import { cn } from "@plane/utils";
 import { emojiCodeToUnicode } from "@plane/utils";
 
 type Props = {

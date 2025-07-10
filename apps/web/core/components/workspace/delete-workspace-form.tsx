@@ -5,7 +5,7 @@ import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
 import { AlertTriangle } from "lucide-react";
 // types
-import { WORKSPACE_DELETED } from "@plane/constants";
+import { WORKSPACE_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import type { IWorkspace } from "@plane/types";
 // ui
@@ -13,7 +13,8 @@ import { Button, Input, TOAST_TYPE, setToast } from "@plane/ui";
 // constants
 // hooks
 import { cn } from "@plane/utils";
-import { useEventTracker, useUserSettings, useWorkspace } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useUserSettings, useWorkspace } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -31,7 +32,6 @@ export const DeleteWorkspaceForm: React.FC<Props> = observer((props) => {
   // router
   const router = useAppRouter();
   // store hooks
-  const { captureWorkspaceEvent } = useEventTracker();
   const { deleteWorkspace } = useWorkspace();
   const { t } = useTranslation();
   const { getWorkspaceRedirectionUrl } = useWorkspace();
@@ -64,13 +64,9 @@ export const DeleteWorkspaceForm: React.FC<Props> = observer((props) => {
         await fetchCurrentUserSettings();
         handleClose();
         router.push(getWorkspaceRedirectionUrl());
-        captureWorkspaceEvent({
-          eventName: WORKSPACE_DELETED,
-          payload: {
-            ...data,
-            state: "SUCCESS",
-            element: "Workspace general settings page",
-          },
+        captureSuccess({
+          eventName: WORKSPACE_TRACKER_EVENTS.delete,
+          payload: { slug: data.slug },
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
@@ -84,13 +80,10 @@ export const DeleteWorkspaceForm: React.FC<Props> = observer((props) => {
           title: t("workspace_settings.settings.general.delete_modal.error_title"),
           message: t("workspace_settings.settings.general.delete_modal.error_message"),
         });
-        captureWorkspaceEvent({
-          eventName: WORKSPACE_DELETED,
-          payload: {
-            ...data,
-            state: "FAILED",
-            element: "Workspace general settings page",
-          },
+        captureError({
+          eventName: WORKSPACE_TRACKER_EVENTS.delete,
+          payload: { slug: data.slug },
+          error: new Error("Error deleting workspace"),
         });
       });
   };

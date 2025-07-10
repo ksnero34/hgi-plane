@@ -8,13 +8,14 @@ import { Controller, useForm } from "react-hook-form";
 import { AlertTriangleIcon } from "lucide-react";
 import { Dialog, Transition } from "@headlessui/react";
 // types
-import { PROJECT_MEMBER_LEAVE } from "@plane/constants";
+import { MEMBER_TRACKER_EVENTS } from "@plane/constants";
 import { IProject } from "@plane/types";
 // ui
 import { Button, Input, TOAST_TYPE, setToast } from "@plane/ui";
 // constants
 // hooks
-import { useEventTracker, useUserPermissions } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type FormData = {
@@ -39,7 +40,6 @@ export const LeaveProjectModal: FC<ILeaveProjectModal> = observer((props) => {
   const router = useAppRouter();
   const { workspaceSlug } = useParams();
   // store hooks
-  const { captureEvent } = useEventTracker();
   const { leaveProject } = useUserPermissions();
 
   const {
@@ -64,20 +64,25 @@ export const LeaveProjectModal: FC<ILeaveProjectModal> = observer((props) => {
           return leaveProject(workspaceSlug.toString(), project.id)
             .then(() => {
               handleClose();
-              captureEvent(PROJECT_MEMBER_LEAVE, {
-                state: "SUCCESS",
-                element: "Project settings members page",
+              captureSuccess({
+                eventName: MEMBER_TRACKER_EVENTS.project.leave,
+                payload: {
+                  project: project.id,
+                },
               });
             })
-            .catch(() => {
+            .catch((err) => {
+              captureError({
+                eventName: MEMBER_TRACKER_EVENTS.project.leave,
+                payload: {
+                  project: project.id,
+                },
+                error: err,
+              });
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: "Error!",
                 message: "Something went wrong please try again later.",
-              });
-              captureEvent(PROJECT_MEMBER_LEAVE, {
-                state: "FAILED",
-                element: "Project settings members page",
               });
             });
         } else {

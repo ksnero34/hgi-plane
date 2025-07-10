@@ -4,21 +4,20 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
-import { EUserPermissionsLevel, EUserProjectRoles } from "@plane/constants";
+import { EUserPermissionsLevel, CYCLE_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TCycleFilters } from "@plane/types";
+import { EUserProjectRoles, TCycleFilters } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
-import { PageHead } from "@/components/core";
+import { calculateTotalFilters } from "@plane/utils";
+import { PageHead } from "@/components/core/page-title";
 import { CyclesView, CycleCreateUpdateModal, CycleAppliedFiltersList } from "@/components/cycles";
 import { ComicBoxButton, DetailedEmptyState } from "@/components/empty-state";
 import { CycleModuleListLayout } from "@/components/ui";
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
-import { calculateTotalFilters } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@plane/utils";
 // hooks
-import { useEventTracker, useCycle, useProject, useCycleFilter, useUserPermissions } from "@/hooks/store";
+import { useCycle, useProject, useCycleFilter, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -26,7 +25,6 @@ const ProjectCyclesPage = observer(() => {
   // states
   const [createModal, setCreateModal] = useState(false);
   // store hooks
-  const { setTrackElement } = useEventTracker();
   const { currentProjectCycleIds, loader } = useCycle();
   const { getProjectById, currentProjectDetails } = useProject();
   // router
@@ -104,8 +102,8 @@ const ProjectCyclesPage = observer(() => {
                   label={t("project_cycles.empty_state.general.primary_button.text")}
                   title={t("project_cycles.empty_state.general.primary_button.comic.title")}
                   description={t("project_cycles.empty_state.general.primary_button.comic.description")}
+                  data-ph-element={CYCLE_TRACKER_ELEMENTS.EMPTY_STATE_ADD_BUTTON}
                   onClick={() => {
-                    setTrackElement("Cycle empty state");
                     setCreateModal(true);
                   }}
                   disabled={!hasMemberLevelPermission}

@@ -2,8 +2,8 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 // types
-import { EIssueFilterType, EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { IIssueFilterOptions, TCustomField } from "@plane/types";
+import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { EIssuesStoreType, IIssueFilterOptions, TCustomField } from "@plane/types";
 // ui
 import { Header, EHeaderVariant } from "@plane/ui";
 // components
@@ -12,7 +12,7 @@ import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 // hooks
 import { useLabel, useProjectState, useUserPermissions } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { calculateFilterValue } from "@plane/utils";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web constants
 

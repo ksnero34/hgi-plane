@@ -5,11 +5,11 @@ import { useTranslation } from "@plane/i18n";
 import { TModuleDisplayFilters, TModuleFilters, TCustomField } from "@plane/types";
 // components
 import { Header, EHeaderVariant, Tag } from "@plane/ui";
+import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
 import { AppliedDateFilters, AppliedMembersFilters, AppliedStatusFilters } from "@/components/modules";
 import { AppliedCustomFieldFilters } from "@/components/issues";
 // helpers
-import { replaceUnderscoreIfSnakeCase } from "@/helpers/string.helper";
-import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@/helpers/custom-field.helper";
+import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
 // types
 
 type Props = {

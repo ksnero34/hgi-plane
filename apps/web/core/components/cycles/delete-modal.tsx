@@ -4,14 +4,15 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useSearchParams } from "next/navigation";
 // types
-import { PROJECT_ERROR_MESSAGES, CYCLE_DELETED } from "@plane/constants";
+import { PROJECT_ERROR_MESSAGES, CYCLE_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { ICycle } from "@plane/types";
 // ui
 import { AlertModalCore, TOAST_TYPE, setToast } from "@plane/ui";
-// constants
+// helpers
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
-import { useEventTracker, useCycle } from "@/hooks/store";
+import { useCycle } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 interface ICycleDelete {
@@ -27,7 +28,6 @@ export const CycleDeleteModal: React.FC<ICycleDelete> = observer((props) => {
   // states
   const [loader, setLoader] = useState(false);
   // store hooks
-  const { captureCycleEvent } = useEventTracker();
   const { deleteCycle } = useCycle();
   const { t } = useTranslation();
   // router
@@ -49,9 +49,11 @@ export const CycleDeleteModal: React.FC<ICycleDelete> = observer((props) => {
             title: "성공했습니다!",
             message: "주기가 삭제되었습니다.",
           });
-          captureCycleEvent({
-            eventName: CYCLE_DELETED,
-            payload: { ...cycle, state: "SUCCESS" },
+          captureSuccess({
+            eventName: CYCLE_TRACKER_EVENTS.delete,
+            payload: {
+              id: cycle.id,
+            },
           });
         })
         .catch((errors) => {
@@ -64,13 +66,16 @@ export const CycleDeleteModal: React.FC<ICycleDelete> = observer((props) => {
             type: TOAST_TYPE.ERROR,
             message: currentError.i18n_message && t(currentError.i18n_message),
           });
-          captureCycleEvent({
-            eventName: CYCLE_DELETED,
-            payload: { ...cycle, state: "FAILED" },
+          captureError({
+            eventName: CYCLE_TRACKER_EVENTS.delete,
+            payload: {
+              id: cycle.id,
+            },
+            error: errors,
           });
         })
         .finally(() => handleClose());
-    } catch (error) {
+    } catch {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "오류가 발생했습니다!",

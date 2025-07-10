@@ -16,13 +16,11 @@ import { useIssueEmbed } from "@/plane-web/hooks/use-issue-embed";
 
 export type TVersionEditorProps = {
   activeVersion: string | null;
-  currentVersionDescription: string | null;
-  isCurrentVersionActive: boolean;
   versionDetails: TPageVersion | undefined;
 };
 
 export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props) => {
-  const { activeVersion, currentVersionDescription, isCurrentVersionActive, versionDetails } = props;
+  const { activeVersion, versionDetails } = props;
   // store hooks
   const { getUserDetails } = useMember();
   // params
@@ -32,7 +30,7 @@ export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props
   // derived values
   const workspaceDetails = getWorkspaceBySlug(workspaceSlug?.toString() ?? "");
   // editor flaggings
-  const { documentEditor: disabledExtensions } = useEditorFlagging(workspaceSlug?.toString() ?? "");
+  const { document: documentEditorExtensions } = useEditorFlagging(workspaceSlug?.toString() ?? "");
   // editor config
   const { getReadOnlyEditorFileHandlers } = useEditorConfig();
   // issue-embed
@@ -49,7 +47,7 @@ export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props
     wideLayout: true,
   };
 
-  if (!isCurrentVersionActive && !versionDetails)
+  if (!versionDetails)
     return (
       <div className="size-full px-5">
         <Loader className="relative space-y-4">
@@ -91,7 +89,7 @@ export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props
       </div>
     );
 
-  const description = isCurrentVersionActive ? currentVersionDescription : versionDetails?.description_html;
+  const description = versionDetails?.description_html;
   if (description === undefined || description?.trim() === "") return null;
 
   return (
@@ -99,7 +97,8 @@ export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props
       id={activeVersion ?? ""}
       initialValue={description ?? "<p></p>"}
       containerClassName="p-0 pb-64 border-none"
-      disabledExtensions={disabledExtensions}
+      disabledExtensions={documentEditorExtensions.disabled}
+      flaggedExtensions={documentEditorExtensions.flagged}
       displayConfig={displayConfig}
       editorClassName="pl-10"
       fileHandler={getReadOnlyEditorFileHandlers({

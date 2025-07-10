@@ -3,39 +3,20 @@
 import { FC, useEffect, useState, useMemo, useCallback } from "react";
 import { observer } from "mobx-react";
 import { usePathname } from "next/navigation";
-// plane types
-import {
-  EIssuesStoreType,
-  ISSUE_UPDATED,
-  ISSUE_DELETED,
-  ISSUE_ARCHIVED,
-  ISSUE_RESTORED,
-  EUserPermissions,
-  EUserPermissionsLevel,
-} from "@plane/constants";
+// Plane imports
+import { EUserPermissions, EUserPermissionsLevel, WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TIssue } from "@plane/types";
-// plane ui
+import { EIssueServiceType, EIssuesStoreType, IWorkItemPeekOverview, TIssue } from "@plane/types";
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 // components
 import { IssueView, TIssueOperations } from "@/components/issues";
-// constants
 // hooks
-import { useEventTracker, useIssueDetail, useIssues, useUserPermissions, useUser } from "@/hooks/store";
-
-// plane web constants
-// import { EUserPermissions, EUserPermissionsLevel } from "@/plane-web/constants/user-permissions";
-// import { useEventTracker, useIssueDetail, useIssues, useUserPermissions } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useIssueDetail, useIssues, useUserPermissions, useUser } from "@/hooks/store";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
+import { useWorkItemProperties } from "@/plane-web/hooks/use-issue-properties";
 
-interface IIssuePeekOverview {
-  embedIssue?: boolean;
-  embedRemoveCurrentNotification?: () => void;
-  is_draft?: boolean;
-  storeType?: EIssuesStoreType;
-}
-
-export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
+export const IssuePeekOverview: FC<IWorkItemPeekOverview> = observer((props) => {
   const {
     embedIssue = false,
     embedRemoveCurrentNotification,
@@ -61,7 +42,13 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
   const issueStoreType = useIssueStoreType();
   const storeType = issueStoreFromProps ?? issueStoreType;
   const { issues } = useIssues(storeType);
-  const { captureIssueEvent } = useEventTracker();
+
+  useWorkItemProperties(
+    peekIssue?.projectId,
+    peekIssue?.workspaceSlug,
+    peekIssue?.issueId,
+    storeType === EIssuesStoreType.EPIC ? EIssueServiceType.EPICS : EIssueServiceType.ISSUES
+  );
   // state
   const [error, setError] = useState(false);
 
@@ -87,21 +74,16 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
             .updateIssue(workspaceSlug, projectId, issueId, data)
             .then(async () => {
               fetchActivities(workspaceSlug, projectId, issueId);
-              captureIssueEvent({
-                eventName: ISSUE_UPDATED,
-                payload: { ...data, issueId, state: "SUCCESS", element: "Issue peek-overview" },
-                updates: {
-                  changed_property: Object.keys(data).join(","),
-                  change_details: Object.values(data).join(","),
-                },
-                path: pathname,
+              captureSuccess({
+                eventName: WORK_ITEM_TRACKER_EVENTS.update,
+                payload: { id: issueId },
               });
             })
-            .catch(() => {
-              captureIssueEvent({
-                eventName: ISSUE_UPDATED,
-                payload: { state: "FAILED", element: "Issue peek-overview" },
-                path: pathname,
+            .catch((error) => {
+              captureError({
+                eventName: WORK_ITEM_TRACKER_EVENTS.update,
+                payload: { id: issueId },
+                error: error as Error,
               });
               setToast({
                 title: t("toast.error"),
@@ -114,23 +96,22 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
       remove: async (workspaceSlug: string, projectId: string, issueId: string) => {
         try {
           return issues?.removeIssue(workspaceSlug, projectId, issueId).then(() => {
-            captureIssueEvent({
-              eventName: ISSUE_DELETED,
-              payload: { id: issueId, state: "SUCCESS", element: "Issue peek-overview" },
-              path: pathname,
+            captureSuccess({
+              eventName: WORK_ITEM_TRACKER_EVENTS.delete,
+              payload: { id: issueId },
             });
             removeRoutePeekId();
           });
-        } catch {
+        } catch (error) {
           setToast({
             title: t("toast.error"),
             type: TOAST_TYPE.ERROR,
             message: t("entity.delete.failed", { entity: t("issue.label", { count: 1 }) }),
           });
-          captureIssueEvent({
-            eventName: ISSUE_DELETED,
-            payload: { id: issueId, state: "FAILED", element: "Issue peek-overview" },
-            path: pathname,
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.delete,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
@@ -138,16 +119,15 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
         try {
           if (!issues?.archiveIssue) return;
           await issues.archiveIssue(workspaceSlug, projectId, issueId);
-          captureIssueEvent({
-            eventName: ISSUE_ARCHIVED,
-            payload: { id: issueId, state: "SUCCESS", element: "Issue peek-overview" },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.archive,
+            payload: { id: issueId },
           });
-        } catch {
-          captureIssueEvent({
-            eventName: ISSUE_ARCHIVED,
-            payload: { id: issueId, state: "FAILED", element: "Issue peek-overview" },
-            path: pathname,
+        } catch (error) {
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.archive,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
@@ -159,21 +139,20 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
             title: t("issue.restore.success.title"),
             message: t("issue.restore.success.message"),
           });
-          captureIssueEvent({
-            eventName: ISSUE_RESTORED,
-            payload: { id: issueId, state: "SUCCESS", element: "Issue peek-overview" },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.restore,
+            payload: { id: issueId },
           });
-        } catch {
+        } catch (error) {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("toast.error"),
             message: t("issue.restore.failed.message"),
           });
-          captureIssueEvent({
-            eventName: ISSUE_RESTORED,
-            payload: { id: issueId, state: "FAILED", element: "Issue peek-overview" },
-            path: pathname,
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.restore,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
@@ -181,58 +160,40 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
         try {
           await issues.addCycleToIssue(workspaceSlug, projectId, cycleId, issueId);
           fetchActivities(workspaceSlug, projectId, issueId);
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { issueId, state: "SUCCESS", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "cycle_id",
-              change_details: cycleId,
-            },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueId },
           });
-        } catch {
+        } catch (error) {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("toast.error"),
             message: t("issue.add.cycle.failed"),
           });
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { state: "FAILED", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "cycle_id",
-              change_details: cycleId,
-            },
-            path: pathname,
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
       addIssueToCycle: async (workspaceSlug: string, projectId: string, cycleId: string, issueIds: string[]) => {
         try {
           await issues.addIssueToCycle(workspaceSlug, projectId, cycleId, issueIds);
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { ...issueIds, state: "SUCCESS", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "cycle_id",
-              change_details: cycleId,
-            },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueIds },
           });
-        } catch {
+        } catch (error) {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("toast.error"),
             message: t("issue.add.cycle.failed"),
           });
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { state: "FAILED", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "cycle_id",
-              change_details: cycleId,
-            },
-            path: pathname,
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueIds },
+            error: error as Error,
           });
         }
       },
@@ -252,24 +213,15 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
           });
           await removeFromCyclePromise;
           fetchActivities(workspaceSlug, projectId, issueId);
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { issueId, state: "SUCCESS", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "cycle_id",
-              change_details: "",
-            },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueId },
           });
-        } catch {
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { state: "FAILED", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "cycle_id",
-              change_details: "",
-            },
-            path: pathname,
+        } catch (error) {
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
@@ -288,14 +240,9 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
           removeModuleIds
         );
         fetchActivities(workspaceSlug, projectId, issueId);
-        captureIssueEvent({
-          eventName: ISSUE_UPDATED,
-          payload: { id: issueId, state: "SUCCESS", element: "Issue detail page" },
-          updates: {
-            changed_property: "module_id",
-            change_details: { addModuleIds, removeModuleIds },
-          },
-          path: pathname,
+        captureSuccess({
+          eventName: WORK_ITEM_TRACKER_EVENTS.update,
+          payload: { id: issueId },
         });
         return promise;
       },
@@ -315,29 +262,21 @@ export const IssuePeekOverview: FC<IIssuePeekOverview> = observer((props) => {
           });
           await removeFromModulePromise;
           fetchActivities(workspaceSlug, projectId, issueId);
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { id: issueId, state: "SUCCESS", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "module_id",
-              change_details: "",
-            },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueId },
           });
-        } catch {
-          captureIssueEvent({
-            eventName: ISSUE_UPDATED,
-            payload: { id: issueId, state: "FAILED", element: "Issue peek-overview" },
-            updates: {
-              changed_property: "module_id",
-              change_details: "",
-            },
-            path: pathname,
+        } catch (error) {
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issueId },
+            error: error as Error,
           });
         }
       },
     }),
-    [fetchIssue, is_draft, issues, fetchActivities, captureIssueEvent, pathname, removeRoutePeekId, restoreIssue]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fetchIssue, is_draft, issues, fetchActivities, pathname, removeRoutePeekId, restoreIssue]
   );
 
   useEffect(() => {

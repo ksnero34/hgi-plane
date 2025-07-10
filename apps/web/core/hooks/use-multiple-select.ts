@@ -8,7 +8,7 @@ import useReloadConfirmations from "./use-reload-confirmation";
 // types
 import { TBulkOperationsPayload } from "@plane/types";
 // helpers
-import { isEditorFocused } from "@/helpers/editor.helper";
+import { isEditorFocused } from "@plane/utils";
 
 export type TEntityDetails = {
   entityID: string;

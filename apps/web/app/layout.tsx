@@ -7,7 +7,7 @@ import "@/styles/globals.css";
 import { SITE_DESCRIPTION, SITE_NAME } from "@plane/constants";
 
 // helpers
-import { cn } from "@/helpers/common.helper";
+import { cn } from "@plane/utils";
 
 // local
 import { AppProvider } from "./provider";
@@ -81,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <div id="context-menu-portal" />
+        <div id="editor-portal" />
         <AppProvider>
           <div
             className={cn(

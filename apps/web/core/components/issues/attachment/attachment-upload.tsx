@@ -7,6 +7,8 @@ import { MAX_FILE_SIZE } from "@/constants/common";
 import { generateFileName } from "@/helpers/attachment.helper";
 // hooks
 import { useInstance, useFileValidation, ValidationResult } from "@/hooks/store";
+// plane web hooks
+import { useFileSize } from "@/plane-web/hooks/use-file-size";
 // icons
 import { Plus } from "lucide-react";
 // ui
@@ -29,6 +31,8 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
   // store hooks
   const { config, fileSettings, fetchFileSettings } = useInstance();
   const { getAcceptedFileTypes } = useFileValidation();
+  // file size
+  const { maxFileSize } = useFileSize();
   
   // states
   const [isLoading, setIsLoading] = useState(false);
@@ -73,9 +77,9 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
     [attachmentOperations, workspaceSlug, validateFile]
   );
 
-  const { getRootProps, getInputProps, isDragActive, isDragReject, open } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, isDragReject, open, fileRejections } = useDropzone({
     onDrop,
-    maxSize: MAX_FILE_SIZE,
+    maxSize: maxFileSize || MAX_FILE_SIZE,
     multiple: false,
     disabled: isLoading || disabled,
     noClick: false,
@@ -89,7 +93,8 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
   };
 
   const fileError = validationError || 
-    (isDragReject ? `Invalid file type or size (max ${(fileSettings?.max_file_size ?? MAX_FILE_SIZE) / 1024 / 1024} MB)` : null);
+    (fileRejections.length > 0 ? `Invalid file type or size (max ${(maxFileSize || fileSettings?.max_file_size || MAX_FILE_SIZE) / 1024 / 1024} MB)` : null) ||
+    (isDragReject ? `Invalid file type or size (max ${(maxFileSize || fileSettings?.max_file_size || MAX_FILE_SIZE) / 1024 / 1024} MB)` : null);
 
   return (
     <div
@@ -109,6 +114,8 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
           <span className="text-sm">Uploading...</span>
         ) : fileError ? (
           <span className="text-sm text-red-500">{fileError}</span>
+        ) : isDragActive ? (
+          <span className="text-sm">Drop here...</span>
         ) : (
           <Plus className="w-4 h-4" />
         )}

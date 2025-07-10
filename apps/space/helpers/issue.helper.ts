@@ -3,7 +3,7 @@ import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 import { STATE_GROUPS } from "@plane/constants";
 import { TStateGroups } from "@plane/types";
 // helpers
-import { getDate } from "@/helpers/date-time.helper";
+import { getDate } from "@plane/utils";
 
 /**
  * @description check if the issue due date should be highlighted

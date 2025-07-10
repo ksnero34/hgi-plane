@@ -12,7 +12,6 @@ import { CycleFilterStore, ICycleFilterStore } from "./cycle_filter.store";
 import { DashboardStore, IDashboardStore } from "./dashboard.store";
 import { EditorAssetStore, IEditorAssetStore } from "./editor/asset.store";
 import { IProjectEstimateStore, ProjectEstimateStore } from "./estimates/project-estimate.store";
-import { EventTrackerStore, IEventTrackerStore } from "./event-tracker.store";
 import { FavoriteStore, IFavoriteStore } from "./favorite.store";
 import { GlobalViewStore, IGlobalViewStore } from "./global-view.store";
 import { IProjectInboxStore, ProjectInboxStore } from "./inbox/project-inbox.store";
@@ -55,7 +54,6 @@ export class CoreRootStore {
   router: IRouterStore;
   commandPalette: ICommandPaletteStore;
   theme: IThemeStore;
-  eventTracker: IEventTrackerStore;
   instance: IInstanceStore;
   user: IUserStore;
   projectInbox: IProjectInboxStore;
@@ -86,7 +84,6 @@ export class CoreRootStore {
     this.state = new StateStore(this as unknown as RootStore);
     this.label = new LabelStore(this);
     this.dashboard = new DashboardStore(this);
-    this.eventTracker = new EventTrackerStore(this);
     this.multipleSelect = new MultipleSelectStore();
     this.projectInbox = new ProjectInboxStore(this);
     this.projectPages = new ProjectPageStore(this as unknown as RootStore);
@@ -120,7 +117,6 @@ export class CoreRootStore {
     this.state = new StateStore(this as unknown as RootStore);
     this.label = new LabelStore(this);
     this.dashboard = new DashboardStore(this);
-    this.eventTracker = new EventTrackerStore(this);
     this.projectInbox = new ProjectInboxStore(this);
     this.projectPages = new ProjectPageStore(this as unknown as RootStore);
     this.multipleSelect = new MultipleSelectStore();

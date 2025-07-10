@@ -4,15 +4,17 @@ import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useForm } from "react-hook-form";
 // types
-import { MODULE_CREATED, MODULE_UPDATED } from "@plane/constants";
+import { MODULE_TRACKER_EVENTS } from "@plane/constants";
 import type { IModule } from "@plane/types";
 // ui
 import { EModalPosition, EModalWidth, ModalCore, TOAST_TYPE, setToast } from "@plane/ui";
 // components
 import { ModuleForm } from "@/components/modules";
 // constants
+// helpers
+import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 // hooks
-import { useEventTracker, useModule, useProject } from "@/hooks/store";
+import { useModule, useProject } from "@/hooks/store";
 import useKeypress from "@/hooks/use-keypress";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
@@ -37,7 +39,6 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
   // states
   const [activeProject, setActiveProject] = useState<string | null>(null);
   // store hooks
-  const { captureModuleEvent } = useEventTracker();
   const { workspaceProjectIds } = useProject();
   const { createModule, updateModuleDetails } = useModule();
   const { isMobile } = usePlatformOS();
@@ -63,9 +64,9 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
           title: "성공!",
           message: "모듈이 성공적으로 생성되었습니다.",
         });
-        captureModuleEvent({
-          eventName: MODULE_CREATED,
-          payload: { ...res, state: "SUCCESS" },
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.create,
+          payload: { id: res.id },
         });
       })
       .catch((err) => {
@@ -74,14 +75,15 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
           title: "오류가 발생했습니다!",
           message: err?.detail ?? err?.error ?? "모듈을 생성할 수 없습니다. 다시 시도해주세요.",
         });
-        captureModuleEvent({
-          eventName: MODULE_CREATED,
-          payload: { ...data, state: "FAILED" },
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.create,
+          payload: { id: data?.id },
+          error: err,
         });
       });
   };
 
-  const handleUpdateModule = async (payload: Partial<IModule>, dirtyFields: any) => {
+  const handleUpdateModule = async (payload: Partial<IModule>) => {
     if (!workspaceSlug || !projectId || !data) return;
 
     const selectedProjectId = payload.project_id ?? projectId.toString();
@@ -94,9 +96,9 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
           title: "성공!",
           message: "모듈이 성공적으로 업데이트되었습니다.",
         });
-        captureModuleEvent({
-          eventName: MODULE_UPDATED,
-          payload: { ...res, changed_properties: Object.keys(dirtyFields || {}), state: "SUCCESS" },
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.update,
+          payload: { id: res.id },
         });
       })
       .catch((err) => {
@@ -105,21 +107,22 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
           title: "오류가 발생했습니다!",
           message: err?.detail ?? err?.error ?? "모듈을 업데이트할 수 없습니다. 다시 시도해주세요.",
         });
-        captureModuleEvent({
-          eventName: MODULE_UPDATED,
-          payload: { ...data, state: "FAILED" },
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.update,
+          payload: { id: data.id },
+          error: err,
         });
       });
   };
 
-  const handleFormSubmit = async (formData: Partial<IModule>, dirtyFields: unknown) => {
+  const handleFormSubmit = async (formData: Partial<IModule>) => {
     if (!workspaceSlug || !projectId) return;
 
     const payload: Partial<IModule> = {
       ...formData,
     };
     if (!data) await handleCreateModule(payload);
-    else await handleUpdateModule(payload, dirtyFields);
+    else await handleUpdateModule(payload);
   };
 
   useEffect(() => {

@@ -14,6 +14,8 @@ from plane.app.views import (
     ProjectBulkAssetEndpoint,
     PageFileAssetEndpoint,
     AssetCheckEndpoint,
+    WorkspaceAssetDownloadEndpoint,
+    ProjectAssetDownloadEndpoint,
 )
 
 
@@ -99,5 +101,15 @@ urlpatterns = [
         "assets/v2/workspaces/<str:slug>/projects/<uuid:project_id>/pages/files/<uuid:pk>/",
         PageFileAssetEndpoint.as_view(),
         name="page-file-assets",
+    ),
+    path(
+        "assets/v2/workspaces/<str:slug>/download/<uuid:asset_id>/",
+        WorkspaceAssetDownloadEndpoint.as_view(),
+        name="workspace-asset-download",
+    ),
+    path(
+        "assets/v2/workspaces/<str:slug>/projects/<uuid:project_id>/download/<uuid:asset_id>/",
+        ProjectAssetDownloadEndpoint.as_view(),
+        name="project-asset-download",
     ),
 ]

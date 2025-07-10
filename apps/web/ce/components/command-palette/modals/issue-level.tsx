@@ -2,8 +2,7 @@ import { FC } from "react";
 import { observer } from "mobx-react";
 import { useParams, usePathname } from "next/navigation";
 // plane imports
-import { EIssueServiceType, EIssuesStoreType } from "@plane/constants";
-import { TIssue } from "@plane/types";
+import { EIssueServiceType, EIssuesStoreType, TIssue } from "@plane/types";
 // components
 import { BulkDeleteIssuesModal } from "@/components/core";
 import { CreateUpdateIssueModal, DeleteIssueModal } from "@/components/issues";
@@ -39,6 +38,7 @@ export const IssueLevelModals: FC<TIssueLevelModalsProps> = observer((props) => 
     toggleDeleteIssueModal,
     isBulkDeleteIssueModalOpen,
     toggleBulkDeleteIssueModal,
+    createWorkItemAllowedProjectIds,
   } = useCommandPalette();
   // derived values
   const issueDetails = issueId ? getIssueById(issueId) : undefined;
@@ -80,6 +80,7 @@ export const IssueLevelModals: FC<TIssueLevelModalsProps> = observer((props) => 
         data={getCreateIssueModalData()}
         isDraft={isDraftIssue}
         onSubmit={handleCreateIssueSubmit}
+        allowedProjectIds={createWorkItemAllowedProjectIds}
       />
       {workspaceSlug && projectId && issueId && issueDetails && (
         <DeleteIssueModal

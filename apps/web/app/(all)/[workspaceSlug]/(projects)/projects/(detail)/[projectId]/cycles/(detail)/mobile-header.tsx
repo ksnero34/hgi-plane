@@ -4,26 +4,19 @@ import { useCallback, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 // icons
 import { Calendar, ChevronDown, Kanban, List } from "lucide-react";
-// plane constants
-import {
-  EIssueLayoutTypes,
-  EIssueFilterType,
-  EIssuesStoreType,
-  ISSUE_LAYOUTS,
-  ISSUE_DISPLAY_FILTERS_BY_PAGE,
-} from "@plane/constants";
-// i18n
+// plane imports
+import { EIssueLayoutTypes, EIssueFilterType, ISSUE_LAYOUTS, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // types
 import { IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions, TCustomField } from "@plane/types";
 // ui
 import { CustomMenu } from "@plane/ui";
+import { isIssueFilterActive } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
 // helpers
-import { calculateFilterValue } from "@/helpers/filter-update.helper";
-import { isIssueFilterActive } from "@/helpers/filter.helper";
+import { calculateFilterValue } from "@plane/utils";
 // hooks
 import {
   useCycle,

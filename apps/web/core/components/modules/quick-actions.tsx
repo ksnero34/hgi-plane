@@ -6,17 +6,22 @@ import { observer } from "mobx-react";
 // icons
 import { ArchiveRestoreIcon, ExternalLink, LinkIcon, Pencil, Trash2 } from "lucide-react";
 // plane imports
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import {
+  EUserPermissions,
+  EUserPermissionsLevel,
+  MODULE_TRACKER_ELEMENTS,
+  MODULE_TRACKER_EVENTS,
+} from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui
 import { ArchiveIcon, ContextMenu, CustomMenu, TContextMenuItem, TOAST_TYPE, setToast } from "@plane/ui";
-import { copyUrlToClipboard } from "@plane/utils";
+import { copyUrlToClipboard, cn } from "@plane/utils";
 // components
 import { ArchiveModuleModal, CreateUpdateModuleModal, DeleteModuleModal } from "@/components/modules";
 // helpers
-import { cn } from "@/helpers/common.helper";
+import { captureClick, captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 // hooks
-import { useModule, useEventTracker, useUserPermissions } from "@/hooks/store";
+import { useModule, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -36,7 +41,6 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
   const [archiveModuleModal, setArchiveModuleModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   // store hooks
-  const { setTrackElement } = useEventTracker();
   const { allowPermissions } = useUserPermissions();
 
   const { getModuleById, restoreModule } = useModule();
@@ -68,7 +72,6 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
   const handleOpenInNewTab = () => window.open(`/${moduleLink}`, "_blank");
 
   const handleEditModule = () => {
-    setTrackElement("Modules page list layout");
     setEditModal(true);
   };
 
@@ -82,18 +85,26 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
           title: "Restore success",
           message: "Your module can be found in project modules.",
         });
+        captureSuccess({
+          eventName: MODULE_TRACKER_EVENTS.restore,
+          payload: { id: moduleId },
+        });
         router.push(`/${workspaceSlug}/projects/${projectId}/archives/modules`);
       })
-      .catch(() =>
+      .catch((error) => {
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "오류가 발생했습니다!",
           message: "모듈을 복원할 수 없습니다. 다시 시도해주세요.",
-        })
-      );
+        });
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.restore,
+          payload: { id: moduleId },
+          error,
+        });
+      });
 
   const handleDeleteModule = () => {
-    setTrackElement("Modules page list layout");
     setDeleteModal(true);
   };
 
@@ -146,6 +157,16 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
     },
   ];
 
+  const CONTEXT_MENU_ITEMS: TContextMenuItem[] = MENU_ITEMS.map((item) => ({
+    ...item,
+    onClick: () => {
+      captureClick({
+        elementName: MODULE_TRACKER_ELEMENTS.CONTEXT_MENU,
+      });
+      item.action();
+    },
+  }));
+
   return (
     <>
       {moduleDetails && (
@@ -167,7 +188,7 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
           <DeleteModuleModal data={moduleDetails} isOpen={deleteModal} onClose={() => setDeleteModal(false)} />
         </div>
       )}
-      <ContextMenu parentRef={parentRef} items={MENU_ITEMS} />
+      <ContextMenu parentRef={parentRef} items={CONTEXT_MENU_ITEMS} />
       <CustomMenu ellipsis placement="bottom-end" closeOnSelect buttonClassName={customClassName}>
         {MENU_ITEMS.map((item) => {
           if (item.shouldRender === false) return null;
@@ -177,6 +198,9 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                captureClick({
+                  elementName: MODULE_TRACKER_ELEMENTS.QUICK_ACTIONS,
+                });
                 item.action();
               }}
               className={cn(

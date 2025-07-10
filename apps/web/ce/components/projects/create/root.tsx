@@ -3,7 +3,7 @@
 import { useState, FC } from "react";
 import { observer } from "mobx-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { PROJECT_CREATED, DEFAULT_PROJECT_FORM_VALUES } from "@plane/constants";
+import { DEFAULT_PROJECT_FORM_VALUES, PROJECT_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui
 import { setToast, TOAST_TYPE } from "@plane/ui";
@@ -12,7 +12,8 @@ import ProjectCommonAttributes from "@/components/project/create/common-attribut
 import ProjectCreateHeader from "@/components/project/create/header";
 import ProjectCreateButtons from "@/components/project/create/project-create-buttons";
 // hooks
-import { useEventTracker, useProject } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useProject } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web types
 import { TProject } from "@/plane-web/types/projects";
@@ -32,7 +33,6 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
   const { setToFavorite, workspaceSlug, data, onClose, handleNextStep, updateCoverImageStatus } = props;
   // store
   const { t } = useTranslation();
-  const { captureProjectEvent } = useEventTracker();
   const { addProjectToFavorites, createProject } = useProject();
   // states
   const [isChangeInIdentifierRequired, setIsChangeInIdentifierRequired] = useState(true);
@@ -49,7 +49,7 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
     addProjectToFavorites(workspaceSlug.toString(), projectId).catch(() => {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: t("error"),
+        title: t("toast.error"),
         message: t("failed_to_remove_project_from_favorites"),
       });
     });
@@ -70,39 +70,51 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
         if (coverImage) {
           await updateCoverImageStatus(res.id, coverImage);
         }
-        const newPayload = {
-          ...res,
-          state: "SUCCESS",
-        };
-        captureProjectEvent({
-          eventName: PROJECT_CREATED,
-          payload: newPayload,
+        captureSuccess({
+          eventName: PROJECT_TRACKER_EVENTS.create,
+          payload: {
+            identifier: formData.identifier,
+          },
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: t("success"),
           message: t("project_created_successfully"),
         });
+
         if (setToFavorite) {
           handleAddToFavorites(res.id);
         }
         handleNextStep(res.id);
       })
       .catch((err) => {
-        Object.keys(err?.data ?? {}).map((key) => {
+        captureError({
+          eventName: PROJECT_TRACKER_EVENTS.create,
+          payload: {
+            identifier: formData.identifier,
+          },
+        });
+        if (err?.data.code === "PROJECT_NAME_ALREADY_EXIST") {
           setToast({
             type: TOAST_TYPE.ERROR,
-            title: t("error"),
-            message: t("something_went_wrong"),
+            title: t("toast.error"),
+            message: t("project_name_already_taken"),
           });
-          captureProjectEvent({
-            eventName: PROJECT_CREATED,
-            payload: {
-              ...formData,
-              state: "FAILED",
-            },
+        } else if (err?.data.code === "PROJECT_IDENTIFIER_ALREADY_EXIST") {
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: t("toast.error"),
+            message: t("project_identifier_already_taken"),
           });
-        });
+        } else {
+          Object.keys(err?.data ?? {}).map((key) => {
+            setToast({
+              type: TOAST_TYPE.ERROR,
+              title: t("error"),
+              message: err.data[key],
+            });
+          });
+        }
       });
   };
 

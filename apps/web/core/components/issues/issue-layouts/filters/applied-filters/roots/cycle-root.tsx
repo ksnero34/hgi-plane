@@ -1,13 +1,12 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { useCallback } from "react";
-import { EIssueFilterType, EIssuesStoreType } from "@plane/constants";
-import { IIssueFilterOptions } from "@plane/types";
+import { EIssueFilterType } from "@plane/constants";
+import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 // hooks
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 import { useIssues, useLabel, useProjectState, useCustomField } from "@/hooks/store";
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { calculateFilterValue } from "@plane/utils";
 // components
 // types
 

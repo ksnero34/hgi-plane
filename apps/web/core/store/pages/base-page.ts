@@ -2,17 +2,18 @@ import set from "lodash/set";
 import { action, computed, makeObservable, observable, reaction, runInAction } from "mobx";
 // plane imports
 import { EPageAccess } from "@plane/constants";
-import { EditorRefApi } from "@plane/editor";
 import { TDocumentPayload, TLogoProps, TNameDescriptionLoader, TPage } from "@plane/types";
 import { TChangeHandlerProps } from "@plane/ui";
 import { convertHexEmojiToDecimal } from "@plane/utils";
 // plane web store
+import { ExtendedBasePage } from "@/plane-web/store/pages/extended-base-page";
 import { RootStore } from "@/plane-web/store/root.store";
+// local imports
+import { PageEditorInstance } from "./page-editor-info";
 
 export type TBasePage = TPage & {
   // observables
   isSubmitting: TNameDescriptionLoader;
-  editorRef: EditorRefApi | null;
   // computed
   asJSON: TPage | undefined;
   isCurrentUserOwner: boolean;
@@ -38,7 +39,8 @@ export type TBasePage = TPage & {
   duplicate: () => Promise<TPage | undefined>;
   moveToFolder: (parentId: string | null) => Promise<void>;
   mutateProperties: (data: Partial<TPage>, shouldUpdateName?: boolean) => void;
-  setEditorRef: (editorRef: EditorRefApi | null) => void;
+  // sub-store
+  editor: PageEditorInstance;
 };
 
 export type TBasePagePermissions = {
@@ -72,10 +74,9 @@ export type TPageInstance = TBasePage &
     getRedirectionLink: () => string;
   };
 
-export class BasePage implements TBasePage {
+export class BasePage extends ExtendedBasePage implements TBasePage {
   // loaders
   isSubmitting: TNameDescriptionLoader = "saved";
-  editorRef: EditorRefApi | null = null;
   // page properties
   id: string | undefined;
   name: string | undefined;
@@ -85,7 +86,6 @@ export class BasePage implements TBasePage {
   label_ids: string[] | undefined;
   owned_by: string | undefined;
   access: EPageAccess | undefined;
-  anchor?: string | null | undefined;
   is_favorite: boolean;
   is_locked: boolean;
   is_folder: boolean;
@@ -93,7 +93,6 @@ export class BasePage implements TBasePage {
   archived_at: string | null | undefined;
   workspace: string | undefined;
   project_ids?: string[] | undefined;
-  team: string | null | undefined;
   created_by: string | undefined;
   updated_by: string | undefined;
   created_at: Date | undefined;
@@ -107,11 +106,16 @@ export class BasePage implements TBasePage {
   disposers: Array<() => void> = [];
   // root store
   rootStore: RootStore;
+  // sub-store
+  editor: PageEditorInstance;
+
   constructor(
     private store: RootStore,
     page: TPage,
     services: TBasePageServices
   ) {
+    super(store, page, services);
+
     this.id = page?.id || undefined;
     this.name = page?.name;
     this.logo_props = page?.logo_props || undefined;
@@ -120,7 +124,6 @@ export class BasePage implements TBasePage {
     this.label_ids = page?.label_ids || undefined;
     this.owned_by = page?.owned_by || undefined;
     this.access = page?.access || EPageAccess.PUBLIC;
-    this.anchor = page?.anchor || undefined;
     this.is_favorite = page?.is_favorite || false;
     this.is_locked = page?.is_locked || false;
     this.is_folder = page?.is_folder || false;
@@ -128,7 +131,6 @@ export class BasePage implements TBasePage {
     this.archived_at = page?.archived_at || undefined;
     this.workspace = page?.workspace || undefined;
     this.project_ids = page?.project_ids || undefined;
-    this.team = page?.team || undefined;
     this.created_by = page?.created_by || undefined;
     this.updated_by = page?.updated_by || undefined;
     this.created_at = page?.created_at || undefined;
@@ -139,7 +141,6 @@ export class BasePage implements TBasePage {
     makeObservable(this, {
       // loaders
       isSubmitting: observable.ref,
-      editorRef: observable.ref,
       // page properties
       id: observable.ref,
       name: observable.ref,
@@ -149,7 +150,6 @@ export class BasePage implements TBasePage {
       label_ids: observable,
       owned_by: observable.ref,
       access: observable.ref,
-      anchor: observable.ref,
       is_favorite: observable.ref,
       is_locked: observable.ref,
       is_folder: observable.ref,
@@ -187,11 +187,12 @@ export class BasePage implements TBasePage {
       duplicate: action,
       moveToFolder: action,
       mutateProperties: action,
-      setEditorRef: action,
     });
 
-    this.rootStore = store;
+    // init
     this.services = services;
+    this.rootStore = store;
+    this.editor = new PageEditorInstance();
 
     const titleDisposer = reaction(
       () => this.name,
@@ -227,7 +228,6 @@ export class BasePage implements TBasePage {
       label_ids: this.label_ids,
       owned_by: this.owned_by,
       access: this.access,
-      anchor: this.anchor,
       logo_props: this.logo_props,
       is_favorite: this.is_favorite,
       is_locked: this.is_locked,
@@ -236,12 +236,12 @@ export class BasePage implements TBasePage {
       archived_at: this.archived_at,
       workspace: this.workspace,
       project_ids: this.project_ids,
-      team: this.team,
       created_by: this.created_by,
       updated_by: this.updated_by,
       created_at: this.created_at,
       updated_at: this.updated_at,
       attachments: this.attachments,
+      ...this.asJSONExtended,
     };
   }
 
@@ -612,12 +612,6 @@ export class BasePage implements TBasePage {
       const value = data[key as keyof TPage];
       if (key === "name" && !shouldUpdateName) return;
       set(this, key, value);
-    });
-  };
-
-  setEditorRef = (editorRef: EditorRefApi | null) => {
-    runInAction(() => {
-      this.editorRef = editorRef;
     });
   };
 }

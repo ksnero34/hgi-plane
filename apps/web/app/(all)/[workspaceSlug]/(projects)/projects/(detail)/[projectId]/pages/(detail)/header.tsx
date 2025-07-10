@@ -2,20 +2,21 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { FileText, Folder } from "lucide-react";
+import { EProjectFeatureKey } from "@plane/constants";
 // types
 import { ICustomSearchSelectOption } from "@plane/types";
 // ui
-import { Breadcrumbs, Header, CustomSearchSelect } from "@plane/ui";
+import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect } from "@plane/ui";
 // components
-import { BreadcrumbLink, PageAccessIcon, SwitcherLabel } from "@/components/common";
+import { getPageName } from "@plane/utils";
+import { PageAccessIcon, SwitcherIcon, SwitcherLabel, BreadcrumbLink } from "@/components/common";
 import { PageHeaderActions } from "@/components/pages/header/actions";
 // helpers
-import { getPageName } from "@/helpers/page.helper";
 // hooks
 import { useProject } from "@/hooks/store";
 // plane web components
 import { useAppRouter } from "@/hooks/use-app-router";
-import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { PageDetailsHeaderExtraActions } from "@/plane-web/components/pages";
 // plane web hooks
 import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";
@@ -31,8 +32,8 @@ export const PageDetailsHeader = observer(() => {
   const router = useAppRouter();
   const { workspaceSlug, pageId, projectId } = useParams();
   // store hooks
-  const { currentProjectDetails, loader } = useProject();
-  const { getPageById, getCurrentProjectFilteredPageIdsByTab } = usePageStore(storeType);
+  const { loader, currentProjectDetails } = useProject();
+  const { getPageById, getCurrentProjectPageIds, getCurrentProjectFilteredPageIdsByTab } = usePageStore(storeType);
   const page = usePage({
     pageId: pageId?.toString() ?? "",
     storeType,
@@ -99,7 +100,31 @@ export const PageDetailsHeader = observer(() => {
 
   // 현재 페이지가 위치한 폴더의 페이지들만 가져오기
   const currentFolderId = page?.parent || null;
-  const switcherOptions = getFolderLevelOptions(currentFolderId);
+  const folderLevelOptions = getFolderLevelOptions(currentFolderId);
+  
+  // derived values
+  const projectPageIds = getCurrentProjectPageIds(projectId?.toString());
+
+  const switcherOptions = folderLevelOptions.length > 0 ? folderLevelOptions : projectPageIds
+    .map((id) => {
+      const _page = id === pageId ? page : getPageById(id);
+      if (!_page) return;
+      return {
+        value: _page.id,
+        query: getPageName(_page.name) || "Untitled",
+        content: (
+          <div className="flex gap-2 items-center justify-between">
+            <SwitcherLabel 
+              logo_props={_page.logo_props} 
+              name={getPageName(_page.name) || "Untitled"} 
+              LabelIcon={_page.is_folder ? Folder : FileText} 
+            />
+            {!_page.is_folder && <PageAccessIcon {..._page} />}
+          </div>
+        ),
+      };
+    })
+    .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
 
   if (!page) return null;
 
@@ -108,21 +133,10 @@ export const PageDetailsHeader = observer(() => {
       <Header.LeftItem>
         <div>
           <Breadcrumbs isLoading={loader === "init-loader"}>
-            <Breadcrumbs.BreadcrumbItem
-              type="text"
-              link={
-                <span>
-                  <span className="hidden md:block">
-                    <ProjectBreadcrumb />
-                  </span>
-                  <span className="md:hidden">
-                    <BreadcrumbLink
-                      href={`/${workspaceSlug}/projects/${currentProjectDetails?.id}/issues`}
-                      label={"..."}
-                    />
-                  </span>
-                </span>
-              }
+            <CommonProjectBreadcrumbs
+              workspaceSlug={workspaceSlug?.toString()}
+              projectId={projectId?.toString()}
+              featureKey={EProjectFeatureKey.PAGES}
             />
 
             <Breadcrumbs.BreadcrumbItem
@@ -153,7 +167,7 @@ export const PageDetailsHeader = observer(() => {
                       label={
                         <SwitcherLabel
                           logo_props={folder.logo_props}
-                          name={folder.name || "Untitled"}
+                          name={getPageName(folder.name) || "Untitled"}
                           LabelIcon={Folder}
                         />
                       }
@@ -173,19 +187,11 @@ export const PageDetailsHeader = observer(() => {
               );
             })}
 
-            <Breadcrumbs.BreadcrumbItem
-              type="component"
+            <Breadcrumbs.Item
               component={
-                <CustomSearchSelect
-                  value={pageId}
-                  options={switcherOptions}
-                  label={
-                    <SwitcherLabel
-                      logo_props={page.logo_props}
-                      name={getPageName(page.name)}
-                      LabelIcon={page.is_folder ? Folder : FileText}
-                    />
-                  }
+                <BreadcrumbNavigationSearchDropdown
+                  selectedItem={pageId?.toString() ?? ""}
+                  navigationItems={switcherOptions}
                   onChange={(value: string) => {
                     const selectedPage = getPageById(value);
                     if (selectedPage?.is_folder) {
@@ -196,6 +202,13 @@ export const PageDetailsHeader = observer(() => {
                       router.push(`/${workspaceSlug}/projects/${projectId}/pages/${value}`);
                     }
                   }}
+                  title={getPageName(page?.name) || "Untitled"}
+                  icon={
+                    <Breadcrumbs.Icon>
+                      <SwitcherIcon logo_props={page.logo_props} LabelIcon={page.is_folder ? Folder : FileText} size={16} />
+                    </Breadcrumbs.Icon>
+                  }
+                  isLast
                 />
               }
             />
@@ -203,7 +216,7 @@ export const PageDetailsHeader = observer(() => {
         </div>
       </Header.LeftItem>
       <Header.RightItem>
-        <PageDetailsHeaderExtraActions page={page} />
+        <PageDetailsHeaderExtraActions page={page} storeType={storeType} />
         <PageHeaderActions page={page} storeType={storeType} />
       </Header.RightItem>
     </Header>

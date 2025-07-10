@@ -2,16 +2,16 @@ import size from "lodash/size";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
-import { EIssueFilterType, EIssuesStoreType, EUserPermissionsLevel, EUserProjectRoles } from "@plane/constants";
+import { EIssueFilterType, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IIssueFilterOptions } from "@plane/types";
+import { EIssuesStoreType, EUserProjectRoles, IIssueFilterOptions } from "@plane/types";
 // components
 import { DetailedEmptyState } from "@/components/empty-state";
 // hooks
 import { useIssues, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { calculateFilterValue } from "@plane/utils";
 
 export const ProjectArchivedEmptyState: React.FC = observer(() => {
   // router

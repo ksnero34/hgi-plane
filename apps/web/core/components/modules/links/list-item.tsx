@@ -1,13 +1,13 @@
 import { observer } from "mobx-react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 // plane types
+import { MODULE_TRACKER_ELEMENTS } from "@plane/constants";
 import { ILinkDetails } from "@plane/types";
 // plane ui
 import { setToast, TOAST_TYPE, Tooltip } from "@plane/ui";
-import { getIconForLink } from "@plane/utils";
+import { getIconForLink, copyTextToClipboard, calculateTimeAgo } from "@plane/utils";
 // helpers
-import { calculateTimeAgo } from "@/helpers/date-time.helper";
-import { copyTextToClipboard } from "@/helpers/string.helper";
+//
 // hooks
 import { useMember } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -59,6 +59,7 @@ export const ModulesLinksListItem: React.FC<Props> = observer((props) => {
             <button
               type="button"
               className="grid place-items-center p-1 hover:bg-custom-background-80"
+              data-ph-element={MODULE_TRACKER_ELEMENTS.LIST_ITEM}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -78,6 +79,7 @@ export const ModulesLinksListItem: React.FC<Props> = observer((props) => {
             <button
               type="button"
               className="grid place-items-center p-1 hover:bg-custom-background-80"
+              data-ph-element={MODULE_TRACKER_ELEMENTS.LIST_ITEM}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

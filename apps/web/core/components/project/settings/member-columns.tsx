@@ -4,8 +4,8 @@ import { Controller, useForm } from "react-hook-form";
 import { CircleMinus } from "lucide-react";
 import { Disclosure } from "@headlessui/react";
 // plane imports
-import { ROLE, EUserPermissions, EUserProjectRoles, TUserPermissions } from "@plane/constants";
-import { IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
+import { ROLE, EUserPermissions, MEMBER_TRACKER_ELEMENTS, TUserPermissions } from "@plane/constants";
+import { EUserProjectRoles, IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
 import { CustomMenu, CustomSelect, TOAST_TYPE, setToast } from "@plane/ui";
 import { getFileURL } from "@plane/utils";
 // hooks
@@ -73,6 +73,7 @@ export const NameColumn: React.FC<NameProps> = (props) => {
                 <CustomMenu.MenuItem>
                   <div
                     className="flex items-center gap-x-1 cursor-pointer text-red-600 font-medium"
+                    data-ph-element={MEMBER_TRACKER_ELEMENTS.PROJECT_MEMBER_TABLE_CONTEXT_MENU}
                     onClick={() => setRemoveMemberModal(rowData)}
                   >
                     <CircleMinus className="flex-shrink-0 size-3.5" />

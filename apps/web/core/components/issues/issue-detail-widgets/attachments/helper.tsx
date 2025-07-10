@@ -1,11 +1,12 @@
 "use client";
 import { useMemo } from "react";
-import { EIssueServiceType } from "@plane/constants";
-import { TIssueServiceType } from "@plane/types";
+import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
+import { EIssueServiceType, TIssueServiceType } from "@plane/types";
 // plane ui
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 // hooks
-import { useEventTracker, useIssueDetail } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useIssueDetail } from "@/hooks/store";
 // types
 import { TAttachmentUploadStatus } from "@/store/issue/issue-details/attachment.store";
 
@@ -32,7 +33,6 @@ export const useAttachmentOperations = (
   const {
     attachment: { createAttachment, removeAttachment, getAttachmentsUploadStatusByIssueId },
   } = useIssueDetail(issueServiceType);
-  const { captureIssueEvent } = useEventTracker();
 
   const attachmentOperations: TAttachmentOperations = useMemo(
     () => ({
@@ -41,25 +41,21 @@ export const useAttachmentOperations = (
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
           const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, file);
 
-          const res = await attachmentUploadPromise;
+          await attachmentUploadPromise;
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.add,
+            payload: { id: issueId },
+          });
           setToast({
             type: TOAST_TYPE.SUCCESS,
             title: "파일 업로드 성공",
             message: `${file.name} 파일이 성공적으로 업로드되었습니다.`
           });
-          
-          captureIssueEvent({
-            eventName: "Issue attachment added",
-            payload: { id: issueId, state: "SUCCESS", element: "Issue detail page" },
-            updates: {
-              changed_property: "attachment",
-              change_details: res.id,
-            },
-          });
-        } catch (error: any) {
-          captureIssueEvent({
-            eventName: "Issue attachment added",
-            payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
+        } catch (error) {
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.add,
+            payload: { id: issueId },
+            error: error as Error,
           });
 
           // 에러 객체에 서버 응답 추가
@@ -78,22 +74,15 @@ export const useAttachmentOperations = (
             type: TOAST_TYPE.SUCCESS,
             title: "첨부파일 제거",
           });
-          captureIssueEvent({
-            eventName: "Issue attachment deleted",
-            payload: { id: issueId, state: "SUCCESS", element: "Issue detail page" },
-            updates: {
-              changed_property: "attachment",
-              change_details: "",
-            },
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.remove,
+            payload: { id: issueId },
           });
         } catch (error) {
-          captureIssueEvent({
-            eventName: "Issue attachment deleted",
-            payload: { id: issueId, state: "FAILED", element: "Issue detail page" },
-            updates: {
-              changed_property: "attachment",
-              change_details: "",
-            },
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.attachment.remove,
+            payload: { id: issueId },
+            error: error as Error,
           });
           setToast({
             message: "첨부파일을 제거할 수 없습니다.",
@@ -103,7 +92,7 @@ export const useAttachmentOperations = (
         }
       },
     }),
-    [captureIssueEvent, workspaceSlug, projectId, issueId, createAttachment, removeAttachment]
+    [workspaceSlug, projectId, issueId, createAttachment, removeAttachment]
   );
   const attachmentsUploadStatus = getAttachmentsUploadStatusByIssueId(issueId);
 

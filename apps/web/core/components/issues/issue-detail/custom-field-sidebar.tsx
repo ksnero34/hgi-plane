@@ -14,8 +14,8 @@ import { TCustomField } from "@plane/types";
 import { useIssueDetail, useCustomField } from "@/hooks/store";
 import type { TIssueOperations } from "./root";
 // helpers
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
-import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@plane/utils";
 
 type Props = {
   workspaceSlug: string;

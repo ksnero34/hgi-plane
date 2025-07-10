@@ -1,37 +1,29 @@
 "use client";
 
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
-import {
-  ArchiveIcon,
-  ArchiveRestoreIcon,
-  ArrowRight,
-  ChevronRight,
-  EllipsisIcon,
-  LinkIcon,
-  Trash2,
-} from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 // Plane Imports
-import { CYCLE_STATUS, CYCLE_UPDATED, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import {
+  CYCLE_TRACKER_EVENTS,
+  CYCLE_STATUS,
+  EUserPermissions,
+  EUserPermissionsLevel,
+  CYCLE_TRACKER_ELEMENTS,
+} from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { ICycle } from "@plane/types";
-import { CustomMenu, setToast, TOAST_TYPE } from "@plane/ui";
-import { copyUrlToClipboard } from "@plane/utils";
+import { setToast, TOAST_TYPE } from "@plane/ui";
+import { getDate, renderFormattedPayloadDate } from "@plane/utils";
 // components
 import { DateRangeDropdown } from "@/components/dropdowns";
-// helpers
-import { renderFormattedPayloadDate, getDate } from "@/helpers/date-time.helper";
 // hooks
-import { useCycle, useEventTracker, useUserPermissions } from "@/hooks/store";
-import { useAppRouter } from "@/hooks/use-app-router";
-// plane web constants
-// services
+import { captureElementAndEvent } from "@/helpers/event-tracker.helper";
+import { useCycle, useUserPermissions } from "@/hooks/store";
 import { useTimeZoneConverter } from "@/hooks/use-timezone-converter";
+// services
 import { CycleService } from "@/services/cycle.service";
-// local components
-import { ArchiveCycleModal } from "../archived-cycles";
-import { CycleDeleteModal } from "../delete-modal";
 
 type Props = {
   workspaceSlug: string;
@@ -50,15 +42,9 @@ const cycleService = new CycleService();
 
 export const CycleSidebarHeader: FC<Props> = observer((props) => {
   const { workspaceSlug, projectId, cycleDetails, handleClose, isArchived = false } = props;
-  // router
-  const router = useAppRouter();
-  // states
-  const [archiveCycleModal, setArchiveCycleModal] = useState(false);
-  const [cycleDeleteModal, setCycleDeleteModal] = useState(false);
   // hooks
   const { allowPermissions } = useUserPermissions();
-  const { updateCycleDetails, restoreCycle } = useCycle();
-  const { setTrackElement, captureCycleEvent } = useEventTracker();
+  const { updateCycleDetails } = useCycle();
   const { t } = useTranslation();
   const { renderFormattedDateInUserTimezone, getProjectUTCOffset } = useTimeZoneConverter(projectId);
 
@@ -75,29 +61,36 @@ export const CycleSidebarHeader: FC<Props> = observer((props) => {
 
   const currentCycle = CYCLE_STATUS.find((status) => status.value === cycleStatus);
 
-  const submitChanges = async (data: Partial<ICycle>, changedProperty: string) => {
+  const submitChanges = async (data: Partial<ICycle>) => {
     if (!workspaceSlug || !projectId || !cycleDetails.id) return;
 
     await updateCycleDetails(workspaceSlug.toString(), projectId.toString(), cycleDetails.id.toString(), data)
-      .then((res) => {
-        captureCycleEvent({
-          eventName: CYCLE_UPDATED,
-          payload: {
-            ...res,
-            changed_properties: [changedProperty],
-            element: "Right side-peek",
+      .then(() => {
+        captureElementAndEvent({
+          element: {
+            elementName: CYCLE_TRACKER_ELEMENTS.RIGHT_SIDEBAR,
+          },
+          event: {
+            eventName: CYCLE_TRACKER_EVENTS.update,
             state: "SUCCESS",
+            payload: {
+              id: cycleDetails.id,
+            },
           },
         });
       })
 
       .catch(() => {
-        captureCycleEvent({
-          eventName: CYCLE_UPDATED,
-          payload: {
-            ...data,
-            element: "Right side-peek",
-            state: "FAILED",
+        captureElementAndEvent({
+          element: {
+            elementName: CYCLE_TRACKER_ELEMENTS.RIGHT_SIDEBAR,
+          },
+          event: {
+            eventName: CYCLE_TRACKER_EVENTS.update,
+            state: "ERROR",
+            payload: {
+              id: cycleDetails.id,
+            },
           },
         });
       });
@@ -136,7 +129,7 @@ export const CycleSidebarHeader: FC<Props> = observer((props) => {
       isDateValid = true;
     }
     if (isDateValid) {
-      submitChanges(payload, "date_range");
+      submitChanges(payload);
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: t("project_cycles.action.update.success.title"),
@@ -159,24 +152,6 @@ export const CycleSidebarHeader: FC<Props> = observer((props) => {
 
   return (
     <>
-      {cycleDetails && workspaceSlug && projectId && (
-        <>
-          <ArchiveCycleModal
-            workspaceSlug={workspaceSlug.toString()}
-            projectId={projectId.toString()}
-            cycleId={cycleDetails.id}
-            isOpen={archiveCycleModal}
-            handleClose={() => setArchiveCycleModal(false)}
-          />
-          <CycleDeleteModal
-            cycle={cycleDetails}
-            isOpen={cycleDeleteModal}
-            handleClose={() => setCycleDeleteModal(false)}
-            workspaceSlug={workspaceSlug.toString()}
-            projectId={projectId.toString()}
-          />
-        </>
-      )}
       <div className="sticky z-10 top-0 pt-2 flex items-center justify-between bg-custom-sidebar-background-100">
         <div className="flex items-center justify-center size-5">
           <button
@@ -239,6 +214,7 @@ export const CycleSidebarHeader: FC<Props> = observer((props) => {
                         {renderFormattedDateInUserTimezone(cycleDetails.end_date ?? "")}
                       </span>
                     }
+                    mergeDates
                     showTooltip={!!cycleDetails.start_date && !!cycleDetails.end_date} // show tooltip only if both start and end date are present
                     required={cycleDetails.status !== "draft"}
                     disabled={!isEditingAllowed || isArchived || isCompleted}

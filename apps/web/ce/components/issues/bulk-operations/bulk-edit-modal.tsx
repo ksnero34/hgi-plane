@@ -8,7 +8,7 @@ import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings, AlertTrian
 import { useProject, useProjectState, useMember, useUser, useUserPermissions } from "@/hooks/store";
 import { DateDropdown, MemberDropdown, CustomFieldDropdown, StateDropdown, PriorityDropdown } from "@/components/dropdowns";
 import { ParentIssuesListModal } from "@/components/issues";
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 

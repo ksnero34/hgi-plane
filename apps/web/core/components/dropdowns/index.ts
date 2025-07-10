@@ -4,6 +4,7 @@ export * from "./custom-field";
 export * from "./date-range";
 export * from "./date";
 export * from "./estimate";
+export * from "./merged-date";
 export * from "./module";
 export * from "./priority";
 export * from "./project";

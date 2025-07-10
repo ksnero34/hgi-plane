@@ -7,16 +7,14 @@ import { useEffect, useState } from "react";
 // ui
 import { useTranslation } from "@plane/i18n";
 import { Loader, Card } from "@plane/ui";
-// types
 import { TCustomField } from "@plane/types";
+import { calculateTimeAgo, getFileURL } from "@plane/utils";
 // components
 import { ActivityMessage, IssueLink } from "@/components/core";
 import { ProfileEmptyState } from "@/components/ui";
 // constants
 import { USER_PROFILE_ACTIVITY } from "@/constants/fetch-keys";
 // helpers
-import { calculateTimeAgo } from "@/helpers/date-time.helper";
-import { getFileURL } from "@/helpers/file.helper";
 // hooks
 import { useUser } from "@/hooks/store";
 // assets

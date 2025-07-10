@@ -6,11 +6,11 @@ import { useTranslation } from "@plane/i18n";
 import { TCycleFilters, TCycleDisplayFilters, TCustomField } from "@plane/types";
 // hooks
 import { Tag } from "@plane/ui";
+import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
 import { AppliedDateFilters, AppliedStatusFilters } from "@/components/cycles";
 import { AppliedCustomFieldFilters, AppliedMembersFilters } from "@/components/issues";
-import { replaceUnderscoreIfSnakeCase } from "@/helpers/string.helper";
 import { useUserPermissions } from "@/hooks/store";
-import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@/helpers/custom-field.helper";
+import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
 
 // components
 // helpers

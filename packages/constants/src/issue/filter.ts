@@ -1,8 +1,7 @@
-import { ILayoutDisplayFiltersOptions, TIssueActivityComment } from "@plane/types";
+import { EIssuesStoreType, ILayoutDisplayFiltersOptions, TIssueActivityComment } from "@plane/types";
 import {
   TIssueFilterPriorityObject,
   ISSUE_DISPLAY_PROPERTIES_KEYS,
-  EIssuesStoreType,
   SUB_ISSUES_DISPLAY_PROPERTIES_KEYS,
 } from "./common";
 
@@ -211,7 +210,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       ],
       display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
       display_filters: {
-        group_by: ["state_detail.group", "cycle", "module", "priority", "project", "labels"],
+        group_by: ["state_detail.group", "cycle", "module", "priority", "project", "labels", "assignees", "created_by", null],
         order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority"],
         type: [null, "active", "backlog"],
       },

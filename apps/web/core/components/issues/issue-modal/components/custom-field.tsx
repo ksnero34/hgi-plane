@@ -10,7 +10,7 @@ import { TIssue, TCustomField } from "@plane/types";
 // ui
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // services
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
 import { useCustomField } from "@/hooks/store";
 
 type Props = {

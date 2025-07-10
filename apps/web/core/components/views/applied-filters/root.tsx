@@ -1,18 +1,17 @@
 import React from "react";
 import { observer } from "mobx-react";
 import { X } from "lucide-react";
-import { EViewAccess } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { TViewFilterProps, TCustomField } from "@plane/types";
+import { EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
 // components
 import { Tag } from "@plane/ui";
+import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
 import { AppliedDateFilters, AppliedMembersFilters } from "@/components/common/applied-filters";
 import { AppliedCustomFieldFilters } from "@/components/issues";
 // constants
 // helpers
-import { replaceUnderscoreIfSnakeCase } from "@/helpers/string.helper";
 import { AppliedAccessFilters } from "./access";
-import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@/helpers/custom-field.helper";
+import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
 // types
 
 type Props = {

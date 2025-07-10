@@ -1,12 +1,10 @@
 import { observer } from "mobx-react";
-import { EStartOfTheWeek } from "@plane/constants";
-import { TGroupedIssues, TIssue, TIssueMap, TPaginationData } from "@plane/types";
-import { cn } from "@plane/utils";
+import { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate, ICalendarWeek } from "@plane/types";
+import { cn, getOrderedDays, renderFormattedPayloadDate } from "@plane/utils";
 // components
 import { CalendarDayTile } from "@/components/issues";
 // helpers
-import { getOrderedDays } from "@/helpers/calendar.helper";
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
+//
 // hooks
 import { useUserProfile } from "@/hooks/store";
 // types
@@ -16,7 +14,6 @@ import { IModuleIssuesFilter } from "@/store/issue/module";
 import { IProjectIssuesFilter } from "@/store/issue/project";
 import { IProjectViewIssuesFilter } from "@/store/issue/project-views";
 import { TRenderQuickActions } from "../list/list-view-types";
-import { ICalendarDate, ICalendarWeek } from "./types";
 // hooks
 import { useCalendarView } from "@/hooks/store/use-calendar-view";
 
@@ -76,8 +73,8 @@ export const CalendarWeekDays: React.FC<Props> = observer((props) => {
   const { data } = useUserProfile();
   const startOfWeek = data?.start_of_the_week;
 
-  const calendarLayout = issuesFilterStore.issueFilters?.displayFilters?.calendar?.layout ?? "month";
-  const showWeekends = issuesFilterStore.issueFilters?.displayFilters?.calendar?.show_weekends ?? false;
+  const calendarLayout = issuesFilterStore?.issueFilters?.displayFilters?.calendar?.layout ?? "month";
+  const showWeekends = issuesFilterStore?.issueFilters?.displayFilters?.calendar?.show_weekends ?? false;
   
   // 캘린더 뷰 훅 사용
   const issueCalendarView = useCalendarView();

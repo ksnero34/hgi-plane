@@ -12,6 +12,8 @@ import {
   DocumentCollaborativeEvents,
   TDocumentEventsServer,
 } from "@plane/editor/lib";
+// editor types
+import { TUserDetails } from "@plane/editor";
 // types
 import { type HocusPocusServerContext } from "@/core/types/common.js";
 
@@ -168,18 +170,23 @@ export const getHocusPocusServer = async () => {
     onAuthenticate: async ({
       requestHeaders,
       context,
+      // user id used as token for authentication
       token,
     }) => {
       let cookie: string | undefined = undefined;
       let userId: string | undefined = undefined;
 
+      // Extract cookie (fallback to request headers) and userId from token (for scenarios where
+      // the cookies are not passed in the request headers)
       try {
         const parsedToken = JSON.parse(token) as TUserDetails;
         userId = parsedToken.id;
         cookie = parsedToken.cookie;
       } catch (error) {
+        // If token parsing fails, fallback to request headers
         console.error("Token parsing failed, using request headers:", error);
       } finally {
+        // If cookie is still not found, fallback to request headers
         if (!cookie) {
           cookie = requestHeaders.cookie?.toString();
         }
@@ -189,6 +196,7 @@ export const getHocusPocusServer = async () => {
         throw new Error("Credentials not provided");
       }
 
+      // set cookie in context, so it can be used throughout the ws connection
       (context as HocusPocusServerContext).cookie = cookie;
 
       try {
@@ -201,6 +209,7 @@ export const getHocusPocusServer = async () => {
       }
     },
     async onStateless({ payload, document }) {
+      // broadcast the client event (derived from the server event) to all the clients so that they can update their state
       const response =
         DocumentCollaborativeEvents[payload as TDocumentEventsServer].client;
       if (response) {

@@ -2,18 +2,22 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { useParams, usePathname } from "next/navigation";
-import { EIssuesStoreType, ISSUE_CREATED, ISSUE_UPDATED } from "@plane/constants";
+import { useParams } from "next/navigation";
+import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
+// Plane imports
 import { useTranslation } from "@plane/i18n";
-// types
-import type { TBaseIssue, TIssue } from "@plane/types";
-// ui
+import { EIssuesStoreType, TBaseIssue, TIssue } from "@plane/types";
 import { EModalPosition, EModalWidth, ModalCore, TOAST_TYPE, setToast } from "@plane/ui";
+// components
 import { CreateIssueToastActionItems, IssuesModalProps } from "@/components/issues";
-// constants
 // hooks
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
-import { useEventTracker, useCycle, useIssues, useModule, useIssueDetail, useUser, useProject } from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useModule } from "@/hooks/store/use-module";
+import { useProject } from "@/hooks/store/use-project";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // services
@@ -57,26 +61,21 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   // store hooks
   const { t } = useTranslation();
-  const { captureIssueEvent } = useEventTracker();
   const { workspaceSlug, projectId: routerProjectId, cycleId, moduleId, workItem } = useParams();
-  const { projectsWithCreatePermissions } = useUser();
   const { fetchCycleDetails } = useCycle();
   const { fetchModuleDetails } = useModule();
   const { issues } = useIssues(storeType);
   const { issues: projectIssues } = useIssues(EIssuesStoreType.PROJECT);
   const { issues: draftIssues } = useIssues(EIssuesStoreType.WORKSPACE_DRAFT);
   const { fetchIssue } = useIssueDetail();
-  const { handleCreateUpdatePropertyValues } = useIssueModal();
+  const { allowedProjectIds, handleCreateUpdatePropertyValues } = useIssueModal();
   const { getProjectByIdentifier } = useProject();
-  // pathname
-  const pathname = usePathname();
   // current store details
   const { createIssue, updateIssue } = useIssuesActions(storeType);
   // derived values
   const routerProjectIdentifier = workItem?.toString().split("-")[0];
   const projectIdFromRouter = getProjectByIdentifier(routerProjectIdentifier)?.id;
   const projectId = data?.project_id ?? routerProjectId?.toString() ?? projectIdFromRouter;
-  const projectIdsWithCreatePermissions = Object.keys(projectsWithCreatePermissions ?? {});
 
   const fetchIssueDetail = async (issueId: string | undefined) => {
     setDescription(undefined);
@@ -114,10 +113,9 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
       return;
     }
 
-    // if data is not present, set active project to the project
-    // in the url. This has the least priority.
-    if (projectIdsWithCreatePermissions && projectIdsWithCreatePermissions.length > 0 && !activeProjectId)
-      setActiveProjectId(projectId?.toString() ?? projectIdsWithCreatePermissions?.[0]);
+    // if data is not present, set active project to the first project in the allowedProjectIds array
+    if (allowedProjectIds && allowedProjectIds.length > 0 && !activeProjectId)
+      setActiveProjectId(projectId?.toString() ?? allowedProjectIds?.[0]);
 
     // clearing up the description state when we leave the component
     return () => setDescription(undefined);
@@ -238,10 +236,9 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
           />
         ),
       });
-      captureIssueEvent({
-        eventName: ISSUE_CREATED,
-        payload: { ...response, state: "SUCCESS" },
-        path: pathname,
+      captureSuccess({
+        eventName: WORK_ITEM_TRACKER_EVENTS.create,
+        payload: { id: response.id },
       });
       if (!createMore) handleClose();
       if (createMore && issueTitleRef) issueTitleRef?.current?.focus();
@@ -254,10 +251,10 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
         title: t("error"),
         message: error?.error ?? t(is_draft_issue ? "draft_creation_failed" : "issue_creation_failed"),
       });
-      captureIssueEvent({
-        eventName: ISSUE_CREATED,
-        payload: { ...payload, state: "FAILED" },
-        path: pathname,
+      captureError({
+        eventName: WORK_ITEM_TRACKER_EVENTS.create,
+        payload: { id: payload.id },
+        error: error as Error,
       });
       throw error;
     }
@@ -300,10 +297,9 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
         title: t("success"),
         message: t("issue_updated_successfully"),
       });
-      captureIssueEvent({
-        eventName: ISSUE_UPDATED,
-        payload: { ...payload, issueId: data.id, state: "SUCCESS" },
-        path: pathname,
+      captureSuccess({
+        eventName: WORK_ITEM_TRACKER_EVENTS.update,
+        payload: { id: data.id },
       });
       handleClose();
     } catch (error: any) {
@@ -313,10 +309,10 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
         title: t("error"),
         message: error?.error ?? t("issue_could_not_be_updated"),
       });
-      captureIssueEvent({
-        eventName: ISSUE_UPDATED,
-        payload: { ...payload, state: "FAILED" },
-        path: pathname,
+      captureError({
+        eventName: WORK_ITEM_TRACKER_EVENTS.update,
+        payload: { id: data.id },
+        error: error as Error,
       });
     }
   };
@@ -332,8 +328,6 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
       if (beforeFormSubmit) await beforeFormSubmit();
       if (!data?.id) response = await handleCreateIssue(payload, is_draft_issue);
       else response = await handleUpdateIssue(payload);
-    } catch (error) {
-      throw error;
     } finally {
       if (response != undefined && onSubmit) await onSubmit(response);
     }
@@ -346,7 +340,7 @@ export const CreateUpdateIssueModalBase: React.FC<IssuesModalProps> = observer((
   const handleDuplicateIssueModal = (value: boolean) => setIsDuplicateModalOpen(value);
 
   // don't open the modal if there are no projects
-  if (!projectIdsWithCreatePermissions || projectIdsWithCreatePermissions.length === 0 || !activeProjectId) return null;
+  if (!allowedProjectIds || allowedProjectIds.length === 0 || !activeProjectId) return null;
 
   const commonIssueModalProps: IssueFormProps = {
     issueTitleRef: issueTitleRef,

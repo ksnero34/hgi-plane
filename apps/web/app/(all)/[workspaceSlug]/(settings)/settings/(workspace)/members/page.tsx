@@ -5,11 +5,17 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search } from "lucide-react";
 // types
-import { MEMBER_INVITED, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import {
+  EUserPermissions,
+  EUserPermissionsLevel,
+  MEMBER_TRACKER_ELEMENTS,
+  MEMBER_TRACKER_EVENTS,
+} from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { IWorkspaceBulkInviteFormData } from "@plane/types";
 // ui
 import { Button, TOAST_TYPE, setToast } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import { NotAuthorizedView } from "@/components/auth-screens";
 import { CountChip } from "@/components/common";
@@ -17,10 +23,9 @@ import { PageHead } from "@/components/core";
 import { SettingsContentWrapper } from "@/components/settings";
 import { WorkspaceMembersList } from "@/components/workspace";
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { getUserRole } from "@/helpers/user.helper";
 // hooks
-import { useEventTracker, useMember, useUserPermissions, useWorkspace } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useMember, useUserPermissions, useWorkspace } from "@/hooks/store";
 // plane web components
 import { BillingActionsButton } from "@/plane-web/components/workspace/billing";
 import { SendWorkspaceInvitationModal } from "@/plane-web/components/workspace/members";
@@ -33,7 +38,6 @@ const WorkspaceMembersSettingsPage = observer(() => {
   const { workspaceSlug } = useParams();
   // store hooks
   const { workspaceUserInfo, allowPermissions } = useUserPermissions();
-  const { captureEvent } = useEventTracker();
   const {
     workspace: { workspaceMemberIds, inviteMembersToWorkspace },
   } = useMember();
@@ -53,16 +57,11 @@ const WorkspaceMembersSettingsPage = observer(() => {
     return inviteMembersToWorkspace(workspaceSlug.toString(), data, autoAccept)
       .then(() => {
         setInviteModal(false);
-        captureEvent(MEMBER_INVITED, {
-          emails: [
-            ...data.emails.map((email) => ({
-              email: email.email,
-              role: getUserRole(email.role as unknown as EUserPermissions),
-            })),
-          ],
-          project_id: undefined,
-          state: "SUCCESS",
-          element: "Workspace settings member page",
+        captureSuccess({
+          eventName: MEMBER_TRACKER_EVENTS.invite,
+          payload: {
+            emails: [...data.emails.map((email) => email.email)],
+          },
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
@@ -71,16 +70,12 @@ const WorkspaceMembersSettingsPage = observer(() => {
         });
       })
       .catch((err) => {
-        captureEvent(MEMBER_INVITED, {
-          emails: [
-            ...data.emails.map((email) => ({
-              email: email.email,
-              role: getUserRole(email.role as unknown as EUserPermissions),
-            })),
-          ],
-          project_id: undefined,
-          state: "FAILED",
-          element: "Workspace settings member page",
+        captureError({
+          eventName: MEMBER_TRACKER_EVENTS.invite,
+          payload: {
+            emails: [...data.emails.map((email) => email.email)],
+          },
+          error: err,
         });
         setToast({
           type: TOAST_TYPE.ERROR,
@@ -130,7 +125,12 @@ const WorkspaceMembersSettingsPage = observer(() => {
             />
           </div>
           {canPerformWorkspaceAdminActions && (
-            <Button variant="primary" size="sm" onClick={() => setInviteModal(true)}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setInviteModal(true)}
+              data-ph-element={MEMBER_TRACKER_ELEMENTS.HEADER_ADD_BUTTON}
+            >
               {t("workspace_settings.settings.members.add_member")}
             </Button>
           )}

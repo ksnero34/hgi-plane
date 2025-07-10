@@ -6,21 +6,31 @@ import { Controller, useForm } from "react-hook-form";
 import { Layers } from "lucide-react";
 import { useParams } from "next/navigation";
 // plane constants
-import { EIssueLayoutTypes, ETabIndices, EViewAccess, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
+import { EIssueLayoutTypes, ETabIndices, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
-import { IProjectView, IIssueFilterOptions, IIssueDisplayProperties, IIssueDisplayFilterOptions, TCustomField } from "@plane/types";
+import {
+  EViewAccess,
+  IIssueDisplayFilterOptions,
+  IIssueDisplayProperties,
+  IIssueFilterOptions,
+  IProjectView,
+  TCustomField,
+} from "@plane/types";
 // ui
 import { Button, EmojiIconPicker, EmojiIconPickerTypes, Input, TextArea } from "@plane/ui";
+import {
+  convertHexEmojiToDecimal,
+  getComputedDisplayFilters,
+  getComputedDisplayProperties,
+  getTabIndex,
+} from "@plane/utils";
 // components
 import { Logo } from "@/components/common";
 import { AppliedFiltersList, DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
 // helpers
-import { convertHexEmojiToDecimal } from "@/helpers/emoji.helper";
-import { getComputedDisplayFilters, getComputedDisplayProperties } from "@/helpers/issue.helper";
-import { getTabIndex } from "@/helpers/tab-indices.helper";
-import { calculateFilterValue, calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { calculateFilterValue, calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useLabel, useMember, useProject, useProjectState, useCustomField } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";

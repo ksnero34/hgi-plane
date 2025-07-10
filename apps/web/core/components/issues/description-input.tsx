@@ -8,14 +8,13 @@ import { Controller, useForm } from "react-hook-form";
 import { EditorReadOnlyRefApi, EditorRefApi } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { TIssue, TNameDescriptionLoader } from "@plane/types";
-import { EFileAssetType } from "@plane/types/src/enums";
+import { EFileAssetType } from "@plane/types";
 import { Loader } from "@plane/ui";
 // components
-import { RichTextEditor, RichTextReadOnlyEditor } from "@/components/editor";
+import { RichTextEditor } from "@/components/editor";
 import { TIssueOperations } from "@/components/issues/issue-detail";
 // helpers
-import { maskPrivateInformation } from "@/utils/privacy-masking";
-import { getDescriptionPlaceholderI18n } from "@/helpers/issue.helper";
+import { getDescriptionPlaceholderI18n } from "@plane/utils";
 // hooks
 import { useEditorAsset, useWorkspace } from "@/hooks/store";
 // plane web services
@@ -73,9 +72,8 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
 
   const handleDescriptionFormSubmit = useCallback(
     async (formData: Partial<TIssue>) => {
-      const maskedDescription = maskPrivateInformation(formData.description_html ?? "<p></p>");
       await issueOperations.update(workspaceSlug, projectId, issueId, {
-        description_html: maskedDescription,
+        description_html: formData.description_html ?? "<p></p>",
       });
     },
     [workspaceSlug, projectId, issueId, issueOperations]
@@ -124,8 +122,7 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                 dragDropEnabled
                 onChange={(_description: object, description_html: string) => {
                   setIsSubmitting("submitting");
-                  const maskedContent = maskPrivateInformation(description_html);
-                  onChange(maskedContent);
+                  onChange(description_html);
                   debouncedFormSave();
                 }}
                 placeholder={
@@ -159,16 +156,12 @@ export const IssueDescriptionInput: FC<IssueDescriptionInputProps> = observer((p
                     throw new Error("Asset upload failed. Please try again later.");
                   }
                 }}
-                transformContent={(content: string) => {
-                  // 모든 텍스트에 대해 개인정보 마스킹 적용
-                  return maskPrivateInformation(content);
-                }}
                 ref={editorRef}
               />
             ) : (
-              <RichTextReadOnlyEditor
+              <RichTextEditor
                 id={issueId}
-                initialValue={maskPrivateInformation(localIssueDescription.description_html ?? "")}
+                editable={false}
                 containerClassName={containerClassName}
                 workspaceId={workspaceId}
                 workspaceSlug={workspaceSlug}

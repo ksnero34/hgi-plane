@@ -3,7 +3,7 @@
 import { FC, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Info, Lock } from "lucide-react";
-import { NETWORK_CHOICES, PROJECT_UPDATED } from "@plane/constants";
+import { NETWORK_CHOICES, PROJECT_TRACKER_ELEMENTS, PROJECT_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // plane types
 import { IProject, IWorkspace } from "@plane/types";
@@ -19,17 +19,16 @@ import {
   EmojiIconPickerTypes,
   Tooltip,
 } from "@plane/ui";
+import { renderFormattedDate, convertHexEmojiToDecimal, getFileURL } from "@plane/utils";
 // components
 import { Logo } from "@/components/common";
 import { ImagePickerPopover } from "@/components/core";
 import { TimezoneSelect } from "@/components/global";
 import { ProjectNetworkIcon } from "@/components/project";
 // helpers
-import { renderFormattedDate } from "@/helpers/date-time.helper";
-import { convertHexEmojiToDecimal } from "@/helpers/emoji.helper";
-import { getFileURL } from "@/helpers/file.helper";
 // hooks
-import { useEventTracker, useProject } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useProject } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { ProjectService } from "@/services/project";
@@ -48,7 +47,6 @@ export const ProjectDetailsForm: FC<IProjectDetailsForm> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   // store hooks
-  const { captureProjectEvent } = useEventTracker();
   const { updateProject } = useProject();
   const { isMobile } = usePlatformOS();
 
@@ -60,7 +58,7 @@ export const ProjectDetailsForm: FC<IProjectDetailsForm> = (props) => {
     setValue,
     setError,
     reset,
-    formState: { errors, dirtyFields },
+    formState: { errors },
     getValues,
   } = useForm<IProject>({
     defaultValues: {
@@ -94,15 +92,10 @@ export const ProjectDetailsForm: FC<IProjectDetailsForm> = (props) => {
     if (!workspaceSlug || !project) return;
     return updateProject(workspaceSlug.toString(), project.id, payload)
       .then((res) => {
-        const changed_properties = Object.keys(dirtyFields);
-
-        captureProjectEvent({
-          eventName: PROJECT_UPDATED,
+        captureSuccess({
+          eventName: PROJECT_TRACKER_EVENTS.update,
           payload: {
-            ...res,
-            changed_properties: changed_properties,
-            state: "SUCCESS",
-            element: "Project general settings",
+            id: projectId,
           },
         });
         setToast({
@@ -112,9 +105,11 @@ export const ProjectDetailsForm: FC<IProjectDetailsForm> = (props) => {
         });
       })
       .catch((error) => {
-        captureProjectEvent({
-          eventName: PROJECT_UPDATED,
-          payload: { ...payload, state: "FAILED", element: "Project general settings" },
+        captureError({
+          eventName: PROJECT_TRACKER_EVENTS.update,
+          payload: {
+            id: projectId,
+          },
         });
         setToast({
           type: TOAST_TYPE.ERROR,
@@ -399,7 +394,13 @@ export const ProjectDetailsForm: FC<IProjectDetailsForm> = (props) => {
         </div>
         <div className="flex items-center justify-between py-2">
           <>
-            <Button variant="primary" type="submit" loading={isLoading} disabled={!isAdmin}>
+            <Button
+              data-ph-element={PROJECT_TRACKER_ELEMENTS.UPDATE_PROJECT_BUTTON}
+              variant="primary"
+              type="submit"
+              loading={isLoading}
+              disabled={!isAdmin}
+            >
               {isLoading ? `${t("updating")}...` : t("common.update_project")}
             </Button>
             <span className="text-sm italic text-custom-sidebar-text-400">

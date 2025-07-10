@@ -6,22 +6,22 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Controller, useForm } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react";
+import { E_PASSWORD_STRENGTH, ONBOARDING_TRACKER_ELEMENTS, USER_TRACKER_EVENTS } from "@plane/constants";
 // types
-import { USER_DETAILS, E_ONBOARDING_STEP_1, E_ONBOARDING_STEP_2 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { IUser, TUserProfile, TOnboardingSteps } from "@plane/types";
 // ui
 import { Button, Input, Spinner, TOAST_TYPE, setToast } from "@plane/ui";
 // components
+import { getFileURL, getPasswordStrength } from "@plane/utils";
 import { PasswordStrengthMeter } from "@/components/account";
 import { UserImageUploadModal } from "@/components/core";
 import { OnboardingHeader, SwitchAccountDropdown } from "@/components/onboarding";
 // constants
 // helpers
-import { getFileURL } from "@/helpers/file.helper";
-import { E_PASSWORD_STRENGTH, getPasswordStrength } from "@/helpers/password.helper";
 // hooks
-import { useEventTracker, useUser, useUserProfile } from "@/hooks/store";
+import { captureError, captureSuccess, captureView } from "@/helpers/event-tracker.helper";
+import { useUser, useUserProfile } from "@/hooks/store";
 // assets
 import ProfileSetupDark from "@/public/onboarding/profile-setup-dark.webp";
 import ProfileSetupLight from "@/public/onboarding/profile-setup-light.webp";
@@ -101,7 +101,6 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
   // store hooks
   const { updateCurrentUser } = useUser();
   const { updateUserProfile } = useUserProfile();
-  const { captureEvent } = useEventTracker();
   // form info
   const {
     getValues,
@@ -146,11 +145,12 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         updateUserProfile(profileUpdatePayload),
         totalSteps > 2 && stepChange({ profile_complete: true }),
       ]);
-      captureEvent(USER_DETAILS, {
-        use_case: formData.use_case,
-        role: formData.role,
-        state: "SUCCESS",
-        element: E_ONBOARDING_STEP_1,
+      captureSuccess({
+        eventName: USER_TRACKER_EVENTS.add_details,
+        payload: {
+          use_case: formData.use_case,
+          role: formData.role,
+        },
       });
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -162,9 +162,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         finishOnboarding();
       }
     } catch {
-      captureEvent(USER_DETAILS, {
-        state: "FAILED",
-        element: E_ONBOARDING_STEP_1,
+      captureError({
+        eventName: USER_TRACKER_EVENTS.add_details,
       });
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -186,9 +185,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         formData.password && handleSetPassword(formData.password),
       ]).then(() => setProfileSetupStep(EProfileSetupSteps.USER_PERSONALIZATION));
     } catch {
-      captureEvent(USER_DETAILS, {
-        state: "FAILED",
-        element: E_ONBOARDING_STEP_1,
+      captureError({
+        eventName: USER_TRACKER_EVENTS.add_details,
       });
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -208,11 +206,12 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         updateUserProfile(profileUpdatePayload),
         totalSteps > 2 && stepChange({ profile_complete: true }),
       ]);
-      captureEvent(USER_DETAILS, {
-        use_case: formData.use_case,
-        role: formData.role,
-        state: "SUCCESS",
-        element: E_ONBOARDING_STEP_2,
+      captureSuccess({
+        eventName: USER_TRACKER_EVENTS.add_details,
+        payload: {
+          use_case: formData.use_case,
+          role: formData.role,
+        },
       });
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -224,9 +223,8 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
         finishOnboarding();
       }
     } catch {
-      captureEvent(USER_DETAILS, {
-        state: "FAILED",
-        element: E_ONBOARDING_STEP_2,
+      captureError({
+        eventName: USER_TRACKER_EVENTS.add_details,
       });
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -238,6 +236,9 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
 
   const onSubmit = async (formData: TProfileSetupFormValues) => {
     if (!user) return;
+    captureView({
+      elementName: ONBOARDING_TRACKER_ELEMENTS.PROFILE_SETUP_FORM,
+    });
     if (profileSetupStep === EProfileSetupSteps.ALL) await handleSubmitProfileSetup(formData);
     if (profileSetupStep === EProfileSetupSteps.USER_DETAILS) await handleSubmitUserDetail(formData);
     if (profileSetupStep === EProfileSetupSteps.USER_PERSONALIZATION) await handleSubmitUserPersonalization(formData);

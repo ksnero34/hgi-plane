@@ -6,14 +6,8 @@ import isEmpty from "lodash/isEmpty";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
-import {
-  EIssueFilterType,
-  EIssuesStoreType,
-  EViewAccess,
-  EUserPermissions,
-  EUserPermissionsLevel,
-} from "@plane/constants";
-import { IIssueFilterOptions, TCustomField } from "@plane/types";
+import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { EIssuesStoreType, EViewAccess, IIssueFilterOptions, TCustomField } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList } from "@/components/issues";
@@ -31,7 +25,7 @@ import {
   useCustomField,
 } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
-import { calculateFilterRemovalValue } from "@/helpers/filter-update.helper";
+import { calculateFilterValue } from "@plane/utils";
 
 export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   // router

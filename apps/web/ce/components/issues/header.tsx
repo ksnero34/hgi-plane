@@ -7,10 +7,10 @@ import axios from "axios";
 // icons
 import { Circle, ExternalLink, Upload, Edit3 } from "lucide-react";
 // plane constants
-import { EIssuesStoreType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { EUserPermissions, EUserPermissionsLevel, SPACE_BASE_PATH, SPACE_BASE_URL, WORK_ITEM_TRACKER_ELEMENTS, EProjectFeatureKey } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // types
-import { TIssue } from "@plane/types";
+import { TIssue, EIssuesStoreType } from "@plane/types";
 // ui
 import { Breadcrumbs, Button, LayersIcon, Tooltip, Header, setToast, TOAST_TYPE } from "@plane/ui";
 // components
@@ -18,16 +18,16 @@ import { BreadcrumbLink, CountChip } from "@/components/common";
 // constants
 import HeaderFilters from "@/components/issues/filters";
 // helpers
-import { SPACE_BASE_PATH, SPACE_BASE_URL } from "@/helpers/common.helper";
+import { captureClick } from "@/helpers/event-tracker.helper";
 // hooks
-import { useEventTracker, useProject, useCommandPalette, useUserPermissions, useMultipleSelectStore } from "@/hooks/store";
+import { useProject, useCommandPalette, useUserPermissions, useMultipleSelectStore } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // plane web
-import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "../breadcrumbs/common";
 import { IssueUploadModal } from "./issue-uploader/issue-upload-modal";
 import { BulkEditModal } from "./bulk-operations/bulk-edit-modal";
 
@@ -51,7 +51,6 @@ export const IssuesHeader = observer(() => {
   const { currentProjectDetails, loader } = useProject();
 
   const { toggleCreateIssueModal } = useCommandPalette();
-  const { setTrackElement } = useEventTracker();
   const { allowPermissions } = useUserPermissions();
   const { isMobile } = usePlatformOS();
 
@@ -167,17 +166,12 @@ export const IssuesHeader = observer(() => {
     <Header>
       <Header.LeftItem>
         <div className="flex items-center gap-2.5">
-          <Breadcrumbs onBack={() => router.back()} isLoading={loader === "init-loader"}>
-            <ProjectBreadcrumb />
-
-            <Breadcrumbs.BreadcrumbItem
-              type="text"
-              link={
-                <BreadcrumbLink
-                  label={t("issue.label", { count: 2 })} // count is for pluralization
-                  icon={<LayersIcon className="h-4 w-4 text-custom-text-300" />}
-                />
-              }
+          <Breadcrumbs onBack={() => router.back()} isLoading={loader === "init-loader"} className="flex-grow-0">
+            <CommonProjectBreadcrumbs
+              workspaceSlug={workspaceSlug?.toString()}
+              projectId={projectId?.toString()}
+              featureKey={EProjectFeatureKey.WORK_ITEMS}
+              isLast
             />
           </Breadcrumbs>
           {issuesCount && issuesCount > 0 ? (
@@ -236,9 +230,13 @@ export const IssuesHeader = observer(() => {
             )}
             <Button
               onClick={() => {
-                setTrackElement("Project work items page");
+                captureClick({
+                  elementName: "project_work_items_create_button",
+                  context: { page: "project_work_items" },
+                });
                 toggleCreateIssueModal(true, EIssuesStoreType.PROJECT);
               }}
+              data-ph-element={WORK_ITEM_TRACKER_ELEMENTS.HEADER_ADD_BUTTON.WORK_ITEMS}
               size="sm"
             >
               <div className="block sm:hidden">{t("issue.label", { count: 1 })}</div>

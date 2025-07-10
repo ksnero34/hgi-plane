@@ -8,15 +8,15 @@ import { TIssue, TCustomField, IIssueDisplayProperties } from "@plane/types";
 // ui
 import { Tooltip } from "@plane/ui";
 // helpers
-import { renderFormattedPayloadDate } from "@/helpers/date-time.helper";
-import { updateCustomFieldValueSafely, getCustomFieldValue } from "@/helpers/custom-field.helper";
+import { renderFormattedPayloadDate } from "@plane/utils";
+import { updateCustomFieldValueSafely, getCustomFieldValue } from "@plane/utils";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useMember } from "@/hooks/store";
 // components
 import { CustomFieldDropdown, DateDropdown, MemberDropdown } from "@/components/dropdowns";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
-import { cn } from "@/helpers/common.helper";
+import { cn } from "@plane/utils";
 
 type Props = {
   issue: TIssue;

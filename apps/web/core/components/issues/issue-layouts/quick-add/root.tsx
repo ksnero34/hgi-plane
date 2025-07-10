@@ -2,24 +2,23 @@
 
 import { FC, useEffect, useState } from "react";
 import { observer } from "mobx-react";
-import { useParams, usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useForm, UseFormRegister } from "react-hook-form";
 import { PlusIcon } from "lucide-react";
 // plane constants
-import { EIssueLayoutTypes, EIssueServiceType, ISSUE_CREATED } from "@plane/constants";
+import { EIssueLayoutTypes, WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 import { IProject, TIssue } from "@plane/types";
 // ui
 import { setPromiseToast } from "@plane/ui";
+import { cn, createIssuePayload } from "@plane/utils";
 // components
 import { CreateIssueToastActionItems } from "@/components/issues";
 // constants
 // helpers
-import { cn } from "@/helpers/common.helper";
-import { createIssuePayload } from "@/helpers/issue.helper";
 // hooks
-import { useEventTracker } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // plane web components
 import { QuickAddIssueFormRoot } from "@/plane-web/components/issues";
 
@@ -70,11 +69,8 @@ export const QuickAddIssueRoot: FC<TQuickAddIssueRoot> = observer((props) => {
   const { t } = useTranslation();
   // router
   const { workspaceSlug, projectId } = useParams();
-  const pathname = usePathname();
   // states
   const [isOpen, setIsOpen] = useState(isQuickAddOpen ?? false);
-  // store hooks
-  const { captureIssueEvent } = useEventTracker();
   // form info
   const {
     reset,
@@ -137,17 +133,16 @@ export const QuickAddIssueRoot: FC<TQuickAddIssueRoot> = observer((props) => {
 
       await quickAddPromise
         .then((res) => {
-          captureIssueEvent({
-            eventName: ISSUE_CREATED,
-            payload: { ...res, state: "SUCCESS", element: ` ${layout} quick add` },
-            path: pathname,
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.create,
+            payload: { id: res?.id },
           });
         })
-        .catch(() => {
-          captureIssueEvent({
-            eventName: ISSUE_CREATED,
-            payload: { ...payload, state: "FAILED", element: `${layout}  quick ad` },
-            path: pathname,
+        .catch((error) => {
+          captureError({
+            eventName: WORK_ITEM_TRACKER_EVENTS.create,
+            payload: { id: payload.id },
+            error: error as Error,
           });
         });
     }

@@ -2,18 +2,18 @@
 
 import React, { useState } from "react";
 // plane imports
-import { ROLE, MEMBER_ACCEPTED } from "@plane/constants";
+import { ROLE, MEMBER_TRACKER_EVENTS, MEMBER_TRACKER_ELEMENTS } from "@plane/constants";
 // types
 import { IWorkspaceMemberInvitation } from "@plane/types";
 // ui
 import { Button, Checkbox, Spinner } from "@plane/ui";
+import { truncateText } from "@plane/utils";
 // constants
 // helpers
 import { WorkspaceLogo } from "@/components/workspace/logo";
-import { truncateText } from "@/helpers/string.helper";
-import { getUserRole } from "@/helpers/user.helper";
 // hooks
-import { useEventTracker, useUserSettings, useWorkspace } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useUserSettings, useWorkspace } from "@/hooks/store";
 // services
 import { WorkspaceService } from "@/plane-web/services";
 
@@ -30,7 +30,6 @@ export const Invitations: React.FC<Props> = (props) => {
   const [isJoiningWorkspaces, setIsJoiningWorkspaces] = useState(false);
   const [invitationsRespond, setInvitationsRespond] = useState<string[]>([]);
   // store hooks
-  const { captureEvent } = useEventTracker();
   const { fetchWorkspaces } = useWorkspace();
   const { fetchCurrentUserSettings } = useUserSettings();
 
@@ -51,26 +50,23 @@ export const Invitations: React.FC<Props> = (props) => {
 
     try {
       await workspaceService.joinWorkspaces({ invitations: invitationsRespond });
-      captureEvent(MEMBER_ACCEPTED, {
-        member_id: invitation?.id,
-        role: getUserRole(invitation?.role as any),
-        project_id: undefined,
-        accepted_from: "App",
-        state: "SUCCESS",
-        element: "Workspace invitations page",
+      captureSuccess({
+        eventName: MEMBER_TRACKER_EVENTS.accept,
+        payload: {
+          member_id: invitation?.id,
+        },
       });
       await fetchWorkspaces();
       await fetchCurrentUserSettings();
       await handleNextStep();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      captureEvent(MEMBER_ACCEPTED, {
-        member_id: invitation?.id,
-        role: getUserRole(invitation?.role as any),
-        project_id: undefined,
-        accepted_from: "App",
-        state: "FAILED",
-        element: "Workspace invitations page",
+      captureError({
+        eventName: MEMBER_TRACKER_EVENTS.accept,
+        payload: {
+          member_id: invitation?.id,
+        },
+        error: error,
       });
       setIsJoiningWorkspaces(false);
     }
@@ -118,6 +114,7 @@ export const Invitations: React.FC<Props> = (props) => {
         className="w-full"
         onClick={submitInvitations}
         disabled={isJoiningWorkspaces || !invitationsRespond.length}
+        data-ph-element={MEMBER_TRACKER_ELEMENTS.ONBOARDING_JOIN_WORKSPACE}
       >
         {isJoiningWorkspaces ? <Spinner height="20px" width="20px" /> : "Continue to workspace"}
       </Button>

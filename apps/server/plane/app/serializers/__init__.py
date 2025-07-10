@@ -41,7 +41,7 @@ from .project import (
     ProjectMattermostConfigSerializer,
 )
 from .state import StateSerializer, StateLiteSerializer
-from .view import IssueViewSerializer
+from .view import IssueViewSerializer, ViewIssueListSerializer
 from .cycle import (
     CycleSerializer,
     CycleIssueSerializer,
@@ -78,6 +78,7 @@ from .issue import (
     IssueDescriptionVersionDetailSerializer,
     CustomFieldSerializer,
     CustomFieldValueSerializer,
+    IssueListDetailSerializer,
 )
 
 from .module import (

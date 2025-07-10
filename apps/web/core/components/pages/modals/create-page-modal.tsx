@@ -1,13 +1,13 @@
 import { FC, useEffect, useState } from "react";
 // constants
-import { EPageAccess, PAGE_CREATED } from "@plane/constants";
+import { EPageAccess, PROJECT_PAGE_TRACKER_EVENTS } from "@plane/constants";
 import { TPage } from "@plane/types";
 // ui
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // components
 import { PageForm } from "@/components/pages";
 // hooks
-import { useEventTracker } from "@/hooks/store";
+import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 import { useAppRouter } from "@/hooks/use-app-router";
 // plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
@@ -48,7 +48,6 @@ export const CreatePageModal: FC<Props> = (props) => {
   const router = useAppRouter();
   // store hooks
   const { createPage } = usePageStore(storeType);
-  const { capturePageEvent } = useEventTracker();
   const handlePageFormData = <T extends keyof TPage>(key: T, value: TPage[T]) =>
     setPageFormData((prev) => ({ ...prev, [key]: value }));
 
@@ -77,11 +76,10 @@ export const CreatePageModal: FC<Props> = (props) => {
     try {
       const pageData = await createPage(pageFormData);
       if (pageData) {
-        capturePageEvent({
-          eventName: PAGE_CREATED,
+        captureSuccess({
+          eventName: PROJECT_PAGE_TRACKER_EVENTS.create,
           payload: {
-            ...pageData,
-            state: "SUCCESS",
+            id: pageData.id,
           },
         });
         handleStateClear();
@@ -97,12 +95,10 @@ export const CreatePageModal: FC<Props> = (props) => {
           }
         }
       }
-    } catch {
-      capturePageEvent({
-        eventName: PAGE_CREATED,
-        payload: {
-          state: "FAILED",
-        },
+    } catch (error: any) {
+      captureError({
+        eventName: PROJECT_PAGE_TRACKER_EVENTS.create,
+        error,
       });
     }
   };
