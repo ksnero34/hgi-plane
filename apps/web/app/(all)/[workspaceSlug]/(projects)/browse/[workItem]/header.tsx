@@ -11,7 +11,7 @@ import { IssueDetailQuickActions } from "@/components/issues";
 // hooks
 import { useIssueDetail, useProject } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
 
 export const ProjectIssueDetailsHeader = observer(() => {
   // router

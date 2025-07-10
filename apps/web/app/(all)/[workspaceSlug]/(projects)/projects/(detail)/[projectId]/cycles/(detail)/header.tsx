@@ -54,8 +54,8 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 // plane web imports
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
-import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
 
 export const CycleIssuesHeader: React.FC = observer(() => {
   // refs

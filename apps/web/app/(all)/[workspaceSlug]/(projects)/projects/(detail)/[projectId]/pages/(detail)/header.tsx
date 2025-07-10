@@ -16,7 +16,7 @@ import { PageHeaderActions } from "@/components/pages/header/actions";
 import { useProject } from "@/hooks/store";
 // plane web components
 import { useAppRouter } from "@/hooks/use-app-router";
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
 import { PageDetailsHeaderExtraActions } from "@/plane-web/components/pages";
 // plane web hooks
 import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";
@@ -139,9 +139,8 @@ export const PageDetailsHeader = observer(() => {
               featureKey={EProjectFeatureKey.PAGES}
             />
 
-            <Breadcrumbs.BreadcrumbItem
-              type="text"
-              link={
+            <Breadcrumbs.Item
+              component={
                 <BreadcrumbLink
                   href={getFolderUrl(null)}
                   label="Pages"
@@ -157,9 +156,8 @@ export const PageDetailsHeader = observer(() => {
               const folderLevelOptions = getFolderLevelOptions(parentFolderId);
 
               return (
-                <Breadcrumbs.BreadcrumbItem
+                <Breadcrumbs.Item
                   key={folder.id}
-                  type="component"
                   component={
                     <CustomSearchSelect
                       value={folder.id}

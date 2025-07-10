@@ -84,7 +84,8 @@ RUN mkdir -p /etc/nginx/ssl && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/nginx/ssl/key.pem \
     -out /etc/nginx/ssl/cert.pem \
-    -subj "/C=KR/ST=Seoul/L=Seoul/O=HGI/OU=Development/CN=localhost/emailAddress=dev@hgi.com"
+    -subj "/C=KR/ST=Seoul/L=Seoul/O=HGI/OU=Development/CN=plane.hgi.com/emailAddress=dev@hgi.com" \
+    -addext "subjectAltName=DNS:plane.hgi.com,DNS:localhost,DNS:*.hgi.com,IP:127.0.0.1"
 
 # 이미지 다운로드를 위한 스크립트 생성
 RUN echo '#!/bin/bash\n\

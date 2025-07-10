@@ -90,8 +90,7 @@ deploy/selfhost/plane-app/
 ## Storybook
 *storybook.log
 output.css
-
-data
+data/
 dev-editor
 # Redis
 *.rdb

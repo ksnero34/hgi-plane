@@ -28,7 +28,8 @@ export const months: WeekMonthDataType[] = [
   { key: 7, shortTitle: "8월", title: "8월", abbreviation: "8월" },
   { key: 8, shortTitle: "9월", title: "9월", abbreviation: "9월" },
   { key: 9, shortTitle: "10월", title: "10월", abbreviation: "10월" },
-  { key
+  { key: 10, shortTitle: "11월", title: "11월", abbreviation: "11월" },
+  { key: 11, shortTitle: "12월", title: "12월", abbreviation: "12월" },
 ];
 
 export const quarters: WeekMonthDataType[] = [

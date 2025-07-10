@@ -54,7 +54,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // plane web
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
-import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
 
 export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // refs

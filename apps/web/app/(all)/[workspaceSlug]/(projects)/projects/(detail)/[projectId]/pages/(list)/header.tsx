@@ -12,10 +12,11 @@ import { TPage } from "@plane/types";
 import { Breadcrumbs, Button, Header, setToast, TOAST_TYPE } from "@plane/ui";
 // helpers
 import { BreadcrumbLink } from "@/components/common";
+import { captureClick } from "@/helpers/event-tracker.helper";
 // hooks
-import { useEventTracker, useProject, useCommandPalette } from "@/hooks/store";
+import { useProject, useCommandPalette } from "@/hooks/store";
 // plane web
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
 // plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
 
@@ -31,7 +32,6 @@ export const PagesListHeader = observer(() => {
   // store hooks
   const { currentProjectDetails, loader } = useProject();
   const { canCurrentUserCreatePage, createPage, getPageById } = usePageStore(EPageStoreType.PROJECT);
-  const { setTrackElement } = useEventTracker();
   const { toggleCreatePageModal } = useCommandPalette();
 
   // 현재 폴더 정보 가져오기
@@ -62,7 +62,7 @@ export const PagesListHeader = observer(() => {
   // handle page create
   const handleCreatePage = async () => {
     setIsCreatingPage(true);
-    setTrackElement("Project pages page");
+    captureClick({ elementName: "Project pages page" });
 
     const payload: Partial<TPage> = {
       access: pageType === "private" ? EPageAccess.PRIVATE : EPageAccess.PUBLIC,
@@ -96,9 +96,8 @@ export const PagesListHeader = observer(() => {
               projectId={projectId?.toString() ?? ""}
               featureKey={EProjectFeatureKey.PAGES}
             />
-            <Breadcrumbs.BreadcrumbItem
-              type="text"
-              link={
+            <Breadcrumbs.Item
+              component={
                 <BreadcrumbLink
                   label="Pages"
                   icon={<FileText className="h-4 w-4 text-custom-text-300" />}
@@ -108,10 +107,9 @@ export const PagesListHeader = observer(() => {
             />
             {/* 폴더 경로 브레드크럼 */}
             {folderPath.map((folder, index) => (
-              <Breadcrumbs.BreadcrumbItem
+              <Breadcrumbs.Item
                 key={folder.id}
-                type="text"
-                link={
+                component={
                   <BreadcrumbLink
                     label={folder.name || "Untitled"}
                     icon={<Folder className="h-4 w-4 text-custom-text-300" />}
