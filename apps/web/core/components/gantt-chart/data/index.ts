@@ -8,35 +8,34 @@ export const generateWeeks = (startOfWeek: EStartOfTheWeek = EStartOfTheWeek.SUN
 ];
 
 export const weeks: WeekMonthDataType[] = [
-  { key: 0, shortTitle: "sun", title: "sunday", abbreviation: "Su" },
-  { key: 1, shortTitle: "mon", title: "monday", abbreviation: "M" },
-  { key: 2, shortTitle: "tue", title: "tuesday", abbreviation: "T" },
-  { key: 3, shortTitle: "wed", title: "wednesday", abbreviation: "W" },
-  { key: 4, shortTitle: "thurs", title: "thursday", abbreviation: "Th" },
-  { key: 5, shortTitle: "fri", title: "friday", abbreviation: "F" },
-  { key: 6, shortTitle: "sat", title: "saturday", abbreviation: "Sa" },
+  { key: 0, shortTitle: "일", title: "일요일", abbreviation: "일" },
+  { key: 1, shortTitle: "월", title: "월요일", abbreviation: "월" },
+  { key: 2, shortTitle: "화", title: "화요일", abbreviation: "화" },
+  { key: 3, shortTitle: "수", title: "수요일", abbreviation: "수" },
+  { key: 4, shortTitle: "목", title: "목요일", abbreviation: "목" },
+  { key: 5, shortTitle: "금", title: "금요일", abbreviation: "금" },
+  { key: 6, shortTitle: "토", title: "토요일", abbreviation: "토" },
 ];
 
 export const months: WeekMonthDataType[] = [
-  { key: 0, shortTitle: "jan", title: "january", abbreviation: "Jan" },
-  { key: 1, shortTitle: "feb", title: "february", abbreviation: "Feb" },
-  { key: 2, shortTitle: "mar", title: "march", abbreviation: "Mar" },
-  { key: 3, shortTitle: "apr", title: "april", abbreviation: "Apr" },
-  { key: 4, shortTitle: "may", title: "may", abbreviation: "May" },
-  { key: 5, shortTitle: "jun", title: "june", abbreviation: "Jun" },
-  { key: 6, shortTitle: "jul", title: "july", abbreviation: "Jul" },
-  { key: 7, shortTitle: "aug", title: "august", abbreviation: "Aug" },
-  { key: 8, shortTitle: "sept", title: "september", abbreviation: "Sept" },
-  { key: 9, shortTitle: "oct", title: "october", abbreviation: "Oct" },
-  { key: 10, shortTitle: "nov", title: "november", abbreviation: "Nov" },
-  { key: 11, shortTitle: "dec", title: "december", abbreviation: "Dec" },
+  { key: 0, shortTitle: "1월", title: "1월", abbreviation: "1월" },
+  { key: 1, shortTitle: "2월", title: "2월", abbreviation: "2월" },
+  { key: 2, shortTitle: "3월", title: "3월", abbreviation: "3월" },
+  { key: 3, shortTitle: "4월", title: "4월", abbreviation: "4월" },
+  { key: 4, shortTitle: "5월", title: "5월", abbreviation: "5월" },
+  { key: 5, shortTitle: "6월", title: "6월", abbreviation: "6월" },
+  { key: 6, shortTitle: "7월", title: "7월", abbreviation: "7월" },
+  { key: 7, shortTitle: "8월", title: "8월", abbreviation: "8월" },
+  { key: 8, shortTitle: "9월", title: "9월", abbreviation: "9월" },
+  { key: 9, shortTitle: "10월", title: "10월", abbreviation: "10월" },
+  { key
 ];
 
 export const quarters: WeekMonthDataType[] = [
-  { key: 0, shortTitle: "Q1", title: "Jan - Mar", abbreviation: "Q1" },
-  { key: 1, shortTitle: "Q2", title: "Apr - Jun", abbreviation: "Q2" },
-  { key: 2, shortTitle: "Q3", title: "Jul - Sept", abbreviation: "Q3" },
-  { key: 3, shortTitle: "Q4", title: "Oct - Dec", abbreviation: "Q4" },
+  { key: 0, shortTitle: "1분기", title: "1분기", abbreviation: "1분기" },
+  { key: 1, shortTitle: "2분기", title: "2분기", abbreviation: "2분기" },
+  { key: 2, shortTitle: "3분기", title: "3분기", abbreviation: "3분기" },
+  { key: 3, shortTitle: "4분기", title: "4분기", abbreviation: "4분기" },
 ];
 
 export const charCapitalize = (word: string) => `${word.charAt(0).toUpperCase()}${word.substring(1)}`;
