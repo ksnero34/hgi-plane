@@ -70,12 +70,12 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/web:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/web:1.1.2-dev
     # restart: unless-stopped
     networks:
       - dev_env
     volumes:
-      - .:/app
+      - ./apps/web:/app/web
     env_file:
       - ./apps/web/.env.dev
     depends_on:
@@ -87,12 +87,12 @@ services:
     build:
       context: .
       dockerfile: apps/space/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/space:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/space:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
     volumes:
-      - .:/app
+      - ./apps/space:/app/space
     depends_on:
       - api
       - worker
@@ -103,12 +103,12 @@ services:
     build:
       context: .
       dockerfile: apps/admin/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/admin:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/admin:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
     volumes:
-      - .:/app
+      - ./apps/admin:/app/admin
     depends_on:
       - api
       - worker
@@ -119,12 +119,12 @@ services:
     build:
       context: .
       dockerfile: apps/live/Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/live:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/live:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
     volumes:
-      - .:/app
+      - ./apps/live:/app/live
 
     depends_on:
       - api
@@ -138,7 +138,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
@@ -159,7 +159,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
@@ -180,7 +180,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
@@ -202,7 +202,7 @@ services:
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
-    image: harbor.hwgeneralins.com/plane-dev/api:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/api:1.1.2-dev
     #restart: "no"
     networks:
       - dev_env
@@ -220,7 +220,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/proxy:1.1.1-dev
+    image: harbor.hwgeneralins.com/plane-dev/proxy:1.1.2-dev
     #restart: unless-stopped
     networks:
       - dev_env
