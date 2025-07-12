@@ -2,8 +2,8 @@ services:
   web:
     container_name: web
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile.web
+      context: .
+      dockerfile: ./apps/web/Dockerfile.web
       args:
         DOCKER_BUILDKIT: 1
     restart: always
@@ -17,8 +17,8 @@ services:
   admin:
     container_name: admin
     build:
-      context: ./apps/admin
-      dockerfile: Dockerfile.admin
+      context: .
+      dockerfile: ./apps/admin/Dockerfile.admin
       args:
         DOCKER_BUILDKIT: 1
     restart: always
@@ -33,8 +33,8 @@ services:
   space:
     container_name: space
     build:
-      context: ./apps/space
-      dockerfile: Dockerfile.space
+      context: .
+      dockerfile: ./apps/space/Dockerfile.space
       args:
         DOCKER_BUILDKIT: 1
     restart: always
@@ -49,8 +49,8 @@ services:
   api:
     container_name: api
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile.api
+      context: .
+      dockerfile: ./apps/server/Dockerfile.api
       args:
         DOCKER_BUILDKIT: 1
     restart: always
@@ -70,8 +70,8 @@ services:
   worker:
     container_name: bgworker
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile.api
+      context: .
+      dockerfile: ./apps/server/Dockerfile.api
       args:
         DOCKER_BUILDKIT: 1
     restart: always
@@ -90,8 +90,8 @@ services:
   beat-worker:
     container_name: beatworker
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile.api
+      context: .
+      dockerfile: ./apps/server/Dockerfile.api
       args:
         DOCKER_BUILDKIT: 1
     restart: always
@@ -110,8 +110,8 @@ services:
   migrator:
     container_name: plane-migrator
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile.api
+      context: .
+      dockerfile: ./apps/server/Dockerfile.api
       args:
         DOCKER_BUILDKIT: 1
     restart: no
@@ -128,8 +128,8 @@ services:
   live:
     container_name: plane-live
     build:
-      context: ./apps/live
-      dockerfile: Dockerfile.live
+      context: .
+      dockerfile: ./apps/live/Dockerfile.live
       args:
         DOCKER_BUILDKIT: 1
     restart: always

@@ -11,7 +11,7 @@ import { EViewAccess, IIssueFilterOptions, IWorkspaceView } from "@plane/types";
 import { WorkspaceService } from "@/plane-web/services";
 // store
 import { CoreRootStore } from "./root.store";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 export interface IGlobalViewStore {
   // observables

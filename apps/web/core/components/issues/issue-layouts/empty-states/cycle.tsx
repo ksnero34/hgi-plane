@@ -16,7 +16,7 @@ import { DetailedEmptyState } from "@/components/empty-state";
 import { captureClick } from "@/helpers/event-tracker.helper";
 import { useCommandPalette, useCycle, useIssues, useUserPermissions } from "@/hooks/store";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 
 export const CycleEmptyState: React.FC = observer(() => {
   // router

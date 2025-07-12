@@ -9,7 +9,7 @@ import { AppliedFiltersList } from "@/components/issues";
 import { useIssues, useLabel } from "@/hooks/store";
 import { useWorkspaceIssueProperties } from "@/hooks/use-workspace-issue-properties";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 
 export const ProfileIssuesAppliedFiltersRoot: React.FC = observer(() => {
   // router

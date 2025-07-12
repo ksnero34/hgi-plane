@@ -12,7 +12,7 @@ import { isIssueFilterActive } from "@plane/utils";
 import { ArchiveTabsList } from "@/components/archives";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useIssues, useLabel, useMember, useProject, useProjectState } from "@/hooks/store";
 

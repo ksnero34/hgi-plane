@@ -21,7 +21,7 @@ import { Button, Input, TextArea } from "@plane/ui";
 import { getComputedDisplayFilters, getComputedDisplayProperties } from "@plane/utils";
 import { AppliedFiltersList, DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useLabel, useMember } from "@/hooks/store";
 import { AccessController } from "@/plane-web/components/views/access-controller";
@@ -177,14 +177,14 @@ export const WorkspaceViewForm: React.FC<Props> = observer((props) => {
                   <FilterSelection
                     filters={filters ?? {}}
                     handleFiltersUpdate={(key, value) => {
-                      const newValues = filters?.[key] ?? [];
+                      const newValues = (filters?.[key] as string[]) ?? [];
 
                       if (Array.isArray(value)) {
                         value.forEach((val) => {
                           if (!newValues.includes(val)) newValues.push(val);
                         });
                       } else {
-                        if (filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+                        if ((filters?.[key] as string[])?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
                         else newValues.push(value);
                       }
 

@@ -59,8 +59,8 @@ export const useAttachmentOperations = (
           });
 
           // 에러 객체에 서버 응답 추가
-          if (error.response?.data) {
-            error.serverError = error.response.data;
+          if ((error as any).response?.data) {
+            (error as any).serverError = (error as any).response.data;
           }
           throw error;
         }

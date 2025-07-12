@@ -7,7 +7,7 @@ import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 import { CYCLE_ISSUES_WITH_PARAMS } from "@/constants/fetch-keys";
 import { useCycle, useIssues } from "@/hooks/store";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 interface IActiveCycleDetails {
   workspaceSlug: string;

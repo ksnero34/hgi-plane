@@ -11,7 +11,7 @@ import { EIssuesStoreType, IIssueDisplayFilterOptions, IIssueDisplayProperties, 
 import { isIssueFilterActive } from "@plane/utils";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, LayoutSelection } from "@/components/issues";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useIssues, useLabel } from "@/hooks/store";
 

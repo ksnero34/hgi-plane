@@ -3,8 +3,6 @@ import { observer } from "mobx-react";
 import { useDropzone } from "react-dropzone";
 // constants
 import { MAX_FILE_SIZE } from "@/constants/common";
-// helpers
-import { generateFileName } from "@/helpers/attachment.helper";
 // hooks
 import { useInstance, useFileValidation, ValidationResult } from "@/hooks/store";
 // plane web hooks

@@ -123,10 +123,10 @@ export const PagesListHeader = observer(() => {
       </Header.LeftItem>
       {canCurrentUserCreatePage ? (
         <Header.RightItem>
-          <Button 
-            variant="primary" 
-            size="sm" 
-            onClick={handleCreatePage} 
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleCreatePage}
             loading={isCreatingPage}
             data-ph-element={PROJECT_TRACKER_ELEMENTS.CREATE_HEADER_BUTTON}
           >

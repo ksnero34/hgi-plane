@@ -16,7 +16,7 @@ import { CustomSelect, Spinner } from "@plane/ui";
 import { getDate } from "@plane/utils";
 import ProgressChart from "@/components/core/sidebar/progress-chart";
 import { ModuleProgressStats } from "@/components/modules";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useIssues, useModule, useProjectEstimates } from "@/hooks/store";
 // plane web constants

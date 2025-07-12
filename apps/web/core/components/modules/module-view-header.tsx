@@ -19,7 +19,7 @@ import { FiltersDropdown } from "@/components/issues";
 import { ModuleFiltersSelection, ModuleOrderByDropdown } from "@/components/modules/dropdowns";
 // constants
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useMember, useModuleFilter } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";

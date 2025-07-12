@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Layers, Lock, Edit3 } from "lucide-react";
+import { Layers, Lock } from "lucide-react";
 // plane constants
 import {
   EIssueLayoutTypes,
@@ -14,7 +14,6 @@ import {
   EProjectFeatureKey,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
-import { useTranslation } from "@plane/i18n";
 // types
 import {
   EIssuesStoreType,
@@ -23,19 +22,18 @@ import {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
   IIssueFilterOptions,
-  TCustomField,
   TIssue,
+  TBulkOperationsPayload,
 } from "@plane/types";
+// utils
+import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // ui
-import { Breadcrumbs, Button, Tooltip, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, Tooltip, Header, BreadcrumbNavigationSearchDropdown, setToast, TOAST_TYPE } from "@plane/ui";
 // components
-import { isIssueFilterActive } from "@plane/utils";
 import { SwitcherIcon, SwitcherLabel } from "@/components/common";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // constants
 import { ViewQuickActions } from "@/components/views";
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 // hooks
 import {
   useCommandPalette,
@@ -49,7 +47,6 @@ import {
   useMultipleSelectStore,
   useCustomField,
 } from "@/hooks/store";
-import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // plane web
@@ -67,10 +64,12 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // store hooks
   const {
     issuesFilter: { issueFilters, updateFilters },
+    issueMap,
   } = useIssues(EIssuesStoreType.PROJECT_VIEW);
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
-  const { t } = useTranslation();
+  const { selectedEntityIds, clearSelection } = useMultipleSelectStore();
+  const { fetchIssues } = useIssuesActions(EIssuesStoreType.PROJECT_VIEW);
 
   const { currentProjectDetails, loader } = useProject();
   const { projectViewIds, getViewById } = useProjectView();
@@ -149,7 +148,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   );
 
   // 일괄변경을 위한 핸들러 함수
-  const handleBulkUpdate = async (bulkUpdatePayload: any) => {
+  const handleBulkUpdate = async (bulkUpdatePayload: TBulkOperationsPayload) => {
     try {
       const response = await fetch(
         `/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`,
@@ -205,7 +204,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
 
   // 선택된 이슈들의 데이터를 가져오기 (완전한 이슈 데이터가 있는 것만)
   const selectedIssuesList = selectedEntityIds
-    .map(issueId => getIssueById(issueId))
+    .map(issueId => issueMap[issueId])
     .filter((issue): issue is TIssue => issue !== undefined);
 
   if (!viewDetails) return;

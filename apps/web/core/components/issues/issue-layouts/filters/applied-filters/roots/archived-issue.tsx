@@ -6,7 +6,7 @@ import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 import { useIssues, useLabel, useProjectState } from "@/hooks/store";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 // components
 // types
 

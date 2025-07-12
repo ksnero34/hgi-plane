@@ -4,7 +4,7 @@ import { EIssueFilterType } from "@plane/constants";
 // types
 import { IIssueFilterOptions, IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 interface UseFilterUpdateProps {
   workspaceSlug: string | undefined;

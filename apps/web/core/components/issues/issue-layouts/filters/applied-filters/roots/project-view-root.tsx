@@ -25,7 +25,7 @@ import {
   useCustomField,
 } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
   // router

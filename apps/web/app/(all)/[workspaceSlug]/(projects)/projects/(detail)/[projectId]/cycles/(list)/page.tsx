@@ -9,13 +9,11 @@ import { useTranslation } from "@plane/i18n";
 import { EUserProjectRoles, TCycleFilters } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
-import { calculateTotalFilters } from "@plane/utils";
+import { calculateTotalFilters, calculateFilterRemovalValue } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { CyclesView, CycleCreateUpdateModal, CycleAppliedFiltersList } from "@/components/cycles";
 import { ComicBoxButton, DetailedEmptyState } from "@/components/empty-state";
 import { CycleModuleListLayout } from "@/components/ui";
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 // hooks
 import { useCycle, useProject, useCycleFilter, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";

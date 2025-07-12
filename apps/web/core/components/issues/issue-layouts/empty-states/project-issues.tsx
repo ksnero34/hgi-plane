@@ -11,7 +11,7 @@ import { captureClick } from "@/helpers/event-tracker.helper";
 // hooks
 import { useCommandPalette, useIssues, useUserPermissions } from "@/hooks/store";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 
 export const ProjectEmptyState: React.FC = observer(() => {
   // router

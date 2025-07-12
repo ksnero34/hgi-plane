@@ -24,7 +24,7 @@ import { CreateUpdateWorkspaceViewModal } from "@/components/workspace";
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 import { useGlobalView, useIssues, useLabel, useUser, useUserPermissions, useCustomField } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 
 type Props = {
   globalViewId: string;

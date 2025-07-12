@@ -34,16 +34,12 @@ const ActiveProjectItem = (props: Props) => {
   return (
     <div className="flex items-center justify-between gap-2  ">
       <div className="flex items-center gap-2">
-        <div className="flex h-8  w-8 items-center justify-center rounded-xl bg-custom-background-80">
-          <span className="grid h-4 w-4 flex-shrink-0 place-items-center">
-            {projectDetails?.logo_props ? (
-              <Logo logo={projectDetails?.logo_props} size={16} />
-            ) : (
-              <span className="grid h-4 w-4 flex-shrink-0 place-items-center">
-                <Briefcase className="h-4 w-4" />
-              </span>
-            )}
-          </span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-custom-background-80">
+          {projectDetails?.logo_props ? (
+            <Logo logo={projectDetails?.logo_props} size={20} />
+          ) : (
+            <Briefcase className="h-4 w-4" />
+          )}
         </div>
         <p className="text-sm font-medium">{projectDetails?.name}</p>
       </div>

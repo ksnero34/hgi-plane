@@ -13,7 +13,7 @@ import { Button } from "@plane/ui";
 import { isIssueFilterActive } from "@plane/utils";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useLabel, useProjectState, useMember, useIssues, useCustomField } from "@/hooks/store";
 // plane web types

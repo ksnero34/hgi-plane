@@ -5,7 +5,7 @@ import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 // hooks
 import { AppliedFiltersList } from "@/components/issues";
 import { useIssues, useLabel, useProjectState } from "@/hooks/store";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 // components
 // types
 

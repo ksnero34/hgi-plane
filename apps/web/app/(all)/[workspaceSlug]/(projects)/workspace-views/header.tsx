@@ -21,12 +21,10 @@ import {
   ICustomSearchSelectOption,
 } from "@plane/types";
 import { Breadcrumbs, Button, Header, BreadcrumbNavigationSearchDropdown } from "@plane/ui";
-import { isIssueFilterActive } from "@plane/utils";
+import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { BreadcrumbLink, SwitcherLabel } from "@/components/common";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection } from "@/components/issues";
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 import {
   CreateUpdateWorkspaceViewModal,
   WorkspaceViewQuickActions,

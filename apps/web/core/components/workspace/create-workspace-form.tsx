@@ -88,14 +88,14 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
 
               if (onSubmit) await onSubmit(res);
             })
-            .catch(() => {
+            .catch((error) => {
               captureError({
                 eventName: WORKSPACE_TRACKER_EVENTS.create,
                 payload: { slug: formData.slug },
                 error: new Error("Error creating workspace"),
               });
               
-              const errorMessage = error?.error === "Only instance administrators can create workspaces"
+              const errorMessage = (error as any)?.response?.data?.error === "Only instance administrators can create workspaces"
                 ? "인스턴스 관리자만 워크스페이스를 생성할 수 있습니다."
                 : "워크스페이스 생성에 실패했습니다. 다시 시도해주세요.";
 

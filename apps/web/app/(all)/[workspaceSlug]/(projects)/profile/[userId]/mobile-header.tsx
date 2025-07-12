@@ -20,11 +20,9 @@ import {
 // ui
 import { CustomMenu } from "@plane/ui";
 // components
-import { isIssueFilterActive } from "@plane/utils";
+import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
 
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 // hooks
 import { useIssues, useLabel } from "@/hooks/store";
 

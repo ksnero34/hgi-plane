@@ -6,6 +6,9 @@ from .common import *  # noqa
 
 DEBUG = True
 
+# Honor the 'X-Forwarded-Proto' header for request.is_secure()
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # Debug Toolbar settings
 INSTALLED_APPS += ("debug_toolbar",)  # noqa
 MIDDLEWARE += ("debug_toolbar.middleware.DebugToolbarMiddleware",)  # noqa

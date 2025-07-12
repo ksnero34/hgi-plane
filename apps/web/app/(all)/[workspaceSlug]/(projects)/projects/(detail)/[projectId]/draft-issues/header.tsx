@@ -17,11 +17,9 @@ import {
 // ui
 import { Breadcrumbs, LayersIcon, Tooltip } from "@plane/ui";
 // components
-import { isIssueFilterActive } from "@plane/utils";
+import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 import { BreadcrumbLink } from "@/components/common";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 // hooks
 import { useIssues, useLabel, useMember, useProject, useProjectState } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";

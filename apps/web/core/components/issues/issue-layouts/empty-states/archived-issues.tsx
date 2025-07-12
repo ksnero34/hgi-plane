@@ -11,7 +11,7 @@ import { DetailedEmptyState } from "@/components/empty-state";
 import { useIssues, useUserPermissions } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue, calculateFilterRemovalValue } from "@plane/utils";
 
 export const ProjectArchivedEmptyState: React.FC = observer(() => {
   // router

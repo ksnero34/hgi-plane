@@ -15,7 +15,7 @@ import {
   IIssueFilterOptions,
 } from "@plane/types";
 import { CustomMenu } from "@plane/ui";
-import { isIssueFilterActive } from "@plane/utils";
+import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import {
@@ -24,8 +24,6 @@ import {
   FiltersDropdown,
   IssueLayoutIcon,
 } from "@/components/issues/issue-layouts";
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 // hooks
 import { useIssues, useLabel, useMember, useProject, useProjectState } from "@/hooks/store";
 

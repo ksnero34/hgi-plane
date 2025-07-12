@@ -29,14 +29,12 @@ import {
 } from "@plane/types";
 // ui
 import { Breadcrumbs, Button, ContrastIcon, Tooltip, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
-import { cn, isIssueFilterActive } from "@plane/utils";
+import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { SwitcherLabel } from "@/components/common";
 import { CycleQuickActions } from "@/components/cycles";
 import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
-// helpers
-import { calculateFilterValue } from "@plane/utils";
 // hooks
 import {
   useCommandPalette,

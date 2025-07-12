@@ -13,7 +13,7 @@ import { ArchiveTabsList } from "@/components/archives";
 import { CycleFiltersSelection } from "@/components/cycles";
 import { FiltersDropdown } from "@/components/issues";
 // helpers
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useCycleFilter } from "@/hooks/store";
 

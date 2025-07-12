@@ -5,7 +5,7 @@ import { Search, X } from "lucide-react";
 import { EViewAccess, TViewFilterProps, TViewFilters, TCustomField } from "@plane/types";
 // components
 import { FilterCreatedBy, FilterCreatedDate } from "@/components/common/filters";
-import { FilterOption } from "@/components/issues";
+import { FilterOption, FilterCustomFields } from "@/components/issues";
 // constants
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";

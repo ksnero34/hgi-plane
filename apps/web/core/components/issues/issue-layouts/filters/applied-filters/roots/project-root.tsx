@@ -12,7 +12,7 @@ import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
 // hooks
 import { useLabel, useProjectState, useUserPermissions } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
-import { calculateFilterValue } from "@plane/utils";
+import { calculateFilterRemovalValue } from "@plane/utils";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web constants
 

@@ -101,7 +101,7 @@ export const PageDetailsHeader = observer(() => {
   // 현재 페이지가 위치한 폴더의 페이지들만 가져오기
   const currentFolderId = page?.parent || null;
   const folderLevelOptions = getFolderLevelOptions(currentFolderId);
-  
+
   // derived values
   const projectPageIds = getCurrentProjectPageIds(projectId?.toString());
 
@@ -114,10 +114,10 @@ export const PageDetailsHeader = observer(() => {
         query: getPageName(_page.name) || "Untitled",
         content: (
           <div className="flex gap-2 items-center justify-between">
-            <SwitcherLabel 
-              logo_props={_page.logo_props} 
-              name={getPageName(_page.name) || "Untitled"} 
-              LabelIcon={_page.is_folder ? Folder : FileText} 
+            <SwitcherLabel
+              logo_props={_page.logo_props}
+              name={getPageName(_page.name) || "Untitled"}
+              LabelIcon={_page.is_folder ? Folder : FileText}
             />
             {!_page.is_folder && <PageAccessIcon {..._page} />}
           </div>
