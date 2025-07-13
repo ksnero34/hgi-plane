@@ -1,0 +1,828 @@
+# Django imports
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.utils import timezone
+
+# Third party imports
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+
+# Module imports
+from .. import BaseViewSet
+from plane.app.serializers import (
+    WorkflowTemplateSerializer,
+    WorkflowTemplateDetailSerializer,
+    WorkflowStateSerializer,
+    WorkflowTransitionSerializer,
+    WorkflowTransitionReviewerSerializer,
+    WorkflowAssignmentRuleSerializer,
+    WorkflowTransitionLogSerializer,
+    WorkflowValidationSerializer,
+)
+from plane.app.permissions import ROLE, allow_permission
+from plane.db.models import (
+    WorkflowTemplate,
+    WorkflowState,
+    WorkflowTransition,
+    WorkflowTransitionReviewer,
+    WorkflowAssignmentRule,
+    WorkflowApprovalRequest,
+    WorkflowTransitionLog,
+    Issue,
+    State,
+)
+from plane.utils.cache import invalidate_cache
+
+
+class WorkflowTemplateViewSet(BaseViewSet):
+    serializer_class = WorkflowTemplateSerializer
+    model = WorkflowTemplate
+
+    def get_queryset(self):
+        return self.filter_queryset(
+            super()
+            .get_queryset()
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(project_id=self.kwargs.get("project_id"))
+            .filter(
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+            )
+            .select_related("project", "workspace", "created_by")
+            .prefetch_related("workflow_states", "workflow_transitions", "assignment_rules")
+            .distinct()
+        )
+
+    @invalidate_cache(path="workspaces/:slug/workflows/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def create(self, request, slug, project_id):
+        try:
+            serializer = WorkflowTemplateSerializer(
+                data=request.data, context={"project_id": project_id}
+            )
+            if serializer.is_valid():
+                serializer.save(project_id=project_id, created_by=request.user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {"error": "Workflow with the same name already exists in the project"},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def retrieve(self, request, slug, project_id, pk):
+        workflow = self.get_queryset().get(pk=pk)
+        serializer = WorkflowTemplateDetailSerializer(workflow)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def list(self, request, slug, project_id):
+        workflows = WorkflowTemplateSerializer(self.get_queryset(), many=True).data
+        return Response(workflows, status=status.HTTP_200_OK)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def partial_update(self, request, slug, project_id, pk):
+        workflow = self.get_queryset().get(pk=pk)
+        serializer = WorkflowTemplateSerializer(
+            workflow, data=request.data, partial=True, context={"project_id": project_id}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def destroy(self, request, slug, project_id, pk):
+        workflow = self.get_queryset().get(pk=pk)
+        
+        # Check if workflow is being used by any issues
+        issue_exists = Issue.issue_objects.filter(workflow=workflow).exists()
+        if issue_exists:
+            return Response(
+                {"error": "Cannot delete workflow that is being used by issues"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        workflow.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @allow_permission([ROLE.ADMIN])
+    def activate(self, request, slug, project_id, pk):
+        """Activate a workflow"""
+        workflow = self.get_queryset().get(pk=pk)
+        workflow.is_active = True
+        workflow.save()
+        return Response({"message": "Workflow activated successfully"}, status=status.HTTP_200_OK)
+
+    @allow_permission([ROLE.ADMIN])
+    def deactivate(self, request, slug, project_id, pk):
+        """Deactivate a workflow"""
+        workflow = self.get_queryset().get(pk=pk)
+        workflow.is_active = False
+        workflow.save()
+        return Response({"message": "Workflow deactivated successfully"}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    @allow_permission([ROLE.ADMIN])
+    def apply_to_all_issues(self, request, slug, project_id, pk):
+        """Apply this workflow to all issues in the project"""
+        workflow = self.get_queryset().get(pk=pk)
+        
+        # Update all issues in the project to use this workflow
+        updated_count = Issue.issue_objects.filter(
+            project_id=project_id,
+            workspace__slug=slug
+        ).update(workflow=workflow)
+        
+        return Response({
+            "message": f"Workflow applied to {updated_count} issues successfully",
+            "updated_count": updated_count
+        }, status=status.HTTP_200_OK)
+
+
+class WorkflowStateViewSet(BaseViewSet):
+    serializer_class = WorkflowStateSerializer
+    model = WorkflowState
+
+    def get_queryset(self):
+        return self.filter_queryset(
+            super()
+            .get_queryset()
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(project_id=self.kwargs.get("project_id"))
+            .filter(workflow_id=self.kwargs.get("workflow_id"))
+            .filter(
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+            )
+            .select_related("workflow", "state", "project", "workspace")
+            .distinct()
+        )
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/states/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def create(self, request, slug, project_id, workflow_id):
+        try:
+            serializer = WorkflowStateSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(
+                    project_id=project_id,
+                    workflow_id=workflow_id,
+                )
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {"error": "State already exists in this workflow"},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def retrieve(self, request, slug, project_id, workflow_id, pk):
+        workflow_state = self.get_queryset().get(pk=pk)
+        serializer = WorkflowStateSerializer(workflow_state)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def list(self, request, slug, project_id, workflow_id):
+        workflow_states = WorkflowStateSerializer(
+            self.get_queryset().order_by("sequence"), many=True
+        ).data
+        return Response(workflow_states, status=status.HTTP_200_OK)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/states/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def partial_update(self, request, slug, project_id, workflow_id, pk):
+        workflow_state = self.get_queryset().get(pk=pk)
+        serializer = WorkflowStateSerializer(workflow_state, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/states/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def destroy(self, request, slug, project_id, workflow_id, pk):
+        workflow_state = self.get_queryset().get(pk=pk)
+        workflow_state.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WorkflowTransitionViewSet(BaseViewSet):
+    serializer_class = WorkflowTransitionSerializer
+    model = WorkflowTransition
+
+    def get_queryset(self):
+        return self.filter_queryset(
+            super()
+            .get_queryset()
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(project_id=self.kwargs.get("project_id"))
+            .filter(workflow_id=self.kwargs.get("workflow_id"))
+            .filter(
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+            )
+            .select_related("workflow", "from_state", "to_state", "project", "workspace")
+            .prefetch_related("reviewers")
+            .distinct()
+        )
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/transitions/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def create(self, request, slug, project_id, workflow_id):
+        try:
+            with transaction.atomic():
+                serializer = WorkflowTransitionSerializer(data=request.data)
+                if serializer.is_valid():
+                    transition = serializer.save(
+                        project_id=project_id,
+                        workflow_id=workflow_id,
+                    )
+                    
+                    # Add reviewers if provided
+                    reviewer_ids = request.data.get("reviewer_ids", [])
+                    if reviewer_ids:
+                        # Automatically set require_reviewer=True when reviewers are provided
+                        transition.require_reviewer = True
+                        transition.save()
+                        
+                        for reviewer_id in reviewer_ids:
+                            try:
+                                WorkflowTransitionReviewer.objects.get_or_create(
+                                    transition=transition,
+                                    reviewer_id=reviewer_id,
+                                    defaults={
+                                        'project_id': project_id,
+                                    }
+                                )
+                                print(f"Added reviewer {reviewer_id} to transition {transition.id}")
+                            except Exception as e:
+                                print(f"Error creating reviewer {reviewer_id}: {e}")
+                                continue
+                    
+                    return Response(
+                        WorkflowTransitionSerializer(transition).data,
+                        status=status.HTTP_201_CREATED
+                    )
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {"error": "Transition already exists between these states"},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def retrieve(self, request, slug, project_id, workflow_id, pk):
+        transition = self.get_queryset().get(pk=pk)
+        serializer = WorkflowTransitionSerializer(transition)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def list(self, request, slug, project_id, workflow_id):
+        transitions = WorkflowTransitionSerializer(self.get_queryset(), many=True).data
+        return Response(transitions, status=status.HTTP_200_OK)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/transitions/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def partial_update(self, request, slug, project_id, workflow_id, pk):
+        transition = self.get_queryset().get(pk=pk)
+        
+        # Extract reviewer_ids before serializer processing to avoid it being stripped
+        reviewer_ids = request.data.get("reviewer_ids", [])
+        has_reviewer_ids = "reviewer_ids" in request.data
+        
+        print(f"Updating transition {pk} with reviewer_ids: {reviewer_ids}")
+        
+        serializer = WorkflowTransitionSerializer(transition, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                transition = serializer.save()
+                
+                # Update reviewers if provided
+                if has_reviewer_ids:
+                    print(f"Updating reviewers for transition {transition.id}")
+                    
+                    # Use raw SQL to force delete all existing reviewers
+                    from django.db import connection
+                    table_name = WorkflowTransitionReviewer._meta.db_table
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            f"DELETE FROM {table_name} WHERE transition_id = %s",
+                            [str(transition.id)]
+                        )
+                        print(f"Force deleted all reviewers from {table_name} for transition {transition.id}")
+                    
+                    # Now add new reviewers
+                    for reviewer_id in reviewer_ids:
+                        try:
+                            # Try to create directly first
+                            reviewer = WorkflowTransitionReviewer(
+                                transition=transition,
+                                reviewer_id=reviewer_id,
+                                project_id=project_id,
+                            )
+                            reviewer.save()
+                            print(f"Created reviewer {reviewer_id} for transition {transition.id}")
+                        except Exception as e:
+                            print(f"Error creating reviewer {reviewer_id}: {e}")
+                            # Try get_or_create as fallback
+                            try:
+                                obj, created = WorkflowTransitionReviewer.objects.get_or_create(
+                                    transition=transition,
+                                    reviewer_id=reviewer_id,
+                                    defaults={'project_id': project_id}
+                                )
+                                if created:
+                                    print(f"Fallback created reviewer {reviewer_id}")
+                                else:
+                                    print(f"Fallback found existing reviewer {reviewer_id}")
+                            except Exception as e2:
+                                print(f"Fallback also failed for reviewer {reviewer_id}: {e2}")
+                                continue
+                    
+                    # Update require_reviewer flag
+                    if reviewer_ids:
+                        transition.require_reviewer = True
+                    else:
+                        transition.require_reviewer = False
+                    transition.save()
+                    print(f"Updated require_reviewer to {transition.require_reviewer}")
+                
+                return Response(
+                    WorkflowTransitionSerializer(transition).data,
+                    status=status.HTTP_200_OK
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/transitions/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def destroy(self, request, slug, project_id, workflow_id, pk):
+        transition = self.get_queryset().get(pk=pk)
+        transition.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WorkflowAssignmentRuleViewSet(BaseViewSet):
+    serializer_class = WorkflowAssignmentRuleSerializer
+    model = WorkflowAssignmentRule
+
+    def get_queryset(self):
+        return self.filter_queryset(
+            super()
+            .get_queryset()
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(project_id=self.kwargs.get("project_id"))
+            .filter(workflow_id=self.kwargs.get("workflow_id"))
+            .filter(
+                project__project_projectmember__member=self.request.user,
+                project__project_projectmember__is_active=True,
+                project__archived_at__isnull=True,
+            )
+            .select_related("workflow", "project", "workspace")
+            .distinct()
+        )
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/assignment-rules/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def create(self, request, slug, project_id, workflow_id):
+        serializer = WorkflowAssignmentRuleSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(
+                project_id=project_id,
+                workflow_id=workflow_id,
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def retrieve(self, request, slug, project_id, workflow_id, pk):
+        rule = self.get_queryset().get(pk=pk)
+        serializer = WorkflowAssignmentRuleSerializer(rule)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
+    def list(self, request, slug, project_id, workflow_id):
+        rules = WorkflowAssignmentRuleSerializer(
+            self.get_queryset().order_by("-priority"), many=True
+        ).data
+        return Response(rules, status=status.HTTP_200_OK)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/assignment-rules/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def partial_update(self, request, slug, project_id, workflow_id, pk):
+        rule = self.get_queryset().get(pk=pk)
+        serializer = WorkflowAssignmentRuleSerializer(rule, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @invalidate_cache(path="workspaces/:slug/workflows/:workflow_id/assignment-rules/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
+    def destroy(self, request, slug, project_id, workflow_id, pk):
+        rule = self.get_queryset().get(pk=pk)
+        rule.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WorkflowValidationViewSet(BaseViewSet):
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
+    def validate_transition(self, request, slug, project_id):
+        """Validate if a state transition is allowed according to workflow rules"""
+        serializer = WorkflowValidationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        issue_id = serializer.validated_data["issue_id"]
+        from_state_id = serializer.validated_data["from_state_id"]
+        to_state_id = serializer.validated_data["to_state_id"]
+
+        try:
+            issue = Issue.issue_objects.get(
+                pk=issue_id,
+                project_id=project_id,
+                workspace__slug=slug
+            )
+            
+            # If issue has no workflow, allow all transitions
+            if not issue.workflow:
+                return Response({"allowed": True}, status=status.HTTP_200_OK)
+
+            # Check if transition exists in workflow
+            transition = WorkflowTransition.objects.filter(
+                workflow=issue.workflow,
+                from_state_id=from_state_id,
+                to_state_id=to_state_id
+            ).first()
+
+            if not transition:
+                # If no specific transition rule exists, allow the transition
+                return Response({"allowed": True}, status=status.HTTP_200_OK)
+
+            # Check if reviewer is required
+            requires_reviewer = transition.require_reviewer
+            reviewers = list(transition.reviewers.values_list("reviewer_id", flat=True))
+
+            return Response(
+                {
+                    "allowed": True,
+                    "requires_reviewer": requires_reviewer,
+                    "reviewers": reviewers,
+                    "transition_id": transition.id
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Issue.DoesNotExist:
+            return Response(
+                {"error": "Issue not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def execute_transition(self, request, slug, project_id):
+        """Execute a workflow state transition with logging"""
+        serializer = WorkflowValidationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        issue_id = serializer.validated_data["issue_id"]
+        from_state_id = serializer.validated_data["from_state_id"]
+        to_state_id = serializer.validated_data["to_state_id"]
+        comment = serializer.validated_data.get("comment", "")
+
+        try:
+            with transaction.atomic():
+                issue = Issue.issue_objects.get(
+                    pk=issue_id,
+                    project_id=project_id,
+                    workspace__slug=slug
+                )
+                
+                from_state = State.objects.get(pk=from_state_id)
+                to_state = State.objects.get(pk=to_state_id)
+
+                # Update issue state
+                issue.state = to_state
+                issue.save()
+
+                # Log the transition if workflow is active
+                if issue.workflow:
+                    transition = WorkflowTransition.objects.filter(
+                        workflow=issue.workflow,
+                        from_state=from_state,
+                        to_state=to_state
+                    ).first()
+
+                    WorkflowTransitionLog.objects.create(
+                        issue=issue,
+                        workflow=issue.workflow,
+                        transition=transition,
+                        from_state=from_state,
+                        to_state=to_state,
+                        actor=request.user,
+                        comment=comment,
+                        project_id=project_id,
+                    )
+
+                return Response(
+                    {"message": "State transition executed successfully"},
+                    status=status.HTTP_200_OK
+                )
+
+        except (Issue.DoesNotExist, State.DoesNotExist):
+            return Response(
+                {"error": "Issue or state not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
+    def request_approval(self, request, slug, project_id):
+        """Request approval for a workflow state transition"""
+        serializer = WorkflowValidationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        issue_id = serializer.validated_data["issue_id"]
+        from_state_id = serializer.validated_data["from_state_id"]
+        to_state_id = serializer.validated_data["to_state_id"]
+        comment = serializer.validated_data.get("comment", "")
+
+        try:
+            with transaction.atomic():
+                issue = Issue.issue_objects.get(
+                    pk=issue_id,
+                    project_id=project_id,
+                    workspace__slug=slug
+                )
+                
+                # Check if issue has a workflow
+                if not issue.workflow:
+                    return Response(
+                        {"error": "Issue has no workflow assigned"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Get transition
+                transition = WorkflowTransition.objects.filter(
+                    workflow=issue.workflow,
+                    from_state_id=from_state_id,
+                    to_state_id=to_state_id
+                ).first()
+
+                if not transition:
+                    return Response(
+                        {"error": "Transition not allowed by workflow rules"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if not transition.require_reviewer:
+                    return Response(
+                        {"error": "This transition does not require approval"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Check if there's already a pending request
+                existing_request = WorkflowApprovalRequest.objects.filter(
+                    issue=issue,
+                    transition=transition,
+                    status="pending"
+                ).first()
+
+                if existing_request:
+                    return Response(
+                        {
+                            "message": "Approval request already exists",
+                            "approval_request_id": existing_request.id
+                        },
+                        status=status.HTTP_200_OK
+                    )
+
+                # Get state objects
+                from_state = State.objects.get(pk=from_state_id)
+                to_state = State.objects.get(pk=to_state_id)
+                
+                # Create approval request
+                approval_request = WorkflowApprovalRequest.objects.create(
+                    issue=issue,
+                    workflow=issue.workflow,
+                    transition=transition,
+                    from_state=from_state,
+                    to_state=to_state,
+                    requester=request.user,
+                    comment=comment,
+                    project_id=project_id,
+                )
+
+                # TODO: Send notifications to reviewers
+                reviewers = list(transition.reviewers.values_list("reviewer_id", flat=True))
+
+                return Response(
+                    {
+                        "message": "Approval request created successfully",
+                        "approval_request_id": approval_request.id,
+                        "reviewers": reviewers
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+
+        except Issue.DoesNotExist:
+            return Response(
+                {"error": "Issue not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except State.DoesNotExist:
+            return Response(
+                {"error": "State not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
+    def list_approval_requests(self, request, slug, project_id):
+        """List approval requests for the current user to review"""
+        try:
+            # Get approval requests where the current user is a reviewer
+            approval_requests = WorkflowApprovalRequest.objects.filter(
+                project_id=project_id,
+                workspace__slug=slug,
+                status="pending",
+                transition__reviewers__reviewer=request.user
+            ).select_related(
+                "issue", "workflow", "transition", "from_state", "to_state", "requester"
+            ).prefetch_related("transition__reviewers__reviewer").distinct()
+
+            approval_data = []
+            for approval in approval_requests:
+                approval_data.append({
+                    "id": approval.id,
+                    "issue": {
+                        "id": approval.issue.id,
+                        "name": approval.issue.name,
+                        "sequence_id": approval.issue.sequence_id,
+                    },
+                    "workflow": {
+                        "id": approval.workflow.id,
+                        "name": approval.workflow.name,
+                    },
+                    "from_state": {
+                        "id": approval.from_state.id,
+                        "name": approval.from_state.name,
+                        "color": approval.from_state.color,
+                    },
+                    "to_state": {
+                        "id": approval.to_state.id,
+                        "name": approval.to_state.name,
+                        "color": approval.to_state.color,
+                    },
+                    "requester": {
+                        "id": approval.requester.id,
+                        "display_name": approval.requester.display_name,
+                        "avatar": approval.requester.avatar,
+                    },
+                    "comment": approval.comment,
+                    "created_at": approval.created_at,
+                })
+
+            return Response(approval_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error fetching approval requests: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Error creating approval request: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def approve_transition(self, request, slug, project_id, approval_request_id):
+        """Approve a workflow transition request"""
+        try:
+            with transaction.atomic():
+                approval_request = WorkflowApprovalRequest.objects.select_for_update().get(
+                    pk=approval_request_id,
+                    project_id=project_id,
+                    status="pending"
+                )
+
+                # Check if current user is authorized to approve
+                transition = approval_request.transition
+                reviewer_ids = list(transition.reviewers.values_list("reviewer_id", flat=True))
+                
+                if request.user.id not in reviewer_ids:
+                    return Response(
+                        {"error": "You are not authorized to approve this transition"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
+                # Get approval data
+                approval_comment = request.data.get("comment", "")
+                
+                # Update approval request
+                approval_request.status = "approved"
+                approval_request.approved_by = request.user
+                approval_request.approved_at = timezone.now()
+                approval_request.approval_comment = approval_comment
+                approval_request.save()
+
+                # Execute the transition
+                issue = approval_request.issue
+                from_state = approval_request.from_state
+                to_state = approval_request.to_state
+
+                # Update issue state
+                issue.state = to_state
+                issue.save()
+
+                # Log the transition
+                WorkflowTransitionLog.objects.create(
+                    issue=issue,
+                    workflow=approval_request.workflow,
+                    transition=transition,
+                    from_state=from_state,
+                    to_state=to_state,
+                    reviewer=request.user,
+                    actor=approval_request.requester,
+                    comment=f"Approved by {request.user.display_name}. {approval_comment}".strip(),
+                    project_id=project_id,
+                )
+
+                return Response(
+                    {"message": "Transition approved and executed successfully"},
+                    status=status.HTTP_200_OK
+                )
+
+        except WorkflowApprovalRequest.DoesNotExist:
+            return Response(
+                {"error": "Approval request not found or already processed"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except State.DoesNotExist:
+            return Response(
+                {"error": "State not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
+    def list_approval_requests(self, request, slug, project_id):
+        """List approval requests for the current user to review"""
+        try:
+            # Get approval requests where the current user is a reviewer
+            approval_requests = WorkflowApprovalRequest.objects.filter(
+                project_id=project_id,
+                workspace__slug=slug,
+                status="pending",
+                transition__reviewers__reviewer=request.user
+            ).select_related(
+                "issue", "workflow", "transition", "from_state", "to_state", "requester"
+            ).prefetch_related("transition__reviewers__reviewer").distinct()
+
+            approval_data = []
+            for approval in approval_requests:
+                approval_data.append({
+                    "id": approval.id,
+                    "issue": {
+                        "id": approval.issue.id,
+                        "name": approval.issue.name,
+                        "sequence_id": approval.issue.sequence_id,
+                    },
+                    "workflow": {
+                        "id": approval.workflow.id,
+                        "name": approval.workflow.name,
+                    },
+                    "from_state": {
+                        "id": approval.from_state.id,
+                        "name": approval.from_state.name,
+                        "color": approval.from_state.color,
+                    },
+                    "to_state": {
+                        "id": approval.to_state.id,
+                        "name": approval.to_state.name,
+                        "color": approval.to_state.color,
+                    },
+                    "requester": {
+                        "id": approval.requester.id,
+                        "display_name": approval.requester.display_name,
+                        "avatar": approval.requester.avatar,
+                    },
+                    "comment": approval.comment,
+                    "created_at": approval.created_at,
+                })
+
+            return Response(approval_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Error fetching approval requests: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

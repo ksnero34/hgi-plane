@@ -570,6 +570,24 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     id?: string,
     shouldUpdateList = true
   ) {
+    // Auto-assign workflow to new issues based on assignment rules
+    try {
+      const workflowStore = this.rootIssueStore.rootStore.workflow;
+      const workflows = workflowStore.getWorkflowTemplates(projectId);
+      const activeWorkflows = workflows.filter(w => w.is_active);
+      
+      if (activeWorkflows.length > 0 && !data.workflow) {
+        // Find default workflow or first active workflow
+        const defaultWorkflow = activeWorkflows.find(w => w.is_default) || activeWorkflows[0];
+        if (defaultWorkflow) {
+          data.workflow = defaultWorkflow.id;
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to auto-assign workflow:", error);
+      // Continue with issue creation even if workflow assignment fails
+    }
+    
     // perform an API call
     const response = await this.issueService.createIssue(workspaceSlug, projectId, data);
 
@@ -602,6 +620,61 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   ) {
     // Store Before state of the issue
     const issueBeforeUpdate = clone(this.rootIssueStore.issues.getIssueById(issueId));
+    
+    // Workflow validation for state changes
+    if (data.state_id && issueBeforeUpdate?.state_id !== data.state_id) {
+      try {
+        const workflowStore = this.rootIssueStore.rootStore.workflow;
+        const validationResult = await workflowStore.validateTransition(workspaceSlug, projectId, {
+          issue_id: issueId,
+          from_state_id: issueBeforeUpdate?.state_id || "",
+          to_state_id: data.state_id,
+        });
+        
+        if (!validationResult.allowed) {
+          // Show toast message instead of throwing error
+          const { setToast, TOAST_TYPE } = await import("@plane/ui");
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: "상태 전환 실패",
+            message: validationResult.reason || "이 상태 전환은 워크플로우 규칙에 의해 허용되지 않습니다."
+          });
+          return;
+        }
+        
+        // If reviewer is required, request approval instead of direct transition
+        if (validationResult.requires_reviewer) {
+          try {
+            const approvalResult = await workflowStore.requestApproval(workspaceSlug, projectId, {
+              issue_id: issueId,
+              from_state_id: issueBeforeUpdate?.state_id || "",
+              to_state_id: data.state_id,
+              comment: `상태를 ${issueBeforeUpdate?.state_detail?.name || ''}에서 ${data.state_detail?.name || ''}으로 변경 요청`
+            });
+            
+            const { setToast, TOAST_TYPE } = await import("@plane/ui");
+            setToast({
+              type: TOAST_TYPE.INFO,
+              title: "승인 요청됨",
+              message: `상태 전환에 대한 승인이 요청되었습니다. 승인자: ${validationResult.reviewers?.length || 0}명`
+            });
+            return;
+          } catch (approvalError) {
+            const { setToast, TOAST_TYPE } = await import("@plane/ui");
+            setToast({
+              type: TOAST_TYPE.ERROR,
+              title: "승인 요청 실패",
+              message: "상태 전환 승인 요청 중 오류가 발생했습니다."
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        // If workflow validation API fails, allow transition (no rules defined)
+        console.warn("워크플로우 검증 실패, 전환 허용:", error);
+      }
+    }
+    
     try {
       // Update the Respective Stores
       this.rootIssueStore.issues.updateIssue(issueId, data);
@@ -827,6 +900,37 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
    */
   bulkUpdateProperties = async (workspaceSlug: string, projectId: string, data: TBulkOperationsPayload) => {
     const issueIds = data.issue_ids;
+    
+    // Workflow validation for bulk state changes
+    if (data.properties.state_id) {
+      const workflowStore = this.rootIssueStore.rootStore.workflow;
+      const failedValidations: string[] = [];
+      
+      // Validate each issue state transition
+      for (const issueId of issueIds) {
+        const issueBeforeUpdate = this.rootIssueStore.issues.getIssueById(issueId);
+        if (issueBeforeUpdate?.state_id !== data.properties.state_id) {
+          try {
+            const validationResult = await workflowStore.validateTransition(workspaceSlug, projectId, {
+              issue_id: issueId,
+              from_state_id: issueBeforeUpdate?.state_id || "",
+              to_state_id: data.properties.state_id,
+            });
+            
+            if (!validationResult.allowed) {
+              failedValidations.push(issueBeforeUpdate?.name || issueId);
+            }
+          } catch (error) {
+            failedValidations.push(issueBeforeUpdate?.name || issueId);
+          }
+        }
+      }
+      
+      if (failedValidations.length > 0) {
+        throw new Error(`다음 이슈들의 상태 전환이 워크플로우 규칙에 의해 허용되지 않습니다: ${failedValidations.join(", ")}`);
+      }
+    }
+    
     // make request to update issue properties
     await this.issueService.bulkOperations(workspaceSlug, projectId, data);
     // update issues in the store

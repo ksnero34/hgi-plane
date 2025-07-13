@@ -176,6 +176,14 @@ class Issue(ProjectBaseModel):
         blank=True,
         db_index=True
     )
+    workflow = models.ForeignKey(
+        "db.WorkflowTemplate",
+        on_delete=models.SET_NULL,
+        related_name="workflow_issues",
+        null=True,
+        blank=True,
+        db_index=True
+    )
 
     issue_objects = IssueManager()
 

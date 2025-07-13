@@ -85,6 +85,8 @@ export const IssueDetailsSidebar: React.FC<Props> = observer((props) => {
                 buttonClassName="text-sm"
                 dropdownArrow
                 dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+                issueId={issueId}
+                enableWorkflowValidation={true}
               />
             </div>
 

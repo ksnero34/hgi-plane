@@ -27,6 +27,8 @@ export const SpreadsheetStateColumn: React.FC<Props> = observer((props) => {
         buttonContainerClassName="w-full"
         onClose={onClose}
         showTooltip
+        issueId={issue.id}
+        enableWorkflowValidation={true}
       />
     </div>
   );

@@ -6,6 +6,7 @@ from .module import urlpatterns as module_patterns
 from .intake import urlpatterns as intake_patterns
 from .member import urlpatterns as member_patterns
 from .storage import urlpatterns as storage_patterns
+from .workflow import urlpatterns as workflow_patterns
 
 urlpatterns = [
     *project_patterns,
@@ -16,4 +17,5 @@ urlpatterns = [
     *intake_patterns,
     *member_patterns,
     *storage_patterns,
+    *workflow_patterns,
 ]

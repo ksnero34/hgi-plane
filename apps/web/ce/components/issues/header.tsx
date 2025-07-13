@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import axios from "axios";
 // icons
-import { Circle, ExternalLink, Upload, Edit3 } from "lucide-react";
+import { Circle, ExternalLink, Upload, Edit3, CheckCircle } from "lucide-react";
 // plane constants
 import { EUserPermissions, EUserPermissionsLevel, SPACE_BASE_PATH, SPACE_BASE_URL, WORK_ITEM_TRACKER_ELEMENTS, EProjectFeatureKey } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
@@ -20,7 +20,7 @@ import HeaderFilters from "@/components/issues/filters";
 // helpers
 import { captureClick } from "@/helpers/event-tracker.helper";
 // hooks
-import { useProject, useCommandPalette, useUserPermissions, useMultipleSelectStore } from "@/hooks/store";
+import { useProject, useCommandPalette, useUserPermissions, useMultipleSelectStore, useWorkflowApproval } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -30,6 +30,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { CommonProjectBreadcrumbs } from "../breadcrumbs/common";
 import { IssueUploadModal } from "./issue-uploader/issue-upload-modal";
 import { BulkEditModal } from "./bulk-operations/bulk-edit-modal";
+import { WorkflowApprovalModal } from "./workflow-approval-modal";
 
 export const IssuesHeader = observer(() => {
   // router
@@ -53,6 +54,7 @@ export const IssuesHeader = observer(() => {
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
   const { isMobile } = usePlatformOS();
+  const { approvalCount, refreshApprovalCount } = useWorkflowApproval();
 
   const SPACE_APP_URL = (SPACE_BASE_URL.trim() === "" ? window.location.origin : SPACE_BASE_URL) + SPACE_BASE_PATH;
   const publishedURL = `${SPACE_APP_URL}/issues/${currentProjectDetails?.anchor}`;
@@ -65,6 +67,7 @@ export const IssuesHeader = observer(() => {
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     try {
@@ -228,6 +231,17 @@ export const IssuesHeader = observer(() => {
                 {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
               </Button>
             )}
+            {approvalCount > 0 && (
+              <Button
+                onClick={() => setIsApprovalModalOpen(true)}
+                size="sm"
+                variant="primary"
+                className="relative"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                승인 요청 ({approvalCount})
+              </Button>
+            )}
             <Button
               onClick={() => {
                 captureClick({
@@ -257,6 +271,12 @@ export const IssuesHeader = observer(() => {
         onClose={() => setIsBulkEditModalOpen(false)}
         selectedIssues={selectedIssuesList}
         onBulkUpdate={handleBulkUpdate}
+      />
+
+      <WorkflowApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => setIsApprovalModalOpen(false)}
+        onApprovalProcessed={refreshApprovalCount}
       />
     </Header>
   );

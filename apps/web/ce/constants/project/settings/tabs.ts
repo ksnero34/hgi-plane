@@ -86,6 +86,14 @@ export const PROJECT_SETTINGS = {
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/custom-fields/`,
     Icon: SettingIcon,
   },
+  workflows: {
+    key: "workflows",
+    i18n_label: "워크플로우",
+    href: `/workflows`,
+    access: [EUserPermissions.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/workflows/`,
+    Icon: SettingIcon,
+  },
 };
 
 export const PROJECT_SETTINGS_LINKS: {
@@ -103,6 +111,7 @@ export const PROJECT_SETTINGS_LINKS: {
   PROJECT_SETTINGS["labels"],
   PROJECT_SETTINGS["estimates"],
   PROJECT_SETTINGS["automations"],
+  PROJECT_SETTINGS["workflows"],
   PROJECT_SETTINGS["exports"],
   PROJECT_SETTINGS["notifications"],
   PROJECT_SETTINGS["custom_fields"],

@@ -2,3 +2,8 @@ export * from "./archive-project";
 export * from "./delete-project-section";
 export * from "./features-list";
 export * from "./project-exports";
+export * from "./workflow-management";
+export * from "./workflow-template-modal";
+export * from "./workflow-states-list";
+export * from "./workflow-transitions-list";
+export * from "./workflow-approval-requests";
