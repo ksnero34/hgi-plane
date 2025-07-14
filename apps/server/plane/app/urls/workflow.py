@@ -140,6 +140,11 @@ urlpatterns = [
         name="workflow-approve-transition",
     ),
     path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/workflows/reject-transition/<uuid:approval_request_id>/",
+        WorkflowValidationViewSet.as_view({"post": "reject_transition"}),
+        name="workflow-reject-transition",
+    ),
+    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/workflows/approval-requests/",
         WorkflowValidationViewSet.as_view({"get": "list_approval_requests"}),
         name="workflow-approval-requests",

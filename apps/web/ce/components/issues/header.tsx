@@ -231,17 +231,15 @@ export const IssuesHeader = observer(() => {
                 {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
               </Button>
             )}
-            {approvalCount > 0 && (
-              <Button
-                onClick={() => setIsApprovalModalOpen(true)}
-                size="sm"
-                variant="primary"
-                className="relative"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                승인 요청 ({approvalCount})
-              </Button>
-            )}
+            <Button
+              onClick={() => setIsApprovalModalOpen(true)}
+              size="sm"
+              variant="primary"
+              className="relative"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {approvalCount > 0 ? `승인 요청 (${approvalCount})` : "승인 요청"}
+            </Button>
             <Button
               onClick={() => {
                 captureClick({

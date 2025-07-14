@@ -113,6 +113,7 @@ export class WorkflowStore implements IWorkflowStore {
       executeTransition: action,
       requestApproval: action,
       approveTransition: action,
+      rejectTransition: action,
       applyWorkflowToAllIssues: action,
       getApprovalRequests: action,
     });
@@ -505,6 +506,15 @@ export class WorkflowStore implements IWorkflowStore {
       await this.workflowService.approveTransition(workspaceSlug, projectId, approvalRequestId, data);
     } catch (error) {
       console.error("Error approving transition:", error);
+      throw error;
+    }
+  };
+
+  rejectTransition = async (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }): Promise<void> => {
+    try {
+      await this.workflowService.rejectTransition(workspaceSlug, projectId, approvalRequestId, data);
+    } catch (error) {
+      console.error("Error rejecting transition:", error);
       throw error;
     }
   };

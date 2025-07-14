@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { CheckCircle, XCircle, User, Clock, MessageSquare } from "lucide-react";
+import { CheckCircle, XCircle, User, Clock, MessageSquare, Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 // ui
 import { Button, ModalCore, EModalPosition, EModalWidth, setToast, TOAST_TYPE, TextArea } from "@plane/ui";
 // hooks
@@ -68,13 +68,22 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
   // router
   const { workspaceSlug, projectId } = useParams();
   // store hooks
-  const { getApprovalRequests, approveTransition } = useWorkflow();
+  const workflowStore = useWorkflow();
   // state
   const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [loadingRequests, setLoadingRequests] = useState<Set<string>>(new Set());
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [comment, setComment] = useState("");
+  const [comments, setComments] = useState<Record<string, string>>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "priority">("newest");
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "my_review">("my_review");
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showPageSizeOptions, setShowPageSizeOptions] = useState(false);
 
   // fetch approval requests
   const fetchApprovalRequests = async () => {
@@ -82,7 +91,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
 
     try {
       setLoading(true);
-      const requests = await getApprovalRequests(workspaceSlug as string, projectId as string);
+      const requests = await workflowStore.getApprovalRequests(workspaceSlug as string, projectId as string);
       setApprovalRequests(requests);
     } catch (error) {
       setToast({
@@ -101,13 +110,25 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
     }
   }, [isOpen, workspaceSlug, projectId]);
 
+  // Close page size options when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showPageSizeOptions && !(event.target as Element).closest('[data-page-size-selector]')) {
+        setShowPageSizeOptions(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showPageSizeOptions]);
+
   const handleApprove = async (approvalRequestId: string, approvalComment: string = "") => {
     if (!workspaceSlug || !projectId) return;
 
     try {
       setProcessingIds(prev => new Set(prev).add(approvalRequestId));
       
-      await approveTransition(
+      await workflowStore.approveTransition(
         workspaceSlug as string,
         projectId as string,
         approvalRequestId,
@@ -145,12 +166,113 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
   };
 
   const handleReject = async (approvalRequestId: string, rejectionComment: string = "") => {
-    // TODO: Implement rejection API if needed
-    setToast({
-      type: TOAST_TYPE.INFO,
-      title: "거부 기능",
-      message: "거부 기능은 아직 구현되지 않았습니다.",
+    try {
+      if (!workspaceSlug || !projectId) return;
+      
+      setLoadingRequests(prev => new Set(prev).add(approvalRequestId));
+      
+      await workflowStore.rejectTransition(workspaceSlug, projectId, approvalRequestId, {
+        comment: rejectionComment
+      });
+      
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "거부 완료",
+        message: "상태 전환이 거부되었습니다.",
+      });
+      
+      // Refresh approval requests
+      fetchApprovalRequests();
+      
+      // Clear the comment for this request
+      setComments(prev => {
+        const newComments = { ...prev };
+        delete newComments[approvalRequestId];
+        return newComments;
+      });
+      
+    } catch (error) {
+      console.error("Error rejecting transition:", error);
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "거부 실패",
+        message: "상태 전환 거부에 실패했습니다.",
+      });
+    } finally {
+      setLoadingRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(approvalRequestId);
+        return newSet;
+      });
+    }
+  };
+
+  // Filter and sort approval requests
+  const filteredAndSortedRequests = React.useMemo(() => {
+    let filtered = approvalRequests;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(request =>
+        request.issue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.requester.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        request.issue.sequence_id.toString().includes(searchTerm)
+      );
+    }
+
+    // Apply status filter
+    switch (filterStatus) {
+      case "pending":
+        filtered = filtered.filter(request => request.status === "pending");
+        break;
+      case "my_review":
+        filtered = filtered.filter(request => request.can_approve);
+        break;
+      case "all":
+      default:
+        // Show all requests
+        break;
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortOrder) {
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "priority":
+          // Sort by pending status first, then by creation date
+          if (a.status === "pending" && b.status !== "pending") return -1;
+          if (a.status !== "pending" && b.status === "pending") return 1;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
     });
+
+    return filtered;
+  }, [approvalRequests, searchTerm, filterStatus, sortOrder]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedRequests.length / itemsPerPage);
+  const paginatedRequests = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedRequests.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedRequests, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, sortOrder]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+    setShowPageSizeOptions(false);
   };
 
   return (
@@ -158,16 +280,95 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
       isOpen={isOpen}
       handleClose={onClose}
       position={EModalPosition.CENTER}
-      width={EModalWidth.XXL}
+      width={EModalWidth.VIIXL}
     >
       <div className="p-6" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-custom-text-100">
-            워크플로우 승인 요청 ({approvalRequests.length})
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-custom-text-100">
+              워크플로우 승인 요청 ({filteredAndSortedRequests.length}개)
+            </h3>
+            {totalPages > 1 && (
+              <div className="text-sm text-custom-text-200">
+                {currentPage} / {totalPages} 페이지
+              </div>
+            )}
+          </div>
           <p className="text-sm text-custom-text-200 mt-1">
             프로젝트의 모든 상태 전환 승인 요청을 확인하고 처리하세요.
           </p>
+          
+          {/* Search and Filter Controls */}
+          <div className="mt-4 space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-custom-text-400" />
+              <input
+                type="text"
+                placeholder="이슈 제목, 요청자 이름, 이슈 번호로 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-custom-border-200 rounded-lg bg-custom-background-100 text-custom-text-100 placeholder-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 focus:border-custom-primary-100"
+              />
+            </div>
+            
+            {/* Filter and Sort Controls */}
+            <div className="flex flex-wrap gap-3">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-custom-text-400" />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as "all" | "pending" | "my_review")}
+                  className="px-3 py-1 border border-custom-border-200 rounded bg-custom-background-100 text-custom-text-100 text-sm focus:outline-none focus:ring-2 focus:ring-custom-primary-100"
+                >
+                  <option value="my_review">내가 검토할 것</option>
+                  <option value="pending">대기 중</option>
+                  <option value="all">전체</option>
+                </select>
+              </div>
+              
+              {/* Sort Order */}
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-custom-text-400" />
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as "newest" | "oldest" | "priority")}
+                  className="px-3 py-1 border border-custom-border-200 rounded bg-custom-background-100 text-custom-text-100 text-sm focus:outline-none focus:ring-2 focus:ring-custom-primary-100"
+                >
+                  <option value="newest">최신순</option>
+                  <option value="oldest">오래된순</option>
+                  <option value="priority">우선순위</option>
+                </select>
+              </div>
+              
+              {/* Page Size Setting */}
+              <div className="flex items-center gap-2 relative" data-page-size-selector>
+                <Settings className="h-4 w-4 text-custom-text-400" />
+                <button
+                  onClick={() => setShowPageSizeOptions(!showPageSizeOptions)}
+                  className="px-3 py-1 border border-custom-border-200 rounded bg-custom-background-100 text-custom-text-100 text-sm focus:outline-none focus:ring-2 focus:ring-custom-primary-100 hover:bg-custom-background-80"
+                >
+                  {itemsPerPage}개씩 보기
+                </button>
+                {showPageSizeOptions && (
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-custom-background-100 border border-custom-border-200 rounded-lg shadow-lg">
+                    {[5, 10, 20, 50].map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => handleItemsPerPageChange(size)}
+                        className={`block w-full px-4 py-2 text-left text-sm hover:bg-custom-background-80 first:rounded-t-lg last:rounded-b-lg ${
+                          itemsPerPage === size ? 'bg-custom-background-80 text-custom-primary-100' : 'text-custom-text-100'
+                        }`}
+                      >
+                        {size}개씩
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -178,19 +379,23 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
               </div>
             ))}
           </div>
-        ) : approvalRequests.length === 0 ? (
+        ) : filteredAndSortedRequests.length === 0 ? (
           <div className="text-center py-12">
             <Clock className="h-12 w-12 text-custom-text-400 mx-auto mb-4" />
             <h4 className="text-lg font-medium text-custom-text-100 mb-2">
-              관련된 승인 요청이 없습니다
+              {searchTerm || filterStatus !== "all" ? "검색 결과가 없습니다" : "관련된 승인 요청이 없습니다"}
             </h4>
             <p className="text-custom-text-200">
-              현재 내가 검토자이거나 요청한 워크플로우 승인 요청이 없습니다.
+              {searchTerm || filterStatus !== "all" 
+                ? "검색 조건을 변경하거나 필터를 조정해보세요."
+                : "현재 내가 검토자이거나 요청한 워크플로우 승인 요청이 없습니다."
+              }
             </p>
           </div>
         ) : (
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {approvalRequests.map((request) => (
+          <>
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+              {paginatedRequests.map((request) => (
               <div
                 key={request.id}
                 className="border border-custom-border-200 rounded-lg p-4 bg-custom-background-100"
@@ -411,6 +616,74 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
               </div>
             ))}
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-custom-border-200">
+              <div className="text-sm text-custom-text-200">
+                {filteredAndSortedRequests.length > 0 && (
+                  <>
+                    {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredAndSortedRequests.length)} / {filteredAndSortedRequests.length}개
+                  </>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Previous Page */}
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  이전
+                </Button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "primary" : "outline-primary"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="min-w-[32px] px-2"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                {/* Next Page */}
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="flex items-center gap-1"
+                >
+                  다음
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          </>
         )}
 
         <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-custom-border-200">

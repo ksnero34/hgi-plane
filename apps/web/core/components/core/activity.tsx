@@ -1054,18 +1054,32 @@ const activityDetails: {
     icon: <CopyPlus size={12} className="text-custom-text-200" />,
   },
   state: {
-    message: (activity, showIssue) => (
-      <>
-        상태를 <span className="font-medium text-custom-text-100 break-all">{activity.new_value}</span>
-        {showIssue && (
-          <>
-            {" "}
-            (으)로 <IssueLink activity={activity} />에{" "}
-          </>
-        )}
-        {!showIssue && " (으)로"} 설정했습니다
-      </>
-    ),
+    message: (activity, showIssue) => {
+      // 워크플로우 승인 정보 파싱
+      const comment = activity.comment || "";
+      const approvalMatch = comment.match(/\(approved by ([^)]+)\)(?:\s*-\s*(.+))?/);
+      
+      return (
+        <>
+          상태를 <span className="font-medium text-custom-text-100 break-all">{activity.new_value}</span>
+          {showIssue && (
+            <>
+              {" "}
+              (으)로 <IssueLink activity={activity} />에{" "}
+            </>
+          )}
+          {!showIssue && " (으)로"} 설정했습니다.
+          {approvalMatch && (
+            <span className="text-custom-text-200">
+              {" "}(승인자: <span className="font-medium text-custom-text-100">{approvalMatch[1]}</span>
+              {approvalMatch[2] && (
+                <>, 승인 코멘트: <span className="font-medium text-custom-text-100">{approvalMatch[2]}</span></>
+              )})
+            </span>
+          )}
+        </>
+      );
+    },
     icon: <LayoutGridIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
   },
   start_date: {

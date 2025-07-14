@@ -9,6 +9,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+# Background tasks
+from plane.bgtasks.issue_activities_task import issue_activity
+
+# Django imports
+from django.core.serializers.json import DjangoJSONEncoder
+import json
+import uuid
+
 # Module imports
 from .. import BaseViewSet
 from plane.app.serializers import (
@@ -512,6 +520,7 @@ class WorkflowValidationViewSet(BaseViewSet):
                 from_state = State.objects.get(pk=from_state_id)
                 to_state = State.objects.get(pk=to_state_id)
 
+
                 # Update issue state
                 issue.state = to_state
                 issue.save()
@@ -551,6 +560,9 @@ class WorkflowValidationViewSet(BaseViewSet):
                         comment=comment,
                         project_id=project_id,
                     )
+
+                # Note: No notifications for direct workflow transitions
+                # Notifications are only sent for approved transitions
 
                 return Response(
                     {"message": "State transition executed successfully"},
@@ -791,6 +803,20 @@ class WorkflowValidationViewSet(BaseViewSet):
                 from_state = approval_request.from_state
                 to_state = approval_request.to_state
 
+                # Capture basic issue state for notifications (before change)
+                # Using minimal data to avoid serialization issues
+                current_instance = json.dumps({
+                    "id": str(issue.id),
+                    "name": issue.name,
+                    "state": str(from_state.id),
+                    "project": str(issue.project_id),
+                    "assignees": [str(a.id) for a in issue.assignees.all()],
+                    "labels": [str(l.id) for l in issue.labels.all()],
+                }, cls=DjangoJSONEncoder)
+                
+                # Capture requested changes
+                requested_data = json.dumps({"state": str(to_state.id)}, cls=DjangoJSONEncoder)
+
                 # Update issue state
                 issue.state = to_state
                 issue.save()
@@ -849,6 +875,36 @@ class WorkflowValidationViewSet(BaseViewSet):
                     project_id=project_id,
                 )
 
+                # Create direct notification for workflow approval
+                from plane.bgtasks.notification_task import notifications
+                
+                # Create activity data that matches expected format
+                activity_data = [{
+                    "id": str(uuid.uuid4()),
+                    "issue": str(issue.id),
+                    "actor": str(approval_request.requester.id),
+                    "verb": "updated",
+                    "field": "state",
+                    "old_value": from_state.name,
+                    "new_value": to_state.name,
+                    "old_identifier": str(from_state.id),
+                    "new_identifier": str(to_state.id),
+                    "comment": f"updated the state to (approved by {request.user.display_name})",
+                    "epoch": current_epoch,
+                }]
+                
+                # Call notification task directly with proper data
+                notifications.delay(
+                    type="issue.activity.updated",
+                    issue_id=str(issue.id),
+                    project_id=str(project_id),
+                    actor_id=str(approval_request.requester.id),
+                    subscriber=True,
+                    issue_activities_created=json.dumps(activity_data, cls=DjangoJSONEncoder),
+                    requested_data=requested_data,
+                    current_instance=current_instance,
+                )
+                
                 return Response(
                     {"message": "Transition approved and executed successfully"},
                     status=status.HTTP_200_OK
@@ -862,5 +918,91 @@ class WorkflowValidationViewSet(BaseViewSet):
         except State.DoesNotExist:
             return Response(
                 {"error": "State not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=["post"], url_path="reject-transition/(?P<approval_request_id>[^/.]+)")
+    def reject_transition(self, request, slug, project_id, approval_request_id):
+        """
+        Reject a workflow transition request
+        """
+        try:
+            with transaction.atomic():
+                # Get the approval request
+                approval_request = WorkflowApprovalRequest.objects.select_for_update().get(
+                    id=approval_request_id,
+                    project_id=project_id,
+                    status="pending"
+                )
+                
+                # Check if user is authorized to reject this request
+                transition_reviewers = WorkflowTransitionReviewer.objects.filter(
+                    transition=approval_request.transition,
+                    reviewer=request.user
+                )
+                
+                if not transition_reviewers.exists():
+                    return Response(
+                        {"error": "You are not authorized to reject this transition"},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                
+                # Get rejection comment
+                rejection_comment = request.data.get("comment", "")
+                
+                # Update approval request status to rejected
+                approval_request.status = "rejected"
+                approval_request.approved_by = request.user
+                approval_request.approved_at = timezone.now()
+                approval_request.approval_comment = rejection_comment
+                approval_request.save()
+                
+                # Get issue and states for logging
+                issue = approval_request.issue
+                from_state = approval_request.from_state
+                to_state = approval_request.to_state
+                
+                # Create issue activity for rejection
+                current_epoch = time.time()
+                rejection_activity_comment = f"rejected the state transition from {from_state.name} to {to_state.name}"
+                if rejection_comment:
+                    rejection_activity_comment += f": {rejection_comment}"
+                
+                IssueActivity.objects.create(
+                    issue=issue,
+                    actor=request.user,
+                    verb="rejected",
+                    old_value=from_state.name,
+                    new_value=to_state.name,
+                    field="workflow_rejection",
+                    project_id=project_id,
+                    workspace_id=issue.workspace_id,
+                    comment=rejection_activity_comment,
+                    old_identifier=from_state.id,
+                    new_identifier=to_state.id,
+                    epoch=current_epoch,
+                )
+                
+                # Create workflow transition log
+                WorkflowTransitionLog.objects.create(
+                    issue=issue,
+                    workflow=approval_request.transition.workflow,
+                    transition=approval_request.transition,
+                    from_state=from_state,
+                    to_state=to_state,
+                    actor=approval_request.requester,
+                    reviewer=request.user,
+                    comment=rejection_comment,
+                    project_id=project_id,
+                )
+                
+                return Response(
+                    {"message": "Transition rejected successfully"},
+                    status=status.HTTP_200_OK
+                )
+                
+        except WorkflowApprovalRequest.DoesNotExist:
+            return Response(
+                {"error": "Approval request not found or already processed"},
                 status=status.HTTP_404_NOT_FOUND
             )

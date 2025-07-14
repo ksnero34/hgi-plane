@@ -28,9 +28,27 @@ export const IssueStateActivity: FC<TIssueStateActivity> = observer((props) => {
       ends={ends}
     >
       <>
-        님이 상태를 <span className="font-medium text-custom-text-100">{activity.new_value}</span> 로 변경했습니다
+        님이 상태를 <span className="font-medium text-custom-text-100">{activity.new_value}</span> 로 변경했습니다.
+        {(() => {
+          // 워크플로우 승인 정보 파싱
+          const comment = activity.comment || "";
+          const approvalMatch = comment.match(/\(approved by ([^)]+)\)(?:\s*-\s*(.+))?/);
+          
+          if (approvalMatch) {
+            const [, approverName, approvalComment] = approvalMatch;
+            return (
+              <span className="text-custom-text-200">
+                {" "}(승인자: <span className="font-medium text-custom-text-100">{approverName}</span>
+                {approvalComment && (
+                  <>, 승인 코멘트: <span className="font-medium text-custom-text-100">{approvalComment}</span></>
+                )})
+              </span>
+            );
+          }
+          return null;
+        })()}
         {showIssue ? ` for ` : ``}
-        {showIssue && <IssueLink activityId={activityId} />}.
+        {showIssue && <IssueLink activityId={activityId} />}
       </>
     </IssueActivityBlockComponent>
   );

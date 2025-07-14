@@ -114,6 +114,20 @@ export const NotificationContent: FC<{
   const renderSuffix = () => {
     if (notificationField === "priority") return " 로 변경했습니다.";
     if (notificationField === "state") {
+      // 워크플로우 승인 정보 파싱
+      const comment = data?.issue_activity?.comment || "";
+      const approvalMatch = comment.match(/\(approved by ([^)]+)\)(?:\s*-\s*(.+))?/);
+      
+      if (approvalMatch) {
+        const [, approverName, approvalComment] = approvalMatch;
+        let suffix = ` 로 변경했습니다. (승인자: ${approverName}`;
+        if (approvalComment) {
+          suffix += `, 승인 코멘트: ${approvalComment}`;
+        }
+        suffix += ")";
+        return suffix;
+      }
+      
       if (data?.issue?.state_group === "completed") return " 로 변경하여 완료처리했습니다.";
       else return " 로 변경했습니다.";
     }

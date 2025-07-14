@@ -218,6 +218,11 @@ export class WorkflowService extends APIService {
       .then((response) => response?.data);
   }
 
+  async rejectTransition(workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }): Promise<void> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/workflows/reject-transition/${approvalRequestId}/`, data)
+      .then((response) => response?.data);
+  }
+
   async applyWorkflowToAllIssues(workspaceSlug: string, projectId: string, workflowId: string): Promise<any> {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/workflows/${workflowId}/apply-to-all-issues/`, {})
       .then((response) => response?.data);
