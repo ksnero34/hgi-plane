@@ -3,6 +3,8 @@ import { observer } from "mobx-react";
 // types
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import { IIssueDisplayProperties, TIssue } from "@plane/types";
+// ui
+import { setToast, TOAST_TYPE } from "@plane/ui";
 // hooks
 import { captureSuccess } from "@/helpers/event-tracker.helper";
 // components
@@ -45,14 +47,53 @@ export const IssueColumn = observer((props: Props) => {
           issue={issueDetail}
           onChange={(issue: TIssue, data: Partial<TIssue>) =>
             updateIssue &&
-            updateIssue(issue.project_id, issue.id, data).then(() => {
-              captureSuccess({
-                eventName: WORK_ITEM_TRACKER_EVENTS.update,
-                payload: {
-                  id: issue.id,
-                },
-              });
-            })
+            updateIssue(issue.project_id, issue.id, data)
+              .then(() => {
+                captureSuccess({
+                  eventName: WORK_ITEM_TRACKER_EVENTS.update,
+                  payload: {
+                    id: issue.id,
+                  },
+                });
+              })
+              .catch((error: any) => {
+                console.error("Issue update failed:", error);
+                console.error("Error details:", {
+                  status: error?.response?.status,
+                  data: error?.response?.data,
+                  message: error?.message
+                });
+                
+                // Extract detailed error message
+                let errorMessage = "이슈 업데이트 실패";
+                let errorTitle = "업데이트 실패";
+                
+                // Handle workflow-specific errors
+                if (error?.response?.status === 400) {
+                  if (error?.response?.data?.non_field_errors?.[0]) {
+                    errorMessage = error.response.data.non_field_errors[0];
+                  } else if (error?.response?.data?.detail) {
+                    errorMessage = error.response.data.detail;
+                  } else if (error?.response?.data?.error) {
+                    errorMessage = error.response.data.error;
+                  } else if (error?.response?.data?.message) {
+                    errorMessage = error.response.data.message;
+                  }
+                  
+                  // Check for workflow-related errors
+                  if (errorMessage.includes("workflow") || errorMessage.includes("transition") || errorMessage.includes("승인")) {
+                    errorTitle = "워크플로우 규칙 위반";
+                  }
+                } else if (error?.message) {
+                  errorMessage = error.message;
+                }
+                
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: errorTitle,
+                  message: errorMessage,
+                });
+              })
           }
           disabled={disableUserActions}
           onClose={() => tableCellRef?.current?.focus()}

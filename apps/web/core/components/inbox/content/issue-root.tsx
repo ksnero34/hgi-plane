@@ -125,11 +125,23 @@ export const InboxIssueMainContent: React.FC<Props> = observer((props) => {
             eventName: WORK_ITEM_TRACKER_EVENTS.update,
             payload: { id: _issueId },
           });
-        } catch (error) {
+        } catch (error: any) {
+          console.error("Issue update failed:", error);
+          
+          // Extract detailed error message
+          let errorMessage = "작업 항목 업데이트 실패";
+          if (error?.response?.data?.non_field_errors?.[0]) {
+            errorMessage = error.response.data.non_field_errors[0];
+          } else if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+          
           setToast({
-            title: "Work item update failed",
+            title: "작업 항목 업데이트 실패",
             type: TOAST_TYPE.ERROR,
-            message: "Work item update failed",
+            message: errorMessage,
           });
           captureError({
             eventName: WORK_ITEM_TRACKER_EVENTS.update,

@@ -2,6 +2,7 @@
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
+import time
 
 # Third party imports
 from rest_framework import status
@@ -31,6 +32,7 @@ from plane.db.models import (
     WorkflowTransitionLog,
     Issue,
     State,
+    IssueActivity,
 )
 from plane.utils.cache import invalidate_cache
 
@@ -514,6 +516,23 @@ class WorkflowValidationViewSet(BaseViewSet):
                 issue.state = to_state
                 issue.save()
 
+                # Create issue activity for state change
+                current_epoch = time.time()
+                IssueActivity.objects.create(
+                    issue=issue,
+                    actor=request.user,
+                    verb="updated",
+                    old_value=from_state.name,
+                    new_value=to_state.name,
+                    field="state",
+                    project_id=project_id,
+                    workspace_id=issue.workspace_id,
+                    comment="updated the state to",
+                    old_identifier=from_state.id,
+                    new_identifier=to_state.id,
+                    epoch=current_epoch,
+                )
+
                 # Log the transition if workflow is active
                 if issue.workflow:
                     transition = WorkflowTransition.objects.filter(
@@ -598,13 +617,21 @@ class WorkflowValidationViewSet(BaseViewSet):
                 ).first()
 
                 if existing_request:
-                    return Response(
-                        {
-                            "message": "Approval request already exists",
-                            "approval_request_id": existing_request.id
-                        },
-                        status=status.HTTP_200_OK
-                    )
+                    # If the same user is requesting again, return the existing request
+                    if existing_request.requester == request.user:
+                        return Response(
+                            {
+                                "message": "Approval request already exists",
+                                "approval_request_id": existing_request.id
+                            },
+                            status=status.HTTP_200_OK
+                        )
+                    else:
+                        # Different user is requesting - cancel the existing request and create a new one
+                        existing_request.status = "cancelled"
+                        existing_request.save()
+                        
+                        # Continue to create new request
 
                 # Get state objects
                 from_state = State.objects.get(pk=from_state_id)
@@ -647,60 +674,84 @@ class WorkflowValidationViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
     def list_approval_requests(self, request, slug, project_id):
-        """List approval requests for the current user to review"""
+        """List all approval requests in the project"""
         try:
-            # Get approval requests where the current user is a reviewer
+            # Get all approval requests in the project (visible to all project members)
             approval_requests = WorkflowApprovalRequest.objects.filter(
                 project_id=project_id,
-                workspace__slug=slug,
-                status="pending",
-                transition__reviewers__reviewer=request.user
+                status__in=["pending", "approved", "rejected", "cancelled"]
             ).select_related(
-                "issue", "workflow", "transition", "from_state", "to_state", "requester"
-            ).prefetch_related("transition__reviewers__reviewer").distinct()
+                "issue", "workflow", "transition", "from_state", "to_state", 
+                "requester", "approved_by"
+            ).prefetch_related(
+                "transition__reviewers__reviewer"
+            ).distinct().order_by("-created_at")
 
-            approval_data = []
-            for approval in approval_requests:
-                approval_data.append({
-                    "id": approval.id,
+            response_data = []
+            for request_obj in approval_requests:
+                # Check if current user is a reviewer for this transition
+                is_reviewer = request_obj.transition.reviewers.filter(reviewer=request.user).exists()
+                can_approve = is_reviewer and request_obj.status == "pending"
+                
+                # Get all reviewers for this transition
+                reviewers = [
+                    {
+                        "id": reviewer.reviewer.id,
+                        "display_name": reviewer.reviewer.display_name,
+                        "email": reviewer.reviewer.email
+                    }
+                    for reviewer in request_obj.transition.reviewers.all()
+                ]
+
+                response_data.append({
+                    "id": request_obj.id,
                     "issue": {
-                        "id": approval.issue.id,
-                        "name": approval.issue.name,
-                        "sequence_id": approval.issue.sequence_id,
+                        "id": request_obj.issue.id,
+                        "name": request_obj.issue.name,
+                        "sequence_id": request_obj.issue.sequence_id
                     },
                     "workflow": {
-                        "id": approval.workflow.id,
-                        "name": approval.workflow.name,
+                        "id": request_obj.workflow.id,
+                        "name": request_obj.workflow.name
                     },
-                    "from_state": {
-                        "id": approval.from_state.id,
-                        "name": approval.from_state.name,
-                        "color": approval.from_state.color,
-                    },
-                    "to_state": {
-                        "id": approval.to_state.id,
-                        "name": approval.to_state.name,
-                        "color": approval.to_state.color,
+                    "transition": {
+                        "id": request_obj.transition.id,
+                        "from_state": {
+                            "id": request_obj.from_state.id,
+                            "name": request_obj.from_state.name,
+                            "color": request_obj.from_state.color
+                        },
+                        "to_state": {
+                            "id": request_obj.to_state.id,
+                            "name": request_obj.to_state.name,
+                            "color": request_obj.to_state.color
+                        }
                     },
                     "requester": {
-                        "id": approval.requester.id,
-                        "display_name": approval.requester.display_name,
-                        "avatar": approval.requester.avatar,
+                        "id": request_obj.requester.id,
+                        "display_name": request_obj.requester.display_name,
+                        "email": request_obj.requester.email
                     },
-                    "comment": approval.comment,
-                    "created_at": approval.created_at,
+                    "reviewers": reviewers,
+                    "status": request_obj.status,
+                    "comment": request_obj.comment,
+                    "approved_by": {
+                        "id": request_obj.approved_by.id,
+                        "display_name": request_obj.approved_by.display_name,
+                        "email": request_obj.approved_by.email
+                    } if request_obj.approved_by else None,
+                    "approved_at": request_obj.approved_at,
+                    "approval_comment": request_obj.approval_comment,
+                    "created_at": request_obj.created_at,
+                    "is_reviewer": is_reviewer,
+                    "can_approve": can_approve
                 })
 
-            return Response(approval_data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response(
                 {"error": f"Error fetching approval requests: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"Error creating approval request: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -744,6 +795,47 @@ class WorkflowValidationViewSet(BaseViewSet):
                 issue.state = to_state
                 issue.save()
 
+                # Create issue activity for state change
+                current_epoch = time.time()
+                activity_comment = f"updated the state to (approved by {request.user.display_name})"
+                if approval_comment:
+                    activity_comment += f" - {approval_comment}"
+                
+                IssueActivity.objects.create(
+                    issue=issue,
+                    actor=approval_request.requester,  # Show as requester's action
+                    verb="updated",
+                    old_value=from_state.name,
+                    new_value=to_state.name,
+                    field="state",
+                    project_id=project_id,
+                    workspace_id=issue.workspace_id,
+                    comment=activity_comment,
+                    old_identifier=from_state.id,
+                    new_identifier=to_state.id,
+                    epoch=current_epoch,
+                )
+                
+                # Create separate activity for approval with approver information
+                approval_activity_comment = f"approved the state transition"
+                if approval_comment:
+                    approval_activity_comment += f": {approval_comment}"
+                
+                IssueActivity.objects.create(
+                    issue=issue,
+                    actor=request.user,  # Show as approver's action
+                    verb="approved",
+                    old_value=from_state.name,
+                    new_value=to_state.name,
+                    field="workflow_approval",
+                    project_id=project_id,
+                    workspace_id=issue.workspace_id,
+                    comment=approval_activity_comment,
+                    old_identifier=from_state.id,
+                    new_identifier=to_state.id,
+                    epoch=current_epoch,
+                )
+
                 # Log the transition
                 WorkflowTransitionLog.objects.create(
                     issue=issue,
@@ -771,58 +863,4 @@ class WorkflowValidationViewSet(BaseViewSet):
             return Response(
                 {"error": "State not found"},
                 status=status.HTTP_404_NOT_FOUND
-            )
-
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
-    def list_approval_requests(self, request, slug, project_id):
-        """List approval requests for the current user to review"""
-        try:
-            # Get approval requests where the current user is a reviewer
-            approval_requests = WorkflowApprovalRequest.objects.filter(
-                project_id=project_id,
-                workspace__slug=slug,
-                status="pending",
-                transition__reviewers__reviewer=request.user
-            ).select_related(
-                "issue", "workflow", "transition", "from_state", "to_state", "requester"
-            ).prefetch_related("transition__reviewers__reviewer").distinct()
-
-            approval_data = []
-            for approval in approval_requests:
-                approval_data.append({
-                    "id": approval.id,
-                    "issue": {
-                        "id": approval.issue.id,
-                        "name": approval.issue.name,
-                        "sequence_id": approval.issue.sequence_id,
-                    },
-                    "workflow": {
-                        "id": approval.workflow.id,
-                        "name": approval.workflow.name,
-                    },
-                    "from_state": {
-                        "id": approval.from_state.id,
-                        "name": approval.from_state.name,
-                        "color": approval.from_state.color,
-                    },
-                    "to_state": {
-                        "id": approval.to_state.id,
-                        "name": approval.to_state.name,
-                        "color": approval.to_state.color,
-                    },
-                    "requester": {
-                        "id": approval.requester.id,
-                        "display_name": approval.requester.display_name,
-                        "avatar": approval.requester.avatar,
-                    },
-                    "comment": approval.comment,
-                    "created_at": approval.created_at,
-                })
-
-            return Response(approval_data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response(
-                {"error": f"Error fetching approval requests: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

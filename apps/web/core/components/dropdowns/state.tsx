@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useRef, useState, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
@@ -104,12 +104,81 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
   const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   const { fetchProjectStates, getProjectStates, getStateById } = useProjectState();
-  const { validateTransition, requestApproval } = useWorkflow();
+  const { validateTransition, requestApproval, getDefaultWorkflow, getWorkflowTransitions } = useWorkflow();
   const statesList = stateIds
     ? stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state)
     : getProjectStates(projectId);
   const defaultState = statesList?.find((state) => state?.default);
   const stateValue = !!value ? value : showDefaultState ? defaultState?.id : undefined;
+
+  // Note: Workflow data is now preloaded at the page level (ProjectLayoutRoot)
+  // to ensure it's available before StateDropdown components render
+
+  // Get available states based on workflow rules
+  const getAvailableStates = useMemo(() => {
+    if (!enableWorkflowValidation || !issueId || !projectId || !workspaceSlug) {
+      console.log("Workflow validation disabled or missing required data");
+      return statesList; // Return all states if workflow validation is disabled
+    }
+
+    // Get default workflow for the project
+    const defaultWorkflow = getDefaultWorkflow(projectId);
+    if (!defaultWorkflow) {
+      console.log("No default workflow found for project:", projectId);
+      return statesList; // Return all states if no workflow is found
+    }
+
+    console.log("Default workflow found:", defaultWorkflow);
+
+    // Get workflow transitions
+    const transitions = getWorkflowTransitions(defaultWorkflow.id);
+    if (!transitions || transitions.length === 0) {
+      console.log("No transitions found for workflow:", defaultWorkflow.id);
+      return statesList; // Return all states if no transitions are found
+    }
+
+    console.log("Workflow transitions:", transitions);
+
+    // Filter states that can be transitioned to from current state
+    const currentStateId = stateValue;
+    if (!currentStateId) {
+      console.log("No current state ID");
+      return statesList; // Return all states if no current state
+    }
+
+    console.log("Current state ID:", currentStateId);
+
+    // Find transitions from current state
+    const availableTransitions = transitions.filter(
+      (transition) => transition.from_state === currentStateId
+    );
+
+    console.log("Available transitions from current state:", availableTransitions);
+
+    // Extract target state IDs
+    const availableStateIds = new Set([
+      currentStateId, // Always include current state
+      ...availableTransitions.map((transition) => transition.to_state),
+    ]);
+
+    console.log("Available state IDs:", Array.from(availableStateIds));
+
+    // Filter states list to only include available states
+    const filteredStates = statesList?.filter((state) => availableStateIds.has(state?.id ?? "")) || [];
+    
+    console.log("Filtered states:", filteredStates);
+    
+    return filteredStates;
+  }, [
+    enableWorkflowValidation,
+    issueId,
+    projectId,
+    workspaceSlug,
+    statesList,
+    stateValue,
+    getDefaultWorkflow,
+    getWorkflowTransitions,
+  ]);
 
   // Workflow validation logic
   const validateStateTransition = async (toStateId: string) => {
@@ -140,7 +209,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     }
   };
 
-  const options = statesList?.map((state) => ({
+  const options = getAvailableStates?.map((state) => ({
     value: state?.id,
     query: `${state?.name}`,
     content: (
@@ -195,38 +264,16 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
         return;
       }
       
-      // If reviewer is required, create approval request
+      // If reviewer is required, show modal without creating approval request yet
       if (validation.requiresReviewer && validation.reviewers && validation.reviewers.length > 0) {
-        try {
-          const approvalResult = await requestApproval(workspaceSlug as string, projectId, {
-            issue_id: issueId,
-            from_state_id: stateValue!,
-            to_state_id: val,
-            comment: "",
-          });
-          
-          setToast({
-            type: TOAST_TYPE.SUCCESS,
-            title: "승인 요청 전송됨",
-            message: `승인자에게 상태 전환 요청이 전송되었습니다. (요청 ID: ${approvalResult.approval_request_id})`,
-          });
-          
-          // Show reviewer modal for immediate approval if user is a reviewer
-          setReviewerModalData({
-            issueId,
-            fromStateId: stateValue!,
-            toStateId: val,
-            reviewers: validation.reviewers,
-            approvalRequestId: approvalResult.approval_request_id,
-          });
-        } catch (error) {
-          console.error("Error creating approval request:", error);
-          setToast({
-            type: TOAST_TYPE.ERROR,
-            title: "승인 요청 실패",
-            message: "승인 요청을 생성하는 중 오류가 발생했습니다.",
-          });
-        }
+        // Show reviewer modal - let the modal handle approval request creation
+        setReviewerModalData({
+          issueId,
+          fromStateId: stateValue!,
+          toStateId: val,
+          reviewers: validation.reviewers,
+          transitionId: validation.transition_id,
+        });
         handleClose();
         return;
       }
@@ -363,6 +410,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
         isOpen={!!reviewerModalData}
         onClose={() => setReviewerModalData(null)}
         transitionData={reviewerModalData}
+        projectId={projectId}
         onApprove={() => {
           if (reviewerModalData) {
             onChange(reviewerModalData.toStateId);

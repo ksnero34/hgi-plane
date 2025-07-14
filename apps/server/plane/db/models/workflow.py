@@ -198,6 +198,7 @@ class WorkflowApprovalRequest(ProjectBaseModel):
             ("pending", "Pending"),
             ("approved", "Approved"),
             ("rejected", "Rejected"),
+            ("cancelled", "Cancelled"),
             ("expired", "Expired"),
         ],
         default="pending",

@@ -279,6 +279,27 @@ class IssueCreateSerializer(BaseSerializer):
                 member_id__in=attrs["assignee_ids"],
             ).values_list("member_id", flat=True)
 
+        # Check workflow transition rules for state changes (for updates only)
+        if self.instance and attrs.get("state") and self.instance.state != attrs.get("state"):
+            # Only validate workflow transitions for existing issues with workflow assigned
+            if self.instance.workflow:
+                from plane.db.models import WorkflowTransition
+                
+                from_state = self.instance.state
+                to_state = attrs.get("state")
+                
+                # Check if transition exists in workflow
+                transition = WorkflowTransition.objects.filter(
+                    workflow=self.instance.workflow,
+                    from_state=from_state,
+                    to_state=to_state
+                ).first()
+                
+                if not transition:
+                    raise serializers.ValidationError(
+                        f"State transition from '{from_state.name}' to '{to_state.name}' is not allowed by workflow rules"
+                    )
+
         return attrs
 
     def get_valid_assignees(self, assignees, project_id):

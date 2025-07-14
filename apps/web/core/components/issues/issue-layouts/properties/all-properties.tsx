@@ -12,7 +12,7 @@ import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
 // ui
-import { Tooltip } from "@plane/ui";
+import { Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
 import {
   cn,
   getDate,
@@ -107,12 +107,49 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
 
   const handleState = (stateId: string) => {
     if (updateIssue)
-      updateIssue(issue.project_id, issue.id, { state_id: stateId }).then(() => {
-        captureSuccess({
-          eventName: WORK_ITEM_TRACKER_EVENTS.update,
-          payload: { id: issue.id },
+      updateIssue(issue.project_id, issue.id, { state_id: stateId })
+        .then(() => {
+          captureSuccess({
+            eventName: WORK_ITEM_TRACKER_EVENTS.update,
+            payload: { id: issue.id },
+          });
+        })
+        .catch((error) => {
+          console.error("State update failed:", error);
+          console.error("Error details:", {
+            status: error?.response?.status,
+            data: error?.response?.data,
+            message: error?.message
+          });
+          
+          // Extract and show detailed error message
+          let errorMessage = "작업 항목 업데이트 실패";
+          let errorTitle = "상태 변경 실패";
+          
+          // Handle workflow-specific errors
+          if (error?.response?.status === 400) {
+            if (error?.response?.data?.non_field_errors?.[0]) {
+              errorMessage = error.response.data.non_field_errors[0];
+            } else if (error?.response?.data?.detail) {
+              errorMessage = error.response.data.detail;
+            } else if (error?.response?.data?.error) {
+              errorMessage = error.response.data.error;
+            }
+            
+            // Check for workflow-related errors
+            if (errorMessage.includes("workflow") || errorMessage.includes("transition") || errorMessage.includes("승인")) {
+              errorTitle = "워크플로우 규칙 위반";
+            }
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+          
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: errorTitle,
+            message: errorMessage,
+          });
         });
-      });
   };
 
   const handlePriority = (value: TIssuePriorities) => {
@@ -258,6 +295,8 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
             buttonVariant="border-with-text"
             renderByDefault={isMobile}
             showTooltip
+            issueId={issue.id}
+            enableWorkflowValidation={true}
           />
         </div>
       </WithDisplayPropertiesHOC>

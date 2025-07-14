@@ -20,7 +20,7 @@ import {
   IssuePeekOverview,
 } from "@/components/issues";
 // hooks
-import { useIssues } from "@/hooks/store";
+import { useIssues, useWorkflow } from "@/hooks/store";
 import { IssuesStoreContext } from "@/hooks/use-issue-layout-store";
 
 const ProjectIssueLayout = (props: { activeLayout: EIssueLayoutTypes | undefined }) => {
@@ -45,6 +45,7 @@ export const ProjectLayoutRoot: FC = observer(() => {
   const { workspaceSlug, projectId } = useParams();
   // hooks
   const { issues, issuesFilter } = useIssues(EIssuesStoreType.PROJECT);
+  const { fetchWorkflowTemplates, getDefaultWorkflow, fetchWorkflowTransitions } = useWorkflow();
 
   const { isLoading } = useSWR(
     workspaceSlug && projectId ? `PROJECT_ISSUES_${workspaceSlug}_${projectId}` : null,
@@ -56,12 +57,34 @@ export const ProjectLayoutRoot: FC = observer(() => {
     { revalidateIfStale: false, revalidateOnFocus: false }
   );
 
+  // Preload workflow data for better UX with state dropdowns
+  const { isLoading: isWorkflowLoading } = useSWR(
+    workspaceSlug && projectId ? `PROJECT_WORKFLOWS_${workspaceSlug}_${projectId}` : null,
+    async () => {
+      if (workspaceSlug && projectId) {
+        try {
+          // Fetch workflow templates first
+          await fetchWorkflowTemplates(workspaceSlug.toString(), projectId.toString());
+          
+          // Get the default workflow and fetch its transitions
+          const defaultWorkflow = getDefaultWorkflow(projectId.toString());
+          if (defaultWorkflow) {
+            await fetchWorkflowTransitions(workspaceSlug.toString(), projectId.toString(), defaultWorkflow.id);
+          }
+        } catch (error) {
+          console.warn("Failed to preload workflow data:", error);
+        }
+      }
+    },
+    { revalidateIfStale: false, revalidateOnFocus: false }
+  );
+
   const issueFilters = issuesFilter?.getIssueFilters(projectId?.toString());
   const activeLayout = issueFilters?.displayFilters?.layout;
 
   if (!workspaceSlug || !projectId) return <></>;
 
-  if (isLoading && !issueFilters)
+  if ((isLoading && !issueFilters) || isWorkflowLoading)
     return (
       <div className="h-full w-full flex items-center justify-center">
         <LogoSpinner />

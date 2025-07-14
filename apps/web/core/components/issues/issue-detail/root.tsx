@@ -100,10 +100,19 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
             payload: { id: issueId },
             error: error as Error,
           });
+          
+          // Extract and show detailed error message
+          let errorMessage = t("entity.update.failed", { entity: t("issue.label") });
+          if ((error as any)?.response?.data?.non_field_errors?.[0]) {
+            errorMessage = (error as any).response.data.non_field_errors[0];
+          } else if ((error as any)?.message) {
+            errorMessage = (error as any).message;
+          }
+          
           setToast({
             title: t("common.error.label"),
             type: TOAST_TYPE.ERROR,
-            message: t("entity.update.failed", { entity: t("issue.label") }),
+            message: errorMessage,
           });
         }
       },

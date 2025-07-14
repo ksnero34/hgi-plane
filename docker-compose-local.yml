@@ -75,7 +75,7 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/web:/app/web
+      - ./apps/web:/app/apps/web
     env_file:
       - ./apps/web/.env.dev
     depends_on:
@@ -92,7 +92,7 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/space:/app/space
+      - ./apps/space:/app/apps/space
     depends_on:
       - api
       - worker
@@ -108,7 +108,7 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/admin:/app/admin
+      - ./apps/admin:/app/apps/admin
     depends_on:
       - api
       - worker
@@ -124,7 +124,7 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/live:/app/live
+      - ./apps/live:/app/apps/live
 
     depends_on:
       - api

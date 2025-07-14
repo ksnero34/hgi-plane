@@ -110,6 +110,27 @@ class IssueSerializer(BaseSerializer):
                 "State is not valid please pass a valid state_id"
             )
 
+        # Check workflow transition rules for state changes
+        if self.instance and data.get("state") and self.instance.state != data.get("state"):
+            # Only validate workflow transitions for existing issues with workflow assigned
+            if self.instance.workflow:
+                from plane.db.models import WorkflowTransition
+                
+                from_state = self.instance.state
+                to_state = data.get("state")
+                
+                # Check if transition exists in workflow
+                transition = WorkflowTransition.objects.filter(
+                    workflow=self.instance.workflow,
+                    from_state=from_state,
+                    to_state=to_state
+                ).first()
+                
+                if not transition:
+                    raise serializers.ValidationError(
+                        f"State transition from '{from_state.name}' to '{to_state.name}' is not allowed by workflow rules"
+                    )
+
         # Check parent issue is from workspace as it can be cross workspace
         if (
             data.get("parent")

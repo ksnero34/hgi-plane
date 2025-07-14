@@ -60,7 +60,7 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
   return (
     <div>
       <h6 className="text-sm font-medium">{t("common.properties")}</h6>
-      {/* TODO: render properties using a common component */}
+      {/* TODO: render properties using a common components */}
       <div className={`w-full space-y-2 mt-3 ${disabled ? "opacity-60" : ""}`}>
         {/* state */}
         <div className="flex w-full items-center gap-3 h-8">
@@ -79,6 +79,8 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
             buttonClassName="text-sm"
             dropdownArrow
             dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+            issueId={issueId}
+            enableWorkflowValidation={true}
           />
         </div>
 
