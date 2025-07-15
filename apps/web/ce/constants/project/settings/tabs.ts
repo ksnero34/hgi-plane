@@ -54,6 +54,14 @@ export const PROJECT_SETTINGS = {
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/estimates/`,
     Icon: SettingIcon,
   },
+  issue_types: {
+    key: "issue_types",
+    i18n_label: "이슈 타입",
+    href: `/issue-types`,
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/issue-types/`,
+    Icon: SettingIcon,
+  },
   automations: {
     key: "automations",
     i18n_label: "project_settings.automations.label",
@@ -109,6 +117,7 @@ export const PROJECT_SETTINGS_LINKS: {
   PROJECT_SETTINGS["features"],
   PROJECT_SETTINGS["states"],
   PROJECT_SETTINGS["labels"],
+  PROJECT_SETTINGS["issue_types"],
   PROJECT_SETTINGS["estimates"],
   PROJECT_SETTINGS["automations"],
   PROJECT_SETTINGS["workflows"],

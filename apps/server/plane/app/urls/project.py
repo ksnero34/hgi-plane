@@ -16,6 +16,7 @@ from plane.app.views import (
     ProjectArchiveUnarchiveEndpoint,
     ProjectMattermostConfigViewSet,
     CustomFieldViewSet,
+    ProjectIssueTypeViewSet,
 )
 
 
@@ -166,5 +167,22 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/custom-fields/analytics/",
         CustomFieldViewSet.as_view({"get": "analytics"}),
         name="project-custom-fields-analytics",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/",
+        ProjectIssueTypeViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-issue-types",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/<uuid:pk>/",
+        ProjectIssueTypeViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="project-issue-type-detail",
     ),
 ]

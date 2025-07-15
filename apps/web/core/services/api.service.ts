@@ -16,6 +16,26 @@ export abstract class APIService {
   }
 
   private setupInterceptors() {
+    // Request interceptor to add CSRF token for POST/PUT/PATCH/DELETE requests
+    this.axiosInstance.interceptors.request.use(
+      async (config) => {
+        if (['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
+          try {
+            // Get CSRF token directly from API
+            const response = await axios.get(`${this.baseURL}/auth/get-csrf-token/`, {
+              withCredentials: true
+            });
+            const { csrf_token } = response.data;
+            config.headers['X-CSRFToken'] = csrf_token;
+          } catch (error) {
+            console.warn('Failed to get CSRF token:', error);
+          }
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {

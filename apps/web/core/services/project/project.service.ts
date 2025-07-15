@@ -5,6 +5,7 @@ import type {
   TProjectAnalyticsCount,
   TProjectAnalyticsCountParams,
   TProjectIssuesSearchParams,
+  IIssueType,
 } from "@plane/types";
 // helpers
 // plane web types
@@ -178,6 +179,44 @@ export class ProjectService extends APIService {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/search-issues/`, {
       params,
     })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  // Issue Types
+  async getProjectIssueTypes(workspaceSlug: string, projectId: string): Promise<IIssueType[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createProjectIssueType(workspaceSlug: string, projectId: string, data: Partial<IIssueType>): Promise<IIssueType> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateProjectIssueType(
+    workspaceSlug: string,
+    projectId: string,
+    issueTypeId: string,
+    data: Partial<IIssueType>
+  ): Promise<IIssueType> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async deleteProjectIssueType(workspaceSlug: string, projectId: string, issueTypeId: string): Promise<any> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

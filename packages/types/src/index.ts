@@ -47,3 +47,4 @@ export * from "./payment";
 export * from "./layout";
 export * from "./analytics";
 export * from "./workflow";
+export * from "./issue_type";

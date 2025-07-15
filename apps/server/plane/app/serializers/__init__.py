@@ -146,3 +146,8 @@ from .workflow import (
     WorkflowTemplateDetailSerializer,
     WorkflowValidationSerializer,
 )
+
+from .issue_type import (
+    IssueTypeSerializer,
+    ProjectIssueTypeSerializer,
+)

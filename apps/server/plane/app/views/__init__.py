@@ -251,3 +251,5 @@ from .workflow import (
     WorkflowAssignmentRuleViewSet,
     WorkflowValidationViewSet,
 )
+
+from .issue_type import IssueTypeViewSet, ProjectIssueTypeViewSet
