@@ -12,6 +12,7 @@ export type TCustomField = {
   id: string;
   workspace_id: string;
   project_id: string;
+  issue_type?: string | null; // 백엔드에서 issue_type으로 반환
   name: string;
   key: string;
   description?: string;

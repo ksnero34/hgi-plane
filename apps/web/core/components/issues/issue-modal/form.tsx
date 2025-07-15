@@ -28,6 +28,7 @@ import { useIssueModal } from "@/hooks/context/use-issue-modal";
 import { useIssueDetail, useProject, useProjectState, useWorkspaceDraftIssues } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 // plane web imports
 import { DeDupeButtonRoot, DuplicateModalRoot } from "@/plane-web/components/de-dupe";
 import {
@@ -109,7 +110,6 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     selectedParentIssue,
     setWorkItemTemplateId,
     setSelectedParentIssue,
-    getIssueTypeIdOnProjectChange,
     getActiveAdditionalPropertiesLength,
     handlePropertyValuesValidation,
     handleCreateUpdatePropertyValues,
@@ -141,6 +141,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
   } = methods;
 
   const projectId = watch("project_id");
+  const { getDefaultIssueType } = useIssueType(projectId || "");
   const activeAdditionalPropertiesLength = getActiveAdditionalPropertiesLength({
     projectId: projectId,
     workspaceSlug: workspaceSlug?.toString(),
@@ -170,19 +171,19 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  // Update the issue type id when the project id changes
+  // Update the issue type id when the project id changes or on initial load
   useEffect(() => {
     const issueTypeId = watch("type_id");
 
     // if issue type id is present or project not available, return
     if (issueTypeId || !projectId) return;
 
-    // get issue type id on project change
-    const issueTypeIdOnProjectChange = getIssueTypeIdOnProjectChange(projectId);
-    if (issueTypeIdOnProjectChange) setValue("type_id", issueTypeIdOnProjectChange, { shouldValidate: true });
+    // get default issue type for this project
+    const defaultIssueType = getDefaultIssueType();
+    if (defaultIssueType?.id) setValue("type_id", defaultIssueType.id, { shouldValidate: true });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, projectId]);
+  }, [data, projectId, getDefaultIssueType]);
 
   useEffect(() => {
     if (workItemTemplateId && editorRef.current) {
@@ -389,13 +390,16 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                     handleFormChange={handleFormChange}
                   />
                   {projectId && storeType !== EIssuesStoreType.EPIC && (
-                    <IssueTypeSelect
-                      control={control}
-                      projectId={projectId}
-                      editorRef={editorRef}
-                      disabled={!!data?.sourceIssueId}
-                      handleFormChange={handleFormChange}
-                    />
+                    <>
+                      <span className="text-custom-text-300 text-sm">{">"}</span>
+                      <IssueTypeSelect
+                        control={control}
+                        projectId={projectId}
+                        editorRef={editorRef}
+                        disabled={!!data?.sourceIssueId}
+                        handleFormChange={handleFormChange}
+                      />
+                    </>
                   )}
                   {projectId && !data?.id && !data?.sourceIssueId && (
                     <WorkItemTemplateSelect
@@ -482,13 +486,16 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                 )}
               >
                 {projectId && (
-                  <IssueAdditionalProperties
-                    issueId={data?.id ?? data?.sourceIssueId}
-                    issueTypeId={watch("type_id")}
-                    projectId={projectId}
-                    workspaceSlug={workspaceSlug?.toString()}
-                    isDraft={isDraft}
-                  />
+                  <>
+                    {console.log("form.tsx - watch('type_id'):", watch("type_id"))}
+                    <IssueAdditionalProperties
+                      issueId={data?.id ?? data?.sourceIssueId}
+                      issueTypeId={watch("type_id")}
+                      projectId={projectId}
+                      workspaceSlug={workspaceSlug?.toString()}
+                      isDraft={isDraft}
+                    />
+                  </>
                 )}
               </div>
             </div>

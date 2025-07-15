@@ -6,6 +6,7 @@ import { IPartialProject, ISearchIssueResponse, IState, TIssue } from "@plane/ty
 export const getUpdateFormDataForReset = (projectId: string | null | undefined, formData: Partial<TIssue>) => ({
   ...DEFAULT_WORK_ITEM_FORM_VALUES,
   project_id: projectId,
+  type_id: formData.type_id,
   name: formData.name,
   description_html: formData.description_html,
   priority: formData.priority,

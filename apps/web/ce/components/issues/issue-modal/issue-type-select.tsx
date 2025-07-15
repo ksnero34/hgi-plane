@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Control, Controller } from "react-hook-form";
 // plane imports
 import { EditorRefApi } from "@plane/editor";
@@ -6,6 +6,8 @@ import { EditorRefApi } from "@plane/editor";
 import { TBulkIssueProperties, TIssue } from "@plane/types";
 // components
 import { IssueTypeDropdown } from "@/components/dropdowns";
+// hooks
+import { useIssueType } from "@/hooks/store/use-issue-type";
 
 export type TIssueFields = TIssue & TBulkIssueProperties;
 
@@ -37,7 +39,12 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
   dropDownContainerClassName,
   handleFormChange,
   onTypeChange,
-}: TIssueTypeSelectProps<T>) => (
+}: TIssueTypeSelectProps<T>) => {
+  const { issueTypes } = useIssueType(projectId || "");
+  
+  const memoizedIssueTypes = useMemo(() => issueTypes, [issueTypes]);
+  
+  return (
   <div className="flex flex-col gap-1">
     <div className="flex items-center gap-2">
       <div className="w-full">
@@ -47,9 +54,14 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
           render={({ field: { onChange, value } }) => (
             <IssueTypeDropdown
               value={value}
-              onChange={(val: IIssueType | undefined) => {
-                onChange(val?.id);
-                if (onTypeChange) onTypeChange(val);
+              onChange={(val: string) => {
+                onChange(val);
+                // IssueType 객체 찾기
+                const selectedIssueType = projectId && val ? 
+                  memoizedIssueTypes?.find(pt => (pt.issue_type || pt).id === val)?.issue_type || 
+                  memoizedIssueTypes?.find(pt => (pt.issue_type || pt).id === val) : 
+                  undefined;
+                if (onTypeChange) onTypeChange(selectedIssueType);
                 if (handleFormChange) handleFormChange();
               }}
               projectId={projectId}
@@ -64,4 +76,5 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
       </div>
     </div>
   </div>
-);
+  );
+};

@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Button, Input, TOAST_TYPE, setToast, CustomEmojiIconPicker, EmojiIconPickerTypes } from "@plane/ui";
-import { IIssueType } from "@plane/types";
+import { Button, Input, TOAST_TYPE, setToast, CustomEmojiIconPicker, EmojiIconPickerTypes, CustomSelect, ToggleSwitch } from "@plane/ui";
+import { IIssueType, TCustomFieldType } from "@plane/types";
 import { useIssueType } from "@/hooks/store/use-issue-type";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { Logo } from "@/components/common";
 import { convertHexEmojiToDecimal } from "@plane/utils";
 import { getRandomEmoji } from "@/helpers/emoji.helper";
@@ -17,44 +18,358 @@ const getDefaultLogoProp = () => ({
   },
 });
 
+const FIELD_TYPES: { value: TCustomFieldType; label: string; description: string }[] = [
+  { value: "text", label: "Text", description: "일반 텍스트 필드" },
+  { value: "number", label: "Number", description: "숫자 값 필드" },
+  { value: "date", label: "Date", description: "날짜 선택 필드" },
+  { value: "select", label: "Select", description: "단일 선택 드롭다운" },
+  { value: "multiselect", label: "Multi-select", description: "다중 선택 드롭다운" },
+  { value: "project_member", label: "Project Member", description: "프로젝트 멤버 단일 선택" },
+  { value: "project_members", label: "Project Members", description: "프로젝트 멤버 다중 선택" },
+];
+
+interface IIssueTypeCustomField {
+  id?: string;
+  name: string;
+  key: string;
+  description?: string;
+  field_type: TCustomFieldType;
+  options?: string[];
+  is_required: boolean;
+  issue_type?: string;
+}
+
 const IssueTypeItem: React.FC<{ 
   issueType: IIssueType;
+  projectId: string;
   onEdit: (issueType: IIssueType) => void;
   onDelete: (issueTypeId: string) => void;
-}> = ({ issueType, onEdit, onDelete }) => {
+}> = ({ issueType, projectId, onEdit, onDelete }) => {
+  const [showCustomFields, setShowCustomFields] = useState(false);
+  const [customFields, setCustomFields] = useState<IIssueTypeCustomField[]>([]);
+  const [newField, setNewField] = useState<Partial<IIssueTypeCustomField>>({});
+  const [isAddingField, setIsAddingField] = useState(false);
+  const [isEditingField, setIsEditingField] = useState(false);
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+
+  const { customFields: projectCustomFields, createCustomField, updateCustomField, deleteCustomField } = useCustomField(projectId);
+
+  // 이슈타입별 커스텀 필드 필터링
+  const issueTypeCustomFields = projectCustomFields?.filter(field => {
+    // API 응답에서 issue_type 필드를 확인 (백엔드에서 issue_type으로 반환)
+    // issueType.issue_type.id는 실제 IssueType의 ID
+    return field.issue_type === issueType.issue_type.id;
+  }) || [];
+
+  const handleAddField = async () => {
+    if (!newField.name || !newField.key || !newField.field_type) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "오류",
+        message: "필드 이름, 식별자, 타입은 필수입니다.",
+      });
+      return;
+    }
+
+    try {
+      await createCustomField({
+        ...newField,
+        issue_type: issueType.issue_type.id,
+      });
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "성공",
+        message: "커스텀 필드가 추가되었습니다.",
+      });
+      setNewField({});
+      setIsAddingField(false);
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "오류",
+        message: "필드 추가 중 오류가 발생했습니다.",
+      });
+    }
+  };
+
+  const handleUpdateField = async () => {
+    if (!editingFieldId || !newField.name || !newField.key || !newField.field_type) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "오류",
+        message: "필드 이름, 식별자, 타입은 필수입니다.",
+      });
+      return;
+    }
+
+    try {
+      await updateCustomField(editingFieldId, newField);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "성공",
+        message: "커스텀 필드가 수정되었습니다.",
+      });
+      setNewField({});
+      setIsEditingField(false);
+      setEditingFieldId(null);
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "오류",
+        message: "필드 수정 중 오류가 발생했습니다.",
+      });
+    }
+  };
+
+  const handleDeleteField = async (fieldId: string) => {
+    if (!confirm("이 커스텀 필드를 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await deleteCustomField(fieldId);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "성공",
+        message: "커스텀 필드가 삭제되었습니다.",
+      });
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "오류",
+        message: "필드 삭제 중 오류가 발생했습니다.",
+      });
+    }
+  };
+
+  const handleEditField = (field: any) => {
+    setNewField(field);
+    setIsEditingField(true);
+    setEditingFieldId(field.id);
+    setIsAddingField(true);
+  };
+
+  const resetFieldForm = () => {
+    setNewField({});
+    setIsAddingField(false);
+    setIsEditingField(false);
+    setEditingFieldId(null);
+  };
+
   return (
-    <div className="group flex items-center justify-between rounded-lg border border-custom-border-200 bg-custom-background-100 p-4 hover:bg-custom-background-90 transition-colors">
-      <div className="flex items-center gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-custom-border-200">
-          <Logo logo={issueType.issue_type.logo_props || { in_use: "emoji", emoji: { value: "128204" } }} size={18} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="font-medium text-custom-text-100 truncate">{issueType.issue_type.name || "제목 없음"}</h4>
+    <div className="rounded-lg border border-custom-border-200 bg-custom-background-100 overflow-hidden">
+      <div className="group flex items-center justify-between p-4 hover:bg-custom-background-90 transition-colors">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-custom-border-200">
+            <Logo logo={issueType.issue_type.logo_props || { in_use: "emoji", emoji: { value: "128204" } }} size={18} />
           </div>
-          {issueType.issue_type.description && (
-            <p className="text-sm text-custom-text-300 truncate mt-1">{issueType.issue_type.description}</p>
-          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-medium text-custom-text-100 truncate">{issueType.issue_type.name || "제목 없음"}</h4>
+              {issueTypeCustomFields.length > 0 && (
+                <span className="text-xs bg-custom-background-80 text-custom-text-200 px-2 py-1 rounded-full">
+                  {issueTypeCustomFields.length}개 필드
+                </span>
+              )}
+            </div>
+            {issueType.issue_type.description && (
+              <p className="text-sm text-custom-text-300 truncate mt-1">{issueType.issue_type.description}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="neutral-primary" 
+            size="sm" 
+            onClick={() => setShowCustomFields(!showCustomFields)}
+            className="text-xs"
+          >
+            {showCustomFields ? "필드 숨기기" : "필드 관리"}
+          </Button>
+          <Button 
+            variant="neutral-primary" 
+            size="sm" 
+            onClick={() => onEdit(issueType)}
+            className="text-xs"
+          >
+            수정
+          </Button>
+          <Button 
+            variant="danger" 
+            size="sm" 
+            onClick={() => onDelete(issueType.id)}
+            className="text-xs"
+          >
+            삭제
+          </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button 
-          variant="neutral-primary" 
-          size="sm" 
-          onClick={() => onEdit(issueType)}
-          className="text-xs"
-        >
-          수정
-        </Button>
-        <Button 
-          variant="danger" 
-          size="sm" 
-          onClick={() => onDelete(issueType.id)}
-          className="text-xs"
-        >
-          삭제
-        </Button>
-      </div>
+
+      {showCustomFields && (
+        <div className="border-t border-custom-border-200 bg-custom-background-90 p-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h5 className="text-sm font-medium text-custom-text-100">커스텀 필드</h5>
+              <Button 
+                variant="primary" 
+                size="sm"
+                onClick={() => setIsAddingField(!isAddingField)}
+                className="text-xs"
+              >
+                {isAddingField ? "취소" : "필드 추가"}
+              </Button>
+            </div>
+
+            {isAddingField && (
+              <div className="space-y-3 p-3 bg-custom-background-100 rounded-lg border border-custom-border-200">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-custom-text-300">필드 이름</label>
+                    <Input
+                      value={newField.name || ""}
+                      onChange={(e) => setNewField({ ...newField, name: e.target.value })}
+                      placeholder="예: 우선순위"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-custom-text-300">식별자</label>
+                    <Input
+                      value={newField.key || ""}
+                      onChange={(e) => setNewField({ ...newField, key: e.target.value })}
+                      placeholder="예: priority"
+                      className="text-sm"
+                      disabled={isEditingField}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-custom-text-300">필드 타입</label>
+                    <CustomSelect
+                      value={newField.field_type}
+                      label={FIELD_TYPES.find(t => t.value === newField.field_type)?.label || "타입 선택"}
+                      onChange={(val: string) => setNewField({ ...newField, field_type: val as TCustomFieldType })}
+                      buttonClassName="w-full text-left text-sm"
+                    >
+                      {FIELD_TYPES.map((option) => (
+                        <CustomSelect.Option key={option.value} value={option.value}>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm">{option.label}</span>
+                            <span className="text-xs text-custom-text-200">{option.description}</span>
+                          </div>
+                        </CustomSelect.Option>
+                      ))}
+                    </CustomSelect>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ToggleSwitch
+                      value={newField.is_required ?? false}
+                      onChange={(val: boolean) => setNewField({ ...newField, is_required: val })}
+                    />
+                    <span className="text-xs text-custom-text-300">필수 필드</span>
+                  </div>
+                </div>
+                
+                {(newField.field_type === "select" || newField.field_type === "multiselect") && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-custom-text-300">선택 옵션</label>
+                    <div className="flex flex-wrap gap-2">
+                      {newField.options?.map((option, index) => (
+                        <div key={index} className="flex items-center gap-1 bg-custom-background-80 rounded px-2 py-1">
+                          <span className="text-xs">{option}</span>
+                          <button
+                            className="text-custom-text-200 hover:text-custom-text-100"
+                            onClick={() => {
+                              const newOptions = [...(newField.options || [])];
+                              newOptions.splice(index, 1);
+                              setNewField({ ...newField, options: newOptions });
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <Input
+                        placeholder="옵션 추가"
+                        className="w-24 text-xs"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && e.currentTarget.value.trim() !== "") {
+                            setNewField({
+                              ...newField,
+                              options: [...(newField.options || []), e.currentTarget.value.trim()],
+                            });
+                            e.currentTarget.value = "";
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    variant="neutral-primary"
+                    size="sm"
+                    onClick={resetFieldForm}
+                    className="text-xs"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={isEditingField ? handleUpdateField : handleAddField}
+                    className="text-xs"
+                  >
+                    {isEditingField ? "수정" : "추가"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {issueTypeCustomFields.length > 0 ? (
+                issueTypeCustomFields.map((field) => (
+                  <div key={field.id} className="flex items-center justify-between p-3 bg-custom-background-100 rounded-lg border border-custom-border-200">
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-custom-text-100">{field.name}</span>
+                        <span className="text-xs text-custom-text-300">{field.key} • {FIELD_TYPES.find(t => t.value === field.field_type)?.label}</span>
+                      </div>
+                      {field.is_required && (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">필수</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="neutral-primary"
+                        size="sm"
+                        onClick={() => handleEditField(field)}
+                        className="text-xs"
+                      >
+                        수정
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteField(field.id)}
+                        className="text-xs"
+                      >
+                        삭제
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-sm text-custom-text-300">
+                  이 이슈타입에 대한 커스텀 필드가 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -273,6 +588,7 @@ export const IssueTypes: React.FC = observer(() => {
             <IssueTypeItem
               key={issueType.id}
               issueType={issueType}
+              projectId={projectId as string}
               onDelete={handleDelete}
               onEdit={handleEdit}
             />

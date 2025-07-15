@@ -18,10 +18,11 @@ type Props = {
   projectId: string;
   workspaceSlug: string;
   handleFormChange: () => void;
+  issueTypeId?: string | null;
 };
 
 export const IssueCustomField: FC<Props> = observer((props) => {
-  const { control, projectId, workspaceSlug, handleFormChange } = props;
+  const { control, projectId, workspaceSlug, handleFormChange, issueTypeId } = props;
   const { t } = useTranslation();
 
   const { customFields, isLoading } = useCustomField(projectId);
@@ -195,9 +196,13 @@ export const IssueCustomField: FC<Props> = observer((props) => {
 
   if (isLoading) return <div>{t("common.loading")}</div>;
 
+  const filteredCustomFields = customFields.filter(field => 
+    field.issue_type === null
+  );
+
   return (
     <>
-      {customFields.map((field) => (
+      {filteredCustomFields.map((field) => (
         <Controller
           key={field.id}
           control={control}

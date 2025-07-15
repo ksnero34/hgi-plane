@@ -6,6 +6,7 @@ import { ISearchIssueResponse, TIssue } from "@plane/types";
 import { IssueModalContext } from "@/components/issues";
 // hooks
 import { useUser } from "@/hooks/store/user/user-user";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 
 export type TIssueModalProviderProps = {
   templateId?: string;
@@ -20,6 +21,7 @@ export const IssueModalProvider = observer((props: TIssueModalProviderProps) => 
   const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | null>(null);
   // store hooks
   const { projectsWithCreatePermissions } = useUser();
+  const { getDefaultIssueType } = useIssueType();
   // derived values
   const projectIdsWithCreatePermissions = Object.keys(projectsWithCreatePermissions ?? {});
 
@@ -37,7 +39,10 @@ export const IssueModalProvider = observer((props: TIssueModalProviderProps) => 
         setIssuePropertyValues: () => {},
         issuePropertyValueErrors: {},
         setIssuePropertyValueErrors: () => {},
-        getIssueTypeIdOnProjectChange: () => null,
+        getIssueTypeIdOnProjectChange: (projectId: string) => {
+          const defaultIssueType = getDefaultIssueType();
+          return defaultIssueType?.id || null;
+        },
         getActiveAdditionalPropertiesLength: () => 0,
         handlePropertyValuesValidation: () => true,
         handleCreateUpdatePropertyValues: () => Promise.resolve(),
