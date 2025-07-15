@@ -222,4 +222,14 @@ export class ProjectService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  async assignDefaultIssueTypeToExistingIssues(workspaceSlug: string, projectId: string, issueTypeId: string): Promise<any> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/assign-default-issue-type/`, {
+      issue_type_id: issueTypeId
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

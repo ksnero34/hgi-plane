@@ -343,6 +343,34 @@ class ProjectViewSet(BaseViewSet):
 
                 project = self.get_queryset().filter(pk=serializer.data["id"]).first()
 
+                # Create default issue type
+                from plane.db.models import IssueType, ProjectIssueType
+                
+                # Create or get default issue type for workspace
+                default_issue_type, created = IssueType.objects.get_or_create(
+                    workspace=workspace,
+                    name="Issue",
+                    defaults={
+                        "description": "기본 이슈 타입",
+                        "logo_props": {
+                            "in_use": "emoji",
+                            "emoji": {
+                                "value": "128204"  # 📋 이모지
+                            }
+                        },
+                        "created_by": request.user,
+                    }
+                )
+
+                # Create project issue type with is_default=True
+                ProjectIssueType.objects.create(
+                    project=project,
+                    issue_type=default_issue_type,
+                    workspace=workspace,
+                    is_default=True,
+                    created_by=request.user,
+                )
+
                 # Create the model activity
                 model_activity.delay(
                     model_name="project",

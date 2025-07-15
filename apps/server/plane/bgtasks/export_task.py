@@ -580,7 +580,7 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
         custom_fields = CustomField.objects.filter(
             project_id__in=project_ids,
             deleted_at__isnull=True
-        ).order_by("sort_order", "created_at")
+        ).select_related("issue_type").order_by("sort_order", "created_at")
         
         # 커스텀 필드 맵 생성 (field_id -> field_name)
         custom_fields_map = {str(field.id): field.name for field in custom_fields}
@@ -590,7 +590,8 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
             str(field.id): {
                 'name': field.name,
                 'field_type': field.field_type,
-                'options': field.options
+                'options': field.options,
+                'issue_type_id': str(field.issue_type_id) if field.issue_type_id else None,
             } 
             for field in custom_fields
         }

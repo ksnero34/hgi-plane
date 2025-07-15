@@ -395,7 +395,6 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                       editorRef={editorRef}
                       disabled={!!data?.sourceIssueId}
                       handleFormChange={handleFormChange}
-                      renderChevron
                     />
                   )}
                   {projectId && !data?.id && !data?.sourceIssueId && (

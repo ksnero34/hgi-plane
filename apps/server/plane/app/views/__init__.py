@@ -128,6 +128,7 @@ from .issue.base import (
     IssueMetaEndpoint,
     IssueDetailIdentifierEndpoint,
     ImportIssuesEndpoint,
+    AssignDefaultIssueTypeEndpoint,
 )
 
 from .issue.activity import IssueActivityEndpoint

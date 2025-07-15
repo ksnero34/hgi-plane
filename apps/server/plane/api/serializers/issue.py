@@ -232,10 +232,20 @@ class IssueSerializer(BaseSerializer):
 
         # 커스텀 필드 값 생성
         if custom_field_values:
+            # 현재 이슈 타입에 해당하는 커스텀 필드와 프로젝트 공통 커스텀 필드를 가져옴
+            valid_custom_fields = CustomField.objects.filter(
+                Q(project_id=project_id) & 
+                (Q(issue_type=issue_type) | Q(issue_type__isnull=True))
+            ).values_list("id", flat=True)
+
             for field_value in custom_field_values:
+                custom_field_id = field_value["custom_field_id"]
+                if custom_field_id not in valid_custom_fields:
+                    print(f"[IssueSerializer] Invalid custom_field_id {custom_field_id} for issue type {issue_type.id}, skipping.")
+                    continue
                 try:
                     CustomFieldValue.objects.create(
-                        custom_field_id=field_value["custom_field_id"],
+                        custom_field_id=custom_field_id,
                         issue=issue,
                         value=field_value["value"],
                         project_id=project_id,
@@ -314,9 +324,16 @@ class IssueSerializer(BaseSerializer):
             
             print(f"[IssueSerializer] After deduplication: {list(unique_custom_fields.values())}")
             
+            # 현재 이슈 타입에 해당하는 커스텀 필드와 프로젝트 공통 커스텀 필드를 가져옴
+            issue_type = instance.type # 현재 이슈의 타입
+            valid_custom_fields = CustomField.objects.filter(
+                Q(project_id=project_id) & 
+                (Q(issue_type=issue_type) | Q(issue_type__isnull=True))
+            ).values_list("id", flat=True)
+
             # 커스텀 필드 정보 가져오기
             custom_fields = CustomField.objects.filter(
-                id__in=[field_value["custom_field_id"] for field_value in unique_custom_fields.values()],
+                id__in=[field_value["custom_field_id"] for field_value in unique_custom_fields.values() if field_value["custom_field_id"] in valid_custom_fields],
                 deleted_at__isnull=True
             )
             custom_field_map = {str(field.id): field for field in custom_fields}
@@ -325,6 +342,11 @@ class IssueSerializer(BaseSerializer):
             for field_value in unique_custom_fields.values():
                 field_id = field_value["custom_field_id"]
                 new_value = field_value["value"]
+
+                if field_id not in valid_custom_fields:
+                    print(f"[IssueSerializer] Invalid custom_field_id {field_id} for issue type {issue_type.id}, skipping update.")
+                    continue
+
                 field = custom_field_map.get(str(field_id))
                 
                 if not field:

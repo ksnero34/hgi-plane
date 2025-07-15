@@ -1,9 +1,11 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
+import React, { ReactNode, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { usePopper } from "react-popper";
+import { ChevronDown, Search } from "lucide-react";
+import { Combobox } from "@headlessui/react";
 import { useTranslation } from "@plane/i18n";
 // ui
 import { ComboDropDown, Loader } from "@plane/ui";
@@ -27,6 +29,7 @@ type Props = TDropdownProps & {
   onClose?: () => void;
   projectId: string | undefined;
   value: string | undefined | null;
+  renderByDefault?: boolean;
 };
 
 export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
@@ -48,117 +51,247 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     showTooltip = false,
     tabIndex,
     value,
+    renderByDefault = true,
   } = props;
   // router
   const { workspaceSlug } = useParams();
+  // states
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  // refs
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  // popper-js refs
+  const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
+  const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null);
+  // popper-js init
+  const { styles, attributes } = usePopper(referenceElement, popperElement, {
+    placement: placement ?? "bottom-start",
+    modifiers: [
+      {
+        name: "preventOverflow",
+        options: {
+          padding: 12,
+        },
+      },
+    ],
+  });
   // hooks
   const { t } = useTranslation();
-  const { issueTypes, isLoading } = useIssueType(projectId || "");
+  const { issueTypes, isLoading, getDefaultIssueType } = useIssueType(projectId || "");
 
   const {
     handleClose,
     handleKeyDown,
     handleOnClick,
     searchInputKeyDown,
-    isOpen,
-    searchQuery,
-    setIsOpen,
-    setSearchQuery,
   } = useDropdown({
-    dropdownRef: null,
-    isDisabled: disabled,
+    dropdownRef,
+    inputRef,
+    isOpen,
     onClose,
+    query,
+    setIsOpen,
+    setQuery,
   });
 
-  const dropdownOptions = useMemo(() => {
-    if (!issueTypes) return [];
+  const options = useMemo(() => {
+    if (!issueTypes || issueTypes.length === 0) return [];
 
-    return issueTypes.map((issueType) => ({
-      value: issueType.id,
-      query: issueType.name,
-      content: (
-        <div className="flex items-center gap-2">
-          {issueType.icon && (
-            <span style={{ color: issueType.color }}>{issueType.icon}</span>
-          )}
-          <span className="flex-grow truncate">{issueType.name}</span>
-        </div>
-      ),
-    }));
+    return issueTypes.map((projectIssueType) => {
+      const issueType = projectIssueType.issue_type || projectIssueType;
+      
+      // 이모지 코드를 실제 이모지로 변환
+      const getEmojiFromCode = (code: string) => {
+        if (!code) return "";
+        try {
+          return String.fromCodePoint(parseInt(code, 10));
+        } catch (e) {
+          return "";
+        }
+      };
+
+      const emoji = issueType.logo_props?.emoji?.value 
+        ? getEmojiFromCode(issueType.logo_props.emoji.value)
+        : issueType.icon || "";
+
+      return {
+        value: issueType.id,
+        query: issueType.name || "",
+        content: (
+          <div className="flex items-center gap-2">
+            {emoji && (
+              <span style={{ color: issueType.color }}>{emoji}</span>
+            )}
+            <span className="flex-grow truncate">{issueType.name || "Unnamed"}</span>
+          </div>
+        ),
+      };
+    });
   }, [issueTypes]);
 
-  const selectedOption = issueTypes?.find((issueType) => issueType.id === value);
+  const filteredOptions = useMemo(() => {
+    if (!options) return [];
+    return query === "" 
+      ? options 
+      : options.filter(option => {
+          if (!option?.query) return false;
+          return option.query.toLowerCase().includes(query.toLowerCase());
+        });
+  }, [options, query]);
 
-  const ButtonToRender = useMemo(() => {
-    if (button) return button;
+  const selectedOption = useMemo(() => {
+    if (!issueTypes || issueTypes.length === 0) return undefined;
+    
+    // 선택된 값이 있으면 해당 이슈 타입 반환
+    if (value) {
+      const found = issueTypes.find((projectIssueType) => {
+        const issueType = projectIssueType.issue_type || projectIssueType;
+        return issueType.id === value;
+      });
+      return found ? (found.issue_type || found) : undefined;
+    }
+    
+    // 선택된 값이 없으면 기본 이슈 타입 반환
+    return getDefaultIssueType();
+  }, [issueTypes, value, getDefaultIssueType]);
 
-    return (
-      <DropdownButton
-        className={cn(
-          "clickable block w-full max-w-full text-left",
-          {
-            "text-custom-text-400": !selectedOption,
-          },
-          buttonClassName
-        )}
-        isActive={isOpen}
-        tooltipHeading={t("issue_type")}
-        tooltipContent={selectedOption?.name ?? placeholder}
-        showTooltip={showTooltip}
-        variant={buttonVariant}
-      >
-        {!hideIcon && selectedOption?.icon && (
-          <span style={{ color: selectedOption.color }}>{selectedOption.icon}</span>
-        )}
-        <span className="flex-grow truncate">
-          {selectedOption?.name ? selectedOption.name : placeholder}
-        </span>
-        {dropdownArrow && (
-          <ChevronDown className={cn("h-2.5 w-2.5", dropdownArrowClassName)} aria-hidden="true" />
-        )}
-      </DropdownButton>
-    );
-  }, [
-    button,
-    buttonClassName,
-    buttonVariant,
-    dropdownArrow,
-    dropdownArrowClassName,
-    hideIcon,
-    isOpen,
-    placeholder,
-    selectedOption,
-    showTooltip,
-    t,
-  ]);
+  const getIssueTypeIcon = (issueType: any) => {
+    if (!issueType) return null;
+    
+    const getEmojiFromCode = (code: string) => {
+      if (!code) return "";
+      try {
+        return String.fromCodePoint(parseInt(code, 10));
+      } catch (e) {
+        return "";
+      }
+    };
+
+    const emoji = issueType.logo_props?.emoji?.value 
+      ? getEmojiFromCode(issueType.logo_props.emoji.value)
+      : issueType.icon || "";
+
+    return emoji ? (
+      <span style={{ color: issueType.color }}>{emoji}</span>
+    ) : null;
+  };
+
+  const dropdownOnChange = (val: string) => {
+    onChange(val);
+    handleClose();
+  };
+
+  const comboButton = (
+    <>
+      {button ? (
+        <button
+          ref={setReferenceElement}
+          type="button"
+          className={cn("clickable block h-full w-full outline-none", buttonContainerClassName)}
+          onClick={handleOnClick}
+          disabled={disabled}
+        >
+          {button}
+        </button>
+      ) : (
+        <button
+          ref={setReferenceElement}
+          type="button"
+          className={cn(
+            "clickable block h-full max-w-full outline-none",
+            {
+              "cursor-not-allowed text-custom-text-200": disabled,
+              "cursor-pointer": !disabled,
+            },
+            buttonContainerClassName
+          )}
+          onClick={handleOnClick}
+          disabled={disabled}
+        >
+          <DropdownButton
+            className={buttonClassName}
+            isActive={isOpen}
+            tooltipHeading={t("issue_type")}
+            tooltipContent={selectedOption?.name ?? placeholder}
+            showTooltip={showTooltip}
+            variant={buttonVariant}
+            renderToolTipByDefault={renderByDefault}
+          >
+            {!hideIcon && getIssueTypeIcon(selectedOption)}
+            {BUTTON_VARIANTS_WITH_TEXT.includes(buttonVariant) && (
+              <span className="truncate max-w-40">{selectedOption?.name || placeholder}</span>
+            )}
+            {dropdownArrow && (
+              <ChevronDown className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
+            )}
+          </DropdownButton>
+        </button>
+      )}
+    </>
+  );
 
   if (isLoading) return <Loader className="h-3 w-3" />;
 
   return (
     <ComboDropDown
       as="div"
-      className={cn("h-full", className)}
+      ref={dropdownRef}
       tabIndex={tabIndex}
+      className={cn("h-full", className)}
       value={value}
-      onChange={onChange}
+      onChange={dropdownOnChange}
       disabled={disabled}
       onKeyDown={handleKeyDown}
-      button={
-        <div
-          className={cn("clickable w-full", buttonContainerClassName)}
-          onClick={handleOnClick}
-        >
-          {ButtonToRender}
-        </div>
-      }
-      options={dropdownOptions}
-      placement={placement}
-      closeOnSelect
-      searchQuery={searchQuery}
-      setQuery={setSearchQuery}
-      searchInputKeyDown={searchInputKeyDown}
-      optionsClassName="w-full"
-      noOptionsMessage={() => t("no_matching_results")}
-    />
+      button={comboButton}
+      renderByDefault={renderByDefault}
+    >
+      {isOpen && (
+        <Combobox.Options className="fixed z-10" static>
+          <div
+            className="my-1 w-48 rounded border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg focus:outline-none"
+            ref={setPopperElement}
+            style={styles.popper}
+            {...attributes.popper}
+          >
+            <div className="flex items-center gap-1.5 rounded border border-custom-border-100 bg-custom-background-90 px-2">
+              <Search className="h-3.5 w-3.5 text-custom-text-400" strokeWidth={1.5} />
+              <Combobox.Input
+                as="input"
+                ref={inputRef}
+                className="w-full bg-transparent py-1 text-xs text-custom-text-200 placeholder:text-custom-text-400 focus:outline-none"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("search")}
+                onKeyDown={searchInputKeyDown}
+              />
+            </div>
+            <div className="mt-2 max-h-48 space-y-1 overflow-y-scroll">
+              {filteredOptions ? (
+                filteredOptions.length > 0 ? (
+                  filteredOptions.map((option) => (
+                    <Combobox.Option
+                      key={option.value}
+                      value={option.value}
+                      className={({ active, selected }) =>
+                        `w-full truncate flex items-center justify-between gap-2 rounded px-1 py-1.5 cursor-pointer select-none ${
+                          active ? "bg-custom-background-80" : ""
+                        } ${selected ? "text-custom-text-100" : "text-custom-text-200"}`
+                      }
+                    >
+                      <span className="flex-grow truncate">{option.content}</span>
+                    </Combobox.Option>
+                  ))
+                ) : (
+                  <p className="text-custom-text-400 italic py-1 px-1.5">{t("no_matching_results")}</p>
+                )
+              ) : (
+                <p className="text-custom-text-400 italic py-1 px-1.5">{t("loading")}</p>
+              )}
+            </div>
+          </div>
+        </Combobox.Options>
+      )}
+    </ComboDropDown>
   );
 });

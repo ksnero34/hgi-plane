@@ -11,6 +11,8 @@ export type TIssueFields = TIssue & TBulkIssueProperties;
 
 export type TIssueTypeDropdownVariant = "xs" | "sm";
 
+import { IIssueType } from "@plane/types";
+
 export type TIssueTypeSelectProps<T extends Partial<TIssueFields>> = {
   control: Control<T>;
   projectId: string | null;
@@ -23,6 +25,7 @@ export type TIssueTypeSelectProps<T extends Partial<TIssueFields>> = {
   dropDownContainerClassName?: string;
   showMandatoryFieldInfo?: boolean; // Show info about mandatory fields
   handleFormChange?: () => void;
+  onTypeChange?: (type: IIssueType | undefined) => void;
 };
 
 export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
@@ -30,24 +33,23 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
   projectId,
   disabled = false,
   placeholder = "Select issue type",
-  renderChevron = true,
+  renderChevron = false,
   dropDownContainerClassName,
   handleFormChange,
+  onTypeChange,
 }: TIssueTypeSelectProps<T>) => (
   <div className="flex flex-col gap-1">
     <div className="flex items-center gap-2">
-      <div className="h-5 w-5 flex-shrink-0">
-        <span className="text-[12px] text-custom-text-300">#</span>
-      </div>
-      <div className="flex-grow">
+      <div className="w-full">
         <Controller
           control={control}
           name="type_id" as keyof T
           render={({ field: { onChange, value } }) => (
             <IssueTypeDropdown
               value={value}
-              onChange={(val) => {
-                onChange(val);
+              onChange={(val: IIssueType | undefined) => {
+                onChange(val?.id);
+                if (onTypeChange) onTypeChange(val);
                 if (handleFormChange) handleFormChange();
               }}
               projectId={projectId}

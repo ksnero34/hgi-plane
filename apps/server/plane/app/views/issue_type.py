@@ -32,6 +32,11 @@ class ProjectIssueTypeViewSet(viewsets.ModelViewSet):
         
         workspace = Workspace.objects.get(slug=self.kwargs.get("slug"))
         project = Project.objects.get(id=self.kwargs.get("project_id"))
+        is_default = request.data.get("is_default", False)
+
+        if is_default:
+            IssueType.objects.filter(workspace=workspace, is_default=True).update(is_default=False)
+            ProjectIssueType.objects.filter(project=project, is_default=True).update(is_default=False)
         
         # Create the IssueType first
         issue_type_data = {
@@ -39,6 +44,7 @@ class ProjectIssueTypeViewSet(viewsets.ModelViewSet):
             "description": request.data.get("description", ""),
             "logo_props": request.data.get("logo_props", {}),
             "workspace": workspace,
+            "is_default": is_default,
         }
         
         issue_type = IssueType.objects.create(**issue_type_data)
@@ -48,6 +54,7 @@ class ProjectIssueTypeViewSet(viewsets.ModelViewSet):
             project=project,
             issue_type=issue_type,
             workspace=workspace,
+            is_default=is_default,
         )
         
         serializer = self.get_serializer(project_issue_type)
@@ -55,15 +62,24 @@ class ProjectIssueTypeViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        
-        # Update the IssueType
         issue_type = instance.issue_type
-        if "name" in request.data:
-            issue_type.name = request.data.get("name")
-        if "description" in request.data:
-            issue_type.description = request.data.get("description", "")
-        if "logo_props" in request.data:
-            issue_type.logo_props = request.data.get("logo_props", {})
+        is_default = request.data.get("is_default", None)
+
+        if is_default is True:
+            IssueType.objects.filter(workspace=instance.workspace, is_default=True).exclude(pk=issue_type.pk).update(is_default=False)
+            ProjectIssueType.objects.filter(project=instance.project, is_default=True).exclude(pk=instance.pk).update(is_default=False)
+
+        if is_default is not None:
+            instance.is_default = is_default
+            instance.save()
+
+        # Update the IssueType
+        issue_type.name = request.data.get("name", issue_type.name)
+        issue_type.description = request.data.get("description", issue_type.description)
+        issue_type.logo_props = request.data.get("logo_props", issue_type.logo_props)
+        
+        if is_default is not None:
+            issue_type.is_default = is_default
         
         issue_type.save()
         

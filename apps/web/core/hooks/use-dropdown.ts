@@ -44,9 +44,13 @@ export const useDropdown = (args: TArguments) => {
 
   // toggle the dropdown, call the onOpen callback if the dropdown is closed, and call the onClose callback if the dropdown is open
   const toggleDropdown = () => {
-    if (!isOpen) onOpen?.();
-    setIsOpen((prevIsOpen) => !prevIsOpen);
-    if (isOpen) onClose?.();
+    if (!isOpen) {
+      onOpen?.();
+      setIsOpen(true);
+    } else {
+      onClose?.();
+      setIsOpen(false);
+    }
   };
 
   const handleKeyDown = useDropdownKeyDown(toggleDropdown, handleClose);

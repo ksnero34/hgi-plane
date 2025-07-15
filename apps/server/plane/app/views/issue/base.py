@@ -72,6 +72,7 @@ from plane.db.models import (
     IssueRelation,
     IssueAssignee,
     IssueLabel,
+    IssueType,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -2085,6 +2086,57 @@ class ImportIssuesEndpoint(BaseAPIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AssignDefaultIssueTypeEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def patch(self, request, slug, project_id):
+        try:
+            issue_type_id = request.data.get("issue_type_id")
+            
+            if not issue_type_id:
+                return Response(
+                    {"error": "issue_type_id is required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 워크스페이스 조회
+            workspace = Workspace.objects.get(slug=slug)
+            
+            # 이슈 타입 존재 확인
+            issue_type = IssueType.objects.filter(
+                workspace=workspace,
+                id=issue_type_id
+            ).first()
+            
+            if not issue_type:
+                return Response(
+                    {"error": "Issue type not found"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # 프로젝트의 type이 null인 이슈들을 업데이트
+            updated_count = Issue.objects.filter(
+                project_id=project_id,
+                workspace=workspace,
+                type__isnull=True
+            ).update(type=issue_type)
+            
+            return Response({
+                "success": True,
+                "updated_count": updated_count
+            }, status=status.HTTP_200_OK)
+            
+        except Workspace.DoesNotExist:
+            return Response(
+                {"error": "Workspace not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class BulkOperationsEndpoint(BaseAPIView):

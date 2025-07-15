@@ -26,14 +26,14 @@ const IssueTypeItem: React.FC<{
     <div className="group flex items-center justify-between rounded-lg border border-custom-border-200 bg-custom-background-100 p-4 hover:bg-custom-background-90 transition-colors">
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-custom-border-200">
-          <Logo logo={issueType.logo_props || { in_use: "emoji", emoji: { value: "128204" } }} size={18} />
+          <Logo logo={issueType.issue_type.logo_props || { in_use: "emoji", emoji: { value: "128204" } }} size={18} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="font-medium text-custom-text-100 truncate">{issueType.name || "제목 없음"}</h4>
+            <h4 className="font-medium text-custom-text-100 truncate">{issueType.issue_type.name || "제목 없음"}</h4>
           </div>
-          {issueType.description && (
-            <p className="text-sm text-custom-text-300 truncate mt-1">{issueType.description}</p>
+          {issueType.issue_type.description && (
+            <p className="text-sm text-custom-text-300 truncate mt-1">{issueType.issue_type.description}</p>
           )}
         </div>
       </div>
@@ -123,8 +123,12 @@ export const IssueTypes: React.FC = observer(() => {
   };
 
   const handleEdit = (issueType: IIssueType) => {
-    setNewIssueType(issueType);
+    setNewIssueType({
+      ...issueType.issue_type,
+      id: issueType.id
+    });
     setIsEditMode(true);
+    setShowCreateForm(true);
     setIsIconPickerOpen(false);
   };
 
@@ -270,11 +274,7 @@ export const IssueTypes: React.FC = observer(() => {
               key={issueType.id}
               issueType={issueType}
               onDelete={handleDelete}
-              onEdit={(issueType) => {
-                setNewIssueType(issueType);
-                setIsEditMode(true);
-                setShowCreateForm(true);
-              }}
+              onEdit={handleEdit}
             />
           ))
         ) : (

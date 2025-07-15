@@ -894,8 +894,16 @@ class IssueDescriptionVersion(ProjectBaseModel):
 
 class CustomField(ProjectBaseModel):
     """프로젝트의 커스텀 필드 정의"""
+    issue_type = models.ForeignKey(
+        "db.IssueType",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="custom_fields",
+        verbose_name="이슈 타입"
+    )
     name = models.CharField(max_length=100, verbose_name="필드 이름")
-    key = models.CharField(max_length=50, verbose_name="고유 식별자")  
+    key = models.CharField(max_length=50, verbose_name="고유 식별자")
     description = models.TextField(blank=True, null=True, verbose_name="설명")
     field_type = models.CharField(
         max_length=20,

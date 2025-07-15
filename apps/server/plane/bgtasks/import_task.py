@@ -17,7 +17,8 @@ from plane.db.models import (
     Cycle,
     CustomField,
     CustomFieldValue,
-    ProjectMember
+    ProjectMember,
+    IssueType
 )
 from plane.utils.exception_logger import log_exception
 from plane.app.serializers import IssueSerializer, IssueCreateSerializer
@@ -270,15 +271,25 @@ def process_custom_field_value(field, value_str):
         print(f"Error processing custom field value '{value_str}' for field '{field.name}': {str(e)}")
         return None
 
-def process_custom_fields(row, project, creator_user):
+def process_custom_fields(row, project, creator_user, issue_type_id=None):
     """행에서 커스텀 필드 값들을 처리하는 함수"""
     custom_field_values = []
     
     # 프로젝트의 모든 커스텀 필드 가져오기
-    custom_fields = CustomField.objects.filter(
-        project=project,
-        deleted_at__isnull=True
-    )
+    # issue_type_id가 제공되면 해당 타입에 종속된 필드와 공통 필드를 모두 가져옴
+    if issue_type_id:
+        custom_fields = CustomField.objects.filter(
+            Q(project=project) &
+            Q(deleted_at__isnull=True) &
+            (Q(issue_type__isnull=True) | Q(issue_type_id=issue_type_id))
+        )
+    else:
+        # issue_type_id가 없으면 프로젝트 공통 필드만 가져옴
+        custom_fields = CustomField.objects.filter(
+            Q(project=project) &
+            Q(deleted_at__isnull=True) &
+            Q(issue_type__isnull=True)
+        )
     
     #print(f"[DEBUG] Found {custom_fields.count()} existing custom fields in project")
     
@@ -442,8 +453,21 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                     if not creator_user:
                         creator_user = User.objects.get(id=UUID(user_id))
                     
+                    # CSV에서 이슈 타입 읽기
+                    issue_type_name = safe_str(row.get("Issue Type", ""))
+                    issue_type = None
+                    if issue_type_name:
+                        # 이슈 타입을 찾거나 기본값 사용
+                        issue_type = IssueType.objects.filter(project=project, name=issue_type_name).first()
+                        if not issue_type:
+                            # 이슈 타입이 없으면 프로젝트의 기본 이슈 타입 사용
+                            issue_type = IssueType.objects.filter(project=project, is_default=True).first()
+                    else:
+                        # 이슈 타입이 명시되지 않으면 프로젝트의 기본 이슈 타입 사용
+                        issue_type = IssueType.objects.filter(project=project, is_default=True).first()
+                    
                     # 커스텀 필드 값 처리
-                    custom_field_values = process_custom_fields(row, project, creator_user)
+                    custom_field_values = process_custom_fields(row, project, creator_user, issue_type.id if issue_type else None)
                     
                     # 기본 이슈 데이터 준비
                     issue_data = {
@@ -687,6 +711,7 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         issue_data.update({
                             "workspace_id": workspace_uuid,
                             "project": project,
+                            "type": issue_type, # 이슈 타입 추가
                         })
                         
                         # 직접 모델 객체를 생성하고 저장
