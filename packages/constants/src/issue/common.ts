@@ -32,6 +32,7 @@ export enum EIssueGroupByToServerOptions {
   "team_project" = "project_id",
   "parent_child" = "parent_child",
   "top_level_only" = "top_level_only",
+  "issue_type" = "type_id",
 }
 
 export enum EIssueGroupBYServerToProperty {
@@ -94,6 +95,7 @@ export const DRAG_ALLOWED_GROUPS: TIssueGroupByOptions[] = [
   "labels",
   "module",
   "cycle",
+  "issue_type",
 ];
 
 export type TCreateModalStoreTypes =
@@ -120,6 +122,7 @@ export const ISSUE_GROUP_BY_OPTIONS: {
   { key: "labels", titleTranslationKey: "common.labels" },
   { key: "assignees", titleTranslationKey: "common.assignees" },
   { key: "created_by", titleTranslationKey: "common.created_by" },
+  { key: "issue_type", titleTranslationKey: "common.issue_type" },
   { key: "parent_child", titleTranslationKey: "common.order_by.parent_child" },
   { key: "top_level_only", titleTranslationKey: "common.top_level_only" },
   { key: null, titleTranslationKey: "common.none" },

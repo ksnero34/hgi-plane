@@ -964,7 +964,8 @@ class CustomFieldValue(ProjectBaseModel):
     """이슈의 커스텀 필드 값"""
     custom_field = models.ForeignKey(
         CustomField, 
-        on_delete=models.CASCADE, 
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="field_values",
         verbose_name="커스텀 필드"
     )

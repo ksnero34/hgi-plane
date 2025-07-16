@@ -991,26 +991,40 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
         return total_group_dict, total_sub_group_dict
 
     def __get_field_dict(self):
-        # Create a field dictionary
+        # Create a field dictionary for multi-level grouping
         if self.group_by_field_name == "parent_child" or self.group_by_field_name == "top_level_only":
             # parent_child와 top_level_only 그룹화는 동적으로 그룹이 생성되므로
             # group_by_fields를 기반으로 딕셔너리 생성
-            return {
-                str(field.get('id', field) if isinstance(field, dict) else field): {
-                    "results": [],
+            result = {}
+            for field in self.group_by_fields:
+                result[str(field.get('id', field) if isinstance(field, dict) else field)] = {
+                    "results": {},
                     "total_results": 0,
                 }
-                for field in self.group_by_fields
-            }
+                # 서브그룹 초기화
+                for sub_field in self.sub_group_by_fields:
+                    sub_field_key = str(sub_field.get('id', sub_field) if isinstance(sub_field, dict) else sub_field)
+                    result[str(field.get('id', field) if isinstance(field, dict) else field)]["results"][sub_field_key] = {
+                        "results": [],
+                        "total_results": 0,
+                    }
+            return result
         else:
-            total_group_dict = self.__get_total_dict()
-            return {
-                str(field): {
-                    "results": [],
+            total_group_dict, total_sub_group_dict = self.__get_total_dict()
+            result = {}
+            for field in self.group_by_fields:
+                result[str(field)] = {
+                    "results": {},
                     "total_results": total_group_dict.get(str(field), 0),
                 }
-                for field in self.group_by_fields
-            }
+                # 서브그룹 초기화
+                for sub_field in self.sub_group_by_fields:
+                    sub_field_key = str(sub_field)
+                    result[str(field)]["results"][sub_field_key] = {
+                        "results": [],
+                        "total_results": total_sub_group_dict.get(str(field), {}).get(sub_field_key, 0),
+                    }
+            return result
 
     def __query_multi_grouper(self, results):
         # Multi grouper
@@ -1041,10 +1055,14 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
             # Check if the group value is in the processed results
             result_id = result["id"]
 
-            if (
-                group_value in processed_results
-                and sub_group_value in processed_results[str(group_value)]["results"]
-            ):
+            if group_value in processed_results:
+                # 서브그룹이 없으면 생성
+                if sub_group_value not in processed_results[group_value]["results"]:
+                    processed_results[group_value]["results"][sub_group_value] = {
+                        "results": [],
+                        "total_results": 0,
+                    }
+
                 if self.group_by_field_name in self.FIELD_MAPPER:
                     # for multi grouper
                     group_ids = list(result_group_mapping[str(result_id)])
@@ -1057,10 +1075,8 @@ class SubGroupedOffsetPaginator(OffsetPaginator):
                     result[self.FIELD_MAPPER.get(self.sub_group_by_field_name)] = (
                         [] if "None" in sub_group_ids else sub_group_ids
                     )
-                # If a result belongs to multiple groups, add it to each group
-                processed_results[str(group_value)]["results"][str(sub_group_value)][
-                    "results"
-                ].append(result)
+                # Add result to the appropriate group and sub-group
+                processed_results[group_value]["results"][sub_group_value]["results"].append(result)
 
         return processed_results
 

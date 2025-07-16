@@ -3,7 +3,7 @@
 import { observer } from "mobx-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Image, BrainCog, Cog, Lock, Mail, Users, FileText, LayoutTemplate, FolderKanban } from "lucide-react";
+import { Image, BrainCog, Cog, Lock, Mail, Users, FileText, LayoutTemplate, FolderKanban, Bell } from "lucide-react";
 import { Tooltip, WorkspaceIcon } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
@@ -69,6 +69,12 @@ const INSTANCE_ADMIN_LINKS = [
     name: "File Settings",
     description: "Configure file upload settings",
     href: `/file-settings/`,
+  },
+  {
+    Icon: Bell,
+    name: "알림 설정",
+    description: "알림 템플릿 및 설정 관리",
+    href: `/notification-settings/`,
   },
 ];
 

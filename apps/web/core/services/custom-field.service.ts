@@ -67,6 +67,15 @@ export class CustomFieldService {
     return response.json();
   }
 
+  async getCustomFieldUsageCount(workspaceSlug: string, projectId: string, fieldId: string): Promise<{ count: number; sample_issues?: string[] }> {
+    const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}${fieldId}/usage-count/`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) throw new Error("Failed to get custom field usage count");
+    return response.json();
+  }
+
   async deleteCustomField(workspaceSlug: string, projectId: string, fieldId: string): Promise<void> {
     const response = await fetch(`${this.getEndpoint(workspaceSlug, projectId)}${fieldId}/`, {
       method: "DELETE",

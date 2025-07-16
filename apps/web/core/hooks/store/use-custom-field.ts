@@ -24,6 +24,7 @@ type UseCustomFieldReturn = {
   createCustomField: (data: Partial<TCustomField>) => Promise<TCustomField | undefined>;
   updateCustomField: (fieldId: string, data: Partial<TCustomField>) => Promise<TCustomField | undefined>;
   deleteCustomField: (fieldId: string) => Promise<void>;
+  getCustomFieldUsageCount: (fieldId: string) => Promise<{ count: number; sample_issues?: string[] }>;
 };
 
 export const useCustomField = (
@@ -101,6 +102,15 @@ export const useCustomField = (
     [currentProjectId, workspaceSlug, mutateCustomFields]
   );
 
+  const getCustomFieldUsageCount = useCallback(
+    async (fieldId: string) => {
+      if (!currentProjectId || !workspaceSlug) return { count: 0 };
+
+      return await customFieldService.getCustomFieldUsageCount(workspaceSlug as string, currentProjectId, fieldId);
+    },
+    [currentProjectId, workspaceSlug]
+  );
+
   const deleteCustomField = useCallback(
     async (fieldId: string) => {
       if (!currentProjectId || !workspaceSlug) return;
@@ -119,5 +129,6 @@ export const useCustomField = (
     createCustomField,
     updateCustomField,
     deleteCustomField,
+    getCustomFieldUsageCount,
   };
 }; 

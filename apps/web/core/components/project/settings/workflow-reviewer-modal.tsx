@@ -75,8 +75,9 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
     }
 
     try {
-      if (isCurrentUserReviewer) {
-        // Current user is a reviewer - approve the transition
+      // Check if this is an existing approval request that needs to be processed
+      if (transitionData.approvalRequestId && isCurrentUserReviewer) {
+        // This is an existing approval request - approve it
         if (!data.approved) {
           setToast({
             type: TOAST_TYPE.ERROR,
@@ -86,24 +87,14 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
           return;
         }
 
-        // Use approveTransition if this is an approval request, otherwise use executeTransition
-        if (transitionData.approvalRequestId) {
-          await approveTransition(
-            workspaceSlug as string, 
-            projectId as string, 
-            transitionData.approvalRequestId, 
-            {
-              comment: data.comment,
-            }
-          );
-        } else {
-          await executeTransition(workspaceSlug as string, projectId as string, {
-            issue_id: transitionData.issueId,
-            from_state_id: transitionData.fromStateId,
-            to_state_id: transitionData.toStateId,
+        await approveTransition(
+          workspaceSlug as string, 
+          projectId as string, 
+          transitionData.approvalRequestId, 
+          {
             comment: data.comment,
-          });
-        }
+          }
+        );
         
         setToast({
           type: TOAST_TYPE.SUCCESS,
@@ -113,8 +104,8 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
         
         onApprove();
       } else {
-        // Current user is a requester - request approval
-        console.log("About to call requestApproval with:", {
+        // Always create an approval request first, regardless of reviewer status
+        console.log("Creating approval request for:", {
           workspaceSlug,
           projectId,
           payload: {
@@ -142,11 +133,19 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
             message: "이 상태 전환에 대한 승인 요청이 이미 존재합니다. 검토자의 승인을 기다려주세요.",
           });
         } else {
-          setToast({
-            type: TOAST_TYPE.SUCCESS,
-            title: "승인 요청됨", 
-            message: "상태 전환 승인 요청이 검토자에게 전송되었습니다.",
-          });
+          if (isCurrentUserReviewer) {
+            setToast({
+              type: TOAST_TYPE.SUCCESS,
+              title: "승인 요청 생성됨", 
+              message: "승인 요청이 생성되었습니다. 워크플로우 승인 모달에서 검토해주세요.",
+            });
+          } else {
+            setToast({
+              type: TOAST_TYPE.SUCCESS,
+              title: "승인 요청됨", 
+              message: "상태 전환 승인 요청이 검토자에게 전송되었습니다.",
+            });
+          }
         }
       }
       
@@ -206,7 +205,9 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
         <div className="mb-5">
           <h3 className="text-lg font-medium text-custom-text-100 flex items-center gap-2">
             <Shield className="h-5 w-5 text-orange-500" />
-            {isCurrentUserReviewer ? "상태 전환 승인 필요" : "상태 전환 승인 요청"}
+            {transitionData?.approvalRequestId && isCurrentUserReviewer 
+              ? "상태 전환 승인 검토" 
+              : "상태 전환 승인 요청"}
           </h3>
         </div>
 
@@ -224,13 +225,15 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
                 <Shield className="h-5 w-5 text-yellow-400" />
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800">
-                    {isCurrentUserReviewer ? "승인이 필요한 상태 전환" : "승인 요청할 상태 전환"}
+                    {transitionData?.approvalRequestId && isCurrentUserReviewer
+                      ? "승인 검토가 필요한 상태 전환"
+                      : "승인 요청할 상태 전환"}
                   </h3>
                   <div className="mt-2 text-sm text-yellow-700">
                     <p>
-                      {isCurrentUserReviewer 
-                        ? "이 상태 전환은 워크플로우 규칙에 따라 승인이 필요합니다."
-                        : "이 상태 전환은 검토자의 승인이 필요합니다. 승인 요청을 보내시겠습니까?"
+                      {transitionData?.approvalRequestId && isCurrentUserReviewer
+                        ? "이미 생성된 승인 요청을 검토하고 승인 여부를 결정해주세요."
+                        : "이 상태 전환은 검토자의 승인이 필요합니다. 승인 요청을 생성하시겠습니까?"
                       }
                     </p>
                   </div>
@@ -241,7 +244,7 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
             {/* Reviewers */}
             <div>
               <h4 className="text-sm font-medium text-custom-text-100 mb-2">
-                {isCurrentUserReviewer ? "승인자" : "검토자"}
+                {transitionData?.approvalRequestId && isCurrentUserReviewer ? "승인자" : "검토자"}
               </h4>
               <div className="space-y-2">
                 {reviewers.map((reviewer) => (
@@ -263,7 +266,9 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
             {/* Comment */}
             <div>
               <label className="block text-sm font-medium text-custom-text-200 mb-2">
-                {isCurrentUserReviewer ? "승인 코멘트 (선택사항)" : "요청 사유 (선택사항)"}
+                {transitionData?.approvalRequestId && isCurrentUserReviewer 
+                  ? "승인 코멘트 (선택사항)" 
+                  : "요청 사유 (선택사항)"}
               </label>
               <Controller
                 name="comment"
@@ -271,7 +276,7 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
                 render={({ field }) => (
                   <TextArea
                     {...field}
-                    placeholder={isCurrentUserReviewer 
+                    placeholder={transitionData?.approvalRequestId && isCurrentUserReviewer
                       ? "승인에 대한 코멘트를 입력하세요..." 
                       : "승인 요청 사유를 입력하세요..."
                     }
@@ -281,8 +286,8 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
               />
             </div>
 
-            {/* Approval Checkbox - Only show for reviewers */}
-            {isCurrentUserReviewer && (
+            {/* Approval Checkbox - Only show for existing approval requests */}
+            {transitionData?.approvalRequestId && isCurrentUserReviewer && (
               <div className="flex items-start space-x-3">
                 <Controller
                   name="approved"
@@ -322,7 +327,9 @@ export const WorkflowReviewerModal = observer(({ isOpen, onClose, transitionData
               }}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {isCurrentUserReviewer ? "승인 및 전환" : "승인 요청"}
+              {transitionData?.approvalRequestId && isCurrentUserReviewer 
+                ? "승인 및 전환" 
+                : "승인 요청"}
             </Button>
           </div>
         </form>

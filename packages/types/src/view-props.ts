@@ -18,6 +18,7 @@ export type TIssueGroupByOptions =
   | "team_project"
   | "parent_child"
   | "top_level_only"
+  | "issue_type"
   | null;
 
 export type TIssueOrderByOptions =

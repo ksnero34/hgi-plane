@@ -7,7 +7,9 @@ import { setToast, TOAST_TYPE, Tooltip } from "@plane/ui";
 // helpers
 import { cn } from "@plane/utils";
 // hooks
-import { useIssueDetail, useProject } from "@/hooks/store";
+import { useIssueDetail, useProject, useIssueType } from "@/hooks/store";
+// components
+import { IssueTypeIcon } from "../issue-type-icon";
 
 type TIssueIdentifierBaseProps = {
   projectId: string;
@@ -30,11 +32,46 @@ type TIssueIdentifierWithDetails = TIssueIdentifierBaseProps & {
 export type TIssueIdentifierProps = TIssueIdentifierFromStore | TIssueIdentifierWithDetails;
 
 type TIssueTypeIdentifier = {
-  issueTypeId: string;
+  issueId: string;
   size?: "xs" | "sm" | "md" | "lg";
 };
 
-export const IssueTypeIdentifier: FC<TIssueTypeIdentifier> = observer((props) => <></>);
+export const IssueTypeIdentifier: FC<TIssueTypeIdentifier> = observer((props) => {
+  const { issueId, size = "sm" } = props;
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
+  
+  const issue = getIssueById(issueId);
+  const projectId = issue?.project_id;
+  const { issueTypes, getDefaultIssueType } = useIssueType(projectId || "");
+  
+  let issueType = issueTypes.find(it => it.id === issue?.type_id);
+  
+  // 이슈에 type_id가 없거나 매치되지 않으면 기본 이슈 타입 사용
+  if (!issueType && !issue?.type_id) {
+    issueType = getDefaultIssueType();
+  }
+  
+  // console.log('IssueTypeIdentifier debug:', {
+  //   issueId,
+  //   projectId,
+  //   issueTypes,
+  //   issueType,
+  //   issueTypeIdFromIssue: issue?.type_id
+  // });
+  
+  if (!issueType) return null;
+  
+  const iconSize = {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+  }[size];
+  
+  return <IssueTypeIcon issueType={issueType} size={iconSize} />;
+});
 
 type TIdentifierTextProps = {
   identifier: string;
@@ -85,19 +122,35 @@ export const IssueIdentifier: React.FC<TIssueIdentifierProps> = observer((props)
   const isUsingStoreData = "issueId" in props;
   // derived values
   const issue = isUsingStoreData ? getIssueById(props.issueId) : null;
+  const issueTypeId = isUsingStoreData ? issue?.type_id : ("issueTypeId" in props ? props.issueTypeId : null);
   const projectIdentifier = isUsingStoreData ? getProjectIdentifierById(projectId) : props.projectIdentifier;
   const issueSequenceId = isUsingStoreData ? issue?.sequence_id : props.issueSequenceId;
   const shouldRenderIssueID = displayProperties ? displayProperties.key : true;
+  const shouldRenderIssueType = displayProperties ? displayProperties.issue_type !== false : true;
+  
+  // Debug logging
+  // console.log('IssueIdentifier debug:', {
+  //   issueId: isUsingStoreData ? props.issueId : 'not using store',
+  //   issueTypeId,
+  //   shouldRenderIssueType,
+  //   displayProperties,
+  //   issue: isUsingStoreData ? issue : null
+  // });
 
-  if (!shouldRenderIssueID) return null;
+  if (!shouldRenderIssueID && !shouldRenderIssueType) return null;
 
   return (
-    <div className="flex items-center space-x-2">
-      <IdentifierText
-        identifier={`${projectIdentifier}-${issueSequenceId}`}
-        enableClickToCopyIdentifier={enableClickToCopyIdentifier}
-        textContainerClassName={textContainerClassName}
-      />
+    <div className="flex items-center gap-1">
+      {shouldRenderIssueType && isUsingStoreData && (
+        <IssueTypeIdentifier issueId={props.issueId} size={props.size} />
+      )}
+      {shouldRenderIssueID && (
+        <IdentifierText
+          identifier={`${projectIdentifier}-${issueSequenceId}`}
+          enableClickToCopyIdentifier={enableClickToCopyIdentifier}
+          textContainerClassName={textContainerClassName}
+        />
+      )}
     </div>
   );
 });

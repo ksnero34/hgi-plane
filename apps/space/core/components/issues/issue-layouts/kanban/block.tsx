@@ -61,6 +61,7 @@ const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((prop
         className="flex flex-wrap items-center gap-2 whitespace-nowrap text-custom-text-300 pt-1.5"
         issue={issue}
         displayProperties={displayProperties}
+        anchor={anchor.toString()}
       />
     </div>
   );

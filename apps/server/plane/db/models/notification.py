@@ -123,3 +123,80 @@ class EmailNotificationLog(BaseModel):
         verbose_name_plural = "Email Notification Logs"
         db_table = "email_notification_logs"
         ordering = ("-created_at",)
+
+
+class RestNotificationConfig(BaseModel):
+    workspace = models.ForeignKey(
+        "db.Workspace", related_name="rest_notification_configs", on_delete=models.CASCADE
+    )
+    name = models.CharField(max_length=255, default="Default REST Notification")
+    endpoint_url = models.URLField(max_length=500)
+    method = models.CharField(max_length=10, default="POST")
+    headers = models.JSONField(default=dict)
+    json_template = models.JSONField(default=dict)
+    is_enabled = models.BooleanField(default=True)
+    timeout = models.IntegerField(default=30)
+    retry_count = models.IntegerField(default=3)
+    
+    class Meta:
+        verbose_name = "REST Notification Config"
+        verbose_name_plural = "REST Notification Configs"
+        db_table = "rest_notification_configs"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.name} - {self.workspace.name}"
+
+
+class RestNotificationLog(BaseModel):
+    config = models.ForeignKey(
+        "db.RestNotificationConfig", related_name="logs", on_delete=models.CASCADE
+    )
+    notification = models.ForeignKey(
+        "db.Notification", related_name="rest_logs", on_delete=models.CASCADE, null=True
+    )
+    request_data = models.JSONField(null=True)
+    response_data = models.JSONField(null=True)
+    status_code = models.IntegerField(null=True)
+    success = models.BooleanField(default=False)
+    error_message = models.TextField(blank=True, null=True)
+    attempt_count = models.IntegerField(default=1)
+    
+    class Meta:
+        verbose_name = "REST Notification Log"
+        verbose_name_plural = "REST Notification Logs"
+        db_table = "rest_notification_logs"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.config.name} - {self.success}"
+
+
+class NotificationTemplate(BaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    service_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('slack', 'Slack'),
+            ('discord', 'Discord'),
+            ('teams', 'Microsoft Teams'),
+            ('webhook', 'Generic Webhook'),
+            ('custom', 'Custom API'),
+        ],
+        default='custom'
+    )
+    endpoint_url = models.URLField(max_length=500, blank=True, null=True)
+    method = models.CharField(max_length=10, default="POST")
+    headers = models.JSONField(default=dict)
+    json_template = models.JSONField(default=dict)
+    is_system_template = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = "Notification Template"
+        verbose_name_plural = "Notification Templates"
+        db_table = "notification_templates"
+        ordering = ("service_type", "name")
+
+    def __str__(self):
+        return f"{self.name} ({self.service_type})"

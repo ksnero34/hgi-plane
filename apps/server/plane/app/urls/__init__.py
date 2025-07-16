@@ -19,6 +19,7 @@ from .workspace import urlpatterns as workspace_urls
 from .instance import urlpatterns as instance_urls
 from .timezone import urlpatterns as timezone_urls
 from .workflow import urlpatterns as workflow_urls
+from .notification_template import urlpatterns as notification_template_urls
 
 urlpatterns = [
     *analytic_urls,
@@ -42,4 +43,5 @@ urlpatterns = [
     *instance_urls,
     *timezone_urls,
     *workflow_urls,
+    *notification_template_urls,
 ]

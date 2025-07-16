@@ -4,6 +4,7 @@ from django.utils import timezone
 
 # Third party imports
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 # Module imports
@@ -39,7 +40,19 @@ class CustomFieldViewSet(BaseViewSet):
         )
 
     def perform_destroy(self, instance):
-        """소프트 삭제 구현"""
+        """커스텀 필드와 관련 값들 모두 소프트 삭제"""
+        from plane.db.models import CustomFieldValue
+        
+        # 1. 관련된 모든 CustomFieldValue 소프트 삭제
+        CustomFieldValue.objects.filter(
+            custom_field=instance,
+            deleted_at__isnull=True
+        ).update(
+            deleted_at=timezone.now(),
+            deleted_by=self.request.user
+        )
+        
+        # 2. CustomField 소프트 삭제
         instance.deleted_at = timezone.now()
         instance.deleted_by = self.request.user
         instance.save()
@@ -62,6 +75,22 @@ class CustomFieldViewSet(BaseViewSet):
 
             response_serializer = self.get_serializer(created_fields, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'])
+    def usage_count(self, request, slug, project_id, pk=None):
+        """커스텀 필드 사용량 조회"""
+        from plane.db.models import CustomFieldValue
+        
+        field = self.get_object()
+        count = CustomFieldValue.objects.filter(
+            custom_field=field,
+            deleted_at__isnull=True
+        ).count()
+        return Response({
+            "count": count, 
+            "field_id": field.id,
+            "field_name": field.name
+        })
 
     def reorder(self, request, slug, project_id):
         """커스텀 필드 순서 변경"""

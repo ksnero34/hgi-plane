@@ -34,6 +34,11 @@ from plane.app.views import (
     WorkspaceUserPreferenceViewSet,
     IssueTypeViewSet,
 )
+from plane.app.views.workspace.notification import (
+    RestNotificationConfigViewSet,
+    RestNotificationLogViewSet,
+    RestNotificationTestEndpoint,
+)
 
 
 urlpatterns = [
@@ -283,5 +288,53 @@ urlpatterns = [
             {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
         ),
         name="workspace-issue-types",
+    ),
+    # REST Notification Configuration URLs
+    path(
+        "workspaces/<str:slug>/rest-notification-configs/",
+        RestNotificationConfigViewSet.as_view(
+            {
+                "get": "list",
+                "post": "create",
+            }
+        ),
+        name="rest-notification-configs",
+    ),
+    path(
+        "workspaces/<str:slug>/rest-notification-configs/<uuid:pk>/",
+        RestNotificationConfigViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="rest-notification-config",
+    ),
+    # REST Notification Logs URLs
+    path(
+        "workspaces/<str:slug>/rest-notification-logs/",
+        RestNotificationLogViewSet.as_view(
+            {
+                "get": "list",
+            }
+        ),
+        name="rest-notification-logs",
+    ),
+    path(
+        "workspaces/<str:slug>/rest-notification-logs/<uuid:pk>/",
+        RestNotificationLogViewSet.as_view(
+            {
+                "get": "retrieve",
+            }
+        ),
+        name="rest-notification-log",
+    ),
+    # REST Notification Test URL
+    path(
+        "workspaces/<str:slug>/rest-notification-test/",
+        RestNotificationTestEndpoint.as_view(),
+        name="rest-notification-test",
     ),
 ]

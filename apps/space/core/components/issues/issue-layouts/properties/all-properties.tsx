@@ -18,20 +18,27 @@ import {
   IssueBlockModules,
   IssueBlockCycle,
 } from "@/components/issues";
+import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
+import { CustomFieldProperties } from "@/components/issues/custom-field-properties";
 import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/with-display-properties-HOC";
 // helpers
 import { getDate } from "@plane/utils";
 //// hooks
 import { IIssue } from "@/types/issue";
+import { usePublish } from "@/hooks/store";
 
 export interface IIssueProperties {
   issue: IIssue;
   displayProperties: IIssueDisplayProperties | undefined;
   className: string;
+  anchor?: string;
 }
 
 export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, displayProperties, className } = props;
+  const { issue, displayProperties, className, anchor = "" } = props;
+
+  // store hooks
+  const { project_custom_fields } = usePublish(anchor);
 
   if (!displayProperties || !issue.project_id) return null;
 
@@ -44,6 +51,15 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   return (
     <div className={className}>
       {/* basic properties */}
+      {/* issue type */}
+      {issue.type_id && (
+        <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="type">
+          <div className="h-5">
+            <IssueTypeIcon issueType={issue.type_detail} size={16} />
+          </div>
+        </WithDisplayPropertiesHOC>
+      )}
+      
       {/* state */}
       {issue.state_id && (
         <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="state">
@@ -179,6 +195,17 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
           </div>
         </Tooltip>
       </WithDisplayPropertiesHOC>
+
+      {/* custom fields */}
+      {project_custom_fields && project_custom_fields.length > 0 && (
+        <div className="h-5">
+          <CustomFieldProperties 
+            anchor={anchor}
+            issue={issue}
+            customFields={project_custom_fields}
+          />
+        </div>
+      )}
     </div>
   );
 });

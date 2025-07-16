@@ -788,8 +788,21 @@ class WorkflowValidationViewSet(BaseViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
+                # 본인이 요청자인 경우 바로 승인하지 않고 승인 요청을 만들도록 처리
+                # 하지만 이미 승인 요청이 있는 상태이므로 일반적인 승인 프로세스를 진행
+                
                 # Get approval data
-                approval_comment = request.data.get("comment", "")
+                approval_comment = request.data.get("comment", "").strip()
+                
+                # 승인 코멘트가 필수가 되도록 검증 (본인 승인인 경우 기본 메시지 허용)
+                if not approval_comment:
+                    if request.user.id == approval_request.requester.id:
+                        approval_comment = "본인 승인 (자가 검토 완료)"
+                    else:
+                        return Response(
+                            {"error": "승인 사유를 입력해야 합니다."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                 
                 # Update approval request
                 approval_request.status = "approved"
@@ -823,16 +836,34 @@ class WorkflowValidationViewSet(BaseViewSet):
 
                 # Create issue activity for state change
                 current_epoch = time.time()
-                activity_comment = f"updated the state to (approved by {request.user.display_name})"
+                
+                # 본인 승인인지 확인하여 메시지 차별화
+                if request.user.id == approval_request.requester.id:
+                    activity_comment = f"updated the state to (self-approved by {request.user.display_name})"
+                else:
+                    activity_comment = f"updated the state to (approved by {request.user.display_name})"
+                
                 if approval_comment:
                     activity_comment += f" - {approval_comment}"
+                
+                # 워크플로우 승인을 별도 필드로 표시하기 위한 추가 데이터 생성
+                workflow_approval_data = {
+                    "approver_id": str(request.user.id),
+                    "approver_name": request.user.display_name,
+                    "approval_comment": approval_comment,
+                    "is_self_approval": request.user.id == approval_request.requester.id,
+                    "approval_request_id": str(approval_request.id)
+                }
+                
+                # JSON 데이터를 문자열로 직렬화하여 저장
+                workflow_approval_json = json.dumps(workflow_approval_data, cls=DjangoJSONEncoder)
                 
                 IssueActivity.objects.create(
                     issue=issue,
                     actor=approval_request.requester,  # Show as requester's action
                     verb="updated",
                     old_value=from_state.name,
-                    new_value=to_state.name,
+                    new_value=f"{to_state.name}|{workflow_approval_json}",  # 상태명과 JSON 데이터를 구분자로 연결
                     field="state",
                     project_id=project_id,
                     workspace_id=issue.workspace_id,
@@ -843,7 +874,11 @@ class WorkflowValidationViewSet(BaseViewSet):
                 )
                 
                 # Create separate activity for approval with approver information
-                approval_activity_comment = f"approved the state transition"
+                if request.user.id == approval_request.requester.id:
+                    approval_activity_comment = f"self-approved the state transition"
+                else:
+                    approval_activity_comment = f"approved the state transition"
+                
                 if approval_comment:
                     approval_activity_comment += f": {approval_comment}"
                 
@@ -863,6 +898,13 @@ class WorkflowValidationViewSet(BaseViewSet):
                 )
 
                 # Log the transition
+                log_comment = f"Approved by {request.user.display_name}"
+                if request.user.id == approval_request.requester.id:
+                    log_comment = f"Self-approved by {request.user.display_name}"
+                
+                if approval_comment:
+                    log_comment += f". {approval_comment}"
+                
                 WorkflowTransitionLog.objects.create(
                     issue=issue,
                     workflow=approval_request.workflow,
@@ -871,12 +913,17 @@ class WorkflowValidationViewSet(BaseViewSet):
                     to_state=to_state,
                     reviewer=request.user,
                     actor=approval_request.requester,
-                    comment=f"Approved by {request.user.display_name}. {approval_comment}".strip(),
+                    comment=log_comment.strip(),
                     project_id=project_id,
                 )
 
                 # Create direct notification for workflow approval
                 from plane.bgtasks.notification_task import notifications
+                
+                # 알림 메시지도 본인 승인인지에 따라 차별화
+                notification_comment = f"updated the state to (approved by {request.user.display_name})"
+                if request.user.id == approval_request.requester.id:
+                    notification_comment = f"updated the state to (self-approved by {request.user.display_name})"
                 
                 # Create activity data that matches expected format
                 activity_data = [{
@@ -889,7 +936,7 @@ class WorkflowValidationViewSet(BaseViewSet):
                     "new_value": to_state.name,
                     "old_identifier": str(from_state.id),
                     "new_identifier": str(to_state.id),
-                    "comment": f"updated the state to (approved by {request.user.display_name})",
+                    "comment": notification_comment,
                     "epoch": current_epoch,
                 }]
                 
@@ -948,7 +995,14 @@ class WorkflowValidationViewSet(BaseViewSet):
                     )
                 
                 # Get rejection comment
-                rejection_comment = request.data.get("comment", "")
+                rejection_comment = request.data.get("comment", "").strip()
+                
+                # 거부 코멘트는 필수
+                if not rejection_comment:
+                    return Response(
+                        {"error": "거부 사유를 입력해야 합니다."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 
                 # Update approval request status to rejected
                 approval_request.status = "rejected"

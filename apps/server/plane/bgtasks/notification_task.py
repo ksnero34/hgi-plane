@@ -24,6 +24,7 @@ from plane.db.models import (
     Workspace,
     ProjectMattermostConfig,
     CustomField,
+    RestNotificationConfig,
 )
 from django.db.models import Subquery
 from django.conf import settings
@@ -36,6 +37,8 @@ from bs4 import BeautifulSoup
 from plane.bgtasks.java_notification_task import send_java_notification
 # Import Mattermost notification service
 from plane.bgtasks.mattermost_notification_task import send_mattermost_notification, create_mattermost_notification_data
+# Import REST notification service
+from plane.bgtasks.rest_notification_task import send_rest_notification
 
 
 # =========== Issue Description Html Parsing and notification Functions ======================
@@ -294,6 +297,39 @@ def process_notification(notification):
     except Exception as e:
         logging.getLogger("plane").warning(f"Error processing Mattermost notification: {str(e)}")
     
+    # REST 알림 처리
+    try:
+        if notification.project_id:
+            rest_configs = RestNotificationConfig.objects.filter(
+                workspace=notification.workspace,
+                is_enabled=True
+            )
+            
+            for config in rest_configs:
+                # 알림 데이터 생성
+                user_email = notification.receiver.email
+                user_id = user_email.split('@')[0] if '@' in user_email else user_email
+                
+                rest_notification_data = {
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "title": notification.title or "알림",
+                    "message": notification.message or "",
+                    "issue_id": f"{notification.project.identifier}-{notification.data.get('issue', {}).get('sequence_id', '')}" if notification.data.get('issue') else "",
+                    "issue_name": notification.data.get('issue', {}).get('name', '') if notification.data.get('issue') else "",
+                    "workspace_name": notification.workspace.name,
+                    "project_name": notification.project.name if notification.project else "",
+                    "actor_name": notification.triggered_by.display_name if notification.triggered_by else "",
+                    "notification_type": notification.sender,
+                    "entity_type": notification.entity_name,
+                    "entity_id": str(notification.entity_identifier) if notification.entity_identifier else "",
+                }
+                
+                send_rest_notification.delay(config.id, rest_notification_data, notification.id)
+                
+    except Exception as e:
+        logging.getLogger("plane").warning(f"Error processing REST notification: {str(e)}")
+    
     return notification
 
 
@@ -380,8 +416,6 @@ def notifications(
                         )
                         # 알림 처리 함수 호출
                         process_notification(notification)
-                        # 알림을 bulk_notifications 배열에 추가
-                        bulk_notifications.append(notification)
                     except Exception as e:
                         print(f"Error creating mention notification: {e}")
 
@@ -668,8 +702,6 @@ def notifications(
                 )
                 # 알림 처리 함수 호출
                 process_notification(notification)
-                # 알림을 bulk_notifications 배열에 추가
-                bulk_notifications.append(notification)
                 # Create email notification
                 if send_email:
                     bulk_email_logs.append(
@@ -752,21 +784,20 @@ def notifications(
                 preference = UserNotificationPreference.objects.get(
                     user_id=mention_id
                 )
-                for issue_activity in issue_activities_created:
-                    notification = create_mention_notification(
-                        project=project,
-                        issue=issue,
-                        notification_comment=f"{actor.display_name}님이 '{issue.name}' 이슈에서 당신을 멘션했습니다.",
-                        actor_id=actor_id,
-                        mention_id=mention_id,
-                        issue_id=issue_id,
-                        activity=issue_activity,
-                    )
+                if issue_activities_created:
+                    for issue_activity in issue_activities_created:
+                        notification = create_mention_notification(
+                            project=project,
+                            issue=issue,
+                            notification_comment=f"{actor.display_name}님이 '{issue.name}' 이슈에서 당신을 멘션했습니다.",
+                            actor_id=actor_id,
+                            mention_id=mention_id,
+                            issue_id=issue_id,
+                            activity=issue_activity,
+                        )
 
-                    # 알림 처리 함수 호출
-                    process_notification(notification)
-                    # 알림을 bulk_notifications 배열에 추가
-                    bulk_notifications.append(notification)
+                        # 알림 처리 함수 호출
+                        process_notification(notification)
 
         for mention_id in new_mentions:
             if mention_id != actor_id:
@@ -789,23 +820,20 @@ def notifications(
                     )
                     # 알림 처리 함수 호출
                     process_notification(notification)
-                    # 알림을 bulk_notifications 배열에 추가
-                    bulk_notifications.append(notification)
                 else:
-                    for issue_activity in issue_activities_created:
-                        notification = create_mention_notification(
-                            project=project,
-                            issue=issue,
-                            notification_comment=f"{actor.display_name}님이 '{issue.name}' 이슈에서 당신을 멘션했습니다.",
-                            actor_id=actor_id,
-                            mention_id=mention_id,
-                            issue_id=issue_id,
-                            activity=issue_activity,
-                        )
-                        # 알림 처리 함수 호출
-                        process_notification(notification)
-                        # 알림을 bulk_notifications 배열에 추가
-                        bulk_notifications.append(notification)
+                    if issue_activities_created:
+                        for issue_activity in issue_activities_created:
+                            notification = create_mention_notification(
+                                project=project,
+                                issue=issue,
+                                notification_comment=f"{actor.display_name}님이 '{issue.name}' 이슈에서 당신을 멘션했습니다.",
+                                actor_id=actor_id,
+                                mention_id=mention_id,
+                                issue_id=issue_id,
+                                activity=issue_activity,
+                            )
+                            # 알림 처리 함수 호출
+                            process_notification(notification)
 
         # save new mentions for the particular issue and remove the mentions that has been deleted from the description
         update_mentions_for_issue(
@@ -814,8 +842,8 @@ def notifications(
             new_mentions=new_mentions,
             removed_mention=removed_mention,
         )
-        # Bulk create notifications
-        Notification.objects.bulk_create(bulk_notifications, batch_size=100)
+        # Bulk create notifications and email logs
+        # Note: bulk_notifications is removed as notifications are now processed individually
         EmailNotificationLog.objects.bulk_create(
             bulk_email_logs, batch_size=100, ignore_conflicts=True
         )

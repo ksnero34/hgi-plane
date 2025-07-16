@@ -6,7 +6,7 @@ import { useTranslation } from "@plane/i18n";
 import { TIssue, TCustomField, ISearchIssueResponse } from "@plane/types";
 import { Check, X, Tag, CalendarCheck2, UserCircle2, Users, Settings, AlertTriangle, Signal, Calendar, LayoutPanelTop, Type } from "lucide-react";
 import { useProject, useProjectState, useMember, useUser, useUserPermissions } from "@/hooks/store";
-import { DateDropdown, MemberDropdown, CustomFieldDropdown, StateDropdown, PriorityDropdown } from "@/components/dropdowns";
+import { DateDropdown, MemberDropdown, CustomFieldDropdown, StateDropdown, PriorityDropdown, IssueTypeDropdown } from "@/components/dropdowns";
 import { ParentIssuesListModal } from "@/components/issues";
 import { renderFormattedPayloadDate } from "@plane/utils";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
@@ -456,6 +456,26 @@ export const BulkEditModal: FC<TBulkEditModalProps> = observer((props) => {
         ) : (
           <>
             <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
+              {/* 이슈 타입 변경 */}
+              <div className="flex items-center gap-3 h-8">
+                <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">
+                  <Type className="h-4 w-4 flex-shrink-0" />
+                  <span>이슈 타입</span>
+                </div>
+                <IssueTypeDropdown
+                  value={updates.type_id || null}
+                  onChange={(val) => handleFieldChange('type_id', val)}
+                  projectId={projectId}
+                  buttonVariant="transparent-with-text"
+                  className="w-3/5 flex-grow group"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-sm ${updates.type_id ? "" : "text-custom-text-400"}`}
+                  placeholder="변경하지 않음"
+                  dropdownArrow
+                  dropdownArrowClassName="h-3.5 w-3.5 hidden group-hover:inline"
+                />
+              </div>
+
               {/* 상태 변경 */}
               <div className="flex items-center gap-3 h-8">
                 <div className="flex items-center gap-1 w-2/5 flex-shrink-0 text-sm text-custom-text-300">

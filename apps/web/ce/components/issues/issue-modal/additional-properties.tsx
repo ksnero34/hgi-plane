@@ -16,14 +16,14 @@ export const IssueAdditionalProperties: React.FC<TIssueAdditionalPropertiesProps
   const { watch, control } = useFormContext();
   const { customFields } = useProjectCustomFields(workspaceSlug, projectId);
 
-  console.log("IssueAdditionalProperties - issueTypeId:", issueTypeId);
-  console.log("IssueAdditionalProperties - customFields:", customFields);
+  // console.log("IssueAdditionalProperties - issueTypeId:", issueTypeId);
+  // console.log("IssueAdditionalProperties - customFields:", customFields);
 
   const filteredCustomFields = issueTypeId ? customFields.filter(field => 
     field.issue_type === issueTypeId
   ) : [];
 
-  console.log("IssueAdditionalProperties - filteredCustomFields:", filteredCustomFields);
+  // console.log("IssueAdditionalProperties - filteredCustomFields:", filteredCustomFields);
 
   if (!filteredCustomFields.length) return null;
 

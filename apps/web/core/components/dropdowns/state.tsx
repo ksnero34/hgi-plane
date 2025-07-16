@@ -117,43 +117,43 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
   // Get available states based on workflow rules
   const getAvailableStates = useMemo(() => {
     if (!enableWorkflowValidation || !issueId || !projectId || !workspaceSlug) {
-      console.log("Workflow validation disabled or missing required data");
+      // console.log("Workflow validation disabled or missing required data");
       return statesList; // Return all states if workflow validation is disabled
     }
 
     // Get default workflow for the project
     const defaultWorkflow = getDefaultWorkflow(projectId);
     if (!defaultWorkflow) {
-      console.log("No default workflow found for project:", projectId);
+      // console.log("No default workflow found for project:", projectId);
       return statesList; // Return all states if no workflow is found
     }
 
-    console.log("Default workflow found:", defaultWorkflow);
+    // console.log("Default workflow found:", defaultWorkflow);
 
     // Get workflow transitions
     const transitions = getWorkflowTransitions(defaultWorkflow.id);
     if (!transitions || transitions.length === 0) {
-      console.log("No transitions found for workflow:", defaultWorkflow.id);
+      // console.log("No transitions found for workflow:", defaultWorkflow.id);
       return statesList; // Return all states if no transitions are found
     }
 
-    console.log("Workflow transitions:", transitions);
+    // console.log("Workflow transitions:", transitions);
 
     // Filter states that can be transitioned to from current state
     const currentStateId = stateValue;
     if (!currentStateId) {
-      console.log("No current state ID");
+      // console.log("No current state ID");
       return statesList; // Return all states if no current state
     }
 
-    console.log("Current state ID:", currentStateId);
+    // console.log("Current state ID:", currentStateId);
 
     // Find transitions from current state
     const availableTransitions = transitions.filter(
       (transition) => transition.from_state === currentStateId
     );
 
-    console.log("Available transitions from current state:", availableTransitions);
+    // console.log("Available transitions from current state:", availableTransitions);
 
     // Extract target state IDs
     const availableStateIds = new Set([
@@ -161,12 +161,12 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
       ...availableTransitions.map((transition) => transition.to_state),
     ]);
 
-    console.log("Available state IDs:", Array.from(availableStateIds));
+    // console.log("Available state IDs:", Array.from(availableStateIds));
 
     // Filter states list to only include available states
     const filteredStates = statesList?.filter((state) => availableStateIds.has(state?.id ?? "")) || [];
     
-    console.log("Filtered states:", filteredStates);
+    // console.log("Filtered states:", filteredStates);
     
     return filteredStates;
   }, [
@@ -412,9 +412,13 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
         transitionData={reviewerModalData}
         projectId={projectId}
         onApprove={() => {
-          if (reviewerModalData) {
-            onChange(reviewerModalData.toStateId);
-          }
+          // Don't change state immediately after approval request
+          // State will be changed only after actual approval through the approval modal
+          setToast({
+            type: TOAST_TYPE.INFO,
+            title: "승인 요청 완료",
+            message: "워크플로우 승인 모달에서 요청을 확인하세요.",
+          });
         }}
       />
     </>

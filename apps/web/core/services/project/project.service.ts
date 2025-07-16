@@ -232,4 +232,12 @@ export class ProjectService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  async getIssueTypeUsageCount(workspaceSlug: string, projectId: string, issueTypeId: string): Promise<{ count: number }> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/usage-count/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

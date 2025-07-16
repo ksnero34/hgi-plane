@@ -85,6 +85,7 @@ export const IssueBlock = observer((props: IssueBlockProps) => {
           className="relative flex flex-wrap md:flex-grow md:flex-shrink-0 items-center gap-2 whitespace-nowrap"
           issue={issue}
           displayProperties={displayProperties}
+          anchor={anchor.toString()}
         />
       </div>
     </div>

@@ -9,6 +9,8 @@ import { DoubleCircleIcon, StateGroupIcon, TOAST_TYPE, setToast } from "@plane/u
 import { cn, getIssuePriorityFilters } from "@plane/utils";
 // components
 import { Icon } from "@/components/ui";
+import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
+import { CustomFieldProperties } from "@/components/issues/custom-field-properties";
 // helpers
 import { renderFormattedDate } from "@plane/utils";
 import { shouldHighlightIssueDueDate } from "@/helpers/issue.helper";
@@ -31,7 +33,7 @@ export const PeekOverviewIssueProperties: React.FC<Props> = observer(({ issueDet
 
   const { anchor } = useParams();
 
-  const { project_details } = usePublish(anchor?.toString());
+  const { project_details, project_custom_fields } = usePublish(anchor?.toString());
 
   const priority = issueDetails.priority ? getIssuePriorityFilters(issueDetails.priority) : null;
 
@@ -62,6 +64,20 @@ export const PeekOverviewIssueProperties: React.FC<Props> = observer(({ issueDet
         </div>
       )}
       <div className={`space-y-2 ${mode === "full" ? "pt-3" : ""}`}>
+        {/* Issue Type */}
+        {issueDetails.type_id && issueDetails.type_detail && (
+          <div className="flex items-center gap-3 h-8">
+            <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">
+              <IssueTypeIcon issueType={issueDetails.type_detail} size={16} showTooltip={false} />
+              <span>Type</span>
+            </div>
+            <div className="w-3/4 flex items-center gap-1.5 py-0.5 text-sm">
+              <IssueTypeIcon issueType={issueDetails.type_detail} size={16} />
+              {issueDetails.type_detail.name}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-3 h-8">
           <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">
             <DoubleCircleIcon className="size-4 flex-shrink-0" />
@@ -122,6 +138,18 @@ export const PeekOverviewIssueProperties: React.FC<Props> = observer(({ issueDet
             )}
           </div>
         </div>
+
+        {/* Custom Fields */}
+        {project_custom_fields && project_custom_fields.length > 0 && (
+          <div className="space-y-2 pt-2">
+            <h6 className="text-sm font-medium text-custom-text-300">Custom Fields</h6>
+            <CustomFieldProperties 
+              anchor={anchor?.toString() || ""}
+              issue={issueDetails}
+              customFields={project_custom_fields}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

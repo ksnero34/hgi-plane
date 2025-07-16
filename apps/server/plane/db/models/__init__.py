@@ -47,7 +47,7 @@ from .issue import (
     CustomFieldValue,
 )
 from .module import Module, ModuleIssue, ModuleLink, ModuleMember, ModuleUserProperties
-from .notification import EmailNotificationLog, Notification, UserNotificationPreference
+from .notification import EmailNotificationLog, Notification, UserNotificationPreference, RestNotificationConfig, RestNotificationLog, NotificationTemplate
 from .page import Page, PageLabel, PageLog, ProjectPage, PageVersion
 from .project import (
     Project,

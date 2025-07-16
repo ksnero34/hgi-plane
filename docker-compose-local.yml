@@ -71,7 +71,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile.dev
     image: harbor.hwgeneralins.com/plane-dev/web:1.1.2-dev
-    # restart: unless-stopped
+    restart: unless-stopped
     networks:
       - dev_env
     volumes:

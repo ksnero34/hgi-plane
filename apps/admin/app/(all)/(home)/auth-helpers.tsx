@@ -7,22 +7,21 @@ import { SUPPORT_EMAIL, EAdminAuthErrorCodes, TAdminAuthErrorInfo } from "@plane
 import { TGetBaseAuthenticationModeProps, TInstanceAuthenticationModes } from "@plane/types";
 import { resolveGeneralTheme } from "@plane/utils";
 // components
-<<<<<<<< HEAD:apps/admin/core/lib/auth-helpers.tsx
-import {
-  EmailCodesConfiguration,
-  GithubConfiguration,
-  GitlabConfiguration,
-  GoogleConfiguration,
-  PasswordLoginConfiguration,
-  OIDCConfiguration,
-} from "@/components/authentication";
-========
+// import {
+//   EmailCodesConfiguration,
+//   GithubConfiguration,
+//   GitlabConfiguration,
+//   GoogleConfiguration,
+//   PasswordLoginConfiguration,
+//   OIDCConfiguration,
+// } from "@/components/authentication";
+
 import { EmailCodesConfiguration } from "@/components/authentication/email-config-switch";
 import { GithubConfiguration } from "@/components/authentication/github-config";
 import { GitlabConfiguration } from "@/components/authentication/gitlab-config";
 import { GoogleConfiguration } from "@/components/authentication/google-config";
 import { PasswordLoginConfiguration } from "@/components/authentication/password-config-switch";
->>>>>>>> v0.27.1:apps/admin/app/(all)/(home)/auth-helpers.tsx
+import { OIDCConfiguration } from "@/components/authentication/oidc-config";
 // images
 import githubLightModeImage from "@/public/logos/github-black.png";
 import githubDarkModeImage from "@/public/logos/github-white.png";

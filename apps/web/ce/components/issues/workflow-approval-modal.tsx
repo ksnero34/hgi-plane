@@ -517,7 +517,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
                     selectedRequest === request.id ? (
                       <div className="space-y-3">
                         <TextArea
-                          placeholder="승인 사유를 입력하세요 (선택사항)"
+                          placeholder="승인/거부 사유를 입력하세요 (필수)"
                           value={comment}
                           onChange={(e) => setComment(e.target.value)}
                           rows={2}
@@ -528,6 +528,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
                             size="sm"
                             onClick={() => handleApprove(request.id, comment)}
                             loading={processingIds.has(request.id)}
+                            disabled={!comment.trim()}
                             className="flex items-center gap-1"
                           >
                             <CheckCircle className="h-4 w-4" />
@@ -538,6 +539,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
                             size="sm"
                             onClick={() => handleReject(request.id, comment)}
                             loading={processingIds.has(request.id)}
+                            disabled={!comment.trim()}
                             className="flex items-center gap-1"
                           >
                             <XCircle className="h-4 w-4" />
@@ -562,18 +564,10 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
                           size="sm"
                           onClick={() => setSelectedRequest(request.id)}
                           disabled={processingIds.has(request.id)}
-                        >
-                          검토
-                        </Button>
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          onClick={() => handleApprove(request.id)}
-                          loading={processingIds.has(request.id)}
                           className="flex items-center gap-1"
                         >
-                          <CheckCircle className="h-4 w-4" />
-                          즉시 승인
+                          <MessageSquare className="h-4 w-4" />
+                          검토 및 승인/거부
                         </Button>
                       </div>
                     )

@@ -52,7 +52,7 @@ const IssueTypeItem: React.FC<{
   const [isEditingField, setIsEditingField] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
 
-  const { customFields: projectCustomFields, createCustomField, updateCustomField, deleteCustomField } = useCustomField(projectId);
+  const { customFields: projectCustomFields, createCustomField, updateCustomField, deleteCustomField, getCustomFieldUsageCount } = useCustomField(projectId);
 
   // 이슈타입별 커스텀 필드 필터링
   const issueTypeCustomFields = projectCustomFields?.filter(field => {
@@ -122,11 +122,33 @@ const IssueTypeItem: React.FC<{
   };
 
   const handleDeleteField = async (fieldId: string) => {
-    if (!confirm("이 커스텀 필드를 삭제하시겠습니까?")) {
-      return;
-    }
-
     try {
+      // 커스텀 필드 사용량 확인
+      const usageCount = await getCustomFieldUsageCount(fieldId);
+      
+      if (usageCount.count > 0) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "삭제 불가",
+          message: `이 커스텀 필드를 사용하는 이슈가 ${usageCount.count}개 있습니다. 커스텀 필드를 삭제하면 해당 이슈들의 데이터가 영구적으로 손실됩니다.`,
+        });
+        
+        // 사용량이 있어도 강제 삭제를 원하는지 확인
+        const forceDelete = confirm(
+          `이 커스텀 필드를 사용하는 이슈가 ${usageCount.count}개 있습니다.\n\n` +
+          "삭제하면 해당 이슈들의 커스텀 필드 데이터가 영구적으로 손실되며 복구할 수 없습니다.\n\n" +
+          "정말로 삭제하시겠습니까?"
+        );
+        
+        if (!forceDelete) {
+          return;
+        }
+      } else {
+        if (!confirm("이 커스텀 필드를 삭제하시겠습니까?")) {
+          return;
+        }
+      }
+
       await deleteCustomField(fieldId);
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -376,7 +398,7 @@ const IssueTypeItem: React.FC<{
 
 export const IssueTypes: React.FC = observer(() => {
   const { projectId } = useParams();
-  const { issueTypes, createIssueType, updateIssueType, deleteIssueType } = useIssueType(projectId as string);
+  const { issueTypes, createIssueType, updateIssueType, deleteIssueType, getIssueTypeUsageCount } = useIssueType(projectId as string);
 
   const [newIssueType, setNewIssueType] = useState<Partial<IIssueType>>(() => ({ 
     logo_props: getDefaultLogoProp() 
@@ -448,11 +470,37 @@ export const IssueTypes: React.FC = observer(() => {
   };
 
   const handleDelete = async (issueTypeId: string) => {
-    if (!confirm("이 이슈 타입을 삭제하시겠습니까?")) {
+    // 삭제하려는 이슈 타입 찾기
+    const issueTypeToDelete = issueTypes.find(it => it.id === issueTypeId);
+    if (!issueTypeToDelete) return;
+
+    // 기본 이슈 타입인지 확인
+    if (issueTypeToDelete.is_default) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "삭제 불가",
+        message: "기본 이슈 타입은 삭제할 수 없습니다.",
+      });
       return;
     }
-    
+
     try {
+      // 해당 이슈 타입을 사용하는 이슈 수 확인
+      const usageCount = await getIssueTypeUsageCount(issueTypeId);
+      
+      if (usageCount.count > 0) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "삭제 불가",
+          message: `이 이슈 타입을 사용하는 이슈가 ${usageCount.count}개 있습니다. 먼저 해당 이슈들의 타입을 변경해주세요.`,
+        });
+        return;
+      }
+
+      if (!confirm("이 이슈 타입을 삭제하시겠습니까?")) {
+        return;
+      }
+      
       await deleteIssueType(issueTypeId);
       setToast({
         type: TOAST_TYPE.SUCCESS,

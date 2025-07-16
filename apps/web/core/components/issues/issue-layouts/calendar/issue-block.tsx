@@ -386,18 +386,27 @@ export const CalendarIssueBlock = observer(
             />
             <div className="flex items-center gap-1 truncate">
               {projectIdentifier && (
-                <span
+                <div
                   className={cn(
-                    "flex-shrink-0 text-xs font-medium text-custom-text-300",
+                    "flex-shrink-0",
                     {
-                      "text-custom-text-200": isSelected,
-                      // 연속된 블록의 프로젝트 식별자 스타일
                       "opacity-95": issueInfo?.isContinuous && !issueInfo?.isStartDate && !issueInfo?.isEndDate,
                     }
                   )}
                 >
-                  {projectIdentifier}-{issue.sequence_id}
-                </span>
+                  <IssueIdentifier
+                    issueId={issue.id}
+                    projectId={issue.project_id}
+                    size="xs"
+                    textContainerClassName={cn(
+                      "text-xs font-medium text-custom-text-300",
+                      {
+                        "text-custom-text-200": isSelected,
+                      }
+                    )}
+                    displayProperties={{ key: true, issue_type: true }}
+                  />
+                </div>
               )}
               <Tooltip tooltipContent={issue.name} position="top-left" isMobile={isMobile}>
                 <span

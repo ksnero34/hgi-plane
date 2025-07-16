@@ -120,7 +120,7 @@ from .intake import (
 
 from .analytic import AnalyticViewSerializer
 
-from .notification import NotificationSerializer, UserNotificationPreferenceSerializer
+from .notification import NotificationSerializer, UserNotificationPreferenceSerializer, RestNotificationConfigSerializer, RestNotificationLogSerializer, NotificationTemplateSerializer
 
 from .exporter import ExporterHistorySerializer
 
