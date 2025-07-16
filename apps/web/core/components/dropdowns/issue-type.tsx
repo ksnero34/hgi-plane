@@ -231,7 +231,7 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     </>
   );
 
-  if (isLoading) return <Loader className="h-3 w-3" />;
+  if (isLoading) return <Loader className="h-3 w-3">Loading...</Loader>;
 
   return (
     <ComboDropDown
