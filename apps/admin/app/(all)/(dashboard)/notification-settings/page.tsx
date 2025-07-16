@@ -137,7 +137,10 @@ function NotificationSettingsPage() {
     
     try {
       const response = await axios.get(`/api/instances/workspaces/${workspaceSlug}/rest-notification-configs/`, { withCredentials: true });
-      setConfigs(response.data.results || []);
+      console.log('Configs API response:', response.data);
+      // API 응답이 배열이면 직접 사용, 객체면 results 속성 사용
+      const configsData = Array.isArray(response.data) ? response.data : response.data.results || [];
+      setConfigs(configsData);
     } catch (error) {
       console.error("알림 설정 로드 오류:", error);
       const apiError = error as ApiError;
@@ -151,7 +154,10 @@ function NotificationSettingsPage() {
   const fetchTemplates = async () => {
     try {
       const response = await axios.get("/api/instances/notification-templates/", { withCredentials: true });
-      setTemplates(response.data.results || []);
+      console.log('Templates API response:', response.data);
+      // API 응답이 배열이면 직접 사용, 객체면 results 속성 사용
+      const templatesData = Array.isArray(response.data) ? response.data : response.data.results || [];
+      setTemplates(templatesData);
     } catch (error) {
       console.error("템플릿 로드 오류:", error);
       const apiError = error as ApiError;
