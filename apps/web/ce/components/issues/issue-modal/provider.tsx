@@ -21,7 +21,7 @@ export const IssueModalProvider = observer((props: TIssueModalProviderProps) => 
   const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | null>(null);
   // store hooks
   const { projectsWithCreatePermissions } = useUser();
-  const { getDefaultIssueType } = useIssueType();
+  const { getDefaultIssueType } = useIssueType("");
   // derived values
   const projectIdsWithCreatePermissions = Object.keys(projectsWithCreatePermissions ?? {});
 

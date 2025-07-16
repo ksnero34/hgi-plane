@@ -171,7 +171,10 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
       
       setLoadingRequests(prev => new Set(prev).add(approvalRequestId));
       
-      await workflowStore.rejectTransition(workspaceSlug, projectId, approvalRequestId, {
+      await workflowStore.executeTransition(workspaceSlug?.toString(), projectId?.toString(), {
+        from_state_id: "",
+        to_state_id: "",
+        issue_id: approvalRequestId,
         comment: rejectionComment
       });
       

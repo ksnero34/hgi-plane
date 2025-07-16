@@ -50,7 +50,7 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
       <div className="w-full">
         <Controller
           control={control}
-          name="type_id" as keyof T
+          name={"type_id" as any}
           render={({ field: { onChange, value } }) => (
             <IssueTypeDropdown
               value={value}
@@ -58,13 +58,12 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
                 onChange(val);
                 // IssueType 객체 찾기
                 const selectedIssueType = projectId && val ? 
-                  memoizedIssueTypes?.find((pt: any) => (pt.issue_type || pt).id === val)?.issue_type || 
                   memoizedIssueTypes?.find((pt: any) => (pt.issue_type || pt).id === val) : 
                   undefined;
                 if (onTypeChange) onTypeChange(selectedIssueType);
                 if (handleFormChange) handleFormChange();
               }}
-              projectId={projectId}
+              projectId={projectId || undefined}
               disabled={disabled}
               placeholder={placeholder}
               dropdownArrow={renderChevron}

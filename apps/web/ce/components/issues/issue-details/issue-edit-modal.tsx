@@ -7,6 +7,8 @@ import { EditorRefApi } from "@plane/editor";
 // ui
 import { Button, ModalCore, EModalWidth, EModalPosition, ToggleSwitch, TOAST_TYPE, setToast } from "@plane/ui";
 import { cn, getChangedIssuefields } from "@plane/utils";
+// types
+import { ISearchIssueResponse } from "@plane/types";
 // hooks
 import { useIssueDetail, useProject } from "@/hooks/store";
 // components
@@ -17,11 +19,14 @@ import {
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
 import { CreateLabelModal } from "@/components/labels";
-// plane web components
+// components
 import {
   IssueAdditionalProperties,
-  IssueTypeSelect,
 } from "@/plane-web/components/issues/issue-modal";
+import {
+  IssueTypeSelect,
+  TIssueFields,
+} from "../issue-modal";
 
 export type TIssueEditModalProps = {
   isOpen: boolean;
@@ -37,11 +42,12 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
   // states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [labelModal, setLabelModal] = useState(false);
-  const [selectedParentIssue, setSelectedParentIssue] = useState(null);
+  const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | null>(null);
   // refs
   const editorRef = useRef<EditorRefApi>(null);
   const submitBtnRef = useRef<HTMLButtonElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const issueTitleRef = useRef<HTMLInputElement | null>(null);
   // store hooks
   const {
     issue: { getIssueById, updateIssue },
@@ -53,7 +59,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
   const projectDetails = issue?.project_id ? getProjectById(issue?.project_id) : undefined;
 
   // form
-  const methods = useForm({
+  const methods = useForm<Partial<TIssueFields>>({
     defaultValues: {
       name: "",
       description_html: "<p></p>",
@@ -69,7 +75,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
       cycle_id: null,
       module_ids: [],
       estimate_point: null,
-      custom_field_values: {},
+      custom_field_values: [],
     },
   });
 
@@ -167,8 +173,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
         handleClose={handleModalClose} // 배경 클릭으로 닫히지 않도록 빈 함수 전달
         position={EModalPosition.TOP}
         width={EModalWidth.XXXXL}
-        className="!bg-transparent rounded-lg shadow-none transition-[width] ease-linear"
-        style={{ zIndex: 20 }}
+        className="!bg-transparent rounded-lg shadow-none transition-[width] ease-linear z-20"
       >
         <div className="flex gap-2 bg-transparent" data-prevent-outside-click>
           <div className="rounded-lg w-full">
@@ -217,7 +222,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
                 {watch("parent_id") && selectedParentIssue && (
                   <div className="pb-4">
                     <IssueParentTag
-                      control={control}
+                      control={control as any}
                       selectedParentIssue={selectedParentIssue}
                       handleFormChange={handleFormChange}
                       setSelectedParentIssue={setSelectedParentIssue}
@@ -226,8 +231,8 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
                 )}
                 <div className="space-y-1">
                   <IssueTitleInput
-                    control={control}
-                    issueTitleRef={null}
+                    control={control as any}
+                    issueTitleRef={issueTitleRef}
                     formState={methods.formState}
                     handleFormChange={handleFormChange}
                   />
@@ -238,9 +243,9 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
               <div className="pb-4 space-y-3 bg-custom-background-100">
                 <div className="px-5">
                   <IssueDescriptionEditor
-                    control={control}
+                    control={control as any}
                     isDraft={false}
-                    issueName={watch("name")}
+                    issueName={watch("name") || ""}
                     issueId={issue?.id}
                     descriptionHtmlData={issue?.description_html}
                     editorRef={editorRef}
@@ -262,7 +267,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
                   {projectId && (
                     <IssueAdditionalProperties
                       issueId={issue?.id}
-                      issueTypeId={watch("type_id")}
+                      issueTypeId={watch("type_id") || null}
                       projectId={projectId}
                       workspaceSlug={workspaceSlug?.toString()}
                       isDraft={false}
@@ -275,14 +280,14 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
               <div className="px-4 py-3 border-t-[0.5px] border-custom-border-200 shadow-custom-shadow-xs rounded-b-lg bg-custom-background-100">
                 <div className="pb-3 border-b-[0.5px] border-custom-border-200">
                   <IssueDefaultProperties
-                    control={control}
+                    control={control as any}
                     id={issue?.id}
                     projectId={projectId}
                     workspaceSlug={workspaceSlug?.toString()}
                     selectedParentIssue={selectedParentIssue}
-                    startDate={watch("start_date")}
-                    targetDate={watch("target_date")}
-                    parentId={watch("parent_id")}
+                    startDate={watch("start_date") || null}
+                    targetDate={watch("target_date") || null}
+                    parentId={watch("parent_id") || null}
                     isDraft={false}
                     handleFormChange={handleFormChange}
                     setLabelModal={setLabelModal}

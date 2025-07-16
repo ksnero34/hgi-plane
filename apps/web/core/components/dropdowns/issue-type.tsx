@@ -99,7 +99,7 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     if (!issueTypes || issueTypes.length === 0) return [];
 
     return issueTypes.map((projectIssueType) => {
-      const issueType = projectIssueType.issue_type || projectIssueType;
+      const issueType = projectIssueType;
       
       // 이모지 코드를 실제 이모지로 변환
       const getEmojiFromCode = (code: string) => {
@@ -146,10 +146,10 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     // 선택된 값이 있으면 해당 이슈 타입 반환
     if (value) {
       const found = issueTypes.find((projectIssueType) => {
-        const issueType = projectIssueType.issue_type || projectIssueType;
+        const issueType = projectIssueType;
         return issueType.id === value;
       });
-      return found ? (found.issue_type || found) : undefined;
+      return found || undefined;
     }
     
     // 선택된 값이 없으면 기본 이슈 타입 반환
