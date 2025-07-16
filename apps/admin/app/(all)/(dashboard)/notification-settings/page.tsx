@@ -136,7 +136,7 @@ function NotificationSettingsPage() {
     if (!workspaceSlug) return;
     
     try {
-      const response = await axios.get(`/api/workspaces/${workspaceSlug}/rest-notification-configs/`, { withCredentials: true });
+      const response = await axios.get(`/api/instances/workspaces/${workspaceSlug}/rest-notification-configs/`, { withCredentials: true });
       setConfigs(response.data.results || []);
     } catch (error) {
       console.error("알림 설정 로드 오류:", error);
@@ -150,7 +150,7 @@ function NotificationSettingsPage() {
   // 템플릿 목록 로드
   const fetchTemplates = async () => {
     try {
-      const response = await axios.get("/api/notification-templates/", { withCredentials: true });
+      const response = await axios.get("/api/instances/notification-templates/", { withCredentials: true });
       setTemplates(response.data.results || []);
     } catch (error) {
       console.error("템플릿 로드 오류:", error);
@@ -193,7 +193,7 @@ function NotificationSettingsPage() {
   const handleCreateConfig = async (data: Partial<INotificationConfig>) => {
     try {
       const response = await axios.post(
-        `/api/workspaces/${selectedWorkspace}/rest-notification-configs/`,
+        `/api/instances/workspaces/${selectedWorkspace}/rest-notification-configs/`,
         data,
         { withCredentials: true }
       );
@@ -225,7 +225,7 @@ function NotificationSettingsPage() {
   const handleUpdateConfig = async (configId: string, data: Partial<INotificationConfig>) => {
     try {
       const response = await axios.patch(
-        `/api/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`,
+        `/api/instances/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`,
         data,
         { withCredentials: true }
       );
@@ -258,7 +258,7 @@ function NotificationSettingsPage() {
   const handleDeleteConfig = async (configId: string) => {
     try {
       await axios.delete(
-        `/api/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`,
+        `/api/instances/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`,
         { withCredentials: true }
       );
       
@@ -288,7 +288,7 @@ function NotificationSettingsPage() {
   const handleTestNotification = async (configId: string) => {
     try {
       await axios.post(
-        `/api/workspaces/${selectedWorkspace}/rest-notification-test/`,
+        `/api/instances/workspaces/${selectedWorkspace}/rest-notification-test/`,
         { config_id: configId },
         { withCredentials: true }
       );

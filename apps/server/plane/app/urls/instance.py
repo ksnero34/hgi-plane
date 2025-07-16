@@ -4,6 +4,15 @@ from plane.app.views.instance.file_settings import FileSettingsViewSet
 from plane.app.views.instance.workspace import DefaultWorkspaceConfigViewSet
 from plane.app.views import WorkSpaceViewSet
 from plane.license.api.views.project import InstanceAdminProjectEndpoint
+from plane.app.views.notification_template import (
+    NotificationTemplateViewSet,
+    NotificationTemplateListEndpoint,
+)
+from plane.app.views.workspace.notification import (
+    RestNotificationConfigViewSet,
+    RestNotificationLogViewSet,
+    RestNotificationTestEndpoint,
+)
 
 urlpatterns = [
     # 인스턴스 멤버 관리 URL
@@ -62,6 +71,71 @@ urlpatterns = [
         "instances/public/members/",
         InstanceMemberPublicViewSet.as_view({"get": "list"}),
         name="instance-public-members",
+    ),
+    
+    # 알림 템플릿 관련 URL
+    path(
+        "instances/notification-templates/",
+        NotificationTemplateListEndpoint.as_view(),
+        name="instance-notification-templates",
+    ),
+    path(
+        "instances/notification-templates/<uuid:pk>/",
+        NotificationTemplateViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="instance-notification-template",
+    ),
+    path(
+        "instances/notification-templates/create-system-templates/",
+        NotificationTemplateViewSet.as_view(
+            {
+                "post": "create_system_templates",
+            }
+        ),
+        name="instance-create-system-templates",
+    ),
+    
+    # 워크스페이스별 알림 설정 관련 URL
+    path(
+        "instances/workspaces/<str:slug>/rest-notification-configs/",
+        RestNotificationConfigViewSet.as_view(
+            {
+                "get": "list",
+                "post": "create",
+            }
+        ),
+        name="instance-rest-notification-configs",
+    ),
+    path(
+        "instances/workspaces/<str:slug>/rest-notification-configs/<uuid:pk>/",
+        RestNotificationConfigViewSet.as_view(
+            {
+                "get": "retrieve",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="instance-rest-notification-config",
+    ),
+    path(
+        "instances/workspaces/<str:slug>/rest-notification-logs/",
+        RestNotificationLogViewSet.as_view(
+            {
+                "get": "list",
+            }
+        ),
+        name="instance-rest-notification-logs",
+    ),
+    path(
+        "instances/workspaces/<str:slug>/rest-notification-test/",
+        RestNotificationTestEndpoint.as_view(),
+        name="instance-rest-notification-test",
     ),
 ]
 

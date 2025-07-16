@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Badge } from "@plane/ui";
+import { Button } from "@plane/ui";
 import { INotificationTemplate } from "../page";
 import { CreateTemplateModal } from "./create-template-modal";
 
@@ -43,7 +43,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
   const handleCreateSystemTemplates = async () => {
     try {
       // 시스템 템플릿 생성 API 호출
-      await fetch("/api/notification-templates/create-system-templates/", {
+      await fetch("/api/instances/notification-templates/create-system-templates/", {
         method: "POST",
         credentials: "include",
       });
@@ -61,15 +61,16 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
         <h3 className="text-lg font-medium text-custom-text-100">템플릿 관리</h3>
         <div className="flex gap-2">
           <Button 
-            variant="outline" 
+            variant="outline-primary" 
             size="sm"
             onClick={handleCreateSystemTemplates}
           >
             시스템 템플릿 생성
           </Button>
           <Button 
-            onClick={() => setShowCreateModal(true)} 
+            variant="primary" 
             size="sm"
+            onClick={() => setShowCreateModal(true)}
           >
             새 템플릿 추가
           </Button>
@@ -81,15 +82,16 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
           <p className="text-custom-text-400 mb-4">템플릿이 없습니다.</p>
           <div className="flex justify-center gap-2">
             <Button 
-              variant="outline" 
+              variant="outline-primary" 
               size="sm"
               onClick={handleCreateSystemTemplates}
             >
               시스템 템플릿 생성
             </Button>
             <Button 
-              onClick={() => setShowCreateModal(true)} 
+              variant="primary" 
               size="sm"
+              onClick={() => setShowCreateModal(true)}
             >
               새 템플릿 추가
             </Button>
@@ -103,14 +105,19 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="font-medium text-custom-text-100">{template.name}</h4>
-                    <Badge variant={getServiceTypeBadge(template.service_type)}>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      getServiceTypeBadge(template.service_type) === 'success' ? 'bg-green-100 text-green-800' :
+                      getServiceTypeBadge(template.service_type) === 'primary' ? 'bg-blue-100 text-blue-800' :
+                      getServiceTypeBadge(template.service_type) === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
                       {getServiceTypeLabel(template.service_type)}
-                    </Badge>
+                    </span>
                   </div>
                   {template.is_system_template && (
-                    <Badge variant="outline" className="mb-2">
+                    <span className="px-2 py-1 text-xs rounded-full font-medium bg-custom-background-80 text-custom-text-300 border border-custom-border-200 mb-2 inline-block">
                       시스템 템플릿
-                    </Badge>
+                    </span>
                   )}
                   <p className="text-sm text-custom-text-400 mb-2">
                     {template.description || "설명 없음"}
@@ -146,7 +153,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
           onSubmit={async (data) => {
             // 템플릿 생성 API 호출
             try {
-              await fetch("/api/notification-templates/", {
+              await fetch("/api/instances/notification-templates/", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",

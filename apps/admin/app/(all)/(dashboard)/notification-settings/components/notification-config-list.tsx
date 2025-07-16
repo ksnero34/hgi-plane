@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Badge } from "@plane/ui";
+import { Button } from "@plane/ui";
 import { INotificationConfig } from "../page";
 import { ConfigEditModal } from "./config-edit-modal";
 
@@ -56,7 +56,11 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-custom-text-100">알림 설정</h3>
-        <Button onClick={onCreateNew} size="sm">
+        <Button 
+          variant="primary" 
+          size="sm"
+          onClick={onCreateNew}
+        >
           새 설정 추가
         </Button>
       </div>
@@ -64,7 +68,11 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
       {configs.length === 0 ? (
         <div className="text-center py-8 border border-custom-border-200 rounded-lg">
           <p className="text-custom-text-400 mb-4">설정된 알림이 없습니다.</p>
-          <Button onClick={onCreateNew} size="sm">
+          <Button 
+            variant="primary" 
+            size="sm"
+            onClick={onCreateNew}
+          >
             첫 번째 설정 추가
           </Button>
         </div>
@@ -76,11 +84,11 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="font-medium text-custom-text-100">{config.name}</h4>
-                    <Badge 
-                      variant={config.is_enabled ? "success" : "secondary"}
-                    >
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      config.is_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
                       {config.is_enabled ? "활성" : "비활성"}
-                    </Badge>
+                    </span>
                   </div>
                   <div className="text-sm text-custom-text-400 space-y-1">
                     <p><strong>엔드포인트:</strong> {config.endpoint_url}</p>
@@ -91,28 +99,28 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    variant="outline"
+                    variant="outline-primary"
                     size="sm"
                     onClick={() => handleToggleEnabled(config)}
                   >
                     {config.is_enabled ? "비활성화" : "활성화"}
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="outline-primary"
                     size="sm"
                     onClick={() => handleTest(config)}
                   >
                     테스트
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="outline-primary"
                     size="sm"
                     onClick={() => handleEdit(config)}
                   >
                     편집
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="outline-primary"
                     size="sm"
                     onClick={() => handleDelete(config)}
                     className="text-red-500 hover:text-red-600"

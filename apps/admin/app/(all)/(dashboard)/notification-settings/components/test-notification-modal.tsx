@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Modal, Input, TextArea } from "@plane/ui";
+import { Button, Input } from "@plane/ui";
 import { INotificationConfig } from "../page";
 
 interface TestNotificationModalProps {
@@ -67,9 +67,33 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <div className="p-6">
-        <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 테스트</h2>
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-custom-backdrop transition-opacity" />
+        </Transition.Child>
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-custom-background-100 text-left shadow-custom-shadow-md transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                <div className="p-6">
+                  <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 테스트</h2>
         
         <div className="space-y-4 mb-6">
           <div className="bg-custom-background-80 p-4 rounded-lg">
@@ -128,11 +152,11 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
               </div>
               <div className="col-span-2">
                 <label className="block text-xs text-custom-text-400 mb-1">메시지</label>
-                <TextArea
+                <textarea
                   value={testData.message}
                   onChange={(e) => setTestData(prev => ({ ...prev, message: e.target.value }))}
                   rows={2}
-                  size="sm"
+                  className="w-full px-3 py-2 border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100 placeholder:text-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 text-sm"
                 />
               </div>
               <div>
@@ -170,15 +194,20 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
 
           {/* 버튼 */}
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="neutral-primary" size="sm" onClick={onClose}>
               취소
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button variant="primary" size="sm" type="submit" loading={isSubmitting}>
               {isSubmitting ? "전송 중..." : "테스트 전송"}
             </Button>
           </div>
-        </form>
-      </div>
-    </Modal>
+                  </form>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 };

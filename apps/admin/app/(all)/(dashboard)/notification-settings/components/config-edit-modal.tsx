@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Modal, Input, Select, TextArea } from "@plane/ui";
+import { Button, Input, CustomSelect } from "@plane/ui";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 import { INotificationConfig } from "../page";
 
 interface ConfigEditModalProps {
@@ -60,9 +62,33 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <div className="p-6">
-        <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 설정 편집</h2>
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-custom-backdrop transition-opacity" />
+        </Transition.Child>
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-custom-background-100 text-left shadow-custom-shadow-md transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                <div className="p-6">
+                  <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 설정 편집</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* 기본 정보 */}
@@ -97,14 +123,16 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
               <label className="block text-sm font-medium text-custom-text-200 mb-2">
                 HTTP 메소드
               </label>
-              <Select
-                value={formData.method}
-                onChange={(value) => setFormData(prev => ({ ...prev, method: value }))}
+              <CustomSelect
+                value={{value: formData.method, label: formData.method}}
+                label={formData.method}
+                onChange={(option: any) => setFormData(prev => ({ ...prev, method: option.value }))}
+                input
               >
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
-              </Select>
+                <CustomSelect.Option value={{value: "POST", label: "POST"}}>POST</CustomSelect.Option>
+                <CustomSelect.Option value={{value: "PUT", label: "PUT"}}>PUT</CustomSelect.Option>
+                <CustomSelect.Option value={{value: "PATCH", label: "PATCH"}}>PATCH</CustomSelect.Option>
+              </CustomSelect>
             </div>
 
             <div>
@@ -139,12 +167,12 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
             <label className="block text-sm font-medium text-custom-text-200 mb-2">
               HTTP 헤더 (JSON)
             </label>
-            <TextArea
+            <textarea
               value={formData.headers}
               onChange={(e) => setFormData(prev => ({ ...prev, headers: e.target.value }))}
               rows={4}
               placeholder='{\n  "Content-Type": "application/json",\n  "Authorization": "Bearer your-token"\n}'
-              className="font-mono text-sm"
+              className="w-full px-3 py-2 border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100 placeholder:text-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 font-mono text-sm"
             />
           </div>
 
@@ -153,15 +181,15 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
             <label className="block text-sm font-medium text-custom-text-200 mb-2">
               JSON 템플릿
             </label>
-            <TextArea
+            <textarea
               value={formData.json_template}
               onChange={(e) => setFormData(prev => ({ ...prev, json_template: e.target.value }))}
               rows={8}
               placeholder='{\n  "text": "{{message}}",\n  "user": "{{user_email}}",\n  "issue": "{{issue_name}}"\n}'
-              className="font-mono text-sm"
+              className="w-full px-3 py-2 border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100 placeholder:text-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 font-mono text-sm"
             />
             <p className="text-xs text-custom-text-400 mt-1">
-              사용 가능한 변수: {{user_id}}, {{user_email}}, {{title}}, {{message}}, {{issue_name}}, {{workspace_name}}, {{project_name}} 등
+              사용 가능한 변수: {"{"}{"{"}<wbr />user_id{"}"}{"}"}}, {"{"}{"{"}<wbr />user_email{"}"}{"}"}}, {"{"}{"{"}<wbr />title{"}"}{"}"}}, {"{"}{"{"}<wbr />message{"}"}{"}"}}, {"{"}{"{"}<wbr />issue_name{"}"}{"}"}}, {"{"}{"{"}<wbr />workspace_name{"}"}{"}"}}, {"{"}{"{"}<wbr />project_name{"}"}{"}"}}} 등
             </p>
           </div>
 
@@ -181,15 +209,20 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
 
           {/* 버튼 */}
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="neutral-primary" size="sm" onClick={onClose}>
               취소
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button variant="primary" size="sm" type="submit" loading={isSubmitting}>
               {isSubmitting ? "저장 중..." : "저장"}
             </Button>
           </div>
-        </form>
-      </div>
-    </Modal>
+                  </form>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 };
