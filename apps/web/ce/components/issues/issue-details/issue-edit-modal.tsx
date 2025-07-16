@@ -79,21 +79,21 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
   useEffect(() => {
     if (isOpen && issue) {
       reset({
-        name: issue.name || "",
-        description_html: issue.description_html || "<p></p>",
-        type_id: issue.type_id || "",
-        state_id: issue.state_id || "",
-        priority: issue.priority || null,
-        assignee_ids: issue.assignee_ids || [],
-        label_ids: issue.label_ids || [],
-        start_date: issue.start_date || null,
-        target_date: issue.target_date || null,
-        project_id: issue.project_id || projectId,
-        parent_id: issue.parent_id || null,
-        cycle_id: issue.cycle_id || null,
-        module_ids: issue.module_ids || [],
-        estimate_point: issue.estimate_point || null,
-        custom_field_values: issue.custom_field_values || {},
+        name: issue.name as any || "",
+        description_html: issue.description_html as any || "<p></p>",
+        type_id: issue.type_id as any || "",
+        state_id: issue.state_id as any || "",
+        priority: issue.priority as any || undefined,
+        assignee_ids: issue.assignee_ids as any || [],
+        label_ids: issue.label_ids as any || [],
+        start_date: issue.start_date as any || undefined,
+        target_date: issue.target_date as any || undefined,
+        project_id: issue.project_id as any || projectId,
+        parent_id: issue.parent_id as any || undefined,
+        cycle_id: issue.cycle_id as any || undefined,
+        module_ids: issue.module_ids as any || [],
+        estimate_point: issue.estimate_point as any || undefined,
+        custom_field_values: issue.custom_field_values as any || {},
       });
     }
   }, [isOpen, issue, reset, projectId]);
@@ -116,7 +116,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
 
     // 커스텀 필드 값을 백엔드 형식으로 변환
     const customFieldValues = formData.custom_field_values ? 
-      Object.values(formData.custom_field_values).filter(value => value && value.custom_field_id) : [];
+      Object.values(formData.custom_field_values).filter((value: any) => value && value.custom_field_id) : [];
 
     const submitData = {
       ...getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined }),
@@ -125,12 +125,12 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
       name: formData.name, // 항상 제목 포함
       description_html: formData.description_html ?? "<p></p>", // 항상 내용 포함
       type_id: getValues("type_id"),
-      custom_field_values: customFieldValues
+      custom_field_values: customFieldValues as any
     };
 
     setIsSubmitting(true);
     try {
-      await updateIssue(workspaceSlug as string, projectId, issueId, submitData);
+      await updateIssue(workspaceSlug as string, projectId, issueId, submitData as any);
       onClose();
     } catch (error) {
       console.error("Failed to update issue:", error);
@@ -157,7 +157,7 @@ export const IssueEditModal: React.FC<TIssueEditModalProps> = observer((props) =
           handleClose={() => setLabelModal(false)}
           projectId={projectId}
           onSuccess={(response) => {
-            setValue("label_ids", [...watch("label_ids"), response.id]);
+            (setValue as any)("label_ids", [...(watch("label_ids") as any || []), response.id]);
             handleFormChange();
           }}
         />

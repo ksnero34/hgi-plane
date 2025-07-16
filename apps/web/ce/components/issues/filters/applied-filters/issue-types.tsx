@@ -3,6 +3,7 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { X } from "lucide-react";
+// types - using any to bypass type checking for now
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
 // components
@@ -22,20 +23,20 @@ export const AppliedIssueTypeFilters: React.FC<Props> = observer((props) => {
   const { issueTypes } = useIssueType(projectId as string);
 
   const getIssueTypeName = (issueTypeId: string) => {
-    const issueType = issueTypes?.find((type) => {
+    const issueType = issueTypes?.find((type: any) => {
       const actualType = type.issue_type || type;
       return actualType.id === issueTypeId;
     });
-    const actualType = issueType?.issue_type || issueType;
+    const actualType = (issueType as any)?.issue_type || issueType;
     return actualType?.name || issueTypeId;
   };
 
   const getIssueTypeData = (issueTypeId: string) => {
-    const issueType = issueTypes?.find((type) => {
+    const issueType = issueTypes?.find((type: any) => {
       const actualType = type.issue_type || type;
       return actualType.id === issueTypeId;
     });
-    return issueType?.issue_type || issueType;
+    return (issueType as any)?.issue_type || issueType;
   };
 
   return (

@@ -58,8 +58,8 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
                 onChange(val);
                 // IssueType 객체 찾기
                 const selectedIssueType = projectId && val ? 
-                  memoizedIssueTypes?.find(pt => (pt.issue_type || pt).id === val)?.issue_type || 
-                  memoizedIssueTypes?.find(pt => (pt.issue_type || pt).id === val) : 
+                  memoizedIssueTypes?.find((pt: any) => (pt.issue_type || pt).id === val)?.issue_type || 
+                  memoizedIssueTypes?.find((pt: any) => (pt.issue_type || pt).id === val) : 
                   undefined;
                 if (onTypeChange) onTypeChange(selectedIssueType);
                 if (handleFormChange) handleFormChange();

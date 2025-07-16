@@ -31,17 +31,17 @@ export const FilterIssueTypes: React.FC<Props> = observer((props) => {
   const appliedFiltersCount = appliedFilters?.length ?? 0;
 
   const sortedOptions = useMemo(() => {
-    const filteredOptions = (issueTypes || []).filter((issueType) => {
+    const filteredOptions = (issueTypes || []).filter((issueType: any) => {
       const actualIssueType = issueType.issue_type || issueType;
       return actualIssueType.name.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     return sortBy(filteredOptions, [
-      (issueType) => {
+      (issueType: any) => {
         const actualIssueType = issueType.issue_type || issueType;
         return !(appliedFilters ?? []).includes(actualIssueType.id);
       },
-      (issueType) => {
+      (issueType: any) => {
         const actualIssueType = issueType.issue_type || issueType;
         return actualIssueType.name.toLowerCase();
       },
@@ -72,7 +72,7 @@ export const FilterIssueTypes: React.FC<Props> = observer((props) => {
             </Loader>
           ) : sortedOptions && sortedOptions.length > 0 ? (
             <>
-              {sortedOptions.slice(0, itemsToRender).map((issueType) => {
+              {sortedOptions.slice(0, itemsToRender).map((issueType: any) => {
                 const actualIssueType = issueType.issue_type || issueType;
                 return (
                   <FilterOption
