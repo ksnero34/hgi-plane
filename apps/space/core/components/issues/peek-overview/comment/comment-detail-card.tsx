@@ -11,7 +11,7 @@ import { getFileURL } from "@plane/utils";
 import { LiteTextEditor, LiteTextReadOnlyEditor } from "@/components/editor";
 import { CommentReactions } from "@/components/issues/peek-overview";
 // helpers
-import { timeAgo } from "@plane/utils";
+import { timeAgo } from "@/helpers/date-time.helper";
 // hooks
 import { useIssueDetails, usePublish, useUser } from "@/hooks/store";
 import useIsInIframe from "@/hooks/use-is-in-iframe";

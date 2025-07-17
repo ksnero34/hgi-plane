@@ -24,7 +24,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
       webhook: "secondary",
       custom: "primary",
     };
-    
+
     return variants[serviceType] || "secondary";
   };
 
@@ -36,7 +36,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
       webhook: "Webhook",
       custom: "Custom",
     };
-    
+
     return labels[serviceType] || serviceType;
   };
 
@@ -47,7 +47,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
         method: "POST",
         credentials: "include",
       });
-      
+
       // 템플릿 목록 새로고침
       await onRefresh();
     } catch (error) {
@@ -60,15 +60,15 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-custom-text-100">템플릿 관리</h3>
         <div className="flex gap-2">
-          <Button 
-            variant="outline-primary" 
+          <Button
+            variant="outline-primary"
             size="sm"
             onClick={handleCreateSystemTemplates}
           >
             시스템 템플릿 생성
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="sm"
             onClick={() => setShowCreateModal(true)}
           >
@@ -81,15 +81,15 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
         <div className="text-center py-8 border border-custom-border-200 rounded-lg">
           <p className="text-custom-text-400 mb-4">템플릿이 없습니다.</p>
           <div className="flex justify-center gap-2">
-            <Button 
-              variant="outline-primary" 
+            <Button
+              variant="outline-primary"
               size="sm"
               onClick={handleCreateSystemTemplates}
             >
               시스템 템플릿 생성
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               size="sm"
               onClick={() => setShowCreateModal(true)}
             >
@@ -130,7 +130,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
                   </div>
                 </div>
               </div>
-              
+
               <div className="border-t border-custom-border-200 pt-3">
                 <details className="group">
                   <summary className="cursor-pointer text-sm font-medium text-custom-text-300 hover:text-custom-text-100">
@@ -161,7 +161,7 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
                 credentials: "include",
                 body: JSON.stringify(data),
               });
-              
+
               await onRefresh();
               setShowCreateModal(false);
             } catch (error) {

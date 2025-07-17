@@ -5,8 +5,12 @@ import { TLogoProps } from "@plane/types";
 
 interface IssueTypeIconProps {
   issueType: {
-    name: string;
+    name?: string;
     logo_props?: TLogoProps;
+    issue_type?: {
+      name: string;
+      logo_props?: TLogoProps;
+    };
   };
   size?: number;
   showTooltip?: boolean;
@@ -19,17 +23,22 @@ export const IssueTypeIcon: React.FC<IssueTypeIconProps> = ({
   showTooltip = true,
   className = "",
 }) => {
-  if (!issueType?.logo_props) return null;
+  // 중첩된 데이터 구조 처리
+  const actualIssueType = issueType?.issue_type || issueType;
+  const logoProps = actualIssueType?.logo_props;
+  const name = actualIssueType?.name || issueType?.name;
+
+  if (!logoProps) return null;
 
   const iconElement = (
     <div className={`flex items-center justify-center ${className}`}>
-      <Logo logo={issueType.logo_props} size={size} />
+      <Logo logo={logoProps} size={size} />
     </div>
   );
 
   if (showTooltip) {
     return (
-      <Tooltip tooltipContent={issueType.name} position="top">
+      <Tooltip tooltipContent={name || ""} position="top">
         {iconElement}
       </Tooltip>
     );

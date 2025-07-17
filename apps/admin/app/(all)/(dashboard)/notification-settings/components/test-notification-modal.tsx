@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 import { Button, Input } from "@plane/ui";
 import { INotificationConfig } from "../page";
 
@@ -31,7 +32,7 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
     entity_type: "issue",
     entity_id: "test-entity-id",
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,15 +54,15 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
     try {
       const template = JSON.stringify(config.json_template, null, 2);
       let preview = template;
-      
+
       // 변수 치환
       Object.entries(testData).forEach(([key, value]) => {
         const regex = new RegExp(`{{${key}}}`, 'g');
         preview = preview.replace(regex, value.toString());
       });
-      
+
       return preview;
-    } catch (error) {
+    } catch {
       return "템플릿 미리보기 생성 오류";
     }
   };
@@ -94,7 +95,7 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-custom-background-100 text-left shadow-custom-shadow-md transition-all sm:my-8 sm:w-full sm:max-w-2xl">
                 <div className="p-6">
                   <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 테스트</h2>
-        
+
         <div className="space-y-4 mb-6">
           <div className="bg-custom-background-80 p-4 rounded-lg">
             <h3 className="text-sm font-medium text-custom-text-200 mb-2">설정 정보</h3>
@@ -120,7 +121,6 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                   type="text"
                   value={testData.user_id}
                   onChange={(e) => setTestData(prev => ({ ...prev, user_id: e.target.value }))}
-                  size="sm"
                 />
               </div>
               <div>
@@ -129,7 +129,6 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                   type="email"
                   value={testData.user_email}
                   onChange={(e) => setTestData(prev => ({ ...prev, user_email: e.target.value }))}
-                  size="sm"
                 />
               </div>
               <div>
@@ -138,7 +137,6 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                   type="text"
                   value={testData.title}
                   onChange={(e) => setTestData(prev => ({ ...prev, title: e.target.value }))}
-                  size="sm"
                 />
               </div>
               <div>
@@ -147,7 +145,6 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                   type="text"
                   value={testData.issue_id}
                   onChange={(e) => setTestData(prev => ({ ...prev, issue_id: e.target.value }))}
-                  size="sm"
                 />
               </div>
               <div className="col-span-2">
@@ -165,7 +162,6 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                   type="text"
                   value={testData.issue_name}
                   onChange={(e) => setTestData(prev => ({ ...prev, issue_name: e.target.value }))}
-                  size="sm"
                 />
               </div>
               <div>
@@ -174,7 +170,6 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                   type="text"
                   value={testData.project_name}
                   onChange={(e) => setTestData(prev => ({ ...prev, project_name: e.target.value }))}
-                  size="sm"
                 />
               </div>
             </div>

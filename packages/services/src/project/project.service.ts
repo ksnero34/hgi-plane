@@ -1,14 +1,27 @@
-import { http } from "../api.service";
-import { IIssueType, IProject, TProjectIssues } from "@plane/types";
+import { API_BASE_URL } from "@plane/constants";
+import { APIService } from "../api.service";
+import { IIssueType, IProject, IProjectIssueType } from "@plane/types";
 
-const projectService = {
-  async getProjectIssueTypes(workspaceSlug: string, projectId: string): Promise<IIssueType[]> {
-    return http.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`);
-  },
+export class ProjectService extends APIService {
+  constructor() {
+    super(API_BASE_URL);
+  }
+
+  async getProjectIssueTypes(workspaceSlug: string, projectId: string): Promise<IProjectIssueType[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 
   async createProjectIssueType(workspaceSlug: string, projectId: string, data: any): Promise<IIssueType> {
-    return http.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`, data);
-  },
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 
   async updateProjectIssueType(
     workspaceSlug: string,
@@ -16,12 +29,21 @@ const projectService = {
     issueTypeId: string,
     data: any
   ): Promise<IIssueType> {
-    return http.put(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`, data);
-  },
+    return this.put(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 
   async deleteProjectIssueType(workspaceSlug: string, projectId: string, issueTypeId: string): Promise<any> {
-    return http.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`);
-  },
-};
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+}
 
+const projectService = new ProjectService();
 export default projectService;

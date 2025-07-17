@@ -68,6 +68,8 @@ export const ModuleIssueQuickActions: React.FC<IQuickActionProps> = observer((pr
       ...issue,
       name: `${issue.name} (copy)`,
       sourceIssueId: issue.id,
+      type_id: issue.type_id,
+      custom_field_values: issue.custom_field_values,
     },
     ["id"]
   );

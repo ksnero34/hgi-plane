@@ -62,8 +62,8 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
     formState: { errors, isSubmitting },
   } = useForm<IWorkflowTransitionFormData>({
     defaultValues: {
-      from_state_id: "",
-      to_state_id: "",
+      from_state: "",
+      to_state: "",
       require_reviewer: false,
       reviewer_ids: [],
     },
@@ -77,18 +77,18 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
     
     if (workflowTransition) {
       const formData = {
-        from_state_id: workflowTransition.from_state_detail?.id || workflowTransition.from_state_id || workflowTransition.from_state || "",
-        to_state_id: workflowTransition.to_state_detail?.id || workflowTransition.to_state_id || workflowTransition.to_state || "",
+        from_state: workflowTransition.from_state_detail?.id || workflowTransition.from_state || "",
+        to_state: workflowTransition.to_state_detail?.id || workflowTransition.to_state || "",
         require_reviewer: workflowTransition.require_reviewer || false,
-        reviewer_ids: workflowTransition.reviewers?.map(r => r.reviewer_id || r.reviewer) || workflowTransition.reviewer_ids || [],
+        reviewer_ids: workflowTransition.reviewers?.map(r => r.reviewer) || [],
       };
       
       console.log("Setting transition form data:", formData);
       reset(formData);
     } else {
       reset({
-        from_state_id: "",
-        to_state_id: "",
+        from_state: "",
+        to_state: "",
         require_reviewer: false,
         reviewer_ids: [],
       });
@@ -109,8 +109,8 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
 
     // 백엔드 API 스펙에 맞게 데이터 변환
     const apiData = {
-      from_state: data.from_state_id, // State 모델의 UUID
-      to_state: data.to_state_id, // State 모델의 UUID  
+      from_state: data.from_state, // State 모델의 UUID
+      to_state: data.to_state, // State 모델의 UUID  
       require_reviewer: data.require_reviewer,
       reviewer_ids: data.reviewer_ids || [],
     };
@@ -205,11 +205,11 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
           <div className="space-y-4 mb-5">
             {/* From State */}
             <div>
-              <label htmlFor="from_state_id" className="block text-sm font-medium text-custom-text-200 mb-2">
+              <label htmlFor="from_state" className="block text-sm font-medium text-custom-text-200 mb-2">
                 시작 상태 *
               </label>
               <Controller
-                name="from_state_id"
+                name="from_state"
                 control={control}
                 rules={{ required: "시작 상태를 선택해주세요" }}
                 render={({ field }) => (
@@ -219,25 +219,25 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                   >
                     <option value="">시작 상태를 선택하세요</option>
                     {workflowStates?.map((state) => (
-                      <option key={state.id} value={state.state_detail?.id || state.state_id}>
+                      <option key={state.id} value={state.state_detail?.id || state.state}>
                         {state.state_detail?.name} (#{state.sequence})
                       </option>
                     ))}
                   </select>
                 )}
               />
-              {errors.from_state_id && (
-                <p className="mt-1 text-sm text-red-500">{errors.from_state_id.message}</p>
+              {errors.from_state && (
+                <p className="mt-1 text-sm text-red-500">{errors.from_state.message}</p>
               )}
             </div>
 
             {/* To State */}
             <div>
-              <label htmlFor="to_state_id" className="block text-sm font-medium text-custom-text-200 mb-2">
+              <label htmlFor="to_state" className="block text-sm font-medium text-custom-text-200 mb-2">
                 도착 상태 *
               </label>
               <Controller
-                name="to_state_id"
+                name="to_state"
                 control={control}
                 rules={{ required: "도착 상태를 선택해주세요" }}
                 render={({ field }) => (
@@ -247,15 +247,15 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                   >
                     <option value="">도착 상태를 선택하세요</option>
                     {workflowStates?.map((state) => (
-                      <option key={state.id} value={state.state_detail?.id || state.state_id}>
+                      <option key={state.id} value={state.state_detail?.id || state.state}>
                         {state.state_detail?.name} (#{state.sequence})
                       </option>
                     ))}
                   </select>
                 )}
               />
-              {errors.to_state_id && (
-                <p className="mt-1 text-sm text-red-500">{errors.to_state_id.message}</p>
+              {errors.to_state && (
+                <p className="mt-1 text-sm text-red-500">{errors.to_state.message}</p>
               )}
             </div>
 
@@ -269,7 +269,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                 name="require_reviewer"
                 control={control}
                 render={({ field: { value, onChange } }) => (
-                  <ToggleSwitch value={value} onChange={onChange} />
+                  <ToggleSwitch value={value ?? false} onChange={onChange} />
                 )}
               />
             </div>
@@ -287,7 +287,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {projectMembers.map((member) => (
+                      {projectMembers.filter(member => member !== null).map((member) => (
                         <div
                           key={member.id}
                           className="flex items-center justify-between p-2 rounded-md hover:bg-custom-background-80 cursor-pointer"
@@ -318,7 +318,8 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {selectedReviewerIds.map((userId) => {
-                        const member = projectMembers.find(m => m.id === userId);
+                        const filteredMembers = projectMembers.filter(m => m !== null) as Array<{ id: any; display_name: any; avatar_url: any; role: any; }>;
+                        const member = filteredMembers.find(m => m.id === userId);
                         if (!member) return null;
                         
                         return (
@@ -329,7 +330,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                             <Avatar 
                               name={member.display_name} 
                               src={getFileURL(member.avatar_url || "")} 
-                              size="xs"
+                              size="sm"
                             />
                             <span>{member.display_name}</span>
                             <button

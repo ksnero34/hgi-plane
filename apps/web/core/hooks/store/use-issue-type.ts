@@ -2,30 +2,30 @@ import { useCallback, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 // types
-import { IIssueType } from "@plane/types";
+import { IIssueType, IProjectIssueType } from "@plane/types";
 // services
 import { ProjectService } from "@/services/project";
 
 const projectService = new ProjectService();
 
 // 전역 생성 상태 관리를 위한 Map
-const creatingDefaultIssueType = new Map<string, Promise<IIssueType | undefined>>();
+const creatingDefaultIssueType = new Map<string, Promise<IProjectIssueType | undefined>>();
 
 type UseIssueTypeReturn = {
-  issueTypes: IIssueType[];
+  issueTypes: IProjectIssueType[];
   error: any;
   isLoading: boolean;
   mutateIssueTypes: (
     data?:
-      | IIssueType[]
-      | Promise<IIssueType[]>
-      | ((val: IIssueType[] | undefined) => IIssueType[] | Promise<IIssueType[]> | undefined),
+      | IProjectIssueType[]
+      | Promise<IProjectIssueType[]>
+      | ((val: IProjectIssueType[] | undefined) => IProjectIssueType[] | Promise<IProjectIssueType[]> | undefined),
     opts?: any
-  ) => Promise<IIssueType[] | undefined>;
-  createIssueType: (data: Partial<IIssueType>) => Promise<IIssueType | undefined>;
-  updateIssueType: (issueTypeId: string, data: Partial<IIssueType>) => Promise<IIssueType | undefined>;
+  ) => Promise<IProjectIssueType[] | undefined>;
+  createIssueType: (data: Partial<IIssueType>) => Promise<IProjectIssueType | undefined>;
+  updateIssueType: (issueTypeId: string, data: Partial<IIssueType>) => Promise<IProjectIssueType | undefined>;
   deleteIssueType: (issueTypeId: string) => Promise<void>;
-  getDefaultIssueType: () => IIssueType | undefined;
+  getDefaultIssueType: () => IProjectIssueType | undefined;
   getIssueTypeUsageCount: (issueTypeId: string) => Promise<{ count: number }>;
 };
 
@@ -34,7 +34,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
 
   const swrKey = `/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`;
 
-  const fetcher = () => {
+  const fetcher = (): Promise<IProjectIssueType[]> => {
     if (!workspaceSlug || !projectId) return Promise.resolve([]);
     return projectService.getProjectIssueTypes(workspaceSlug as string, projectId);
   };
@@ -44,7 +44,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
     error,
     isValidating,
     mutate: mutateIssueTypes,
-  } = useSWR<IIssueType[]>(swrKey, fetcher);
+  } = useSWR<IProjectIssueType[]>(swrKey, fetcher);
 
   const createIssueType = useCallback(
     async (data: Partial<IIssueType>) => {
@@ -68,7 +68,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
         data
       );
       mutateIssueTypes((prevData) =>
-        prevData ? prevData.map((issueType) => (issueType.id === issueTypeId ? response : issueType)) : [response]
+        prevData ? prevData.map((projectIssueType) => (projectIssueType.id === issueTypeId ? response : projectIssueType)) : [response]
       );
       return response;
     },
@@ -80,7 +80,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
       if (!workspaceSlug || !projectId) return;
 
       await projectService.deleteProjectIssueType(workspaceSlug as string, projectId, issueTypeId);
-      mutateIssueTypes((prevData) => prevData?.filter((issueType) => issueType.id !== issueTypeId));
+      mutateIssueTypes((prevData) => prevData?.filter((projectIssueType) => projectIssueType.id !== issueTypeId));
     },
     [workspaceSlug, projectId, mutateIssueTypes]
   );
@@ -173,22 +173,22 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
     );
     
     if (defaultProjectIssueType) {
-      return defaultProjectIssueType.issue_type || defaultProjectIssueType;
+      return defaultProjectIssueType;
     }
     
     // 그 다음 이름이 "Issue"인 것을 찾기
     const issueTypeByName = issueTypes.find(projectIssueType => {
-      const issueType = projectIssueType.issue_type || projectIssueType;
+      const issueType = projectIssueType.issue_type;
       return issueType.name === "Issue";
     });
     
     if (issueTypeByName) {
-      return issueTypeByName.issue_type || issueTypeByName;
+      return issueTypeByName;
     }
     
     // 기본 타입이 없으면 첫 번째 타입 반환
     const firstType = issueTypes[0];
-    return firstType ? (firstType.issue_type || firstType) : undefined;
+    return firstType || undefined;
   }, [issueTypes]);
 
   return {

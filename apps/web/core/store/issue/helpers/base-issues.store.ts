@@ -133,6 +133,7 @@ export const ISSUE_GROUP_BY_KEY: Record<TIssueDisplayFilterOptions, keyof TIssue
   team_project: "project_id",
   parent_child: "parent_id",
   top_level_only: "parent_id",
+  issue_type: "type_id",
 };
 
 export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof TIssue> = {
@@ -149,6 +150,7 @@ export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof
   team_project: "project_id",
   parent_child: "parent_id",
   top_level_only: "parent_id",
+  issue_type: "type_id",
 };
 
 // This constant maps the order by keys to the respective issue property that the key relies on
@@ -576,11 +578,11 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       const workflows = workflowStore.getWorkflowTemplates(projectId);
       const activeWorkflows = workflows.filter(w => w.is_active);
       
-      if (activeWorkflows.length > 0 && !data.workflow) {
+      if (activeWorkflows.length > 0 && !data.workflow_id) {
         // Find default workflow or first active workflow
         const defaultWorkflow = activeWorkflows.find(w => w.is_default) || activeWorkflows[0];
         if (defaultWorkflow) {
-          data.workflow = defaultWorkflow.id;
+          data.workflow_id = defaultWorkflow.id;
         }
       }
     } catch (error) {
@@ -649,7 +651,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               issue_id: issueId,
               from_state_id: issueBeforeUpdate?.state_id || "",
               to_state_id: data.state_id,
-              comment: `상태를 ${issueBeforeUpdate?.state_detail?.name || ''}에서 ${data.state_detail?.name || ''}으로 변경 요청`
+              comment: `상태 변경 요청`
             });
             
             const { setToast, TOAST_TYPE } = await import("@plane/ui");
@@ -706,8 +708,23 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         ...data,
       } as TIssue);
 
+      // type_id 변환: ProjectIssueType ID -> IssueType ID
+      const apiData = { ...data };
+      if (apiData.type_id) {
+        try {
+          const projectService = await import("@/services/project");
+          const projectIssueTypes = await projectService.ProjectService.prototype.getProjectIssueTypes(workspaceSlug, projectId);
+          const projectIssueType = projectIssueTypes.find(pit => pit.id === apiData.type_id);
+          if (projectIssueType?.issue_type?.id) {
+            apiData.type_id = projectIssueType.issue_type.id;
+          }
+        } catch (error) {
+          console.warn("이슈 타입 ID 변환 실패:", error);
+        }
+      }
+
       // call API to update the issue
-      await this.issueService.patchIssue(workspaceSlug, projectId, issueId, data);
+      await this.issueService.patchIssue(workspaceSlug, projectId, issueId, apiData);
 
       // call fetch Parent Stats
       this.fetchParentStats(workspaceSlug, projectId);

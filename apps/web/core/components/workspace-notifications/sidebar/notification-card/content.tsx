@@ -115,7 +115,7 @@ export const NotificationContent: FC<{
     if (notificationField === "priority") return " 로 변경했습니다.";
     if (notificationField === "state") {
       // 워크플로우 승인 정보 파싱
-      const comment = data?.issue_activity?.comment || "";
+      const comment = data?.issue_activity?.issue_comment || "";
       const approvalMatch = comment.match(/\(approved by ([^)]+)\)(?:\s*-\s*(.+))?/);
       
       if (approvalMatch) {

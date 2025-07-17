@@ -67,6 +67,7 @@ export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof
   target_date: "target_date",
   parent_child: "parent_id",
   top_level_only: "parent_id",
+  issue_type: "id" as keyof IIssue, // IIssue doesn't have issue_type, using id as fallback
 };
 
 export abstract class BaseIssuesStore implements IBaseIssuesStore {

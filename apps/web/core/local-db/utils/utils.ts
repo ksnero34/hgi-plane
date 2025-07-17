@@ -47,9 +47,10 @@ export const addIssueToPersistanceLayer = async (issue: TIssue) => {
       "label_ids",
       "module_ids",
       "type_id",
+      "workflow_id",
       "description_html",
     ]);
-    await updateIssue({ ...issuePartial, is_local_update: 1 });
+    await updateIssue({ ...issuePartial, workflow_id: issuePartial.workflow_id || null, is_local_update: 1 });
   } catch (e) {
     logError("Error while adding issue to db");
   }

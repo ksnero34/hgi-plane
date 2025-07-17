@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { observer } from "mobx-react";
-import { useRouter, usePathname } from "next/navigation";
 import { TOAST_TYPE, setToast, Loader } from "@plane/ui";
-import { useAuth, useUser } from "@/hooks/store/use-user";
+import { useAuth } from "@/hooks/store/use-user";
+import { CreateConfigModal } from "./components/create-config-modal";
 import { NotificationConfigList } from "./components/notification-config-list";
 import { NotificationTemplateList } from "./components/notification-template-list";
-import { CreateConfigModal } from "./components/create-config-modal";
 import { TestNotificationModal } from "./components/test-notification-modal";
 
 export interface INotificationConfig {
@@ -70,11 +69,8 @@ interface ApiError {
 }
 
 function NotificationSettingsPage() {
-  const router = useRouter();
-  const pathname = usePathname();
   const { isAdmin, isLoading: authLoading } = useAuth();
-  const { currentUser } = useUser();
-  
+
   const [configs, setConfigs] = useState<INotificationConfig[]>([]);
   const [templates, setTemplates] = useState<INotificationTemplate[]>([]);
   const [workspaces, setWorkspaces] = useState<IWorkspace[]>([]);
@@ -84,7 +80,7 @@ function NotificationSettingsPage() {
   const [activeTab, setActiveTab] = useState<"configs" | "templates">("configs");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
-  const [selectedConfig, setSelectedConfig] = useState<INotificationConfig | null>(null);
+  const [selectedConfig] = useState<INotificationConfig | null>(null);
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
   const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, '');
@@ -92,8 +88,7 @@ function NotificationSettingsPage() {
   // 인증 오류 처리 함수
   const handleAuthError = () => {
     console.log("Notification-settings 페이지: 인증 오류 발생, 리다이렉션 실행");
-    const normalizedPath = getNormalizedPath(pathname);
-    window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
+    window.location.replace(`/god-mode/?next_path=/notification-settings`);
   };
 
   // 직접 인스턴스 관리자 API 호출로 인증 체크
@@ -134,7 +129,7 @@ function NotificationSettingsPage() {
   // 알림 설정 목록 로드
   const fetchConfigs = async (workspaceSlug: string) => {
     if (!workspaceSlug) return;
-    
+
     try {
       const response = await axios.get(`/api/instances/workspaces/${workspaceSlug}/rest-notification-configs/`, { withCredentials: true });
       console.log('Configs API response:', response.data);
@@ -186,14 +181,14 @@ function NotificationSettingsPage() {
     if (!authLoading && isAdmin && !isDataLoaded) {
       loadData();
     }
-  }, [authLoading, isAdmin, isDataLoaded]);
+  }, [authLoading, isAdmin, isDataLoaded, fetchTemplates, fetchWorkspaces]);
 
   // 워크스페이스 변경시 알림 설정 로드
   useEffect(() => {
     if (selectedWorkspace) {
       fetchConfigs(selectedWorkspace);
     }
-  }, [selectedWorkspace]);
+  }, [selectedWorkspace, fetchConfigs]);
 
   // 알림 설정 생성
   const handleCreateConfig = async (data: Partial<INotificationConfig>) => {
@@ -203,10 +198,10 @@ function NotificationSettingsPage() {
         data,
         { withCredentials: true }
       );
-      
+
       setConfigs(prev => [...prev, response.data]);
       setShowCreateModal(false);
-      
+
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 생성 완료",
@@ -235,11 +230,11 @@ function NotificationSettingsPage() {
         data,
         { withCredentials: true }
       );
-      
-      setConfigs(prev => prev.map(config => 
+
+      setConfigs(prev => prev.map(config =>
         config.id === configId ? response.data : config
       ));
-      
+
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 업데이트 완료",
@@ -267,9 +262,9 @@ function NotificationSettingsPage() {
         `/api/instances/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`,
         { withCredentials: true }
       );
-      
+
       setConfigs(prev => prev.filter(config => config.id !== configId));
-      
+
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 삭제 완료",
@@ -298,7 +293,7 @@ function NotificationSettingsPage() {
         { config_id: configId },
         { withCredentials: true }
       );
-      
+
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "테스트 알림 전송",
@@ -338,8 +333,8 @@ function NotificationSettingsPage() {
       <div className="px-4">
         <div className="flex items-center gap-4">
           <label className="text-sm font-medium text-custom-text-200">워크스페이스:</label>
-          <select 
-            value={selectedWorkspace} 
+          <select
+            value={selectedWorkspace}
             onChange={(e) => setSelectedWorkspace(e.target.value)}
             className="px-3 py-2 text-sm border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100"
           >
@@ -381,7 +376,9 @@ function NotificationSettingsPage() {
 
       <div className="flex-grow overflow-hidden overflow-y-scroll vertical-scrollbar scrollbar-md px-4">
         {isLoading ? (
-          <Loader className="w-6 h-6" />
+          <Loader className="w-6 h-6">
+            <Loader.Item width="100%" height="100%" />
+          </Loader>
         ) : (
           <>
             {activeTab === "configs" && (

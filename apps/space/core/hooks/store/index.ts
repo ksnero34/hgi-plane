@@ -10,3 +10,4 @@ export * from "./use-label";
 export * from "./use-cycle";
 export * from "./use-module";
 export * from "./use-member";
+export * from "./use-custom-field";

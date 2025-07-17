@@ -13,7 +13,7 @@ export type TIssueFields = TIssue & TBulkIssueProperties;
 
 export type TIssueTypeDropdownVariant = "xs" | "sm";
 
-import { IIssueType } from "@plane/types";
+import { IIssueType, IProjectIssueType } from "@plane/types";
 
 export type TIssueTypeSelectProps<T extends Partial<TIssueFields>> = {
   control: Control<T>;
@@ -27,7 +27,7 @@ export type TIssueTypeSelectProps<T extends Partial<TIssueFields>> = {
   dropDownContainerClassName?: string;
   showMandatoryFieldInfo?: boolean; // Show info about mandatory fields
   handleFormChange?: () => void;
-  onTypeChange?: (type: IIssueType | undefined) => void;
+  onTypeChange?: (type: IProjectIssueType | undefined) => void;
 };
 
 export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
@@ -58,7 +58,7 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
                 onChange(val);
                 // IssueType 객체 찾기
                 const selectedIssueType = projectId && val ? 
-                  memoizedIssueTypes?.find((pt: any) => (pt.issue_type || pt).id === val) : 
+                  memoizedIssueTypes?.find((pt: any) => pt.id === val) : 
                   undefined;
                 if (onTypeChange) onTypeChange(selectedIssueType);
                 if (handleFormChange) handleFormChange();

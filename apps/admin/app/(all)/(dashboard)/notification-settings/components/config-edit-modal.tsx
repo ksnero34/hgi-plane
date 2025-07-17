@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Button, Input, CustomSelect } from "@plane/ui";
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import { INotificationConfig } from "../page";
 
 interface ConfigEditModalProps {
@@ -29,7 +28,7 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
     retry_count: config.retry_count,
     is_enabled: config.is_enabled,
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +88,7 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-custom-background-100 text-left shadow-custom-shadow-md transition-all sm:my-8 sm:w-full sm:max-w-2xl">
                 <div className="p-6">
                   <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 설정 편집</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* 기본 정보 */}
           <div>
@@ -189,7 +188,7 @@ export const ConfigEditModal: React.FC<ConfigEditModalProps> = ({
               className="w-full px-3 py-2 border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100 placeholder:text-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 font-mono text-sm"
             />
             <p className="text-xs text-custom-text-400 mt-1">
-              사용 가능한 변수: {"{"}{"{"}<wbr />user_id{"}"}{"}"}}, {"{"}{"{"}<wbr />user_email{"}"}{"}"}}, {"{"}{"{"}<wbr />title{"}"}{"}"}}, {"{"}{"{"}<wbr />message{"}"}{"}"}}, {"{"}{"{"}<wbr />issue_name{"}"}{"}"}}, {"{"}{"{"}<wbr />workspace_name{"}"}{"}"}}, {"{"}{"{"}<wbr />project_name{"}"}{"}"}}} 등
+              사용 가능한 변수: {"{{user_id}}"}, {"{{user_email}}"}, {"{{title}}"}, {"{{message}}"}, {"{{issue_name}}"}, {"{{workspace_name}}"}, {"{{project_name}}"} 등
             </p>
           </div>
 

@@ -58,6 +58,8 @@ export const DraftIssueQuickActions: React.FC<IQuickActionProps> = observer((pro
       name: `${issue.name} (copy)`,
       is_draft: isDraftIssue ? false : issue.is_draft,
       sourceIssueId: issue.id,
+      type_id: issue.type_id,
+      custom_field_values: issue.custom_field_values,
     },
     ["id"]
   );

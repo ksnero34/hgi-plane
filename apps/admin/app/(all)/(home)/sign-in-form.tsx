@@ -176,7 +176,7 @@ export const InstanceSignInForm: FC = () => {
           </Button>
         </div>
       </form>
-      
+
       <OAuthOptions />
     </>
   );

@@ -111,7 +111,7 @@ export const WorkflowManagement = observer(() => {
   };
 
   if (isLoading) {
-    return <Loader className="space-y-5" />;
+    return <Loader className="space-y-5">Loading...</Loader>;
   }
 
   return (

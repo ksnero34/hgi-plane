@@ -272,7 +272,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
           fromStateId: stateValue!,
           toStateId: val,
           reviewers: validation.reviewers,
-          transitionId: validation.transition_id,
+          transitionId: validation.transitionId,
         });
         handleClose();
         return;

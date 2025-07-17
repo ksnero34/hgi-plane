@@ -13,6 +13,8 @@ import { ComboDropDown, Loader } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
+// types
+import { IProjectIssueType } from "@plane/types";
 import { useDropdown } from "@/hooks/use-dropdown";
 // components
 import { DropdownButton } from "./buttons";
@@ -98,8 +100,9 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
   const options = useMemo(() => {
     if (!issueTypes || issueTypes.length === 0) return [];
 
-    return issueTypes.map((projectIssueType) => {
-      const issueType = projectIssueType;
+    return issueTypes.map((projectIssueType: IProjectIssueType) => {
+      // 중첩된 데이터 구조 처리: projectIssueType.issue_type이 실제 이슈 타입
+      const issueType = projectIssueType.issue_type || projectIssueType;
       
       // 이모지 코드를 실제 이모지로 변환
       const getEmojiFromCode = (code: string) => {
@@ -116,7 +119,7 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
         : issueType.icon || "";
 
       return {
-        value: issueType.id,
+        value: projectIssueType.id, // ProjectIssueType의 ID를 사용
         query: issueType.name || "",
         content: (
           <div className="flex items-center gap-2">
@@ -145,9 +148,8 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     
     // 선택된 값이 있으면 해당 이슈 타입 반환
     if (value) {
-      const found = issueTypes.find((projectIssueType) => {
-        const issueType = projectIssueType;
-        return issueType.id === value;
+      const found = issueTypes.find((projectIssueType: IProjectIssueType) => {
+        return projectIssueType.id === value; // ProjectIssueType의 ID로 비교
       });
       return found || undefined;
     }
@@ -156,8 +158,11 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     return getDefaultIssueType();
   }, [issueTypes, value, getDefaultIssueType]);
 
-  const getIssueTypeIcon = (issueType: any) => {
-    if (!issueType) return null;
+  const getIssueTypeIcon = (projectIssueType: IProjectIssueType | undefined) => {
+    if (!projectIssueType) return null;
+    
+    // 중첩된 데이터 구조 처리
+    const issueType = projectIssueType.issue_type || projectIssueType;
     
     const getEmojiFromCode = (code: string) => {
       if (!code) return "";
@@ -213,14 +218,14 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
             className={buttonClassName}
             isActive={isOpen}
             tooltipHeading={t("issue_type")}
-            tooltipContent={selectedOption?.name ?? placeholder}
+            tooltipContent={selectedOption?.issue_type?.name || placeholder}
             showTooltip={showTooltip}
             variant={buttonVariant}
             renderToolTipByDefault={renderByDefault}
           >
             {!hideIcon && getIssueTypeIcon(selectedOption)}
             {BUTTON_VARIANTS_WITH_TEXT.includes(buttonVariant) && (
-              <span className="truncate max-w-40">{selectedOption?.name || placeholder}</span>
+              <span className="truncate max-w-40">{selectedOption?.issue_type?.name || placeholder}</span>
             )}
             {dropdownArrow && (
               <ChevronDown className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />

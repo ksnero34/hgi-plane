@@ -187,7 +187,7 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
                   name="is_active"
                   control={control}
                   render={({ field: { value, onChange } }) => (
-                    <ToggleSwitch value={value} onChange={onChange} />
+                    <ToggleSwitch value={value ?? false} onChange={onChange} />
                   )}
                 />
               </div>
@@ -201,7 +201,7 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
                   name="is_default"
                   control={control}
                   render={({ field: { value, onChange } }) => (
-                    <ToggleSwitch value={value} onChange={onChange} />
+                    <ToggleSwitch value={value ?? false} onChange={onChange} />
                   )}
                 />
               </div>

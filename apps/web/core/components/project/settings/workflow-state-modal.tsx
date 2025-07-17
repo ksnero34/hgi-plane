@@ -33,7 +33,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
     formState: { errors, isSubmitting },
   } = useForm<IWorkflowStateFormData>({
     defaultValues: {
-      state_id: "",
+      state: "",
       sequence: 1,
       allow_new_issues: false,
     },
@@ -44,7 +44,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
     
     if (workflowState) {
       const formData = {
-        state_id: workflowState.state_detail?.id || workflowState.state_id || workflowState.state || "",
+        state: workflowState.state_detail?.id || workflowState.state || "",
         sequence: workflowState.sequence || 1,
         allow_new_issues: workflowState.allow_new_issues || false,
       };
@@ -53,7 +53,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
       reset(formData);
     } else {
       reset({
-        state_id: "",
+        state: "",
         sequence: 1,
         allow_new_issues: false,
       });
@@ -65,7 +65,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
 
     // 백엔드 API 스펙에 맞게 데이터 변환
     const apiData = {
-      state: data.state_id, // State 모델의 UUID
+      state: data.state, // State 모델의 UUID
       sequence: data.sequence,
       allow_new_issues: data.allow_new_issues,
     };
@@ -146,11 +146,11 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
           <div className="space-y-4 mb-5">
             {/* State Selection */}
             <div>
-              <label htmlFor="state_id" className="block text-sm font-medium text-custom-text-200 mb-2">
+              <label htmlFor="state" className="block text-sm font-medium text-custom-text-200 mb-2">
                 프로젝트 상태 선택 *
               </label>
               <Controller
-                name="state_id"
+                name="state"
                 control={control}
                 rules={{ required: "상태를 선택해주세요" }}
                 render={({ field }) => (
@@ -167,8 +167,8 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
                   </select>
                 )}
               />
-              {errors.state_id && (
-                <p className="mt-1 text-sm text-red-500">{errors.state_id.message}</p>
+              {errors.state && (
+                <p className="mt-1 text-sm text-red-500">{errors.state.message}</p>
               )}
             </div>
 
@@ -205,7 +205,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
                 name="allow_new_issues"
                 control={control}
                 render={({ field: { value, onChange } }) => (
-                  <ToggleSwitch value={value} onChange={onChange} />
+                  <ToggleSwitch value={value ?? false} onChange={onChange} />
                 )}
               />
             </div>

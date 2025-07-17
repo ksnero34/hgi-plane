@@ -396,7 +396,7 @@ export const CalendarIssueBlock = observer(
                 >
                   <IssueIdentifier
                     issueId={issue.id}
-                    projectId={issue.project_id}
+                    projectId={issue.project_id || ""}
                     size="xs"
                     textContainerClassName={cn(
                       "text-xs font-medium text-custom-text-300",

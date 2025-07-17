@@ -56,8 +56,8 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-custom-text-100">알림 설정</h3>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           size="sm"
           onClick={onCreateNew}
         >
@@ -68,8 +68,8 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
       {configs.length === 0 ? (
         <div className="text-center py-8 border border-custom-border-200 rounded-lg">
           <p className="text-custom-text-400 mb-4">설정된 알림이 없습니다.</p>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="sm"
             onClick={onCreateNew}
           >
@@ -129,7 +129,7 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
                   </Button>
                 </div>
               </div>
-              
+
               <div className="border-t border-custom-border-200 pt-3">
                 <details className="group">
                   <summary className="cursor-pointer text-sm font-medium text-custom-text-300 hover:text-custom-text-100">

@@ -50,7 +50,7 @@ export const WorkflowStatesList = observer(({ workflowId }: Props) => {
   };
 
   if (isLoading) {
-    return <Loader className="space-y-2" />;
+    return <Loader className="space-y-2">Loading...</Loader>;
   }
 
   return (

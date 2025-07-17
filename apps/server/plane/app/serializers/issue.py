@@ -478,9 +478,9 @@ class IssueCreateSerializer(BaseSerializer):
             
             # 새로운 값들 생성/수정
             for field_value in unique_custom_fields.values():
-                field_id = field_value["custom_field_id"]
-                new_value = field_value["value"]
-                field = custom_field_map.get(str(field_id))
+                field_id = field_value.get("custom_field_id")
+                new_value = field_value.get("value")
+                field = custom_field_map.get(str(field_id)) if field_id else None
                 
                 if not field:
                     # print(f"[IssueCreateSerializer] Field {field_id} not found, skipping")
@@ -1131,6 +1131,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "id",
             "name",
             "state_id",
+            "type_id",
             "sort_order",
             "completed_at",
             "estimate_point",
@@ -1182,6 +1183,7 @@ class IssueListDetailSerializer(serializers.Serializer):
             "id": instance.id,
             "name": instance.name,
             "state_id": instance.state_id,
+            "type_id": instance.type_id,
             "sort_order": instance.sort_order,
             "completed_at": instance.completed_at,
             "estimate_point": instance.estimate_point_id,

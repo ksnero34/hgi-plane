@@ -8,6 +8,7 @@ import { IIssue } from "@/types/issue";
 
 // hooks
 import { usePublish } from "@/hooks/store";
+import { StoreContext } from "@/lib/store-provider";
 
 type TCustomFieldProperties = {
   anchor: string;
@@ -19,10 +20,13 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
   const { anchor, issue, customFields } = props;
 
   // store hooks
-  const { project_members } = usePublish(anchor);
+  const { member } = React.useContext(StoreContext);
+  const { project } = usePublish(anchor);
+
+  const project_members = member.members?.filter(m => m.project === project);
 
   const getFieldValue = (fieldId: string) => {
-    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === fieldId);
+    const fieldValue = (issue as any)?.custom_field_values?.find((cfv: any) => cfv.custom_field_id === fieldId);
     return fieldValue?.value;
   };
 
@@ -63,7 +67,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         );
       
       case "select":
-        const selectOption = field.options?.find(opt => opt.value === fieldValue);
+        const selectOption = (field.options as unknown as { value: string; label: string; color: string; }[])?.find(opt => opt.value === fieldValue);
         return selectOption ? (
           <div className="flex items-center gap-1">
             <div 
@@ -79,7 +83,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <div className="flex flex-wrap gap-1">
             {values.map((value, index) => {
-              const option = field.options?.find(opt => opt.value === value);
+              const option = (field.options as unknown as { value: string; label: string; color: string; }[])?.find(opt => opt.value === value);
               return option ? (
                 <div key={index} className="flex items-center gap-1">
                   <div 
@@ -94,15 +98,15 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         );
       
       case "project_member":
-        const member = project_members?.find(m => m.id === fieldValue);
+        const member = project_members?.find(m => m.member === fieldValue);
         return member ? (
           <div className="flex items-center gap-1">
             <div className="w-4 h-4 rounded-full bg-custom-background-80 flex items-center justify-center">
               <span className="text-xs text-custom-text-200">
-                {member.display_name?.charAt(0).toUpperCase()}
+                {member.member__display_name?.charAt(0).toUpperCase()}
               </span>
             </div>
-            <span className="text-sm text-custom-text-200">{member.display_name}</span>
+            <span className="text-sm text-custom-text-200">{member.member__display_name}</span>
           </div>
         ) : null;
       
@@ -111,15 +115,15 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <div className="flex flex-wrap gap-1">
             {memberIds.map((memberId, index) => {
-              const member = project_members?.find(m => m.id === memberId);
+              const member = project_members?.find(m => m.member === memberId);
               return member ? (
                 <div key={index} className="flex items-center gap-1">
                   <div className="w-4 h-4 rounded-full bg-custom-background-80 flex items-center justify-center">
                     <span className="text-xs text-custom-text-200">
-                      {member.display_name?.charAt(0).toUpperCase()}
+                      {member.member__display_name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-xs text-custom-text-200">{member.display_name}</span>
+                  <span className="text-xs text-custom-text-200">{member.member__display_name}</span>
                 </div>
               ) : null;
             })}

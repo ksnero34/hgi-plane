@@ -9,7 +9,7 @@ services:
     restart: always
     networks:
       - dev_env
-    command: node web/server.js web
+    command: node ./apps/web/server.js web
     depends_on:
       - api
     image: harbor.hwgeneralins.com/plane/web:1.1.0
@@ -24,7 +24,7 @@ services:
     restart: always
     networks:
       - dev_env
-    command: node admin/server.js admin
+    command: node ./apps/admin/server.js admin
     depends_on:
       - api
       - web
@@ -40,7 +40,7 @@ services:
     restart: always
     networks:
       - dev_env
-    command: node space/server.js space
+    command: node ./apps/space/server.js space
     depends_on:
       - api
       - web
@@ -135,7 +135,8 @@ services:
     restart: always
     networks:
       - dev_env
-    command: node live/dist/server.js
+    command: node live/server.js
+    # command: ls -al live
     image: harbor.hwgeneralins.com/plane/live:1.1.0
     environment:
       - API_BASE_URL=http://api:8000

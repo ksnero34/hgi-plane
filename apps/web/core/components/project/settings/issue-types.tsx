@@ -4,7 +4,10 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Button, Input, TOAST_TYPE, setToast, CustomEmojiIconPicker, EmojiIconPickerTypes, CustomSelect, ToggleSwitch } from "@plane/ui";
-import { IIssueType, TCustomFieldType } from "@plane/types";
+import { IIssueType, IProjectIssueType, TCustomFieldType } from "@plane/types";
+
+// API 응답에 맞춘 확장 타입 - 실제로는 IProjectIssueType과 동일
+interface IIssueTypeWithNested extends IProjectIssueType {}
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 import { Logo } from "@/components/common";
@@ -40,9 +43,9 @@ interface IIssueTypeCustomField {
 }
 
 const IssueTypeItem: React.FC<{ 
-  issueType: IIssueType;
+  issueType: IIssueTypeWithNested;
   projectId: string;
-  onEdit: (issueType: IIssueType) => void;
+  onEdit: (issueType: IIssueTypeWithNested) => void;
   onDelete: (issueTypeId: string) => void;
 }> = ({ issueType, projectId, onEdit, onDelete }) => {
   const [showCustomFields, setShowCustomFields] = useState(false);
@@ -459,7 +462,7 @@ export const IssueTypes: React.FC = observer(() => {
     setShowCreateForm(false);
   };
 
-  const handleEdit = (issueType: IIssueType) => {
+  const handleEdit = (issueType: IIssueTypeWithNested) => {
     setNewIssueType({
       ...issueType.issue_type,
       id: issueType.id
@@ -635,7 +638,7 @@ export const IssueTypes: React.FC = observer(() => {
           issueTypes.map((issueType) => (
             <IssueTypeItem
               key={issueType.id}
-              issueType={issueType}
+              issueType={issueType as IIssueTypeWithNested}
               projectId={projectId as string}
               onDelete={handleDelete}
               onEdit={handleEdit}

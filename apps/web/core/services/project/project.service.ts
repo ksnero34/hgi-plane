@@ -6,6 +6,7 @@ import type {
   TProjectAnalyticsCountParams,
   TProjectIssuesSearchParams,
   IIssueType,
+  IProjectIssueType,
 } from "@plane/types";
 // helpers
 // plane web types
@@ -186,7 +187,7 @@ export class ProjectService extends APIService {
   }
 
   // Issue Types
-  async getProjectIssueTypes(workspaceSlug: string, projectId: string): Promise<IIssueType[]> {
+  async getProjectIssueTypes(workspaceSlug: string, projectId: string): Promise<IProjectIssueType[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`)
       .then((response) => response?.data)
       .catch((error) => {
@@ -194,7 +195,7 @@ export class ProjectService extends APIService {
       });
   }
 
-  async createProjectIssueType(workspaceSlug: string, projectId: string, data: Partial<IIssueType>): Promise<IIssueType> {
+  async createProjectIssueType(workspaceSlug: string, projectId: string, data: Partial<IIssueType>): Promise<IProjectIssueType> {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`, data)
       .then((response) => response?.data)
       .catch((error) => {
@@ -207,7 +208,7 @@ export class ProjectService extends APIService {
     projectId: string,
     issueTypeId: string,
     data: Partial<IIssueType>
-  ): Promise<IIssueType> {
+  ): Promise<IProjectIssueType> {
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/`, data)
       .then((response) => response?.data)
       .catch((error) => {
