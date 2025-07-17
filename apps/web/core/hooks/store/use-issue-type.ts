@@ -138,7 +138,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
                 await projectService.assignDefaultIssueTypeToExistingIssues(
                   workspaceSlug as string, 
                   projectId, 
-                  defaultIssueType.id
+                  defaultIssueType.issue_type.id
                 );
               } catch (error) {
                 console.error("기존 이슈들에게 기본 이슈 타입 할당 실패:", error);

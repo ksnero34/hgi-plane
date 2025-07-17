@@ -686,10 +686,25 @@ class WorkflowValidationViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
     def list_approval_requests(self, request, slug, project_id):
-        """List all approval requests in the project"""
+        """List all approval requests in the project with pagination"""
         try:
+            # Get pagination parameters
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # Get filter parameters
+            filter_status = request.GET.get('filter_status', 'all')  # all, pending, my_review
+            search_term = request.GET.get('search', '').strip()
+            sort_order = request.GET.get('sort', 'newest')  # newest, oldest, priority
+            
+            # Validate page_size
+            if page_size < 1:
+                page_size = 10
+            elif page_size > 100:
+                page_size = 100
+            
             # Get all approval requests in the project (visible to all project members)
-            approval_requests = WorkflowApprovalRequest.objects.filter(
+            approval_requests_qs = WorkflowApprovalRequest.objects.filter(
                 project_id=project_id,
                 status__in=["pending", "approved", "rejected", "cancelled"]
             ).select_related(
@@ -697,7 +712,65 @@ class WorkflowValidationViewSet(BaseViewSet):
                 "requester", "approved_by"
             ).prefetch_related(
                 "transition__reviewers__reviewer"
-            ).distinct().order_by("-created_at")
+            ).distinct()
+            
+            # Apply filters
+            if filter_status == "pending":
+                approval_requests_qs = approval_requests_qs.filter(status="pending")
+            elif filter_status == "my_review":
+                # Only show requests where current user is a reviewer and status is pending
+                approval_requests_qs = approval_requests_qs.filter(
+                    transition__reviewers__reviewer=request.user,
+                    status="pending"
+                )
+            
+            # Apply search filter
+            if search_term:
+                from django.db.models import Q
+                approval_requests_qs = approval_requests_qs.filter(
+                    Q(issue__name__icontains=search_term) |
+                    Q(requester__display_name__icontains=search_term) |
+                    Q(issue__sequence_id__icontains=search_term)
+                )
+            
+            # Apply sorting
+            if sort_order == "oldest":
+                approval_requests_qs = approval_requests_qs.order_by("created_at")
+            elif sort_order == "priority":
+                # Sort by pending status first, then by creation date (newest first)
+                approval_requests_qs = approval_requests_qs.extra(
+                    select={
+                        'is_pending': "CASE WHEN status = 'pending' THEN 0 ELSE 1 END"
+                    }
+                ).order_by('is_pending', '-created_at')
+            else:  # newest (default)
+                approval_requests_qs = approval_requests_qs.order_by("-created_at")
+            
+            # Get total count before pagination
+            total_count = approval_requests_qs.count()
+            
+            # Get count of requests that current user can approve (from filtered results)
+            if filter_status == "my_review":
+                # If already filtered for my_review, all results are approvable
+                can_approve_count = total_count
+            else:
+                # Count requests where current user is a reviewer and status is pending
+                can_approve_count = WorkflowApprovalRequest.objects.filter(
+                    project_id=project_id,
+                    status="pending",
+                    transition__reviewers__reviewer=request.user,
+                ).count()
+            
+            # Apply pagination
+            from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+            paginator = Paginator(approval_requests_qs, page_size)
+            
+            try:
+                approval_requests = paginator.page(page)
+            except PageNotAnInteger:
+                approval_requests = paginator.page(1)
+            except EmptyPage:
+                approval_requests = paginator.page(paginator.num_pages)
 
             response_data = []
             for request_obj in approval_requests:
@@ -759,7 +832,17 @@ class WorkflowValidationViewSet(BaseViewSet):
                     "can_approve": can_approve
                 })
 
-            return Response(response_data, status=status.HTTP_200_OK)
+            # Return paginated response
+            return Response({
+                "count": total_count,
+                "can_approve_count": can_approve_count,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": paginator.num_pages,
+                "next": approval_requests.has_next(),
+                "previous": approval_requests.has_previous(),
+                "results": response_data
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response(

@@ -35,7 +35,17 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   // text 필드의 로컬 상태 관리
   const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
   
-  if (!customFields || customFields.length === 0 || !displayProperties?.custom_fields) return null;
+  // Filter custom fields based on current issue type
+  const filteredCustomFields = customFields.filter(field => {
+    // If custom field has no issue_type restriction, show for all issue types
+    if (!field.issue_type) return true;
+    // If issue has no type_id, don't show type-specific fields
+    if (!issue?.type_id) return !field.issue_type;
+    // Show only fields that match the current issue type
+    return field.issue_type === issue.type_id;
+  });
+  
+  if (!filteredCustomFields || filteredCustomFields.length === 0 || !displayProperties?.custom_fields) return null;
 
   // MobX 반응성을 위해 computed 값 사용
   const customFieldValues = useMemo(() => {
@@ -51,7 +61,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   const updateFieldValue = (fieldId: string, value: any) => {
     if (!updateIssue || !issue?.project_id) return;
 
-    const field = customFields.find(f => f.id === fieldId);
+    const field = filteredCustomFields.find(f => f.id === fieldId);
     if (!field) return;
 
     // 안전한 업데이트 함수 사용
@@ -298,7 +308,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
 
   return (
     <>
-      {customFields.map((field) => (
+      {filteredCustomFields.map((field) => (
         <WithDisplayPropertiesHOC
           key={field.id}
           displayProperties={displayProperties}

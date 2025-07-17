@@ -34,13 +34,38 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
   // derived values
   const issue = getIssueById(issueId);
   
+  console.log('Issue data:', {
+    issueId: issueId,
+    issue: issue,
+    type_id: issue?.type_id,
+    allIssueFields: issue ? Object.keys(issue) : 'no issue'
+  });
+  
+  // Filter custom fields based on current issue type
+  const filteredCustomFields = customFields.filter(field => {
+    console.log('Custom field filtering:', {
+      fieldId: field.id,
+      fieldName: field.name,
+      fieldIssueType: field.issue_type,
+      issueTypeId: issue?.type_id,
+      match: field.issue_type === issue?.type_id
+    });
+    
+    // If custom field has no issue_type restriction, show for all issue types
+    if (!field.issue_type) return true;
+    // If issue has no type_id, don't show type-specific fields
+    if (!issue?.type_id) return !field.issue_type;
+    // Show only fields that match the current issue type
+    return field.issue_type === issue.type_id;
+  });
+  
   const getFieldValue = (fieldId: string) => {
     const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === fieldId);
     return fieldValue?.value;
   };
 
   const updateFieldValue = (fieldId: string, value: any) => {
-    const fieldArray = customFields.filter(f => f.id === fieldId);
+    const fieldArray = filteredCustomFields.filter(f => f.id === fieldId);
     const field = fieldArray.length > 0 ? fieldArray[0] : null;
     issueOperations.update(workspaceSlug, projectId, issueId, {
       custom_field_values: [
@@ -203,7 +228,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
 
   return (
     <>
-      {customFields.map((field) => {
+      {filteredCustomFields.map((field) => {
         const FieldIcon = getFieldIcon(field.field_type);
 
         return (

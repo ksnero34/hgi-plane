@@ -54,8 +54,8 @@ export const WorkflowApprovalRequests = observer(() => {
 
     try {
       setLoading(true);
-      const requests = await getApprovalRequests(workspaceSlug as string, projectId as string);
-      setApprovalRequests(requests);
+      const response = await getApprovalRequests(workspaceSlug as string, projectId as string, 1, 100, 'all', '', 'newest');
+      setApprovalRequests(response.results || []);
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,

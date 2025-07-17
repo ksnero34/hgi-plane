@@ -41,6 +41,8 @@ from plane.db.models import (
     ProjectMember,
     CustomField,
     CustomFieldValue,
+    IssueType,
+    ProjectIssueType,
 )
 
 
@@ -130,6 +132,7 @@ class IssueCreateSerializer(BaseSerializer):
     parent_id = serializers.PrimaryKeyRelatedField(
         source="parent", queryset=Issue.objects.all(), required=False, allow_null=True
     )
+    type_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
     label_ids = serializers.ListField(
         child=serializers.PrimaryKeyRelatedField(queryset=Label.objects.all()),
         write_only=True,
@@ -245,6 +248,18 @@ class IssueCreateSerializer(BaseSerializer):
         label_ids = self.initial_data.get("label_ids")
         data["label_ids"] = label_ids if label_ids else []
         
+        # Convert IssueType ID to ProjectIssueType ID for consistency with frontend
+        if instance.type_id:
+            project_id = self.context.get("project_id")
+            if project_id:
+                project_issue_type = ProjectIssueType.objects.filter(
+                    issue_type_id=instance.type_id,
+                    project_id=project_id,
+                    deleted_at__isnull=True
+                ).first()
+                if project_issue_type:
+                    data["type_id"] = str(project_issue_type.id)
+        
         # 커스텀 필드 값 포함 (간소화된 형태)
         custom_field_values = CustomFieldValue.objects.filter(
             issue=instance,
@@ -299,6 +314,34 @@ class IssueCreateSerializer(BaseSerializer):
                     raise serializers.ValidationError(
                         f"State transition from '{from_state.name}' to '{to_state.name}' is not allowed by workflow rules"
                     )
+
+        # Handle type_id validation and conversion
+        if attrs.get("type_id"):
+            workspace_id = self.context.get("workspace_id")
+            project_id = self.context.get("project_id")
+            
+            # First try to find IssueType directly
+            issue_type = IssueType.objects.filter(
+                id=attrs["type_id"],
+                workspace_id=workspace_id
+            ).first()
+            
+            if not issue_type:
+                # If not found, try to find through ProjectIssueType
+                project_issue_type = ProjectIssueType.objects.filter(
+                    id=attrs["type_id"],
+                    project_id=project_id,
+                    deleted_at__isnull=True
+                ).first()
+                
+                if project_issue_type:
+                    issue_type = project_issue_type.issue_type
+                else:
+                    raise serializers.ValidationError(f"Issue type with id {attrs['type_id']} does not exist in this workspace or project")
+            
+            attrs["type"] = issue_type
+            # Remove type_id from attrs since it's not a model field
+            attrs.pop("type_id", None)
 
         return attrs
 
@@ -1019,6 +1062,24 @@ class CustomFieldSerializer(BaseSerializer):
             
         return data
 
+    def to_representation(self, instance):
+        """Convert IssueType ID to ProjectIssueType ID in response"""
+        data = super().to_representation(instance)
+        
+        # Convert issue_type from IssueType to ProjectIssueType
+        if data.get('issue_type') and instance.issue_type:
+            try:
+                project_issue_type = ProjectIssueType.objects.get(
+                    issue_type_id=instance.issue_type_id,
+                    project_id=instance.project_id,
+                    deleted_at__isnull=True
+                )
+                data['issue_type'] = str(project_issue_type.id)
+            except ProjectIssueType.DoesNotExist:
+                pass
+        
+        return data
+
     def update(self, instance, validated_data):
         # key 필드는 수정할 수 없도록 제거
         validated_data.pop('key', None)
@@ -1124,6 +1185,28 @@ class IssueSerializer(DynamicBaseSerializer):
             }
             for cfv in custom_field_values
         ]
+
+    def to_representation(self, instance):
+        """Convert IssueType ID to ProjectIssueType ID in response"""
+        data = super().to_representation(instance)
+        
+        # Convert type_id from IssueType to ProjectIssueType
+        if data.get('type_id') and instance.type_id:
+            try:
+                project_issue_type = ProjectIssueType.objects.get(
+                    issue_type_id=instance.type_id,
+                    project_id=instance.project_id,
+                    deleted_at__isnull=True
+                )
+                data['type_id'] = str(project_issue_type.id)
+                # print(f"IssueSerializer: Converted type_id from {instance.type_id} to {project_issue_type.id}")
+            except ProjectIssueType.DoesNotExist:
+                # print(f"IssueSerializer: No ProjectIssueType found for issue_type_id={instance.type_id}, project_id={instance.project_id}")
+                pass
+        else:
+            # print(f"IssueSerializer: type_id is None or empty - data.type_id={data.get('type_id')}, instance.type_id={instance.type_id}")
+            pass
+        return data
 
     class Meta:
         model = Issue

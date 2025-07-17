@@ -2115,12 +2115,12 @@ class AssignDefaultIssueTypeEndpoint(BaseAPIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # 프로젝트의 type이 null인 이슈들을 업데이트
+            # 프로젝트의 type_id가 null인 이슈들을 업데이트
             updated_count = Issue.objects.filter(
                 project_id=project_id,
                 workspace=workspace,
-                type__isnull=True
-            ).update(type=issue_type)
+                type_id__isnull=True
+            ).update(type_id=issue_type.id)
             
             return Response({
                 "success": True,

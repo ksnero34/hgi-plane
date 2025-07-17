@@ -56,8 +56,26 @@ export interface IWorkflowStore {
   executeTransition: (workspaceSlug: string, projectId: string, data: IWorkflowValidation) => Promise<void>;
   requestApproval: (workspaceSlug: string, projectId: string, data: IWorkflowValidation) => Promise<any>;
   approveTransition: (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }) => Promise<void>;
+  rejectTransition: (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }) => Promise<void>;
   applyWorkflowToAllIssues: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<any>;
-  getApprovalRequests: (workspaceSlug: string, projectId: string) => Promise<any[]>;
+  getApprovalRequests: (
+    workspaceSlug: string, 
+    projectId: string, 
+    page?: number, 
+    pageSize?: number,
+    filterStatus?: string,
+    searchTerm?: string,
+    sortOrder?: string
+  ) => Promise<{
+    count: number;
+    can_approve_count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    next: boolean;
+    previous: boolean;
+    results: any[];
+  }>;
 }
 
 export class WorkflowStore implements IWorkflowStore {
@@ -528,9 +546,26 @@ export class WorkflowStore implements IWorkflowStore {
     }
   };
 
-  getApprovalRequests = async (workspaceSlug: string, projectId: string): Promise<any[]> => {
+  getApprovalRequests = async (
+    workspaceSlug: string, 
+    projectId: string, 
+    page: number = 1, 
+    pageSize: number = 10,
+    filterStatus: string = 'all',
+    searchTerm: string = '',
+    sortOrder: string = 'newest'
+  ): Promise<{
+    count: number;
+    can_approve_count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    next: boolean;
+    previous: boolean;
+    results: any[];
+  }> => {
     try {
-      return await this.workflowService.getApprovalRequests(workspaceSlug, projectId);
+      return await this.workflowService.getApprovalRequests(workspaceSlug, projectId, page, pageSize, filterStatus, searchTerm, sortOrder);
     } catch (error) {
       console.error("Error fetching approval requests:", error);
       throw error;

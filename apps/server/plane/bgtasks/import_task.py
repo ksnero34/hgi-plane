@@ -18,7 +18,8 @@ from plane.db.models import (
     CustomField,
     CustomFieldValue,
     ProjectMember,
-    IssueType
+    IssueType,
+    ProjectIssueType
 )
 from plane.utils.exception_logger import log_exception
 from plane.app.serializers import IssueSerializer, IssueCreateSerializer
@@ -454,17 +455,37 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         creator_user = User.objects.get(id=UUID(user_id))
                     
                     # CSV에서 이슈 타입 읽기
-                    issue_type_name = safe_str(row.get("Issue Type", ""))
+                    issue_type_name = safe_str(row.get("Type", ""))
                     issue_type = None
+                    project_issue_type = None
+                    
                     if issue_type_name:
-                        # 이슈 타입을 찾거나 기본값 사용
-                        issue_type = IssueType.objects.filter(project=project, name=issue_type_name).first()
-                        if not issue_type:
+                        # ProjectIssueType을 통해 이슈 타입 찾기
+                        project_issue_type = ProjectIssueType.objects.filter(
+                            project=project,
+                            issue_type__name=issue_type_name,
+                            deleted_at__isnull=True
+                        ).first()
+                        if project_issue_type:
+                            issue_type = project_issue_type.issue_type
+                        else:
                             # 이슈 타입이 없으면 프로젝트의 기본 이슈 타입 사용
-                            issue_type = IssueType.objects.filter(project=project, is_default=True).first()
+                            project_issue_type = ProjectIssueType.objects.filter(
+                                project=project,
+                                is_default=True,
+                                deleted_at__isnull=True
+                            ).first()
+                            if project_issue_type:
+                                issue_type = project_issue_type.issue_type
                     else:
                         # 이슈 타입이 명시되지 않으면 프로젝트의 기본 이슈 타입 사용
-                        issue_type = IssueType.objects.filter(project=project, is_default=True).first()
+                        project_issue_type = ProjectIssueType.objects.filter(
+                            project=project,
+                            is_default=True,
+                            deleted_at__isnull=True
+                        ).first()
+                        if project_issue_type:
+                            issue_type = project_issue_type.issue_type
                     
                     # 커스텀 필드 값 처리
                     custom_field_values = process_custom_fields(row, project, creator_user, issue_type.id if issue_type else None)
@@ -479,7 +500,8 @@ def issue_import_task(workspace_id, project_id, file_content, file_type, user_id
                         "state_id": state.id if state else default_state.id,
                         "sequence_id": sequence_id,
                         "start_date": start_date,
-                        "target_date": target_date
+                        "target_date": target_date,
+                        "type_id": issue_type.id if issue_type else None
                     }
 
                     # print("\n[Debug] 이슈 데이터 준비:")

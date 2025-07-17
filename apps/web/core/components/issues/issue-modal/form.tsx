@@ -180,7 +180,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
 
     // get default issue type for this project
     const defaultIssueType = getDefaultIssueType();
-    if (defaultIssueType?.id) setValue("type_id", defaultIssueType.id, { shouldValidate: true });
+    if (defaultIssueType?.id) setValue("type_id", defaultIssueType.id, { shouldValidate: true, shouldDirty: true });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, projectId, getDefaultIssueType]);
@@ -219,21 +219,28 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
 
     // 커스텀 필드 값을 백엔드 형식으로 변환
     const customFieldValues = formData.custom_field_values ? 
-      Object.values(formData.custom_field_values).filter(value => value && value.custom_field_id) : [];
+      Object.values(formData.custom_field_values).filter(value => 
+        value && value.custom_field_id && value.value !== undefined && value.value !== null && value.value !== ""
+      ) : [];
 
     const submitData = !data?.id
       ? {
           ...formData,
           custom_field_values: customFieldValues
         }
-      : {
-          ...getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined }),
-          project_id: getValues<"project_id">("project_id"),
-          id: data.id,
-          description_html: formData.description_html ?? "<p></p>",
-          type_id: getValues<"type_id">("type_id"),
-          custom_field_values: customFieldValues
-        };
+      : (() => {
+          const changedFields = getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined });
+          const currentTypeId = getValues<"type_id">("type_id");
+          
+          return {
+            ...changedFields,
+            project_id: getValues<"project_id">("project_id"),
+            id: data.id,
+            description_html: formData.description_html ?? "<p></p>",
+            type_id: currentTypeId || (data?.type_id || null),
+            custom_field_values: customFieldValues
+          };
+        })();
 
     // this condition helps to move the issues from draft to project issues
     if (formData.hasOwnProperty("is_draft")) submitData.is_draft = formData.is_draft;

@@ -71,6 +71,8 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
   const workflowStore = useWorkflow();
   // state
   const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [loadingRequests, setLoadingRequests] = useState<Set<string>>(new Set());
@@ -91,8 +93,18 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
 
     try {
       setLoading(true);
-      const requests = await workflowStore.getApprovalRequests(workspaceSlug as string, projectId as string);
-      setApprovalRequests(requests);
+      const response = await workflowStore.getApprovalRequests(
+        workspaceSlug as string, 
+        projectId as string,
+        currentPage,
+        itemsPerPage,
+        filterStatus,
+        searchTerm,
+        sortOrder
+      );
+      setApprovalRequests(response.results || []);
+      setTotalCount(response.count || 0);
+      setTotalPages(response.total_pages || 0);
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
@@ -108,7 +120,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
     if (isOpen) {
       fetchApprovalRequests();
     }
-  }, [isOpen, workspaceSlug, projectId]);
+  }, [isOpen, workspaceSlug, projectId, currentPage, itemsPerPage, filterStatus, searchTerm, sortOrder]);
 
   // Close page size options when clicking outside
   useEffect(() => {
@@ -171,10 +183,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
       
       setLoadingRequests(prev => new Set(prev).add(approvalRequestId));
       
-      await workflowStore.executeTransition(workspaceSlug?.toString(), projectId?.toString(), {
-        from_state_id: "",
-        to_state_id: "",
-        issue_id: approvalRequestId,
+      await workflowStore.rejectTransition(workspaceSlug?.toString(), projectId?.toString(), approvalRequestId, {
         comment: rejectionComment
       });
       
@@ -210,58 +219,8 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
     }
   };
 
-  // Filter and sort approval requests
-  const filteredAndSortedRequests = React.useMemo(() => {
-    let filtered = approvalRequests;
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(request =>
-        request.issue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.requester.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.issue.sequence_id.toString().includes(searchTerm)
-      );
-    }
-
-    // Apply status filter
-    switch (filterStatus) {
-      case "pending":
-        filtered = filtered.filter(request => request.status === "pending");
-        break;
-      case "my_review":
-        filtered = filtered.filter(request => request.can_approve);
-        break;
-      case "all":
-      default:
-        // Show all requests
-        break;
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortOrder) {
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case "priority":
-          // Sort by pending status first, then by creation date
-          if (a.status === "pending" && b.status !== "pending") return -1;
-          if (a.status !== "pending" && b.status === "pending") return 1;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case "newest":
-        default:
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-    });
-
-    return filtered;
-  }, [approvalRequests, searchTerm, filterStatus, sortOrder]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredAndSortedRequests.length / itemsPerPage);
-  const paginatedRequests = React.useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedRequests.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredAndSortedRequests, currentPage, itemsPerPage]);
+  // Data is already filtered and sorted by the backend, so use it directly
+  const paginatedRequests = approvalRequests;
 
   // Reset to first page when filters change
   React.useEffect(() => {
@@ -289,7 +248,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-custom-text-100">
-              워크플로우 승인 요청 ({filteredAndSortedRequests.length}개)
+              워크플로우 승인 요청 ({totalCount}개)
             </h3>
             {totalPages > 1 && (
               <div className="text-sm text-custom-text-200">
@@ -382,7 +341,7 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
               </div>
             ))}
           </div>
-        ) : filteredAndSortedRequests.length === 0 ? (
+        ) : paginatedRequests.length === 0 ? (
           <div className="text-center py-12">
             <Clock className="h-12 w-12 text-custom-text-400 mx-auto mb-4" />
             <h4 className="text-lg font-medium text-custom-text-100 mb-2">
@@ -618,9 +577,9 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-custom-border-200">
               <div className="text-sm text-custom-text-200">
-                {filteredAndSortedRequests.length > 0 && (
+                {totalCount > 0 && (
                   <>
-                    {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredAndSortedRequests.length)} / {filteredAndSortedRequests.length}개
+                    {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalCount)} / {totalCount}개
                   </>
                 )}
               </div>

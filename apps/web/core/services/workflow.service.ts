@@ -229,8 +229,33 @@ export class WorkflowService extends APIService {
   }
 
   // Approval requests
-  async getApprovalRequests(workspaceSlug: string, projectId: string): Promise<any[]> {
-    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/workflows/approval-requests/`)
+  async getApprovalRequests(
+    workspaceSlug: string, 
+    projectId: string, 
+    page: number = 1, 
+    pageSize: number = 10,
+    filterStatus: string = 'all',
+    searchTerm: string = '',
+    sortOrder: string = 'newest'
+  ): Promise<{
+    count: number;
+    can_approve_count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    next: boolean;
+    previous: boolean;
+    results: any[];
+  }> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/workflows/approval-requests/`, {
+      params: {
+        page,
+        page_size: pageSize,
+        filter_status: filterStatus,
+        search: searchTerm,
+        sort: sortOrder
+      }
+    })
       .then((response) => response?.data);
   }
 }

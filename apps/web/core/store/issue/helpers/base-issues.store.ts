@@ -708,23 +708,8 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         ...data,
       } as TIssue);
 
-      // type_id 변환: ProjectIssueType ID -> IssueType ID
-      const apiData = { ...data };
-      if (apiData.type_id) {
-        try {
-          const projectService = await import("@/services/project");
-          const projectIssueTypes = await projectService.ProjectService.prototype.getProjectIssueTypes(workspaceSlug, projectId);
-          const projectIssueType = projectIssueTypes.find(pit => pit.id === apiData.type_id);
-          if (projectIssueType?.issue_type?.id) {
-            apiData.type_id = projectIssueType.issue_type.id;
-          }
-        } catch (error) {
-          console.warn("이슈 타입 ID 변환 실패:", error);
-        }
-      }
-
       // call API to update the issue
-      await this.issueService.patchIssue(workspaceSlug, projectId, issueId, apiData);
+      await this.issueService.patchIssue(workspaceSlug, projectId, issueId, data);
 
       // call fetch Parent Stats
       this.fetchParentStats(workspaceSlug, projectId);

@@ -16,7 +16,7 @@ from django.utils import timezone
 from openpyxl import Workbook
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel, IssueComment
+from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel, IssueComment, IssueType, ProjectIssueType
 from plane.utils.exception_logger import log_exception
 from plane.settings.storage import S3Storage
 
@@ -271,6 +271,7 @@ def generate_table_row(issue, custom_fields_map=None, custom_fields_info=None):
         issue["name"],
         issue["description_stripped"],
         issue["state__name"],
+        issue["type__name"] or "",
         dateConverter(issue["start_date"]),
         dateConverter(issue["target_date"]),
         priority,  # 수정된 priority 값 사용
@@ -340,6 +341,7 @@ def generate_json_row(issue, custom_fields_map=None, custom_fields_info=None):
         "Name": issue["name"],
         "Description": issue["description_stripped"],
         "State": issue["state__name"],
+        "Type": issue["type__name"] or "",
         "Start Date": dateConverter(issue["start_date"]),
         "Target Date": dateConverter(issue["target_date"]),
         "Priority": priority,  # 수정된 priority 값 사용
@@ -605,7 +607,7 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 project__project_projectmember__is_active=True,
                 project__archived_at__isnull=True,
             )
-            .select_related("project", "workspace", "state", "parent", "created_by")
+            .select_related("project", "workspace", "state", "parent", "created_by", "type")
             .values(
                 "id",
                 "project__identifier",
@@ -619,6 +621,8 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 "start_date",
                 "target_date",
                 "state__name",
+                "type__name",
+                "type_id",
                 "created_at",
                 "updated_at",
                 "completed_at",
@@ -653,6 +657,8 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
                 "start_date": issue["start_date"],
                 "target_date": issue["target_date"],
                 "state__name": issue["state__name"],
+                "type__name": issue["type__name"],
+                "type_id": issue["type_id"],
                 "created_at": issue["created_at"],
                 "updated_at": issue["updated_at"],
                 "completed_at": issue["completed_at"],
@@ -754,6 +760,7 @@ def issue_export_task(provider, workspace_id, project_ids, token_id, multiple, s
             "Name",
             "Description",
             "State",
+            "Type",
             "Start Date",
             "Target Date",
             "Priority",

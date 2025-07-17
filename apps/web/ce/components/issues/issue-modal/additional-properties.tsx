@@ -21,17 +21,16 @@ export const IssueAdditionalProperties: React.FC<TIssueAdditionalPropertiesProps
   // console.log("IssueAdditionalProperties - issueTypeId:", issueTypeId);
   // console.log("IssueAdditionalProperties - customFields:", customFields);
 
-  // ProjectIssueType ID를 실제 IssueType ID로 변환
-  const actualIssueTypeId = issueTypeId ? (() => {
-    const projectIssueType = issueTypes.find(pit => pit.id === issueTypeId);
-    return projectIssueType?.issue_type?.id || null;
-  })() : null;
+  // 현재 이슈 타입에 맞는 커스텀 필드 필터링
+  const filteredCustomFields = customFields.filter(field => {
+    // 커스텀 필드에 이슈 타입이 없으면 비표시
+    if (!field.issue_type) return false;
+    // 이슈에 타입이 없으면 타입별 필드는 숨김
+    if (!issueTypeId) return !field.issue_type;
+    // 현재 이슈 타입과 일치하는 필드만 표시
+    return field.issue_type === issueTypeId;
+  });
 
-  const filteredCustomFields = actualIssueTypeId ? customFields.filter(field => 
-    field.issue_type === actualIssueTypeId
-  ) : [];
-
-  // console.log("IssueAdditionalProperties - actualIssueTypeId:", actualIssueTypeId);
   // console.log("IssueAdditionalProperties - filteredCustomFields:", filteredCustomFields);
 
   if (!filteredCustomFields.length) return null;
