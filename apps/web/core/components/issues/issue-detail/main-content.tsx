@@ -133,6 +133,7 @@ export const IssueMainContent: React.FC<Props> = observer((props) => {
           projectId={issue.project_id}
           issueId={issue.id}
           initialValue={issue.description_html}
+          swrIssueDescription={issue.description_html}
           disabled={isArchived || !isEditable}
           issueOperations={issueOperations}
           setIsSubmitting={(value) => setIsSubmitting(value)}
