@@ -125,8 +125,28 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
   const { getStateById } = useProjectState();
 
   // form info
+  const convertedData = React.useMemo(() => {
+    if (!data) return {};
+    
+    // custom_field_values를 폼에서 사용할 수 있는 형태로 변환
+    const result = { ...data };
+    if (data.custom_field_values && Array.isArray(data.custom_field_values)) {
+      const customFieldObject: any = {};
+      data.custom_field_values.forEach((fieldValue: any) => {
+        if (fieldValue.custom_field_id) {
+          customFieldObject[fieldValue.custom_field_id] = {
+            custom_field_id: fieldValue.custom_field_id,
+            value: fieldValue.value
+          };
+        }
+      });
+      result.custom_field_values = customFieldObject;
+    }
+    return result;
+  }, [data]);
+
   const methods = useForm<TIssue>({
-    defaultValues: { ...DEFAULT_WORK_ITEM_FORM_VALUES, project_id: defaultProjectId, ...data },
+    defaultValues: { ...DEFAULT_WORK_ITEM_FORM_VALUES, project_id: defaultProjectId, ...convertedData },
     reValidateMode: "onChange",
   });
   const {
