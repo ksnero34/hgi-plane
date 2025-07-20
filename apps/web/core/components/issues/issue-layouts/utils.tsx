@@ -87,6 +87,7 @@ type TGetGroupByColumns = {
   issuesMap?: TIssueMap;
   projectId?: string;
   groupByFields?: any[];
+  issueTypes?: any[];
 };
 
 // NOTE: Type of groupBy is different compared to what's being passed from the components.
@@ -101,6 +102,7 @@ export const getGroupByColumns = ({
   issuesMap,
   projectId,
   groupByFields,
+  issueTypes,
 }: TGetGroupByColumns): IGroupByColumn[] | undefined => {
   // If no groupBy is specified and includeNone is true, return "All Issues" group
   if (!groupBy && includeNone) {
@@ -134,6 +136,7 @@ export const getGroupByColumns = ({
     team_project: getTeamProjectColumns,
     parent_child: () => getParentChildColumns(groupedIssueIds, issuesMap, groupByFields),
     top_level_only: getTopLevelOnlyColumns,
+    issue_type: () => getIssueTypeColumns(issueTypes),
   };
 
   // Get and return the columns for the specified group by option
@@ -413,6 +416,39 @@ const getTopLevelOnlyColumns = (): IGroupByColumn[] => {
       payload: { parent_id: null },
     }
   ];
+};
+
+const getIssueTypeColumns = (issueTypes?: any[]): IGroupByColumn[] => {
+  const columns: IGroupByColumn[] = [];
+  
+  // Add issue type columns if available
+  if (issueTypes && Array.isArray(issueTypes)) {
+    issueTypes.forEach(projectIssueType => {
+      const issueType = projectIssueType?.issue_type || projectIssueType;
+      if (issueType && issueType.id) {
+        columns.push({
+          id: issueType.id,
+          name: issueType.name || "Unknown Type",
+          icon: issueType.logo_props ? (
+            <div className="w-4 h-4 grid place-items-center flex-shrink-0">
+              <Logo logo={issueType.logo_props} />
+            </div>
+          ) : undefined,
+          payload: { type_id: issueType.id },
+        });
+      }
+    });
+  }
+  
+  // Always include "None" option for issues without types
+  columns.push({
+    id: "None",
+    name: "None",
+    icon: undefined,
+    payload: {},
+  });
+  
+  return columns;
 };
 
 export const getDisplayPropertiesCount = (

@@ -766,6 +766,43 @@ class GroupedOffsetPaginator(OffsetPaginator):
                 processed_results[group_value]["results"].append(result)
                 processed_results[group_value]["total_results"] += 1
             return processed_results
+        elif self.group_by_field_name == "type_id":
+            # type_id 그룹화의 경우 ProjectIssueType ID를 IssueType ID로 역변환하여 매칭
+            processed_results = self.__get_field_dict()
+            
+            # ProjectIssueType ID -> IssueType ID 매핑 생성
+            from plane.db.models import ProjectIssueType
+            project_to_issue_type_map = {}
+            
+            # 현재 결과에 있는 모든 ProjectIssueType ID들 수집
+            project_type_ids = set()
+            for result in results:
+                type_id = result.get(self.group_by_field_name)
+                if type_id and type_id != "None":
+                    project_type_ids.add(type_id)
+            
+            if project_type_ids:
+                # ProjectIssueType에서 IssueType으로의 매핑 가져오기
+                project_issue_types = ProjectIssueType.objects.filter(
+                    id__in=project_type_ids,
+                    deleted_at__isnull=True
+                ).values('id', 'issue_type_id')
+                
+                for pit in project_issue_types:
+                    project_to_issue_type_map[str(pit['id'])] = str(pit['issue_type_id'])
+            
+            for result in results:
+                project_type_id = str(result.get(self.group_by_field_name, "None"))
+                
+                # ProjectIssueType ID를 IssueType ID로 변환
+                if project_type_id in project_to_issue_type_map:
+                    issue_type_id = project_to_issue_type_map[project_type_id]
+                else:
+                    issue_type_id = project_type_id  # "None"이거나 매핑되지 않은 경우
+                
+                if issue_type_id in processed_results:
+                    processed_results[issue_type_id]["results"].append(result)
+            return processed_results
         else:
             processed_results = self.__get_field_dict()
             for result in results:

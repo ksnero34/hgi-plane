@@ -16,6 +16,7 @@ import { Button, Loader } from "@plane/ui";
 import { SectionEmptyState } from "@/components/empty-state";
 import { getGroupByColumns, isWorkspaceLevel } from "@/components/issues/issue-layouts/utils";
 import { useIssueDetail } from "@/hooks/store";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 
 import { SubIssuesListGroup } from "./list-group";
 type Props = {
@@ -57,6 +58,7 @@ export const SubIssuesListRoot: React.FC<Props> = observer((props) => {
       filters: { getSubIssueFilters, getGroupedSubWorkItems, getFilteredSubWorkItems, resetFilters },
     },
   } = useIssueDetail(issueServiceType);
+  const { issueTypes } = useIssueType(projectId);
 
   // derived values
   const filters = getSubIssueFilters(rootIssueId);
@@ -70,6 +72,7 @@ export const SubIssuesListRoot: React.FC<Props> = observer((props) => {
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     isEpic: issueServiceType === EIssueServiceType.EPICS,
     projectId,
+    issueTypes: issueTypes,
   });
 
   const getWorkItemIds = useCallback(

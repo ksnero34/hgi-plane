@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane constants
 import { ALL_ISSUES } from "@plane/constants";
 // types
@@ -21,6 +22,7 @@ import {
 import { MultipleSelectGroup } from "@/components/core";
 // hooks
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 // plane web components
 import { IssueBulkOperationsRoot } from "@/plane-web/components/issues";
 // plane web hooks
@@ -79,7 +81,11 @@ export const List: React.FC<IList> = observer((props) => {
     groupByFields,
   } = props;
 
+  // router
+  const { projectId } = useParams();
+  // store hooks
   const storeType = useIssueStoreType();
+  const { issueTypes } = useIssueType(projectId as string);
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
 
@@ -92,7 +98,9 @@ export const List: React.FC<IList> = observer((props) => {
     isEpic: isEpic,
     groupedIssueIds: groupedIssueIds,
     issuesMap: issuesMap,
+    projectId: projectId as string,
     groupByFields: groupByFields,
+    issueTypes: issueTypes,
   });
 
   // Enable Auto Scroll for Main Kanban

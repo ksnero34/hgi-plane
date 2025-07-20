@@ -511,6 +511,71 @@ def filter_logged_by(params, issue_filter, method, prefix=""):
     return issue_filter
 
 
+def filter_issue_type(params, issue_filter, method, prefix=""):
+    if method == "GET":
+        issue_types = [
+            item for item in params.get("issue_type").split(",") if item != "null"
+        ]
+        if "None" in issue_types:
+            issue_filter[f"{prefix}type__isnull"] = True
+        issue_types = filter_valid_uuids(issue_types)
+        if len(issue_types) and "" not in issue_types:
+            # 전달된 ID들이 IssueType ID인지 ProjectIssueType ID인지 확인하고 처리
+            from plane.db.models import ProjectIssueType, IssueType
+            
+            actual_issue_type_ids = []
+            
+            for type_id in issue_types:
+                # 먼저 ProjectIssueType ID인지 확인
+                project_issue_types = ProjectIssueType.objects.filter(
+                    id=type_id,
+                    deleted_at__isnull=True
+                ).values_list('issue_type_id', flat=True)
+                
+                if project_issue_types:
+                    # ProjectIssueType ID인 경우 IssueType ID로 변환
+                    actual_issue_type_ids.extend(project_issue_types)
+                else:
+                    # IssueType ID인지 확인
+                    if IssueType.objects.filter(id=type_id, is_active=True).exists():
+                        # 직접 IssueType ID인 경우 그대로 사용
+                        actual_issue_type_ids.append(type_id)
+            
+            if actual_issue_type_ids:
+                issue_filter[f"{prefix}type_id__in"] = actual_issue_type_ids
+    else:
+        if (
+            params.get("issue_type", None)
+            and len(params.get("issue_type"))
+            and params.get("issue_type") != "null"
+        ):
+            # 전달된 ID들이 IssueType ID인지 ProjectIssueType ID인지 확인하고 처리
+            from plane.db.models import ProjectIssueType, IssueType
+            
+            type_ids = params.get("issue_type")
+            actual_issue_type_ids = []
+            
+            for type_id in type_ids:
+                # 먼저 ProjectIssueType ID인지 확인
+                project_issue_types = ProjectIssueType.objects.filter(
+                    id=type_id,
+                    deleted_at__isnull=True
+                ).values_list('issue_type_id', flat=True)
+                
+                if project_issue_types:
+                    # ProjectIssueType ID인 경우 IssueType ID로 변환
+                    actual_issue_type_ids.extend(project_issue_types)
+                else:
+                    # IssueType ID인지 확인
+                    if IssueType.objects.filter(id=type_id, is_active=True).exists():
+                        # 직접 IssueType ID인 경우 그대로 사용
+                        actual_issue_type_ids.append(type_id)
+            
+            if actual_issue_type_ids:
+                issue_filter[f"{prefix}type_id__in"] = actual_issue_type_ids
+    return issue_filter
+
+
 def filter_custom_fields(params, issue_filter, method, prefix=""):
     """커스텀 필드 필터링"""
     # print(f"[DEBUG] filter_custom_fields called with method: {method}")
@@ -596,6 +661,7 @@ def issue_filters(query_params, method, prefix=""):
         "target_date": filter_target_date,
         "completed_at": filter_completed_at,
         "type": filter_issue_state_type,
+        "issue_type": filter_issue_type,
         "project": filter_project,
         "cycle": filter_cycle,
         "module": filter_module,

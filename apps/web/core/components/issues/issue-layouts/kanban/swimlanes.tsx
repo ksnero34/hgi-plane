@@ -1,5 +1,6 @@
 import { MutableRefObject } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import {
   GroupByColumnTypes,
   IGroupByColumn,
@@ -17,6 +18,7 @@ import {
 import { Row } from "@plane/ui";
 // hooks
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 // components
 import { useWorkFlowFDragNDrop } from "@/plane-web/components/workflow";
 import { TRenderQuickActions } from "../list/list-view-types";
@@ -273,18 +275,25 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
     scrollableContainerRef,
     customFields,
   } = props;
+  // router
+  const { projectId } = useParams();
   // store hooks
   const storeType = useIssueStoreType();
+  const { issueTypes } = useIssueType(projectId as string);
   // derived values
   const groupByList = getGroupByColumns({
     groupBy: group_by as GroupByColumnTypes,
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
+    projectId: projectId as string,
+    issueTypes: issueTypes,
   });
   const subGroupByList = getGroupByColumns({
     groupBy: sub_group_by as GroupByColumnTypes,
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
+    projectId: projectId as string,
+    issueTypes: issueTypes,
   });
 
   if (!groupByList || !subGroupByList) return null;

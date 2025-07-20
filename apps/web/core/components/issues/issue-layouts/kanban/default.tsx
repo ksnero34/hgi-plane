@@ -1,5 +1,6 @@
 import { MutableRefObject } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // i18n
 import { useTranslation } from "@plane/i18n";
 import {
@@ -23,6 +24,7 @@ import { KanbanColumnLoader } from "@/components/ui";
 // hooks
 import { useKanbanView } from "@/hooks/store";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 // types
 // parent components
 import { useWorkFlowFDragNDrop } from "@/plane-web/components/workflow";
@@ -99,9 +101,12 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
   } = props;
   // i18n
   const { t } = useTranslation();
+  // router
+  const { projectId } = useParams();
   // store hooks
   const storeType = useIssueStoreType();
   const issueKanBanView = useKanbanView();
+  const { issueTypes } = useIssueType(projectId as string);
   // derived values
   const isDragDisabled = !issueKanBanView?.getCanUserDragDrop(group_by, sub_group_by);
 
@@ -114,7 +119,9 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
     isEpic: isEpic,
     groupedIssueIds: groupedIssueIds,
     issuesMap: issuesMap,
+    projectId: projectId as string,
     groupByFields: groupByFields,
+    issueTypes: issueTypes,
   });
 
   if (!groups) return null;

@@ -38,6 +38,7 @@ def issue_queryset_grouper(
         "project_id": "project",
         "created_by": "created_by",
         "parent_child": "parent_child",
+        "type_id": "type",
     }
 
     GROUP_FILTER_MAPPER: Dict[str, Q] = {
@@ -627,5 +628,22 @@ def issue_group_values(
     if field == "top_level_only":
         # 최상위 작업항목만 그룹화
         return ["top_level_only"]
+
+    if field == "type_id":
+        from plane.db.models import IssueType
+        
+        queryset = IssueType.objects.filter(
+            workspace__slug=slug,
+            is_active=True
+        )
+        
+        if project_id:
+            # 프로젝트별 이슈 타입 필터링이 필요하다면 여기에 추가
+            pass
+            
+        result = list(queryset.values_list("id", flat=True).order_by("name"))
+        # None 그룹 추가 (타입이 설정되지 않은 이슈들을 위해)
+        result.append("None")
+        return result
 
     return []

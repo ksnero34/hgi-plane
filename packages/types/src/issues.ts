@@ -191,7 +191,8 @@ export type GroupByColumnTypes =
   | "created_by"
   | "team_project"
   | "parent_child"
-  | "top_level_only";
+  | "top_level_only"
+  | "issue_type";
 
 export type TGetColumns = {
   isWorkspaceLevel?: boolean;
