@@ -34,12 +34,12 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
   // derived values
   const issue = getIssueById(issueId);
   
-  console.log('Issue data:', {
-    issueId: issueId,
-    issue: issue,
-    type_id: issue?.type_id,
-    allIssueFields: issue ? Object.keys(issue) : 'no issue'
-  });
+  // console.log('Issue data:', {
+  //   issueId: issueId,
+  //   issue: issue,
+  //   type_id: issue?.type_id,
+  //   allIssueFields: issue ? Object.keys(issue) : 'no issue'
+  // });
   
   // Filter custom fields based on current issue type
   const filteredCustomFields = customFields.filter(field => {

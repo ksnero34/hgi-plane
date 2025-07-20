@@ -514,7 +514,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
               >
                 {projectId && (
                   <>
-                    {console.log("form.tsx - watch('type_id'):", watch("type_id"))}
+                    {/* {console.log("form.tsx - watch('type_id'):", watch("type_id"))} */}
                     <IssueAdditionalProperties
                       issueId={data?.id ?? data?.sourceIssueId}
                       issueTypeId={watch("type_id")}
