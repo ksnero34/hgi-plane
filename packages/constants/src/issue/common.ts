@@ -122,7 +122,7 @@ export const ISSUE_GROUP_BY_OPTIONS: {
   { key: "labels", titleTranslationKey: "common.labels" },
   { key: "assignees", titleTranslationKey: "common.assignees" },
   { key: "created_by", titleTranslationKey: "common.created_by" },
-  { key: "issue_type", titleTranslationKey: "common.issue_type" },
+  { key: "issue_type", titleTranslationKey: "common.order_by.issue_type" },
   { key: "parent_child", titleTranslationKey: "common.order_by.parent_child" },
   { key: "top_level_only", titleTranslationKey: "common.top_level_only" },
   { key: null, titleTranslationKey: "common.none" },

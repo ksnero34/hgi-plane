@@ -715,6 +715,7 @@
       "label": "정렬 기준",
       "manual": "수동",
       "parent_child": "상위/하위 작업항목 그룹화",
+      "issue_type": "이슈 타입",
       "last_created": "최근 생성",
       "last_updated": "최근 업데이트",
       "start_date": "시작 날짜",
