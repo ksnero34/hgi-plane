@@ -59,9 +59,9 @@ const IssueTypeItem: React.FC<{
 
   // 이슈타입별 커스텀 필드 필터링
   const issueTypeCustomFields = projectCustomFields?.filter(field => {
-    // API 응답에서 issue_type 필드를 확인 (백엔드에서 issue_type으로 반환)
-    // issueType.issue_type.id는 실제 IssueType의 ID
-    return field.issue_type === issueType.issue_type.id;
+    // API 응답에서 issue_type 필드는 ProjectIssueType.id로 변환되어 반환됨
+    // issueType.id는 ProjectIssueType의 ID
+    return field.issue_type === issueType.id;
   }) || [];
 
   const handleAddField = async () => {

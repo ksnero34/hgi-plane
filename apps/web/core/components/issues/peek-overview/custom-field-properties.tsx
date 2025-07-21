@@ -43,13 +43,13 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
   
   // Filter custom fields based on current issue type
   const filteredCustomFields = customFields.filter(field => {
-    console.log('Custom field filtering:', {
-      fieldId: field.id,
-      fieldName: field.name,
-      fieldIssueType: field.issue_type,
-      issueTypeId: issue?.type_id,
-      match: field.issue_type === issue?.type_id
-    });
+    // console.log('Custom field filtering:', {
+    //   fieldId: field.id,
+    //   fieldName: field.name,
+    //   fieldIssueType: field.issue_type,
+    //   issueTypeId: issue?.type_id,
+    //   match: field.issue_type === issue?.type_id
+    // });
     
     // If custom field has no issue_type restriction, show for all issue types
     if (!field.issue_type) return true;

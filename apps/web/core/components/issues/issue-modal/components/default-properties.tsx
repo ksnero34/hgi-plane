@@ -100,6 +100,8 @@ export const IssueDefaultProperties: React.FC<TIssueDefaultPropertiesProps> = ob
               buttonVariant="border-with-text"
               tabIndex={getIndex("state_id")}
               isForWorkItemCreation={!id}
+              issueId={id}
+              enableWorkflowValidation={true}
             />
           </div>
         )}

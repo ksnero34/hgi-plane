@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useState, useMemo } from "react";
+import { ReactNode, useRef, useState, useMemo, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
@@ -74,6 +74,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [stateLoader, setStateLoader] = useState(false);
+  const [workflowStatesLoaded, setWorkflowStatesLoaded] = useState(false);
   const [reviewerModalData, setReviewerModalData] = useState<{
     issueId: string;
     fromStateId: string;
@@ -104,7 +105,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
   const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   const { fetchProjectStates, getProjectStates, getStateById } = useProjectState();
-  const { validateTransition, requestApproval, getDefaultWorkflow, getWorkflowTransitions } = useWorkflow();
+  const { validateTransition, requestApproval, getDefaultWorkflow, getWorkflowTransitions, getWorkflowStates, fetchWorkflowStates, fetchWorkflowTransitions, workflowStates: allWorkflowStates } = useWorkflow();
   const statesList = stateIds
     ? stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state)
     : getProjectStates(projectId);
@@ -114,8 +115,73 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
   // Note: Workflow data is now preloaded at the page level (ProjectLayoutRoot)
   // to ensure it's available before StateDropdown components render
 
-  // Get available states based on workflow rules
+  // Load workflow states and transitions when needed
+  useEffect(() => {
+    if (projectId && workspaceSlug) {
+      const defaultWorkflow = getDefaultWorkflow(projectId);
+      if (defaultWorkflow) {
+        // For new issue creation, load workflow states
+        if (props.isForWorkItemCreation) {
+          const workflowStates = getWorkflowStates(defaultWorkflow.id);
+          if (!workflowStates || workflowStates.length === 0) {
+            fetchWorkflowStates(workspaceSlug.toString(), projectId, defaultWorkflow.id)
+              .then(() => {
+                setWorkflowStatesLoaded(true);
+              })
+              .catch(error => {
+                console.error("StateDropdown: Error fetching workflow states", error);
+              });
+          }
+        }
+        // For existing issues, load workflow transitions
+        else if (enableWorkflowValidation && issueId) {
+          const transitions = getWorkflowTransitions(defaultWorkflow.id);
+          if (!transitions || transitions.length === 0) {
+            fetchWorkflowTransitions(workspaceSlug.toString(), projectId, defaultWorkflow.id)
+              .then(() => {
+                setWorkflowStatesLoaded(true);
+              })
+              .catch(error => {
+                console.error("StateDropdown: Error fetching workflow transitions", error);
+              });
+          }
+        }
+      }
+    }
+  }, [props.isForWorkItemCreation, projectId, workspaceSlug, issueId, enableWorkflowValidation, getDefaultWorkflow, getWorkflowStates, getWorkflowTransitions, fetchWorkflowStates, fetchWorkflowTransitions]);
+
+  // Get available states based on workflow rules and new issue creation settings
   const getAvailableStates = useMemo(() => {
+    // If this is for new issue creation and we have project + workspace context
+    if (props.isForWorkItemCreation && projectId && workspaceSlug) {
+      // Get default workflow for the project
+      const defaultWorkflow = getDefaultWorkflow(projectId);
+      
+      if (defaultWorkflow) {
+        // Get workflow states
+        const workflowStates = getWorkflowStates(defaultWorkflow.id);
+        
+        if (workflowStates && workflowStates.length > 0) {
+          // Filter states that allow new issues
+          const allowedStateIds = workflowStates
+            .filter((workflowState) => workflowState.allow_new_issues)
+            .map((workflowState) => workflowState.state);
+          
+          // Filter project states to only include those allowed for new issues
+          const filteredStates = statesList?.filter((state) => 
+            allowedStateIds.indexOf(state?.id ?? "") !== -1
+          ) || [];
+          
+          if (filteredStates.length > 0) {
+            return filteredStates;
+          }
+        }
+      }
+      // Fallback to all states if no workflow restrictions found
+      return statesList;
+    }
+
+    // For existing issues with workflow validation
     if (!enableWorkflowValidation || !issueId || !projectId || !workspaceSlug) {
       // console.log("Workflow validation disabled or missing required data");
       return statesList; // Return all states if workflow validation is disabled
@@ -128,48 +194,42 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
       return statesList; // Return all states if no workflow is found
     }
 
-    // console.log("Default workflow found:", defaultWorkflow);
-
     // Get workflow transitions
     const transitions = getWorkflowTransitions(defaultWorkflow.id);
+    // console.log("StateDropdown: Workflow transitions for update", transitions);
     if (!transitions || transitions.length === 0) {
-      // console.log("No transitions found for workflow:", defaultWorkflow.id);
+      // console.log("StateDropdown: No transitions found");
       return statesList; // Return all states if no transitions are found
     }
 
-    // console.log("Workflow transitions:", transitions);
-
     // Filter states that can be transitioned to from current state
     const currentStateId = stateValue;
+    // console.log("StateDropdown: Current state ID for update", currentStateId);
     if (!currentStateId) {
-      // console.log("No current state ID");
+      // console.log("StateDropdown: No current state ID");
       return statesList; // Return all states if no current state
     }
-
-    // console.log("Current state ID:", currentStateId);
 
     // Find transitions from current state
     const availableTransitions = transitions.filter(
       (transition) => transition.from_state === currentStateId
     );
-
-    // console.log("Available transitions from current state:", availableTransitions);
+    // console.log("StateDropdown: Available transitions from current state", availableTransitions);
 
     // Extract target state IDs
     const availableStateIds = new Set([
       currentStateId, // Always include current state
       ...availableTransitions.map((transition) => transition.to_state),
     ]);
-
-    // console.log("Available state IDs:", Array.from(availableStateIds));
+    // console.log("StateDropdown: Available state IDs for update", Array.from(availableStateIds));
 
     // Filter states list to only include available states
     const filteredStates = statesList?.filter((state) => availableStateIds.has(state?.id ?? "")) || [];
-    
-    // console.log("Filtered states:", filteredStates);
+    // console.log("StateDropdown: Filtered states for update", filteredStates);
     
     return filteredStates;
   }, [
+    props.isForWorkItemCreation,
     enableWorkflowValidation,
     issueId,
     projectId,
@@ -178,6 +238,9 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     stateValue,
     getDefaultWorkflow,
     getWorkflowTransitions,
+    getWorkflowStates,
+    allWorkflowStates, // 워크플로우 상태가 변경될 때 재계산
+    workflowStatesLoaded, // 워크플로우 상태 로드 완료시 재계산
   ]);
 
   // Workflow validation logic

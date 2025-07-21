@@ -1,4 +1,4 @@
-"use-client";
+"use client";
 import { FC, useEffect, useRef } from "react";
 import { observer } from "mobx-react";
 // plane imports
@@ -98,7 +98,10 @@ export const PeekOverviewIssueDetails: FC<IPeekOverviewIssueDetails> = observer(
         />
       )}
       <div className="flex items-center justify-between gap-2">
-        <IssueTypeSwitcher issueId={issueId} disabled={isArchived || disabled} />
+        <IssueTypeSwitcher 
+          issueId={issueId} 
+          disabled={isArchived || disabled} 
+        />
         {duplicateIssues?.length > 0 && (
           <DeDupeIssuePopoverRoot
             workspaceSlug={workspaceSlug}

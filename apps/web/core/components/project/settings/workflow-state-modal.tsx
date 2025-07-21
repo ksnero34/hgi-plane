@@ -40,7 +40,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
   });
 
   React.useEffect(() => {
-    console.log("WorkflowState for editing:", workflowState);
+    // console.log("WorkflowState for editing:", workflowState);
     
     if (workflowState) {
       const formData = {
@@ -49,7 +49,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
         allow_new_issues: workflowState.allow_new_issues || false,
       };
       
-      console.log("Setting form data:", formData);
+      // console.log("Setting form data:", formData);
       reset(formData);
     } else {
       reset({

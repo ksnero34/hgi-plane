@@ -27,6 +27,46 @@ class ProjectIssueTypeViewSet(viewsets.ModelViewSet):
             workspace__slug=self.kwargs.get("slug"),
         ).order_by("issue_type__name")
 
+    def list(self, request, *args, **kwargs):
+        from plane.db.models import Workspace, Project, Issue
+        
+        workspace = Workspace.objects.get(slug=self.kwargs.get("slug"))
+        project = Project.objects.get(id=self.kwargs.get("project_id"))
+        
+        # Check if project has any issue types
+        if not self.get_queryset().exists():
+            # Create default issue type for this project
+            default_issue_type = IssueType.objects.create(
+                workspace=workspace,
+                name="Issue",
+                description="기본 이슈 타입",
+                logo_props={
+                    "in_use": "emoji",
+                    "emoji": {
+                        "value": "128204"  # 📋 이모지
+                    }
+                },
+                created_by=request.user,
+            )
+
+            # Create project issue type with is_default=True
+            ProjectIssueType.objects.create(
+                project=project,
+                issue_type=default_issue_type,
+                workspace=workspace,
+                is_default=True,
+                created_by=request.user,
+            )
+
+            # Update all issues in the project that don't have a type
+            Issue.objects.filter(
+                project=project,
+                workspace=workspace,
+                type_id__isnull=True
+            ).update(type_id=default_issue_type.id)
+        
+        return super().list(request, *args, **kwargs)
+
     def create(self, request, *args, **kwargs):
         from plane.db.models import Workspace, Project
         

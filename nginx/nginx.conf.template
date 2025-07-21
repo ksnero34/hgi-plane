@@ -21,9 +21,20 @@ http {
         "~^(${ADMIN_ALLOWED_IPS})$" 1;
         default 0;
     }
-    
+        
+    # HTTPS server
     server {
-        listen 18080;
+        listen 18080 ssl;
+        server_name _;
+        
+        ssl_certificate /etc/nginx/ssl/cert.pem;
+        ssl_certificate_key /etc/nginx/ssl/key.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 10m;
+        
         root /www/data/;
         access_log /var/log/nginx/access.log;
 

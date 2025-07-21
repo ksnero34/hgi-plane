@@ -70,7 +70,23 @@ COPY --from=builder /usr/share/nginx /usr/share/nginx
 # FROM hgi-nginx:1.26.2
 
 
-RUN apt-get update && apt-get install -y gettext curl
+# 기본 저장소를 카카오 미러로 변경 및 openssl 설치
+RUN sed -i 's/archive.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirror.kakao.com/g' /etc/apt/sources.list && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    apt-get update --fix-missing && \
+    apt-get upgrade -y && \
+    apt-get install -y gettext curl openssl && \
+    rm -rf /var/lib/apt/lists/*
+
+# SSL 인증서 생성 (프로덕션용 자체 서명 인증서)
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/key.pem \
+    -out /etc/nginx/ssl/cert.pem \
+    -subj "/C=KR/ST=Seoul/L=Seoul/O=HGI/OU=Production/CN=plane.hgi.com/emailAddress=admin@hgi.com" \
+    -addext "subjectAltName=DNS:plane.hgi.com,DNS:*.hgi.com"
 #RUN rm /etc/nginx/conf.d/default.conf
 
 # 이미지 다운로드를 위한 스크립트 생성

@@ -346,20 +346,18 @@ class ProjectViewSet(BaseViewSet):
                 # Create default issue type
                 from plane.db.models import IssueType, ProjectIssueType
                 
-                # Create or get default issue type for workspace
-                default_issue_type, created = IssueType.objects.get_or_create(
+                # Create default issue type for this project
+                default_issue_type = IssueType.objects.create(
                     workspace=workspace,
                     name="Issue",
-                    defaults={
-                        "description": "기본 이슈 타입",
-                        "logo_props": {
-                            "in_use": "emoji",
-                            "emoji": {
-                                "value": "128204"  # 📋 이모지
-                            }
-                        },
-                        "created_by": request.user,
-                    }
+                    description="기본 이슈 타입",
+                    logo_props={
+                        "in_use": "emoji",
+                        "emoji": {
+                            "value": "128204"  # 📋 이모지
+                        }
+                    },
+                    created_by=request.user,
                 )
 
                 # Create project issue type with is_default=True
@@ -370,6 +368,14 @@ class ProjectViewSet(BaseViewSet):
                     is_default=True,
                     created_by=request.user,
                 )
+
+                # Update all issues in the project that don't have a type
+                from plane.db.models import Issue
+                Issue.objects.filter(
+                    project=project,
+                    workspace=workspace,
+                    type_id__isnull=True
+                ).update(type_id=default_issue_type.id)
 
                 # Create the model activity
                 model_activity.delay(

@@ -35,9 +35,9 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
   const workflowStates = getWorkflowStates(workflowId);
   
   // 디버깅을 위한 로그
-  React.useEffect(() => {
-    console.log("Workflow states:", workflowStates);
-  }, [workflowStates]);
+  // React.useEffect(() => {
+  //   console.log("Workflow states:", workflowStates);
+  // }, [workflowStates]);
   
   const projectMembers = projectMemberIds?.map((userId) => {
     if (!projectId) return null;
@@ -73,7 +73,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
   const selectedReviewerIds = watch("reviewer_ids") || [];
 
   React.useEffect(() => {
-    console.log("WorkflowTransition for editing:", workflowTransition);
+    // console.log("WorkflowTransition for editing:", workflowTransition);
     
     if (workflowTransition) {
       const formData = {
@@ -83,7 +83,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
         reviewer_ids: workflowTransition.reviewers?.map(r => r.reviewer) || [],
       };
       
-      console.log("Setting transition form data:", formData);
+      // console.log("Setting transition form data:", formData);
       reset(formData);
     } else {
       reset({
@@ -142,8 +142,8 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
       }
       onClose();
     } catch (error: any) {
-      console.log("Transition error details:", error);
-      console.log("API data sent:", apiData);
+      // console.log("Transition error details:", error);
+      // console.log("API data sent:", apiData);
       
       let errorMessage = workflowTransition ? "전환 규칙 수정에 실패했습니다." : "전환 규칙 추가에 실패했습니다.";
       
