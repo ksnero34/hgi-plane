@@ -745,7 +745,7 @@ def notifications(
                 # 알림 처리 함수 호출
                 process_notification(notification)
                 # Create email notification
-                if send_email:
+                if send_email and settings.EMAIL_NOTIFICATION_ENABLED:
                     bulk_email_logs.append(
                         EmailNotificationLog(
                             triggered_by_id=actor_id,
@@ -886,9 +886,10 @@ def notifications(
         )
         # Bulk create notifications and email logs
         # Note: bulk_notifications is removed as notifications are now processed individually
-        EmailNotificationLog.objects.bulk_create(
-            bulk_email_logs, batch_size=100, ignore_conflicts=True
-        )
+        if settings.EMAIL_NOTIFICATION_ENABLED:
+            EmailNotificationLog.objects.bulk_create(
+                bulk_email_logs, batch_size=100, ignore_conflicts=True
+            )
         return
     except Exception as e:
         print(e)

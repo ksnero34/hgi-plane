@@ -22,12 +22,8 @@ app = Celery("plane")
 # pickle the object when using Windows.
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
-app.conf.beat_schedule = {
+beat_schedule = {
     # Intra day recurring jobs
-    "check-every-five-minutes-to-send-email-notifications": {
-        "task": "plane.bgtasks.email_notification_task.stack_email_notification",
-        "schedule": crontab(minute="*/5"),  # Every 5 minutes
-    },
     "run-every-6-hours-for-instance-trace": {
         "task": "plane.license.bgtasks.tracer.instance_traces",
         "schedule": crontab(hour="*/6", minute=0),  # Every 6 hours
@@ -54,6 +50,15 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=2, minute=30),  # UTC 02:30
     },
 }
+
+# Email notification 환경 변수 확인해서 조건부 추가
+if os.environ.get("EMAIL_NOTIFICATION_ENABLED", "1") == "1":
+    beat_schedule["check-every-five-minutes-to-send-email-notifications"] = {
+        "task": "plane.bgtasks.email_notification_task.stack_email_notification",
+        "schedule": crontab(minute="*/5"),  # Every 5 minutes
+    }
+
+app.conf.beat_schedule = beat_schedule
 
 
 # Setup logging

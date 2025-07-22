@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def send_rest_notification(config_id: int, notification_data: Dict[str, Any], notification_id: int = None):
+def send_rest_notification(config_id, notification_data: Dict[str, Any], notification_id=None):
     """
     REST API 기반 알림 전송 태스크
     
@@ -28,16 +28,26 @@ def send_rest_notification(config_id: int, notification_data: Dict[str, Any], no
         notification_id: 알림 ID (선택사항)
     """
     try:
-        config = RestNotificationConfig.objects.get(id=config_id, is_enabled=True)
+        # config_id를 문자열로 변환 (UUID 처리)
+        config_id_str = str(config_id)
+        config = RestNotificationConfig.objects.get(id=config_id_str, is_enabled=True)
     except RestNotificationConfig.DoesNotExist:
         logger.error(f"REST notification config not found or disabled: {config_id}")
         return False
+    except Exception as e:
+        logger.error(f"Error getting REST notification config: {str(e)}", exc_info=True)
+        return False
 
-    log_entry = RestNotificationLog.objects.create(
-        config=config,
-        notification_id=notification_id,
-        request_data=notification_data
-    )
+    try:
+        # REST 알림은 notification_id 없이도 동작해야 함 - config만으로 충분
+        log_entry = RestNotificationLog.objects.create(
+            config=config,
+            notification=None,  # REST 알림은 notification FK 불필요
+            request_data=notification_data
+        )
+    except Exception as e:
+        logger.error(f"Error creating REST notification log entry: {str(e)}", exc_info=True)
+        return False
 
     try:
         # JSON 템플릿에 데이터 매핑
@@ -48,6 +58,8 @@ def send_rest_notification(config_id: int, notification_data: Dict[str, Any], no
         headers.setdefault('Content-Type', 'application/json')
         
         # REST API 호출
+        logger.info(f"Sending REST request to {config.endpoint_url}")
+        
         response = requests.request(
             method=config.method,
             url=config.endpoint_url,
@@ -82,7 +94,7 @@ def send_rest_notification(config_id: int, notification_data: Dict[str, Any], no
         log_entry.error_message = str(e)
         log_entry.save()
         
-        logger.error(f"REST notification request failed: {config.name} - {str(e)}")
+        logger.error(f"REST notification request failed: {config.name} - {str(e)}", exc_info=True)
         
         # 재시도 로직
         if log_entry.attempt_count < config.retry_count:
@@ -103,7 +115,7 @@ def send_rest_notification(config_id: int, notification_data: Dict[str, Any], no
         log_entry.error_message = f"Unexpected error: {str(e)}"
         log_entry.save()
         
-        logger.error(f"Unexpected error in REST notification: {config.name} - {str(e)}")
+        logger.error(f"Unexpected error in REST notification: {config.name} - {str(e)}", exc_info=True)
         return False
 
 

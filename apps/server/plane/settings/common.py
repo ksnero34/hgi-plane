@@ -447,5 +447,8 @@ ATTACHMENT_MIME_TYPES = [
 # Java Notification API Settings
 JAVA_NOTIFICATION_API_PATH = os.environ.get("JAVA_NOTIFICATION_API_PATH", "/opt/notification/notification-service.jar")
 JAVA_NOTIFICATION_API_ENABLED = os.environ.get("JAVA_NOTIFICATION_API_ENABLED", "0") == "1"
+
+# Email Notification Settings
+EMAIL_NOTIFICATION_ENABLED = os.environ.get("EMAIL_NOTIFICATION_ENABLED", "0") == "1"
 # Seed directory path
 SEED_DIR = os.path.join(BASE_DIR, "seeds")
