@@ -130,13 +130,13 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
         {/* End header */}
         {/* Version description */}
         <div className="mt-4 pb-4">
-          {activeVersionDescription ? (
+          {activeVersionDescription && activeVersionDescription.trim() !== "" && activeVersionDescription !== "<p></p>" ? (
             <RichTextEditor
               editable={false}
               containerClassName="p-0 !pl-0 border-none"
               editorClassName="pl-0"
               id={activeVersionId ?? ""}
-              initialValue={activeVersionDescription ?? "<p></p>"}
+              initialValue={activeVersionDescription}
               projectId={projectId}
               ref={editorRef}
               workspaceId={workspaceId}

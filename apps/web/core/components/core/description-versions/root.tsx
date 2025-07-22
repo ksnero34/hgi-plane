@@ -64,7 +64,7 @@ export const DescriptionVersionsRoot: React.FC<Props> = observer((props) => {
   return (
     <>
       <DescriptionVersionsModal
-        activeVersionDescription={activeVersionResponse?.description_html ?? "<p></p>"}
+        activeVersionDescription={activeVersionResponse?.description_html ?? undefined}
         activeVersionDetails={activeVersionDetails}
         handleClose={() => {
           setIsModalOpen(false);
