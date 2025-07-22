@@ -260,6 +260,18 @@ def filter_name(params, issue_filter, method, prefix=""):
     return issue_filter
 
 
+def filter_search(params, issue_filter, method, prefix=""):
+    """제목과 설명에서 통합 검색"""
+    if params.get("search", "") != "":
+        from django.db.models import Q
+        search_query = params.get("search")
+        # Q 객체를 사용해서 제목 또는 설명에서 검색 (description_stripped는 HTML 태그가 제거된 텍스트)
+        search_filter = Q(**{f"{prefix}name__icontains": search_query}) | Q(**{f"{prefix}description_stripped__icontains": search_query})
+        # Q 객체는 직접 issue_filter에 넣을 수 없으므로 특별한 키로 저장
+        issue_filter[f"search_q_filter"] = search_filter
+    return issue_filter
+
+
 def filter_created_at(params, issue_filter, method, prefix=""):
     if method == "GET":
         created_ats = params.get("created_at").split(",")
@@ -655,6 +667,7 @@ def issue_filters(query_params, method, prefix=""):
         "created_by": filter_created_by,
         "logged_by": filter_logged_by,
         "name": filter_name,
+        "search": filter_search,
         "created_at": filter_created_at,
         "updated_at": filter_updated_at,
         "start_date": filter_start_date,

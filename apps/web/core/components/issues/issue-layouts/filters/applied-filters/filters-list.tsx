@@ -94,7 +94,9 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
       module: "모듈",
       issue_type: "작업 항목 유형",
       team_project: "팀 프로젝트",
-      custom_fields: "커스텀 필드"
+      custom_fields: "커스텀 필드",
+      search: "검색",
+      name: "제목"
     };
 
     return filterLabels[key] || replaceUnderscoreIfSnakeCase(key);
@@ -173,6 +175,20 @@ export const AppliedFiltersList: React.FC<Props> = observer((props) => {
             )}
             {dateFilters.includes(filterKey) && (
               <AppliedDateFilters handleRemove={(val) => handleRemoveFilter(filterKey, val)} values={value} />
+            )}
+            {(filterKey === "search" || filterKey === "name") && (
+              <>
+                <span className="text-xs text-custom-text-200 ml-1">"{value}"</span>
+                {isEditingAllowed && (
+                  <button
+                    type="button"
+                    className="ml-1 grid place-items-center text-custom-text-300 hover:text-custom-text-200"
+                    onClick={() => handleRemoveFilter(filterKey, null)}
+                  >
+                    <X size={12} strokeWidth={2} />
+                  </button>
+                )}
+              </>
             )}
             {filterKey === "labels" && (
               <AppliedLabelsFilters

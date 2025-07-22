@@ -25,6 +25,8 @@ from plane.db.models import (
     ProjectMattermostConfig,
     CustomField,
     RestNotificationConfig,
+    WorkflowApprovalRequest,
+    WorkflowTransition,
 )
 from django.db.models import Subquery
 from django.conf import settings
@@ -299,26 +301,66 @@ def process_notification(notification):
     
     # REST 알림 처리
     try:
-        if notification.project_id:
+        # workspace를 찾는 로직 개선
+        workspace = None
+        if notification.workspace:
+            workspace = notification.workspace
+        elif notification.project:
+            workspace = notification.project.workspace
+        elif notification.project_id:
+            try:
+                project = Project.objects.get(id=notification.project_id)
+                workspace = project.workspace
+            except Project.DoesNotExist:
+                pass
+        
+        if workspace:
             rest_configs = RestNotificationConfig.objects.filter(
-                workspace=notification.workspace,
+                workspace=workspace,
                 is_enabled=True
             )
-            
+                        
             for config in rest_configs:
                 # 알림 데이터 생성
                 user_email = notification.receiver.email
                 user_id = user_email.split('@')[0] if '@' in user_email else user_email
+                
+                # issue_id와 issue_name 처리 개선
+                issue_id = ""
+                issue_name = ""
+                
+                if notification.data and notification.data.get('issue'):
+                    issue_data = notification.data.get('issue', {})
+                    issue_id = issue_data.get('identifier', '')  # 이미 PROJECT-123 형태로 저장됨
+                    issue_name = issue_data.get('name', '')
+                elif notification.entity_name == "issue" and notification.project:
+                    try:
+                        issue = Issue.objects.get(pk=notification.entity_identifier)
+                        issue_id = f"{notification.project.identifier}-{issue.sequence_id}"
+                        issue_name = issue.name
+                    except Issue.DoesNotExist:
+                        pass
+                
+                # project 정보 안전하게 가져오기
+                project_name = ""
+                if notification.project:
+                    project_name = notification.project.name
+                elif notification.project_id:
+                    try:
+                        project = Project.objects.get(id=notification.project_id)
+                        project_name = project.name
+                    except Project.DoesNotExist:
+                        pass
                 
                 rest_notification_data = {
                     "user_id": user_id,
                     "user_email": user_email,
                     "title": notification.title or "알림",
                     "message": notification.message or "",
-                    "issue_id": f"{notification.project.identifier}-{notification.data.get('issue', {}).get('sequence_id', '')}" if notification.data.get('issue') else "",
-                    "issue_name": notification.data.get('issue', {}).get('name', '') if notification.data.get('issue') else "",
-                    "workspace_name": notification.workspace.name,
-                    "project_name": notification.project.name if notification.project else "",
+                    "issue_id": issue_id,
+                    "issue_name": issue_name,
+                    "workspace_name": workspace.name if workspace else "",
+                    "project_name": project_name,
                     "actor_name": notification.triggered_by.display_name if notification.triggered_by else "",
                     "notification_type": notification.sender,
                     "entity_type": notification.entity_name,
@@ -851,3 +893,85 @@ def notifications(
     except Exception as e:
         print(e)
         return
+
+
+@shared_task
+def workflow_approval_request_notifications(
+    approval_request_id,
+    project_id,
+    actor_id,
+):
+    """
+    Workflow 승인 요청 시 reviewer들에게 알림을 보내는 함수
+    """
+    try:
+        # Approval request와 관련 정보 조회
+        approval_request = WorkflowApprovalRequest.objects.select_related(
+            'issue', 'transition', 'requester'
+        ).get(id=approval_request_id)
+        
+        issue = approval_request.issue
+        transition = approval_request.transition
+        requester = approval_request.requester
+        project = Project.objects.get(id=project_id)
+        
+        # Reviewer들 조회
+        reviewers = list(transition.reviewers.values_list("reviewer_id", flat=True))
+        
+        if not reviewers:
+            return
+        
+        # 각 reviewer에게 알림 생성
+        for reviewer_id in reviewers:
+            try:
+                reviewer = User.objects.get(id=reviewer_id)
+                
+                # 알림 생성
+                notification = Notification.objects.create(
+                    workspace=project.workspace,
+                    sender="in_app:workflow_approval_request",
+                    triggered_by_id=actor_id,
+                    receiver_id=reviewer_id,
+                    entity_identifier=issue.id,
+                    entity_name="issue",
+                    title=f"승인 요청: {issue.name}",
+                    message=f"{requester.display_name}님이 '{issue.name}' 이슈의 상태 변경 승인을 요청했습니다.",
+                    message_html=f"<p><strong>{requester.display_name}</strong>님이 '<strong>{issue.name}</strong>' 이슈의 상태 변경 승인을 요청했습니다.</p>",
+                    message_stripped=f"{requester.display_name}님이 '{issue.name}' 이슈의 상태 변경 승인을 요청했습니다.",
+                    data={
+                        "issue": {
+                            "id": str(issue.id),
+                            "name": issue.name,
+                            "identifier": f"{project.identifier}-{issue.sequence_id}",
+                        },
+                        "approval_request": {
+                            "id": str(approval_request.id),
+                            "from_state": str(transition.from_state_id),
+                            "to_state": str(transition.to_state_id),
+                        },
+                        "requester": {
+                            "id": str(requester.id),
+                            "display_name": requester.display_name,
+                        },
+                        "project": {
+                            "id": str(project.id),
+                            "identifier": project.identifier,
+                            "name": project.name,
+                        },
+                    },
+                    project_id=project_id,
+                )
+                
+                # 알림 처리 (이메일, Mattermost, REST 등)
+                process_notification(notification)
+                
+            except User.DoesNotExist:
+                continue
+                
+        return f"Approval request notifications sent to {len(reviewers)} reviewers"
+        
+    except WorkflowApprovalRequest.DoesNotExist:
+        return "Approval request not found"
+    except Exception as e:
+        logging.getLogger("plane").error(f"Error sending workflow approval notifications: {str(e)}")
+        return f"Error: {str(e)}"

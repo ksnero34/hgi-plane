@@ -181,14 +181,14 @@ function NotificationSettingsPage() {
     if (!authLoading && isAdmin && !isDataLoaded) {
       loadData();
     }
-  }, [authLoading, isAdmin, isDataLoaded, fetchTemplates, fetchWorkspaces]);
+  }, [authLoading, isAdmin, isDataLoaded]);
 
   // 워크스페이스 변경시 알림 설정 로드
   useEffect(() => {
     if (selectedWorkspace) {
       fetchConfigs(selectedWorkspace);
     }
-  }, [selectedWorkspace, fetchConfigs]);
+  }, [selectedWorkspace]);
 
   // 알림 설정 생성
   const handleCreateConfig = async (data: Partial<INotificationConfig>) => {

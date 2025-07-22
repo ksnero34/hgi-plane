@@ -42,6 +42,11 @@ export const calculateFilterValue = (
     return toggleCustomFieldValue(currentCustomFields, value);
   }
 
+  // 문자열 타입 필터의 경우 (search, name 등)
+  if (key === "search" || key === "name") {
+    return value || null;
+  }
+
   // 일반 필터의 경우 기존 로직 적용
   const newValues: string[] = [...((currentFilters[key] as string[]) ?? [])];
 
@@ -108,6 +113,11 @@ export const calculateFilterRemovalValue = <T extends Record<string, any>>(
       console.error("커스텀 필드 파싱 오류:", error);
       return null;
     }
+  }
+
+  // 문자열 타입 필터의 경우 (search, name 등)
+  if (key === "search" || key === "name") {
+    return null;
   }
 
   // 일반 필터의 경우

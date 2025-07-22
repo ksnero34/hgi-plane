@@ -600,6 +600,15 @@ class WorkflowApprovalAPIEndpoint(BaseAPIView):
 
                 # Get reviewers
                 reviewers = list(transition.reviewers.values_list("reviewer_id", flat=True))
+                
+                # Send notifications to reviewers
+                if reviewers:
+                    from plane.bgtasks.notification_task import workflow_approval_request_notifications
+                    workflow_approval_request_notifications.delay(
+                        approval_request_id=str(approval_request.id),
+                        project_id=str(project_id),
+                        actor_id=str(request.user.id),
+                    )
 
                 return Response(
                     {

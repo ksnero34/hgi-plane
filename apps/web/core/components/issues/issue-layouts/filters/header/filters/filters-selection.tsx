@@ -30,6 +30,7 @@ import {
   FilterModule,
   FilterIssueGrouping,
   FilterCustomFields,
+  FilterTitleDescription,
 } from "@/components/issues";
 // hooks
 import { useMember } from "@/hooks/store";
@@ -129,6 +130,17 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
         </div>
       </div>
       <div className="vertical-scrollbar scrollbar-sm h-full w-full divide-y divide-custom-border-200 overflow-y-auto px-2.5">
+        {/* title and description search */}
+        {isFilterEnabled("search") && (
+          <div className="py-2">
+            <FilterTitleDescription
+              appliedFilters={filters.search ?? null}
+              handleUpdate={(val) => handleFiltersUpdate("search", val)}
+              searchQuery={filtersSearchQuery}
+            />
+          </div>
+        )}
+
         {/* priority */}
         {isFilterEnabled("priority") && (
           <div className="py-2">

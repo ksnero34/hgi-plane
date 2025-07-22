@@ -271,6 +271,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
   issues: {
     list: {
       filters: [
+        "search",
         "priority",
         "state",
         "cycle",
@@ -317,6 +318,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
     },
     kanban: {
       filters: [
+        "search",
         "priority",
         "state",
         "cycle",
@@ -345,6 +347,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
     },
     calendar: {
       filters: [
+        "search",
         "priority",
         "state",
         "cycle",
@@ -369,6 +372,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
     },
     spreadsheet: {
       filters: [
+        "search",
         "priority",
         "state",
         "cycle",
@@ -395,6 +399,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
     },
     gantt_chart: {
       filters: [
+        "search",
         "priority",
         "state",
         "cycle",

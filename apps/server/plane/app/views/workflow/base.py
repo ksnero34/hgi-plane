@@ -661,8 +661,17 @@ class WorkflowValidationViewSet(BaseViewSet):
                     project_id=project_id,
                 )
 
-                # TODO: Send notifications to reviewers
+                # Send notifications to reviewers
                 reviewers = list(transition.reviewers.values_list("reviewer_id", flat=True))
+                
+                # 알림 전송 (비동기)
+                if reviewers:
+                    from plane.bgtasks.notification_task import workflow_approval_request_notifications
+                    workflow_approval_request_notifications.delay(
+                        approval_request_id=str(approval_request.id),
+                        project_id=str(project_id),
+                        actor_id=str(request.user.id),
+                    )
 
                 return Response(
                     {

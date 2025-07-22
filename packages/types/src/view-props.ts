@@ -85,7 +85,9 @@ export type TIssueParams =
   | "layout"
   | "expand"
   | "custom_fields"
-  | "my_issues_only";
+  | "my_issues_only"
+  | "name"
+  | "search";
 
 export type TCalendarLayouts = "month" | "week";
 
@@ -107,6 +109,8 @@ export interface IIssueFilterOptions {
   target_date?: string[] | null;
   issue_type?: string[] | null;
   custom_fields?: { [field_id: string]: string[] } | string | null;
+  name?: string | null;
+  search?: string | null;
 }
 
 export interface IIssueDisplayFilterOptions {

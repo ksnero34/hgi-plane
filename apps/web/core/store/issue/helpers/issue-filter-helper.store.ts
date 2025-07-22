@@ -101,6 +101,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       subscriber: filters?.subscriber || undefined,
       issue_type: filters?.issue_type || undefined,
       custom_fields: filters?.custom_fields || undefined,
+      search: filters?.search || undefined,
+      name: filters?.name || undefined,
       // display filters
       group_by: displayFilters?.group_by ? EIssueGroupByToServerOptions[displayFilters.group_by] : undefined,
       sub_group_by: displayFilters?.sub_group_by
@@ -196,6 +198,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     subscriber: filters?.subscriber || null,
     issue_type: filters?.issue_type || null,
     custom_fields: filters?.custom_fields || null,
+    search: filters?.search || null,
+    name: filters?.name || null,
   });
 
   /**

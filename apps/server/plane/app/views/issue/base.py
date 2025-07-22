@@ -179,6 +179,12 @@ class IssueListEndpoint(BaseAPIView):
             ).distinct()
 
             filters = issue_filters(request.query_params, "GET")
+            
+            # search_q_filter 처리 (제목 + 설명 검색)
+            search_q_filter = filters.pop('search_q_filter', None)
+            if search_q_filter:
+                issues = issues.filter(search_q_filter)
+            
             order_by_param = request.GET.get("order_by", "-created_at")
             
             # Issue queryset
@@ -243,6 +249,9 @@ class IssueListEndpoint(BaseAPIView):
 
         filters = issue_filters(request.query_params, "GET")
         
+        # search_q_filter 처리 (제목 + 설명 검색)
+        search_q_filter = filters.pop('search_q_filter', None)
+        
         # 커스텀 필드 필터 처리
         custom_field_filters = filters.pop('custom_field_filters', None)
 
@@ -256,6 +265,14 @@ class IssueListEndpoint(BaseAPIView):
             Issue.issue_objects.filter(workspace__slug=slug)
             .filter(project_id=project_id)
             .filter(**filters)
+        )
+        
+        # search_q_filter 적용 (제목 + 설명 검색)
+        if search_q_filter:
+            issue_queryset = issue_queryset.filter(search_q_filter)
+        
+        issue_queryset = (
+            issue_queryset
             .select_related("workspace", "project", "state", "parent")
             .prefetch_related("assignees", "labels", "issue_module__module")
             .prefetch_related(
@@ -580,6 +597,9 @@ class IssueViewSet(BaseViewSet):
         # 모든 필터 적용 (날짜 필터 포함)
         filters = issue_filters(request.query_params, "GET")
         
+        # search_q_filter 처리 (제목 + 설명 검색)
+        search_q_filter = filters.pop('search_q_filter', None)
+        
         # 커스텀 필드 필터 처리
         custom_field_filters = filters.pop('custom_field_filters', None)
         # print(f"[DEBUG] IssueViewSet - custom_field_filters: {custom_field_filters}")
@@ -606,6 +626,10 @@ class IssueViewSet(BaseViewSet):
 
         # 기본 필터와 extra 필터 적용
         issue_queryset = issue_queryset.filter(**filters, **extra_filters)
+        
+        # search_q_filter 적용 (제목 + 설명 검색)
+        if search_q_filter:
+            issue_queryset = issue_queryset.filter(search_q_filter)
         
         # 커스텀 필드 필터 적용
         if custom_field_filters:
