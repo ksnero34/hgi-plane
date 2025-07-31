@@ -85,8 +85,27 @@ export const SlashCommandsMenu = forwardRef((props: SlashCommandsMenuProps, ref)
 
     const item = container.querySelector(`#item-${selectedIndex.section}-${selectedIndex.item}`) as HTMLElement;
 
-    // use scroll into view to bring the item in view if it is not in view
-    item?.scrollIntoView({ block: "nearest" });
+    if (item) {
+      // Check if item is visible within the container
+      const containerRect = container.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
+      
+      const isItemAboveView = itemRect.top < containerRect.top;
+      const isItemBelowView = itemRect.bottom > containerRect.bottom;
+      
+      // Only scroll if the item is not fully visible
+      if (isItemAboveView || isItemBelowView) {
+        // Use scrollTop to manually control scrolling within the container only
+        const scrollTop = item.offsetTop - container.offsetTop;
+        const scrollBottom = scrollTop + item.offsetHeight - container.clientHeight;
+        
+        if (isItemAboveView) {
+          container.scrollTop = scrollTop;
+        } else if (isItemBelowView) {
+          container.scrollTop = scrollBottom + container.scrollTop;
+        }
+      }
+    }
   }, [sections, selectedIndex]);
 
   useImperativeHandle(ref, () => ({

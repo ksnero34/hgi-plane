@@ -125,12 +125,12 @@ export const PeekOverviewIssueDetails: FC<IPeekOverviewIssueDetails> = observer(
       />
 
       <IssueDescriptionInput
-        key={issue.description_html} // description이 변경되면 컴포넌트 재렌더링
         editorRef={editorRef}
         workspaceSlug={workspaceSlug}
         projectId={issue.project_id}
         issueId={issue.id}
         initialValue={issueDescription}
+        swrIssueDescription={issue.description_html}
         disabled={disabled || isArchived}
         issueOperations={issueOperations}
         setIsSubmitting={(value) => setIsSubmitting(value)}

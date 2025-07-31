@@ -141,6 +141,31 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
           </div>
         )}
 
+        {/* issue type */}
+        {isFilterEnabled("issue_type") && (
+          <FilterIssueTypes
+            appliedFilters={filters.issue_type ?? null}
+            handleUpdate={(val) => handleFiltersUpdate("issue_type", val)}
+            searchQuery={filtersSearchQuery}
+          />
+        )}
+
+        {/* custom fields */}
+        {isFilterEnabled("custom_fields") && (
+          <FilterCustomFields
+            appliedFilters={
+              filters.custom_fields && typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== ''
+                ? JSON.parse(filters.custom_fields)
+                : {}
+            }
+            handleUpdate={handleCustomFieldUpdate}
+            searchQuery={filtersSearchQuery}
+            customFields={customFields || []}
+            workspaceSlug={workspaceSlug as string}
+            projectId={effectiveProjectId as string}
+          />
+        )}
+
         {/* priority */}
         {isFilterEnabled("priority") && (
           <div className="py-2">
@@ -173,15 +198,6 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
               states={states}
             />
           </div>
-        )}
-
-        {/* issue type */}
-        {isFilterEnabled("issue_type") && (
-          <FilterIssueTypes
-            appliedFilters={filters.issue_type ?? null}
-            handleUpdate={(val) => handleFiltersUpdate("issue_type", val)}
-            searchQuery={filtersSearchQuery}
-          />
         )}
 
         {/* assignees */}
@@ -276,22 +292,6 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
           </div>
         )}
 
-        {/* custom fields */}
-        {isFilterEnabled("custom_fields") && (
-          <FilterCustomFields
-            appliedFilters={
-              filters.custom_fields && typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== ''
-                ? JSON.parse(filters.custom_fields)
-                : {}
-            }
-            handleUpdate={handleCustomFieldUpdate}
-            searchQuery={filtersSearchQuery}
-            customFields={customFields || []}
-            workspaceSlug={workspaceSlug as string}
-            projectId={effectiveProjectId as string}
-          />
-        )}
-
         {/* issue type */}
         {isDisplayFilterEnabled("type") && displayFilters && handleDisplayFiltersUpdate && (
           <div className="py-2">
@@ -306,6 +306,7 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
             />
           </div>
         )}
+
         {/* start_date */}
         {isFilterEnabled("start_date") && (
           <div className="py-2">

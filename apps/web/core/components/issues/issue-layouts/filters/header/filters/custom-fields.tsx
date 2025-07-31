@@ -36,6 +36,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
   const [previewEnabled, setPreviewEnabled] = useState(true);
   const [isDateFilterModalOpen, setIsDateFilterModalOpen] = useState(false);
   const [selectedDateField, setSelectedDateField] = useState<string | null>(null);
+  const [memberFieldsToRender, setMemberFieldsToRender] = useState<{ [fieldId: string]: number }>({});
   const { t } = useTranslation();
   
   // hooks
@@ -306,6 +307,10 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
 
               // 프로젝트 멤버 필드 (단일 선택)
               if (field.field_type === "project_member") {
+                const itemsToRender = memberFieldsToRender[field.id] || 5;
+                const membersToShow = projectMembers.slice(0, itemsToRender);
+                const hasMore = projectMembers.length > itemsToRender;
+                
                 return (
                   <div key={field.id} className="mb-2">
                     <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
@@ -313,24 +318,47 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                       {field.name}
                     </div>
                     {projectMembers.length > 0 ? (
-                      projectMembers
-                        .filter((member): member is NonNullable<typeof member> => member !== null)
-                        .map((member) => (
-                          <FilterOption
-                            key={`${field.id}-${member.id}`}
-                            isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
-                            onClick={() => handleUpdate(field.id, member.id)}
-                            icon={
-                              <Avatar
-                                name={member.name}
-                                src={getFileURL(member.avatar ?? "")}
-                                showTooltip={false}
-                                size="md"
-                              />
-                            }
-                            title={member.name}
-                          />
-                        ))
+                      <>
+                        {membersToShow
+                          .filter((member): member is NonNullable<typeof member> => member !== null)
+                          .map((member) => (
+                            <FilterOption
+                              key={`${field.id}-${member.id}`}
+                              isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
+                              onClick={() => handleUpdate(field.id, member.id)}
+                              icon={
+                                <Avatar
+                                  name={member.name}
+                                  src={getFileURL(member.avatar ?? "")}
+                                  showTooltip={false}
+                                  size="md"
+                                />
+                              }
+                              title={member.name}
+                            />
+                          ))}
+                        {projectMembers.length > 5 && (
+                          <button
+                            type="button"
+                            className="ml-8 text-xs font-medium text-custom-primary-100 hover:underline"
+                            onClick={() => {
+                              if (hasMore) {
+                                setMemberFieldsToRender({
+                                  ...memberFieldsToRender,
+                                  [field.id]: projectMembers.length
+                                });
+                              } else {
+                                setMemberFieldsToRender({
+                                  ...memberFieldsToRender,
+                                  [field.id]: 5
+                                });
+                              }
+                            }}
+                          >
+                            {hasMore ? "모두 보기" : "줄여서 보기"}
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <div className="text-xs text-custom-text-400 italic ml-4">
                         {projectMemberIds.length === 0 ? "프로젝트 멤버가 없습니다" : "프로젝트 멤버를 불러오는 중..."}
@@ -342,6 +370,10 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
 
               // 프로젝트 멤버들 필드 (다중 선택)
               if (field.field_type === "project_members") {
+                const itemsToRender = memberFieldsToRender[field.id] || 5;
+                const membersToShow = projectMembers.slice(0, itemsToRender);
+                const hasMore = projectMembers.length > itemsToRender;
+                
                 return (
                   <div key={field.id} className="mb-2">
                     <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
@@ -349,25 +381,48 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                       {field.name}
                     </div>
                     {projectMembers.length > 0 ? (
-                      projectMembers
-                        .filter((member): member is NonNullable<typeof member> => member !== null)
-                        .map((member) => (
-                          <FilterOption
-                            key={`${field.id}-${member.id}`}
-                            isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
-                            onClick={() => handleUpdate(field.id, member.id)}
-                            icon={
-                              <Avatar
-                                name={member.name}
-                                src={getFileURL(member.avatar ?? "")}
-                                showTooltip={false}
-                                size="md"
-                              />
-                            }
-                            title={member.name}
-                            multiple
-                          />
-                        ))
+                      <>
+                        {membersToShow
+                          .filter((member): member is NonNullable<typeof member> => member !== null)
+                          .map((member) => (
+                            <FilterOption
+                              key={`${field.id}-${member.id}`}
+                              isChecked={appliedFilters?.[field.id]?.includes(member.id) || false}
+                              onClick={() => handleUpdate(field.id, member.id)}
+                              icon={
+                                <Avatar
+                                  name={member.name}
+                                  src={getFileURL(member.avatar ?? "")}
+                                  showTooltip={false}
+                                  size="md"
+                                />
+                              }
+                              title={member.name}
+                              multiple
+                            />
+                          ))}
+                        {projectMembers.length > 5 && (
+                          <button
+                            type="button"
+                            className="ml-8 text-xs font-medium text-custom-primary-100 hover:underline"
+                            onClick={() => {
+                              if (hasMore) {
+                                setMemberFieldsToRender({
+                                  ...memberFieldsToRender,
+                                  [field.id]: projectMembers.length
+                                });
+                              } else {
+                                setMemberFieldsToRender({
+                                  ...memberFieldsToRender,
+                                  [field.id]: 5
+                                });
+                              }
+                            }}
+                          >
+                            {hasMore ? "모두 보기" : "줄여서 보기"}
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <div className="text-xs text-custom-text-400 italic ml-4">
                         {projectMemberIds.length === 0 ? "프로젝트 멤버가 없습니다" : "프로젝트 멤버를 불러오는 중..."}
