@@ -225,7 +225,12 @@ def create_mention_notification(
 
 # 알림 처리 함수 수정
 def process_notification(notification):
-    # 기존 알림 처리 로직
+    # 먼저 알림을 데이터베이스에 저장
+    try:
+        notification.save()
+    except Exception as e:
+        logging.getLogger("plane").error(f"Error saving notification to database: {str(e)}")
+        return notification
     
     # Java 알림 API가 활성화되어 있는 경우 Java 알림 서비스 호출
     if settings.JAVA_NOTIFICATION_API_ENABLED:
@@ -459,7 +464,7 @@ def notifications(
                         # 알림 처리 함수 호출
                         process_notification(notification)
                     except Exception as e:
-                        print(f"Error creating mention notification: {e}")
+                        logging.getLogger("plane").error(f"Error creating mention notification: {e}")
 
         # 댓글에서 멘션 추출 (댓글 활동이 있는 경우)
         for activity in issue_activities_created:
@@ -928,7 +933,7 @@ def workflow_approval_request_notifications(
                 reviewer = User.objects.get(id=reviewer_id)
                 
                 # 알림 생성
-                notification = Notification.objects.create(
+                notification = Notification(
                     workspace=project.workspace,
                     sender="in_app:workflow_approval_request",
                     triggered_by_id=actor_id,
