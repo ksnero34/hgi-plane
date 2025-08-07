@@ -2,6 +2,7 @@ import { differenceInDays, format, formatDistanceToNow, isAfter, isEqual, isVali
 import {ko} from "date-fns/locale";
 import isNumber from "lodash/isNumber";
 
+// Format Date Helpers
 /**
  * @description 주어진 날짜가 시작일과 종료일 사이에 있는지 확인
  * @param date 확인할 날짜
@@ -60,7 +61,7 @@ export const renderFormattedDate = (
   // return if undefined
   if (!parsedDate) return;
   // Check if the parsed date is valid before formatting
-  if (!isValid(parsedDate)) return; // Return undefined for invalid dates
+  if (!isValid(parsedDate)) return; // Return null for invalid dates
   let formattedDate;
   try {
     // Format the date in the format provided or default format (yyyy-MM-dd)
@@ -228,31 +229,31 @@ export function calculateTimeAgoShort(date: string | number | Date | null): stri
   const diffInSeconds = (now.getTime() - parsedDate.getTime()) / 1000;
 
   if (diffInSeconds < 60) {
-    return `${Math.floor(diffInSeconds)}s`;
+    return `${Math.floor(diffInSeconds)}초`;
   }
 
   const diffInMinutes = diffInSeconds / 60;
   if (diffInMinutes < 60) {
-    return `${Math.floor(diffInMinutes)}m`;
+    return `${Math.floor(diffInMinutes)}분`;
   }
 
   const diffInHours = diffInMinutes / 60;
   if (diffInHours < 24) {
-    return `${Math.floor(diffInHours)}h`;
+    return `${Math.floor(diffInHours)}시간`;
   }
 
   const diffInDays = diffInHours / 24;
   if (diffInDays < 30) {
-    return `${Math.floor(diffInDays)}d`;
+    return `${Math.floor(diffInDays)}일`;
   }
 
   const diffInMonths = diffInDays / 30;
   if (diffInMonths < 12) {
-    return `${Math.floor(diffInMonths)}mo`;
+    return `${Math.floor(diffInMonths)}개월`;
   }
 
   const diffInYears = diffInMonths / 12;
-  return `${Math.floor(diffInYears)}y`;
+  return `${Math.floor(diffInYears)}년`;
 }
 
 // Date Validation Helpers
@@ -433,19 +434,19 @@ export const generateDateArray = (startDate: string | Date, endDate: string | Da
   const start = new Date(startDate);
   // start.setDate(start.getDate() + 1);
   const end = new Date(endDate);
-  end.setDate(end.getDate() + 1);
+  end.setDate(end.getDate() + 2);
 
   // Create an empty array to store the dates
   const dateArray = [];
 
   // Use a while loop to generate dates between the range
   while (start <= end) {
-    // Increment the date by 1 day (86400000 milliseconds)
-    start.setDate(start.getDate() + 1);
     // Push the current date (converted to ISO string for consistency)
     dateArray.push({
       date: new Date(start).toISOString().split("T")[0],
     });
+    // Increment the date by 1 day (86400000 milliseconds)
+    start.setDate(start.getDate() + 1);
   }
 
   return dateArray;
@@ -521,6 +522,13 @@ export const checkDateCriteria = (dateToCheck: Date | null, filterDate: Date, ty
   return type === "after" ? normalizedCheck >= normalizedFilter : normalizedCheck <= normalizedFilter;
 };
 
+/**
+ * Formats merged date range display with smart formatting
+ * - Single date: "Jan 24, 2025"
+ * - Same year, same month: "Jan 24 - 28, 2025"
+ * - Same year, different month: "Jan 24 - Feb 6, 2025"
+ * - Different year: "Dec 28, 2024 - Jan 4, 2025"
+ */
 export const formatDateRange = (
   parsedStartDate: Date | null | undefined,
   parsedEndDate: Date | null | undefined

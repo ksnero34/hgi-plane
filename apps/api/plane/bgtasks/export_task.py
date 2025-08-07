@@ -3,9 +3,11 @@ import csv
 import io
 import json
 import zipfile
-
+from typing import List
 import boto3
 from botocore.client import Config
+from uuid import UUID
+from datetime import datetime, date
 
 # Third party imports
 from celery import shared_task
@@ -14,27 +16,38 @@ from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from openpyxl import Workbook
+from django.db.models import F, Prefetch
+
+from collections import defaultdict
 
 # Module imports
-from plane.db.models import ExporterHistory, Issue, FileAsset, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel, IssueComment, IssueType, ProjectIssueType
+from plane.db.models import ExporterHistory, Issue, FileAsset, Label, CustomField, CustomFieldValue, User, IssueAssignee, IssueLabel, IssueComment, IssueType, ProjectIssueType
 from plane.utils.exception_logger import log_exception
 from plane.settings.storage import S3Storage
 
 
-def dateTimeConverter(time):
+def dateTimeConverter(time: datetime) -> str | None:
+    """
+    Convert a datetime object to a formatted string.
+    """
     if time:
         # 날짜 형식을 ISO 형식(YYYY-MM-DD HH:MM:SS)으로 변경
         return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def dateConverter(time):
+def dateConverter(time: date) -> str | None:
+    """
+    Convert a date object to a formatted string.
+    """
     if time:
         # 날짜 형식을 ISO 형식(YYYY-MM-DD)으로 변경
         return time.strftime("%Y-%m-%d")
 
 
-def create_csv_file(data):
-    # UTF-8 with BOM 인코딩을 사용하여 한글이 깨지지 않도록 함
+def create_csv_file(data: List[List[str]]) -> str:
+    """
+    Create a CSV file from the provided data.
+    """
     csv_buffer = io.StringIO()
     # BOM 추가
     csv_buffer.write('\ufeff')
@@ -47,11 +60,17 @@ def create_csv_file(data):
     return csv_buffer.getvalue()
 
 
-def create_json_file(data):
+def create_json_file(data: List[dict]) -> str:
+    """
+    Create a JSON file from the provided data.
+    """
     return json.dumps(data)
 
 
-def create_xlsx_file(data):
+def create_xlsx_file(data: List[List[str]]) -> bytes:
+    """
+    Create an XLSX file from the provided data.
+    """
     workbook = Workbook()
     sheet = workbook.active
 
@@ -64,7 +83,10 @@ def create_xlsx_file(data):
     return xlsx_buffer.getvalue()
 
 
-def create_zip_file(files):
+def create_zip_file(files: List[tuple[str, str | bytes]]) -> io.BytesIO:
+    """
+    Create a ZIP file from the provided files.
+    """
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
         for filename, file_content in files:
@@ -444,7 +466,10 @@ def update_json_row(rows, row):
         rows.append(row)
 
 
-def update_table_row(rows, row):
+def update_table_row(rows: List[List[str]], row: List[str]) -> None:
+    """
+    Update the table row with the new assignee and label.
+    """
     matched_index = next(
         (index for index, existing_row in enumerate(rows) if existing_row[0] == row[0]),
         None,

@@ -7,7 +7,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
 import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { EIssuesStoreType, EViewAccess, IIssueFilterOptions, TCustomField } from "@plane/types";
+import { EIssuesStoreType, EViewAccess, IIssueFilterOptions } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
 import { AppliedFiltersList } from "@/components/issues";

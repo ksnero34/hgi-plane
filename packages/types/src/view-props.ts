@@ -178,20 +178,6 @@ export interface IWorkspaceIssueFilterOptions {
   project?: string[] | null;
 }
 
-export interface IWorkspaceIssueDisplayFilterOptions {
-  order_by?: string | undefined;
-  type?: "active" | "backlog" | null;
-  sub_issue?: boolean;
-  layout?: TIssueViewOptions;
-}
-
-export interface IWorkspaceGlobalViewDisplayFilterOptions {
-  order_by?: string | undefined;
-  type?: "active" | "backlog" | null;
-  sub_issue?: boolean;
-  layout?: TIssueViewOptions;
-}
-
 export interface IWorkspaceViewIssuesParams {
   assignees?: string | undefined;
   created_by?: string | undefined;

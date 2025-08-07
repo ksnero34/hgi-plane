@@ -37,7 +37,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
                 workspace__slug=self.kwargs.get("slug"),
                 receiver_id=self.request.user.id,
             )
-            .select_related("workspace", "project," "triggered_by", "receiver")
+            .select_related("workspace", "project", "triggered_by", "receiver")
         )
 
     @allow_permission(
@@ -234,6 +234,8 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
 
 
 class UnreadNotificationEndpoint(BaseAPIView):
+    use_read_replica = True
+
     @allow_permission(
         allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED,ROLE.GUEST],
         level="WORKSPACE",

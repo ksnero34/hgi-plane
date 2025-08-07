@@ -155,6 +155,18 @@ export class InstanceService extends APIService {
         }
       }
     )
+    .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+  /**
+   * Disables the email configuration
+   * @returns {Promise<void>} Promise resolving to void
+   * @throws {Error} If the API request fails
+   */
+  async disableEmail(): Promise<void> {
+    return this.delete("/api/instances/configurations/disable-email-feature/")
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

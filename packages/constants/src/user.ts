@@ -71,9 +71,6 @@ export const USER_ALLOWED_PERMISSIONS: TUserAllowedPermissions = {
   workspace: {
     dashboard: {
       read: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.VIEWER, EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
-      create: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-      update: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-      delete: [EUserPermissions.ADMIN],
     },
   },
   project: {

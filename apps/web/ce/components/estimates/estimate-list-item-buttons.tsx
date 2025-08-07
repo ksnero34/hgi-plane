@@ -1,6 +1,8 @@
 import { FC } from "react";
 import { observer } from "mobx-react";
 import { Pen, Trash } from "lucide-react";
+import { PROJECT_SETTINGS_TRACKER_ELEMENTS } from "@plane/constants";
+import { Tooltip } from "@plane/ui";
 // components
 import { useProjectEstimates } from "@/hooks/store";
 
@@ -21,19 +23,24 @@ export const EstimateListItemButtons: FC<TEstimateListItem> = observer((props) =
   if (!isAdmin || !isEditable) return <></>;
   return (
     <div className="relative flex items-center gap-1">
-      <button 
-        className="relative flex-shrink-0 w-6 h-6 flex justify-center items-center rounded cursor-pointer transition-colors overflow-hidden hover:bg-custom-background-80" 
-        tabIndex={0}
-        onClick={() => onEditClick && onEditClick(estimateId)}
-      >
-        <Pen size={12} />
-      </button>
-      <button
-        className="relative flex-shrink-0 w-6 h-6 flex justify-center items-center rounded cursor-pointer transition-colors overflow-hidden hover:bg-custom-background-80"
-        onClick={() => onDeleteClick && onDeleteClick(estimateId)}
-      >
-        <Trash size={12} />
-      </button>
+      <Tooltip tooltipContent="Edit estimate">
+        <button
+          className="relative flex-shrink-0 w-6 h-6 flex justify-center items-center rounded cursor-pointer transition-colors overflow-hidden hover:bg-custom-background-80"
+          onClick={() => onEditClick && onEditClick(estimateId)}
+          data-ph-element={PROJECT_SETTINGS_TRACKER_ELEMENTS.ESTIMATES_LIST_ITEM}
+        >
+          <Pen size={12} />
+        </button>
+      </Tooltip>
+      <Tooltip tooltipContent="Delete estimate">
+        <button
+          className="relative flex-shrink-0 w-6 h-6 flex justify-center items-center rounded cursor-pointer transition-colors overflow-hidden hover:bg-custom-background-80"
+          onClick={() => onDeleteClick && onDeleteClick(estimateId)}
+          data-ph-element={PROJECT_SETTINGS_TRACKER_ELEMENTS.ESTIMATES_LIST_ITEM}
+        >
+          <Trash size={12} />
+        </button>
+      </Tooltip>
     </div>
   );
 });

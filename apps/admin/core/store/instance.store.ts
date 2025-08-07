@@ -39,6 +39,7 @@ export interface IInstanceStore {
   updateInstanceMember: (userId: string, data: { is_admin: boolean }) => Promise<IUser>;
   fetchFileSettings: () => Promise<IFileSettings | undefined>;
   updateFileSettings: (data: Partial<IFileSettings>) => Promise<IFileSettings>;
+  disableEmail: () => Promise<void>;
 }
 
 export class InstanceStore implements IInstanceStore {
@@ -253,6 +254,29 @@ export class InstanceStore implements IInstanceStore {
     } catch (error) {
       console.error("Error updating file settings");
       throw error;
+  disableEmail = async () => {
+    const instanceConfigurations = this.instanceConfigurations;
+    try {
+      runInAction(() => {
+        this.instanceConfigurations = this.instanceConfigurations?.map((config) => {
+          if (
+            [
+              "EMAIL_HOST",
+              "EMAIL_PORT",
+              "EMAIL_HOST_USER",
+              "EMAIL_HOST_PASSWORD",
+              "EMAIL_FROM",
+              "ENABLE_SMTP",
+            ].includes(config.key)
+          )
+            return { ...config, value: "" };
+          return config;
+        });
+      });
+      await this.instanceService.disableEmail();
+    } catch (error) {
+      console.error("Error disabling the email");
+      this.instanceConfigurations = instanceConfigurations;
     }
   };
 }

@@ -194,6 +194,7 @@ export type GroupByColumnTypes =
   | "top_level_only"
   | "issue_type";
 
+
 export type TGetColumns = {
   isWorkspaceLevel?: boolean;
   projectId?: string;

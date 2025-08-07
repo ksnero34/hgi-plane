@@ -16,7 +16,7 @@ import { PageHeaderActions } from "@/components/pages/header/actions";
 import { useProject } from "@/hooks/store";
 // plane web components
 import { useAppRouter } from "@/hooks/use-app-router";
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { PageDetailsHeaderExtraActions } from "@/plane-web/components/pages";
 // plane web hooks
 import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";

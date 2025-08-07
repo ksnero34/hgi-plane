@@ -2,14 +2,12 @@
 
 import { useCallback, useRef, useState, useEffect } from "react";
 import { observer } from "mobx-react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 // icons
-import { PanelRight, Edit3 } from "lucide-react";
-// plane constants
+import { ChartNoAxesColumn, ListFilter, PanelRight, SlidersHorizontal, Edit3 } from "lucide-react";
+// plane imports
 import {
   EIssueFilterType,
-  EIssueLayoutTypes,
   EUserPermissions,
   EUserPermissionsLevel,
   EProjectFeatureKey,
@@ -24,17 +22,23 @@ import {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
   IIssueFilterOptions,
+  EIssueLayoutTypes,
   TCustomField,
   TIssue,
 } from "@plane/types";
-// ui
-import { Breadcrumbs, Button, ContrastIcon, Tooltip, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, ContrastIcon, BreadcrumbNavigationSearchDropdown, Header, Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
 import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { SwitcherLabel } from "@/components/common";
 import { CycleQuickActions } from "@/components/cycles";
-import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
+import {
+  DisplayFiltersSelection,
+  FiltersDropdown,
+  FilterSelection,
+  LayoutSelection,
+  MobileLayoutSelection,
+} from "@/components/issues";
 // hooks
 import {
   useCommandPalette,
@@ -52,7 +56,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 // plane web imports
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
 
 export const CycleIssuesHeader: React.FC = observer(() => {
@@ -271,22 +275,38 @@ export const CycleIssuesHeader: React.FC = observer(() => {
           </div>
         </Header.LeftItem>
         <Header.RightItem className="items-center">
-          <div className="hidden items-center gap-2 md:flex">
-            <LayoutSelection
-              layouts={[
-                EIssueLayoutTypes.LIST,
-                EIssueLayoutTypes.KANBAN,
-                EIssueLayoutTypes.CALENDAR,
-                EIssueLayoutTypes.SPREADSHEET,
-                EIssueLayoutTypes.GANTT,
-              ]}
-              onChange={(layout) => handleLayoutChange(layout)}
-              selectedLayout={activeLayout}
-            />
+          <div className="hidden items-center gap-2 md:flex ">
+            <div className="hidden @4xl:flex">
+              <LayoutSelection
+                layouts={[
+                  EIssueLayoutTypes.LIST,
+                  EIssueLayoutTypes.KANBAN,
+                  EIssueLayoutTypes.CALENDAR,
+                  EIssueLayoutTypes.SPREADSHEET,
+                  EIssueLayoutTypes.GANTT,
+                ]}
+                onChange={(layout) => handleLayoutChange(layout)}
+                selectedLayout={activeLayout}
+              />
+            </div>
+            <div className="flex @4xl:hidden">
+              <MobileLayoutSelection
+                layouts={[
+                  EIssueLayoutTypes.LIST,
+                  EIssueLayoutTypes.KANBAN,
+                  EIssueLayoutTypes.CALENDAR,
+                  EIssueLayoutTypes.SPREADSHEET,
+                  EIssueLayoutTypes.GANTT,
+                ]}
+                onChange={(layout) => handleLayoutChange(layout)}
+                activeLayout={activeLayout}
+              />
+            </div>
             <FiltersDropdown
               title={t("common.filters")}
               placement="bottom-end"
               isFiltersApplied={isIssueFilterActive(issueFilters)}
+              miniIcon={<ListFilter className="size-3.5" />}
             >
               <FilterSelection
                 filters={issueFilters?.filters ?? {}}
@@ -305,7 +325,11 @@ export const CycleIssuesHeader: React.FC = observer(() => {
                 moduleViewDisabled={!currentProjectDetails?.module_view}
               />
             </FiltersDropdown>
-            <FiltersDropdown title={t("common.display")} placement="bottom-end">
+            <FiltersDropdown
+              title={t("common.display")}
+              placement="bottom-end"
+              miniIcon={<SlidersHorizontal className="size-3.5" />}
+            >
               <DisplayFiltersSelection
                 layoutDisplayFiltersOptions={
                   activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[activeLayout] : undefined
@@ -323,7 +347,10 @@ export const CycleIssuesHeader: React.FC = observer(() => {
             {canUserCreateIssue && (
               <>
                 <Button onClick={() => setAnalyticsModal(true)} variant="neutral-primary" size="sm">
-                  {t("common.analytics")}
+                  <div className="hidden @4xl:flex">Analytics</div>
+                  <div className="flex @4xl:hidden">
+                    <ChartNoAxesColumn className="size-3.5" />
+                  </div>
                 </Button>
                 {isSelectionActive && selectedEntityIds.length > 0 && (
                   <Button

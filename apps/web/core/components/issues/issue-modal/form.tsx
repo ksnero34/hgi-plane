@@ -12,7 +12,14 @@ import { useTranslation } from "@plane/i18n";
 import { EIssuesStoreType, TIssue, TWorkspaceDraftIssue } from "@plane/types";
 // hooks
 import { Button, ToggleSwitch, TOAST_TYPE, setToast } from "@plane/ui";
-import { convertWorkItemDataToSearchResponse, getUpdateFormDataForReset, cn, getTextContent, getChangedIssuefields, getTabIndex } from "@plane/utils";
+import {
+  convertWorkItemDataToSearchResponse,
+  getUpdateFormDataForReset,
+  cn,
+  getTextContent,
+  getChangedIssuefields,
+  getTabIndex,
+} from "@plane/utils";
 // components
 import {
   IssueDefaultProperties,
@@ -25,17 +32,14 @@ import { CreateLabelModal } from "@/components/labels";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
-import { useIssueDetail, useProject, useProjectState, useWorkspaceDraftIssues } from "@/hooks/store";
+import { useIssueDetail, useLabel, useProject, useProjectState, useWorkspaceDraftIssues } from "@/hooks/store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 // plane web imports
 import { DeDupeButtonRoot, DuplicateModalRoot } from "@/plane-web/components/de-dupe";
-import {
-  IssueAdditionalProperties,
-  IssueTypeSelect,
-  WorkItemTemplateSelect,
-} from "@/plane-web/components/issues/issue-modal";
+import { IssueTypeSelect, WorkItemTemplateSelect } from "@/plane-web/components/issues/issue-modal";
+import { WorkItemModalAdditionalProperties } from "@/plane-web/components/issues/issue-modal/modal-additional-properties";
 import { useDebouncedDuplicateIssues } from "@/plane-web/hooks/use-debounced-duplicate-issues";
 
 export interface IssueFormProps {
@@ -117,6 +121,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
   } = useIssueModal();
   const { isMobile } = usePlatformOS();
   const { moveIssue } = useWorkspaceDraftIssues();
+  const { createLabel } = useLabel();
 
   const {
     issue: { getIssueById },
@@ -391,9 +396,9 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     <FormProvider {...methods}>
       {projectId && (
         <CreateLabelModal
+          createLabel={createLabel.bind(createLabel, workspaceSlug?.toString(), projectId)}
           isOpen={labelModal}
           handleClose={() => setLabelModal(false)}
-          projectId={projectId}
           onSuccess={(response) => {
             setValue<"label_ids">("label_ids", [...watch("label_ids"), response.id]);
             handleFormChange();
@@ -505,28 +510,19 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                   onClose={onClose}
                 />
               </div>
-              <div
-                className={cn(
-                  "px-5",
-                  activeAdditionalPropertiesLength <= 4 &&
-                    "max-h-[25vh] overflow-hidden overflow-y-auto vertical-scrollbar scrollbar-sm"
-                )}
-              >
-                {projectId && (
-                  <>
-                    {/* {console.log("form.tsx - watch('type_id'):", watch("type_id"))} */}
-                    <IssueAdditionalProperties
-                      issueId={data?.id ?? data?.sourceIssueId}
-                      issueTypeId={watch("type_id")}
-                      projectId={projectId}
-                      workspaceSlug={workspaceSlug?.toString()}
-                      isDraft={isDraft}
-                    />
-                  </>
-                )}
-              </div>
+              <WorkItemModalAdditionalProperties
+                isDraft={isDraft}
+                workItemId={data?.id ?? data?.sourceIssueId}
+                projectId={projectId}
+                workspaceSlug={workspaceSlug?.toString()}
+              />
             </div>
-            <div className="px-4 py-3 border-t-[0.5px] border-custom-border-200 shadow-custom-shadow-xs rounded-b-lg bg-custom-background-100">
+            <div
+              className={cn(
+                "px-4 py-3 border-t-[0.5px] border-custom-border-200 rounded-b-lg bg-custom-background-100",
+                activeAdditionalPropertiesLength > 0 && "shadow-custom-shadow-xs"
+              )}
+            >
               <div className="pb-3 border-b-[0.5px] border-custom-border-200">
                 <IssueDefaultProperties
                   control={control}

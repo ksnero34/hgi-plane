@@ -6,14 +6,14 @@ import { ACCEPTED_IMAGE_MIME_TYPES } from "@/constants/config";
 import { isFileValid } from "@/helpers/file";
 import { insertEmptyParagraphAtNodeBoundaries } from "@/helpers/insert-empty-paragraph-at-node-boundary";
 // types
-import type { TFileHandler, TReadOnlyFileHandler } from "@/types";
+import type { TFileHandler } from "@/types";
 // local imports
 import { CustomImageNodeView } from "./components/node-view";
 import { CustomImageExtensionConfig } from "./extension-config";
 import { getImageComponentImageFileMap } from "./utils";
 
 type Props = {
-  fileHandler: TFileHandler | TReadOnlyFileHandler;
+  fileHandler: TFileHandler;
   isEditable: boolean;
 };
 
@@ -116,7 +116,7 @@ export const CustomImageExtension = (props: Props) => {
     },
 
     addNodeView() {
-      return ReactNodeViewRenderer(CustomImageNodeView);
+      return ReactNodeViewRenderer(CustomImageNodeView as any);
     },
   });
 };

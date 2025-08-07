@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
 import { ChevronDown, Search } from "lucide-react";
 import { Combobox } from "@headlessui/react";
+// plane imports
 import { useTranslation } from "@plane/i18n";
 // ui
 import { ComboDropDown, Loader } from "@plane/ui";
@@ -13,20 +14,19 @@ import { ComboDropDown, Loader } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
+import { useDropdown } from "@/hooks/use-dropdown";
 // types
 import { IProjectIssueType } from "@plane/types";
-import { useDropdown } from "@/hooks/use-dropdown";
 // components
-import { DropdownButton } from "./buttons";
-// constants
-import { BUTTON_VARIANTS_WITH_TEXT } from "./constants";
-// types
-import { TDropdownProps } from "./types";
+import { DropdownButton } from "@/components/dropdowns/buttons";
+import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
+import { TDropdownProps } from "@/components/dropdowns/types";
 
-type Props = TDropdownProps & {
+export type TIssueTypeDropdownProps = TDropdownProps & {
   button?: ReactNode;
   dropdownArrow?: boolean;
   dropdownArrowClassName?: string;
+  iconSize?: string;
   onChange: (val: string) => void;
   onClose?: () => void;
   projectId: string | undefined;
@@ -34,7 +34,7 @@ type Props = TDropdownProps & {
   renderByDefault?: boolean;
 };
 
-export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
+export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((props) => {
   const {
     button,
     buttonClassName,
@@ -45,6 +45,7 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
     dropdownArrow = false,
     dropdownArrowClassName = "",
     hideIcon = false,
+    iconSize = "size-4",
     onChange,
     onClose,
     placeholder = "Issue type",
@@ -57,15 +58,18 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
   } = props;
   // router
   const { workspaceSlug } = useParams();
-  // states
-  const [query, setQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
   // refs
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   // popper-js refs
   const [referenceElement, setReferenceElement] = useState<HTMLButtonElement | null>(null);
   const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null);
+  // states
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  // store hooks
+  const { t } = useTranslation();
+  const { issueTypes, isLoading, getDefaultIssueType } = useIssueType(projectId || "");
   // popper-js init
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: placement ?? "bottom-start",
@@ -78,10 +82,7 @@ export const IssueTypeDropdown: React.FC<Props> = observer((props) => {
       },
     ],
   });
-  // hooks
-  const { t } = useTranslation();
-  const { issueTypes, isLoading, getDefaultIssueType } = useIssueType(projectId || "");
-
+  // dropdown init
   const {
     handleClose,
     handleKeyDown,

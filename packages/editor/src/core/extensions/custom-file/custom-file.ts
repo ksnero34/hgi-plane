@@ -158,7 +158,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
     },
 
     addNodeView() {
-      return ReactNodeViewRenderer(FileNode);
+      return ReactNodeViewRenderer(FileNode as any);
     },
   });
 

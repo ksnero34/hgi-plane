@@ -40,6 +40,17 @@ export const useAttachmentOperations = (
         try {
           if (!workspaceSlug || !projectId || !issueId) throw new Error("Missing required fields");
           const attachmentUploadPromise = createAttachment(workspaceSlug, projectId, issueId, file);
+          setPromiseToast(attachmentUploadPromise, {
+            loading: "Uploading attachment...",
+            success: {
+              title: "Attachment uploaded",
+              message: () => "The attachment has been successfully uploaded",
+            },
+            error: {
+              title: "Attachment not uploaded",
+              message: () => "The attachment could not be uploaded",
+            },
+          });
 
           await attachmentUploadPromise;
           captureSuccess({

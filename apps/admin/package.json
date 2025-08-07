@@ -1,7 +1,7 @@
 {
   "name": "admin",
   "description": "Admin UI for Plane",
-  "version": "0.27.0",
+  "version": "0.28.0",
   "license": "AGPL-3.0",
   "private": true,
   "scripts": {
@@ -9,9 +9,12 @@
     "build": "next build",
     "preview": "next build && next start",
     "start": "next start",
-    "format": "prettier --write .",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:errors": "eslint . --ext .ts,.tsx --quiet"
+    "clean": "rm -rf .turbo && rm -rf .next && rm -rf node_modules && rm -rf dist",
+    "check:lint": "eslint . --max-warnings 19",
+    "check:types": "tsc --noEmit",
+    "check:format": "prettier --check \"**/*.{ts,tsx,md,json,css,scss}\"",
+    "fix:lint": "eslint . --fix",
+    "fix:format": "prettier --write \"**/*.{ts,tsx,md,json,css,scss}\""
   },
   "dependencies": {
     "@headlessui/react": "^1.7.19",
@@ -25,10 +28,7 @@
     "@tailwindcss/typography": "^0.5.9",
     "@types/lodash": "^4.17.0",
     "autoprefixer": "10.4.14",
-    "framer-motion": "^11.0.8",
-    "js-cookie": "^3.0.5",
-    "date-fns": "^2.30.0",
-    "axios": "^1.8.3",
+    "axios": "1.11.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.469.0",
     "mobx": "^6.12.0",
@@ -40,8 +40,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "7.51.5",
     "swr": "^2.2.4",
-    "uuid": "^9.0.1",
-    "zxcvbn": "^4.4.2"
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@plane/eslint-config": "*",
@@ -51,7 +50,6 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.2.18",
     "@types/uuid": "^9.0.8",
-    "@types/zxcvbn": "^4.4.4",
     "typescript": "5.8.3"
   }
 }

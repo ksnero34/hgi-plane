@@ -111,6 +111,10 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
           eventName: CYCLE_TRACKER_EVENTS.update,
           error: err,
         });
+        captureError({
+          eventName: CYCLE_TRACKER_EVENTS.update,
+          error: err,
+        });
       });
   };
 

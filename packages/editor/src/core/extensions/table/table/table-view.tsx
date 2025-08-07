@@ -5,8 +5,8 @@ import { Decoration, NodeView } from "@tiptap/pm/view";
 import { h } from "jsx-dom-cjs";
 import { icons } from "src/core/extensions/table/table/icons";
 import tippy, { Instance, Props } from "tippy.js";
-// constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
+import { isCellSelection } from "./utilities/helpers";
 
 type ToolboxItem = {
   label: string;
@@ -95,7 +95,7 @@ function setCellsBackgroundColor(editor: Editor, color: { backgroundColor: strin
 function setTableRowBackgroundColor(editor: Editor, color: { backgroundColor: string; textColor: string }) {
   const { state, dispatch } = editor.view;
   const { selection } = state;
-  if (!(selection instanceof CellSelection)) {
+  if (!isCellSelection(selection)) {
     return false;
   }
 
@@ -146,7 +146,7 @@ const columnsToolboxItems: ToolboxItem[] = [
   {
     label: "Pick color",
     icon: "", // No icon needed for color picker
-    action: (args: any) => {}, // Placeholder action; actual color picking is handled in `createToolbox`
+    action: (_args: unknown) => { }, // Placeholder action; actual color picking is handled in `createToolbox`
   },
   {
     label: "Delete column",
@@ -174,7 +174,7 @@ const rowsToolboxItems: ToolboxItem[] = [
   {
     label: "Pick color",
     icon: "",
-    action: (args: any) => {}, // Placeholder action; actual color picking is handled in `createToolbox`
+    action: (_args: unknown) => { }, // Placeholder action; actual color picking is handled in `createToolbox`
   },
   {
     label: "Delete row",
@@ -288,7 +288,6 @@ function createToolbox({
   onSelectColor: (color: { backgroundColor: string; textColor: string }) => void;
   colors: { [key: string]: { backgroundColor: string; textColor: string; icon?: string } };
 }): Instance<Props> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   const toolbox = tippy(triggerButton ?? document.createElement('div'), {
     content: createToolboxContent(items, colors, onClickItem, onSelectColor), // 분리된 함수 사용
     ...tippyOptions,
@@ -656,12 +655,16 @@ export class TableView implements NodeView {
 
       this.cellSelectionToolbar.setProps({
         getReferenceClientRect: () => ({
-          width: 0, height: 0,
+          width: 0, 
+          height: 0,
           top: coords.bottom + 5,
           bottom: coords.bottom + 5,
           left: coords.left,
           right: coords.left,
-        }),
+          x: coords.left,
+          y: coords.bottom + 5,
+          toJSON: () => ({})
+        } as DOMRect),
       });
 
       if (!this.cellSelectionToolbar.state.isShown) {

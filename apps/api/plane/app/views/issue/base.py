@@ -73,6 +73,9 @@ from plane.db.models import (
     IssueAssignee,
     IssueLabel,
     IssueType,
+    IssueRelation,
+    IssueAssignee,
+    IssueLabel,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -821,7 +824,6 @@ class IssueViewSet(BaseViewSet):
             entity_identifier=project_id,
             user_id=request.user.id,
         )
-
         if (
             ProjectMember.objects.filter(
                 workspace__slug=slug,
@@ -1265,8 +1267,7 @@ class IssueViewSet(BaseViewSet):
 
         if not issue:
             return Response(
-                {"error": "Issue does not exist"},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "Issue not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         current_instance = json.dumps(
@@ -1768,7 +1769,7 @@ class IssueDetailEndpoint(BaseAPIView):
             request=request,
             order_by=order_by_param,
             queryset=(issue),
-            on_results=lambda issue: IssueSerializer(
+            on_results=lambda issue: IssueListDetailSerializer(
                 issue, many=True, fields=self.fields, expand=self.expand
             ).data,
         )

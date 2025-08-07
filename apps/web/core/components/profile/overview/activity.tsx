@@ -3,7 +3,6 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
-import { useEffect, useState } from "react";
 // ui
 import { useTranslation } from "@plane/i18n";
 import { Loader, Card } from "@plane/ui";

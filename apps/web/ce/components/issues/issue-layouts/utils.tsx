@@ -33,7 +33,7 @@ import {
   SpreadsheetSubIssueColumn,
   SpreadsheetUpdatedOnColumn,
   AllCustomFieldsColumn,
-} from "@/components/issues/issue-layouts/spreadsheet/columns";
+} from "@/components/issues/issue-layouts/spreadsheet";
 // store
 import { store } from "@/lib/store-context";
 

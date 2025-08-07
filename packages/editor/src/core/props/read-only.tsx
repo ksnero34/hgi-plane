@@ -2,7 +2,7 @@ import { EditorProps } from "@tiptap/pm/view";
 // plane utils
 import { cn } from "@plane/utils";
 // props
-import { TCoreEditorProps } from "@/props";
+import { TCoreEditorProps } from "./props";
 
 export const CoreReadOnlyEditorProps = (props: TCoreEditorProps): EditorProps => {
   const { editorClassName } = props;

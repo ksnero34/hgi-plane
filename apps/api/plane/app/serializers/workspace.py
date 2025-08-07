@@ -24,6 +24,11 @@ from plane.db.models import (
 )
 from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
 from plane.utils.url import contains_url
+from plane.utils.content_validator import (
+    validate_html_content,
+    validate_json_content,
+    validate_binary_data,
+)
 
 # Django imports
 from django.core.validators import URLValidator
@@ -76,7 +81,6 @@ class WorkspaceLiteSerializer(BaseSerializer):
 
 class WorkSpaceMemberSerializer(DynamicBaseSerializer):
     member = UserLiteSerializer(read_only=True)
-    workspace = WorkspaceLiteSerializer(read_only=True)
 
     class Meta:
         model = WorkspaceMember
@@ -93,7 +97,6 @@ class WorkspaceMemberMeSerializer(BaseSerializer):
 
 class WorkspaceMemberAdminSerializer(DynamicBaseSerializer):
     member = UserAdminLiteSerializer(read_only=True)
-    workspace = WorkspaceLiteSerializer(read_only=True)
 
     class Meta:
         model = WorkspaceMember
@@ -364,6 +367,22 @@ class StickySerializer(BaseSerializer):
     def validate(self, data):
         if 'description_html' in data:
             data['description_html'] = self.mask_private_information(data['description_html'])
+        
+        # Validate description content for security
+        if "description" in data and data["description"]:
+            is_valid, error_msg = validate_json_content(data["description"])
+            if not is_valid:
+                raise serializers.ValidationError({"description": error_msg})
+
+        if "description_html" in data and data["description_html"]:
+            is_valid, error_msg = validate_html_content(data["description_html"])
+            if not is_valid:
+                raise serializers.ValidationError({"description_html": error_msg})
+
+        if "description_binary" in data and data["description_binary"]:
+            is_valid, error_msg = validate_binary_data(data["description_binary"])
+            if not is_valid:
+                raise serializers.ValidationError({"description_binary": error_msg})
         return data
 
 

@@ -1,9 +1,14 @@
 import { FC } from "react";
 import { TNotification } from "@plane/types";
-import { convertMinutesToHoursMinutesString, renderFormattedDate, sanitizeCommentForNotification, replaceUnderscoreIfSnakeCase, stripAndTruncateHTML } from "@plane/utils";
+import {
+  convertMinutesToHoursMinutesString,
+  renderFormattedDate,
+  sanitizeCommentForNotification,
+  replaceUnderscoreIfSnakeCase,
+  stripAndTruncateHTML,
+} from "@plane/utils";
 // components
-// helpers
-import { LiteTextReadOnlyEditor } from "@/components/editor";
+import { LiteTextEditor } from "@/components/editor/lite-text";
 
 export const NotificationContent: FC<{
   notification: TNotification;

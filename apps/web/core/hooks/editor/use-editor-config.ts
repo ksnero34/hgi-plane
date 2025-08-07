@@ -1,7 +1,6 @@
 import { useCallback } from "react";
-// plane editor
-import { TFileHandler, TReadOnlyFileHandler } from "@plane/editor";
-// helpers
+// plane imports
+import type { TFileHandler } from "@plane/editor";
 import { getEditorAssetDownloadSrc, getEditorAssetSrc } from "@plane/utils";
 // hooks
 import { useEditorAsset } from "@/hooks/store";
@@ -24,14 +23,29 @@ export const useEditorConfig = () => {
   // file size
   const { maxFileSize } = useFileSize();
 
-  const getReadOnlyEditorFileHandlers = useCallback(
-    (args: Pick<TArgs, "projectId" | "workspaceId" | "workspaceSlug">): TReadOnlyFileHandler & { validateFile?: (file: File) => Promise<boolean>; fileTypes?: string[]; maxFileSize?: number } => {
-      const { projectId, workspaceId, workspaceSlug } = args;
+  const getEditorFileHandlers = useCallback(
+    (args: TArgs): TFileHandler => {
+      const { projectId, uploadFile, workspaceId, workspaceSlug } = args;
 
       return {
+        assetsUploadStatus: assetsUploadPercentage,
+        cancel: fileService.cancelUpload,
         checkIfAssetExists: async (assetId: string) => {
           const res = await fileService.checkIfAssetExists(workspaceSlug, assetId);
           return res?.exists ?? false;
+        },
+        delete: async (src: string) => {
+          if (src?.startsWith("http")) {
+            await fileService.deleteOldWorkspaceAsset(workspaceId, src);
+          } else {
+            await fileService.deleteNewAsset(
+              getEditorAssetSrc({
+                assetId: src,
+                projectId,
+                workspaceSlug,
+              }) ?? ""
+            );
+          }
         },
         getAssetDownloadSrc: async (path) => {
           if (!path) return "";
@@ -50,7 +64,7 @@ export const useEditorConfig = () => {
         getAssetSrc: async (path) => {
           if (!path) return "";
           if (path?.startsWith("http")) {
-            // console.log("[getReadOnlyEditorFileHandlers] Returning direct URL:", path);
+            // console.log("[getEditorFileHandlers] Returning direct URL:", path);
             return path;
           } else {
             const assetSrc = getEditorAssetSrc({
@@ -58,66 +72,34 @@ export const useEditorConfig = () => {
               projectId,
               workspaceSlug,
             }) ?? "";
-            // console.log("[getReadOnlyEditorFileHandlers] Generated asset src:", assetSrc);
+            // console.log("[getEditorFileHandlers] Generated asset src:", assetSrc);
             return assetSrc;
           }
         },
         restore: async (src: string) => {
-          // console.log("[getReadOnlyEditorFileHandlers] restore called with:", src);
+          // console.log("[getEditorFileHandlers] restore called with:", src);
           if (src?.startsWith("http")) {
             await fileService.restoreOldEditorAsset(workspaceId, src);
           } else {
             await fileService.restoreNewAsset(workspaceSlug, src);
           }
         },
-        // 파일 핸들러에 필요한 추가 속성들
-        validateFile: async (file: File) => {
-          // console.log("[getReadOnlyEditorFileHandlers] validateFile called with:", file.name);
-          return true;
-        },
-        fileTypes: ["*"],
-        maxFileSize: 50 * 1024 * 1024, // 50MB
-      };
-    },
-    []
-  );
-
-  const getEditorFileHandlers = useCallback(
-    (args: TArgs): TFileHandler => {
-      const { projectId, uploadFile, workspaceId, workspaceSlug } = args;
-
-      return {
-        ...getReadOnlyEditorFileHandlers({
-          projectId,
-          workspaceId,
-          workspaceSlug,
-        }),
-        assetsUploadStatus: assetsUploadPercentage,
         upload: uploadFile,
-        delete: async (src: string) => {
-          if (src?.startsWith("http")) {
-            await fileService.deleteOldWorkspaceAsset(workspaceId, src);
-          } else {
-            await fileService.deleteNewAsset(
-              getEditorAssetSrc({
-                assetId: src,
-                projectId,
-                workspaceSlug,
-              }) ?? ""
-            );
-          }
-        },
-        cancel: fileService.cancelUpload,
         validation: {
           maxFileSize,
         },
+        // 파일 핸들러에 필요한 추가 속성들 (커스텀)
+        validateFile: async (file: File) => {
+          // console.log("[getEditorFileHandlers] validateFile called with:", file.name);
+          return true;
+        },
+        fileTypes: ["*"],
       };
     },
-    [assetsUploadPercentage, getReadOnlyEditorFileHandlers, maxFileSize]
+    [assetsUploadPercentage, maxFileSize]
   );
 
   return {
     getEditorFileHandlers,
-    getReadOnlyEditorFileHandlers,
   };
 };

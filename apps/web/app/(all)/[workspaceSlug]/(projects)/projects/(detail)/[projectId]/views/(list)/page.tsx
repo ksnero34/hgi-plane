@@ -6,15 +6,15 @@ import { useParams } from "next/navigation";
 // components
 import { EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { EUserProjectRoles, EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
+import { EUserProjectRoles, EViewAccess, TViewFilterProps } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
-import { calculateTotalFilters, calculateFilterRemovalValue, calculateFilterValue } from "@plane/utils";
+import { calculateTotalFilters, calculateFilterRemovalValue } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { DetailedEmptyState } from "@/components/empty-state";
 import { ProjectViewsList } from "@/components/views";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
 // constants
-
+// helpers
 // hooks
 import { useProject, useProjectView, useUserPermissions, useCustomField } from "@/hooks/store";
 import { useAppRouter } from "@/hooks/use-app-router";

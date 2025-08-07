@@ -3,7 +3,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 // types
 import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { EIssuesStoreType, IIssueFilterOptions, TCustomField } from "@plane/types";
+import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 // ui
 import { Header, EHeaderVariant } from "@plane/ui";
 // components

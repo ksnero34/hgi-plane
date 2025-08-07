@@ -15,6 +15,7 @@ from django.utils import timezone
 # Module imports
 from plane.db.models import FileAsset
 from ..mixins import TimeAuditModel
+from plane.utils.color import get_random_color
 
 
 def get_default_onboarding():
@@ -103,7 +104,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     # timezone
-    USER_TIMEZONE_CHOICES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
+    USER_TIMEZONE_CHOICES = tuple(zip(pytz.common_timezones, pytz.common_timezones))
     user_timezone = models.CharField(
         max_length=255, default="Asia/Seoul", choices=USER_TIMEZONE_CHOICES
     )
@@ -199,6 +200,7 @@ class Profile(TimeAuditModel):
     )
     # General
     theme = models.JSONField(default=dict)
+    is_app_rail_docked = models.BooleanField(default=True)
     # Onboarding
     is_tour_completed = models.BooleanField(default=False)
     onboarding_step = models.JSONField(default=get_default_onboarding)
@@ -223,6 +225,8 @@ class Profile(TimeAuditModel):
     start_of_the_week = models.PositiveSmallIntegerField(
         choices=START_OF_THE_WEEK_CHOICES, default=SUNDAY
     )
+    goals = models.JSONField(default=dict)
+    background_color = models.CharField(max_length=255, default=get_random_color)
 
     class Meta:
         verbose_name = "Profile"

@@ -77,7 +77,7 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
     },
 
     addNodeView() {
-      return ReactNodeViewRenderer(FileNode);
+      return ReactNodeViewRenderer(FileNode as any);
     },
   });
 }; 

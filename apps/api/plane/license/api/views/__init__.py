@@ -8,6 +8,12 @@ from .instance import (
 from .configuration import (
     EmailCredentialCheckEndpoint,
     InstanceConfigurationEndpoint,
+    DisableEmailFeatureEndpoint,
+)
+
+from .configuration import (
+    EmailCredentialCheckEndpoint,
+    InstanceConfigurationEndpoint,
 )
     
 from .admin import (

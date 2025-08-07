@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { Layers, Lock } from "lucide-react";
 // plane constants
 import {
-  EIssueLayoutTypes,
   EIssueFilterType,
   ISSUE_DISPLAY_FILTERS_BY_PAGE,
   EUserPermissions,
@@ -24,6 +23,7 @@ import {
   IIssueFilterOptions,
   TIssue,
   TBulkOperationsPayload,
+  EIssueLayoutTypes,
 } from "@plane/types";
 // utils
 import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";

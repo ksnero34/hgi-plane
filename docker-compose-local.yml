@@ -68,8 +68,10 @@ services:
   web:
     container_name: dev-web
     build:
-      context: .
-      dockerfile: apps/web/Dockerfile.dev
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+      args:
+        DOCKER_BUILDKIT: 1
     image: harbor.hwgeneralins.com/plane-dev/web:1.1.2-dev
     restart: unless-stopped
     networks:
@@ -134,7 +136,7 @@ services:
   api:
     container_name: dev-api
     build:
-      context: ./apps/server
+      context: ./apps/api
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
@@ -143,10 +145,10 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/server:/code
+      - ./apps/api:/code
     command: ./bin/docker-entrypoint-api-local.sh
     env_file:
-      - ./apps/server/.env
+      - ./apps/api/.env
     depends_on:
       - plane-db
       - plane-redis
@@ -155,7 +157,7 @@ services:
   worker:
     container_name: dev-worker
     build:
-      context: ./apps/server
+      context: ./apps/api
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
@@ -164,10 +166,10 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/server:/code
+      - ./apps/api:/code
     command: ./bin/docker-entrypoint-worker.sh
     env_file:
-      - ./apps/server/.env
+      - ./apps/api/.env
     depends_on:
       - api
       - plane-db
@@ -176,7 +178,7 @@ services:
   beat-worker:
     container_name: dev-beat-worker
     build:
-      context: ./apps/server
+      context: ./apps/api
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
@@ -185,10 +187,10 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/server:/code
+      - ./apps/api:/code
     command: ./bin/docker-entrypoint-beat.sh
     env_file:
-      - ./apps/server/.env
+      - ./apps/api/.env
     depends_on:
       - api
       - plane-db
@@ -198,7 +200,7 @@ services:
   migrator:
     container_name: dev-migrator
     build:
-      context: ./apps/server
+      context: ./apps/api
       dockerfile: Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
@@ -207,10 +209,10 @@ services:
     networks:
       - dev_env
     volumes:
-      - ./apps/server:/code
+      - ./apps/api:/code
     command: ./bin/docker-entrypoint-migrator.sh --settings=plane.settings.local
     env_file:
-      - ./apps/server/.env
+      - ./apps/api/.env
     depends_on:
       - plane-db
       - plane-redis

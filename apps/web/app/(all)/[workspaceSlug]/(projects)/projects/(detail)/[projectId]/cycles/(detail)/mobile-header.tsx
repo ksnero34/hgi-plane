@@ -5,16 +5,21 @@ import { useParams } from "next/navigation";
 // icons
 import { Calendar, ChevronDown, Kanban, List } from "lucide-react";
 // plane imports
-import { EIssueLayoutTypes, EIssueFilterType, ISSUE_LAYOUTS, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
+import { EIssueFilterType, ISSUE_LAYOUTS, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-// types
-import { EIssuesStoreType, IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions, TCustomField } from "@plane/types";
-// ui
+import {
+  EIssuesStoreType,
+  IIssueDisplayFilterOptions,
+  IIssueDisplayProperties,
+  IIssueFilterOptions,
+  EIssueLayoutTypes,
+} from "@plane/types";
 import { CustomMenu } from "@plane/ui";
 import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
+// helpers
 // hooks
 import {
   useCycle,

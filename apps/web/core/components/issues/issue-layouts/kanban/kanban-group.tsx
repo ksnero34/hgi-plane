@@ -6,7 +6,7 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { observer } from "mobx-react";
 // plane constants
-import { EIssueLayoutTypes, DRAG_ALLOWED_GROUPS } from "@plane/constants";
+import { DRAG_ALLOWED_GROUPS } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 //types
@@ -19,6 +19,7 @@ import {
   TIssueGroupByOptions,
   TIssueOrderByOptions,
   TCustomField,
+  EIssueLayoutTypes,
 } from "@plane/types";
 import { TOAST_TYPE, setToast } from "@plane/ui";
 import { cn } from "@plane/utils";

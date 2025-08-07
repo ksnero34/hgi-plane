@@ -8,13 +8,7 @@ export * from "./issue_sub_issues";
 export * from "./activity/base";
 export * from "./custom_field";
 
-
-export type TLoader =
-  | "init-loader"
-  | "mutation"
-  | "pagination"
-  | "loaded"
-  | undefined;
+export type TLoader = "init-loader" | "mutation" | "pagination" | "loaded" | undefined;
 
 export type TGroupedIssues = {
   [group_id: string]: string[];

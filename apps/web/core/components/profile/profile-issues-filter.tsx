@@ -2,11 +2,17 @@ import { useCallback } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane constants
-import { EIssueLayoutTypes, EIssueFilterType, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
+import { EIssueFilterType, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
-import { EIssuesStoreType, IIssueDisplayFilterOptions, IIssueDisplayProperties, IIssueFilterOptions } from "@plane/types";
+import {
+  EIssuesStoreType,
+  IIssueDisplayFilterOptions,
+  IIssueDisplayProperties,
+  IIssueFilterOptions,
+  EIssueLayoutTypes,
+} from "@plane/types";
 // components
 import { isIssueFilterActive } from "@plane/utils";
 import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, LayoutSelection } from "@/components/issues";
@@ -97,7 +103,11 @@ export const ProfileIssuesFilter = observer(() => {
         selectedLayout={activeLayout}
       />
 
-      <FiltersDropdown title={t("common.filters")} placement="bottom-end" isFiltersApplied={isIssueFilterActive(issueFilters)}>
+      <FiltersDropdown
+        title={t("common.filters")}
+        placement="bottom-end"
+        isFiltersApplied={isIssueFilterActive(issueFilters)}
+      >
         <FilterSelection
           layoutDisplayFiltersOptions={
             activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.profile_issues[activeLayout] : undefined

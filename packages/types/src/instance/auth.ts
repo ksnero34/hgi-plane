@@ -16,9 +16,7 @@ export type TInstanceAuthenticationMethodKeys =
   | "IS_GITLAB_ENABLED"
   | "IS_OIDC_ENABLED";
 
-export type TInstanceGoogleAuthenticationConfigurationKeys =
-  | "GOOGLE_CLIENT_ID"
-  | "GOOGLE_CLIENT_SECRET";
+export type TInstanceGoogleAuthenticationConfigurationKeys = "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET";
 
 export type TInstanceGithubAuthenticationConfigurationKeys =
   | "GITHUB_CLIENT_ID"
@@ -44,9 +42,7 @@ export type TInstanceAuthenticationConfigurationKeys =
   | TInstanceGitlabAuthenticationConfigurationKeys
   | TInstanceOIDCAuthenticationConfigurationKeys;
 
-export type TInstanceAuthenticationKeys =
-  | TInstanceAuthenticationMethodKeys
-  | TInstanceAuthenticationConfigurationKeys;
+export type TInstanceAuthenticationKeys = TInstanceAuthenticationMethodKeys | TInstanceAuthenticationConfigurationKeys;
 
 export type TGetBaseAuthenticationModeProps = {
   disabled: boolean;

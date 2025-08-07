@@ -159,6 +159,10 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
           eventName: MODULE_TRACKER_EVENTS.link.delete,
           payload: { id: moduleId },
         });
+        captureError({
+          eventName: MODULE_TRACKER_EVENTS.link.delete,
+          payload: { id: moduleId },
+        });
       });
   };
 

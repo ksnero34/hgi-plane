@@ -5,7 +5,7 @@ import { EditorBubbleMenu } from "@/components/menus";
 // extensions
 import { SideMenuExtension } from "@/extensions";
 // plane editor imports
-import { RichTextEditorAdditionalExtensions } from "@/plane-editor/extensions/rich-text/extensions";
+import { RichTextEditorAdditionalExtensions } from "@/plane-editor/extensions/rich-text-extensions";
 // types
 import { EditorRefApi, IRichTextEditorProps } from "@/types";
 
@@ -17,7 +17,6 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
     extensions: externalExtensions = [],
     fileHandler,
     flaggedExtensions,
-    transformContent,
   } = props;
 
   const getExtensions = useCallback(() => {
@@ -38,11 +37,8 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
   }, [dragDropEnabled, disabledExtensions, externalExtensions, fileHandler, flaggedExtensions]);
 
   const handleChange = useCallback((json: object, html: string) => {
-    if (transformContent) {
-      html = transformContent(html);
-    }
     props.onChange?.(json, html);
-  }, [transformContent, props.onChange]);
+  }, [props.onChange]);
 
   return (
     <EditorWrapper {...props} extensions={getExtensions()} onChange={handleChange}>

@@ -7,8 +7,11 @@ from .intake import urlpatterns as intake_patterns
 from .member import urlpatterns as member_patterns
 from .storage import urlpatterns as storage_patterns
 from .workflow import urlpatterns as workflow_patterns
+from .asset import urlpatterns as asset_patterns
+from .user import urlpatterns as user_patterns
 
 urlpatterns = [
+    *asset_patterns,
     *project_patterns,
     *state_patterns,
     *issue_patterns,
@@ -18,4 +21,5 @@ urlpatterns = [
     *member_patterns,
     *storage_patterns,
     *workflow_patterns,
+    *user_patterns,
 ]

@@ -1,5 +1,5 @@
-import React, { FC } from "react";
 import { Emoji, EmojiStyle } from "emoji-picker-react";
+import React, { FC } from "react";
 import useFontFaceObserver from "use-font-face-observer";
 // local imports
 import { LUCIDE_ICONS_LIST } from "..";

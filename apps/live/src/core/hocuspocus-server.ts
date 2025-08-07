@@ -5,13 +5,8 @@ import * as Y from "yjs";
 import { handleAuthentication } from "@/core/lib/authentication.js";
 // extensions
 import { getExtensions } from "@/core/extensions/index.js";
-// utils
 import { maskPrivateInformation } from "@/core/utils/privacy-masking.js";
-// types
-import {
-  DocumentCollaborativeEvents,
-  TDocumentEventsServer,
-} from "@plane/editor/lib";
+import { DocumentCollaborativeEvents, TDocumentEventsServer } from "@plane/editor/lib";
 // editor types
 import { TUserDetails } from "@plane/editor";
 // types
@@ -204,14 +199,13 @@ export const getHocusPocusServer = async () => {
           cookie,
           userId,
         });
-      } catch (error) {
+      } catch (_error) {
         throw Error("Authentication unsuccessful!");
       }
     },
     async onStateless({ payload, document }) {
       // broadcast the client event (derived from the server event) to all the clients so that they can update their state
-      const response =
-        DocumentCollaborativeEvents[payload as TDocumentEventsServer].client;
+      const response = DocumentCollaborativeEvents[payload as TDocumentEventsServer].client;
       if (response) {
         document.broadcastStateless(response);
       }

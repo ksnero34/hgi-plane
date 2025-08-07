@@ -5,14 +5,19 @@ import { observer } from "mobx-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FileText, Folder, ChevronRight } from "lucide-react";
 // constants
-import { EPageAccess, EProjectFeatureKey, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
+import {
+  EPageAccess,
+  EProjectFeatureKey,
+  PROJECT_PAGE_TRACKER_EVENTS,
+  PROJECT_TRACKER_ELEMENTS,
+} from "@plane/constants";
 // plane types
 import { TPage } from "@plane/types";
 // plane ui
 import { Breadcrumbs, Button, Header, setToast, TOAST_TYPE } from "@plane/ui";
 // helpers
 import { BreadcrumbLink } from "@/components/common";
-import { captureClick } from "@/helpers/event-tracker.helper";
+import { captureError, captureSuccess, captureClick } from "@/helpers/event-tracker.helper";
 // hooks
 import { useProject, useCommandPalette } from "@/hooks/store";
 // plane web
@@ -71,16 +76,29 @@ export const PagesListHeader = observer(() => {
 
     await createPage(payload)
       .then((res) => {
+        captureSuccess({
+          eventName: PROJECT_PAGE_TRACKER_EVENTS.create,
+          payload: {
+            id: res?.id,
+            state: "SUCCESS",
+          },
+        });
         const pageId = `/${workspaceSlug}/projects/${currentProjectDetails?.id}/pages/${res?.id}`;
         router.push(pageId);
       })
-      .catch((err) =>
+      .catch((err) => {
+        captureError({
+          eventName: PROJECT_PAGE_TRACKER_EVENTS.create,
+          payload: {
+            state: "ERROR",
+          },
+        });
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "오류가 발생했습니다!",
-          message: "페이지를 생성할 수 없습니다. 다시 시도해주세요.",
-        })
-      )
+          message: err?.data?.error || "페이지를 생성할 수 없습니다. 다시 시도해주세요.",
+        });
+      })
       .finally(() => setIsCreatingPage(false));
   };
 

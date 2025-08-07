@@ -22,7 +22,7 @@ import { UpdateViewComponent } from "@/components/views/update-view-component";
 import { CreateUpdateWorkspaceViewModal } from "@/components/workspace";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useGlobalView, useIssues, useLabel, useUser, useUserPermissions, useCustomField } from "@/hooks/store";
+import { useGlobalView, useIssues, useLabel, useUser, useUserPermissions } from "@/hooks/store";
 import { getAreFiltersEqual } from "../../../utils";
 import { calculateFilterRemovalValue } from "@plane/utils";
 

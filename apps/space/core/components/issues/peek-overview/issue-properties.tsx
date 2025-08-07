@@ -12,7 +12,7 @@ import { Icon } from "@/components/ui";
 import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
 import { CustomFieldProperties } from "@/components/issues/custom-field-properties";
 // helpers
-import { renderFormattedDate } from "@plane/utils";
+import { renderFormattedDate } from "@/helpers/date-time.helper";
 import { shouldHighlightIssueDueDate } from "@/helpers/issue.helper";
 import { copyTextToClipboard, addSpaceIfCamelCase } from "@/helpers/string.helper";
 // hooks
