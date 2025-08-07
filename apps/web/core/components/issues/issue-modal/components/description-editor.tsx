@@ -199,7 +199,6 @@ export const IssueDescriptionEditor: React.FC<TIssueDescriptionEditorProps> = ob
                   })
                 }
                 containerClassName="pt-3 min-h-[120px]"
-                transformContent={(content: string) => maskPrivateInformation(content)}
                 // uploadFile={async (file) => {
                 uploadFile={async (blockId, file) => {
                   try {

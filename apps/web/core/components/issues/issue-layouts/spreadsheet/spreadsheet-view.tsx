@@ -3,7 +3,7 @@ import { observer } from "mobx-react";
 // plane constants
 import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
 // types
-import { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties, EIssueLayoutTypes } from "@plane/types";
+import { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties, EIssueLayoutTypes, TCustomField } from "@plane/types";
 // components
 import { LogoSpinner } from "@/components/common";
 import { MultipleSelectGroup } from "@/components/core";
