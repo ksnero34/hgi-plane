@@ -11,8 +11,7 @@ interface IIssueTypeWithNested extends IProjectIssueType {}
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 import { Logo } from "@/components/common";
-import { convertHexEmojiToDecimal } from "@plane/utils";
-import { getRandomEmoji } from "@/helpers/emoji.helper";
+import { convertHexEmojiToDecimal, getRandomEmoji } from "@plane/utils";
 
 const getDefaultLogoProp = () => ({
   in_use: "emoji" as const,
