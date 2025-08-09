@@ -1,6 +1,7 @@
 import type { HocuspocusProvider } from "@hocuspocus/provider";
 import type { AnyExtension } from "@tiptap/core";
 import { SlashCommands } from "@/extensions";
+import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
 // plane editor types
 import type { TEmbedConfig } from "@/plane-editor/types";
 // types
@@ -26,6 +27,14 @@ const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
     isEnabled: (disabledExtensions) => !disabledExtensions.includes("slash-commands"),
     getExtension: ({ disabledExtensions, flaggedExtensions }) =>
       SlashCommands({ disabledExtensions, flaggedExtensions }),
+  },
+  {
+    isEnabled: (disabledExtensions) => !disabledExtensions.includes("file"),
+    getExtension: ({ fileHandler, isEditable }) =>
+      CustomReadOnlyFileExtension({ 
+        getAssetSrc: fileHandler?.getAssetSrc || (async () => ""),
+        getAssetDownloadSrc: fileHandler?.getAssetDownloadSrc || (async () => "")
+      }),
   },
 ];
 

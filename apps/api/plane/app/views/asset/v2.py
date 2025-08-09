@@ -1114,7 +1114,7 @@ def replace_domain_in_url(request, url):
 class AssetCheckEndpoint(BaseAPIView):
     """Endpoint to check if an asset exists."""
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug, asset_id):
         asset = FileAsset.all_objects.filter(
             id=asset_id, workspace__slug=slug, deleted_at__isnull=True
@@ -1125,7 +1125,7 @@ class AssetCheckEndpoint(BaseAPIView):
 class WorkspaceAssetDownloadEndpoint(BaseAPIView):
     """Endpoint to generate a download link for an asset with content-disposition=attachment."""
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="WORKSPACE")
     def get(self, request, slug, asset_id):
         try:
             asset = FileAsset.objects.get(
@@ -1140,9 +1140,10 @@ class WorkspaceAssetDownloadEndpoint(BaseAPIView):
             )
 
         storage = S3Storage(request=request)
+        original_filename = asset.attributes.get("name", "download")
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition=f"attachment; filename={asset.asset.name}",
+            disposition=f"attachment; filename=\"{original_filename}\"",
         )
 
         return HttpResponseRedirect(signed_url)
@@ -1151,8 +1152,9 @@ class WorkspaceAssetDownloadEndpoint(BaseAPIView):
 class ProjectAssetDownloadEndpoint(BaseAPIView):
     """Endpoint to generate a download link for an asset with content-disposition=attachment."""
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="PROJECT")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="PROJECT")
     def get(self, request, slug, project_id, asset_id):
+        print(f"[ProjectAssetDownloadEndpoint] Called with asset_id: {asset_id}")
         try:
             asset = FileAsset.objects.get(
                 id=asset_id,
@@ -1160,18 +1162,26 @@ class ProjectAssetDownloadEndpoint(BaseAPIView):
                 project_id=project_id,
                 is_uploaded=True,
             )
+            print(f"[ProjectAssetDownloadEndpoint] Asset found: {asset.asset.name}")
+            print(f"[ProjectAssetDownloadEndpoint] Asset attributes: {asset.attributes}")
         except FileAsset.DoesNotExist:
+            print(f"[ProjectAssetDownloadEndpoint] Asset not found: {asset_id}")
             return Response(
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         storage = S3Storage(request=request)
+        # 원본 파일명 가져오기 (attributes에서)
+        original_filename = asset.attributes.get("name", "download")
+        print(f"[ProjectAssetDownloadEndpoint] Original filename: {original_filename}")
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition=f"attachment; filename={asset.asset.name}",
+            disposition=f"attachment; filename=\"{original_filename}\"",
         )
+        print(f"[ProjectAssetDownloadEndpoint] Generated signed URL: {signed_url}")
         # URL의 도메인을 요청 도메인으로 변경
         modified_presigned_data = modify_presigned_post_url(request, signed_url)
+        print(f"[ProjectAssetDownloadEndpoint] Modified URL: {modified_presigned_data}")
 
         return HttpResponseRedirect(modified_presigned_data)

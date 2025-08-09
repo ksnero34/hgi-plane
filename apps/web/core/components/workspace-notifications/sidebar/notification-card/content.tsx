@@ -191,12 +191,13 @@ export const NotificationContent: FC<{
           <span className="text-custom-text-300">{renderSuffix()}</span>
           {notificationField === "comment" && renderCommentBox && (
             <div className="scale-75 origin-left">
-              <LiteTextReadOnlyEditor
+              <LiteTextEditor
                 id=""
                 initialValue={newValue ?? ""}
                 workspaceId={workspaceId}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
+                editable={false}
                 displayConfig={{
                   fontSize: "small-font",
                 }}

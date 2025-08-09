@@ -106,6 +106,7 @@ export const CoreEditorExtensionsWithoutProps = [
 export const DocumentEditorExtensionsWithoutProps = [
   WorkItemEmbedExtensionConfig,
   CustomReadOnlyFileExtension({ 
-    getAssetSrc: async () => Promise.resolve("") 
+    getAssetSrc: async () => Promise.resolve(""),
+    getAssetDownloadSrc: async () => Promise.resolve("")
   }),
 ];

@@ -5,8 +5,8 @@ import { FileNode } from "./components/file-node";
 // types
 import { TFileHandler } from "@/types";
 
-export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetSrc">) => {
-  const { getAssetSrc } = props;
+export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetSrc" | "getAssetDownloadSrc">) => {
+  const { getAssetSrc, getAssetDownloadSrc } = props;
 
   return Node.create({
     name: "fileComponent",
@@ -65,6 +65,14 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
               return await getAssetSrc(path);
             } catch (error) {
               console.error("Error getting file URL:", error);
+              return "";
+            }
+          },
+          getAssetDownloadSrc: async (path: string) => {
+            try {
+              return await (getAssetDownloadSrc ? getAssetDownloadSrc(path) : getAssetSrc(path));
+            } catch (error) {
+              console.error("Error getting file download URL:", error);
               return "";
             }
           },

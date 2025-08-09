@@ -50,7 +50,7 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
         <div>
           {date} {weekDay} {timeString}
         </div>
-      </h5>
+      </h6>
     </div>
   );
 };

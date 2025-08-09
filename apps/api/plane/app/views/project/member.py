@@ -195,7 +195,7 @@ class ProjectMemberViewSet(BaseViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, pk):
         project_member = ProjectMember.objects.get(
             pk=pk, workspace__slug=slug, project_id=project_id, is_active=True

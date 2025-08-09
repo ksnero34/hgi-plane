@@ -86,7 +86,8 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
         }
         return true;
       },
-      getAssetSrc: fileHandler.getAssetSrc
+      getAssetSrc: fileHandler.getAssetSrc,
+      getAssetDownloadSrc: fileHandler.getAssetDownloadSrc
     }, "", ""),
     TiptapUnderline,
     TextStyle,

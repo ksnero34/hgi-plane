@@ -68,8 +68,8 @@ services:
   web:
     container_name: dev-web
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
       args:
         DOCKER_BUILDKIT: 1
     image: harbor.hwgeneralins.com/plane-dev/web:1.1.2-dev

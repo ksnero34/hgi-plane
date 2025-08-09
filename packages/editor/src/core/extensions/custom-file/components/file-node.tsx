@@ -71,15 +71,12 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
       let fileHandler;
       
       try {
-        // 1. 읽기 모드(fileComponent)에서 시도
-        if (editor.storage.fileComponent?.fileHandler?.getAssetSrc) {
-          fileHandler = editor.storage.fileComponent.fileHandler;
-          url = await fileHandler.getAssetSrc(`${fileId}/`);
-        }
-        // 2. 실패하면 편집 모드(customFile)에서 시도
-        else if (editor.storage.customFile?.fileHandler?.getAssetSrc) {
+        // customFile 스토리지에서 fileHandler 가져오기
+        if (editor.storage.customFile?.fileHandler?.getAssetSrc) {
           fileHandler = editor.storage.customFile.fileHandler;
           url = await fileHandler.getAssetSrc(`${fileId}/`);
+          console.log(`[FileDownload] Generated URL: ${url}`);
+          console.log(`[FileDownload] FileID: ${fileId}, FileName: ${fileName}`);
         }
       } catch (fetchError) {
         console.error("Error fetching file URL:", fetchError);
@@ -90,13 +87,32 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
         throw new Error("파일 URL을 가져오지 못했습니다");
       }
 
+      // 먼저 getAssetDownloadSrc가 있는지 확인하고 사용
+      try {
+        console.log(`[FileDownload] Checking getAssetDownloadSrc:`, !!fileHandler?.getAssetDownloadSrc);
+        if (fileHandler?.getAssetDownloadSrc) {
+          console.log(`[FileDownload] Calling getAssetDownloadSrc with: ${fileId}/`);
+          const downloadUrl = await fileHandler.getAssetDownloadSrc(`${fileId}/`);
+          console.log(`[FileDownload] Download URL: ${downloadUrl}`);
+          if (downloadUrl) {
+            url = downloadUrl;
+          }
+        } else {
+          console.log(`[FileDownload] getAssetDownloadSrc not available, using asset URL`);
+        }
+      } catch (downloadError) {
+        console.warn("Download URL generation failed, using asset URL:", downloadError);
+      }
+
       // 파일 다운로드를 위한 임시 링크 생성
       const link = document.createElement('a');
       link.href = url;
-      link.download = fileName;
+      // HTML5 download 속성 제거 - 서버의 Content-Disposition 헤더에 의존
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      console.log(`[FileDownload] Download initiated: ${fileName} from ${url}`);
     } catch (error: any) {
       console.error("Error downloading file:", error);
       const message = error?.message || "파일 다운로드에 실패했습니다.";

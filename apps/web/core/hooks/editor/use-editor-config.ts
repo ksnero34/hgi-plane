@@ -88,12 +88,6 @@ export const useEditorConfig = () => {
         validation: {
           maxFileSize,
         },
-        // 파일 핸들러에 필요한 추가 속성들 (커스텀)
-        validateFile: async (file: File) => {
-          // console.log("[getEditorFileHandlers] validateFile called with:", file.name);
-          return true;
-        },
-        fileTypes: ["*"],
       };
     },
     [assetsUploadPercentage, maxFileSize]

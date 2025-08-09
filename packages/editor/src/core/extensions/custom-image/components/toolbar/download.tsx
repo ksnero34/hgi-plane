@@ -9,11 +9,21 @@ type Props = {
 export const ImageDownloadAction: React.FC<Props> = (props) => {
   const { src } = props;
 
+  const handleDownload = () => {
+    // 파일과 동일한 방식으로 다운로드 링크 생성
+    const link = document.createElement('a');
+    link.href = src;
+    // HTML5 download 속성 제거 - 서버의 Content-Disposition 헤더에 의존
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Tooltip tooltipContent="Download">
       <button
         type="button"
-        onClick={() => window.open(src, "_blank")}
+        onClick={handleDownload}
         className="flex-shrink-0 h-full grid place-items-center text-white/60 hover:text-white transition-colors"
         aria-label="Download image"
       >

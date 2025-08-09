@@ -3,7 +3,6 @@
 import { FC, useState } from "react";
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { motion, AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react";
 import { User, ChevronUp, ChevronDown } from "lucide-react";
 import { IUser } from "@plane/types";
@@ -107,14 +106,10 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
           </tr>
         </thead>
         <tbody className="divide-y divide-custom-border-200">
-          <AnimatePresence>
+          <>
             {sortedMembers.map((member) => (
-              <motion.tr
+              <tr
                 key={member.id}
-                layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
                 className={`${member.id === currentUser?.id ? "bg-custom-background-80" : ""}`}
               >
                 <td className="px-4 py-3 whitespace-nowrap">
@@ -154,9 +149,9 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                     />
                   </div>
                 </td>
-              </motion.tr>
+              </tr>
             ))}
-          </AnimatePresence>
+          </>
         </tbody>
       </table>
     </div>

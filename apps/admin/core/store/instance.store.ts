@@ -254,6 +254,9 @@ export class InstanceStore implements IInstanceStore {
     } catch (error) {
       console.error("Error updating file settings");
       throw error;
+    }
+  };
+
   disableEmail = async () => {
     const instanceConfigurations = this.instanceConfigurations;
     try {

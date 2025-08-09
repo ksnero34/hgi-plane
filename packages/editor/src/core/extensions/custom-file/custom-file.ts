@@ -71,6 +71,7 @@ export interface FileHandler {
   restore: (fileId: string) => Promise<void>;
   validateFile?: (file: File) => Promise<boolean>;
   getAssetSrc?: (path: string) => Promise<string>;
+  getAssetDownloadSrc?: (path: string) => Promise<string>;
 }
 
 export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: string, projectId: string) => {

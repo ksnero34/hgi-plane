@@ -106,13 +106,9 @@ class S3Storage(S3Boto3Storage):
 
     def _get_content_disposition(self, disposition, filename=None):
         """Helper method to generate Content-Disposition header value"""
-        if filename is None:
-            filename = uuid.uuid4().hex
-
         if filename:
-            # Encode the filename to handle special characters
-            encoded_filename = quote(filename)
-            return f"{disposition}; filename*=UTF-8''{encoded_filename}"
+            # Standard Content-Disposition format with quoted filename
+            return f'{disposition}; filename="{filename}"'
         return disposition
 
     def generate_presigned_url(
@@ -123,7 +119,11 @@ class S3Storage(S3Boto3Storage):
         disposition="inline",
         filename=None,
     ):
-        content_disposition = self._get_content_disposition(disposition, filename)
+        # disposition이 이미 완전한 Content-Disposition 헤더인 경우 그대로 사용
+        if "filename=" in disposition:
+            content_disposition = disposition
+        else:
+            content_disposition = self._get_content_disposition(disposition, filename)
         """Generate a presigned URL to share an S3 object"""
         try:
             # 내부 URL 생성 (/storage 제거)

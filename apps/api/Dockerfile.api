@@ -18,7 +18,7 @@ RUN apk add --no-cache --upgrade \
     "xmlsec" \
     "file" \
     "curl" \
-    "openjdk21-jre"
+    "openjdk21-jre" \
     "ca-certificates" \
     "openssl"
 

@@ -74,15 +74,24 @@ export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props
       </div>
     );
 
-  const description = versionDetails?.description_json;
-  if (!description) return null;
+  // description_json이 비어있으면 description_html을 사용
+  const description = versionDetails?.description_json && Object.keys(versionDetails.description_json).length > 0
+    ? versionDetails.description_json
+    : null;
+  
+  const descriptionHTML = versionDetails?.description_html;
+  
+  // 유효한 콘텐츠 값 결정
+  const content = description || descriptionHTML || "<p></p>";
+  
+  if (!content || content === "<p></p>") return null;
 
   return (
     <DocumentEditor
       key={activeVersion ?? ""}
       editable={false}
       id={activeVersion ?? ""}
-      value={description}
+      value={content}
       containerClassName="p-0 pb-64 border-none"
       displayConfig={displayConfig}
       editorClassName="pl-10"

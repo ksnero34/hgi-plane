@@ -62,15 +62,10 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:2.1.4
+    image: harbor.hwgeneralins.com/plane/api:2.1.5
 
   worker:
     container_name: bgworker
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
     restart: always
     networks:
       - dev_env
@@ -82,15 +77,10 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:2.1.4
+    image: harbor.hwgeneralins.com/plane/api:2.1.5
 
   beat-worker:
     container_name: beatworker
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
     restart: always
     networks:
       - dev_env
@@ -102,15 +92,10 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:2.1.4
+    image: harbor.hwgeneralins.com/plane/api:2.1.5
 
   migrator:
     container_name: plane-migrator
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
     restart: no
     networks:
       - dev_env
@@ -120,7 +105,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: harbor.hwgeneralins.com/plane/api:2.1.4
+    image: harbor.hwgeneralins.com/plane/api:2.1.5
 
   live:
     container_name: plane-live
