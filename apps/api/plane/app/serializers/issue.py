@@ -432,6 +432,35 @@ class IssueCreateSerializer(BaseSerializer):
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
+        
+        # Check for default workflow and set workflow_id if exists
+        from plane.db.models import WorkflowTemplate
+        
+        # Get the default workflow for the project
+        default_workflow = WorkflowTemplate.objects.filter(
+            project_id=project_id,
+            is_default=True,
+            is_active=True,
+            deleted_at__isnull=True
+        ).first()
+        
+        if default_workflow:
+            # Set the workflow_id for the new issue
+            validated_data["workflow_id"] = default_workflow.id
+            
+            # If state is not provided, set initial state from workflow
+            if not validated_data.get("state"):
+                from plane.db.models import WorkflowState
+                
+                # Get the first state that allows new issues
+                initial_state = WorkflowState.objects.filter(
+                    workflow=default_workflow,
+                    allow_new_issues=True,
+                    deleted_at__isnull=True
+                ).order_by('sequence').first()
+                
+                if initial_state:
+                    validated_data["state_id"] = initial_state.state_id
 
         # Create Issue
         issue = Issue.objects.create(**validated_data, project_id=project_id)

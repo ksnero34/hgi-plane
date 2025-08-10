@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState, useEffect } from "react";
 // plane types
 import { useTranslation } from "@plane/i18n";
 import { IUser } from "@plane/types";
@@ -40,11 +40,31 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
 
   const greeting = parseInt(hour, 10) < 6 ? "dawn" : parseInt(hour, 10) < 12 ? "morning" : parseInt(hour, 10) < 18 ? "afternoon" : "evening";
 
+  // Random welcome messages
+  const welcomeMessages = [
+    "오늘도 좋은 하루 되세요!",
+    "새로운 프로젝트를 시작해볼까요?",
+    "멋진 아이디어가 기다리고 있어요!",
+    "창의적인 작업을 시작해보세요!",
+    "오늘은 어떤 일을 해볼까요?",
+    "함께 만들어가는 즐거운 하루!",
+    "새로운 도전이 당신을 기다리고 있습니다!",
+  ];
+
+  const [randomMessage, setRandomMessage] = useState("");
+
+  useEffect(() => {
+    setRandomMessage(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
+  }, []);
+
   return (
-    <div className="flex flex-col items-center my-6">
-      <h2 className="text-2xl font-semibold text-center">
-        {t("good")} {t(greeting)}, {user?.first_name} {user?.last_name}
+    <div className="flex flex-col my-6">
+      <h2 className="text-2xl font-semibold">
+        {t("good")} {t(greeting)}, {user?.first_name} 님
       </h2>
+      <p className="text-base text-custom-text-300 mt-2 mb-4">
+        {randomMessage}
+      </p>
       <h5 className="flex items-center gap-2 font-medium text-custom-text-400">
         <div>{greeting === "dawn" ? "🌃" : greeting === "morning" ? "🌤️" : greeting === "afternoon" ? "🌥️" : "🌙️"}</div>
         <div>

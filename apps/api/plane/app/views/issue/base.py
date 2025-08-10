@@ -2167,6 +2167,12 @@ class AssignDefaultIssueTypeEndpoint(BaseAPIView):
 class BulkOperationsEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED])
     def post(self, request, slug, project_id):
+        # Import all required models at the beginning
+        from plane.db.models import (
+            WorkflowTemplate, WorkflowTransition, State, 
+            IssueComment, ProjectIssueType, IssueType, WorkflowApprovalRequest
+        )
+        
         issue_ids = request.data.get("issue_ids", [])
         properties = request.data.get("properties", {})
 
@@ -2259,12 +2265,113 @@ class BulkOperationsEndpoint(BaseAPIView):
                 for issue in editable_issues:
                     all_issue_activity_details[issue.id]['issue_obj'] = issue
 
+                # Initialize state_change_requests at the beginning
+                state_change_requests = {}  # Will store issues that need approval
 
                 # 1. Handle regular issue properties (assignees and custom_fields are handled separately)
                 regular_properties_to_update = {
                     k: v for k, v in properties.items() 
-                    if k not in ["custom_field_values", "assignee_ids"] and hasattr(Issue, k)
+                    if k not in ["custom_field_values", "assignee_ids", "type_id", "state_id"] and hasattr(Issue, k)
                 }
+                
+                # Handle state_id separately with workflow validation
+                if "state_id" in properties:
+                    new_state_id = properties["state_id"]
+                    
+                    # Get the active workflow for the project
+                    active_workflow = WorkflowTemplate.objects.filter(
+                        project_id=project_id,
+                        is_active=True,
+                        deleted_at__isnull=True
+                    ).first()
+                    
+                    if active_workflow:
+                        # Check each issue's workflow transition
+                        for issue in editable_issues:
+                            current_state_id = issue.state_id
+                            
+                            # Check if transition is allowed
+                            transition = WorkflowTransition.objects.filter(
+                                workflow=active_workflow,
+                                from_state_id=current_state_id,
+                                to_state_id=new_state_id,
+                                deleted_at__isnull=True
+                            ).first()
+                            
+                            if transition:
+                                if transition.require_reviewer:
+                                    # This transition requires approval, add to requests
+                                    state_change_requests[issue.id] = {
+                                        'issue': issue,
+                                        'from_state': current_state_id,
+                                        'to_state': new_state_id,
+                                        'transition': transition
+                                    }
+                                else:
+                                    # Direct transition allowed
+                                    Issue.objects.filter(id=issue.id).update(state_id=new_state_id)
+                                    
+                                    # Track state change for activity log
+                                    details = all_issue_activity_details[issue.id]
+                                    details['regular_old_values']['state_id'] = current_state_id
+                                    details['regular_new_values']['state_id'] = new_state_id
+                                    details['has_regular_changes'] = True
+                            else:
+                                # No valid transition found, skip this issue's state change
+                                pass
+                    else:
+                        # No workflow, allow direct state change
+                        regular_properties_to_update["state_id"] = new_state_id
+                
+                # Handle type_id separately with validation
+                if "type_id" in properties:
+                    type_id_value = properties["type_id"]
+                    
+                    try:
+                        # First, try to find as ProjectIssueType
+                        project_issue_type = ProjectIssueType.objects.filter(
+                            id=type_id_value,
+                            project_id=project_id,
+                            deleted_at__isnull=True
+                        ).first()
+                        
+                        if project_issue_type:
+                            # Use the actual IssueType ID
+                            regular_properties_to_update["type_id"] = project_issue_type.issue_type_id
+                        else:
+                            # Try to find as direct IssueType ID (for backward compatibility)
+                            issue_type = IssueType.objects.filter(
+                                id=type_id_value,
+                                workspace__slug=slug,
+                                deleted_at__isnull=True
+                            ).first()
+                            
+                            if issue_type:
+                                # Verify this IssueType is available in the project
+                                project_issue_type_exists = ProjectIssueType.objects.filter(
+                                    issue_type_id=type_id_value,
+                                    project_id=project_id,
+                                    deleted_at__isnull=True
+                                ).exists()
+                                
+                                if project_issue_type_exists:
+                                    regular_properties_to_update["type_id"] = type_id_value
+                                else:
+                                    return Response(
+                                        {"error": f"Issue type {type_id_value} is not available in this project"},
+                                        status=status.HTTP_400_BAD_REQUEST
+                                    )
+                            else:
+                                return Response(
+                                    {"error": f"Invalid issue type ID: {type_id_value}"},
+                                    status=status.HTTP_400_BAD_REQUEST
+                                )
+                    except Exception as e:
+                        return Response(
+                            {"error": f"Error validating issue type: {str(e)}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
                 # print(f"[DEBUG] regular_properties_to_update: {regular_properties_to_update}") # DEBUG
                 
                 if regular_properties_to_update:
@@ -2655,6 +2762,61 @@ class BulkOperationsEndpoint(BaseAPIView):
                             create_activity_record=False # 활동은 이미 동기적으로 생성됨
                         )
                         created_activities_for_notification = [] # 다음 이슈를 위해 리스트 초기화
+                    
+                    # Create approval request comments for state changes that require review
+                    if state_change_requests:
+                        # Get state names for better comment messages
+                        state_ids = set()
+                        for req in state_change_requests.values():
+                            state_ids.add(req['from_state'])
+                            state_ids.add(req['to_state'])
+                        
+                        states = {str(s.id): s for s in State.objects.filter(id__in=state_ids)}
+                        
+                        for issue_id, request_info in state_change_requests.items():
+                            try:
+                                issue = request_info['issue']
+                                transition = request_info['transition']
+                                from_state = states.get(str(request_info['from_state']))
+                                to_state = states.get(str(request_info['to_state']))
+                                
+                                from_state_name = from_state.name if from_state else "Unknown"
+                                to_state_name = to_state.name if to_state else "Unknown"
+                                
+                                # Create actual workflow approval request
+                                approval_request = WorkflowApprovalRequest.objects.create(
+                                    issue=issue,
+                                    workflow=transition.workflow,
+                                    transition=transition,
+                                    from_state_id=request_info['from_state'],
+                                    to_state_id=request_info['to_state'],
+                                    requester=request.user,
+                                    project_id=project_id,
+                                    workspace_id=issue.workspace_id,
+                                    comment=f"일괄 변경 작업으로 인한 상태 변경 요청: {from_state_name} → {to_state_name}",
+                                    status="pending",
+                                    created_by=request.user,
+                                    updated_by=request.user
+                                )
+                                
+                                # Create activity log for the approval request
+                                IssueActivity.objects.create(
+                                    issue_id=issue_id,
+                                    actor_id=request.user.id,
+                                    project_id=project_id,
+                                    workspace_id=issue.workspace_id,
+                                    comment=f"상태 변경 승인 요청: {from_state_name} → {to_state_name}",
+                                    field="workflow_approval",
+                                    old_value=from_state_name,
+                                    new_value=to_state_name,
+                                    verb="requested_approval",
+                                    epoch=epoch
+                                )
+                                
+                            except Exception as comment_error:
+                                print(f"Error creating approval request for issue {issue_id}: {str(comment_error)}")
+                                import traceback
+                                traceback.print_exc()
 
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -2687,6 +2849,10 @@ class BulkOperationsEndpoint(BaseAPIView):
         if non_editable_issues:
             response_data["warning"] = f"{len(non_editable_issues)} issues were skipped due to insufficient permissions"
             response_data["skipped_issues"] = len(non_editable_issues)
+        
+        if state_change_requests:
+            response_data["approval_requests"] = len(state_change_requests)
+            response_data["approval_message"] = f"{len(state_change_requests)}개 이슈의 상태 변경이 승인 대기 중입니다"
 
         return Response(response_data, status=status.HTTP_200_OK)
 
