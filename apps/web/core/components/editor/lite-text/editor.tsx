@@ -65,6 +65,8 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
   } = props;
   // states
   const [isFocused, setIsFocused] = useState(showToolbarInitially);
+  const [isEditorReady, setIsEditorReady] = useState(false);
+  const [localEditorRef, setLocalEditorRef] = useState<EditorRefApi | null>(null);
   // editor flaggings
   const { liteText: liteTextEditorExtensions } = useEditorFlagging(workspaceSlug?.toString());
   // store hooks
@@ -85,7 +87,16 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
   }
   // derived values
   const isEmpty = isCommentEmpty(props.initialValue);
-  const editorRef = isMutableRefObject<EditorRefApi>(ref) ? ref.current : null;
+  const editorRef = localEditorRef || (isMutableRefObject<EditorRefApi>(ref) ? ref.current : null);
+
+  // Handle editor ready callback
+  const handleEditorReady = React.useCallback((ready: boolean) => {
+    setIsEditorReady(ready);
+    if (ready && isMutableRefObject<EditorRefApi>(ref) && ref.current) {
+      setLocalEditorRef(ref.current);
+    }
+    rest.handleEditorReady?.(ready);
+  }, [ref, rest]);
 
   return (
     <div
@@ -125,6 +136,7 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
         containerClassName={cn(containerClassName, "relative", {
           "p-2": !editable,
         })}
+        handleEditorReady={handleEditorReady}
         {...rest}
       />
       {showToolbar && editable && (
@@ -137,9 +149,13 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
           <IssueCommentToolbar
             accessSpecifier={accessSpecifier}
             executeCommand={(item) => {
+              if (!editorRef) {
+                console.warn("Editor not ready yet");
+                return;
+              }
               // TODO: update this while toolbar homogenization
               // @ts-expect-error type mismatch here
-              editorRef?.executeMenuItemCommand({
+              editorRef.executeMenuItemCommand({
                 itemKey: item.itemKey,
                 ...item.extraProps,
               });
@@ -151,6 +167,7 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
             showAccessSpecifier={showAccessSpecifier}
             editorRef={editorRef}
             showSubmitButton={showSubmitButton}
+            isEditorReady={isEditorReady}
           />
         </div>
       )}

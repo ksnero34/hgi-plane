@@ -24,6 +24,7 @@ type Props = {
   showAccessSpecifier: boolean;
   showSubmitButton: boolean;
   editorRef: EditorRefApi | null;
+  isEditorReady?: boolean;
 };
 
 type TCommentAccessType = {
