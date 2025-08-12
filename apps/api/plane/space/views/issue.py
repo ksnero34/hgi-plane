@@ -191,7 +191,7 @@ class ProjectIssuesPublicEndpoint(BaseAPIView):
                     order_by=order_by_param,
                     queryset=issue_queryset,
                     on_results=lambda issues: issue_on_results(
-                        group_by=group_by, issues=issues, sub_group_by=sub_group_by
+                        issues=issues, group_by=group_by, sub_group_by=sub_group_by
                     ),
                     paginator_cls=GroupedOffsetPaginator,
                     group_by_fields=issue_group_values(

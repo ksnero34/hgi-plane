@@ -6,11 +6,11 @@ mkdir -p $SAVE_DIR
 
 # 이미지 목록
 IMAGES=(
-    "harbor.hwgeneralins.com/plane/api:2.1.0"
-    "harbor.hwgeneralins.com/plane/web:2.1.0"
-    "harbor.hwgeneralins.com/plane/admin:2.1.0"
-    "harbor.hwgeneralins.com/plane/space:2.1.0"
-    "harbor.hwgeneralins.com/plane/live:2.1.0"
+    "harbor.hwgeneralins.com/plane/api:2.2.0"
+    "harbor.hwgeneralins.com/plane/web:2.2.0"
+    "harbor.hwgeneralins.com/plane/admin:2.2.0"
+    "harbor.hwgeneralins.com/plane/space:2.2.0"
+    "harbor.hwgeneralins.com/plane/live:2.2.0"
 )
 
 echo "이미지 저장을 시작합니다..."

@@ -72,6 +72,10 @@ class OIDCOAuthProvider(OauthAdapter):
         # admin 로그인인지 확인
         self.is_admin = request.session.get('is_admin_login', False)
         
+        # space 인증인지 확인 (요청 경로를 통해 판단)
+        request_path = request.path
+        self.is_space = '/spaces/' in request_path or request_path.startswith('/auth/spaces/')
+        
         # 적절한 콜백 URL 설정 - 하나의 URL만 설정
         # X-Forwarded-Proto 헤더 확인
         forwarded_proto = request.META.get('HTTP_X_FORWARDED_PROTO', '')
@@ -79,6 +83,8 @@ class OIDCOAuthProvider(OauthAdapter):
         base_url = f"""{"https" if is_secure else "http"}://{request.get_host()}"""
         if self.is_admin:
             redirect_uri = f"{base_url}/api/instances/admins/oidc/callback/"
+        elif self.is_space:
+            redirect_uri = f"{base_url}/auth/spaces/oidc/callback/"
         else:
             redirect_uri = f"{base_url}/auth/oidc/callback/"
             

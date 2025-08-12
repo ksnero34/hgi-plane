@@ -816,11 +816,27 @@ class GroupedOffsetPaginator(OffsetPaginator):
                     processed_results[issue_type_id]["results"].append(result)
             return processed_results
         else:
+            import logging
+            logger = logging.getLogger("plane.paginator")
+            
             processed_results = self.__get_field_dict()
+            logger.info(f"GroupedOffsetPaginator: Processing {len(results)} results for field {self.group_by_field_name}")
+            logger.info(f"Available groups: {list(processed_results.keys())[:5]}")  # 처음 5개 그룹만 로그
+            
             for result in results:
                 group_value = str(result.get(self.group_by_field_name))
+                logger.debug(f"Result ID {result.get('id')}: group_value = {group_value}")
                 if group_value in processed_results:
                     processed_results[str(group_value)]["results"].append(result)
+                    logger.debug(f"Added to group {group_value}")
+                else:
+                    logger.warning(f"Group value {group_value} not found in processed_results")
+            
+            # 결과 요약 로그
+            for key, value in processed_results.items():
+                if value["results"]:
+                    logger.info(f"Group {key}: {len(value['results'])} results")
+            
             return processed_results
 
     def process_results(self, results):

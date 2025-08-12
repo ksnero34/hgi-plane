@@ -121,6 +121,11 @@ urlpatterns = [
         name="project-deploy-board",
     ),
     path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/project-deploy-boards/<uuid:pk>/",
+        DeployBoardViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
+        name="project-deploy-board-detail",
+    ),
+    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/mattermost-config/",
         ProjectMattermostConfigViewSet.as_view({
             "get": "retrieve",

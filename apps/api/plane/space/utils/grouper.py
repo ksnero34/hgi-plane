@@ -87,6 +87,9 @@ def issue_queryset_grouper(
         default_annotations["assignees__id"] = F("assignees__id")
     elif group_by == "labels__id":
         default_annotations["labels__id"] = F("labels__id")
+    elif group_by == "state_id":
+        # state_id는 이미 모델에 있는 필드이므로 annotate 하지 않음
+        pass
     elif group_by == "parent_child":
         # parent_child 그룹화를 위한 처리 - 최상단 부모 찾기
         # 단계적으로 처리하여 안정성 확보
@@ -110,6 +113,9 @@ def issue_queryset_grouper(
         default_annotations["assignees__id"] = F("assignees__id")
     elif sub_group_by == "labels__id":
         default_annotations["labels__id"] = F("labels__id")
+    elif sub_group_by == "state_id":
+        # state_id는 이미 모델에 있는 필드이므로 annotate 하지 않음
+        pass
     elif sub_group_by == "parent_child":
         # parent_child 그룹화를 위한 처리 - 최상단 부모 찾기
         # 단계적으로 처리하여 안정성 확보
@@ -128,12 +134,19 @@ def issue_queryset_grouper(
 
     # 그룹화 필드에 따른 어노테이션 추가
     if group_by:
-        group_field, group_condition = annotations_map.get(group_by, (group_by, Q()))
         if group_by == "parent_child":
             # parent_child 그룹화를 위한 특별 처리는 이미 위에서 처리됨
             pass
-        else:
+        elif group_by == "state_id":
+            # state_id는 이미 모델에 있는 필드이므로 annotate 하지 않음
+            pass
+        elif group_by in annotations_map:
+            # annotations_map에 정의된 필드들 처리
+            group_field, group_condition = annotations_map[group_by]
             queryset = queryset.annotate(**{group_by: group_field})
+        else:
+            # 기타 필드들은 F 표현식으로 처리
+            queryset = queryset.annotate(**{group_by: F(group_by)})
 
     return queryset.annotate(**default_annotations)
 
@@ -141,7 +154,45 @@ def issue_queryset_grouper(
 def issue_on_results(
     issues: QuerySet[Issue], group_by: Optional[str], sub_group_by: Optional[str]
 ) -> List[Dict[str, Any]]:
-    from plane.space.serializer import IssuePublicSerializer
+    # 리스트인 경우 처리
+    if isinstance(issues, list):
+        # Issue 객체 리스트인 경우 딕셔너리로 변환
+        if issues and hasattr(issues[0], 'id'):
+            # Issue 객체를 딕셔너리로 변환 (state_id 포함)
+            result = []
+            for issue in issues:
+                issue_dict = {
+                    'id': str(issue.id),
+                    'state_id': str(issue.state_id) if issue.state_id else None,
+                    'name': issue.name,
+                    'sequence_id': issue.sequence_id,
+                    'sort_order': issue.sort_order,
+                    'priority': issue.priority,
+                    'start_date': issue.start_date,
+                    'target_date': issue.target_date,
+                    'project_id': str(issue.project_id),
+                    'parent_id': str(issue.parent_id) if issue.parent_id else None,
+                    'cycle_id': str(issue.cycle_id) if issue.cycle_id else None,
+                    'created_by': str(issue.created_by),
+                    'estimate_point': issue.estimate_point,
+                    'assignee_ids': getattr(issue, 'assignee_ids', []),
+                    'label_ids': getattr(issue, 'label_ids', []),
+                    'module_ids': getattr(issue, 'module_ids', []),
+                    'vote_items': getattr(issue, 'vote_items', []),
+                    'reaction_items': getattr(issue, 'reaction_items', []),
+                }
+                # state__group 추가
+                if hasattr(issue, 'state') and issue.state:
+                    issue_dict['state__group'] = issue.state.group
+                elif hasattr(issue, 'state__group'):
+                    issue_dict['state__group'] = issue.state__group
+                else:
+                    issue_dict['state__group'] = None
+                    
+                result.append(issue_dict)
+            return result
+        # 이미 딕셔너리 리스트인 경우 그대로 반환
+        return issues
     
     FIELD_MAPPER = {
         "labels__id": "label_ids",
@@ -251,85 +302,7 @@ def issue_on_results(
         ),
     ).values(*required_fields, "vote_items", "reaction_items")
 
-    # IssuePublicSerializer를 사용하여 커스텀 필드 값들을 포함한 데이터 반환
-    serializer = IssuePublicSerializer(issues, many=True)
-    serialized_data = serializer.data
-    
-    # parent_child 또는 top_level_only 그룹화인 경우 특별 처리
-    if group_by == "parent_child" or sub_group_by == "parent_child" or group_by == "top_level_only" or sub_group_by == "top_level_only":
-        # 모든 이슈의 parent_id를 가져와서 최상단 부모를 찾기
-        issue_values = list(issues.values("id", "parent_id"))
-        
-        # 최상단 부모를 찾는 헬퍼 함수
-        def find_root_parent(issue_id, all_issues_dict):
-            """재귀적으로 최상단 부모를 찾는 함수"""
-            current_id = str(issue_id)
-            visited = set()  # 무한 루프 방지
-            
-            # print(f"[DEBUG] find_root_parent 시작 - issue_id: {issue_id}")
-            
-            while current_id and current_id not in visited:
-                visited.add(current_id)
-                
-                if current_id not in all_issues_dict:
-                    # print(f"[DEBUG] {current_id}가 all_issues_dict에 없음")
-                    break
-                    
-                parent_id = all_issues_dict[current_id]["parent_id"]
-                # print(f"[DEBUG] {current_id}의 parent_id: {parent_id}")
-                
-                if parent_id is None:
-                    # 현재 이슈가 최상단 부모
-                    # print(f"[DEBUG] 최상단 부모 찾음: {current_id}")
-                    return current_id
-                
-                # 부모로 이동
-                current_id = str(parent_id)
-                # print(f"[DEBUG] 부모로 이동: {current_id}")
-            
-            # 최상단 부모를 찾지 못한 경우
-            # print(f"[DEBUG] 최상단 부모를 찾지 못함 - visited: {visited}")
-            return None
-        
-        # 빠른 lookup을 위한 딕셔너리 생성
-        all_issues_dict = {str(issue["id"]): issue for issue in issue_values}
-        
-        for i, result in enumerate(serialized_data):
-            if i < len(issue_values):
-                issue_value = issue_values[i]
-                issue_id = str(issue_value["id"])
-                parent_id = issue_value.get("parent_id")
-                
-                # parent_child 그룹화 처리
-                if group_by == "parent_child" or sub_group_by == "parent_child":
-                    # 최상단 부모 찾기
-                    if parent_id is None:
-                        # 부모가 없으면 최상단 이슈
-                        parent_child_value = "None"
-                    else:
-                        # 부모가 있으면 최상단 부모 찾기
-                        root_parent = find_root_parent(issue_id, all_issues_dict)
-                        parent_child_value = root_parent if root_parent is not None else str(parent_id)
-                    
-                    # parent_child 그룹 값을 설정 (리스트가 아닌 단순 값으로)
-                    if group_by == "parent_child":
-                        result["parent_child"] = parent_child_value
-                    if sub_group_by == "parent_child":
-                        result["sub_parent_child"] = parent_child_value
-                
-                # top_level_only 그룹화 처리
-                if group_by == "top_level_only" or sub_group_by == "top_level_only":
-                    # 최상위 작업항목만 표시 (parent_id가 null인 것만)
-                    top_level_value = "top_level_only" if parent_id is None else None
-                    
-                    if group_by == "top_level_only":
-                        result["top_level_only"] = top_level_value
-                    if sub_group_by == "top_level_only":
-                        result["sub_top_level_only"] = top_level_value
-    
-    return serialized_data
-
-    # return issues
+    return issues
 
 
 def issue_group_values(
