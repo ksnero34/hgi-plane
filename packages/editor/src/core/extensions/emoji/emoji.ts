@@ -193,22 +193,10 @@ export const Emoji = Node.create<EmojiOptions, EmojiStorage>({
       return ["span", attributes, `:${node.attrs.name}:`];
     }
 
-    const renderFallbackImage = false;
-
     return [
       "span",
       attributes,
-      renderFallbackImage
-        ? [
-            "img",
-            {
-              src: emojiItem.fallbackImage,
-              draggable: "false",
-              loading: "lazy",
-              align: "absmiddle",
-            },
-          ]
-        : emojiItem.emoji || `:${emojiItem.shortcodes[0]}:`,
+      emojiItem.emoji || `:${emojiItem.shortcodes[0]}:`,
     ];
   },
 

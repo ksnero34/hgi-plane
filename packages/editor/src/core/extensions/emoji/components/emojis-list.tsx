@@ -176,11 +176,7 @@ export const EmojiList = forwardRef<EmojiListRef, EmojiListProps>((props, ref) =
                 onMouseEnter={() => setSelectedIndex(index)}
               >
                 <span className="size-5 grid place-items-center flex-shrink-0 text-base">
-                  {item.fallbackImage ? (
-                    <img src={item.fallbackImage} alt={item.name} className="size-4 object-contain" />
-                  ) : (
-                    item.emoji
-                  )}
+                  {item.emoji}
                 </span>
                 <span className="flex-grow truncate">
                   <span className="font-medium">:{item.name}:</span>

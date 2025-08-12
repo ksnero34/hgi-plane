@@ -29,6 +29,7 @@ export const PeekOverviewIssueDetails: React.FC<Props> = observer((props) => {
           editable={false}
           anchor={anchor}
           id={issueDetails.id}
+          key={`${issueDetails.id}-${description?.slice(0, 50)}`} // Force re-render when content changes
           initialValue={
             !description ||
             description === "" ||

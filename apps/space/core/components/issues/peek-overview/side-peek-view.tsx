@@ -31,7 +31,7 @@ export const SidePeekView: React.FC<Props> = observer((props) => {
         <PeekOverviewHeader handleClose={handleClose} issueDetails={issueDetails} />
       </div>
       {issueDetails ? (
-        <div className="h-full w-full overflow-y-auto px-6">
+        <div className="h-full w-full overflow-y-auto px-6 vertical-scrollbar scrollbar-md">
           {/* issue title and description */}
           <div className="w-full">
             <PeekOverviewIssueDetails anchor={anchor} issueDetails={issueDetails} />

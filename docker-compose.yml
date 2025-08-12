@@ -11,7 +11,7 @@ services:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:2.2.0
+    image: harbor.hwgeneralins.com/plane/web:2.2.1
 
   admin:
     container_name: admin
@@ -41,7 +41,7 @@ services:
     depends_on:
       - api
       - web
-    image: harbor.hwgeneralins.com/plane/space:2.2.0
+    image: harbor.hwgeneralins.com/plane/space:2.2.1
 
   api:
     container_name: api
