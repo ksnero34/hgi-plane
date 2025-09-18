@@ -18,11 +18,12 @@ export const NotificationContent: FC<{
   renderCommentBox?: boolean;
 }> = ({ notification, workspaceId, workspaceSlug, projectId, renderCommentBox = false }) => {
   const { data, triggered_by_details: triggeredBy } = notification;
-  const notificationField = data?.issue_activity.field;
-  const newValue = data?.issue_activity.new_value;
-  const oldValue = data?.issue_activity.old_value;
-  const verb = data?.issue_activity.verb;
-  const customFieldName = data?.issue_activity.custom_field_name;
+  const notificationField = data?.issue_activity?.field;
+  const newValue = data?.issue_activity?.new_value;
+  const oldValue = data?.issue_activity?.old_value;
+  const verb = data?.issue_activity?.verb;
+  const customFieldName = data?.issue_activity?.custom_field_name;
+  const approvalRequest = data?.approval_request;
 
   const renderTriggerName = () => (
     <span className="text-custom-text-100 font-medium">
@@ -31,6 +32,10 @@ export const NotificationContent: FC<{
   );
 
   const renderAction = () => {
+    // Workflow approval request specific message (simple, value-less)
+    if (approvalRequest && !notificationField) {
+      return "님이 이슈의 상태 변경을 요청했습니다";
+    }
     if (!notificationField) return "";
     if (notificationField === "duplicate")
       return verb === "created"
@@ -82,6 +87,8 @@ export const NotificationContent: FC<{
   };
 
   const renderValue = () => {
+    // For approval request, we don't show raw IDs. Keep it empty.
+    if (approvalRequest && !notificationField) return null;
     if (notificationField === "None") return null;
     if (notificationField === "comment") return renderCommentBox ? null : sanitizeCommentForNotification(newValue);
     if (notificationField === "target_date" || notificationField === "start_date") return renderFormattedDate(newValue);
@@ -117,6 +124,9 @@ export const NotificationContent: FC<{
   };
 
   const renderSuffix = () => {
+    if (approvalRequest && !notificationField) {
+      return "";
+    }
     if (notificationField === "priority") return " 로 변경했습니다.";
     if (notificationField === "state") {
       // 워크플로우 승인 정보 파싱
@@ -171,9 +181,9 @@ export const NotificationContent: FC<{
     return "";
   };
 
-  const needsValueDisplay = [
-    "None", "archived_at"
-  ].indexOf(notificationField || "") === -1;
+  const needsValueDisplay = approvalRequest && !notificationField
+    ? true
+    : ["None", "archived_at"].indexOf(notificationField || "") === -1;
 
   // 마침표가 필요없는 필드 목록
   const fieldsWithCustomSuffix = [

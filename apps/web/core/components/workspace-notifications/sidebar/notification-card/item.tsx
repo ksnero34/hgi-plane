@@ -33,7 +33,8 @@ export const NotificationItem: FC<TNotificationItem> = observer((props) => {
   const issueId = notification?.data?.issue?.id || undefined;
   const workspace = getWorkspaceBySlug(workspaceSlug);
 
-  const notificationField = notification?.data?.issue_activity.field || undefined;
+  const isApprovalRequest = !!notification?.data?.approval_request;
+  const notificationField = notification?.data?.issue_activity?.field || undefined;
   const notificationTriggeredBy = notification.triggered_by_details || undefined;
 
   const handleNotificationIssuePeekOverview = async () => {
@@ -56,7 +57,15 @@ export const NotificationItem: FC<TNotificationItem> = observer((props) => {
     }
   };
 
-  if (!workspaceSlug || !notificationId || !notification?.id || !notificationField || !workspace?.id || !projectId)
+  // Allow either traditional issue_activity notifications or approval_request notifications
+  if (
+    !workspaceSlug ||
+    !notificationId ||
+    !notification?.id ||
+    (!notificationField && !isApprovalRequest) ||
+    !workspace?.id ||
+    !projectId
+  )
     return <></>;
 
   return (

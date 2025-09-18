@@ -61,7 +61,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             # 문서
             'pdf': ['application/pdf', 'application/octet-stream'],
             'doc': ['application/msword', 'application/octet-stream'],
-            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream'],
+            'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream', 'application/haansoftdocx'],
             'xls': ['application/vnd.ms-excel', 'application/octet-stream'],
             'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'],
             'ppt': ['application/vnd.ms-powerpoint', 'application/octet-stream'],

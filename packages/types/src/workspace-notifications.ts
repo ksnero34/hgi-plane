@@ -23,7 +23,8 @@ export type TNotificationIssueLite = {
 
 export type TNotificationData = {
   issue: TNotificationIssueLite | undefined;
-  issue_activity: {
+  // Optional: present for typical issue activity notifications
+  issue_activity?: {
     id: string | undefined;
     actor: string | undefined;
     field: string | undefined;
@@ -32,6 +33,12 @@ export type TNotificationData = {
     new_value: string | undefined;
     old_value: string | undefined;
     custom_field_name: string | undefined;
+  };
+  // Optional: present for workflow approval request notifications
+  approval_request?: {
+    id: string | undefined;
+    from_state: string | undefined;
+    to_state: string | undefined;
   };
 };
 
