@@ -6,10 +6,11 @@ import { X } from "lucide-react";
 // plane imports
 import { ROLE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Avatar,CustomSelect, Input, CustomSearchSelect } from "@plane/ui";
+import { Avatar, CustomSelect, Input,CustomSearchSelect } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
-import { useUserPermissions, useMember } from "@/hooks/store";
+import { useUserPermissions } from "@/hooks/store/user";
+import { useMember } from "@/hooks/store/use-member";
 import { InvitationFormValues } from "@/hooks/use-workspace-invitation";
 import { getFileURL } from "@plane/utils";
 import { useEffect, useState } from "react";
@@ -36,7 +37,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
   const { t } = useTranslation();
   // store hooks
   const { workspaceInfoBySlug } = useUserPermissions();
-  const { 
+  const {
     workspace: { workspaceMemberIds, getWorkspaceMemberDetails },
     instance: { instanceMemberIds, getInstanceMemberDetails, fetchInstanceMembers }
   } = useMember();
@@ -111,7 +112,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                   setError(null);
                   onChange(email);
                   e.currentTarget.value = ''; // 입력 필드 초기화
-                  
+
                   // 드롭다운 버튼 클릭하여 닫기
                   const button = document.querySelector('[id^="headlessui-combobox-button-"]');
                   if (button) {
@@ -119,7 +120,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                     button.setAttribute('data-headlessui-state', '');
                     (button as HTMLElement).click();
                   }
-                  
+
                   // 포커스 해제
                   e.currentTarget.blur();
                 }

@@ -9,7 +9,8 @@ import { Button, Loader } from "@plane/ui";
 // types
 import { IWorkflowState } from "@plane/types";
 // hooks
-import { useWorkflow, useProjectState } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
+import { useProjectState } from "@/hooks/store/use-project-state";
 // components
 import { WorkflowStateModal } from "./workflow-state-modal";
 

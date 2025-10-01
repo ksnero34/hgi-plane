@@ -17,17 +17,21 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
   // store hooks
   const { t } = useTranslation();
 
-  const hour = new Intl.DateTimeFormat("en-US", {
+  const hour = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: user?.user_timezone,
     hour12: false,
     hour: "numeric",
   }).format(currentTime);
 
-  const date = new Intl.DateTimeFormat("ko-KR", {
+  const dateString = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: user?.user_timezone,
+    year: "numeric",
     month: "long",
     day: "numeric",
   }).format(currentTime);
 
   const weekDay = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: user?.user_timezone,
     weekday: "long",
   }).format(currentTime);
 
@@ -68,7 +72,7 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
       <h5 className="flex items-center gap-2 font-medium text-custom-text-400">
         <div>{greeting === "dawn" ? "🌃" : greeting === "morning" ? "🌤️" : greeting === "afternoon" ? "🌥️" : "🌙️"}</div>
         <div>
-          {weekDay}, {date} {timeString}
+          {`${dateString} ${weekDay} ${timeString}`}
         </div>
       </h5>
     </div>

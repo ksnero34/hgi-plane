@@ -6,23 +6,28 @@ import { Signal, Tag, Triangle, LayoutPanelTop, CalendarClock, CalendarCheck2, U
 // i18n
 import { useTranslation } from "@plane/i18n";
 // ui icons
-import { DiceIcon, DoubleCircleIcon, ContrastIcon } from "@plane/ui";
+import { DiceIcon, DoubleCircleIcon, ContrastIcon } from "@plane/propel/icons";
 import { cn, getDate, renderFormattedPayloadDate, shouldHighlightIssueDueDate } from "@plane/utils";
 // components
-import {
-  DateDropdown,
-  EstimateDropdown,
-  PriorityDropdown,
-  MemberDropdown,
-  StateDropdown,
-} from "@/components/dropdowns";
+import { DateDropdown } from "@/components/dropdowns/date";
+import { EstimateDropdown } from "@/components/dropdowns/estimate";
 import { ButtonAvatars } from "@/components/dropdowns/member/avatar";
-import { IssueCycleSelect, IssueModuleSelect, IssueLabel, TIssueOperations } from "@/components/issues";
+import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
+import { PriorityDropdown } from "@/components/dropdowns/priority";
+import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // helpers
-import { useIssueDetail, useMember, useProject, useProjectState } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useMember } from "@/hooks/store/use-member";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web components
-import { IssueParentSelectRoot, IssueWorklogProperty } from "@/plane-web/components/issues";
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
+import { IssueParentSelectRoot } from "@/plane-web/components/issues/issue-details/parent-select-root";
+import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/property";
+import type { TIssueOperations } from "../issue-detail";
+import { IssueCycleSelect } from "../issue-detail/cycle-select";
+import { IssueLabel } from "../issue-detail/label";
+import { IssueModuleSelect } from "../issue-detail/module-select";
 import { CustomFieldProperties } from "./custom-field-properties";
 
 interface IPeekOverviewProperties {
@@ -60,7 +65,7 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
   return (
     <div>
       <h6 className="text-sm font-medium">{t("common.properties")}</h6>
-      {/* TODO: render properties using a common components */}
+      {/* TODO: render properties using a common component */}
       <div className={`w-full space-y-2 mt-3 ${disabled ? "opacity-60" : ""}`}>
         {/* state */}
         <div className="flex w-full items-center gap-3 h-8">
@@ -208,14 +213,14 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
               <span>{t("common.estimate")}</span>
             </div>
             <EstimateDropdown
-              value={issue.estimate_point}
+              value={issue.estimate_point ?? undefined}
               onChange={(val) => issueOperations.update(workspaceSlug, projectId, issueId, { estimate_point: val })}
               projectId={projectId}
               disabled={disabled}
               buttonVariant="transparent-with-text"
               className="w-3/4 flex-grow group"
               buttonContainerClassName="w-full text-left"
-              buttonClassName={`text-sm ${issue?.estimate_point !== null ? "" : "text-custom-text-400"}`}
+              buttonClassName={`text-sm ${issue?.estimate_point !== undefined ? "" : "text-custom-text-400"}`}
               placeholder="None"
               hideIcon
               dropdownArrow
@@ -274,6 +279,17 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
           />
         </div>
 
+        {/* label */}
+        <div className="flex w-full items-center gap-3 min-h-8">
+          <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">
+            <Tag className="h-4 w-4 flex-shrink-0" />
+            <span>{t("common.labels")}</span>
+          </div>
+          <div className="flex w-full flex-col gap-3 truncate">
+            <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
+          </div>
+        </div>
+
         <IssueWorklogProperty
           workspaceSlug={workspaceSlug}
           projectId={projectId}
@@ -299,16 +315,6 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
           disabled={disabled}
         />
 
-        {/* label */}
-        <div className="flex w-full items-center gap-3 min-h-8">
-          <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">
-            <Tag className="h-4 w-4 flex-shrink-0" />
-            <span>{t("common.labels")}</span>
-          </div>
-          <div className="flex w-full flex-col gap-3 truncate">
-            <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
-          </div>
-        </div>
       </div>
     </div>
   );

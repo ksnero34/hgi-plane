@@ -24,11 +24,13 @@ import {
   User,
 } from "lucide-react";
 import { IIssueActivity, TCustomField } from "@plane/types";
-import { Tooltip, BlockedIcon, BlockerIcon, RelatedIcon, EpicIcon, LayersIcon, DiceIcon, Intake } from "@plane/ui";
+import { Tooltip } from "@plane/ui";
+import { BlockedIcon, BlockerIcon, RelatedIcon, EpicIcon, LayersIcon, DiceIcon, Intake } from "@plane/propel/icons";
 // helpers
 import { renderFormattedDate, generateWorkItemLink, capitalizeFirstLetter } from "@plane/utils";
 import { convertMinutesToHoursMinutesString } from "@plane/utils";
-import { useLabel, useMember } from "@/hooks/store";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // types
 
@@ -475,14 +477,14 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            uploaded a new{" "}
+            새로운 첨부파일 {" "}
             <a
               href={`${activity.new_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-              attachment
+              첨부파일
             </a>
             {showIssue && (
               <>
@@ -490,7 +492,7 @@ const activityDetails: {
                 <IssueLink activity={activity} /> 에{" "}
               </>
             )}
-            업로드 했습니다.
+            추가했습니다.
           </>
         );
       else
@@ -660,7 +662,7 @@ const activityDetails: {
       else if (activity.verb === "converted")
         return (
           <>
-            converted <IssueLink activity={activity} /> to an epic
+            <IssueLink activity={activity} /> 을 에픽으로 변환했습니다.
           </>
         );
       else
@@ -677,19 +679,19 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            created <IssueLink activity={activity} />
+            <IssueLink activity={activity} /> 을 생성했습니다.
           </>
         );
       else if (activity.verb === "converted")
         return (
           <>
-            converted <IssueLink activity={activity} /> to a work item
+            <IssueLink activity={activity} /> 을 작업 항목으로 변환했습니다.
           </>
         );
       else
         return (
           <>
-            deleted <IssueLink activity={activity} />
+            <IssueLink activity={activity} /> 을 삭제했습니다.
           </>
         );
     },
@@ -1075,6 +1077,42 @@ const activityDetails: {
               {approvalMatch[2] && (
                 <>, 승인 코멘트: <span className="font-medium text-custom-text-100">{approvalMatch[2]}</span></>
               )})
+            </span>
+          )}
+        </>
+      );
+    },
+    icon: <LayoutGridIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
+  },
+  workflow_approval: {
+    message: (activity, showIssue) => {
+      const comment = activity.comment || "";
+      const reason = comment.includes(":") ? comment.split(":").slice(1).join(":").trim() : "";
+      const isSelfApproval = comment.toLowerCase().startsWith("self-approved");
+      const oldState = activity.old_value;
+      const newState = activity.new_value;
+
+      return (
+        <>
+          {isSelfApproval ? "본인 승인으로 " : ""}
+          {showIssue ? (
+            <>
+              <IssueLink activity={activity} /> 의 상태를{" "}
+            </>
+          ) : (
+            "이 작업항목의 상태를 "
+          )}
+          {oldState && (
+            <>
+              <span className="font-medium text-custom-text-100 break-all">{oldState}</span>
+              {"에서 "}
+            </>
+          )}
+          <span className="font-medium text-custom-text-100 break-all">{newState}</span>
+          {" (으)로 변경하는 것을 승인했습니다."}
+          {reason && (
+            <span className="text-custom-text-200">
+              {" "}(승인 사유: <span className="font-medium text-custom-text-100 break-all">{reason}</span>)
             </span>
           )}
         </>

@@ -2,7 +2,7 @@ import { FC } from "react";
 import { observer } from "mobx-react";
 import { Triangle } from "lucide-react";
 // hooks
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
 // utilities
@@ -20,28 +20,28 @@ export const IssueEstimateActivity: FC<TIssueEstimateActivity> = observer((props
   const activity = getActivityById(activityId);
 
   if (!activity) return <></>;
-  
+
   const getEstimateLabel = (field?: string | null) => {
     if (!field) return "소요자원";
-    
+
     if (field.includes("time")) return "소요시간";
     if (field.includes("points")) return "포인트";
     if (field.includes("categories")) return "카테고리";
-    
+
     return "소요자원";
   };
 
   const estimateLabel = getEstimateLabel(activity.field);
-  
+
   // 시간 타입일 경우 분 단위를 시간:분 형식으로 변환
   const formatEstimateValue = (value: string | null, field?: string | null) => {
     if (!value) return "";
-    
+
     // 시간 추정값인 경우 분 단위를 시간:분 형식으로 변환
     if (field && field.includes("time")) {
       return convertMinutesToHoursMinutesString(Number(value)).trim();
     }
-    
+
     return value;
   };
 

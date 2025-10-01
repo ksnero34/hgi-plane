@@ -9,7 +9,7 @@ import { Button, Loader } from "@plane/ui";
 // types
 import { IWorkflowTransition } from "@plane/types";
 // hooks
-import { useWorkflow } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 // components
 import { WorkflowTransitionModal } from "./workflow-transition-modal";
 

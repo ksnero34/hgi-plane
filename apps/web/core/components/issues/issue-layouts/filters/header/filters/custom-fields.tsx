@@ -6,11 +6,11 @@ import { Calendar, User, Users, Tag as TagIcon } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { TCustomField } from "@plane/types";
 // components
-import { FilterHeader, FilterOption } from "@/components/issues";
-import { DateFilterModal } from "@/components/core";
+import { FilterHeader, FilterOption } from "../helpers";
+import { DateFilterModal } from "@/components/core/filters/date-filter-modal";
 import { Avatar } from "@plane/ui";
 // hooks
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 // helpers
 import { getFileURL } from "@plane/utils";
 

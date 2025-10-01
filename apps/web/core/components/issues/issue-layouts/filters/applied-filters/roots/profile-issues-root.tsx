@@ -1,14 +1,14 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+// plane imports
 import { EIssueFilterType } from "@plane/constants";
 import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 // hooks
-// components
-import { AppliedFiltersList } from "@/components/issues";
-// types
-import { useIssues, useLabel } from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
 import { useWorkspaceIssueProperties } from "@/hooks/use-workspace-issue-properties";
 // helpers
+import { AppliedFiltersList } from "../filters-list";
 import { calculateFilterRemovalValue } from "@plane/utils";
 
 export const ProfileIssuesAppliedFiltersRoot: React.FC = observer(() => {

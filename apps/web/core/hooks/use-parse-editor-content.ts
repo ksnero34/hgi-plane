@@ -5,7 +5,7 @@ import { TSearchEntities } from "@plane/types";
 // helpers
 import { getBase64Image } from "@plane/utils";
 // hooks
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 // plane web hooks
 import { useAdditionalEditorMention } from "@/plane-web/hooks/use-additional-editor-mention";
 
@@ -101,17 +101,17 @@ export const useParseEditorContent = () => {
           // 원래 너비와 높이 속성값 가져오기
           const originalHeight = component.getAttribute("height") ?? "";
           const originalWidth = component.getAttribute("width") ?? "";
-          
+
           // create an img element to replace the image-component
           const img = doc.createElement("img");
           img.src = src;
-          
+
           // 이미지 크기 조정 - PDF에서 너무 커지지 않도록 제한
           // 퍼센트 값이면 최대 50%로 제한
           if (originalWidth.endsWith('%')) {
             const widthPercent = Math.min(parseInt(originalWidth), 50);
             img.style.width = `${widthPercent}%`;
-          } 
+          }
           // 픽셀 값이면 최대 500px로 제한
           else if (originalWidth.endsWith('px')) {
             const widthPx = Math.min(parseInt(originalWidth), 500);
@@ -121,43 +121,43 @@ export const useParseEditorContent = () => {
           else {
             img.style.width = "40%";
           }
-          
+
           // 높이는 자동으로 설정하여 비율 유지
           img.style.height = "auto";
-          
+
           // replace the image-component with the img element
           component.replaceWith(img);
         });
       }
       // convert all images to base64
       const imgElements = doc.querySelectorAll("img");
-      
+
       // 이미지 처리 로직 간소화
       await Promise.all(
         Array.from(imgElements).map(async (img) => {
           const src = img.getAttribute("src");
           if (!src) return;
-          
+
           try {
             // 이미 data:image 형식이면 유지
             if (src.startsWith("data:")) return;
-            
+
             // 이미지 URL 준비
             let fetchUrl = src;
-            
+
             // 1. 상대 경로면 origin 추가
             if (src.startsWith("/")) {
               fetchUrl = `${window.location.origin}${src}`;
-            } 
+            }
             // 2. UUID 패턴 확인 (UUID만 있는 경우)
             else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(src)) {
               // URL에서 현재 경로 정보 추출
               const path = window.location.pathname.split('/');
-              
+
               // 워크스페이스 슬러그와 프로젝트 ID 추출
               let workspaceSlug = '';
               let projectId = '';
-              
+
               // 페이지 URL에서 정보 추출
               for (let i = 0; i < path.length; i++) {
                 if ((path[i] === 'workspaces' || path[i] === 'workspace') && i+1 < path.length) {
@@ -166,12 +166,12 @@ export const useParseEditorContent = () => {
                   // 첫 번째 경로 세그먼트를 워크스페이스로 사용
                   workspaceSlug = path[1];
                 }
-                
+
                 if (path[i] === 'projects' && i+1 < path.length) {
                   projectId = path[i+1];
                 }
               }
-              
+
               // API 경로 형식으로 구성
               if (workspaceSlug && projectId) {
                 fetchUrl = `${window.location.origin}/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${src}/`;
@@ -187,11 +187,11 @@ export const useParseEditorContent = () => {
               mode: "cors",
               redirect: "follow"
             });
-            
+
             if (!response.ok) {
               throw new Error(`이미지 가져오기 실패: ${response.status} ${response.statusText}`);
             }
-            
+
             // 이미지를 blob으로 변환 후 base64로 인코딩
             const blob = await response.blob();
             const reader = new FileReader();
@@ -200,10 +200,10 @@ export const useParseEditorContent = () => {
               reader.onerror = reject;
               reader.readAsDataURL(blob);
             });
-            
+
             // 이미지 소스 교체
             img.src = base64;
-            
+
             // react-pdf에서 지원하지 않는 스타일 제거
             if (img.style.whiteSpace) img.style.whiteSpace = "";
           } catch (error) {
@@ -235,23 +235,23 @@ export const useParseEditorContent = () => {
         const fileName = component.getAttribute("fileName") || component.getAttribute("data-file-name") || "Unknown file";
         const fileSize = Number(component.getAttribute("fileSize") || component.getAttribute("data-file-size") || "0");
         const fileType = component.getAttribute("fileType") || component.getAttribute("data-file-type") || "";
-        
+
         // 파일 확장자 추출
         const extension = fileName?.split(".").pop()?.toUpperCase() || "";
-        
+
         // 파일 크기 포맷팅
         const formattedSize = fileSize ? (
-          fileSize >= 1024 * 1024 
+          fileSize >= 1024 * 1024
             ? `${(fileSize / (1024 * 1024)).toFixed(1)}MB`
             : `${Math.round(fileSize / 1024)}KB`
         ) : "";
-        
+
         // 파일 유형에 따른 아이콘 문자 결정
         let iconChar = extension.charAt(0) || "F";
         let iconColor = "#3b82f6"; // 기본 파란색
         let iconBgColor = "#e6efff";
         let iconBorderColor = "#d1e0ff";
-        
+
         // 파일 유형에 따른 색상 및 아이콘 설정
         if (extension) {
           switch (extension.toLowerCase()) {
@@ -346,7 +346,7 @@ export const useParseEditorContent = () => {
               break;
           }
         }
-        
+
         // 파일 노드를 완전히 새롭게 만듭니다 - 매우 단순한 구조로
         const div = doc.createElement("div");
         div.style.cssText = `
@@ -361,7 +361,7 @@ export const useParseEditorContent = () => {
           font-size: 12px;
           align-items: center;
         `;
-        
+
         // 왼쪽 아이콘 컨테이너
         const iconContainer = doc.createElement("div");
         iconContainer.style.cssText = `
@@ -372,7 +372,7 @@ export const useParseEditorContent = () => {
           margin-right: 10px;
           flex-shrink: 0;
         `;
-        
+
         // 아이콘 부분
         const icon = doc.createElement("span");
         icon.style.cssText = `
@@ -390,7 +390,7 @@ export const useParseEditorContent = () => {
           text-align: center;
         `;
         icon.textContent = iconChar;
-        
+
         // 오른쪽 컨텐츠 컨테이너
         const contentContainer = doc.createElement("div");
         contentContainer.style.cssText = `
@@ -400,7 +400,7 @@ export const useParseEditorContent = () => {
           min-width: 0;
           justify-content: center;
         `;
-        
+
         // 파일명 부분
         const name = doc.createElement("div");
         name.style.cssText = `
@@ -413,7 +413,7 @@ export const useParseEditorContent = () => {
           line-height: 1.3;
         `;
         name.textContent = fileName;
-        
+
         // 메타데이터 부분
         const meta = doc.createElement("div");
         meta.style.cssText = `
@@ -422,16 +422,16 @@ export const useParseEditorContent = () => {
           line-height: 1.3;
         `;
         meta.textContent = `${extension} • ${formattedSize || ""}`;
-        
+
         // 전체 조립
         contentContainer.appendChild(name);
         contentContainer.appendChild(meta);
-        
+
         iconContainer.appendChild(icon);
-        
+
         div.appendChild(iconContainer);
         div.appendChild(contentContainer);
-        
+
         // 원래 컴포넌트를 새 컴포넌트로 교체
         component.replaceWith(div);
       });
@@ -494,13 +494,13 @@ export const useParseEditorContent = () => {
           margin-left: 0 !important;
         }
       `;
-      
+
       // 추가: 이미지 및 파일 컴포넌트 조정 - 모든 이미지에 직접 스타일 적용
       const allImages = doc.querySelectorAll('img');
       allImages.forEach(img => {
         // 기존 스타일 대신 새 스타일 적용
         img.removeAttribute('style'); // 기존 스타일 모두 제거
-        
+
         // 새 스타일 직접 적용 - 크기 강제 제한
         if(img.hasAttribute('width') && img.getAttribute('width')?.includes('%')) {
           // width 속성이 있고 %가 포함된 경우
@@ -516,13 +516,13 @@ export const useParseEditorContent = () => {
           img.style.width = '90%';
           img.style.maxWidth = '500px';
         }
-        
+
         img.style.height = 'auto';
         img.style.margin = '15px auto';
         img.style.display = 'block';
         img.style.objectFit = 'contain';
       });
-      
+
       // 워드랩 적용
       doc.querySelectorAll('div, p, span, td').forEach(el => {
         // HTMLElement로 타입 캐스팅
@@ -601,17 +601,17 @@ export const useParseEditorContent = () => {
           const fileName = fileName1 || fileName2 || "Unknown file";
           const fileSize = Number(fileSize1 || fileSize2 || "0");
           const fileType = fileType1 || fileType2 || "";
-          
+
           const extension = fileName?.split(".").pop()?.toUpperCase() || "";
           const formattedSize = fileSize ? (
-            fileSize >= 1024 * 1024 
+            fileSize >= 1024 * 1024
               ? `${(fileSize / (1024 * 1024)).toFixed(1)}MB`
               : `${Math.round(fileSize / 1024)}KB`
           ) : "";
-          
+
           // 파일 유형에 따른 이모티콘 선택
           let fileEmoji = "📎"; // 기본 파일 이모티콘
-          
+
           if (extension) {
             const ext = extension.toLowerCase();
             // 문서 파일
@@ -647,11 +647,11 @@ export const useParseEditorContent = () => {
               fileEmoji = "📝";
             }
           }
-          
+
           return `${fileEmoji} **${fileName}** (${extension} ${formattedSize ? `• ${formattedSize}` : ""})`;
         }
       );
-      
+
       const end = performance.now();
       console.log("Exec time:", end - start);
       return parsedMarkdownContent;

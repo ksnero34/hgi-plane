@@ -32,10 +32,11 @@ import {
   TGetColumns,
 } from "@plane/types";
 // plane ui
-import { Avatar, CycleGroupIcon, DiceIcon, ISvgIcons, PriorityIcon, StateGroupIcon } from "@plane/ui";
+import { Avatar } from "@plane/ui";
+import { CycleGroupIcon, DiceIcon, PriorityIcon, StateGroupIcon, ISvgIcons } from "@plane/propel/icons";
 import { renderFormattedDate, getFileURL } from "@plane/utils";
 // components
-import { Logo } from "@/components/common";
+import { Logo } from "@/components/common/logo";
 // helpers
 // store
 import { store } from "@/lib/store-context";
@@ -73,7 +74,8 @@ export const isWorkspaceLevel = (type: EIssuesStoreType) =>
     EIssuesStoreType.GLOBAL,
     EIssuesStoreType.TEAM,
     EIssuesStoreType.TEAM_VIEW,
-    EIssuesStoreType.PROJECT_VIEW,
+    EIssuesStoreType.TEAM_PROJECT_WORK_ITEMS,
+    EIssuesStoreType.WORKSPACE_DRAFT,
   ].includes(type)
     ? true
     : false;
@@ -329,7 +331,7 @@ const getCreatedByColumns = (): IGroupByColumn[] | undefined => {
 };
 
 const getParentChildColumns = (
-  groupedIssueIds?: TGroupedIssues | TSubGroupedIssues, 
+  groupedIssueIds?: TGroupedIssues | TSubGroupedIssues,
   issuesMap?: TIssueMap,
   groupByFields?: any[]
 ): IGroupByColumn[] => {
@@ -345,7 +347,7 @@ const getParentChildColumns = (
   }
 
   const columns: IGroupByColumn[] = [];
-  
+
   // groupByFields를 ID로 매핑하여 빠른 조회 가능하도록 함
   const groupByFieldsMap: Record<string, any> = {};
   if (groupByFields && Array.isArray(groupByFields)) {
@@ -355,7 +357,7 @@ const getParentChildColumns = (
       }
     });
   }
-  
+
   // 그룹 키들을 순회하면서 컬럼 생성
   Object.keys(groupedIssueIds).forEach(groupKey => {
     if (groupKey === "None") {
@@ -367,10 +369,10 @@ const getParentChildColumns = (
       });
     } else {
       let displayName = `이슈 ${groupKey.slice(0, 8)}...`;
-      
+
       // 1. 먼저 groupByFields에서 정확한 ID 매칭으로 찾기
       const foundField = groupByFieldsMap[groupKey];
-      
+
       if (foundField && foundField.display_name) {
         displayName = foundField.display_name;
       } else if (foundField && foundField.name) {
@@ -378,7 +380,7 @@ const getParentChildColumns = (
       } else {
         // 2. groupByFields에서 찾지 못했다면 issuesMap에서 찾기
         const issueFromMap = issuesMap?.[groupKey];
-        
+
         if (issueFromMap) {
           if (issueFromMap.name) {
             displayName = issueFromMap.name;
@@ -391,10 +393,10 @@ const getParentChildColumns = (
           }
         }
       }
-      
+
       // parent_child 그룹화에서는 "의 하위 이슈" 접미사 추가
       const finalName = `${displayName}의 하위 이슈`;
-      
+
       columns.push({
         id: groupKey,
         name: finalName,
@@ -403,7 +405,7 @@ const getParentChildColumns = (
       });
     }
   });
-  
+
   return columns;
 };
 
@@ -420,7 +422,7 @@ const getTopLevelOnlyColumns = (): IGroupByColumn[] => {
 
 const getIssueTypeColumns = (issueTypes?: any[]): IGroupByColumn[] => {
   const columns: IGroupByColumn[] = [];
-  
+
   // Add issue type columns if available
   if (issueTypes && Array.isArray(issueTypes)) {
     issueTypes.forEach(projectIssueType => {
@@ -439,7 +441,7 @@ const getIssueTypeColumns = (issueTypes?: any[]): IGroupByColumn[] => {
       }
     });
   }
-  
+
   // Always include "None" option for issues without types
   columns.push({
     id: "None",
@@ -447,7 +449,7 @@ const getIssueTypeColumns = (issueTypes?: any[]): IGroupByColumn[] => {
     icon: undefined,
     payload: {},
   });
-  
+
   return columns;
 };
 
@@ -656,7 +658,7 @@ export const handleGroupDragDrop = async (
   subGroupBy: TIssueGroupByOptions | undefined,
   shouldAddIssueAtTop = false
 ) => {
-  if (!source.id || !groupBy || (subGroupBy && (!source.subGroupId || !destination.subGroupId))) return;
+  if (!source.id || (subGroupBy && (!source.subGroupId || !destination.subGroupId))) return;
 
   let updatedIssue: Partial<TIssue> = {};
   const issueUpdates: IssueUpdates = {};
@@ -684,7 +686,7 @@ export const handleGroupDragDrop = async (
   };
 
   // update updatedIssue values based on the source and destination groupIds
-  if (source.groupId && destination.groupId && source.groupId !== destination.groupId) {
+  if (source.groupId && destination.groupId && source.groupId !== destination.groupId && groupBy) {
     const groupKey = ISSUE_FILTER_DEFAULT_DATA[groupBy];
     let groupValue: any = clone(sourceIssue[groupKey]);
 

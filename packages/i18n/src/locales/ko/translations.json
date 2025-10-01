@@ -357,7 +357,7 @@
   "leave_project": "프로젝트 떠나기",
   "join_the_project_to_rearrange": "프로젝트에 참여하여 재정렬",
   "drag_to_rearrange": "드래그하여 재정렬",
-  "congrats": "축하합니다",
+  "congrats": "축하합니다!",
   "open_project": "프로젝트 열기",
   "issues": "작업 항목",
   "cycles": "주기",
@@ -935,6 +935,10 @@
     "add": {
       "success": "{entity}가 성공적으로 추가되었습니다",
       "failed": "{entity} 추가 중 오류 발생"
+    },
+    "remove": {
+      "success": "{entity}가 성공적으로 제거되었습니다",
+      "failed": "{entity} 제거 중 오류 발생"
     }
   },
   "epic": {
@@ -961,23 +965,6 @@
     "title": {
       "label": "작업 항목 제목",
       "required": "작업 항목 제목이 필요합니다."
-    },
-    "upload": {
-      "label": "파일 업로드",
-      "title": "작업 항목 업로드",
-      "description": "파일에서 작업 항목을 업로드합니다. 파일은 내보낸 작업 항목의 형식과 일치해야 합니다.",
-      "select_file": "파일 선택",
-      "upload": "업로드",
-      "uploading": "업로드 중...",
-      "success": "작업 항목이 성공적으로 업로드되었습니다",
-      "success_message": "작업 항목이 성공적으로 가져와졌습니다.",
-      "error": "작업 항목 업로드 실패",
-      "error_message": "작업 항목 업로드 중 오류가 발생했습니다. 다시 시도해주세요."
-    },
-    "bulk_edit": {
-      "label": "일괄 변경",
-      "success": "선택된 작업 항목이 성공적으로 업데이트되었습니다",
-      "error": "일괄 변경 중 오류가 발생했습니다. 다시 시도해주세요."
     },
     "add": {
       "press_enter": "다른 작업 항목을 추가하려면 'Enter'를 누르세요",
@@ -1017,6 +1004,15 @@
     "create": {
       "success": "작업 항목이 성공적으로 생성되었습니다"
     },
+    "upload": {
+      "button": "작업 항목 가져오기",
+      "title": "작업 항목 가져오기",
+      "description": "CSV 또는 Excel 파일을 업로드하여 작업 항목을 가져옵니다.",
+      "select_file": "파일 선택",
+      "uploading": "업로드 중",
+      "success": "작업 항목을 성공적으로 가져왔습니다.",
+      "error": "작업 항목 가져오기 중 오류가 발생했습니다."
+    },
     "priority": {
       "urgent": "긴급",
       "high": "높음",
@@ -1036,8 +1032,7 @@
       },
       "extra": {
         "show_sub_issues": "하위 작업 항목 표시",
-        "show_empty_groups": "빈 그룹 표시",
-        "my_issues_only": "내가 담당인 작업항목만"
+        "show_empty_groups": "빈 그룹 표시"
       }
     },
     "layouts": {
@@ -1125,6 +1120,12 @@
       "blocking": "차단 중"
     },
     "copy_link": "작업 항목 링크 복사",
+    "bulk_edit": {
+      "label": "일괄 편집",
+      "success_suffix": "개 작업 항목이 성공적으로 업데이트되었습니다.",
+      "skipped_suffix": "개 작업 항목은 권한이 없어 건너뛰었습니다.",
+      "error_prefix": "업데이트 중 오류가 발생했습니다"
+    },
     "delete": {
       "label": "작업 항목 삭제",
       "error": "작업 항목 삭제 중 오류 발생"
@@ -1310,7 +1311,7 @@
     },
     "request_email": {
       "subject": "새 작업 공간 요청",
-      "body": "안녕하세요 인스턴스 관리자님,\n\n[목적]을 위해 [/workspace-name] URL로 새 작업 공간을 생성해 주세요.\n\n감사합니다,\n{lastName} {firstName}\n{email}"
+      "body": "안녕하세요 인스턴스 관리자님,\n\n[목적]을 위해 [/workspace-name] URL로 새 작업 공간을 생성해 주세요.\n\n감사합니다,\n{firstName} {lastName}\n{email}"
     },
     "button": {
       "default": "작업 공간 생성",
@@ -1818,16 +1819,16 @@
     },
     "estimates": {
       "label": "추정",
-      "title": "프로젝트 추정 시스템 활성화",
+      "title": "프로젝트 추정 활성화",
       "description": "팀의 복잡성과 작업량을 전달하는 데 도움이 됩니다.",
-      "no_estimate": "없음",
-      "new": "새 추정 시스템 추가",
+      "no_estimate": "추정 없음",
+      "new": "새 추정 시스템",
       "create": {
         "custom": "사용자 지정",
         "start_from_scratch": "처음부터 시작",
         "choose_template": "템플릿 선택",
         "choose_estimate_system": "추정 시스템 선택",
-        "enter_estimate_point": "추정(소요자원) 입력",
+        "enter_estimate_point": "추정 입력",
         "step": "단계 {step}/{total}",
         "label": "추정 생성"
       },
@@ -2534,7 +2535,11 @@
     "plane_didnt_start_up_this_could_be_because_one_or_more_plane_services_failed_to_start": "Plane이 시작되지 않았습니다. 이는 하나 이상의 Plane 서비스가 시작에 실패했기 때문일 수 있습니다.",
     "choose_view_logs_from_setup_sh_and_docker_logs_to_be_sure": "확실히 하려면 setup.sh와 Docker 로그에서 View Logs를 선택하세요."
   },
-
+  "workflow": {
+    "approval": {
+      "button": "승인 요청"
+    }
+  },
   "page_navigation_pane": {
     "tabs": {
       "outline": {

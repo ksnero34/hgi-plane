@@ -3,18 +3,17 @@
 import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-// types
+// plane imports
 import { GLOBAL_VIEW_TRACKER_EVENTS } from "@plane/constants";
 import { IWorkspaceView } from "@plane/types";
-// ui
 import { EModalPosition, EModalWidth, ModalCore, TOAST_TYPE, setToast } from "@plane/ui";
-// components
-import { WorkspaceViewForm } from "@/components/workspace";
-// constants
-// store hooks
+// helpers
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useGlobalView } from "@/hooks/store";
+// hooks
+import { useGlobalView } from "@/hooks/store/use-global-view";
 import { useAppRouter } from "@/hooks/use-app-router";
+// local imports
+import { WorkspaceViewForm } from "./form";
 
 type Props = {
   data?: IWorkspaceView;
@@ -55,8 +54,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "뷰가 성공적으로 생성되었습니다.",
+          title: "Success!",
+          message: "View created successfully.",
         });
 
         router.push(`/${workspaceSlug}/workspace-views/${res.id}`);
@@ -68,8 +67,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "뷰를 생성할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: "View could not be created. Please try again.",
         });
       });
   };
@@ -95,8 +94,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
           });
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "성공!",
-            message: "뷰가 성공적으로 업데이트되었습니다.",
+            title: "Success!",
+            message: "View updated successfully.",
           });
           handleClose();
         }
@@ -110,8 +109,8 @@ export const CreateUpdateWorkspaceViewModal: React.FC<Props> = observer((props) 
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "뷰를 업데이트할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: "View could not be updated. Please try again.",
         });
       });
   };

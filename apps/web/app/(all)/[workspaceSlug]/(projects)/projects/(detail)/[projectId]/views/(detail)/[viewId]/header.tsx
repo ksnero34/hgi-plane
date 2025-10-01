@@ -14,6 +14,7 @@ import {
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
 // types
+import { Tooltip } from "@plane/propel/tooltip";
 import {
   EIssuesStoreType,
   EViewAccess,
@@ -21,36 +22,38 @@ import {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
   IIssueFilterOptions,
+  EIssueLayoutTypes,
   TIssue,
   TBulkOperationsPayload,
-  EIssueLayoutTypes,
 } from "@plane/types";
-// utils
-import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // ui
 import { Breadcrumbs, Button, Tooltip, Header, BreadcrumbNavigationSearchDropdown, setToast, TOAST_TYPE } from "@plane/ui";
 // components
-import { SwitcherIcon, SwitcherLabel } from "@/components/common";
-import { DisplayFiltersSelection, FiltersDropdown, FilterSelection, LayoutSelection } from "@/components/issues";
-// constants
-import { ViewQuickActions } from "@/components/views";
-// hooks
+import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
+import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
 import {
-  useCommandPalette,
-  useIssues,
-  useLabel,
-  useMember,
-  useProject,
-  useProjectState,
-  useProjectView,
-  useUserPermissions,
-  useMultipleSelectStore,
-  useCustomField,
-} from "@/hooks/store";
-import { useAppRouter } from "@/hooks/use-app-router";
-import { useIssuesActions } from "@/hooks/use-issues-actions";
+  DisplayFiltersSelection,
+  FiltersDropdown,
+  FilterSelection,
+  LayoutSelection,
+} from "@/components/issues/issue-layouts/filters";
+// constants
+import { ViewQuickActions } from "@/components/views/quick-actions";
+// hooks
+import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectView } from "@/hooks/store/use-project-view";
+import { useUserPermissions } from "@/hooks/store/user";
+import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
+import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
 
 export const ProjectViewIssuesHeader: React.FC = observer(() => {

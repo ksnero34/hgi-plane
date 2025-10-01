@@ -7,13 +7,16 @@ import { useParams } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import { EUserPermissions, EUserPermissionsLevel, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { setToast, TOAST_TYPE, Tooltip } from "@plane/ui";
+import { Tooltip } from "@plane/propel/tooltip";
+import { setToast, TOAST_TYPE } from "@plane/ui";
 import { copyUrlToClipboard, orderJoinedProjects } from "@plane/utils";
 // components
-import { CreateProjectModal } from "@/components/project";
-import { SidebarProjectsListItem } from "@/components/workspace";
+import { CreateProjectModal } from "@/components/project/create-project-modal";
+import { SidebarProjectsListItem } from "@/components/workspace/sidebar/projects-list-item";
 // hooks
-import { useAppTheme, useProject, useUserPermissions } from "@/hooks/store";
+import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useProject } from "@/hooks/store/use-project";
+import { useUserPermissions } from "@/hooks/store/user";
 import { TProject } from "@/plane-web/types";
 import { ExtendedSidebarWrapper } from "./extended-sidebar-wrapper";
 
@@ -55,8 +58,8 @@ export const ExtendedProjectSidebar = observer(() => {
       updateProjectView(workspaceSlug.toString(), sourceId, { sort_order: updatedSortOrder }).catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "프로젝트 순서 변경에 실패했습니다. 다시 시도해주세요.",
+          title: t("error"),
+          message: t("something_went_wrong"),
         });
       });
   };
@@ -80,8 +83,8 @@ export const ExtendedProjectSidebar = observer(() => {
     copyUrlToClipboard(`${workspaceSlug}/projects/${projectId}/issues`).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "링크가 복사되었습니다!",
-        message: "프로젝트 링크가 클립보드에 복사되었습니다.",
+        title: t("link_copied"),
+        message: t("project_link_copied_to_clipboard"),
       });
     });
   };

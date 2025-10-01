@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 // editor
 import { ETabIndices, DEFAULT_WORK_ITEM_FORM_VALUES } from "@plane/constants";
-import { EditorRefApi } from "@plane/editor";
+import type { EditorRefApi } from "@plane/editor";
 // i18n
 import { useTranslation } from "@plane/i18n";
 import { EIssuesStoreType, TIssue, TWorkspaceDraftIssue } from "@plane/types";
@@ -28,16 +28,20 @@ import {
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
-import { CreateLabelModal } from "@/components/labels";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
-import { useIssueDetail, useLabel, useProject, useProjectState, useWorkspaceDraftIssues } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useLabel } from "@/hooks/store/use-label";
+import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 // plane web imports
-import { DeDupeButtonRoot, DuplicateModalRoot } from "@/plane-web/components/de-dupe";
+import { DeDupeButtonRoot } from "@/plane-web/components/de-dupe/de-dupe-button";
+import { DuplicateModalRoot } from "@/plane-web/components/de-dupe/duplicate-modal";
 import { IssueTypeSelect, WorkItemTemplateSelect } from "@/plane-web/components/issues/issue-modal";
 import { WorkItemModalAdditionalProperties } from "@/plane-web/components/issues/issue-modal/modal-additional-properties";
 import { useDebouncedDuplicateIssues } from "@/plane-web/hooks/use-debounced-duplicate-issues";
@@ -93,7 +97,6 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
   } = props;
 
   // states
-  const [labelModal, setLabelModal] = useState(false);
   const [gptAssistantModal, setGptAssistantModal] = useState(false);
   const [isMoving, setIsMoving] = useState<boolean>(false);
 
@@ -114,6 +117,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     selectedParentIssue,
     setWorkItemTemplateId,
     setSelectedParentIssue,
+    getIssueTypeIdOnProjectChange,
     getActiveAdditionalPropertiesLength,
     handlePropertyValuesValidation,
     handleCreateUpdatePropertyValues,
@@ -132,7 +136,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
   // form info
   const convertedData = React.useMemo(() => {
     if (!data) return {};
-    
+
     // custom_field_values를 폼에서 사용할 수 있는 형태로 변환
     const result = { ...data };
     if (data.custom_field_values && Array.isArray(data.custom_field_values)) {
@@ -151,7 +155,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
   }, [data]);
 
   const methods = useForm<TIssue>({
-    defaultValues: { ...DEFAULT_WORK_ITEM_FORM_VALUES, project_id: defaultProjectId, ...convertedData },
+    defaultValues: { ...DEFAULT_WORK_ITEM_FORM_VALUES, project_id: defaultProjectId, ...data },
     reValidateMode: "onChange",
   });
   const {
@@ -243,8 +247,8 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
       return;
 
     // 커스텀 필드 값을 백엔드 형식으로 변환
-    const customFieldValues = formData.custom_field_values ? 
-      Object.values(formData.custom_field_values).filter(value => 
+    const customFieldValues = formData.custom_field_values ?
+      Object.values(formData.custom_field_values).filter(value =>
         value && value.custom_field_id && value.value !== undefined && value.value !== null && value.value !== ""
       ) : [];
 
@@ -256,7 +260,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
       : (() => {
           const changedFields = getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined });
           const currentTypeId = getValues<"type_id">("type_id");
-          
+
           return {
             ...changedFields,
             project_id: getValues<"project_id">("project_id"),
@@ -394,17 +398,6 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
 
   return (
     <FormProvider {...methods}>
-      {projectId && (
-        <CreateLabelModal
-          createLabel={createLabel.bind(createLabel, workspaceSlug?.toString(), projectId)}
-          isOpen={labelModal}
-          handleClose={() => setLabelModal(false)}
-          onSuccess={(response) => {
-            setValue<"label_ids">("label_ids", [...watch("label_ids"), response.id]);
-            handleFormChange();
-          }}
-        />
-      )}
       <div className="flex gap-2 bg-transparent">
         <div className="rounded-lg w-full">
           <form
@@ -535,7 +528,6 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                   parentId={watch("parent_id")}
                   isDraft={isDraft}
                   handleFormChange={handleFormChange}
-                  setLabelModal={setLabelModal}
                   setSelectedParentIssue={setSelectedParentIssue}
                 />
               </div>

@@ -4,14 +4,16 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { TModuleDisplayFilters, TModuleFilters, TCustomField } from "@plane/types";
+// plane imports
+import { TModuleStatus } from "@plane/propel/icons";
+import { TModuleDisplayFilters, TModuleFilters } from "@plane/types";
+import { FilterCustomFields } from "@/components/issues/issue-layouts/filters/header/filters";
 // components
-import { TModuleStatus } from "@plane/ui";
-import { FilterOption } from "@/components/issues";
-import { FilterCustomFields } from "@/components/issues";
+import { FilterOption } from "@/components/issues/issue-layouts/filters";
 import { FilterLead, FilterMembers, FilterStartDate, FilterStatus, FilterTargetDate } from "@/components/modules";
+// hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
-import { useCustomField } from "@/hooks/store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // types
 
 type Props = {
@@ -38,7 +40,7 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
   const { isMobile } = usePlatformOS();
   const { workspaceSlug, projectId } = useParams();
   const { customFields } = useCustomField();
-  
+
   // 디버깅: useParams 값 확인
   // console.log("ModuleFiltersSelection - useParams() 전체 값:", useParams());
   // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
@@ -60,21 +62,21 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
         currentCustomFieldFilters = JSON.parse(JSON.stringify(filters.custom_fields));
       }
     }
-    
+
     const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-    
+
     let newFieldValues: string[];
     if (currentFieldValues.includes(value)) {
       newFieldValues = currentFieldValues.filter(v => v !== value);
     } else {
       newFieldValues = [...currentFieldValues, value];
     }
-    
+
     const newCustomFieldFilters = {
       ...currentCustomFieldFilters,
       [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
     };
-    
+
     // 빈 배열인 필드들 제거
     Object.keys(newCustomFieldFilters).forEach(key => {
       const fieldValues = newCustomFieldFilters[key];
@@ -82,12 +84,12 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
         delete newCustomFieldFilters[key];
       }
     });
-    
+
     // JSON 문자열로 변환하여 전달 (빈 객체인 경우 빈 문자열)
-    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
-      ? JSON.stringify(newCustomFieldFilters) 
+    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0
+      ? JSON.stringify(newCustomFieldFilters)
       : "";
-    
+
     handleFiltersUpdate("custom_fields", customFieldsValue);
   };
 
@@ -183,7 +185,7 @@ export const ModuleFiltersSelection: React.FC<Props> = observer((props) => {
             // console.log("ModuleFiltersSelection - customFields length:", customFields?.length);
             // console.log("ModuleFiltersSelection - workspaceSlug:", workspaceSlug);
             // console.log("ModuleFiltersSelection - projectId:", projectId);
-            
+
             return (
               <FilterCustomFields
                 appliedFilters={

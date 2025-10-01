@@ -11,7 +11,7 @@ import { AlertModalCore, TOAST_TYPE, setToast } from "@plane/ui";
 // constants
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useGlobalView } from "@/hooks/store";
+import { useGlobalView } from "@/hooks/store/use-global-view";
 
 type Props = {
   data: IWorkspaceView;
@@ -54,8 +54,8 @@ export const DeleteGlobalViewModal: React.FC<Props> = observer((props) => {
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: error?.error ?? "뷰를 삭제할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: error?.error ?? "Something went wrong while deleting the view. Please try again.",
         });
       })
       .finally(() => {

@@ -120,5 +120,10 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
+        "plane.mongo": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
     },
 }

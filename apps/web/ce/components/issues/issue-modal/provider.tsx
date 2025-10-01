@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { observer } from "mobx-react";
+import { observer } from "mobx-react-lite";
 // plane imports
 import { ISearchIssueResponse, TIssue } from "@plane/types";
 // components
-import { IssueModalContext } from "@/components/issues";
+import { IssueModalContext } from "@/components/issues/issue-modal/context";
 // hooks
 import { useUser } from "@/hooks/store/user/user-user";
 import { useIssueType } from "@/hooks/store/use-issue-type";

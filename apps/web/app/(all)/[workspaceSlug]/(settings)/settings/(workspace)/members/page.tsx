@@ -17,18 +17,20 @@ import { IWorkspaceBulkInviteFormData } from "@plane/types";
 import { Button, TOAST_TYPE, setToast } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
-import { NotAuthorizedView } from "@/components/auth-screens";
-import { CountChip } from "@/components/common";
-import { PageHead } from "@/components/core";
-import { SettingsContentWrapper } from "@/components/settings";
-import { WorkspaceMembersList } from "@/components/workspace";
+import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
+import { CountChip } from "@/components/common/count-chip";
+import { PageHead } from "@/components/core/page-title";
+import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
+import { WorkspaceMembersList } from "@/components/workspace/settings/members-list";
 // helpers
-// hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useMember, useUserPermissions, useWorkspace } from "@/hooks/store";
+// hooks
+import { useMember } from "@/hooks/store/use-member";
+import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useUserPermissions } from "@/hooks/store/user";
 // plane web components
-import { BillingActionsButton } from "@/plane-web/components/workspace/billing";
-import { SendWorkspaceInvitationModal } from "@/plane-web/components/workspace/members";
+import { BillingActionsButton } from "@/plane-web/components/workspace/billing/billing-actions-button";
+import { SendWorkspaceInvitationModal } from "@/plane-web/components/workspace/members/invite-modal";
 
 const WorkspaceMembersSettingsPage = observer(() => {
   // states
@@ -51,10 +53,10 @@ const WorkspaceMembersSettingsPage = observer(() => {
     EUserPermissionsLevel.WORKSPACE
   );
 
-  const handleWorkspaceInvite = (data: IWorkspaceBulkInviteFormData, autoAccept: boolean = false) => {
+  const handleWorkspaceInvite = (data: IWorkspaceBulkInviteFormData) => {
     if (!workspaceSlug) return;
 
-    return inviteMembersToWorkspace(workspaceSlug.toString(), data, autoAccept)
+    return inviteMembersToWorkspace(workspaceSlug.toString(), data)
       .then(() => {
         setInviteModal(false);
         captureSuccess({
@@ -65,8 +67,8 @@ const WorkspaceMembersSettingsPage = observer(() => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공했습니다!",
-          message: "초대 알림이 발송되었습니다.",
+          title: "Success!",
+          message: t("workspace_settings.settings.members.invitations_sent_successfully"),
         });
       })
       .catch((err) => {
@@ -79,8 +81,8 @@ const WorkspaceMembersSettingsPage = observer(() => {
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: `${err.error ?? "문제가 발생했습니다. 다시 시도해주세요."}`,
+          title: "Error!",
+          message: `${err.error ?? t("something_went_wrong_please_try_again")}`,
         });
         throw err;
       });

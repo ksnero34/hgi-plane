@@ -1,5 +1,5 @@
 import { Editor } from "@tiptap/core";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 
 export const TrackFileDeletionPlugin = (editor: Editor, deleteFile: (fileId: string) => Promise<void>, nodeName: string) =>
   new Plugin({

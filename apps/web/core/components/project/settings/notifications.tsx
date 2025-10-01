@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Button, Input, TOAST_TYPE, setToast } from "@plane/ui";
-import { useProject } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
 
 // CSRF 토큰을 가져오는 함수
 const getCSRFToken = async (): Promise<string> => {

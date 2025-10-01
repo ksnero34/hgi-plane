@@ -11,7 +11,7 @@ import { TIssue, TCustomField } from "@plane/types";
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // services
 import { renderFormattedPayloadDate } from "@plane/utils";
-import { useCustomField } from "@/hooks/store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 
 type Props = {
   control: Control<TIssue>;

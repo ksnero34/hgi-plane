@@ -16,11 +16,12 @@ const generalSelectors = [
   "blockquote",
   "h1.editor-heading-block, h2.editor-heading-block, h3.editor-heading-block, h4.editor-heading-block, h5.editor-heading-block, h6.editor-heading-block",
   "[data-type=horizontalRule]",
-  "table",
+  "table:not(.table-drag-preview)",
   ".issue-embed",
   ".image-component",
   ".image-upload-component",
   ".editor-callout-component",
+  ".editor-embed-component",
 ].join(", ");
 
 const maxScrollSpeed = 20;
@@ -65,9 +66,7 @@ const isScrollable = (node: HTMLElement | SVGElement) => {
   });
 };
 
-const getScrollParent = (node: HTMLElement | SVGElement | null): Element | null => {
-  if (!node) return null;
-
+export const getScrollParent = (node: HTMLElement | SVGElement) => {
   if (scrollParentCache.has(node)) {
     return scrollParentCache.get(node);
   }
@@ -89,24 +88,10 @@ const getScrollParent = (node: HTMLElement | SVGElement | null): Element | null 
 
 export const nodeDOMAtCoords = (coords: { x: number; y: number }) => {
   const elements = document.elementsFromPoint(coords.x, coords.y);
-  const generalSelectors = [
-    "li",
-    "p:not(:first-child)",
-    ".code-block",
-    "blockquote",
-    "h1, h2, h3, h4, h5, h6",
-    "[data-type=horizontalRule]",
-    ".table-wrapper",
-    ".issue-embed",
-    ".image-component",
-    ".image-upload-component",
-    ".editor-callout-component",
-    ".node-fileComponent",
-  ].join(", ");
 
   for (const elem of elements) {
     // Check for table wrapper first
-    if (elem.matches("table")) {
+    if (elem.matches("table:not(.table-drag-preview)")) {
       return elem;
     }
 
@@ -116,6 +101,11 @@ export const nodeDOMAtCoords = (coords: { x: number; y: number }) => {
 
     // Skip table cells
     if (elem.closest("table")) {
+      continue;
+    }
+
+    // Skip elements inside .editor-embed-component
+    if (elem.closest(".editor-embed-component") && !elem.matches(".editor-embed-component")) {
       continue;
     }
 
@@ -187,7 +177,7 @@ export const DragHandlePlugin = (options: SideMenuPluginProps): SideMenuHandleOp
       scrollableParent.scrollBy({ top: currentScrollSpeed });
     }
 
-    scrollAnimationFrame = requestAnimationFrame(scroll);
+    scrollAnimationFrame = requestAnimationFrame(scroll) as unknown as null;
   }
 
   const handleClick = (event: MouseEvent, view: EditorView) => {
@@ -395,8 +385,9 @@ const handleNodeSelection = (
   let draggedNodePos = nodePosAtDOM(node, view, options);
   if (draggedNodePos == null || draggedNodePos < 0) return;
 
-  // Handle blockquote separately
-  if (node.matches("blockquote")) {
+  if (node.matches("table")) {
+    draggedNodePos = draggedNodePos - 2;
+  } else if (node.matches("blockquote")) {
     draggedNodePos = nodePosAtDOMForBlockQuotes(node, view);
     if (draggedNodePos === null || draggedNodePos === undefined) return;
   } else {

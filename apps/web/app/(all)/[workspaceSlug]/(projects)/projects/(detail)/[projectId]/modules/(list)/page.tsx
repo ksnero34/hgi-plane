@@ -10,10 +10,14 @@ import { EUserProjectRoles, TModuleFilters, TCustomField  } from "@plane/types";
 // components
 import { calculateTotalFilters, calculateFilterRemovalValue, calculateFilterValue } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
-import { DetailedEmptyState } from "@/components/empty-state";
-import { ModuleAppliedFiltersList,ModulesListView } from "@/components/modules";
+import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
+import { ModuleAppliedFiltersList, ModulesListView } from "@/components/modules";
+// helpers
 // hooks
-import { useModuleFilter, useProject, useUserPermissions, useCustomField } from "@/hooks/store";
+import { useModuleFilter } from "@/hooks/store/use-module-filter";
+import { useProject } from "@/hooks/store/use-project";
+import { useUserPermissions } from "@/hooks/store/user";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -25,7 +29,7 @@ const ProjectModulesPage = observer(() => {
   const { t } = useTranslation();
   // store
   const { getProjectById, currentProjectDetails } = useProject();
-  const { currentProjectFilters, currentProjectDisplayFilters, clearAllFilters, updateDisplayFilters, updateFilters } =
+  const { currentProjectFilters, currentProjectDisplayFilters, clearAllFilters, updateFilters, updateDisplayFilters } =
     useModuleFilter();
   const { allowPermissions } = useUserPermissions();
   const { customFields } = useCustomField(projectId as string);
@@ -48,7 +52,7 @@ const ProjectModulesPage = observer(() => {
       const updatedValue = calculateFilterRemovalValue<TModuleFilters>(key as string, value, currentProjectFilters ?? {});
       updateFilters(projectId.toString(), { [key]: updatedValue });
     },
-    [projectId, currentProjectFilters, updateFilters]
+    [currentProjectFilters, projectId, updateFilters]
   );
 
   if (!workspaceSlug || !projectId) return <></>;

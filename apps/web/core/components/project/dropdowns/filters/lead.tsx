@@ -7,10 +7,11 @@ import { observer } from "mobx-react";
 import { Avatar, Loader } from "@plane/ui";
 // components
 import { getFileURL } from "@plane/utils";
-import { FilterHeader, FilterOption } from "@/components/issues";
+import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters";
 // helpers
 // hooks
-import { useMember, useUser } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
+import { useUser } from "@/hooks/store/user";
 
 type Props = {
   appliedFilters: string[] | null;
@@ -89,12 +90,12 @@ export const FilterLead: React.FC<Props> = observer((props: Props) => {
                     className="ml-8 text-xs font-medium text-custom-primary-100"
                     onClick={handleViewToggle}
                   >
-                    {itemsToRender === sortedOptions.length ? "줄여서 보기" : "모두 보기"}
+                    {itemsToRender === sortedOptions.length ? "View less" : "View all"}
                   </button>
                 )}
               </>
             ) : (
-              <p className="text-xs italic text-custom-text-400">일치하는 항목 없음</p>
+              <p className="text-xs italic text-custom-text-400">No matches found</p>
             )
           ) : (
             <Loader className="space-y-2">

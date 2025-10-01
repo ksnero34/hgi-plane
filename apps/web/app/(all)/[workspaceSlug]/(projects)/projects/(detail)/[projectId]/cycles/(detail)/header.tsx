@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useRouter } from "next/navigation";
 // icons
@@ -16,6 +16,8 @@ import {
 } from "@plane/constants";
 import { usePlatformOS } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
+import { ContrastIcon } from "@plane/propel/icons";
+import { Tooltip } from "@plane/propel/tooltip";
 import {
   EIssuesStoreType,
   ICustomSearchSelectOption,
@@ -30,28 +32,27 @@ import { Breadcrumbs, Button, ContrastIcon, BreadcrumbNavigationSearchDropdown, 
 import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
-import { SwitcherLabel } from "@/components/common";
-import { CycleQuickActions } from "@/components/cycles";
+import { SwitcherLabel } from "@/components/common/switcher-label";
+import { CycleQuickActions } from "@/components/cycles/quick-actions";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
   FilterSelection,
   LayoutSelection,
   MobileLayoutSelection,
-} from "@/components/issues";
+} from "@/components/issues/issue-layouts/filters";
 // hooks
-import {
-  useCommandPalette,
-  useCycle,
-  useIssues,
-  useLabel,
-  useMember,
-  useProject,
-  useProjectState,
-  useUserPermissions,
-  useMultipleSelectStore,
-  useCustomField,
-} from "@/hooks/store";
+import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useUserPermissions } from "@/hooks/store/user";
+import { useAppRouter } from "@/hooks/use-app-router";
+import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
@@ -67,7 +68,7 @@ export const CycleIssuesHeader: React.FC = observer(() => {
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   // router
-  const router = useRouter();
+  const router = useAppRouter();
   const { workspaceSlug, projectId, cycleId } = useParams() as {
     workspaceSlug: string;
     projectId: string;
@@ -117,7 +118,6 @@ export const CycleIssuesHeader: React.FC = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
-
       const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
       updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: updatedValue }, cycleId);
     },

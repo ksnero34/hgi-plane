@@ -1,16 +1,17 @@
-import { useCallback, useState, useEffect } from "react";
+import { MouseEvent, useCallback, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { useDropzone } from "react-dropzone";
+// plane web hooks
+import { useFileSize } from "@/plane-web/hooks/use-file-size";
 // constants
 import { MAX_FILE_SIZE } from "@/constants/common";
 // hooks
-import { useInstance, useFileValidation, ValidationResult } from "@/hooks/store";
-// plane web hooks
-import { useFileSize } from "@/plane-web/hooks/use-file-size";
-// icons
-import { Plus } from "lucide-react";
+import { useInstance } from "@/hooks/store/use-instance";
+import { useFileValidation, ValidationResult } from "@/hooks/store/use-file-validation";
 // ui
 import { TOAST_TYPE, setToast } from "@plane/ui";
+// icons
+import { Plus } from "lucide-react";
 // types
 import { TAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
 
@@ -25,88 +26,97 @@ type Props = {
 
 export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
   const { workspaceSlug, disabled = false, attachmentOperations, validateFile } = props;
-  
-  // store hooks
-  const { config, fileSettings, fetchFileSettings } = useInstance();
-  const { getAcceptedFileTypes } = useFileValidation();
-  // file size
-  const { maxFileSize } = useFileSize();
-  
   // states
   const [isLoading, setIsLoading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  // store hooks
+  const { fileSettings } = useInstance();
+  const { getAcceptedFileTypes } = useFileValidation();
+  // file size
+  const { maxFileSize } = useFileSize();
 
-  // 컴포넌트 마운트 시 file settings 가져오기
-  useEffect(() => {
-    fetchFileSettings().catch(console.error);
-  }, [fetchFileSettings]);
+  const effectiveMaxFileSize = useMemo(
+    () => maxFileSize || fileSettings?.max_file_size || MAX_FILE_SIZE,
+    [fileSettings?.max_file_size, maxFileSize]
+  );
+
+  const acceptedFileTypes = useMemo(() => getAcceptedFileTypes(), [getAcceptedFileTypes]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       const currentFile: File = acceptedFiles[0];
-      
       if (!currentFile || !workspaceSlug) return;
 
       try {
-        const validationResult = await validateFile(currentFile);
-        if (!validationResult.isValid) {
-          setValidationError(validationResult.error);
+        const { isValid, error } = await validateFile(currentFile);
+
+        if (!isValid) {
+          setValidationError(error ?? "허용되지 않는 파일입니다.");
           return;
         }
-        setValidationError(null);
 
+        setValidationError(null);
         setIsLoading(true);
         await attachmentOperations.create(currentFile);
-        setValidationError(null);
-        
-        // 업로드 성공 토스트 메시지 표시
+
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "업로드 성공",
-          message: `${currentFile.name} 파일이 성공적으로 업로드되었습니다.`
+          message: `${currentFile.name} 파일이 성공적으로 업로드되었습니다.`,
         });
       } catch (error) {
-        console.error("❌ Upload failed:", error);
+        console.error("IssueAttachmentUpload: failed to upload attachment", error);
         setValidationError("파일 업로드에 실패했습니다.");
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "업로드 실패",
+          message: "파일 업로드 중 오류가 발생했습니다.",
+        });
       } finally {
         setIsLoading(false);
       }
     },
-    [attachmentOperations, workspaceSlug, validateFile]
+    [attachmentOperations, validateFile, workspaceSlug]
   );
 
   const { getRootProps, getInputProps, isDragActive, isDragReject, open, fileRejections } = useDropzone({
     onDrop,
-    maxSize: maxFileSize || MAX_FILE_SIZE,
+    maxSize: effectiveMaxFileSize,
+    accept: acceptedFileTypes,
     multiple: false,
     disabled: isLoading || disabled,
     noClick: false,
     noKeyboard: false,
   });
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleOpen = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     open();
   };
 
-  const fileError = validationError || 
-    (fileRejections.length > 0 ? `Invalid file type or size (max ${(maxFileSize || fileSettings?.max_file_size || MAX_FILE_SIZE) / 1024 / 1024} MB)` : null) ||
-    (isDragReject ? `Invalid file type or size (max ${(maxFileSize || fileSettings?.max_file_size || MAX_FILE_SIZE) / 1024 / 1024} MB)` : null);
+  const maxSizeInMB = Math.floor(effectiveMaxFileSize / (1024 * 1024));
+  const fileError =
+    validationError ||
+    (fileRejections.length > 0
+      ? `Invalid file type or size (max ${maxSizeInMB} MB)`
+      : isDragReject
+      ? `Invalid file type or size (max ${maxSizeInMB} MB)`
+      : null);
 
   return (
     <div
       {...getRootProps()}
-      className={`flex h-[60px] items-center justify-center rounded-md border-2 border-dashed bg-custom-background-90 hover:bg-custom-background-80 ${
+      className={`flex h-[60px] items-center justify-center rounded-md border-2 border-dashed bg-custom-background-90 transition-colors hover:bg-custom-background-80 ${
         isDragActive ? "border-custom-primary bg-custom-primary/10" : "border-custom-border-200"
       } ${isDragReject ? "bg-red-100" : ""} ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
     >
       <input {...getInputProps()} />
       <button
         type="button"
-        className="flex items-center justify-center w-full h-full"
+        className="flex h-full w-full items-center justify-center"
         disabled={disabled || isLoading}
-        onClick={handleClick}
+        onClick={handleOpen}
       >
         {isLoading ? (
           <span className="text-sm">Uploading...</span>
@@ -115,7 +125,7 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
         ) : isDragActive ? (
           <span className="text-sm">Drop here...</span>
         ) : (
-          <Plus className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
         )}
       </button>
     </div>

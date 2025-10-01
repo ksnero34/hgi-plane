@@ -106,6 +106,9 @@ class S3Storage(S3Boto3Storage):
 
     def _get_content_disposition(self, disposition, filename=None):
         """Helper method to generate Content-Disposition header value"""
+        if filename is None:
+            filename = uuid.uuid4().hex
+
         if filename:
             # Standard Content-Disposition format with quoted filename
             return f'{disposition}; filename="{filename}"'

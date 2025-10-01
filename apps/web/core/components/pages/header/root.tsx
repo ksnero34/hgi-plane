@@ -1,25 +1,23 @@
 import { useCallback } from "react";
 import { observer } from "mobx-react";
 import { ListFilter } from "lucide-react";
+// plane imports
 import { useTranslation } from "@plane/i18n";
 import { TPageFilterProps, TPageNavigationTabs } from "@plane/types";
-// components
 import { Header, EHeaderVariant } from "@plane/ui";
 import { calculateTotalFilters } from "@plane/utils";
-import { FiltersDropdown } from "@/components/issues";
-import {
-  PageAppliedFiltersList,
-  PageFiltersSelection,
-  PageOrderByDropdown,
-  PageSearchInput,
-  PageTabNavigation,
-} from "@/components/pages";
-// helpers
-import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
+// components
+import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 // hooks
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 // plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
+// local imports
+import { PageAppliedFiltersList } from "../list/applied-filters";
+import { PageFiltersSelection } from "../list/filters";
+import { PageOrderByDropdown } from "../list/order-by";
+import { PageSearchInput } from "../list/search-input";
+import { PageTabNavigation } from "../list/tab-navigation";
 
 type Props = {
   pageType: TPageNavigationTabs;
@@ -40,13 +38,15 @@ export const PagesListHeaderRoot: React.FC<Props> = observer((props) => {
 
   const handleRemoveFilter = useCallback(
     (key: keyof TPageFilterProps, value: string | null) => {
-      if (key === "favorites") {
-        updateFilters("filters", { [key]: !!value });
-        return;
+      let newValues = filters.filters?.[key];
+
+      if (key === "favorites") newValues = !!value;
+      if (Array.isArray(newValues)) {
+        if (!value) newValues = [];
+        else newValues = newValues.filter((val) => val !== value);
       }
 
-      const updatedValue = calculateFilterRemovalValue(key as any, value, filters.filters ?? {});
-      updateFilters("filters", { [key]: updatedValue });
+      updateFilters("filters", { [key]: newValues });
     },
     [filters.filters, updateFilters]
   );

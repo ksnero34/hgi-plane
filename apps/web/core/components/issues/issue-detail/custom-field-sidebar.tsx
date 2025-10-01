@@ -11,7 +11,8 @@ import { CustomFieldDropdown } from "@/components/dropdowns/custom-field";
 import { TCustomField } from "@plane/types";
 
 // hooks
-import { useIssueDetail, useCustomField } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import type { TIssueOperations } from "./root";
 // helpers
 import { renderFormattedPayloadDate } from "@plane/utils";

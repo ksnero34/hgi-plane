@@ -49,7 +49,6 @@ from plane.db.models import (
 )
 from plane.utils.content_validator import (
     validate_html_content,
-    validate_json_content,
     validate_binary_data,
 )
 
@@ -57,12 +56,12 @@ def format_custom_field_value_for_activity(field, value):
     """커스텀 필드 값을 activity 표시용으로 포맷팅"""
     if value is None:
         return "없음"
-    
+
     try:
         if field.field_type == "project_member":
             # 단일 멤버인 경우 UUID 그대로 반환 (프론트엔드에서 변환)
             return str(value)
-                
+
         elif field.field_type == "project_members":
             # 다중 멤버인 경우 UUID 배열을 JSON 문자열로 반환
             try:
@@ -72,12 +71,12 @@ def format_custom_field_value_for_activity(field, value):
                     member_ids = value
                 else:
                     member_ids = [value]
-                
+
                 # UUID 배열을 JSON 문자열로 반환
                 return json.dumps(member_ids)
             except (json.JSONDecodeError, ValueError):
                 return str(value)
-                
+
         elif field.field_type in ["select", "multiselect"]:
             # 선택 필드인 경우
             if field.field_type == "multiselect":
@@ -96,7 +95,7 @@ def format_custom_field_value_for_activity(field, value):
         else:
             # 기타 필드 타입 (text, number, date 등)
             return str(value)
-            
+
     except Exception:
         return str(value)
 
@@ -236,13 +235,13 @@ class IssueCreateSerializer(BaseSerializer):
                         # 다중 멤버 검증
                         if not isinstance(field_value, list):
                             raise serializers.ValidationError(f"필드 {field.name}는 리스트여야 합니다.")
-                        
+
                         valid_members = ProjectMember.objects.filter(
                             project_id=self.context.get("project_id"),
                             member_id__in=field_value,
                             is_active=True
                         ).values_list("member_id", flat=True)
-                        
+
                         if len(valid_members) != len(field_value):
                             raise serializers.ValidationError(f"필드 {field.name}에 유효하지 않은 멤버가 포함되어 있습니다.")
 
@@ -254,7 +253,7 @@ class IssueCreateSerializer(BaseSerializer):
         data["assignee_ids"] = assignee_ids if assignee_ids else []
         label_ids = self.initial_data.get("label_ids")
         data["label_ids"] = label_ids if label_ids else []
-        
+
         # Convert IssueType ID to ProjectIssueType ID for consistency with frontend
         if instance.type_id:
             project_id = self.context.get("project_id")
@@ -266,13 +265,13 @@ class IssueCreateSerializer(BaseSerializer):
                 ).first()
                 if project_issue_type:
                     data["type_id"] = str(project_issue_type.id)
-        
+
         # 커스텀 필드 값 포함 (간소화된 형태)
         custom_field_values = CustomFieldValue.objects.filter(
             issue=instance,
             deleted_at__isnull=True
         ).select_related('custom_field')
-        
+
         data["custom_field_values"] = [
             {
                 "custom_field_id": str(cfv.custom_field_id),
@@ -282,7 +281,7 @@ class IssueCreateSerializer(BaseSerializer):
             }
             for cfv in custom_field_values
         ]
-        
+
         return data
 
     def validate(self, attrs):
@@ -294,20 +293,24 @@ class IssueCreateSerializer(BaseSerializer):
             raise serializers.ValidationError("Start date cannot exceed target date")
 
         # Validate description content for security
-        if "description" in attrs and attrs["description"]:
-            is_valid, error_msg = validate_json_content(attrs["description"])
-            if not is_valid:
-                raise serializers.ValidationError({"description": error_msg})
-
         if "description_html" in attrs and attrs["description_html"]:
-            is_valid, error_msg = validate_html_content(attrs["description_html"])
+            is_valid, error_msg, sanitized_html = validate_html_content(
+                attrs["description_html"]
+            )
             if not is_valid:
-                raise serializers.ValidationError({"description_html": error_msg})
+                raise serializers.ValidationError(
+                    {"error": "html content is not valid"}
+                )
+            # Update the attrs with sanitized HTML if available
+            if sanitized_html is not None:
+                attrs["description_html"] = sanitized_html
 
         if "description_binary" in attrs and attrs["description_binary"]:
             is_valid, error_msg = validate_binary_data(attrs["description_binary"])
             if not is_valid:
-                raise serializers.ValidationError({"description_binary": error_msg})
+                raise serializers.ValidationError(
+                    {"description_binary": "Invalid binary data"}
+                )
 
         # Validate assignees are from project
         if attrs.get("assignee_ids", []):
@@ -317,6 +320,7 @@ class IssueCreateSerializer(BaseSerializer):
                 is_active=True,
                 member_id__in=attrs["assignee_ids"],
             ).values_list("member_id", flat=True)
+
         # Validate labels are from project
         if attrs.get("label_ids"):
             label_ids = [label.id for label in attrs["label_ids"]]
@@ -366,17 +370,17 @@ class IssueCreateSerializer(BaseSerializer):
             # Only validate workflow transitions for existing issues with workflow assigned
             if self.instance.workflow:
                 from plane.db.models import WorkflowTransition
-                
+
                 from_state = self.instance.state
                 to_state = attrs.get("state")
-                
+
                 # Check if transition exists in workflow
                 transition = WorkflowTransition.objects.filter(
                     workflow=self.instance.workflow,
                     from_state=from_state,
                     to_state=to_state
                 ).first()
-                
+
                 if not transition:
                     raise serializers.ValidationError(
                         f"State transition from '{from_state.name}' to '{to_state.name}' is not allowed by workflow rules"
@@ -386,13 +390,13 @@ class IssueCreateSerializer(BaseSerializer):
         if attrs.get("type_id"):
             workspace_id = self.context.get("workspace_id")
             project_id = self.context.get("project_id")
-            
+
             # First try to find IssueType directly
             issue_type = IssueType.objects.filter(
                 id=attrs["type_id"],
                 workspace_id=workspace_id
             ).first()
-            
+
             if not issue_type:
                 # If not found, try to find through ProjectIssueType
                 project_issue_type = ProjectIssueType.objects.filter(
@@ -400,12 +404,12 @@ class IssueCreateSerializer(BaseSerializer):
                     project_id=project_id,
                     deleted_at__isnull=True
                 ).first()
-                
+
                 if project_issue_type:
                     issue_type = project_issue_type.issue_type
                 else:
                     raise serializers.ValidationError(f"Issue type with id {attrs['type_id']} does not exist in this workspace or project")
-            
+
             attrs["type"] = issue_type
             # Remove type_id from attrs since it's not a model field
             attrs.pop("type_id", None)
@@ -432,10 +436,10 @@ class IssueCreateSerializer(BaseSerializer):
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
-        
+
         # Check for default workflow and set workflow_id if exists
         from plane.db.models import WorkflowTemplate
-        
+
         # Get the default workflow for the project
         default_workflow = WorkflowTemplate.objects.filter(
             project_id=project_id,
@@ -443,22 +447,22 @@ class IssueCreateSerializer(BaseSerializer):
             is_active=True,
             deleted_at__isnull=True
         ).first()
-        
+
         if default_workflow:
             # Set the workflow_id for the new issue
             validated_data["workflow_id"] = default_workflow.id
-            
+
             # If state is not provided, set initial state from workflow
             if not validated_data.get("state"):
                 from plane.db.models import WorkflowState
-                
+
                 # Get the first state that allows new issues
                 initial_state = WorkflowState.objects.filter(
                     workflow=default_workflow,
                     allow_new_issues=True,
                     deleted_at__isnull=True
                 ).order_by('sequence').first()
-                
+
                 if initial_state:
                     validated_data["state_id"] = initial_state.state_id
 
@@ -599,65 +603,65 @@ class IssueCreateSerializer(BaseSerializer):
 
         if custom_field_values is not None:
             # print(f"[IssueCreateSerializer] Processing custom field values: {custom_field_values}")
-            
+
             # 중복된 custom_field_id 제거 - 마지막 값만 사용
             unique_custom_fields = {}
             for field_value in custom_field_values:
                 field_id = field_value["custom_field_id"]
                 unique_custom_fields[field_id] = field_value
-            
+
             # print(f"[IssueCreateSerializer] After deduplication: {list(unique_custom_fields.values())}")
-            
+
             # 커스텀 필드 정보 가져오기
             custom_fields = CustomField.objects.filter(
                 id__in=[field_value["custom_field_id"] for field_value in unique_custom_fields.values()],
                 deleted_at__isnull=True
             )
             custom_field_map = {str(field.id): field for field in custom_fields}
-            
+
             # 새로운 값들 생성/수정
             for field_value in unique_custom_fields.values():
                 field_id = field_value.get("custom_field_id")
                 new_value = field_value.get("value")
                 field = custom_field_map.get(str(field_id)) if field_id else None
-                
+
                 if not field:
                     # print(f"[IssueCreateSerializer] Field {field_id} not found, skipping")
                     continue
-                
+
                 # print(f"[IssueCreateSerializer] Processing field {field_id} ({field.field_type}) with value {new_value}")
-                
+
                 # 모든 타입 동일 처리: 하나의 custom_field_id에 하나의 값 (단일값 또는 JSON 배열)
                 existing_value = CustomFieldValue.objects.filter(
                     issue=instance,
                     custom_field_id=field_id,
                     deleted_at__isnull=True
                 ).first()
-                
+
                 if existing_value:
                     # 기존 값 업데이트
                     previous_value = existing_value.value
-                    
+
                     # print(f"[IssueCreateSerializer] Updating existing field {field_id}: {previous_value} -> {new_value}")
-                    
+
                     if existing_value.value != new_value:
                         existing_value.value = new_value
                         existing_value.updated_by_id = updated_by_id
                         existing_value.save()
-                        
+
                         # 활동 로그 생성
                         # IssueActivity 객체를 직접 생성하지 않고 issue_activity.delay 호출
                         # (issue_activity.delay는 메인 HTTP 요청 처리 후 별도 워커에서 수행됨)
                         from plane.bgtasks.issue_activities_task import issue_activity
-                        
+
                         # 값 변환
                         old_value_str = format_custom_field_value_for_activity(field, previous_value)
                         new_value_str = format_custom_field_value_for_activity(field, new_value)
-                        
+
                         # 활동 로그 생성 - identifier는 project_member 타입만 사용
                         old_identifier = previous_value if field.field_type == "project_member" else None
                         new_identifier = new_value if field.field_type == "project_member" else None
-                        
+
                         issue_activity.delay(
                             type="issue.activity.updated",
                             requested_data=json.dumps({
@@ -681,7 +685,7 @@ class IssueCreateSerializer(BaseSerializer):
                 else:
                     # 새로운 값 생성
                     # print(f"[IssueCreateSerializer] Creating new field {field_id} with value {new_value}")
-                    
+
                     CustomFieldValue.objects.create(
                         custom_field_id=field_id,
                         issue=instance,
@@ -691,9 +695,9 @@ class IssueCreateSerializer(BaseSerializer):
                         created_by_id=created_by_id,
                         updated_by_id=updated_by_id,
                     )
-                    
+
                     # print(f"[IssueCreateSerializer] Successfully created field {field_id}")
-                    
+
                     # 이중 활동 로그 생성 방지를 위해 주석 처리
                     # 활동 로그는 issue_activity.delay를 통해 처리됨
                     """
@@ -1051,16 +1055,33 @@ class IssueReactionSerializer(BaseSerializer):
 
 
 class IssueReactionLiteSerializer(DynamicBaseSerializer):
+    display_name = serializers.CharField(source="actor.display_name", read_only=True)
+
     class Meta:
         model = IssueReaction
-        fields = ["id", "actor", "issue", "reaction"]
+        fields = ["id", "actor", "issue", "reaction", "display_name"]
 
 
 class CommentReactionSerializer(BaseSerializer):
+    display_name = serializers.CharField(source="actor.display_name", read_only=True)
+
     class Meta:
         model = CommentReaction
-        fields = "__all__"
-        read_only_fields = ["workspace", "project", "comment", "actor", "deleted_at"]
+        fields = [
+            "id",
+            "actor",
+            "comment",
+            "reaction",
+            "display_name",
+            "deleted_at",
+            "workspace",
+            "project",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]
+        read_only_fields = ["workspace", "project", "comment", "actor", "deleted_at", "created_by", "updated_by"]
 
 
 class IssueVoteSerializer(BaseSerializer):
@@ -1145,7 +1166,7 @@ class CustomFieldSerializer(BaseSerializer):
     def validate(self, data):
         field_type = data.get("field_type")
         options = data.get("options", [])
-        
+
         if field_type in ["select", "multiselect"]:
             if not options or len(options) == 0:
                 raise serializers.ValidationError("선택 타입의 필드는 최소 하나의 옵션이 필요합니다.")
@@ -1155,13 +1176,13 @@ class CustomFieldSerializer(BaseSerializer):
         elif field_type in ["project_member", "project_members"]:
             # 프로젝트 멤버 타입은 options가 필요하지 않음
             pass
-            
+
         return data
 
     def to_representation(self, instance):
         """Convert IssueType ID to ProjectIssueType ID in response"""
         data = super().to_representation(instance)
-        
+
         # Convert issue_type from IssueType to ProjectIssueType
         if data.get('issue_type') and instance.issue_type:
             try:
@@ -1173,7 +1194,7 @@ class CustomFieldSerializer(BaseSerializer):
                 data['issue_type'] = str(project_issue_type.id)
             except ProjectIssueType.DoesNotExist:
                 pass
-        
+
         return data
 
     def update(self, instance, validated_data):
@@ -1197,7 +1218,7 @@ class CustomFieldValueSerializer(BaseSerializer):
 
         if value is not None:
             field_type = custom_field.field_type
-            
+
             if field_type == "text":
                 # text 필드: 문자열 타입 검증
                 if not isinstance(value, str):
@@ -1236,13 +1257,13 @@ class CustomFieldValueSerializer(BaseSerializer):
                     # 다중 멤버 검증
                     if not isinstance(value, list):
                         raise serializers.ValidationError("프로젝트 멤버(다중)는 리스트 형태여야 합니다.")
-                    
+
                     valid_members = ProjectMember.objects.filter(
                         project_id=custom_field.project_id,
                         member_id__in=value,
                         is_active=True
                     ).values_list("member_id", flat=True)
-                    
+
                     if len(valid_members) != len(value):
                         raise serializers.ValidationError("유효하지 않은 프로젝트 멤버가 포함되어 있습니다.")
 
@@ -1271,7 +1292,7 @@ class IssueSerializer(DynamicBaseSerializer):
             deleted_at__isnull=True,
             custom_field__deleted_at__isnull=True  # 삭제된 커스텀 필드 제외
         ).select_related('custom_field')
-        
+
         return [
             {
                 "custom_field_id": str(cfv.custom_field_id),
@@ -1285,7 +1306,7 @@ class IssueSerializer(DynamicBaseSerializer):
     def to_representation(self, instance):
         """Convert IssueType ID to ProjectIssueType ID in response"""
         data = super().to_representation(instance)
-        
+
         # Convert type_id from IssueType to ProjectIssueType
         if data.get('type_id') and instance.type_id:
             try:
@@ -1452,9 +1473,14 @@ class IssueLiteSerializer(DynamicBaseSerializer):
 class IssueDetailSerializer(IssueSerializer):
     description_html = serializers.CharField()
     is_subscribed = serializers.BooleanField(read_only=True)
+    is_intake = serializers.BooleanField(read_only=True)
 
     class Meta(IssueSerializer.Meta):
-        fields = IssueSerializer.Meta.fields + ["description_html", "is_subscribed"]
+        fields = IssueSerializer.Meta.fields + [
+            "description_html",
+            "is_subscribed",
+            "is_intake",
+        ]
         read_only_fields = fields
 
 

@@ -1,15 +1,21 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { observer } from "mobx-react";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
-// components
-import { CalendarIssueBlock } from "@/components/issues";
-import { useIssueDetail } from "@/hooks/store";
+// hooks
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+// local components
 import { TRenderQuickActions } from "../list/list-view-types";
-import { HIGHLIGHT_CLASS } from "../utils";
-// types
+import { HIGHLIGHT_CLASS } from "./utils";
+import { CalendarIssueBlock } from "./issue-block";
+
+const formatToLocalDate = (value: Date | string | null | undefined): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
 
 type Props = {
   issueId: string;
@@ -28,106 +34,76 @@ type Props = {
 export const CalendarIssueBlockRoot: React.FC<Props> = observer((props) => {
   const { issueId, quickActions, isDragDisabled, date, canEditProperties, isEpic = false, issueInfo } = props;
 
-  // states
+  const issueRef = useRef<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // refs
-  const issueRef = useRef<HTMLDivElement>(null);
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
 
-  // store hooks
-  const { issue: issueDetails } = useIssueDetail();
-  const { getIssueById } = issueDetails;
+  const issue = useMemo(() => getIssueById(issueId), [getIssueById, issueId]);
 
-  // issue from the store
-  const issue = getIssueById(issueId);
-  if (!issue) return null;
+  const canDrag = useMemo(() => !isDragDisabled && canEditProperties(issue?.project_id ?? undefined), [
+    canEditProperties,
+    isDragDisabled,
+    issue?.project_id,
+  ]);
 
   useEffect(() => {
     const element = issueRef.current;
-    if (!element || isDragDisabled) return;
+    if (!element || !issue || !canDrag) return;
 
-    // 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
-    const formatToLocalDate = (date: Date | string) => {
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
-
-    // 날짜 비교를 위해 로컬 시간 기준으로 문자열 변환
     const dateString = formatToLocalDate(date);
-    const startDateString = issue.start_date ? formatToLocalDate(issue.start_date) : null;
-    const targetDateString = issue.target_date ? formatToLocalDate(issue.target_date) : null;
+    const startDateString = formatToLocalDate(issue.start_date);
+    const targetDateString = formatToLocalDate(issue.target_date);
 
-    // 시작일과 종료일이 같은지 확인
-    const hasSameDates = startDateString && targetDateString && startDateString === targetDateString;
+    const hasSameDates = Boolean(startDateString && targetDateString && startDateString === targetDateString);
+    const isStart = !hasSameDates && startDateString === dateString;
+    const isEnd = !hasSameDates && targetDateString === dateString;
+    const isEqualDatesCase = hasSameDates && startDateString === dateString;
 
-    // issue.start_date와 issue.target_date가 설정되었는지 확인
-    const hasStartDate = !!startDateString;
-    const hasTargetDate = !!targetDateString;
+    const isDraggableForDate = canDrag && (isStart || isEnd || isEqualDatesCase);
 
-    // 현재 표시되는 날짜가 시작일인지 종료일인지 결정
-    // 1. 날짜가 시작일과 종료일이 같고, 현재 날짜가 그 날짜인 경우 (특별한 경우로 표시)
-    const isEqualDatesCase = hasSameDates && dateString === startDateString;
-    
-    // 2. 날짜가 시작일인지 확인 (시작일과 종료일이 다른 경우)
-    const isStart = !hasSameDates && hasStartDate && dateString === startDateString;
-    
-    // 3. 날짜가 종료일인지 확인 (시작일과 종료일이 다른 경우)
-    const isEnd = !hasSameDates && hasTargetDate && dateString === targetDateString;
+    if (!isDraggableForDate) return;
 
-    // 드래그 가능한 플래그 설정
-    const isDragEnabled = !isDragDisabled && (isStart || isEnd || isEqualDatesCase);
-
-    if (!isDragEnabled) return;
-
-    // 드래그 설정
     return combine(
       draggable({
         element,
         getInitialData: () => {
           setIsDragging(true);
-          // 디버깅을 위한 로그
-          // console.log("[중요] 드래그 시작 데이터:", {
-          //   id: issue?.id,
-          //   date: dateString,
-          //   isStartDate: isStart || (isEqualDatesCase ? null : false),
-          //   isEqualDatesCase: isEqualDatesCase
-          // });
           return {
-            id: issue?.id,
+            id: issue.id,
             date: dateString,
-            isStartDate: isStart || (isEqualDatesCase ? null : false),
-            isEqualDatesCase: isEqualDatesCase
+            isStartDate: isEqualDatesCase ? null : isStart,
+            isEqualDatesCase,
           };
         },
         onDragStart: ({ source }) => {
           source.element.classList.add(HIGHLIGHT_CLASS);
         },
-        onDrop: () => {
+        onDrop: ({ source }) => {
           setIsDragging(false);
+          source.element.classList.remove(HIGHLIGHT_CLASS);
         },
       })
     );
-  }, [issueId, date, isDragDisabled]);
+  }, [canDrag, date, issue]);
 
   useOutsideClickDetector(issueRef, () => {
-    issueRef?.current?.classList?.remove(HIGHLIGHT_CLASS);
+    issueRef.current?.classList?.remove(HIGHLIGHT_CLASS);
   });
 
-  if (!issue) {
-    console.warn(`Issue not found for ID: ${issueId}`);
-    return null;
-  }
+  if (!issue) return null;
 
   return (
-    <CalendarIssueBlock 
-      isDragging={isDragging} 
-      issue={issue} 
-      quickActions={quickActions} 
-      elementRef={issueRef} 
+    <CalendarIssueBlock
+      isDragging={isDragging}
+      issue={issue}
+      quickActions={quickActions}
       date={date}
       isEpic={isEpic}
       issueInfo={issueInfo}
-      className="h-full overflow-hidden w-full"
+      ref={issueRef}
     />
   );
 });

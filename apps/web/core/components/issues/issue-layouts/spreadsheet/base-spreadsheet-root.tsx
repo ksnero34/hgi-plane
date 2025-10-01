@@ -5,10 +5,11 @@ import { useParams } from "next/navigation";
 import { ALL_ISSUES, EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { EIssuesStoreType, IIssueDisplayFilterOptions, EIssueLayoutTypes } from "@plane/types";
 // hooks
-import { useIssues, useUserPermissions } from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
-import { useCustomField } from "@/hooks/store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // local imports
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";

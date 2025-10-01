@@ -2,14 +2,14 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import useSWR from "swr";
 import { EyeIcon, TriangleAlert } from "lucide-react";
-// plane types
+// plane imports
 import { TPageVersion } from "@plane/types";
-// plane ui
 import { Button, setToast, TOAST_TYPE } from "@plane/ui";
-// components
 import { renderFormattedDate, renderFormattedTime } from "@plane/utils";
-import { TVersionEditorProps } from "@/components/pages";
 // helpers
+import { EPageStoreType } from "@/plane-web/hooks/store";
+// local imports
+import { TVersionEditorProps } from "./editor";
 
 type Props = {
   activeVersion: string | null;
@@ -19,11 +19,20 @@ type Props = {
   handleRestore: (descriptionHTML: string) => Promise<void>;
   pageId: string;
   restoreEnabled: boolean;
+  storeType: EPageStoreType;
 };
 
 export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
-  const { activeVersion, editorComponent, fetchVersionDetails, handleClose, handleRestore, pageId, restoreEnabled } =
-    props;
+  const {
+    activeVersion,
+    editorComponent,
+    fetchVersionDetails,
+    handleClose,
+    handleRestore,
+    pageId,
+    restoreEnabled,
+    storeType,
+  } = props;
   // states
   const [isRestoring, setIsRestoring] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -44,14 +53,14 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "페이지 버전이 복원되었습니다.",
+          title: "Page version restored.",
         });
         handleClose();
       })
       .catch(() =>
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "페이지 버전을 복원할 수 없습니다.",
+          title: "Failed to restore page version.",
         })
       )
       .finally(() => setIsRestoring(false));
@@ -74,11 +83,11 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
               <TriangleAlert className="size-10" />
             </span>
             <div>
-              <h6 className="text-lg font-semibold">문제가 발생했습니다!</h6>
-              <p className="text-sm text-custom-text-300">버전을 로드할 수 없습니다. 다시 시도해주세요.</p>
+              <h6 className="text-lg font-semibold">Something went wrong!</h6>
+              <p className="text-sm text-custom-text-300">The version could not be loaded, please try again.</p>
             </div>
             <Button variant="link-primary" onClick={handleRetry} loading={isRetrying}>
-              다시 시도
+              Try again
             </Button>
           </div>
         </div>
@@ -89,7 +98,7 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
               <h6 className="text-base font-medium">
                 {versionDetails
                   ? `${renderFormattedDate(versionDetails.last_saved_at)} ${renderFormattedTime(versionDetails.last_saved_at)}`
-                  : "버전 상세정보 로드중..."}
+                  : "Loading version details"}
               </h6>
               <span className="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-custom-primary-100 bg-custom-primary-100/20 py-1 px-1.5 rounded">
                 <EyeIcon className="flex-shrink-0 size-3" />
@@ -104,12 +113,12 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
                 onClick={handleRestoreVersion}
                 loading={isRestoring}
               >
-                {isRestoring ? "복원 중" : "복원"}
+                {isRestoring ? "Restoring" : "Restore"}
               </Button>
             )}
           </div>
           <div className="pt-8 h-full overflow-y-scroll vertical-scrollbar scrollbar-sm">
-            <VersionEditor activeVersion={activeVersion} versionDetails={versionDetails} />
+            <VersionEditor activeVersion={activeVersion} storeType={storeType} versionDetails={versionDetails} />
           </div>
         </>
       )}

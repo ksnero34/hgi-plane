@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import { TCustomField, TCustomFieldValue } from "@plane/types";
 
 // hooks
-import { useProject, useMember } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
+import { useMember } from "@/hooks/store/use-member";
 
 type Props = {
   customFields: TCustomField[];

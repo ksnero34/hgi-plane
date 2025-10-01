@@ -41,7 +41,7 @@ import { updatePersistentLayer } from "@/local-db/utils/utils";
 import { workItemSortWithOrderByExtended } from "@/plane-web/store/issue/helpers/base-issue.store";
 // services
 import { CycleService } from "@/services/cycle.service";
-import { IssueArchiveService, IssueDraftService, IssueService } from "@/services/issue";
+import { IssueArchiveService, IssueService } from "@/services/issue";
 import { ModuleService } from "@/services/module.service";
 //
 import { IIssueRootStore } from "../root.store";
@@ -205,7 +205,6 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   // services
   issueService;
   issueArchiveService;
-  issueDraftService;
   moduleService;
   cycleService;
   // root store
@@ -249,8 +248,6 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
       createIssue: action,
       issueUpdate: action,
-      createDraftIssue: action,
-      updateDraftIssue: action,
       updateIssueDates: action,
       issueQuickAdd: action.bound,
       removeIssue: action.bound,
@@ -275,7 +272,6 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     this.issueService = new IssueService(serviceType);
     this.issueArchiveService = new IssueArchiveService();
-    this.issueDraftService = new IssueDraftService();
     this.moduleService = new ModuleService();
     this.cycleService = new CycleService();
 
@@ -464,14 +460,14 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   );
 
   /**
-   * Gets the next page cursor based on stored pagination data from backend response
+   * Gets the next page cursor based on number of issues currently available
    * @param groupId groupId for the cursor
    * @param subGroupId subgroupId for cursor
    * @returns next page cursor or undefined
    */
   getNextCursor = (groupId: string | undefined, subGroupId: string | undefined): string | undefined => {
     const paginationData = this.getPaginationData(groupId, subGroupId);
-    
+
     // 백엔드에서 받은 next_cursor를 사용
     if (paginationData?.nextCursor) {
       return paginationData.nextCursor;
@@ -578,7 +574,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       const workflowStore = this.rootIssueStore.rootStore.workflow;
       const workflows = workflowStore.getWorkflowTemplates(projectId);
       const activeWorkflows = workflows.filter(w => w.is_active);
-      
+
       if (activeWorkflows.length > 0 && !data.workflow_id) {
         // Find default workflow or first active workflow
         const defaultWorkflow = activeWorkflows.find(w => w.is_default) || activeWorkflows[0];
@@ -590,7 +586,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       console.warn("Failed to auto-assign workflow:", error);
       // Continue with issue creation even if workflow assignment fails
     }
-    
+
     // perform an API call
     const response = await this.issueService.createIssue(workspaceSlug, projectId, data);
 
@@ -623,7 +619,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   ) {
     // Store Before state of the issue
     const issueBeforeUpdate = clone(this.rootIssueStore.issues.getIssueById(issueId));
-    
+
     // Workflow validation for state changes
     if (data.state_id && issueBeforeUpdate?.state_id !== data.state_id) {
       try {
@@ -633,7 +629,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
           from_state_id: issueBeforeUpdate?.state_id || "",
           to_state_id: data.state_id,
         });
-        
+
         if (!validationResult.allowed) {
           // Show toast message instead of throwing error
           const { setToast, TOAST_TYPE } = await import("@plane/ui");
@@ -644,7 +640,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
           });
           return;
         }
-        
+
         // If reviewer is required, request approval instead of direct transition
         if (validationResult.requires_reviewer) {
           try {
@@ -654,7 +650,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               to_state_id: data.state_id,
               comment: `상태 변경 요청`
             });
-            
+
             const { setToast, TOAST_TYPE } = await import("@plane/ui");
             setToast({
               type: TOAST_TYPE.INFO,
@@ -677,11 +673,11 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         console.warn("워크플로우 검증 실패, 전환 허용:", error);
       }
     }
-    
+
     try {
       // Update the Respective Stores
       this.rootIssueStore.issues.updateIssue(issueId, data);
-      
+
       // 커스텀 필드 업데이트 시 강제로 리액티브 업데이트 트리거
       if (data.custom_field_values) {
         // MobX가 변경을 감지하도록 강제로 observable 업데이트
@@ -697,7 +693,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
           }
         });
       }
-      
+
       this.updateIssueList({ ...issueBeforeUpdate, ...data } as TIssue, issueBeforeUpdate);
 
       // Check if should Sync
@@ -714,54 +710,6 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
       // call fetch Parent Stats
       this.fetchParentStats(workspaceSlug, projectId);
-    } catch (error) {
-      // If errored out update store again to revert the change
-      this.rootIssueStore.issues.updateIssue(issueId, issueBeforeUpdate ?? {});
-      this.updateIssueList(issueBeforeUpdate, { ...issueBeforeUpdate, ...data } as TIssue);
-      throw error;
-    }
-  }
-
-  /**
-   * Similar to Create Issue but for creating Draft issues
-   * @param workspaceSlug
-   * @param projectId
-   * @param data draft issue data
-   * @returns
-   */
-  async createDraftIssue(workspaceSlug: string, projectId: string, data: Partial<TIssue>) {
-    // call API to create a Draft issue
-    const response = await this.issueDraftService.createDraftIssue(workspaceSlug, projectId, data);
-    // call Fetch parent stats
-    this.fetchParentStats(workspaceSlug, projectId);
-    // Add issue to store
-    this.addIssue(response);
-    return response;
-  }
-
-  /**
-   * Similar to update issue but for draft issues.
-   * @param workspaceSlug
-   * @param projectId
-   * @param issueId
-   * @param data Partial Issue Data to be updated
-   */
-  async updateDraftIssue(workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) {
-    // Store Before state of the issue
-    const issueBeforeUpdate = clone(this.rootIssueStore.issues.getIssueById(issueId));
-    try {
-      // Update the Respective Stores
-      this.rootIssueStore.issues.updateIssue(issueId, data);
-      this.updateIssueList({ ...issueBeforeUpdate, ...data } as TIssue, issueBeforeUpdate);
-
-      // call API to update the issue
-      await this.issueDraftService.updateDraftIssue(workspaceSlug, projectId, issueId, data);
-
-      // call Fetch parent stats
-      this.fetchParentStats(workspaceSlug, projectId);
-
-      // If the issue is updated to not a draft issue anymore remove from the store list
-      if (!isNil(data.is_draft) && !data.is_draft) this.removeIssueFromList(issueId);
     } catch (error) {
       // If errored out update store again to revert the change
       this.rootIssueStore.issues.updateIssue(issueId, issueBeforeUpdate ?? {});
@@ -903,12 +851,12 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
    */
   bulkUpdateProperties = async (workspaceSlug: string, projectId: string, data: TBulkOperationsPayload) => {
     const issueIds = data.issue_ids;
-    
+
     // Workflow validation for bulk state changes
     if (data.properties.state_id) {
       const workflowStore = this.rootIssueStore.rootStore.workflow;
       const failedValidations: string[] = [];
-      
+
       // Validate each issue state transition
       for (const issueId of issueIds) {
         const issueBeforeUpdate = this.rootIssueStore.issues.getIssueById(issueId);
@@ -919,7 +867,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               from_state_id: issueBeforeUpdate?.state_id || "",
               to_state_id: data.properties.state_id,
             });
-            
+
             if (!validationResult.allowed) {
               failedValidations.push(issueBeforeUpdate?.name || issueId);
             }
@@ -928,12 +876,12 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
           }
         }
       }
-      
+
       if (failedValidations.length > 0) {
         throw new Error(`다음 이슈들의 상태 전환이 워크플로우 규칙에 의해 허용되지 않습니다: ${failedValidations.join(", ")}`);
       }
     }
-    
+
     // make request to update issue properties
     await this.issueService.bulkOperations(workspaceSlug, projectId, data);
     // update issues in the store
@@ -1977,7 +1925,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         const buildIssueTree = (parentId: string | null, allIssues: TIssue[]): string[] => {
           // 현재 부모의 직계 자식들 찾기
           const children = allIssues.filter(issue => issue.parent_id === parentId);
-          
+
           // 자식들을 날짜 기준으로 정렬
           const sortedChildren = orderBy(
             children,
@@ -2006,7 +1954,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
           // 결과 배열 초기화
           const result: string[] = [];
-          
+
           // 각 자식에 대해 재귀적으로 처리
           sortedChildren.forEach(child => {
             // 현재 자식 ID 추가
@@ -2020,7 +1968,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
         // 최상위 이슈들(부모가 없는 이슈들) 찾기
         const rootIssues = array.filter(issue => !issue.parent_id);
-        
+
         // 최상위 이슈들도 동일한 정렬 로직 적용
         const sortedRootIssues = orderBy(
           rootIssues,

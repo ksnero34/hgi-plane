@@ -7,7 +7,8 @@ import { EIssueServiceType, TIssue } from "@plane/types";
 // ui
 import { setToast, TOAST_TYPE } from "@plane/ui";
 // store hooks
-import { useIssueDetail, useWorkflow } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 // plane web imports
 import { ChangeWorkItemStateList } from "@/plane-web/components/command-palette/actions/work-item-actions";
 
@@ -42,7 +43,7 @@ export const ChangeIssueState: React.FC<Props> = observer((props) => {
           from_state_id: currentStateId || "",
           to_state_id: stateId,
         });
-        
+
         if (!validationResult.allowed) {
           setToast({
             type: TOAST_TYPE.ERROR,
@@ -56,7 +57,7 @@ export const ChangeIssueState: React.FC<Props> = observer((props) => {
         // Continue with state change on validation error
       }
     }
-    
+
     submitChanges({ state_id: stateId });
     closePalette();
   };

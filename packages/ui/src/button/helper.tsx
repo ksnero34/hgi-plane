@@ -3,6 +3,7 @@ export type TButtonVariant =
   | "accent-primary"
   | "outline-primary"
   | "neutral-primary"
+  | "neutral"
   | "link-primary"
   | "danger"
   | "accent-danger"
@@ -61,6 +62,12 @@ export const buttonStyling: IButtonStyling = {
     pressed: `focus:text-custom-text-300 focus:bg-custom-background-90`,
     disabled: `cursor-not-allowed !text-custom-text-400`,
   },
+  neutral: {
+    default: `text-custom-text-200 bg-custom-background-100 border border-custom-border-200`,
+    hover: `hover:bg-custom-background-90`,
+    pressed: `focus:text-custom-text-300 focus:bg-custom-background-90`,
+    disabled: `cursor-not-allowed !text-custom-text-400`,
+  },
   "link-primary": {
     default: `text-custom-primary-100 bg-custom-background-100`,
     hover: `hover:text-custom-primary-200`,
@@ -108,7 +115,7 @@ export const buttonStyling: IButtonStyling = {
 
 export const getButtonStyling = (variant: TButtonVariant, size: TButtonSizes, disabled: boolean = false): string => {
   let tempVariant: string = ``;
-  const currentVariant = buttonStyling[variant];
+  const currentVariant = buttonStyling[variant] ?? buttonStyling.primary;
 
   tempVariant = `${currentVariant.default} ${disabled ? currentVariant.disabled : currentVariant.hover} ${
     currentVariant.pressed

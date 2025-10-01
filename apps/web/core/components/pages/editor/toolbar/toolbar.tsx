@@ -2,18 +2,16 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Check, ChevronDown } from "lucide-react";
-// editor
-import { EditorRefApi } from "@plane/editor";
-// ui
-import { CustomMenu, Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
-// components
+// plane imports
+import type { EditorRefApi } from "@plane/editor";
+import { Tooltip } from "@plane/propel/tooltip";
+import { CustomMenu, setToast, TOAST_TYPE } from "@plane/ui";
 import { cn } from "@plane/utils";
-import { ColorDropdown } from "@/components/pages";
+import { useInstance } from "@/hooks/store/use-instance";
 // constants
 import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/editor";
-// helpers
-// hooks
-import { useInstance } from "@/hooks/store";
+// local imports
+import { ColorDropdown } from "./color-dropdown";
 
 type Props = {
   editorRef: EditorRefApi;
@@ -57,15 +55,6 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
     return true;
   };
 
-  const handleClick = () => {
-    // TODO: update this while toolbar homogenization
-    // @ts-expect-error type mismatch here
-    executeCommand({
-      itemKey: item.itemKey,
-      ...item.extraProps,
-    });
-  };
-
   return (
     <Tooltip
       tooltipContent={
@@ -77,7 +66,14 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
     >
       <button
         type="button"
-        onClick={handleClick}
+        onClick={() =>
+          // TODO: update this while toolbar homogenization
+          // @ts-expect-error type mismatch here
+          executeCommand({
+            itemKey: item.itemKey,
+            ...item.extraProps,
+          })
+        }
         className={cn("grid size-7 place-items-center rounded text-custom-text-300 hover:bg-custom-background-80", {
           "bg-custom-background-80 text-custom-text-100": isActive,
         })}

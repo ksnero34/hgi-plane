@@ -2,8 +2,8 @@ export type TInstanceAuthenticationModes = {
   key: string;
   name: string;
   description: string;
-  icon: JSX.Element;
-  config: JSX.Element;
+  icon: React.ReactNode;
+  config: React.ReactNode;
   unavailable?: boolean;
 };
 
@@ -29,18 +29,18 @@ export type TInstanceGitlabAuthenticationConfigurationKeys =
   | "GITLAB_CLIENT_SECRET";
 
 export type TInstanceOIDCAuthenticationConfigurationKeys =
-  | "OIDC_CLIENT_ID"
-  | "OIDC_CLIENT_SECRET"
-  | "OIDC_ISSUER_URL"
-  | "OIDC_SCOPES"
-  | "OIDC_NAME_CLAIM"
-  | "OIDC_EMAIL_CLAIM";
+    | "OIDC_CLIENT_ID"
+    | "OIDC_CLIENT_SECRET"
+    | "OIDC_ISSUER_URL"
+    | "OIDC_SCOPES"
+    | "OIDC_NAME_CLAIM"
+    | "OIDC_EMAIL_CLAIM";
 
 export type TInstanceAuthenticationConfigurationKeys =
   | TInstanceGoogleAuthenticationConfigurationKeys
   | TInstanceGithubAuthenticationConfigurationKeys
   | TInstanceGitlabAuthenticationConfigurationKeys
-  | TInstanceOIDCAuthenticationConfigurationKeys;
+    | TInstanceOIDCAuthenticationConfigurationKeys;
 
 export type TInstanceAuthenticationKeys = TInstanceAuthenticationMethodKeys | TInstanceAuthenticationConfigurationKeys;
 

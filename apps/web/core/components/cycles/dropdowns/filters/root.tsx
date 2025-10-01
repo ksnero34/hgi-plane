@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
+// plane imports
 import { TCycleFilters, TCycleGroups, TCustomField } from "@plane/types";
-// components
-import { FilterEndDate, FilterStartDate, FilterStatus } from "@/components/cycles";
-import { FilterCustomFields } from "@/components/issues";
+// hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
-import { useCustomField } from "@/hooks/store";
-// types
-
+// local imports
+import { FilterEndDate } from "./end-date";
+import { FilterStartDate } from "./start-date";
+import { FilterStatus } from "./status";
+import { FilterCustomFields } from "@/components/issues/issue-layouts/filters/header/filters";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 type Props = {
   filters: TCycleFilters;
   handleFiltersUpdate: (key: keyof TCycleFilters, value: string | string[]) => void;
@@ -41,21 +43,21 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
         currentCustomFieldFilters = JSON.parse(JSON.stringify(filters.custom_fields));
       }
     }
-    
+
     const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-    
+
     let newFieldValues: string[];
     if (currentFieldValues.includes(value)) {
       newFieldValues = currentFieldValues.filter(v => v !== value);
     } else {
       newFieldValues = [...currentFieldValues, value];
     }
-    
+
     const newCustomFieldFilters = {
       ...currentCustomFieldFilters,
       [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
     };
-    
+
     // 빈 배열인 필드들 제거
     Object.keys(newCustomFieldFilters).forEach(key => {
       const fieldValues = newCustomFieldFilters[key];
@@ -63,12 +65,12 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
         delete newCustomFieldFilters[key];
       }
     });
-    
+
     // JSON 문자열로 변환하여 전달 (빈 객체인 경우 빈 문자열)
-    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
-      ? JSON.stringify(newCustomFieldFilters) 
+    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0
+      ? JSON.stringify(newCustomFieldFilters)
       : "";
-    
+
     handleFiltersUpdate("custom_fields", customFieldsValue);
   };
 

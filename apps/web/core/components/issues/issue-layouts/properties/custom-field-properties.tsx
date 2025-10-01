@@ -12,7 +12,7 @@ import { renderFormattedPayloadDate } from "@plane/utils";
 import { updateCustomFieldValueSafely, getCustomFieldValue } from "@plane/utils";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 // components
 import { CustomFieldDropdown, DateDropdown, MemberDropdown } from "@/components/dropdowns";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";

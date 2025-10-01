@@ -18,14 +18,14 @@ import {
   AppliedStateFilters,
   AppliedStateGroupFilters,
   AppliedCustomFieldFilters,
-} from "@/components/issues";
+} from "@/components/issues/issue-layouts/filters/applied-filters";
 // constants
 // helpers
 import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
 // hooks
-import { useUserPermissions } from "@/hooks/store";
+import { useUserPermissions } from "@/hooks/store/user";
 // plane web components
-import { AppliedIssueTypeFilters } from "@/plane-web/components/issues";
+import { AppliedIssueTypeFilters } from "@/plane-web/components/issues/filters/applied-filters/issue-types";
 
 type Props = {
   appliedFilters: IIssueFilterOptions;

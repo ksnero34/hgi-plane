@@ -19,7 +19,7 @@ export const getRelationActivityContent = (activity: TIssueActivity | undefined)
     case "relates_to":
       return activity.old_value === "" 
         ? ` 과 관련있음으로 표시했습니다: ` 
-        : ` 간의 관련성을 제거했습니다: `;
+        : ` 와 관련있음을 제거했습니다: `;
   }
 
   return;

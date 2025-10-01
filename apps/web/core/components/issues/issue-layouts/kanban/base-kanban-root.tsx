@@ -8,18 +8,20 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel, WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import { EIssueServiceType, EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
-import { DeleteIssueModal } from "@/components/issues";
 //constants
 //hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useIssueDetail, useIssues, useKanbanView, useUserPermissions } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useKanbanView } from "@/hooks/store/use-kanban-view";
+import { useUserPermissions } from "@/hooks/store/user";
 import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 // store
 // ui
 // types
+import { DeleteIssueModal } from "../../delete-issue-modal";
 import { TCustomField } from "@plane/types";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
@@ -33,7 +35,6 @@ export type KanbanStoreType =
   | EIssuesStoreType.MODULE
   | EIssuesStoreType.CYCLE
   | EIssuesStoreType.PROJECT_VIEW
-  | EIssuesStoreType.DRAFT
   | EIssuesStoreType.PROFILE
   | EIssuesStoreType.TEAM
   | EIssuesStoreType.TEAM_VIEW
@@ -94,8 +95,8 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
 
   useEffect(() => {
     const perPageFromFilter = displayFilters?.per_page || (sub_group_by ? 10 : 30);
-    fetchIssues("init-loader", { 
-      canGroup: true, 
+    fetchIssues("init-loader", {
+      canGroup: true,
       perPageCount: perPageFromFilter,
       perPageFromDisplayFilter: perPageFromFilter
     }, viewId);

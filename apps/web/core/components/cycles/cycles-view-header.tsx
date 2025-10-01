@@ -9,12 +9,12 @@ import { useTranslation } from "@plane/i18n";
 import { TCycleFilters } from "@plane/types";
 import { cn, calculateTotalFilters } from "@plane/utils";
 // components
-import { CycleFiltersSelection } from "@/components/cycles";
-import { FiltersDropdown } from "@/components/issues";
-// helpers
-import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
+import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 // hooks
-import { useCycleFilter } from "@/hooks/store";
+import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
+// local imports
+import { CycleFiltersSelection } from "./dropdowns";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 type Props = {
   projectId: string;
@@ -37,7 +37,7 @@ export const CyclesViewHeader: React.FC<Props> = observer((props) => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
-      
+
       const updatedValue = calculateFilterValue(key as any, value, currentProjectFilters as any);
       updateFilters(projectId, { [key]: updatedValue });
     },

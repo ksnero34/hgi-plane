@@ -3,15 +3,28 @@ import { Node as ProseMirrorNode, ResolvedPos } from "@tiptap/pm/model";
 import { CellSelection, TableMap, updateColumnsOnResize } from "@tiptap/pm/tables";
 import { Decoration, NodeView } from "@tiptap/pm/view";
 import { h } from "jsx-dom-cjs";
-import { icons } from "src/core/extensions/table/table/icons";
 import tippy, { Instance, Props } from "tippy.js";
 import { CORE_EXTENSIONS } from "@/constants/extension";
+import { icons } from "./icons";
 import { isCellSelection } from "./utilities/helpers";
+
+type ToolboxContext = {
+  editor: Editor;
+  triggerButton?: Element | null;
+  controlsContainer?: HTMLElement | null;
+  anchorPos?: number;
+  headPos?: number;
+};
 
 type ToolboxItem = {
   label: string;
   icon: string;
-  action: (args: { editor: Editor; [key: string]: any }) => any;
+  action: (args: ToolboxContext) => any;
+};
+
+type ContextMenuItem = ToolboxItem & {
+  shouldDisplay?: (context: ToolboxContext & { selection: CellSelection | null }) => boolean;
+  disabled?: (context: ToolboxContext & { selection: CellSelection | null }) => boolean;
 };
 
 export function updateColumns(
@@ -81,6 +94,15 @@ const defaultTippyOptions: Partial<Props> = {
   placement: "right",
 };
 
+const selectionToolbarOptions: Partial<Props> = {
+  trigger: "manual",
+  interactive: true,
+  arrow: false,
+  placement: "bottom",
+  theme: "light-border no-padding",
+  appendTo: () => document.body,
+};
+
 function setCellsBackgroundColor(editor: Editor, color: { backgroundColor: string; textColor: string }) {
   return editor
     .chain()
@@ -99,24 +121,20 @@ function setTableRowBackgroundColor(editor: Editor, color: { backgroundColor: st
     return false;
   }
 
-  // Get the position of the hovered cell in the selection to determine the row.
   const hoveredCell = selection.$headCell || selection.$anchorCell;
+  if (!hoveredCell) return false;
 
-  // Find the depth of the table row node
   let rowDepth = hoveredCell.depth;
   while (rowDepth > 0 && hoveredCell.node(rowDepth).type.name !== CORE_EXTENSIONS.TABLE_ROW) {
-    rowDepth--;
+    rowDepth -= 1;
   }
 
-  // If we couldn't find a tableRow node, we can't set the background color
   if (hoveredCell.node(rowDepth).type.name !== CORE_EXTENSIONS.TABLE_ROW) {
     return false;
   }
 
-  // Get the position where the table row starts
   const rowStartPos = hoveredCell.start(rowDepth);
 
-  // Create a transaction that sets the background color on the tableRow node.
   const tr = state.tr.setNodeMarkup(rowStartPos - 1, null, {
     ...hoveredCell.node(rowDepth).attrs,
     background: color.backgroundColor,
@@ -131,27 +149,27 @@ const columnsToolboxItems: ToolboxItem[] = [
   {
     label: "Toggle column header",
     icon: icons.toggleColumnHeader,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().toggleHeaderColumn().run(),
+    action: ({ editor }) => editor.chain().focus().toggleHeaderColumn().run(),
   },
   {
     label: "Add column before",
     icon: icons.insertLeftTableIcon,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().addColumnBefore().run(),
+    action: ({ editor }) => editor.chain().focus().addColumnBefore().run(),
   },
   {
     label: "Add column after",
     icon: icons.insertRightTableIcon,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().addColumnAfter().run(),
+    action: ({ editor }) => editor.chain().focus().addColumnAfter().run(),
   },
   {
     label: "Pick color",
-    icon: "", // No icon needed for color picker
-    action: (_args: unknown) => { }, // Placeholder action; actual color picking is handled in `createToolbox`
+    icon: "",
+    action: () => {},
   },
   {
     label: "Delete column",
     icon: icons.deleteColumn,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().deleteColumn().run(),
+    action: ({ editor }) => editor.chain().focus().deleteColumn().run(),
   },
 ];
 
@@ -159,118 +177,91 @@ const rowsToolboxItems: ToolboxItem[] = [
   {
     label: "Toggle row header",
     icon: icons.toggleRowHeader,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().toggleHeaderRow().run(),
+    action: ({ editor }) => editor.chain().focus().toggleHeaderRow().run(),
   },
   {
     label: "Add row above",
     icon: icons.insertTopTableIcon,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().addRowBefore().run(),
+    action: ({ editor }) => editor.chain().focus().addRowBefore().run(),
   },
   {
     label: "Add row below",
     icon: icons.insertBottomTableIcon,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().addRowAfter().run(),
+    action: ({ editor }) => editor.chain().focus().addRowAfter().run(),
   },
   {
     label: "Pick color",
     icon: "",
-    action: (_args: unknown) => { }, // Placeholder action; actual color picking is handled in `createToolbox`
+    action: () => {},
   },
   {
     label: "Delete row",
     icon: icons.deleteRow,
-    action: ({ editor }: { editor: Editor }) => editor.chain().focus().deleteRow().run(),
+    action: ({ editor }) => editor.chain().focus().deleteRow().run(),
   },
 ];
 
-const contextMenuItems: ToolboxItem[] = [
+const selectionToolbarItems: ContextMenuItem[] = [
   {
     label: "Merge cells",
-    icon: "",
-    action: ({ editor }: { editor: Editor }): boolean => {
-      if (editor.can().mergeCells()) {
-        return editor.chain().mergeCells().run();
-      }
-      console.warn("Cannot merge cells with the current selection at action time.");
-      return false;
-    },
+    icon: icons.insertLeftTableIcon,
+    action: ({ editor }) => editor.chain().focus().mergeCells().run(),
+    shouldDisplay: ({ selection, editor }) => Boolean(selection && selection.ranges.length > 0 && editor.can().mergeCells()),
   },
   {
-    label: "Split cell",
-    icon: "",
-    action: ({ editor }: { editor: Editor }): boolean => {
-      if (editor.can().splitCell()) {
-        return editor.chain().splitCell().run();
-      }
-      console.warn("Cannot split cell with the current selection at action time.");
-      return false;
-    },
+    label: "Unmerge cells",
+    icon: icons.insertRightTableIcon,
+    action: ({ editor }) => editor.chain().focus().splitCell().run(),
+    shouldDisplay: ({ editor }) => editor.can().splitCell(),
+  },
+  {
+    label: "Distribute columns",
+    icon: icons.toggleColumnHeader,
+    action: ({ editor }) => editor.chain().focus().distributeColumns().run(),
+    shouldDisplay: ({ editor }) => editor.can().distributeColumns?.() ?? false,
+  },
+  {
+    label: "Clear cell background",
+    icon: icons.toggleRowHeader,
+    action: ({ editor }) =>
+      editor
+        .chain()
+        .focus()
+        .updateAttributes(CORE_EXTENSIONS.TABLE_CELL, { background: null, textColor: null })
+        .run(),
+    shouldDisplay: ({ selection }) => Boolean(selection),
   },
 ];
 
-// Toolbox의 내용을 생성하는 함수를 분리
-function createToolboxContent(
-  items: ToolboxItem[],
-  colors: { [key: string]: { backgroundColor: string; textColor: string; icon?: string } },
-  onClickItem: (item: ToolboxItem, event: MouseEvent) => void,
-  onSelectColor: (color: { backgroundColor: string; textColor: string }) => void
-): HTMLElement {
+function createSelectionToolbarContent(
+  items: ContextMenuItem[],
+  context: ToolboxContext & { selection: CellSelection | null }
+) {
   return h(
     "div",
     {
       className:
-        "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg min-w-[12rem] whitespace-nowrap",
+        "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 py-1 text-xs shadow-custom-shadow-rg min-w-[10rem] whitespace-nowrap",
     },
-    items.map((item) => {
-      if (item.label === "Pick color") {
-        return h("div", { className: "flex flex-col" }, [
-          h("hr", { className: "my-2 border-custom-border-200" }),
-          h("div", { className: "text-custom-text-200 text-sm" }, item.label),
-          h(
-            "div",
-            { className: "grid grid-cols-6 gap-x-1 gap-y-2.5 mt-2" },
-            Object.keys(colors).reduce((acc, colorName) => {
-              const colorValue = colors[colorName];
-              acc.push(h("div", {
-                className: "grid place-items-center size-6 rounded cursor-pointer",
-                style: `background-color: ${colorValue.backgroundColor};color: ${colorValue.textColor || "inherit"};`,
-                innerHTML:
-                  colorValue.icon ?? `<span class="text-md" style:"color: ${colorValue.backgroundColor}>A</span>`,
-                onClick: (event: MouseEvent) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onSelectColor(colorValue);
-                },
-              }));
-              return acc;
-            }, [] as any)
-          ),
-          h("hr", { className: "my-2 border-custom-border-200" }),
-        ]);
-      } else {
-        return h(
-          "div",
-          {
-            className:
-              "flex items-center gap-2 px-1 py-1.5 bg-custom-background-100 hover:bg-custom-background-80 text-sm text-custom-text-200 rounded cursor-pointer",
-            itemType: "div",
-            onClick: (event: MouseEvent) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onClickItem(item, event);
-            },
+    items.map((item) =>
+      h(
+        "button",
+        {
+          className: "flex w-full items-center gap-2 px-2 py-1.5 text-left text-custom-text-200 hover:bg-custom-background-80",
+          disabled: item.disabled ? item.disabled(context) : false,
+          onClick: (event: Event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            item.action(context);
           },
-          [
-            h("span", {
-              className: "h-3 w-3 flex-shrink-0",
-              innerHTML: item.icon,
-            }),
-            h("div", { className: "label" }, item.label),
-          ]
-        );
-      }
-    })
-  ) as HTMLElement;
+        },
+        [
+          h("span", { className: "h-3 w-3 flex-shrink-0", innerHTML: item.icon }),
+          h("span", { className: "text-xs" }, item.label),
+        ]
+      )
+    )
+  );
 }
 
 function createToolbox({
@@ -284,16 +275,121 @@ function createToolbox({
   triggerButton: Element | null;
   items: ToolboxItem[];
   tippyOptions: any;
-  onClickItem: (item: ToolboxItem, event: MouseEvent) => void;
+  onClickItem: (item: ToolboxItem) => void;
   onSelectColor: (color: { backgroundColor: string; textColor: string }) => void;
   colors: { [key: string]: { backgroundColor: string; textColor: string; icon?: string } };
 }): Instance<Props> {
-  const toolbox = tippy(triggerButton ?? document.createElement('div'), {
-    content: createToolboxContent(items, colors, onClickItem, onSelectColor), // 분리된 함수 사용
+  const toolbox = tippy(triggerButton ?? document.body, {
+    content: h(
+      "div",
+      {
+        className:
+          "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg min-w-[12rem] whitespace-nowrap",
+      },
+      items.map((item) => {
+        if (item.label === "Pick color") {
+          return h("div", { className: "flex flex-col" }, [
+            h("hr", { className: "my-2 border-custom-border-200" }),
+            h("div", { className: "text-custom-text-200 text-sm" }, item.label),
+            h(
+              "div",
+              { className: "grid grid-cols-6 gap-x-1 gap-y-2.5 mt-2" },
+              Object.entries(colors).map(([_, colorValue]) =>
+                h("div", {
+                  className: "grid place-items-center size-6 rounded cursor-pointer",
+                  style: `background-color: ${colorValue.backgroundColor};color: ${colorValue.textColor || "inherit"};`,
+                  innerHTML:
+                    colorValue.icon ?? `<span class=\"text-md\" style=\"color: ${colorValue.textColor || colorValue.backgroundColor}\">A</span>` ,
+                  onClick: () => onSelectColor(colorValue),
+                })
+              )
+            ),
+            h("hr", { className: "my-2 border-custom-border-200" }),
+          ]);
+        }
+
+        return h(
+          "div",
+          {
+            className:
+              "flex items-center gap-2 px-1 py-1.5 bg-custom-background-100 hover:bg-custom-background-80 text-sm text-custom-text-200 rounded cursor-pointer",
+            onClick: () => onClickItem(item),
+          },
+          [
+            h("span", {
+              className: "h-3 w-3 flex-shrink-0",
+              innerHTML: item.icon,
+            }),
+            h("div", { className: "label" }, item.label),
+          ]
+        );
+      })
+    ),
     ...tippyOptions,
   });
 
   return Array.isArray(toolbox) ? toolbox[0] : toolbox;
+}
+
+const contextMenuItems: ContextMenuItem[] = [
+  {
+    label: "Insert column before",
+    icon: icons.insertLeftTableIcon,
+    action: ({ editor }) => editor.chain().focus().addColumnBefore().run(),
+    shouldDisplay: ({ editor }) => editor.can().addColumnBefore?.() ?? false,
+  },
+  {
+    label: "Insert column after",
+    icon: icons.insertRightTableIcon,
+    action: ({ editor }) => editor.chain().focus().addColumnAfter().run(),
+    shouldDisplay: ({ editor }) => editor.can().addColumnAfter?.() ?? false,
+  },
+  {
+    label: "Insert row above",
+    icon: icons.insertTopTableIcon,
+    action: ({ editor }) => editor.chain().focus().addRowBefore().run(),
+    shouldDisplay: ({ editor }) => editor.can().addRowBefore?.() ?? false,
+  },
+  {
+    label: "Insert row below",
+    icon: icons.insertBottomTableIcon,
+    action: ({ editor }) => editor.chain().focus().addRowAfter().run(),
+    shouldDisplay: ({ editor }) => editor.can().addRowAfter?.() ?? false,
+  },
+  {
+    label: "Delete row",
+    icon: icons.deleteRow,
+    action: ({ editor }) => editor.chain().focus().deleteRow().run(),
+    shouldDisplay: ({ editor }) => editor.can().deleteRow(),
+  },
+  {
+    label: "Delete column",
+    icon: icons.deleteColumn,
+    action: ({ editor }) => editor.chain().focus().deleteColumn().run(),
+    shouldDisplay: ({ editor }) => editor.can().deleteColumn(),
+  },
+  {
+    label: "Merge cells",
+    icon: icons.insertLeftTableIcon,
+    action: ({ editor }) => editor.chain().focus().mergeCells().run(),
+    shouldDisplay: ({ editor, selection }) => Boolean(selection && editor.can().mergeCells()),
+  },
+  {
+    label: "Split cell",
+    icon: icons.insertRightTableIcon,
+    action: ({ editor }) => editor.chain().focus().splitCell().run(),
+    shouldDisplay: ({ editor }) => editor.can().splitCell(),
+  },
+];
+
+function createContextMenu(content: HTMLElement): Instance<Props> {
+  return tippy(document.body, {
+    content,
+    trigger: "manual",
+    placement: "right-start",
+    interactive: true,
+    theme: "light-border no-padding",
+  }) as Instance<Props>;
 }
 
 export class TableView implements NodeView {
@@ -312,12 +408,12 @@ export class TableView implements NodeView {
   columnsControl?: HTMLElement | null;
   columnsToolbox?: Instance<Props>;
   rowsToolbox?: Instance<Props>;
+  cellSelectionToolbar?: Instance<Props>;
   controls?: HTMLElement;
-  cellSelectionToolbar: Instance<Props>;
-  private lastSelectionStateKey: string | null = null;
-  private currentToolbarItemsKey: string | null = null;
-  private selectionUpdateHandler: (({ editor }: { editor: Editor }) => void) | undefined;
-  private lastKnownCellSelectionRange: { anchor: number; head: number } | null = null;
+  contextMenu?: Instance<Props>;
+  selectionUpdateHandler?: () => void;
+  currentToolbarItemsKey: string | null = null;
+  lastSelectionStateKey: string | null = null;
 
   get dom() {
     return this.root;
@@ -339,22 +435,14 @@ export class TableView implements NodeView {
     this.decorations = decorations;
     this.editor = editor;
     this.getPos = getPos;
+    this.hoveredCell = null;
     this.map = TableMap.get(node);
-
-    this.colgroup = h(
-      "colgroup",
-      null,
-      Array.from({ length: this.map.width }, () => 1).map(() => h("col"))
-    );
-    this.tbody = h("tbody");
-    this.table = h("table", null, this.colgroup, this.tbody);
 
     if (editor.isEditable) {
       this.rowsControl = h(
         "div",
         { className: "rows-control" },
         h("div", {
-          itemType: "button",
           className: "rows-control-div",
           onClick: () => this.selectRow(),
         })
@@ -364,7 +452,6 @@ export class TableView implements NodeView {
         "div",
         { className: "columns-control" },
         h("div", {
-          itemType: "button",
           className: "columns-control-div",
           onClick: () => this.selectColumn(),
         })
@@ -388,24 +475,24 @@ export class TableView implements NodeView {
         None: {
           backgroundColor: "none",
           textColor: "none",
-          icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>`,
+          icon: `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"gray\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-ban\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/></svg>` ,
         },
       };
 
       this.columnsToolbox = createToolbox({
-        triggerButton: this.columnsControl?.querySelector(".columns-control-div") ?? null,
+        triggerButton: this.columnsControl.querySelector(".columns-control-div"),
         items: columnsToolboxItems,
         colors: columnColors,
         onSelectColor: (color) => setCellsBackgroundColor(this.editor, color),
         tippyOptions: {
           ...defaultTippyOptions,
-          appendTo: this.controls ?? undefined,
+          appendTo: this.controls,
         },
-        onClickItem: (item, event) => {
+        onClickItem: (item) => {
           item.action({
             editor: this.editor,
-            triggerButton: this.columnsControl?.firstElementChild ?? null,
-            controlsContainer: this.controls ?? null,
+            triggerButton: this.columnsControl?.firstElementChild ?? undefined,
+            controlsContainer: this.controls,
           });
           this.columnsToolbox?.hide();
         },
@@ -417,23 +504,38 @@ export class TableView implements NodeView {
         colors: columnColors,
         tippyOptions: {
           ...defaultTippyOptions,
-          appendTo: this.controls ?? undefined,
+          appendTo: this.controls,
         },
         onSelectColor: (color) => setTableRowBackgroundColor(editor, color),
-        onClickItem: (item, event) => {
+        onClickItem: (item) => {
           item.action({
             editor: this.editor,
-            triggerButton: this.rowsControl?.firstElementChild ?? null,
-            controlsContainer: this.controls ?? null,
+            triggerButton: this.rowsControl?.firstElementChild ?? undefined,
+            controlsContainer: this.controls,
           });
           this.rowsToolbox?.hide();
         },
       });
 
-      // Store the handler in a class member to remove it later
-      this.selectionUpdateHandler = ({ editor: currentEditor }) => this.handleSelectionUpdate(currentEditor);
-      this.editor.on('selectionUpdate', this.selectionUpdateHandler);
+      this.cellSelectionToolbar = tippy(document.body, selectionToolbarOptions as Props) as Instance<Props>;
+      this.contextMenu = createContextMenu(
+        createSelectionToolbarContent(contextMenuItems, {
+          editor,
+          selection: null,
+        })
+      );
+
+      this.selectionUpdateHandler = () => this.updateSelectionToolbar();
+      this.editor.on("selectionUpdate", this.selectionUpdateHandler);
     }
+
+    this.colgroup = h(
+      "colgroup",
+      null,
+      Array.from({ length: this.map.width }, () => 1).map(() => h("col"))
+    );
+    this.tbody = h("tbody");
+    this.table = h("table", null, this.colgroup, this.tbody);
 
     this.root = h(
       "div",
@@ -444,29 +546,10 @@ export class TableView implements NodeView {
       this.table
     );
 
-    const dummyTrigger = document.createElement('div');
-    this.cellSelectionToolbar = tippy(dummyTrigger, {
-      content: '',
-      allowHTML: true,
-      arrow: false,
-      trigger: "manual",
-      animation: "scale-subtle",
-      theme: "light-border no-padding",
-      interactive: true,
-      placement: "bottom-start",
-      appendTo: editor.view.dom.parentElement || document.body,
-      hideOnClick: true,
-      onHide: () => {
-        // console.log("[TableView] cellSelectionToolbar onHide (Tippy internal)");
-        this.editor.view.dom.removeAttribute('data-cell-toolbar-visible');
-        this.currentToolbarItemsKey = null;
-      },
-      onShow: () => {
-        this.editor.view.dom.setAttribute('data-cell-toolbar-visible', 'true');
-      }
-    });
-    this.cellSelectionToolbar.hide();
-    this.editor.view.dom.removeAttribute('data-cell-toolbar-visible');
+    if (this.contextMenu) {
+      this.table.addEventListener("contextmenu", this.handleContextMenu);
+      this.table.addEventListener("click", this.handleTableClick);
+    }
 
     this.render();
   }
@@ -482,6 +565,7 @@ export class TableView implements NodeView {
 
     if (this.editor.isEditable) {
       this.updateControls();
+      this.updateSelectionToolbar();
     }
 
     this.render();
@@ -503,9 +587,8 @@ export class TableView implements NodeView {
   }
 
   updateControls() {
-    const { hoveredTable: table, hoveredCell: cell } = Object.keys(this.decorations).reduce(
-      (acc, key) => {
-        const curr = this.decorations[key as any] as Decoration & { spec: Record<string, any> }; // 타입 단언 추가
+    const { hoveredTable: table, hoveredCell: cell } = Object.values(this.decorations).reduce(
+      (acc, curr) => {
         if (curr.spec.hoveredCell !== undefined) {
           acc["hoveredCell"] = curr.spec.hoveredCell;
         }
@@ -544,6 +627,122 @@ export class TableView implements NodeView {
     }
   }
 
+  private getCellSelection(): CellSelection | null {
+    const { selection } = this.editor.state;
+    if (selection instanceof CellSelection) {
+      return selection;
+    }
+    return null;
+  }
+
+  private updateSelectionToolbar() {
+    if (!this.cellSelectionToolbar) return;
+
+    const selection = this.getCellSelection();
+    if (!selection) {
+      this.currentToolbarItemsKey = null;
+      this.cellSelectionToolbar.hide();
+      return;
+    }
+
+    const toolbarItems = selectionToolbarItems.filter((item) =>
+      item.shouldDisplay ? item.shouldDisplay({ editor: this.editor, selection }) : true
+    );
+
+    const toolbarKey = toolbarItems.map((item) => item.label).join("|");
+
+    if (!toolbarItems.length) {
+      this.currentToolbarItemsKey = null;
+      this.cellSelectionToolbar.hide();
+      return;
+    }
+
+    const { $headCell } = selection;
+    if (!$headCell) {
+      this.cellSelectionToolbar.hide();
+      return;
+    }
+
+    const coords = this.editor.view.coordsAtPos($headCell.pos);
+
+    if (this.currentToolbarItemsKey !== toolbarKey) {
+      this.cellSelectionToolbar.setContent(
+        createSelectionToolbarContent(toolbarItems, {
+          editor: this.editor,
+          selection,
+        })
+      );
+      this.currentToolbarItemsKey = toolbarKey;
+    }
+
+    this.cellSelectionToolbar.setProps({
+      getReferenceClientRect: () => ({
+        width: 0,
+        height: 0,
+        top: coords.bottom + 4,
+        bottom: coords.bottom + 4,
+        left: coords.left,
+        right: coords.left,
+        x: coords.left,
+        y: coords.bottom + 4,
+        toJSON: () => ({}),
+      } as DOMRect),
+    });
+
+    this.cellSelectionToolbar.show();
+  }
+
+  private handleContextMenu = (event: MouseEvent) => {
+    if (!this.contextMenu || !this.editor.isEditable) return;
+    event.preventDefault();
+
+    const coords = { left: event.clientX, top: event.clientY };
+    const pos = this.editor.view.posAtCoords(coords);
+    if (!pos) return;
+
+    const $pos = this.editor.state.doc.resolve(pos.pos);
+    const offset = $pos.pos - (this.getPos() + 1);
+    if (offset < 0 || offset >= this.map.map.length) return;
+
+    const cellStart = this.map.map[offset] + (this.getPos() + 1);
+    const cellSelection = CellSelection.create(this.editor.state.doc, cellStart, cellStart);
+    const tr = this.editor.state.tr.setSelection(cellSelection);
+    this.editor.view.dispatch(tr);
+    this.updateSelectionToolbar();
+
+    const selection = this.getCellSelection();
+
+    const content = createSelectionToolbarContent(
+      contextMenuItems.filter((item) =>
+        item.shouldDisplay ? item.shouldDisplay({ editor: this.editor, selection }) : true
+      ),
+      {
+        editor: this.editor,
+        selection,
+      }
+    );
+
+    this.contextMenu.setContent(content);
+    this.contextMenu.setProps({
+      getReferenceClientRect: () => ({
+        width: 0,
+        height: 0,
+        top: event.clientY,
+        bottom: event.clientY,
+        left: event.clientX,
+        right: event.clientX,
+        x: event.clientX,
+        y: event.clientY,
+        toJSON: () => ({}),
+      } as DOMRect),
+    });
+    this.contextMenu.show();
+  };
+
+  private handleTableClick = () => {
+    this.contextMenu?.hide();
+  };
+
   selectColumn() {
     if (!this.hoveredCell) return;
 
@@ -553,6 +752,7 @@ export class TableView implements NodeView {
 
     const cellSelection = CellSelection.create(this.editor.view.state.doc, anchorCellPos, headCellPos);
     this.editor.view.dispatch(this.editor.state.tr.setSelection(cellSelection));
+    this.updateSelectionToolbar();
   }
 
   selectRow() {
@@ -564,169 +764,19 @@ export class TableView implements NodeView {
 
     const cellSelection = CellSelection.create(this.editor.state.doc, anchorCellPos, headCellPos);
     this.editor.view.dispatch(this.editor.view.state.tr.setSelection(cellSelection));
-  }
-
-  handleSelectionUpdate(editor: Editor) {
-    const { selection } = editor.state;
-    // console.log('[TableView] handleSelectionUpdate triggered. Selection type:', selection.constructor.name);
-
-    if (!(selection instanceof CellSelection)) {
-      this.currentToolbarItemsKey = null;
-      if (this.cellSelectionToolbar.state.isShown) {
-        // console.log("[TableView] Hiding toolbar because current selection is not CellSelection.");
-        this.cellSelectionToolbar.hide();
-      }
-      this.lastSelectionStateKey = null;
-      this.lastKnownCellSelectionRange = null;
-      return;
-    }
-
-    // CellSelection인 경우의 처리
-    const cellSelection = selection as CellSelection;
-    const capturedAnchorPos = cellSelection.$anchorCell.pos;
-    const capturedHeadPos = cellSelection.$headCell.pos;
-
-    this.lastKnownCellSelectionRange = { anchor: capturedAnchorPos, head: capturedHeadPos };
-
-    const currentSelectionKey = `${selection.from}-${selection.to}-${selection.constructor.name}`;
-    if (this.lastSelectionStateKey === currentSelectionKey && this.cellSelectionToolbar.state.isShown) {
-      return;
-    }
-    this.lastSelectionStateKey = currentSelectionKey;
-
-    // 표시할 툴바 아이템 결정
-    let itemsToShow: ToolboxItem[] = [];
-    if (editor.isEditable) {
-      let selectedCellCount = 0;
-      selection.forEachCell(() => { selectedCellCount++; });
-
-      if (selectedCellCount === 1 && editor.can().splitCell()) {
-        const item = contextMenuItems.find(i => i.label === "Split cell");
-        if (item) itemsToShow.push(item);
-      } else if (selectedCellCount > 1 && editor.can().mergeCells()) {
-        const item = contextMenuItems.find(i => i.label === "Merge cells");
-        if (item) itemsToShow.push(item);
-      }
-    }
-
-    const newToolbarItemsKey = itemsToShow.map(item => item.label).join(',');
-
-    if (itemsToShow.length > 0) {
-      const { $headCell } = selection as CellSelection;
-      if (!$headCell) {
-        if (this.cellSelectionToolbar.state.isShown) this.cellSelectionToolbar.hide();
-        return;
-      }
-
-      const coords = editor.view.coordsAtPos($headCell.pos);
-
-      if (this.currentToolbarItemsKey !== newToolbarItemsKey || !this.cellSelectionToolbar.state.isShown) {
-        // console.log(`[TableView] Updating/Showing toolbar. New items: ${newToolbarItemsKey}`);
-        this.currentToolbarItemsKey = newToolbarItemsKey;
-
-        const newContent = createToolboxContent(
-          itemsToShow,
-          {},
-          async (item, event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const success = await this.handleToolbarAction(
-              item,
-              capturedAnchorPos,
-              capturedHeadPos,
-              this.editor
-            );
-
-            if (!success) {
-              // console.warn(`[TableView] Action '${item.label}' was not successful`);
-            }
-
-            // 액션 완료 후 툴바 숨기기
-            if (this.cellSelectionToolbar.state.isShown) {
-              this.cellSelectionToolbar.hide();
-            }
-          },
-          () => {}
-        );
-
-        this.cellSelectionToolbar.setContent(newContent);
-      }
-
-      this.cellSelectionToolbar.setProps({
-        getReferenceClientRect: () => ({
-          width: 0, 
-          height: 0,
-          top: coords.bottom + 5,
-          bottom: coords.bottom + 5,
-          left: coords.left,
-          right: coords.left,
-          x: coords.left,
-          y: coords.bottom + 5,
-          toJSON: () => ({})
-        } as DOMRect),
-      });
-
-      if (!this.cellSelectionToolbar.state.isShown) {
-        this.cellSelectionToolbar.show();
-      }
-    } else {
-      this.currentToolbarItemsKey = null;
-      if (this.cellSelectionToolbar.state.isShown) {
-        // console.log("[TableView] Hiding toolbar (no items or not CellSelection)");
-        this.cellSelectionToolbar.hide();
-      }
-    }
-  }
-
-  private async handleToolbarAction(
-    item: ToolboxItem,
-    anchorPos: number,
-    headPos: number,
-    currentEditor: Editor
-  ): Promise<boolean> {
-    try {
-      // 현재 selection이 이미 CellSelection이고 동일한 범위인 경우 재선택하지 않음
-      const currentSelection = currentEditor.state.selection;
-      const isSameSelection =
-        currentSelection instanceof CellSelection &&
-        currentSelection.$anchorCell.pos === anchorPos &&
-        currentSelection.$headCell.pos === headPos;
-
-      if (!isSameSelection) {
-        // 새로운 CellSelection 생성 및 적용
-        const restoredSelection = CellSelection.create(currentEditor.state.doc, anchorPos, headPos);
-        const tr = currentEditor.state.tr.setSelection(restoredSelection);
-        currentEditor.view.dispatch(tr);
-        
-        // selection이 안정화되도록 잠시 대기
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-
-      // 현재 selection 상태 확인
-      const selectionAfterRestore = currentEditor.state.selection;
-      if (!(selectionAfterRestore instanceof CellSelection)) {
-        // console.warn("[TableView] Selection is not CellSelection after restoration");
-        return false;
-      }
-
-      // 액션 실행
-      return item.action({ editor: currentEditor });
-    } catch (error) {
-      // console.error("[TableView] Error in toolbar action:", error);
-      return false;
-    }
+    this.updateSelectionToolbar();
   }
 
   destroy() {
-    // Remove the specific listener instance
+    this.table?.removeEventListener("contextmenu", this.handleContextMenu);
+    this.table?.removeEventListener("click", this.handleTableClick);
+
     if (this.selectionUpdateHandler) {
-      this.editor.off('selectionUpdate', this.selectionUpdateHandler);
-      this.selectionUpdateHandler = undefined; // Clear the stored handler
+      this.editor.off("selectionUpdate", this.selectionUpdateHandler);
     }
-    this.lastSelectionStateKey = null;
-    // Destroy tippy instances after removing listeners that might use them
+
     this.cellSelectionToolbar?.destroy();
+    this.contextMenu?.destroy();
     this.columnsToolbox?.destroy();
     this.rowsToolbox?.destroy();
   }

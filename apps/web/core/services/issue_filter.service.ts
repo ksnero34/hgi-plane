@@ -56,23 +56,6 @@ export class IssueFiltersService extends APIService {
     projectId: string,
     data: Partial<IIssueFiltersResponse>
   ): Promise<any> {
-    /* 캘린더 뷰 자동 필터 비활성화
-    if (data.display_filters?.layout === 'calendar') {
-      const currentDate = new Date();
-      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-      data = {
-        ...data,
-        filters: {
-          ...data.filters,
-          start_date: [firstDayOfMonth.toISOString().split('T')[0]],
-          target_date: [lastDayOfMonth.toISOString().split('T')[0]]
-        }
-      };
-    }
-    */
-
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-properties/`, data)
       .then((response) => response?.data)
       .catch((error) => {
@@ -159,7 +142,7 @@ export class IssueFiltersService extends APIService {
     if (data.filters?.layout === "calendar") {
       const firstDayOfMonth = new Date(data.filters.start_date?.[0] || new Date());
       firstDayOfMonth.setDate(1);
-      
+
       const lastDayOfMonth = new Date(firstDayOfMonth);
       lastDayOfMonth.setMonth(lastDayOfMonth.getMonth() + 1);
       lastDayOfMonth.setDate(0);

@@ -12,11 +12,13 @@ import { EFileAssetType, TIssue } from "@plane/types";
 import { Loader, setToast, TOAST_TYPE } from "@plane/ui";
 import { getDescriptionPlaceholderI18n, getTabIndex } from "@plane/utils";
 // components
-import { GptAssistantPopover } from "@/components/core";
-import { RichTextEditor } from "@/components/editor";
+import { GptAssistantPopover } from "@/components/core/modals/gpt-assistant-popover";
+import { RichTextEditor } from "@/components/editor/rich-text";
 // helpers
 // hooks
-import { useEditorAsset, useInstance, useWorkspace } from "@/hooks/store";
+import { useEditorAsset } from "@/hooks/store/use-editor-asset";
+import { useInstance } from "@/hooks/store/use-instance";
+import { useWorkspace } from "@/hooks/store/use-workspace";
 import useKeypress from "@/hooks/use-keypress";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web services
@@ -24,7 +26,7 @@ import { WorkspaceService } from "@/plane-web/services";
 // services
 import { AIService } from "@/services/ai.service";
 import { FileService } from "@/services/file.service";
-import { maskPrivateInformation } from "@/utils/privacy-masking";
+import { maskHtmlContentPreservingStructure } from "@/utils/privacy-masking";
 const workspaceService = new WorkspaceService();
 const aiService = new AIService();
 
@@ -183,7 +185,7 @@ export const IssueDescriptionEditor: React.FC<TIssueDescriptionEditorProps> = ob
                 workspaceId={workspaceId}
                 projectId={projectId}
                 onChange={(_description: object, description_html: string) => {
-                  const maskedContent = maskPrivateInformation(description_html);
+                  const maskedContent = maskHtmlContentPreservingStructure(description_html);
                   onChange(maskedContent);
                   handleFormChange();
                   handleDescriptionHTMLDataChange(maskedContent);

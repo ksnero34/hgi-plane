@@ -10,9 +10,9 @@ import { CalendarCheck2, CalendarClock, Layers, Link, Paperclip } from "lucide-r
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
+import { Tooltip } from "@plane/propel/tooltip";
 import { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
 // ui
-import { Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
 import {
   cn,
   getDate,
@@ -21,21 +21,22 @@ import {
   shouldHighlightIssueDueDate,
 } from "@plane/utils";
 // components
-import {
-  EstimateDropdown,
-  PriorityDropdown,
-  MemberDropdown,
-  ModuleDropdown,
-  CycleDropdown,
-  StateDropdown,
-  DateRangeDropdown,
-  DateDropdown,
-} from "@/components/dropdowns";
-// constants
+import { CycleDropdown } from "@/components/dropdowns/cycle";
+import { DateDropdown } from "@/components/dropdowns/date";
+import { DateRangeDropdown } from "@/components/dropdowns/date-range";
+import { EstimateDropdown } from "@/components/dropdowns/estimate";
+import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
+import { ModuleDropdown } from "@/components/dropdowns/module/dropdown";
+import { PriorityDropdown } from "@/components/dropdowns/priority";
+import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // helpers
-// hooks
 import { captureSuccess } from "@/helpers/event-tracker.helper";
-import { useLabel, useIssues, useProjectState, useProject, useProjectEstimates } from "@/hooks/store";
+// hooks
+import { useProjectEstimates } from "@/hooks/store/estimates";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -58,7 +59,7 @@ export interface IIssueProperties {
 }
 
 export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, updateIssue, displayProperties, isReadOnly, className, activeLayout, isEpic = false, customFields } = props;
+  const { issue, updateIssue, displayProperties, isReadOnly, className, activeLayout, isEpic = false, customFields = [] } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
@@ -79,6 +80,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
+
   // derived values
   const stateDetails = getStateById(issue.state_id);
   const subIssueCount = issue?.sub_issues_count ?? 0;
@@ -121,11 +123,11 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
             data: error?.response?.data,
             message: error?.message
           });
-          
+
           // Extract and show detailed error message
           let errorMessage = "작업 항목 업데이트 실패";
           let errorTitle = "상태 변경 실패";
-          
+
           // Handle workflow-specific errors
           if (error?.response?.status === 400) {
             if (error?.response?.data?.non_field_errors?.[0]) {
@@ -135,7 +137,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
             } else if (error?.response?.data?.error) {
               errorMessage = error.response.data.error;
             }
-            
+
             // Check for workflow-related errors
             if (errorMessage.includes("workflow") || errorMessage.includes("transition") || errorMessage.includes("승인")) {
               errorTitle = "워크플로우 규칙 위반";
@@ -143,7 +145,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
           } else if (error?.message) {
             errorMessage = error.message;
           }
-          
+
           setToast({
             type: TOAST_TYPE.ERROR,
             title: errorTitle,

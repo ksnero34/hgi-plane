@@ -1,14 +1,15 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+// plane imports
 import { EIssueFilterType } from "@plane/constants";
 import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
 // hooks
-import { Header, EHeaderVariant } from "@plane/ui";
-import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
-import { useIssues, useLabel, useProjectState } from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useProjectState } from "@/hooks/store/use-project-state";
+// local imports
+import { AppliedFiltersList } from "../filters-list";
 import { calculateFilterRemovalValue } from "@plane/utils";
-// components
-// types
 
 export const ArchivedIssueAppliedFiltersRoot: React.FC = observer(() => {
   // router
@@ -35,6 +36,7 @@ export const ArchivedIssueAppliedFiltersRoot: React.FC = observer(() => {
   const handleRemoveFilter = (key: keyof IIssueFilterOptions, value: string | null) => {
     if (!workspaceSlug || !projectId) return;
 
+    // remove all values of the key if value is null
     if (!value) {
       updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, {
         [key]: null,
@@ -50,6 +52,7 @@ export const ArchivedIssueAppliedFiltersRoot: React.FC = observer(() => {
 
   const handleClearAllFilters = () => {
     if (!workspaceSlug || !projectId) return;
+
     const newFilters: IIssueFilterOptions = {};
     Object.keys(userFilters ?? {}).forEach((key) => {
       const clearedValue = calculateFilterRemovalValue(key as keyof IIssueFilterOptions, null, userFilters ?? {});

@@ -9,7 +9,7 @@ import { Button, Loader, setToast, TOAST_TYPE } from "@plane/ui";
 // types
 import { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
 // hooks
-import { useWorkflow } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 // components
 import { WorkflowTemplateModal } from "./workflow-template-modal";
 import { WorkflowStatesList } from "./workflow-states-list";

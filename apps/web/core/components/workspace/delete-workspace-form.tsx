@@ -14,7 +14,8 @@ import { Button, Input, TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
 import { cn } from "@plane/utils";
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useUserSettings, useWorkspace } from "@/hooks/store";
+import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useUserSettings } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -102,8 +103,9 @@ export const DeleteWorkspaceForm: React.FC<Props> = observer((props) => {
           <div className="text-center sm:text-left">
             <h3 className="text-lg font-medium">{t("workspace_settings.settings.general.delete_modal.title")}</h3>
             <p className="mt-1 text-sm text-custom-text-200">
-              워크스페이스 <span className="break-words font-semibold">{data?.name}</span> 을 삭제합니다. 확인하면 이 워크스페이스의 모든 작업 데이터에 접근할 수 없게 되며 복구할 수 없습니다.
-              조심하세요.
+              You are about to delete the workspace <span className="break-words font-semibold">{data?.name}</span>. If
+              you confirm, you will lose access to all your work data in this workspace without any way to restore it.
+              Tread very carefully.
             </p>
           </div>
 

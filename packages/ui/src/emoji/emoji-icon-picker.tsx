@@ -1,15 +1,15 @@
+import { Popover, Tab } from "@headlessui/react";
+import EmojiPicker from "emoji-picker-react";
 import React, { useRef, useState } from "react";
 import { usePopper } from "react-popper";
-import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
-import { Popover, Tab } from "@headlessui/react";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // components
+import { cn } from "../utils";
+import { EmojiIconPickerTypes, TABS_LIST, TCustomEmojiPicker } from "./emoji-icon-helper";
 import { IconsList } from "./icons-list";
 // helpers
-import { cn } from "../../helpers";
 // hooks
-import { EmojiIconPickerTypes, TABS_LIST, TCustomEmojiPicker } from "./emoji-icon-helper";
 
 export const CustomEmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
   const {
@@ -40,22 +40,7 @@ export const CustomEmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
       {
         name: "preventOverflow",
         options: {
-          padding: 8,
-          altAxis: true,
-          tether: false,
-        },
-      },
-      {
-        name: "flip",
-        options: {
-          padding: 8,
-          fallbackPlacements: ["top-start", "bottom-start"],
-        },
-      },
-      {
-        name: "offset",
-        options: {
-          offset: [0, 8],
+          padding: 20,
         },
       },
     ],
@@ -125,7 +110,6 @@ export const CustomEmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
                       theme={theme}
                       searchDisabled={searchDisabled}
                       searchPlaceholder={searchPlaceholder}
-                      emojiStyle={EmojiStyle.NATIVE}
                       previewConfig={{
                         showPreview: false,
                       }}

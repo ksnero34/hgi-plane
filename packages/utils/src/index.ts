@@ -28,5 +28,6 @@ export * from "./string";
 export * from "./subscription";
 export * from "./tab-indices";
 export * from "./theme";
+export * from "./url";
 export * from "./work-item";
 export * from "./workspace";

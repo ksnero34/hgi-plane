@@ -1,6 +1,6 @@
 import { observer } from "mobx-react";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
-import React from "react";
 // constants
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // ui
@@ -8,9 +8,8 @@ import { IIssueDisplayFilterOptions, IIssueDisplayProperties, TCustomField } fro
 // components
 import { Row } from "@plane/ui";
 import { cn } from "@plane/utils";
-import { MultipleSelectGroupAction } from "@/components/core";
-import { SpreadsheetHeaderColumn } from "@/components/issues/issue-layouts";
-// helpers
+import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
+import { SpreadsheetHeaderColumn } from "./spreadsheet-header-column";
 // hooks
 import { TSelectionHelper } from "@/hooks/use-multiple-select";
 
@@ -46,7 +45,7 @@ export const SpreadsheetHeader = observer((props: Props) => {
   const canSelectIssues = canEditProperties(projectId?.toString()) && !selectionHelpers.isSelectionDisabled;
 
   // 커스텀 필드 맵 생성
-  const customFieldsMap = React.useMemo(() => {
+  const customFieldsMap = useMemo(() => {
     return customFields.reduce((acc, field) => {
       acc[`custom_field_${field.id}`] = field;
       return acc;
@@ -54,10 +53,13 @@ export const SpreadsheetHeader = observer((props: Props) => {
   }, [customFields]);
 
   return (
-    <thead className="sticky top-0 left-0 z-10 border-b border-custom-border-100">
+    <thead className="sticky top-0 left-0 z-[12] border-b-[0.5px] border-custom-border-100">
       <tr>
-        <th className="sticky left-0 z-10 h-11 w-[28rem] flex items-center bg-custom-background-90 text-sm font-medium text-custom-text-200 border-r-[0.5px] border-custom-border-200">
-          <Row className="flex items-center">
+        <th
+          className="group/list-header sticky left-0 z-[15] h-11 w-[28rem] flex items-center gap-1 bg-custom-background-90 text-sm font-medium before:absolute before:h-full before:right-0 before:border-custom-border-100"
+          tabIndex={-1}
+        >
+          <Row>
             {canSelectIssues && (
               <div className="flex-shrink-0 flex items-center w-3.5 mr-1 absolute left-1 py-[11px]">
                 <MultipleSelectGroupAction
@@ -75,13 +77,13 @@ export const SpreadsheetHeader = observer((props: Props) => {
             <span className="flex h-full w-full flex-grow items-center py-2.5">{`${isEpic ? "Epics" : "Work items"}`}</span>
           </Row>
         </th>
-        
+
         {spreadsheetColumnsList.map((property) => {
           // 커스텀 필드 헤더인지 확인
           if (property.toString().startsWith('custom_field_')) {
             const customField = customFieldsMap[property.toString()];
             if (!customField) return null;
-            
+
             return (
               <th
                 key={property}
@@ -93,7 +95,7 @@ export const SpreadsheetHeader = observer((props: Props) => {
               </th>
             );
           }
-          
+
           // 기본 속성 헤더
           return (
             <SpreadsheetHeaderColumn

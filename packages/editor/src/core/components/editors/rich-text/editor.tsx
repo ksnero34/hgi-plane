@@ -41,7 +41,7 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
   }, [props.onChange]);
 
   return (
-    <EditorWrapper {...props} extensions={getExtensions()} onChange={handleChange}>
+    <EditorWrapper {...props} extensions={getExtensions()}>
       {(editor) => <>{editor && bubbleMenuEnabled && <EditorBubbleMenu editor={editor} />}</>}
     </EditorWrapper>
   );

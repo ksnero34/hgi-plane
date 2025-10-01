@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { TFileHandler } from "@plane/editor";
 import { getEditorAssetDownloadSrc, getEditorAssetSrc } from "@plane/utils";
 // hooks
-import { useEditorAsset } from "@/hooks/store";
+import { useEditorAsset } from "@/hooks/store/use-editor-asset";
 // plane web hooks
 import { useFileSize } from "@/plane-web/hooks/use-file-size";
 // services
@@ -64,20 +64,18 @@ export const useEditorConfig = () => {
         getAssetSrc: async (path) => {
           if (!path) return "";
           if (path?.startsWith("http")) {
-            // console.log("[getEditorFileHandlers] Returning direct URL:", path);
             return path;
           } else {
-            const assetSrc = getEditorAssetSrc({
-              assetId: path,
-              projectId,
-              workspaceSlug,
-            }) ?? "";
-            // console.log("[getEditorFileHandlers] Generated asset src:", assetSrc);
-            return assetSrc;
+            return (
+              getEditorAssetSrc({
+                assetId: path,
+                projectId,
+                workspaceSlug,
+              }) ?? ""
+            );
           }
         },
         restore: async (src: string) => {
-          // console.log("[getEditorFileHandlers] restore called with:", src);
           if (src?.startsWith("http")) {
             await fileService.restoreOldEditorAsset(workspaceId, src);
           } else {

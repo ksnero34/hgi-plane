@@ -38,7 +38,7 @@ def issue_queryset_grouper(
         "type_id": "type",
     }
 
-    GROUP_FILTER_MAPPER: Dict[str, Q] = {
+    GROUP_FILTER_MAPPER = {
         "assignees__id": Q(issue_assignee__deleted_at__isnull=True),
         "labels__id": Q(label_issue__deleted_at__isnull=True),
         "issue_module__module_id": Q(issue_module__deleted_at__isnull=True),
@@ -52,7 +52,7 @@ def issue_queryset_grouper(
         if group_key in GROUP_FILTER_MAPPER:
             queryset = queryset.filter(GROUP_FILTER_MAPPER[group_key])
 
-    annotations_map: Dict[str, Tuple[str, Q]] = {
+    annotations_map = {
         "assignee_ids": (
             "assignees__id",
             ~Q(assignees__id__isnull=True) & Q(issue_assignee__deleted_at__isnull=True),
@@ -70,14 +70,13 @@ def issue_queryset_grouper(
             ),
         ),
     }
-
-    default_annotations: Dict[str, Any] = {
+    default_annotations = {
         key: Coalesce(
             ArrayAgg(field, distinct=True, filter=condition),
             Value([], output_field=ArrayField(UUIDField())),
         )
         for key, (field, condition) in annotations_map.items()
-        if FIELD_MAPPER.get(key) != group_by and FIELD_MAPPER.get(key) != sub_group_by
+        if FIELD_MAPPER.get(key) != group_by or FIELD_MAPPER.get(key) != sub_group_by
     }
 
     # group_by와 sub_group_by 필드를 쿼리셋에 직접 추가
@@ -105,7 +104,7 @@ def issue_queryset_grouper(
             default=Value(None),
             output_field=CharField(),
         )
-    
+
     # sub_group_by 필드가 issue_module__module_id인 경우 해당 필드를 어노테이션으로 추가
     if sub_group_by == "issue_module__module_id":
         default_annotations["issue_module__module_id"] = F("issue_module__module_id")
@@ -188,12 +187,12 @@ def issue_on_results(
                     issue_dict['state__group'] = issue.state__group
                 else:
                     issue_dict['state__group'] = None
-                    
+
                 result.append(issue_dict)
             return result
         # 이미 딕셔너리 리스트인 경우 그대로 반환
         return issues
-    
+
     FIELD_MAPPER = {
         "labels__id": "label_ids",
         "assignees__id": "assignee_ids",
@@ -313,7 +312,7 @@ def issue_group_values(
 ) -> List[Union[str, Any]]:
     # Issue 모델을 함수 시작 부분에서 임포트
     from plane.db.models import Issue as IssueModel
-    
+
     if field == "state_id":
         queryset = State.objects.filter(
             is_triage=False, workspace__slug=slug
@@ -368,7 +367,7 @@ def issue_group_values(
         return ["backlog", "unstarted", "started", "completed", "cancelled"]
     if field == "target_date":
         queryset = (
-            IssueModel.issue_objects.filter(workspace__slug=slug)
+            Issue.issue_objects.filter(workspace__slug=slug)
             .filter(**filters)
             .values_list("target_date", flat=True)
             .distinct()
@@ -379,7 +378,7 @@ def issue_group_values(
             return list(queryset)
     if field == "start_date":
         queryset = (
-            IssueModel.issue_objects.filter(workspace__slug=slug)
+            Issue.issue_objects.filter(workspace__slug=slug)
             .filter(**filters)
             .values_list("start_date", flat=True)
             .distinct()
@@ -391,7 +390,7 @@ def issue_group_values(
 
     if field == "created_by":
         queryset = (
-            IssueModel.issue_objects.filter(workspace__slug=slug)
+            Issue.issue_objects.filter(workspace__slug=slug)
             .filter(**filters)
             .values_list("created_by", flat=True)
             .distinct()
@@ -403,48 +402,48 @@ def issue_group_values(
 
     if field == "parent_child":
         # 부모-자식 관계 그룹화를 위한 그룹 값들
-        
+
         # 필터링된 이슈들을 가져와서 실제로 그룹화될 부모들을 찾기
         filtered_issues = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
             filtered_issues = filtered_issues.filter(project_id=project_id)
-        
+
         # 필터 적용
         if filters:
             filtered_issues = filtered_issues.filter(**filters)
-        
+
         # 필터링된 이슈들의 id와 parent_id 정보 가져오기
         filtered_issues_data = list(filtered_issues.values('id', 'parent_id'))
-        
+
         # 모든 이슈들의 parent 관계를 파악하기 위해 전체 이슈 데이터도 필요
         all_issues = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
             all_issues = all_issues.filter(project_id=project_id)
         all_issues_data = list(all_issues.values('id', 'parent_id'))
-        
+
         # 빠른 lookup을 위한 딕셔너리 생성
         all_issues_dict = {str(issue["id"]): issue for issue in all_issues_data}
-        
+
         # 최상단 부모를 찾는 헬퍼 함수 (issue_on_results와 동일)
         def find_root_parent(issue_id, all_issues_dict):
             current_id = str(issue_id)
             visited = set()
-            
+
             while current_id and current_id not in visited:
                 visited.add(current_id)
-                
+
                 if current_id not in all_issues_dict:
                     break
-                    
+
                 parent_id = all_issues_dict[current_id]["parent_id"]
-                
+
                 if parent_id is None:
                     return current_id
-                
+
                 current_id = str(parent_id)
-            
+
             return None
-        
+
         # 필터링된 이슈들에서 실제로 그룹화될 최상위 부모들 찾기
         # 이는 issue_on_results에서 사용되는 로직과 동일해야 함
         group_parent_ids = set()
@@ -454,10 +453,10 @@ def issue_group_values(
                 if root_parent:
                     group_parent_ids.add(root_parent)
             # 부모가 없는 이슈들은 "None" 그룹에 속함
-        
+
         # 최상위 부모들의 상세 정보를 가져와서 그룹으로 반환
         result = []
-        
+
         if group_parent_ids:
             # parent 이슈들의 상세 정보를 한 번에 가져오기 (전체 workspace에서)
             parent_issues = IssueModel.issue_objects.filter(
@@ -466,7 +465,7 @@ def issue_group_values(
             ).select_related('project').values(
                 'id', 'name', 'project__identifier', 'sequence_id'
             )
-            
+
             # 각 부모 이슈에 대해 딕셔너리 형태로 추가
             for parent in parent_issues:
                 result.append({
@@ -476,7 +475,7 @@ def issue_group_values(
                     'sequence_id': parent['sequence_id'],
                     'display_name': f"{parent['project__identifier']}-{parent['sequence_id']} {parent['name']}"
                 })
-        
+
         # "None" 그룹 추가 (부모가 없는 이슈들)
         result.append({
             'id': 'None',
@@ -485,7 +484,7 @@ def issue_group_values(
             'sequence_id': 0,
             'display_name': '최상단 작업항목'
         })
-        
+
         return result
 
     if field == "top_level_only":
@@ -494,16 +493,16 @@ def issue_group_values(
 
     if field == "type_id":
         from plane.db.models import IssueType
-        
+
         queryset = IssueType.objects.filter(
             workspace__slug=slug,
             is_active=True
         )
-        
+
         if project_id:
             # 프로젝트별 이슈 타입 필터링이 필요하다면 여기에 추가
             pass
-            
+
         result = list(queryset.values_list("id", flat=True).order_by("name"))
         # None 그룹 추가 (타입이 설정되지 않은 이슈들을 위해)
         result.append("None")

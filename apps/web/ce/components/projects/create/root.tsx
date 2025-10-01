@@ -13,7 +13,7 @@ import ProjectCreateHeader from "@/components/project/create/header";
 import ProjectCreateButtons from "@/components/project/create/project-create-buttons";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useProject } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web types
 import { TProject } from "@/plane-web/types/projects";
@@ -60,7 +60,7 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
     formData.identifier = formData.identifier?.toUpperCase();
     const coverImage = formData.cover_image_url;
     // if unsplash or a pre-defined image is uploaded, delete the old uploaded asset
-    if (coverImage) {
+    if (coverImage?.startsWith("http")) {
       formData.cover_image = coverImage;
       formData.cover_image_asset = null;
     }

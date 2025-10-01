@@ -4,7 +4,7 @@ import { PER_PAGE_OPTIONS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 
 // components
-import { FilterHeader, FilterOption } from "@/components/issues";
+import { FilterHeader, FilterOption } from "../helpers";
 
 type Props = {
   selectedPerPage: number | undefined;

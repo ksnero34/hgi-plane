@@ -1,6 +1,6 @@
 import React from "react";
 import { Tooltip } from "@plane/ui";
-import { Logo } from "@/components/common";
+import { Logo } from "@/components/common/logo";
 import { TLogoProps } from "@plane/types";
 
 interface IssueTypeIconProps {

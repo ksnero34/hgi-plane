@@ -14,8 +14,8 @@ import {
   Settings,
 } from "lucide-react";
 // types
+import { DiceIcon, DoubleCircleIcon, ISvgIcons } from "@plane/propel/icons";
 import { IGroupByColumn, IIssueDisplayProperties, TGetColumns, TSpreadsheetColumn } from "@plane/types";
-import { DiceIcon, DoubleCircleIcon, ISvgIcons } from "@plane/ui";
 // components
 import {
   SpreadsheetAssigneeColumn,
@@ -33,7 +33,7 @@ import {
   SpreadsheetSubIssueColumn,
   SpreadsheetUpdatedOnColumn,
   AllCustomFieldsColumn,
-} from "@/components/issues/issue-layouts/spreadsheet";
+} from "@/components/issues/issue-layouts/spreadsheet/columns";
 // store
 import { store } from "@/lib/store-context";
 

@@ -1,9 +1,9 @@
 import { useEditorState, useEditor as useTiptapEditor } from "@tiptap/react";
-import { useImperativeHandle, useEffect, useRef } from "react";
+import { useImperativeHandle, useEffect } from "react";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
 // extensions
-import { CoreEditorExtensions, FileHandler } from "@/extensions";
+import { CoreEditorExtensions } from "@/extensions";
 // helpers
 import { getEditorRefHelpers } from "@/helpers/editor-ref";
 import { getExtensionStorage } from "@/helpers/get-extension-storage";
@@ -20,6 +20,7 @@ export const useEditor = (props: TEditorHookProps) => {
     editorClassName = "",
     editorProps = {},
     enableHistory,
+    extendedEditorProps,
     extensions = [],
     fileHandler,
     flaggedExtensions,
@@ -27,17 +28,17 @@ export const useEditor = (props: TEditorHookProps) => {
     handleEditorReady,
     id = "",
     initialValue,
+    isTouchDevice,
     mentionHandler,
     onAssetChange,
     onChange,
+    onEditorFocus,
     onTransaction,
     placeholder,
     provider,
     tabIndex,
     value,
   } = props;
-
-  const savedSelectionRef = useRef<any>(null);
 
   const editor = useTiptapEditor(
     {
@@ -54,11 +55,13 @@ export const useEditor = (props: TEditorHookProps) => {
       },
       extensions: [
         ...CoreEditorExtensions({
-          editable,
           disabledExtensions,
+          editable,
           enableHistory,
+          extendedEditorProps,
           fileHandler,
           flaggedExtensions,
+          isTouchDevice,
           mentionHandler,
           placeholder,
           tabIndex,
@@ -72,6 +75,7 @@ export const useEditor = (props: TEditorHookProps) => {
       },
       onUpdate: ({ editor }) => onChange?.(editor.getJSON(), editor.getHTML()),
       onDestroy: () => handleEditorReady?.(false),
+      onFocus: onEditorFocus,
     },
     [editable]
   );
@@ -89,19 +93,19 @@ export const useEditor = (props: TEditorHookProps) => {
           const currentSelection = editor.state.selection;
           const { anchor, head } = currentSelection;
           const wasEditorFocused = editor.isFocused;
-          
+
           editor.commands.setContent(value, false, { preserveWhitespace: true });
-          
+
           // Restore selection with full range
           if (currentSelection) {
             const docLength = editor.state.doc.content.size;
             // Ensure positions are within valid range
             const validAnchor = Math.min(Math.max(0, anchor), docLength - 1);
             const validHead = Math.min(Math.max(0, head), docLength - 1);
-            
+
             // Restore the complete selection range
             editor.commands.setTextSelection({ from: validAnchor, to: validHead });
-            
+
             // Restore focus if editor was focused
             if (wasEditorFocused) {
               editor.commands.focus();

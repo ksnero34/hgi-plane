@@ -4,19 +4,23 @@ import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { FileText, HelpCircle, MessagesSquare, MoveLeft, User } from "lucide-react";
+// plane imports
 import { useTranslation } from "@plane/i18n";
-// ui
-import { CustomMenu, Tooltip, ToggleSwitch } from "@plane/ui";
-// components
+import { Tooltip } from "@plane/propel/tooltip";
+import { CustomMenu, ToggleSwitch } from "@plane/ui";
 import { cn } from "@plane/utils";
+// components
 import { ProductUpdatesModal } from "@/components/global";
-// helpers
 // hooks
-import { useAppTheme, useCommandPalette, useInstance, useTransient, useUserSettings } from "@/hooks/store";
+import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useInstance } from "@/hooks/store/use-instance";
+import { useTransient } from "@/hooks/store/use-transient";
+import { useUserSettings } from "@/hooks/store/user";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { PlaneVersionNumber } from "@/plane-web/components/global";
-import { WorkspaceEditionBadge } from "@/plane-web/components/workspace";
+import { WorkspaceEditionBadge } from "@/plane-web/components/workspace/edition-badge";
 
 export interface WorkspaceHelpSectionProps {
   setSidebarActive?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -157,11 +161,11 @@ export const SidebarHelpSection: React.FC<WorkspaceHelpSectionProps> = observer(
           })}
         >
           {/* <WorkspaceEditionBadge /> */}
-          <div 
+          <div
             onClick={() => window.open('https://github.com/ksnero34/hgi-plane', '_blank', 'noopener,noreferrer')}
             className="bg-custom-background-80 text-custom-text-200 hover:bg-custom-background-90 hover:text-custom-text-100 flex items-center gap-1.5 whitespace-nowrap transition-all justify-center w-fit min-w-24 cursor-pointer rounded-2xl px-2 py-1 text-center text-sm font-medium"
           >
-            HGI Issue Tracker
+              HGI Issue Tracker
           </div>
         </div>
         <div className="flex flex-shrink-0 items-center gap-1 justify-evenly">

@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { CalendarCheck2, Signal } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { DoubleCircleIcon, StateGroupIcon, TOAST_TYPE, setToast } from "@plane/ui";
+import { DoubleCircleIcon, StateGroupIcon } from "@plane/propel/icons";
+import { TOAST_TYPE, setToast } from "@plane/ui";
 import { cn, getIssuePriorityFilters } from "@plane/utils";
 // components
 import { Icon } from "@/components/ui";
@@ -16,7 +17,9 @@ import { renderFormattedDate } from "@/helpers/date-time.helper";
 import { shouldHighlightIssueDueDate } from "@/helpers/issue.helper";
 import { copyTextToClipboard, addSpaceIfCamelCase } from "@/helpers/string.helper";
 // hooks
-import { usePublish, useStates, useCustomField } from "@/hooks/store";
+import { usePublish } from "@/hooks/store/publish";
+import { useStates } from "@/hooks/store/use-state";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // types
 import { IIssue, IPeekMode } from "@/types/issue";
 
@@ -144,7 +147,7 @@ export const PeekOverviewIssueProperties: React.FC<Props> = observer(({ issueDet
         {customFields && customFields.length > 0 && (
           <div className="space-y-2 pt-2">
             <h6 className="text-sm font-medium text-custom-text-300">Custom Fields</h6>
-            <CustomFieldProperties 
+            <CustomFieldProperties
               anchor={anchor?.toString() || ""}
               issue={issueDetails}
               customFields={customFields}

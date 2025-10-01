@@ -18,7 +18,7 @@ export const AppliedDateFilters: React.FC<Props> = observer((props) => {
   const getDateLabel = (value: string): string => {
     let dateLabel = "";
 
-    const dateDetails = DATE_AFTER_FILTER_OPTIONS.find((d) => d.value === value) || 
+    const dateDetails = DATE_AFTER_FILTER_OPTIONS.find((d) => d.value === value) ||
                        DATE_WITHIN_FILTER_OPTIONS.find((d) => d.value === value);
 
     if (dateDetails) dateLabel = dateDetails.name;

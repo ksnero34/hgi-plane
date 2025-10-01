@@ -7,10 +7,11 @@ import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/
 
 // types
 import { TCustomField } from "@plane/types";
-import type { TIssueOperations } from "@/components/issues";
+import type { TIssueOperations } from "@/components/issues/issue-detail";
 
 // hooks
-import { useIssueDetail, useCustomField } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { renderFormattedPayloadDate } from "@plane/utils";
 // helpers
 import { updateCustomFieldValueSafely, getCustomFieldValue } from "@plane/utils";

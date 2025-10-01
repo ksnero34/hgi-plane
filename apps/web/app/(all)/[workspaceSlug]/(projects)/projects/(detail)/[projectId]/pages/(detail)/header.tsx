@@ -9,11 +9,13 @@ import { ICustomSearchSelectOption } from "@plane/types";
 import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect } from "@plane/ui";
 // components
 import { getPageName } from "@plane/utils";
-import { PageAccessIcon, SwitcherIcon, SwitcherLabel, BreadcrumbLink } from "@/components/common";
+import { PageAccessIcon } from "@/components/common/page-access-icon";
+import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
+import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { PageHeaderActions } from "@/components/pages/header/actions";
 // helpers
 // hooks
-import { useProject } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
 // plane web components
 import { useAppRouter } from "@/hooks/use-app-router";
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
@@ -111,7 +113,7 @@ export const PageDetailsHeader = observer(() => {
       if (!_page) return;
       return {
         value: _page.id,
-        query: getPageName(_page.name) || "Untitled",
+        query: _page.name,
         content: (
           <div className="flex gap-2 items-center justify-between">
             <SwitcherLabel
@@ -200,7 +202,7 @@ export const PageDetailsHeader = observer(() => {
                       router.push(`/${workspaceSlug}/projects/${projectId}/pages/${value}`);
                     }
                   }}
-                  title={getPageName(page?.name) || "Untitled"}
+                  title={getPageName(page?.name)}
                   icon={
                     <Breadcrumbs.Icon>
                       <SwitcherIcon logo_props={page.logo_props} LabelIcon={page.is_folder ? Folder : FileText} size={16} />

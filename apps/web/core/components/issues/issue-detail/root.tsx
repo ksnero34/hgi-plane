@@ -2,24 +2,26 @@
 
 import { FC, useMemo } from "react";
 import { observer } from "mobx-react";
-// types
+// plane imports
 import { EUserPermissions, EUserPermissionsLevel, WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EIssuesStoreType, TIssue } from "@plane/types";
-// ui
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
 // components
-import { EmptyState } from "@/components/common";
-import { IssueDetailsSidebar, IssuePeekOverview } from "@/components/issues";
-// constants
+import { EmptyState } from "@/components/common/empty-state";
 // hooks
-import { useAppTheme, useIssueDetail, useIssues, useUserPermissions ,useUser} from "@/hooks/store";
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 // images
 import emptyIssue from "@/public/empty-state/issue.svg";
 // local components
+import { IssuePeekOverview } from "../peek-overview";
 import { IssueMainContent } from "./main-content";
+import { IssueDetailsSidebar } from "./sidebar";
 
 export type TIssueOperations = {
   fetch: (workspaceSlug: string, projectId: string, issueId: string, loader?: boolean) => Promise<void>;
@@ -100,19 +102,10 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
             payload: { id: issueId },
             error: error as Error,
           });
-          
-          // Extract and show detailed error message
-          let errorMessage = t("entity.update.failed", { entity: t("issue.label") });
-          if ((error as any)?.response?.data?.non_field_errors?.[0]) {
-            errorMessage = (error as any).response.data.non_field_errors[0];
-          } else if ((error as any)?.message) {
-            errorMessage = (error as any).message;
-          }
-          
           setToast({
             title: t("common.error.label"),
             type: TOAST_TYPE.ERROR,
-            message: errorMessage,
+            message: t("entity.update.failed", { entity: t("issue.label") }),
           });
         }
       },
@@ -287,16 +280,6 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
 
   // issue details
   const issue = getIssueById(issueId);
-  
-  // 권한 체크 로깅
-  // console.log("Issue Details:", {
-  //   workspaceSlug,
-  //   projectId,
-  //   assignees: issue?.assignee_ids,
-  //   currentUserId: currentUser?.id,
-  //   issue
-  // });
-
   // checking if issue is editable, based on user role
   const isEditable = checkIssueEditPermission(
     workspaceSlug,
@@ -304,15 +287,6 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
     issue?.assignee_ids || [],
     currentUser?.id || ""
   );
-
-  // 권한 상태 로깅
-  // console.log("Permission Check:", {
-  //   isEditable,
-  //   currentUser: currentUser?.id,
-  //   assignees: issue?.assignee_ids,
-  //   workspaceSlug,
-  //   projectId
-  // });
 
   return (
     <>

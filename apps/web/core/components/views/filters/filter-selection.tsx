@@ -4,12 +4,14 @@ import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { EViewAccess, TViewFilterProps, TViewFilters, TCustomField } from "@plane/types";
 // components
-import { FilterCreatedBy, FilterCreatedDate } from "@/components/common/filters";
-import { FilterOption, FilterCustomFields } from "@/components/issues";
+import { FilterCreatedDate } from "@/components/common/filters/created-at";
+import { FilterCreatedBy } from "@/components/common/filters/created-by";
+import { FilterOption } from "@/components/issues/issue-layouts/filters";
+import { FilterCustomFields } from "@/components/issues/issue-layouts/filters/header/filters/custom-fields";
 // constants
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
-import { useCustomField } from "@/hooks/store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web components
 import { FilterByAccess } from "@/plane-web/components/views/filters/access-filter";
 
@@ -23,11 +25,11 @@ type Props = {
 
 export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
   const { filters, handleFiltersUpdate, memberIds, isProjectLevel = false, viewProjectId } = props;
-  
+
   // 컴포넌트 렌더링 확인을 위한 로그
   // console.log("ViewFiltersSelection - Component rendered");
   // console.log("ViewFiltersSelection - props:", { isProjectLevel, viewProjectId, memberIds: memberIds?.length });
-  
+
   // states
   const [filtersSearchQuery, setFiltersSearchQuery] = useState("");
   // store
@@ -39,7 +41,7 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
   const { customFields, isLoading: isLoadingCustomFields } = useCustomField(
     isProjectLevel && effectiveProjectId ? effectiveProjectId : undefined
   );
-  
+
   // console.log("ViewFiltersSelection - URL params:", { workspaceSlug, projectId });
   // console.log("ViewFiltersSelection - effectiveProjectId:", effectiveProjectId);
 
@@ -71,7 +73,7 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
   const handleCustomFieldUpdate = (fieldId: string, value: string) => {
     // console.log("ViewFiltersSelection - handleCustomFieldUpdate called:", fieldId, value);
     // console.log("ViewFiltersSelection - current filters.filters?.custom_fields:", filters.filters?.custom_fields);
-    
+
     // 현재 커스텀 필드 필터를 파싱
     let currentCustomFieldFilters: { [field_id: string]: string[] } = {};
     if (filters.filters?.custom_fields) {
@@ -86,25 +88,25 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
         currentCustomFieldFilters = JSON.parse(JSON.stringify(filters.filters.custom_fields));
       }
     }
-    
+
     // console.log("ViewFiltersSelection - parsed currentCustomFieldFilters:", currentCustomFieldFilters);
-    
+
     const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-    
+
     let newFieldValues: string[];
     if (currentFieldValues.includes(value)) {
       newFieldValues = currentFieldValues.filter(v => v !== value);
     } else {
       newFieldValues = [...currentFieldValues, value];
     }
-    
+
     // console.log("ViewFiltersSelection - newFieldValues:", newFieldValues);
-    
+
     const newCustomFieldFilters = {
       ...currentCustomFieldFilters,
       [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
     };
-    
+
     // 빈 배열인 필드들 제거
     Object.keys(newCustomFieldFilters).forEach(key => {
       const fieldValues = newCustomFieldFilters[key];
@@ -112,14 +114,14 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
         delete newCustomFieldFilters[key];
       }
     });
-    
+
     // JSON 문자열로 변환하여 전달 (빈 객체인 경우 빈 문자열)
-    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0 
-      ? JSON.stringify(newCustomFieldFilters) 
+    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0
+      ? JSON.stringify(newCustomFieldFilters)
       : "";
-    
+
     // console.log("ViewFiltersSelection - final customFieldsValue:", customFieldsValue);
-    
+
     handleFiltersUpdate("filters", {
       ...filters.filters,
       custom_fields: customFieldsValue || null,
@@ -197,10 +199,10 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
           // console.log("ViewFiltersSelection - effectiveProjectId:", effectiveProjectId);
           // console.log("ViewFiltersSelection - customFields.length:", customFields.length);
           // console.log("ViewFiltersSelection - isLoadingCustomFields:", isLoadingCustomFields);
-          
+
           const shouldRender = isProjectLevel && effectiveProjectId && !isLoadingCustomFields;
           // console.log("ViewFiltersSelection - shouldRender:", shouldRender);
-          
+
           if (shouldRender) {
             return (
               <div>
@@ -209,7 +211,7 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
                     (() => {
                       const customFieldsData = filters.filters?.custom_fields;
                       // console.log("ViewFiltersSelection - raw custom_fields:", customFieldsData);
-                      
+
                       if (customFieldsData && typeof customFieldsData === 'string' && customFieldsData.trim() !== '') {
                         try {
                           const parsed = JSON.parse(customFieldsData);

@@ -1,4 +1,4 @@
-// types
+// plane imports
 import { API_BASE_URL } from "@plane/constants";
 import {
   EIssueServiceType,
@@ -12,12 +12,8 @@ import {
   type TIssuesResponse,
   type TIssueSubIssues,
 } from "@plane/types";
-// helpers
 import { getIssuesShouldFallbackToServer } from "@plane/utils";
-import { persistence } from "@/local-db/storage.sqlite";
 // services
-
-import { addIssuesBulk, deleteIssueFromLocal, updateIssue } from "@/local-db/utils/load-issues";
 import { APIService } from "@/services/api.service";
 
 // 타입 정의 부분
@@ -62,7 +58,6 @@ export class IssueService extends APIService {
       (queries.expand as string)?.includes("issue_relation") && !queries.group_by
         ? `/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}-detail/`
         : `/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/`;
-        
     return this.get(
       path,
       {
@@ -70,9 +65,7 @@ export class IssueService extends APIService {
       },
       config
     )
-      .then((response) => {
-        return response?.data;
-      })
+      .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
       });
@@ -104,57 +97,7 @@ export class IssueService extends APIService {
     if (getIssuesShouldFallbackToServer(queries) || this.serviceType !== EIssueServiceType.ISSUES) {
       return await this.getIssuesFromServer(workspaceSlug, projectId, queries, config);
     }
-
-    if (queries?.layout === "calendar") {
-      try {
-        const modifiedQueries = {
-          ...queries,
-          layout: "calendar",
-          target_date: undefined,
-          start_target_date: (queries as any).start_date_from,
-          end_target_date: (queries as any).start_date_to
-        };
-
-        const res = await this.getIssuesFromServer(workspaceSlug, projectId, modifiedQueries, config);
-        
-        const allIssues: TIssue[] = [];
-        if (res?.results) {
-          Object.entries(res.results).forEach(([_, group]) => {
-            if (group?.results) {
-              if (Array.isArray(group.results)) {
-                allIssues.push(...group.results);
-              } else if (typeof group.results === 'object') {
-                Object.values(group.results as { [key: string]: { results: TIssue[] } })
-                  .forEach(subGroup => {
-                    if (Array.isArray(subGroup?.results)) {
-                      allIssues.push(...subGroup.results);
-                    }
-                  });
-              }
-            }
-          });
-        }
-
-        return {
-          grouped_by: "target_date",
-          results: res.results || {},
-          prev_page_results: false,
-          next_page_results: false,
-          count: allIssues.length,
-          extra_stats: null,
-          next_cursor: "",
-          prev_cursor: "",
-          total_count: allIssues.length,
-          total_pages: 1,
-          total_results: allIssues.length
-        };
-      } catch (error) {
-        console.error("Calendar view error:", error);
-        throw error;
-      }
-    }
-
-    // console.log('[DEBUG] IssueService.getIssues - 로컬 persistence 사용');
+    const { persistence } = await import("@/local-db/storage.sqlite");
     const response = await persistence.getIssues(workspaceSlug, projectId, queries, config);
     return response as TIssuesResponse;
   }
@@ -187,9 +130,10 @@ export class IssueService extends APIService {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/${issueId}/`, {
       params: queries,
     })
-      .then((response) => {
+      .then(async (response) => {
         // skip issue update when the service type is epic
         if (response.data && this.serviceType === EIssueServiceType.ISSUES) {
+          const { updateIssue } = await import("@/local-db/utils/load-issues");
           updateIssue({ ...response.data, is_local_update: 1 });
         }
         // add is_epic flag when the service type is epic
@@ -207,8 +151,9 @@ export class IssueService extends APIService {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/list/`, {
       params: { issues: issueIds.join(",") },
     })
-      .then((response) => {
+      .then(async (response) => {
         if (response?.data && Array.isArray(response?.data) && this.serviceType === EIssueServiceType.ISSUES) {
+          const { addIssuesBulk } = await import("@/local-db/utils/load-issues");
           addIssuesBulk(response.data);
         }
         return response?.data;
@@ -315,6 +260,7 @@ export class IssueService extends APIService {
 
   async deleteIssue(workspaceSlug: string, projectId: string, issuesId: string): Promise<any> {
     if (this.serviceType === EIssueServiceType.ISSUES) {
+      const { deleteIssueFromLocal } = await import("@/local-db/utils/load-issues");
       deleteIssueFromLocal(issuesId);
     }
     return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/${issuesId}/`)
@@ -423,8 +369,9 @@ export class IssueService extends APIService {
 
   async bulkOperations(workspaceSlug: string, projectId: string, data: TBulkOperationsPayload): Promise<any> {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`, data)
-      .then((response) => {
+      .then(async (response) => {
         if (this.serviceType === EIssueServiceType.ISSUES) {
+          const { persistence } = await import("@/local-db/storage.sqlite");
           persistence.syncIssues(projectId);
         }
         return response?.data;
@@ -442,8 +389,9 @@ export class IssueService extends APIService {
     }
   ): Promise<any> {
     return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-delete-issues/`, data)
-      .then((response) => {
+      .then(async (response) => {
         if (this.serviceType === EIssueServiceType.ISSUES) {
+          const { persistence } = await import("@/local-db/storage.sqlite");
           persistence.syncIssues(projectId);
         }
         return response?.data;
@@ -463,8 +411,9 @@ export class IssueService extends APIService {
     archived_at: string;
   }> {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-archive-issues/`, data)
-      .then((response) => {
+      .then(async (response) => {
         if (this.serviceType === EIssueServiceType.ISSUES) {
+          const { persistence } = await import("@/local-db/storage.sqlite");
           persistence.syncIssues(projectId);
         }
         return response?.data;
@@ -545,9 +494,10 @@ export class IssueService extends APIService {
     return this.get(`/api/workspaces/${workspaceSlug}/work-items/${project_identifier}-${issue_sequence}/`, {
       params: queries,
     })
-      .then((response) => {
+      .then(async (response) => {
         // skip issue update when the service type is epic
         if (response.data && this.serviceType === EIssueServiceType.ISSUES) {
+          const { updateIssue } = await import("@/local-db/utils/load-issues");
           updateIssue({ ...response.data, is_local_update: 1 });
         }
         // add is_epic flag when the service type is epic

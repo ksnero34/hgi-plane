@@ -25,6 +25,7 @@ from plane.authentication.session import BaseSessionAuthentication
 from plane.utils.exception_logger import log_exception
 from plane.utils.paginator import BasePaginator
 from plane.utils.core.mixins import ReadReplicaControlMixin
+
 from plane.utils.audit_logger import log_audit
 from plane.utils.host import base_host
 
@@ -123,7 +124,7 @@ class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePagi
             return response
         except Exception as exc:
             response = self.handle_exception(exc)
-            return response
+            return exc
 
     @property
     def workspace_slug(self):
@@ -224,7 +225,7 @@ class BaseAPIView(TimezoneMixin, ReadReplicaControlMixin, APIView, BasePaginator
 
         except Exception as exc:
             response = self.handle_exception(exc)
-            return response
+            return exc
 
     @property
     def workspace_slug(self):

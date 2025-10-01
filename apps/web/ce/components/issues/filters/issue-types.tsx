@@ -7,7 +7,7 @@ import sortBy from "lodash/sortBy";
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
 // components
-import { FilterHeader, FilterOption } from "@/components/issues";
+import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters/header/helpers";
 import { IssueTypeIcon } from "../issue-type-icon";
 import { Loader } from "@plane/ui";
 

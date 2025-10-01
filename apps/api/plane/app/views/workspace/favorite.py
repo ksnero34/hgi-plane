@@ -14,6 +14,7 @@ from plane.app.permissions import allow_permission, ROLE
 
 
 class WorkspaceFavoriteEndpoint(BaseAPIView):
+    use_read_replica = True
 
     @allow_permission(
         allowed_roles=[ROLE.ADMIN, ROLE.MEMBER,ROLE.VIEWER, ROLE.RESTRICTED,], level="WORKSPACE"

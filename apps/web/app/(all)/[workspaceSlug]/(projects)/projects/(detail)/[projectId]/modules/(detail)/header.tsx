@@ -14,9 +14,8 @@ import {
   EProjectFeatureKey,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
-// i18n
-import { useTranslation } from "@plane/i18n";
-// types
+import { DiceIcon } from "@plane/propel/icons";
+import { Tooltip } from "@plane/propel/tooltip";
 import {
   EIssuesStoreType,
   ICustomSearchSelectOption,
@@ -27,40 +26,39 @@ import {
   TCustomField,
   TIssue
 } from "@plane/types";
-import { Breadcrumbs, Button, DiceIcon, Header, BreadcrumbNavigationSearchDropdown, Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, DiceIcon, Header, BreadcrumbNavigationSearchDropdown } from "@plane/ui";
 import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
-import { SwitcherLabel } from "@/components/common";
+import { SwitcherLabel } from "@/components/common/switcher-label";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
   FilterSelection,
   LayoutSelection,
   MobileLayoutSelection,
-} from "@/components/issues";
+} from "@/components/issues/issue-layouts/filters";
 // helpers
 import { ModuleQuickActions } from "@/components/modules";
 // hooks
-import {
-  useLabel,
-  useMember,
-  useModule,
-  useProject,
-  useProjectState,
-  useIssues,
-  useCommandPalette,
-  useUserPermissions,
-  useMultipleSelectStore,
-  useCustomField,
-} from "@/hooks/store";
+import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useModule } from "@/hooks/store/use-module";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useUserPermissions } from "@/hooks/store/user";
+import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
 
 export const ModuleIssuesHeader: React.FC = observer(() => {
   // refs
@@ -74,14 +72,8 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
     true
   );
   // router
-  const router = useRouter();
-  const { workspaceSlug, projectId, moduleId } = useParams() as {
-    workspaceSlug: string;
-    projectId: string;
-    moduleId: string;
-  };
-  // i18n
-  const { t } = useTranslation();
+  const router = useAppRouter();
+  const { workspaceSlug, projectId, moduleId } = useParams();
   // hooks
   const { isMobile } = usePlatformOS();
   // store hooks
@@ -106,8 +98,11 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
   } = useMember();
   const { customFields } = useCustomField(projectId as string);
 
+  const { setValue, storedValue } = useLocalStorage("module_sidebar_collapsed", "false");
+
+  const isSidebarCollapsed = storedValue ? (storedValue === "true" ? true : false) : false;
   const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    setValue(`${!isSidebarCollapsed}`);
   };
 
   const activeLayout = issueFilters?.displayFilters?.layout;

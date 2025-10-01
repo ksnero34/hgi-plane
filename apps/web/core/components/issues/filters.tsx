@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useEffect } from "react";
 import { observer } from "mobx-react";
+import { ChartNoAxesColumn, ListFilter, SlidersHorizontal } from "lucide-react";
 // plane constants
 import { EIssueFilterType, ISSUE_STORE_TO_FILTERS_MAP } from "@plane/constants";
 // i18n
@@ -17,21 +18,23 @@ import {
 import { Button } from "@plane/ui";
 // components
 import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
+// helpers
+// hooks
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useCustomField } from "@/hooks/store/use-custom-field";
+// plane web types
+import { TProject } from "@/plane-web/types";
+import { WorkItemsModal } from "../analytics/work-items/modal";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
   FilterSelection,
-  IssueLayoutIcon,
   LayoutSelection,
   MobileLayoutSelection,
-} from "@/components/issues";
-// helpers
-// hooks
-import { useLabel, useProjectState, useMember, useIssues, useCustomField } from "@/hooks/store";
-// plane web types
-import { TProject } from "@/plane-web/types";
-import { WorkItemsModal } from "../analytics/work-items/modal";
-import { ChartNoAxesColumn, ChevronDown, ListFilter, SlidersHorizontal } from "lucide-react";
+} from "./issue-layouts/filters";
 
 type Props = {
   currentProjectDetails: TProject | undefined;
@@ -47,7 +50,8 @@ const LAYOUTS = [
   EIssueLayoutTypes.SPREADSHEET,
   EIssueLayoutTypes.GANTT,
 ];
-const HeaderFilters = observer((props: Props) => {
+
+export const HeaderFilters = observer((props: Props) => {
   const {
     currentProjectDetails,
     projectId,
@@ -76,7 +80,7 @@ const HeaderFilters = observer((props: Props) => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
-      
+
       const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
       updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: updatedValue });
     },
@@ -184,5 +188,3 @@ const HeaderFilters = observer((props: Props) => {
     </>
   );
 });
-
-export default HeaderFilters;

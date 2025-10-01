@@ -51,31 +51,28 @@ from plane.app.serializers import (
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.bgtasks.import_task import issue_import_task
 from plane.db.models import (
-    Issue,
+    CycleIssue,
+    CustomField,
+    CustomFieldValue,
     FileAsset,
+    IntakeIssue,
+    Issue,
+    IssueActivity,
+    IssueAssignee,
+    IssueLabel,
     IssueLink,
-    IssueUserProperty,
+    IssueRelation,
     IssueReaction,
     IssueSubscriber,
+    IssueType,
+    IssueUserProperty,
+    ModuleIssue,
     Project,
     ProjectMember,
-    CycleIssue,
-    UserRecentVisit,
-    ModuleIssue,
-    Workspace,
-    CustomFieldValue,
-    CustomField,
-    IssueAssignee,
-    User,
-    IssueActivity,
     State,
-    IssueRelation,
-    IssueAssignee,
-    IssueLabel,
-    IssueType,
-    IssueRelation,
-    IssueAssignee,
-    IssueLabel,
+    User,
+    UserRecentVisit,
+    Workspace,
 )
 from plane.utils.grouper import (
     issue_group_values,
@@ -243,6 +240,7 @@ class IssueListEndpoint(BaseAPIView):
                     "link_count",
                     "is_draft",
                     "archived_at",
+                    "deleted_at",
                 )
                 datetime_fields = ["created_at", "updated_at"]
                 issues = user_timezone_converter(
@@ -2002,6 +2000,16 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
                         project_id=project.id,
                         issue__sequence_id=issue_identifier,
                         subscriber=request.user,
+                    )
+                )
+            )
+            .annotate(
+                is_intake=Exists(
+                    IntakeIssue.objects.filter(
+                        issue=OuterRef("id"),
+                        status__in=[-2, 0],
+                        workspace__slug=slug,
+                        project_id=project.id,
                     )
                 )
             )

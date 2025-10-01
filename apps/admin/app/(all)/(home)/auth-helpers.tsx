@@ -7,15 +7,6 @@ import { SUPPORT_EMAIL, EAdminAuthErrorCodes, TAdminAuthErrorInfo } from "@plane
 import { TGetBaseAuthenticationModeProps, TInstanceAuthenticationModes } from "@plane/types";
 import { resolveGeneralTheme } from "@plane/utils";
 // components
-// import {
-//   EmailCodesConfiguration,
-//   GithubConfiguration,
-//   GitlabConfiguration,
-//   GoogleConfiguration,
-//   PasswordLoginConfiguration,
-//   OIDCConfiguration,
-// } from "@/components/authentication";
-
 import { EmailCodesConfiguration } from "@/components/authentication/email-config-switch";
 import { GithubConfiguration } from "@/components/authentication/github-config";
 import { GitlabConfiguration } from "@/components/authentication/gitlab-config";
@@ -28,6 +19,7 @@ import githubDarkModeImage from "@/public/logos/github-white.png";
 import GitlabLogo from "@/public/logos/gitlab-logo.svg";
 import GoogleLogo from "@/public/logos/google-logo.svg";
 import OIDCLogo from "@/public/logos/oidc-logo.svg";
+
 export enum EErrorAlertType {
   BANNER_ALERT = "BANNER_ALERT",
   INLINE_FIRST_NAME = "INLINE_FIRST_NAME",

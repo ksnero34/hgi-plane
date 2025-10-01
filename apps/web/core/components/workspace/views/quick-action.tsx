@@ -3,19 +3,19 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { ExternalLink, LinkIcon, Pencil, Trash2 } from "lucide-react";
-// types
+// plane imports
 import { EUserPermissions, EUserPermissionsLevel, GLOBAL_VIEW_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { IWorkspaceView } from "@plane/types";
 import { CustomMenu, TContextMenuItem, TOAST_TYPE, setToast } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
-// components
-import { CreateUpdateWorkspaceViewModal, DeleteGlobalViewModal } from "@/components/workspace";
-// constants
 // helpers
-// hooks
 import { captureClick } from "@/helpers/event-tracker.helper";
-import { useUser, useUserPermissions } from "@/hooks/store";
+// hooks
+import { useUser, useUserPermissions } from "@/hooks/store/user";
+// local imports
+import { DeleteGlobalViewModal } from "./delete-view-modal";
+import { CreateUpdateWorkspaceViewModal } from "./modal";
 
 type Props = {
   workspaceSlug: string;
@@ -40,8 +40,8 @@ export const WorkspaceViewQuickActions: React.FC<Props> = observer((props) => {
     copyUrlToClipboard(viewLink).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "링크가 복사되었습니다.",
-        message: "뷰 링크가 클립보드에 복사되었습니다.",
+        title: "Link Copied!",
+        message: "View link copied to clipboard.",
       });
     });
   const handleOpenInNewTab = () => window.open(`/${viewLink}`, "_blank");
@@ -79,7 +79,6 @@ export const WorkspaceViewQuickActions: React.FC<Props> = observer((props) => {
     <>
       <CreateUpdateWorkspaceViewModal data={view} isOpen={updateViewModal} onClose={() => setUpdateViewModal(false)} />
       <DeleteGlobalViewModal data={view} isOpen={deleteViewModal} onClose={() => setDeleteViewModal(false)} />
-
       <CustomMenu
         ellipsis
         placement="bottom-end"

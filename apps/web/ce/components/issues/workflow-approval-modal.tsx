@@ -8,7 +8,7 @@ import { CheckCircle, XCircle, User, Clock, MessageSquare, Search, Filter, Arrow
 // ui
 import { Button, ModalCore, EModalPosition, EModalWidth, setToast, TOAST_TYPE, TextArea } from "@plane/ui";
 // hooks
-import { useWorkflow } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 
 interface ApprovalRequest {
   id: string;

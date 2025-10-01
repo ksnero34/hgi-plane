@@ -6,12 +6,12 @@ import { PRODUCT_TOUR_TRACKER_EVENTS } from "@plane/constants";
 import { ContentWrapper } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
-import { TourRoot } from "@/components/onboarding";
+import { TourRoot } from "@/components/onboarding/tour";
 // helpers
 import { captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
-import { useUserProfile, useUser } from "@/hooks/store";
 import { useHome } from "@/hooks/store/use-home";
+import { useUserProfile, useUser } from "@/hooks/store/user";
 // plane web components
 import { HomePeekOverviewsRoot } from "@/plane-web/components/home";
 // local imports
@@ -60,9 +60,7 @@ export const WorkspaceHomeView = observer(() => {
       )}
       <>
         <HomePeekOverviewsRoot />
-        <ContentWrapper
-          className={cn("gap-6 bg-custom-background-100 scrollbar-hide px-page-x")}
-        >
+        <ContentWrapper className={cn("gap-6 bg-custom-background-100 scrollbar-hide px-page-x lg:px-0")}>
           {currentUser && <UserGreetingsView user={currentUser} />}
           <DashboardWidgets />
         </ContentWrapper>

@@ -1,14 +1,16 @@
 import { FC } from "react";
 import { observer } from "mobx-react";
 // types
+import { Tooltip } from "@plane/propel/tooltip";
 import { IIssueDisplayProperties } from "@plane/types";
 // ui
-import { setToast, TOAST_TYPE, Tooltip } from "@plane/ui";
+import { setToast, TOAST_TYPE } from "@plane/ui";
 // helpers
 import { cn } from "@plane/utils";
 // hooks
-import { useIssueDetail, useProject, useIssueType } from "@/hooks/store";
-// components
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useProject } from "@/hooks/store/use-project";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 import { IssueTypeIcon } from "../issue-type-icon";
 
 type TIssueIdentifierBaseProps = {
@@ -41,18 +43,18 @@ export const IssueTypeIdentifier: FC<TIssueTypeIdentifier> = observer((props) =>
   const {
     issue: { getIssueById },
   } = useIssueDetail();
-  
+
   const issue = getIssueById(issueId);
   const projectId = issue?.project_id;
   const { issueTypes, getDefaultIssueType } = useIssueType(projectId || "");
-  
+
   let issueType = issueTypes.find(it => it.id === issue?.type_id);
-  
+
   // 이슈에 type_id가 없거나 매치되지 않으면 기본 이슈 타입 사용
   if (!issueType && !issue?.type_id) {
     issueType = getDefaultIssueType();
   }
-  
+
   // console.log('IssueTypeIdentifier debug:', {
   //   issueId,
   //   projectId,
@@ -60,16 +62,16 @@ export const IssueTypeIdentifier: FC<TIssueTypeIdentifier> = observer((props) =>
   //   issueType,
   //   issueTypeIdFromIssue: issue?.type_id
   // });
-  
+
   if (!issueType) return null;
-  
+
   const iconSize = {
     xs: 12,
     sm: 14,
     md: 16,
     lg: 18,
   }[size];
-  
+
   return <IssueTypeIcon issueType={issueType} size={iconSize} />;
 });
 
@@ -127,7 +129,7 @@ export const IssueIdentifier: React.FC<TIssueIdentifierProps> = observer((props)
   const issueSequenceId = isUsingStoreData ? issue?.sequence_id : props.issueSequenceId;
   const shouldRenderIssueID = displayProperties ? displayProperties.key : true;
   const shouldRenderIssueType = displayProperties ? displayProperties.issue_type !== false : true;
-  
+
   // Debug logging
   // console.log('IssueIdentifier debug:', {
   //   issueId: isUsingStoreData ? props.issueId : 'not using store',

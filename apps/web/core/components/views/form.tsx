@@ -9,6 +9,7 @@ import { useParams } from "next/navigation";
 import { ETabIndices, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
+import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
 // types
 import {
   EViewAccess,
@@ -20,20 +21,24 @@ import {
   EIssueLayoutTypes,
 } from "@plane/types";
 // ui
-import { Button, EmojiIconPicker, EmojiIconPickerTypes, Input, TextArea } from "@plane/ui";
-import {
-  convertHexEmojiToDecimal,
-  getComputedDisplayFilters,
-  getComputedDisplayProperties,
-  getTabIndex,
-} from "@plane/utils";
+import { Button, Input, TextArea } from "@plane/ui";
+import { getComputedDisplayFilters, getComputedDisplayProperties, getTabIndex } from "@plane/utils";
 // components
-import { Logo } from "@/components/common";
-import { AppliedFiltersList, DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues";
+import { Logo } from "@/components/common/logo";
+import {
+  AppliedFiltersList,
+  DisplayFiltersSelection,
+  FilterSelection,
+  FiltersDropdown,
+} from "@/components/issues/issue-layouts/filters";
 // helpers
 import { calculateFilterValue, calculateFilterRemovalValue } from "@plane/utils";
 // hooks
-import { useLabel, useMember, useProject, useProjectState, useCustomField } from "@/hooks/store";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
 import { AccessController } from "@/plane-web/components/views/access-controller";
@@ -176,8 +181,7 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
 
                 if (val?.type === "emoji")
                   logoValue = {
-                    value: convertHexEmojiToDecimal(val.value.unified),
-                    // url: val.value.imageUrl,
+                    value: val.value,
                   };
                 else if (val?.type === "icon") logoValue = val.value;
 
@@ -194,7 +198,7 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
                   : EmojiIconPickerTypes.ICON
               }
             />
-              <div className="space-y-1 flex-grow w-full">
+            <div className="space-y-1 flew-grow w-full">
               <Controller
                 control={control}
                 name="name"

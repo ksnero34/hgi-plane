@@ -10,7 +10,9 @@ import { Button, ModalCore, EModalPosition, EModalWidth, TextArea, setToast, TOA
 // types
 import { IWorkflowValidation, IWorkflowValidationResponse } from "@plane/types";
 // hooks
-import { useWorkflow, useMember, useUser } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
+import { useMember } from "@/hooks/store/use-member";
+import { useUser } from "@/hooks/store/user";
 
 interface Props {
   isOpen: boolean;

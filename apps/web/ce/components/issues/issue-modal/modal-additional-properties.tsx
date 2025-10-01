@@ -6,7 +6,8 @@ import { TIssue, TCustomField } from "@plane/types";
 // components
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // hooks
-import { useCustomField, useIssueType } from "@/hooks/store";
+import { useCustomField } from "@/hooks/store/use-custom-field";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 import { renderFormattedPayloadDate } from "@plane/utils";
 
 export type TWorkItemModalAdditionalPropertiesProps = {

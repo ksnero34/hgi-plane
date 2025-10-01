@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 
 // components
-import { FilterHeader } from "@/components/issues";
+import { FilterHeader } from "../helpers";
 
 type Props = {
   appliedFilters: string | null;

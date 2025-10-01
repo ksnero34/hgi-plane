@@ -3,13 +3,13 @@
 import { FC } from "react";
 import { observer } from "mobx-react";
 // plane imports
+import { LayersIcon } from "@plane/propel/icons";
 import { EInboxIssueSource } from "@plane/types";
-import { LayersIcon } from "@plane/ui";
 // hooks
 import { capitalizeFirstLetter } from "@plane/utils";
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // local imports
-import { IssueActivityBlockComponent } from ".";
+import { IssueActivityBlockComponent } from "./";
 
 type TIssueDefaultActivity = { activityId: string; ends: "top" | "bottom" | undefined };
 

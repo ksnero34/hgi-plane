@@ -5,13 +5,14 @@ import { observer } from "mobx-react";
 import { Check, Info, X } from "lucide-react";
 import { EEstimateSystem, MAX_ESTIMATE_POINT_INPUT_LENGTH } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { Tooltip } from "@plane/propel/tooltip";
 import { TEstimatePointsObject, TEstimateSystemKeys, TEstimateTypeErrorObject } from "@plane/types";
-import { Spinner, TOAST_TYPE, Tooltip, setToast } from "@plane/ui";
+import { Spinner, TOAST_TYPE, setToast } from "@plane/ui";
 import { cn, isEstimatePointValuesRepeated } from "@plane/utils";
 import { EstimateInputRoot } from "@/components/estimates/inputs/root";
 // helpers
 // hooks
-import { useEstimatePoint } from "@/hooks/store";
+import { useEstimatePoint } from "@/hooks/store/estimates/use-estimate-point";
 // plane web constants
 
 type TEstimatePointUpdate = {
@@ -72,59 +73,6 @@ export const EstimatePointUpdate: FC<TEstimatePointUpdate> = observer((props) =>
     }
   };
 
-  const validateInput = (): boolean => {
-    if (!estimateInputValue) {
-      handleEstimatePointError && 
-        handleEstimatePointError(estimateInputValue || "", t("project_settings.estimates.validation.empty"));
-      return false;
-    }
-
-    const currentEstimateType: EEstimateSystem | undefined = estimateType;
-    let isEstimateValid = false;
-
-    const currentEstimatePointValues = estimatePoints
-      .map((point) => (point?.key != estimatePoint?.key ? point?.value : undefined))
-      .filter((value) => value != undefined) as string[];
-    const isRepeated =
-      (estimateType && isEstimatePointValuesRepeated(currentEstimatePointValues, estimateType, estimateInputValue)) ||
-      false;
-
-    if (isRepeated) {
-      handleEstimatePointError && 
-        handleEstimatePointError(estimateInputValue, t("project_settings.estimates.validation.already_exists"));
-      return false;
-    }
-
-    if (currentEstimateType && [EEstimateSystem.TIME, EEstimateSystem.POINTS].includes(currentEstimateType)) {
-      if (estimateInputValue && !isNaN(Number(estimateInputValue))) {
-        if (Number(estimateInputValue) <= 0) {
-          handleEstimatePointError && 
-            handleEstimatePointError(estimateInputValue, t("project_settings.estimates.validation.min_length"));
-          return false;
-        } else {
-          isEstimateValid = true;
-        }
-      }
-    } else if (currentEstimateType && currentEstimateType === EEstimateSystem.CATEGORIES) {
-      if (estimateInputValue && estimateInputValue.length > 0 && isNaN(Number(estimateInputValue))) {
-        isEstimateValid = true;
-      }
-    }
-
-    if (!isEstimateValid) {
-      handleEstimatePointError &&
-        handleEstimatePointError(
-          estimateInputValue,
-          [EEstimateSystem.POINTS, EEstimateSystem.TIME].includes(estimateType)
-            ? t("project_settings.estimates.validation.numeric")
-            : t("project_settings.estimates.validation.character")
-        );
-      return false;
-    }
-
-    return true;
-  };
-
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -132,15 +80,88 @@ export const EstimatePointUpdate: FC<TEstimatePointUpdate> = observer((props) =>
 
     handleEstimatePointError && handleEstimatePointError(estimateInputValue || "", undefined, "delete");
 
-    if (validateInput()) {
-      // 이제 API 호출 대신 로컬 상태만 업데이트
-      if (estimateInputValue === estimatePoint.value) {
-        handleClose();
-      } else {
-        // 부모 컴포넌트에 변경 사항 알림
-        handleSuccess(estimateInputValue || "");
-      }
-    }
+    if (estimateInputValue) {
+      const currentEstimateType: EEstimateSystem | undefined = estimateType;
+      let isEstimateValid = false;
+
+      const currentEstimatePointValues = estimatePoints
+        .map((point) => (point?.key != estimatePoint?.key ? point?.value : undefined))
+        .filter((value) => value != undefined) as string[];
+      const isRepeated =
+        (estimateType && isEstimatePointValuesRepeated(currentEstimatePointValues, estimateType, estimateInputValue)) ||
+        false;
+
+      if (!isRepeated) {
+        if (currentEstimateType && [EEstimateSystem.TIME, EEstimateSystem.POINTS].includes(currentEstimateType)) {
+          if (estimateInputValue && !isNaN(Number(estimateInputValue))) {
+            if (Number(estimateInputValue) <= 0) {
+              if (handleEstimatePointError)
+                handleEstimatePointError(estimateInputValue, t("project_settings.estimates.validation.min_length"));
+              return;
+            } else {
+              isEstimateValid = true;
+            }
+          }
+        } else if (currentEstimateType && currentEstimateType === EEstimateSystem.CATEGORIES) {
+          if (estimateInputValue && estimateInputValue.length > 0 && isNaN(Number(estimateInputValue))) {
+            isEstimateValid = true;
+          }
+        }
+
+        if (isEstimateValid) {
+          if (estimateId != undefined) {
+            if (estimateInputValue === estimatePoint.value) {
+              setLoader(false);
+              if (handleEstimatePointError) handleEstimatePointError(estimateInputValue, undefined);
+
+              handleClose();
+            } else
+              try {
+                setLoader(true);
+
+                const payload = {
+                  value: estimateInputValue,
+                };
+                await updateEstimatePoint(workspaceSlug, projectId, payload);
+
+                setLoader(false);
+                if (handleEstimatePointError) handleEstimatePointError(estimateInputValue, undefined, "delete");
+                handleClose();
+                setToast({
+                  type: TOAST_TYPE.SUCCESS,
+                  title: t("project_settings.estimates.toasts.updated.success.title"),
+                  message: t("project_settings.estimates.toasts.updated.success.message"),
+                });
+              } catch {
+                setLoader(false);
+                if (handleEstimatePointError)
+                  handleEstimatePointError(
+                    estimateInputValue,
+                    t("project_settings.estimates.validation.unable_to_process")
+                  );
+                setToast({
+                  type: TOAST_TYPE.ERROR,
+                  title: t("project_settings.estimates.toasts.updated.error.title"),
+                  message: t("project_settings.estimates.toasts.updated.error.message"),
+                });
+              }
+          } else {
+            handleSuccess(estimateInputValue);
+          }
+        } else {
+          setLoader(false);
+          if (handleEstimatePointError)
+            handleEstimatePointError(
+              estimateInputValue,
+              [EEstimateSystem.POINTS, EEstimateSystem.TIME].includes(estimateType)
+                ? t("project_settings.estimates.validation.numeric")
+                : t("project_settings.estimates.validation.character")
+            );
+        }
+      } else if (handleEstimatePointError)
+        handleEstimatePointError(estimateInputValue, t("project_settings.estimates.validation.already_exists"));
+    } else if (handleEstimatePointError)
+      handleEstimatePointError(estimateInputValue || "", t("project_settings.estimates.validation.empty"));
   };
 
   return (

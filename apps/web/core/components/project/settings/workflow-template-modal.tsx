@@ -9,7 +9,7 @@ import { Button, Input, ModalCore, EModalPosition, EModalWidth, TextArea, Toggle
 // types
 import { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
 // hooks
-import { useWorkflow } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 
 interface Props {
   isOpen: boolean;

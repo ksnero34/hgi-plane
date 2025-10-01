@@ -6,10 +6,6 @@ export const getUserRole = (role: EUserPermissions | EUserWorkspaceRoles | EUser
   switch (role) {
     case EUserPermissions.GUEST:
       return "GUEST";
-    case EUserPermissions.RESTRICTED:
-      return "RESTRICTED";
-    case EUserPermissions.VIEWER:
-      return "VIEWER";
     case EUserPermissions.MEMBER:
       return "MEMBER";
     case EUserPermissions.ADMIN:

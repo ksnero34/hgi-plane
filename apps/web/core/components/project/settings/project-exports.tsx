@@ -19,7 +19,8 @@ import { ImportExportSettingsLoader } from "@/components/ui";
 // constants
 import { EXPORT_SERVICES_LIST } from "@/constants/fetch-keys";
 // hooks
-import { useProject, useUser, useUserPermissions } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
+import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 // services images

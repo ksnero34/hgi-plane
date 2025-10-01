@@ -94,5 +94,10 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
+        "plane.mongo": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": False,
+        },
     },
 }

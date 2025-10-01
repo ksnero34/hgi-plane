@@ -14,14 +14,16 @@ import {
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui
-import { ArchiveIcon, ContextMenu, CustomMenu, TContextMenuItem, TOAST_TYPE, setToast } from "@plane/ui";
+import { ArchiveIcon } from "@plane/propel/icons";
+import { ContextMenu, CustomMenu, TContextMenuItem, TOAST_TYPE, setToast } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
 // components
 import { ArchiveModuleModal, CreateUpdateModuleModal, DeleteModuleModal } from "@/components/modules";
 // helpers
 import { captureClick, captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 // hooks
-import { useModule, useUserPermissions } from "@/hooks/store";
+import { useModule } from "@/hooks/store/use-module";
+import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -65,8 +67,8 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
     copyUrlToClipboard(moduleLink).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "링크가 복사되었습니다.",
-        message: "모듈 링크가 클립보드에 복사되었습니다.",
+        title: "Link Copied!",
+        message: "Module link copied to clipboard.",
       });
     });
   const handleOpenInNewTab = () => window.open(`/${moduleLink}`, "_blank");
@@ -94,8 +96,8 @@ export const ModuleQuickActions: React.FC<Props> = observer((props) => {
       .catch((error) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "모듈을 복원할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: "Module could not be restored. Please try again.",
         });
         captureError({
           eventName: MODULE_TRACKER_EVENTS.restore,

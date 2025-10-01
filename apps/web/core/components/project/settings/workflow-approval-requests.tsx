@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 // ui
 import { Button, setToast, TOAST_TYPE } from "@plane/ui";
 // hooks
-import { useWorkflow } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 
 interface ApprovalRequest {
   id: string;

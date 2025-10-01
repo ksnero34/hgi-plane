@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
+import { Tooltip } from "@plane/propel/tooltip";
 import { TDescriptionVersion } from "@plane/types";
 import {
   Avatar,
@@ -15,13 +16,13 @@ import {
   ModalCore,
   setToast,
   TOAST_TYPE,
-  Tooltip,
 } from "@plane/ui";
 import { calculateTimeAgo, cn, copyTextToClipboard, getFileURL } from "@plane/utils";
 // components
-import { RichTextEditor } from "@/components/editor";
+import { RichTextEditor } from "@/components/editor/rich-text";
 // hooks
-import { useMember, useWorkspace } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
+import { useWorkspace } from "@/hooks/store/use-workspace";
 
 type Props = {
   activeVersionDescription: string | undefined;
@@ -68,8 +69,8 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
     copyTextToClipboard(editorRef.current.getMarkDown()).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "성공했습니다!",
-        message: "Markdown이 클립보드에 복사되었습니다.",
+        title: t("toast.success"),
+        message: "Markdown copied to clipboard.",
       })
     );
   }, [t]);
@@ -130,12 +131,13 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
         {/* End header */}
         {/* Version description */}
         <div className="mt-4 pb-4">
-          {activeVersionDescription && activeVersionDescription.trim() !== "" && activeVersionDescription !== "<p></p>" ? (
+          {activeVersionId && activeVersionDescription ? (
             <RichTextEditor
+              key={activeVersionId}
               editable={false}
               containerClassName="p-0 !pl-0 border-none"
               editorClassName="pl-0"
-              id={activeVersionId ?? ""}
+              id={activeVersionId}
               initialValue={activeVersionDescription}
               projectId={projectId}
               ref={editorRef}

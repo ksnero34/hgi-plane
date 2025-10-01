@@ -6,9 +6,10 @@ import { TCommentsOperations } from "@plane/types";
 // components
 import { CommentCard } from "@/components/comments/card/root";
 // hooks
-import { useIssueDetail, useCustomField } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web components
-import { IssueAdditionalPropertiesActivity } from "@/plane-web/components/issues";
+import { IssueAdditionalPropertiesActivity } from "@/plane-web/components/issues/issue-details/issue-properties-activity";
 import { IssueActivityWorklog } from "@/plane-web/components/issues/worklog/activity/root";
 // local imports
 import { IssueActivityItem } from "./activity/activity-list";
@@ -17,6 +18,7 @@ import { IssueActivityLoader } from "./loader";
 type TIssueActivityCommentRoot = {
   workspaceSlug: string;
   projectId: string;
+  isIntakeIssue: boolean;
   issueId: string;
   selectedFilters: TActivityFilters[];
   activityOperations: TCommentsOperations;
@@ -28,6 +30,7 @@ type TIssueActivityCommentRoot = {
 export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer((props) => {
   const {
     workspaceSlug,
+    isIntakeIssue,
     issueId,
     selectedFilters,
     activityOperations,
@@ -36,7 +39,7 @@ export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer(
     disabled,
     sortOrder,
   } = props;
-  
+
   // hooks
   const { customFields } = useCustomField(projectId);
   const {
@@ -64,7 +67,7 @@ export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer(
             activityOperations={activityOperations}
             ends={index === 0 ? "top" : index === filteredActivityAndComments.length - 1 ? "bottom" : undefined}
             showAccessSpecifier={!!showAccessSpecifier}
-            showCopyLinkOption
+            showCopyLinkOption={!isIntakeIssue}
             disabled={disabled}
             projectId={projectId}
           />

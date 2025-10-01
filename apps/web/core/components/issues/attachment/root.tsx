@@ -4,7 +4,8 @@ import { FC, useEffect } from "react";
 import { observer } from "mobx-react";
 // hooks
 import { useAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
-import { useFileValidation, useInstance } from "@/hooks/store";
+import { useFileValidation } from "@/hooks/store/use-file-validation";
+import { useInstance } from "@/hooks/store/use-instance";
 // components
 import { IssueAttachmentUpload } from "./attachment-upload";
 import { IssueAttachmentsList } from "./attachments-list";

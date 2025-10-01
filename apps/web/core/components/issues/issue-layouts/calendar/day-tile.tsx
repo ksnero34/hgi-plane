@@ -13,7 +13,8 @@ import { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate } fro
 import { TOAST_TYPE, setToast } from "@plane/ui";
 // components
 import { cn, renderFormattedPayloadDate } from "@plane/utils";
-import { CalendarIssueBlocks, CalendarIssueBlockRoot, CalendarQuickAddIssueActions } from "@/components/issues";
+import { CalendarIssueBlockRoot } from "./issue-block-root";
+import { CalendarQuickAddIssueActions } from "./quick-add-issue-actions";
 import { highlightIssueOnDrop } from "@/components/issues/issue-layouts/utils";
 // helpers
 import { MONTHS_LIST } from "@/constants/calendar";
@@ -25,7 +26,7 @@ import { IProjectIssuesFilter } from "@/store/issue/project";
 import { IProjectViewIssuesFilter } from "@/store/issue/project-views";
 import { TRenderQuickActions } from "../list/list-view-types";
 import { useParams } from "next/navigation";
-import { useIssueDetail, useIssues } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 
 type Props = {
   issuesFilterStore:
@@ -49,13 +50,14 @@ type Props = {
     issueProjectId: string | undefined,
     sourceDate: string | undefined,
     destinationDate: string | undefined,
-    isStartDate: boolean
+    isStartDate?: boolean | null,
+    issueObject?: TIssue
   ) => Promise<void>;
   addIssuesToView?: (issueIds: string[]) => Promise<any>;
   readOnly?: boolean;
   selectedDate: Date;
   setSelectedDate: (date: Date) => void;
-  issueInfo: Map<string, {
+  issueInfo?: Map<string, {
     isStartDate: boolean;
     isEndDate: boolean;
     isContinuous: boolean;
@@ -90,7 +92,11 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
     readOnly,
     selectedDate,
     setSelectedDate,
-    issueInfo: propIssueInfo,
+    issueInfo: propIssueInfo = new Map<string, {
+      isStartDate: boolean;
+      isEndDate: boolean;
+      isContinuous: boolean;
+    }>(),
     canEditProperties,
     isEpic = false,
     globalIssueOrder,
@@ -98,18 +104,27 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [updateTrigger, setUpdateTrigger] = useState(0);
-  const [issueInfoMap, setIssueInfoMap] = useState(new Map());
-  
+  const [issueInfoMap, setIssueInfoMap] = useState<Map<string, {
+    isStartDate: boolean;
+    isEndDate: boolean;
+    isContinuous: boolean;
+  }>>(new Map());
+
   // 이전 issueInfoMap 상태를 추적하기 위한 ref
-  const prevIssueInfoMapRef = useRef(new Map());
+  const prevIssueInfoMapRef = useRef(new Map<string, {
+    isStartDate: boolean;
+    isEndDate: boolean;
+    isContinuous: boolean;
+  }>());
 
   const { workspaceSlug, projectId: rawProjectId } = useParams();
   const projectId = Array.isArray(rawProjectId) ? rawProjectId[0] : rawProjectId;
-  const { updateIssue } = useIssueDetail();
-  const { issue: issueStore } = useIssueDetail();
+  const workspaceSlugValue = Array.isArray(workspaceSlug) ? workspaceSlug[0] : workspaceSlug;
+  const issueDetailStore = useIssueDetail();
+  const { issue: issueStore } = issueDetailStore;
 
   // 처리된 이벤트 ID를 추적하기 위한 ref
-  const processedEvents = useRef(new Set<string>());
+  const processedEvents = useRef<Set<string>>(new Set());
 
   // 다른 날짜 타일에서 발생한 이슈 업데이트 이벤트 수신
   useEffect(() => {
@@ -189,7 +204,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
             isEqualDatesCase?: boolean;
           } | undefined;
           const destinationData = self?.data as { date: string } | undefined;
-          if (!sourceData || !destinationData || !workspaceSlug || !projectId || !updateIssue) return;
+          if (!sourceData || !destinationData || !workspaceSlugValue || !projectId) return;
 
           const issueDetails = issues?.[sourceData?.id];
           if (!issueDetails) return;
@@ -231,7 +246,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               transaction(() => {
                 runInAction(() => {
                   // MobX 스토어 업데이트
-                  issueStore.updateIssue(workspaceSlug.toString(), projectId, sourceData.id, updateData);
+                  issueStore.updateIssue(workspaceSlugValue, projectId, sourceData.id, updateData);
                   
                   // 로컬 issues 객체 직접 업데이트
                   if (issues && issues[sourceData.id]) {
@@ -259,7 +274,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               issueDetails?.project_id ?? undefined,
               sourceData.date,
               destinationData.date,
-              isStartDateFlag // 명확한 플래그 전달
+              isStartDateFlag,
+              issueDetails
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
@@ -317,7 +333,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 // 로컬 상태 업데이트
                 runInAction(() => {
                   // MobX 스토어 업데이트
-                  issueStore.updateIssue(workspaceSlug.toString(), projectId, sourceData.id, updateData);
+                  issueStore.updateIssue(workspaceSlugValue, projectId, sourceData.id, updateData);
                   
                   // 로컬 issues 객체 직접 업데이트
                   if (issues && issues[sourceData.id]) {
@@ -347,7 +363,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               issueDetails?.project_id ?? undefined,
               sourceData.date,
               destinationData.date,
-              true // 시작일 플래그 명확하게 전달
+              true,
+              issueDetails
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
@@ -414,7 +431,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
                 // 로컬 상태 업데이트
                 runInAction(() => {
                   // MobX 스토어 업데이트
-                  issueStore.updateIssue(workspaceSlug.toString(), projectId, sourceData.id, updateData);
+                  issueStore.updateIssue(workspaceSlugValue, projectId, sourceData.id, updateData);
                   
                   // 로컬 issues 객체 직접 업데이트
                   if (issues && issues[sourceData.id]) {
@@ -444,7 +461,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               issueDetails?.project_id ?? undefined,
               sourceData.date,
               destinationData.date,
-              false // 종료일 플래그 명확하게 전달
+              false,
+              issueDetails
             )
             .then(() => {
               highlightIssueOnDrop(source?.element?.id, false);
@@ -485,7 +503,7 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
         },
       })
     );
-  }, [dayTileRef?.current, formattedDatePayload, issues, workspaceSlug, projectId, updateIssue]);
+  }, [dayTileRef?.current, formattedDatePayload, issues, workspaceSlugValue, projectId]);
 
   if (!formattedDatePayload) return null;
 

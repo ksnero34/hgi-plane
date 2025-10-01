@@ -1,7 +1,7 @@
 import { observable, action, makeObservable, runInAction } from "mobx";
 import { createContext, useContext } from "react";
 // types
-import { IInstance, IInstanceConfig, IFileSettings } from "@plane/types";
+import { IInstance, IInstanceConfig,IFileSettings } from "@plane/types";
 // services
 import { InstanceService } from "@/services/instance.service";
 
@@ -31,11 +31,13 @@ const defaultInstanceStore = {
 
 // 인터페이스 정의 및 export
 export interface IInstanceStore {
+  // issues
   isLoading: boolean;
   instance: IInstance | undefined;
   config: IInstanceConfig | undefined;
   fileSettings: IFileSettings | undefined;
   error: TError | undefined;
+  // action
   fetchInstanceInfo: () => Promise<void>;
   fetchFileSettings: () => Promise<IFileSettings | undefined>;
   updateFileSettings: (data: Partial<IFileSettings>) => Promise<IFileSettings>;
@@ -68,7 +70,7 @@ export class InstanceStore implements IInstanceStore {
     });
     // services
     this.instanceService = new InstanceService();
-    
+
     // 생성자에서 fileSettings 초기화
     this.initializeFileSettings();
   }
@@ -93,7 +95,7 @@ export class InstanceStore implements IInstanceStore {
       // console.log("🔄 Initializing file settings...");
       const settings = await this.instanceService.getFileSettings();
       // console.log("✅ Received file settings:", settings);
-      
+
       runInAction(() => {
         this.fileSettings = settings;
         // console.log("💾 Updated file settings in store:", this.fileSettings);
@@ -144,7 +146,7 @@ export class InstanceStore implements IInstanceStore {
       // console.log("🔄 Fetching file settings...");
       const response = await this.instanceService.getFileSettings();
       // console.log("✅ Received file settings:", response);
-      
+
       runInAction(() => {
         this.fileSettings = response;
         // console.log("💾 Updated file settings in store:", this.fileSettings);

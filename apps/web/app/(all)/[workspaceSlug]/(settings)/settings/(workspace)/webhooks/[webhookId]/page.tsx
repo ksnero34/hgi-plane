@@ -9,13 +9,15 @@ import { IWebhook } from "@plane/types";
 // ui
 import { TOAST_TYPE, setToast } from "@plane/ui";
 // components
-import { LogoSpinner } from "@/components/common";
-import { PageHead } from "@/components/core";
-import { SettingsContentWrapper } from "@/components/settings";
+import { LogoSpinner } from "@/components/common/logo-spinner";
+import { PageHead } from "@/components/core/page-title";
+import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 import { DeleteWebhookModal, WebhookDeleteSection, WebhookForm } from "@/components/web-hooks";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useUserPermissions, useWebhook, useWorkspace } from "@/hooks/store";
+import { useWebhook } from "@/hooks/store/use-webhook";
+import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useUserPermissions } from "@/hooks/store/user";
 
 const WebhookDetailsPage = observer(() => {
   // states
@@ -64,8 +66,8 @@ const WebhookDetailsPage = observer(() => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공했습니다!",
-          message: "웹훅이 업데이트되었습니다.",
+          title: "Success!",
+          message: "Webhook updated successfully.",
         });
       })
       .catch((error) => {
@@ -78,8 +80,8 @@ const WebhookDetailsPage = observer(() => {
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: error?.error ?? "문제가 발생했습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: error?.error ?? "Something went wrong. Please try again.",
         });
       });
   };

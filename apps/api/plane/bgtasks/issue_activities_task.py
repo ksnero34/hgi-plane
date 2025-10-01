@@ -396,7 +396,7 @@ def track_assignees(
             IssueActivity(
                 issue_id=issue_id,
                 actor_id=actor_id,
-                verb="assigned",
+                verb="updated",
                 old_value="",
                 new_value=assignee.display_name,
                 field="assignees",
@@ -434,15 +434,14 @@ def track_assignees(
             IssueActivity(
                 issue_id=issue_id,
                 actor_id=actor_id,
-                verb="unassigned",
+                verb="updated",
                 old_value=assignee.display_name,
                 new_value="",
                 field="assignees",
                 project_id=project_id,
                 workspace_id=workspace_id,
-                comment=f"담당자에서 '{assignee.display_name}' 님을 제외했습니다.",
+                comment="removed assignee ",
                 old_identifier=assignee.id,
-                new_identifier=None,
                 epoch=epoch,
             )
         )
@@ -473,7 +472,7 @@ def track_estimate_points(
             if requested_data.get("estimate_point") is not None
             else None
         )
-        
+
         # 활동 기록에 사용할 필드명 결정
         if new_estimate and hasattr(new_estimate, 'estimate') and hasattr(new_estimate.estimate, 'type'):
             field_name = "estimate_" + new_estimate.estimate.type
@@ -481,7 +480,7 @@ def track_estimate_points(
             field_name = "estimate_" + old_estimate.estimate.type
         else:
             field_name = "estimate_point"  # 기본값으로 사용
-            
+
         issue_activities.append(
             IssueActivity(
                 issue_id=issue_id,
@@ -499,7 +498,7 @@ def track_estimate_points(
                 ),
                 old_value=old_estimate.value if old_estimate else None,
                 new_value=new_estimate.value if new_estimate else None,
-                field=field_name,
+                field="estimate_" + new_estimate.estimate.type,
                 project_id=project_id,
                 workspace_id=workspace_id,
                 comment="updated the estimate point to ",
@@ -630,7 +629,7 @@ def convert_member_values_to_names(value, field_type, project_id):
     """멤버 UUID를 사용자 이름으로 변환하는 헬퍼 함수"""
     if not value:
         return value
-        
+
     if field_type in ["project_member", "project_members"]:
         try:
             if isinstance(value, list):
@@ -660,51 +659,51 @@ def track_custom_field_values(
     epoch,
 ):
     """커스텀 필드 값 변경을 추적하고 알림을 생성하는 함수"""
-    
+
     # 현재 값과 요청된 값 가져오기
     current_values = current_instance.get("custom_field_values", []) if current_instance else []
     requested_values = requested_data.get("custom_field_values", []) if requested_data else []
-    
+
     # 현재 값을 딕셔너리로 변환
     current_values_dict = {str(val.get("custom_field_id")): val.get("value") for val in current_values}
-    
+
     # project_member 타입의 필드에서 추가된 멤버들을 구독자로 등록할 리스트
     new_subscribers = []
-    
+
     # 요청된 값 처리
     for new_field_data in requested_values:
         custom_field_id = str(new_field_data.get("custom_field_id"))
         new_value = new_field_data.get("value")
-        
+
         # 필드 정보 가져오기
         try:
             custom_field = CustomField.objects.get(pk=custom_field_id, project_id=project_id)
         except CustomField.DoesNotExist:
             continue
-            
+
         # 현재 값 가져오기
         old_value = current_values_dict.get(custom_field_id)
-        
+
         # 값이 실제로 변경되었는지 확인
         if old_value != new_value:
             # 필드 타입 가져오기
             field_type = custom_field.field_type
-            
+
             # 멤버 타입인 경우 UUID를 사용자 이름으로 변환
             display_old_value = convert_member_values_to_names(old_value, field_type, project_id)
             display_new_value = convert_member_values_to_names(new_value, field_type, project_id)
-            
+
             # 값을 문자열로 변환 (표시용)
             if isinstance(display_old_value, list):
                 old_value_str = ", ".join(str(v) for v in display_old_value) if display_old_value else ""
             else:
                 old_value_str = str(display_old_value) if display_old_value is not None else ""
-                
+
             if isinstance(display_new_value, list):
                 new_value_str = ", ".join(str(v) for v in display_new_value) if display_new_value else ""
             else:
                 new_value_str = str(display_new_value) if display_new_value is not None else ""
-            
+
             # 동작 결정 (생성/수정/삭제)
             if old_value is None and new_value is not None:
                 verb = "created"
@@ -715,7 +714,7 @@ def track_custom_field_values(
             else:
                 verb = "updated"
                 comment = f"{custom_field.name} 필드를 {old_value_str}에서 {new_value_str}로 변경했습니다."
-            
+
             issue_activities.append(
                 IssueActivity(
                     issue_id=issue_id,
@@ -732,11 +731,11 @@ def track_custom_field_values(
                     epoch=epoch,
                 )
             )
-            
+
             # project_member 또는 project_members 타입인 경우 자동 구독 처리
             if custom_field.field_type in ["project_member", "project_members"]:
                 member_ids = []
-                
+
                 if custom_field.field_type == "project_member" and new_value:
                     # 단일 멤버
                     member_ids = [new_value]
@@ -744,7 +743,7 @@ def track_custom_field_values(
                     # 다중 멤버 (배열)
                     if isinstance(new_value, list):
                         member_ids = new_value
-                
+
                 # 새로 추가된 멤버들을 구독자로 등록
                 for member_id in member_ids:
                     if member_id and member_id != actor_id:  # 작업자 본인은 제외
@@ -768,13 +767,13 @@ def track_custom_field_values(
                         except Exception:
                             # 오류 발생 시 무시하고 계속 진행
                             pass
-    
+
     # 새 구독자들을 한 번에 생성 (중복 무시)
     if new_subscribers:
         try:
             IssueSubscriber.objects.bulk_create(
-                new_subscribers, 
-                batch_size=10, 
+                new_subscribers,
+                batch_size=10,
                 ignore_conflicts=True
             )
         except Exception:
@@ -1792,7 +1791,7 @@ def update_imported_issue_activity(
     epoch,
 ):
     """CSV import로 업데이트된 이슈에 대한 Activity 생성 - 각 필드별 변경사항 추적"""
-    
+
     # 기존 update_issue_activity와 동일한 매퍼를 사용하되, 댓글에 "via CSV import" 추가
     def track_name_import(requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch):
         if current_instance.get("name") != requested_data.get("name"):
@@ -2059,51 +2058,51 @@ def update_imported_issue_activity(
         epoch,
     ):
         """커스텀 필드 값 변경을 추적하고 알림을 생성하는 함수 (Import용)"""
-        
+
         # 현재 값과 요청된 값 가져오기
         current_values = current_instance.get("custom_field_values", []) if current_instance else []
         requested_values = requested_data.get("custom_field_values", []) if requested_data else []
-        
+
         # 현재 값을 딕셔너리로 변환
         current_values_dict = {str(val.get("custom_field_id")): val.get("value") for val in current_values}
-        
+
         # project_member 타입의 필드에서 추가된 멤버들을 구독자로 등록할 리스트
         new_subscribers = []
-        
+
         # 요청된 값 처리
         for new_field_data in requested_values:
             custom_field_id = str(new_field_data.get("custom_field_id"))
             new_value = new_field_data.get("value")
-            
+
             # 필드 정보 가져오기
             try:
                 custom_field = CustomField.objects.get(pk=custom_field_id, project_id=project_id)
             except CustomField.DoesNotExist:
                 continue
-                
+
             # 현재 값 가져오기
             old_value = current_values_dict.get(custom_field_id)
-            
+
             # 값이 실제로 변경되었는지 확인
             if old_value != new_value:
                 # 필드 타입 가져오기
                 field_type = custom_field.field_type
-                
+
                 # 멤버 타입인 경우 UUID를 사용자 이름으로 변환
                 display_old_value = convert_member_values_to_names(old_value, field_type, project_id)
                 display_new_value = convert_member_values_to_names(new_value, field_type, project_id)
-                
+
                 # 값을 문자열로 변환 (표시용)
                 if isinstance(display_old_value, list):
                     old_value_str = ", ".join(str(v) for v in display_old_value) if display_old_value else ""
                 else:
                     old_value_str = str(display_old_value) if display_old_value is not None else ""
-                    
+
                 if isinstance(display_new_value, list):
                     new_value_str = ", ".join(str(v) for v in display_new_value) if display_new_value else ""
                 else:
                     new_value_str = str(display_new_value) if display_new_value is not None else ""
-                
+
                 # 동작 결정 (생성/수정/삭제)
                 if old_value is None and new_value is not None:
                     verb = "created"
@@ -2114,7 +2113,7 @@ def update_imported_issue_activity(
                 else:
                     verb = "updated"
                     comment = f"CSV import로 {custom_field.name} 필드를 {old_value_str}에서 {new_value_str}로 변경했습니다."
-                
+
                 issue_activities.append(
                     IssueActivity(
                         issue_id=issue_id,
@@ -2131,11 +2130,11 @@ def update_imported_issue_activity(
                         epoch=epoch,
                     )
                 )
-                
+
                 # project_member 또는 project_members 타입인 경우 자동 구독 처리
                 if custom_field.field_type in ["project_member", "project_members"]:
                     member_ids = []
-                    
+
                     if custom_field.field_type == "project_member" and new_value:
                         # 단일 멤버
                         member_ids = [new_value]
@@ -2143,7 +2142,7 @@ def update_imported_issue_activity(
                         # 다중 멤버 (배열)
                         if isinstance(new_value, list):
                             member_ids = new_value
-                    
+
                     # 새로 추가된 멤버들을 구독자로 등록
                     for member_id in member_ids:
                         if member_id and member_id != actor_id:  # 작업자 본인은 제외
@@ -2167,13 +2166,13 @@ def update_imported_issue_activity(
                             except Exception:
                                 # 오류 발생 시 무시하고 계속 진행
                                 pass
-        
+
         # 새 구독자들을 한 번에 생성 (중복 무시)
         if new_subscribers:
             try:
                 IssueSubscriber.objects.bulk_create(
-                    new_subscribers, 
-                    batch_size=10, 
+                    new_subscribers,
+                    batch_size=10,
                     ignore_conflicts=True
                 )
             except Exception:
@@ -2314,44 +2313,8 @@ def issue_activity(
                 epoch=epoch,
             )
 
-        issue_activities_created = []
-        if create_activity_record:
-            if issue_activities:
-                issue_activities_created = IssueActivity.objects.bulk_create(issue_activities)
-        
-        if issue_activities_created:
-            for activity_obj in issue_activities_created:
-                webhook_activity.delay(
-                    event=(
-                        "issue_comment"
-                        if activity_obj.field == "comment"
-                        else "intake_issue"
-                        if intake
-                        else "issue"
-                    ),
-                    event_id=(
-                        activity_obj.issue_comment_id
-                        if activity_obj.field == "comment"
-                        else intake
-                        if intake
-                        else activity_obj.issue_id
-                    ),
-                    verb=activity_obj.verb,
-                    field=(
-                        "description" if activity_obj.field == "comment" else activity_obj.field
-                    ),
-                    old_value=(
-                        activity_obj.old_value if activity_obj.old_value != "" else None
-                    ),
-                    new_value=(
-                        activity_obj.new_value if activity_obj.new_value != "" else None
-                    ),
-                    actor_id=activity_obj.actor_id,
-                    current_site=origin,
-                    slug=project.workspace.slug,
-                    old_identifier=activity_obj.old_identifier,
-                    new_identifier=activity_obj.new_identifier,
-                )
+        # Save all the values to database
+        issue_activities_created = IssueActivity.objects.bulk_create(issue_activities)
 
         if notification:
             serialized_payload = None
@@ -2369,7 +2332,7 @@ def issue_activity(
                     activities_for_notification_payload = issue_activities_created
                 elif not create_activity_record and issue_activities: # DB에 생성은 안했지만, issue_activities 리스트가 채워진 경우
                     activities_for_notification_payload = issue_activities
-                
+
                 if activities_for_notification_payload:
                     serialized_payload = json.dumps(
                         IssueActivitySerializer(activities_for_notification_payload, many=True).data,
@@ -2384,12 +2347,15 @@ def issue_activity(
                 actor_id=actor_id,
                 project_id=project_id,
                 subscriber=subscriber,
-                issue_activities_created=serialized_payload, # 실제로는 알림을 위한 직렬화된 페이로드
-                requested_data=request_data_for_notification,
-                current_instance=current_instance_for_notification,
+                issue_activities_created=json.dumps(
+                    IssueActivitySerializer(issue_activities_created, many=True).data,
+                    cls=DjangoJSONEncoder,
+                ),
+                requested_data=requested_data,
+                current_instance=current_instance,
             )
 
         return
     except Exception as e:
-        print(f"Error in issue_activity task: {e}")
+        log_exception(e)
         return

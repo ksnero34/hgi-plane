@@ -1,18 +1,22 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
-import { TDisplayConfig } from "@plane/editor";
-import { TPageVersion } from "@plane/types";
+import type { TDisplayConfig } from "@plane/editor";
+import type { JSONContent, TPageVersion } from "@plane/types";
+import { isJSONContentEmpty } from "@plane/utils";
 import { Loader } from "@plane/ui";
 // components
 import { DocumentEditor } from "@/components/editor/document/editor";
 // hooks
-import { useWorkspace } from "@/hooks/store";
+import { useWorkspace } from "@/hooks/store/use-workspace";
 import { usePageFilters } from "@/hooks/use-page-filters";
+// plane web hooks
+import { EPageStoreType } from "@/plane-web/hooks/store";
 
 export type TVersionEditorProps = {
   activeVersion: string | null;
   versionDetails: TPageVersion | undefined;
+  storeType: EPageStoreType;
 };
 
 export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props) => {
@@ -74,24 +78,18 @@ export const PagesVersionEditor: React.FC<TVersionEditorProps> = observer((props
       </div>
     );
 
-  // description_json이 비어있으면 description_html을 사용
-  const description = versionDetails?.description_json && Object.keys(versionDetails.description_json).length > 0
-    ? versionDetails.description_json
-    : null;
-  
-  const descriptionHTML = versionDetails?.description_html;
-  
-  // 유효한 콘텐츠 값 결정
-  const content = description || descriptionHTML || "<p></p>";
-  
-  if (!content || content === "<p></p>") return null;
+  const description = isJSONContentEmpty(versionDetails?.description_json as JSONContent)
+    ? versionDetails?.description_html
+    : versionDetails?.description_json;
+
+  if (!description) return null;
 
   return (
     <DocumentEditor
       key={activeVersion ?? ""}
       editable={false}
       id={activeVersion ?? ""}
-      value={content}
+      value={description}
       containerClassName="p-0 pb-64 border-none"
       displayConfig={displayConfig}
       editorClassName="pl-10"

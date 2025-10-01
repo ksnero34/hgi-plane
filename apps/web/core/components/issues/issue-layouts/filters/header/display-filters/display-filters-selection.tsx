@@ -15,7 +15,7 @@ import {
   FilterOrderBy,
   FilterPerPage,
   FilterSubGroupBy,
-} from "@/components/issues";
+} from "@/components/issues/issue-layouts/filters";
 
 type Props = {
   displayFilters: IIssueDisplayFilterOptions | undefined;

@@ -53,7 +53,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             'xml': ['text/xml', 'application/xml'],
             'csv': ['text/csv'],
             'rtf': ['application/rtf'],
-            
+
             # 이미지
             'jpg': ['image/jpeg'],
             'jpeg': ['image/jpeg'],
@@ -63,7 +63,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             'webp': ['image/webp'],
             'tiff': ['image/tiff'],
             'bmp': ['image/bmp'],
-            
+
             # 문서
             'pdf': ['application/pdf', 'application/octet-stream'],
             'doc': ['application/msword', 'application/octet-stream'],
@@ -76,7 +76,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
                 'application/vnd.ms-powerpoint.presentation.macroenabled.12',
                 'application/octet-stream'
             ],
-            
+
             # 오디오
             'mp3': ['audio/mpeg'],
             'wav': ['audio/wav'],
@@ -85,7 +85,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             'aac': ['audio/aac'],
             'flac': ['audio/flac'],
             'm4a': ['audio/x-m4a'],
-            
+
             # 비디오
             'mp4': ['video/mp4'],
             'mpeg': ['video/mpeg'],
@@ -94,18 +94,18 @@ class IssueAttachmentEndpoint(BaseAPIView):
             'mov': ['video/quicktime'],
             'avi': ['video/x-msvideo'],
             'wmv': ['video/x-ms-wmv'],
-            
+
             # 압축파일
             'zip': ['application/zip', 'application/x-zip-compressed'],
             'rar': ['application/x-rar-compressed'],
             'tar': ['application/x-tar'],
             'gz': ['application/gzip'],
-            
+
             # 3D 모델
             'glb': ['model/gltf-binary'],
             'gltf': ['model/gltf+json'],
             'obj': ['application/octet-stream'],
-            
+
             # 폰트
             'ttf': ['font/ttf'],
             'otf': ['font/otf'],
@@ -134,7 +134,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
-            
+
             # 파일명 안전성 검사 (특수문자 제한)
             # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
             #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
@@ -159,7 +159,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
-            
+
             # 파일명 안전성 검사 (특수문자 제한)
             # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
             #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
@@ -238,7 +238,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
         [
             ROLE.ADMIN,
             ROLE.MEMBER,
-            ROLE.VIEWER, 
+            ROLE.VIEWER,
             ROLE.RESTRICTED,
             ROLE.GUEST,
         ]
@@ -274,7 +274,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'xml': ['text/xml', 'application/xml'],
             'csv': ['text/csv'],
             'rtf': ['application/rtf'],
-            
+
             # 이미지
             'jpg': ['image/jpeg', 'image/png' ,'image/gif'],
             'jpeg': ['image/jpeg', 'image/png' ,'image/gif'],
@@ -284,7 +284,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'webp': ['image/webp'],
             'tiff': ['image/tiff'],
             'bmp': ['image/bmp'],
-            
+
             # 문서
             'pdf': ['application/pdf', 'application/octet-stream'],
             'doc': ['application/msword', 'application/octet-stream'],
@@ -297,7 +297,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 'application/vnd.ms-powerpoint.presentation.macroenabled.12',
                 'application/octet-stream'
             ],
-            
+
             # 오디오
             'mp3': ['audio/mpeg'],
             'wav': ['audio/wav'],
@@ -306,7 +306,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'aac': ['audio/aac'],
             'flac': ['audio/flac'],
             'm4a': ['audio/x-m4a'],
-            
+
             # 비디오
             'mp4': ['video/mp4'],
             'mpeg': ['video/mpeg'],
@@ -315,18 +315,18 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'mov': ['video/quicktime'],
             'avi': ['video/x-msvideo'],
             'wmv': ['video/x-ms-wmv'],
-            
+
             # 압축파일
             'zip': ['application/zip', 'application/x-zip-compressed'],
             'rar': ['application/x-rar-compressed'],
             'tar': ['application/x-tar'],
             'gz': ['application/gzip'],
-            
+
             # 3D 모델
             'glb': ['model/gltf-binary'],
             'gltf': ['model/gltf+json'],
             'obj': ['application/octet-stream'],
-            
+
             # 폰트
             'ttf': ['font/ttf'],
             'otf': ['font/otf'],
@@ -355,7 +355,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
-            
+
             # 파일명 안전성 검사 (특수문자 제한)
             # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
             #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
@@ -380,7 +380,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
-            
+
             # 파일명 안전성 검사 (특수문자 제한)
             # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
             #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
@@ -406,7 +406,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         name = request.data.get("name")
         type = request.data.get("type", False)
         size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
-        
+
         # 파일이 있는 경우와 파일 정보만 있는 경우를 구분하여 검증
         file = request.FILES.get('asset')
         if file:
@@ -418,7 +418,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 'size': size
             }
             is_valid, error_message = self.validate_file(file_info=file_info)
-            
+
         if not is_valid:
             return Response(
                 {"error": "파일 검증 실패", "status": False, "message": error_message},
@@ -535,13 +535,13 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 # S3/MinIO에서 파일 가져오기
                 storage = S3Storage(request=request)
                 file_content = storage.get_object(issue_attachment.asset)
-                
+
                 if not file_content:
                     return Response(
                         {"error": "파일을 읽을 수 없습니다."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                
+
                 # 파일의 실제 MIME 타입 확인
                 try:
                     mime = magic.Magic(mime=True)
@@ -552,19 +552,19 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                             {"error": "파일 내용을 읽을 수 없습니다."},
                             status=status.HTTP_400_BAD_REQUEST
                         )
-                        
+
                     actual_mime_type = mime.from_buffer(content_bytes)
-                    
+
                     # 파일 확장자 가져오기
                     file_name = issue_attachment.attributes.get("name", "")
                     file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
-                    
+
                     # MIME 타입 검증
                     if not self.is_valid_mime_type(file_extension, actual_mime_type):
                         # 파일 삭제
                         storage.delete_object(issue_attachment.asset)
                         issue_attachment.delete()
-                        
+
                         return Response(
                             {
                                 "error": "파일 형식이 올바르지 않습니다.",
@@ -573,7 +573,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                             },
                             status=status.HTTP_400_BAD_REQUEST
                         )
-                    
+
                 except Exception as e:
                     import logging
                     logger = logging.getLogger(__name__)
@@ -591,7 +591,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 logger.error(f"File validation error: {str(storage_error)}")
                 logger.error(f"File info - name: {issue_attachment.attributes.get('name')}, "
                             f"asset: {issue_attachment.asset}")
-                
+
                 return Response(
                     {
                         "error": f"파일 형식 검증에 실패했습니다: {str(storage_error)}",
@@ -604,29 +604,28 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             issue_activity.delay(
                 type="attachment.activity.created",
                 requested_data=None,
-                actor_id=str(request.user.id),
-                issue_id=str(issue_id),
-                project_id=str(project_id),
+                actor_id=str(self.request.user.id),
+                issue_id=str(self.kwargs.get("issue_id", None)),
+                project_id=str(self.kwargs.get("project_id", None)),
                 current_instance=json.dumps(serializer.data, cls=DjangoJSONEncoder),
                 epoch=int(timezone.now().timestamp()),
                 notification=True,
-                origin=request.META.get("HTTP_ORIGIN"),
+                origin=base_host(request=request, is_app=True),
             )
 
-            # 업로드 상태 업데이트
+            # Update the attachment
             issue_attachment.is_uploaded = True
             issue_attachment.created_by = request.user
 
-            # 스토리지 메타데이터 업데이트
+            # Get the storage metadata
             if not issue_attachment.storage_metadata:
                 get_asset_object_metadata.delay(str(issue_attachment.id))
-                
             issue_attachment.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         except FileAsset.DoesNotExist:
             return Response(
-                {"error": "파일을 찾을 수 없습니다."}, 
+                {"error": "파일을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
@@ -634,10 +633,10 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             logger = logging.getLogger(__name__)
             logger.error(f"Unexpected error: {str(e)}")
             return Response(
-                {"error": "파일 처리 중 오류가 발생했습니다."}, 
+                {"error": "파일 처리 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
         # 기본 반환값 추가
         return Response(
             IssueAttachmentSerializer(issue_attachment).data,

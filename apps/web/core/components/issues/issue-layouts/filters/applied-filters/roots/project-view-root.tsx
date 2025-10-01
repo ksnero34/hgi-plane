@@ -1,30 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import isEmpty from "lodash/isEmpty";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
-import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import {
+  EIssueFilterType,
+  EUserPermissions,
+  EUserPermissionsLevel,
+  PROJECT_VIEW_TRACKER_ELEMENTS,
+} from "@plane/constants";
 import { EIssuesStoreType, EViewAccess, IIssueFilterOptions } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
-import { AppliedFiltersList } from "@/components/issues";
-import { CreateUpdateProjectViewModal } from "@/components/views";
+import { CreateUpdateProjectViewModal } from "@/components/views/modal";
 import { UpdateViewComponent } from "@/components/views/update-view-component";
 // constants
 // hooks
-import {
-  useIssues,
-  useLabel,
-  useProjectState,
-  useProjectView,
-  useUser,
-  useUserPermissions,
-  useCustomField,
-} from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectView } from "@/hooks/store/use-project-view";
+import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { getAreFiltersEqual } from "../../../utils";
+import { AppliedFiltersList } from "../filters-list";
 import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
@@ -157,6 +159,7 @@ export const ProjectViewAppliedFiltersRoot: React.FC = observer(() => {
           isAuthorizedUser={isAuthorizedUser}
           setIsModalOpen={setIsModalOpen}
           handleUpdateView={handleUpdateView}
+          trackerElement={PROJECT_VIEW_TRACKER_ELEMENTS.HEADER_SAVE_VIEW_BUTTON}
         />
       </Header.RightItem>
     </Header>

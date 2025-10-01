@@ -3,9 +3,11 @@
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 // ui
+import { CYCLE_TRACKER_EVENTS } from "@plane/constants";
 import { Button, TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
-import { useModule } from "@/hooks/store";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { useModule } from "@/hooks/store/use-module";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -39,19 +41,31 @@ export const ArchiveModuleModal: React.FC<Props> = (props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "보관된 모듈을 보관함에서 찾을 수 있습니다.",
+          title: "Archive success",
+          message: "Your archives can be found in project archives.",
+        });
+        captureSuccess({
+          eventName: CYCLE_TRACKER_EVENTS.archive,
+          payload: {
+            id: cycleId,
+          },
         });
         onClose();
         router.push(`/${workspaceSlug}/projects/${projectId}/modules`);
       })
-      .catch(() =>
+      .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "모듈을 보관할 수 없습니다. 다시 시도해주세요.",
-        })
-      )
+          title: "Error!",
+          message: "Cycle could not be archived. Please try again.",
+        });
+        captureError({
+          eventName: CYCLE_TRACKER_EVENTS.archive,
+          payload: {
+            id: cycleId,
+          },
+        });
+      })
       .finally(() => setIsArchiving(false));
   };
 

@@ -7,15 +7,14 @@ import { useParams, useRouter } from "next/navigation";
 // ui
 import { setToast, TOAST_TYPE } from "@plane/ui";
 // components
-import { Logo } from "@/components/common";
+import { Logo } from "@/components/common/logo";
 import { ListItem } from "@/components/core/list";
-import { BlockItemAction } from "@/components/pages/list";
-// helpers
-import { getPageName } from "@plane/utils";
+import { BlockItemAction } from "@/components/pages/list/block-item-action";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web hooks
 import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";
+import { getPageName } from "@plane/utils";
 
 type TPageListBlock = {
   pageId: string;
@@ -39,10 +38,8 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
   });
   const { getPageById } = usePageStore(storeType);
   const { isMobile } = usePlatformOS();
-  
   // handle page check
   if (!page) return null;
-  
   // derived values
   const { name, logo_props, getRedirectionLink, is_folder } = page;
 
@@ -68,12 +65,12 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
-    
+
     // 타임아웃 클리어
     if (dragOverTimeoutRef.current) {
       clearTimeout(dragOverTimeoutRef.current);
     }
-    
+
     setIsDragOver(true);
   };
 
@@ -90,7 +87,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     if (!is_folder) return;
     e.preventDefault();
     e.stopPropagation();
-    
+
     // 약간의 지연을 두어 마우스가 자식 요소로 이동하는 경우를 처리
     dragOverTimeoutRef.current = setTimeout(() => {
       setIsDragOver(false);
@@ -115,31 +112,31 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     if (!is_folder) return;
     e.preventDefault();
     e.stopPropagation();
-    
+
     // 타임아웃 클리어
     if (dragOverTimeoutRef.current) {
       clearTimeout(dragOverTimeoutRef.current);
     }
-    
+
     setIsDragOver(false);
-    
+
     const draggedPageId = e.dataTransfer.getData('text/plain');
     if (!draggedPageId || draggedPageId === pageId) return;
-    
+
     try {
       // 드래그된 페이지를 현재 폴더로 이동
       const draggedPage = getPageById(draggedPageId);
       if (!draggedPage) {
         throw new Error("드래그된 페이지를 찾을 수 없습니다.");
       }
-      
+
       // 순환 참조 방지 - 폴더를 자신의 하위 폴더로 이동하려는 경우
       if (draggedPage.is_folder && isCircularReference(draggedPageId, pageId)) {
         throw new Error("폴더를 자신의 하위 폴더로 이동할 수 없습니다.");
       }
-      
+
       await draggedPage.moveToFolder(pageId);
-      
+
       const itemType = draggedPage.is_folder ? "폴더" : "페이지";
       setToast({
         type: TOAST_TYPE.SUCCESS,

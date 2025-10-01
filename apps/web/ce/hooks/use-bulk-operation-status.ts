@@ -1,1 +1,1 @@
-export const useBulkOperationStatus = () => true;
+export const useBulkOperationStatus = () => false;

@@ -7,7 +7,7 @@ import { TCustomField } from "@plane/types";
 import { IIssue } from "@/types/issue";
 
 // hooks
-import { usePublish } from "@/hooks/store";
+import { usePublish } from "@/hooks/store/publish";
 import { StoreContext } from "@/lib/store-provider";
 
 type TCustomFieldProperties = {

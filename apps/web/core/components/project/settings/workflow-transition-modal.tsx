@@ -10,7 +10,8 @@ import { Button, ModalCore, EModalPosition, EModalWidth, ToggleSwitch, setToast,
 // types
 import { IWorkflowTransition, IWorkflowTransitionFormData } from "@plane/types";
 // hooks
-import { useWorkflow, useMember } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
+import { useMember } from "@/hooks/store/use-member";
 // helpers
 import { getFileURL } from "@plane/utils";
 

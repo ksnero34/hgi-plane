@@ -1,10 +1,11 @@
 import { observer } from "mobx-react";
-// components
-import { RichTextEditor } from "@/components/editor";
-import { IssueReactions } from "@/components/issues/peek-overview";
-import { usePublish } from "@/hooks/store";
+// plane imports
+import { RichTextEditor } from "@/components/editor/rich-text-editor";
+import { usePublish } from "@/hooks/store/publish";
 // types
 import { IIssue } from "@/types/issue";
+// local imports
+import { IssueReactions } from "./issue-reaction";
 
 type Props = {
   anchor: string;
@@ -29,7 +30,6 @@ export const PeekOverviewIssueDetails: React.FC<Props> = observer((props) => {
           editable={false}
           anchor={anchor}
           id={issueDetails.id}
-          key={`${issueDetails.id}-${description?.slice(0, 50)}`} // Force re-render when content changes
           initialValue={
             !description ||
             description === "" ||

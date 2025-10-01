@@ -16,6 +16,7 @@ from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from openpyxl import Workbook
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from django.db.models import F, Prefetch
 
 from collections import defaultdict
@@ -67,6 +68,13 @@ def create_json_file(data: List[dict]) -> str:
     return json.dumps(data)
 
 
+def sanitize_excel_value(value):
+    """Remove characters that Excel/openpyxl cannot handle."""
+    if isinstance(value, str):
+        return ILLEGAL_CHARACTERS_RE.sub("", value)
+    return value
+
+
 def create_xlsx_file(data: List[List[str]]) -> bytes:
     """
     Create an XLSX file from the provided data.
@@ -75,7 +83,8 @@ def create_xlsx_file(data: List[List[str]]) -> bytes:
     sheet = workbook.active
 
     for row in data:
-        sheet.append(row)
+        sanitized_row = [sanitize_excel_value(cell) for cell in row]
+        sheet.append(sanitized_row)
 
     xlsx_buffer = io.BytesIO()
     workbook.save(xlsx_buffer)

@@ -1,33 +1,26 @@
 "use client";
 
-import React from "react";
 import { observer } from "mobx-react";
 import { Layers, Link, Paperclip } from "lucide-react";
-// plane types
-import { IIssueDisplayProperties } from "@plane/types";
-// plane ui
-import { Tooltip } from "@plane/ui";
-// plane utils
+// plane imports
+import { Tooltip } from "@plane/propel/tooltip";
+import type { IIssueDisplayProperties } from "@plane/types";
 import { cn } from "@plane/utils";
 // components
-import {
-  IssueBlockDate,
-  IssueBlockLabels,
-  IssueBlockPriority,
-  IssueBlockState,
-  IssueBlockMembers,
-  IssueBlockModules,
-  IssueBlockCycle,
-} from "@/components/issues";
 import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
 import { CustomFieldProperties } from "@/components/issues/custom-field-properties";
 import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/with-display-properties-HOC";
 // helpers
-import { getDate } from "@plane/utils";
-// hooks
-import { useCustomField } from "@/hooks/store";
-// types
+import { getDate } from "@/helpers/date-time.helper";
+//// hooks
 import { IIssue } from "@/types/issue";
+import { IssueBlockCycle } from "./cycle";
+import { IssueBlockDate } from "./due-date";
+import { IssueBlockLabels } from "./labels";
+import { IssueBlockMembers } from "./member";
+import { IssueBlockModules } from "./modules";
+import { IssueBlockPriority } from "./priority";
+import { IssueBlockState } from "./state";
 
 export interface IIssueProperties {
   issue: IIssue;
@@ -61,7 +54,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
           </div>
         </WithDisplayPropertiesHOC>
       )}
-      
+
       {/* state */}
       {issue.state_id && (
         <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="state">
@@ -201,7 +194,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
       {/* custom fields */}
       {customFields && customFields.length > 0 && (
         <div className="h-5">
-          <CustomFieldProperties 
+          <CustomFieldProperties
             anchor={anchor}
             issue={issue}
             customFields={customFields}

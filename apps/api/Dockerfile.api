@@ -14,11 +14,9 @@ WORKDIR /code
 RUN apk add --no-cache --upgrade \
     "libpq" \
     "libxslt" \
-    "nodejs-current" \
     "xmlsec" \
     "file" \
     "curl" \
-    "openjdk21-jre" \
     "ca-certificates" \
     "openssl"
 

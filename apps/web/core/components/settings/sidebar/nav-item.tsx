@@ -8,7 +8,7 @@ import { useTranslation } from "@plane/i18n";
 import { EUserWorkspaceRoles } from "@plane/types";
 import { cn, joinUrlPath } from "@plane/utils";
 // hooks
-import { useUserSettings } from "@/hooks/store";
+import { useUserSettings } from "@/hooks/store/user";
 
 export type TSettingItem = {
   key: string;
@@ -49,13 +49,11 @@ const SettingsSidebarNavItem = observer((props: TSettingsSidebarNavItemProps) =>
 
   const titleElement = (
     <>
-      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-        <div className="flex-shrink-0 flex items-center justify-center">
-          {setting.icon
-            ? setting.icon
-            : actionIcons && actionIcons({ type: setting.key, size: 16, className: "w-4 h-4" })}
-        </div>
-        <div className="text-sm font-medium truncate min-w-0">{t(setting.i18n_label)}</div>
+      <div className="flex items-center gap-1.5 overflow-hidden">
+        {setting.icon
+          ? setting.icon
+          : actionIcons && actionIcons({ type: setting.key, size: 16, className: "w-4 h-4" })}
+        <div className="text-sm font-medium truncate">{t(setting.i18n_label)}</div>
       </div>
       {appendItemsToTitle?.(setting.key)}
     </>

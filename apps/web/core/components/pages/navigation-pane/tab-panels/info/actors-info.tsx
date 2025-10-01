@@ -6,9 +6,9 @@ import { useTranslation } from "@plane/i18n";
 import { Avatar } from "@plane/ui";
 import { calculateTimeAgoShort, getFileURL, renderFormattedDate } from "@plane/utils";
 // hooks
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 // store
-import { TPageInstance } from "@/store/pages/base-page";
+import type { TPageInstance } from "@/store/pages/base-page";
 
 type Props = {
   page: TPageInstance;
@@ -43,7 +43,7 @@ export const PageNavigationPaneInfoTabActorsInfo: React.FC<Props> = observer((pr
             />
             <span>{editorInformation?.display_name ?? t("common.deactivated_user")}</span>
           </Link>
-          <span className="flex-shrink-0 text-custom-text-300">{calculateTimeAgoShort(page.updated_at ?? "")} 전</span>
+          <span className="flex-shrink-0 text-custom-text-300">{calculateTimeAgoShort(page.updated_at ?? "")} ago</span>
         </div>
       </div>
       <div>

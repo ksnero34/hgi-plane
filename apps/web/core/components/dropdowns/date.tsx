@@ -1,16 +1,16 @@
 import React, { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { Matcher } from "react-day-picker";
 import { createPortal } from "react-dom";
 import { usePopper } from "react-popper";
 import { CalendarDays, X } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 // ui
-import { ComboDropDown, Calendar } from "@plane/ui";
+import { Calendar, Matcher } from "@plane/propel/calendar";
+import { ComboDropDown } from "@plane/ui";
 import { cn, renderFormattedDate, getDate } from "@plane/utils";
 // helpers
 // hooks
-import { useUserProfile } from "@/hooks/store";
+import { useUserProfile } from "@/hooks/store/user";
 import { useDropdown } from "@/hooks/use-dropdown";
 // components
 import { DropdownButton } from "./buttons";
@@ -32,8 +32,6 @@ type Props = TDropdownProps & {
   closeOnSelect?: boolean;
   formatToken?: string;
   renderByDefault?: boolean;
-  tooltipHeading?: string;
-  tooltipContent?: string;
 };
 
 export const DateDropdown: React.FC<Props> = observer((props) => {
@@ -60,8 +58,6 @@ export const DateDropdown: React.FC<Props> = observer((props) => {
     value,
     formatToken,
     renderByDefault = true,
-    tooltipHeading,
-    tooltipContent,
   } = props;
   // states
   const [isOpen, setIsOpen] = useState(false);
@@ -130,8 +126,8 @@ export const DateDropdown: React.FC<Props> = observer((props) => {
       <DropdownButton
         className={buttonClassName}
         isActive={isOpen}
-        tooltipHeading={tooltipHeading || placeholder}
-        tooltipContent={tooltipContent || (value ? renderFormattedDate(value, formatToken) : "None")}
+        tooltipHeading={placeholder}
+        tooltipContent={value ? renderFormattedDate(value, formatToken) : "None"}
         showTooltip={showTooltip}
         variant={buttonVariant}
         renderToolTipByDefault={renderByDefault}

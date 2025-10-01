@@ -4,7 +4,7 @@ import React, { Fragment, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 // icons
-import { ChevronDown, CirclePlus, LogOut, Mails, Settings } from "lucide-react";
+import { ChevronDown, CirclePlus, LogOut, Mails } from "lucide-react";
 // ui
 import { Menu, Transition } from "@headlessui/react";
 // plane imports
@@ -13,10 +13,12 @@ import { useTranslation } from "@plane/i18n";
 import { IWorkspace } from "@plane/types";
 import { Loader, TOAST_TYPE, setToast } from "@plane/ui";
 import { orderWorkspacesList, cn } from "@plane/utils";
-// components
-import { AppSidebarItem } from "@/components/sidebar";
+// helpers
+import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
 // hooks
-import { useAppTheme, useUser, useUserProfile, useWorkspace } from "@/hooks/store";
+import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useUser, useUserProfile } from "@/hooks/store/user";
 // plane web helpers
 import { getIsWorkspaceCreationDisabled } from "@/plane-web/helpers/instance.helper";
 // components
@@ -86,9 +88,6 @@ export const WorkspaceMenuRoot = observer((props: WorkspaceMenuRootProps) => {
     if (isWorkspaceMenuOpen) toggleAnySidebarDropdown(true);
     else toggleAnySidebarDropdown(false);
   }, [isWorkspaceMenuOpen]);
-
-  const logo = activeWorkspace?.logo_url;
-  const name = activeWorkspace?.name;
 
   return (
     <Menu

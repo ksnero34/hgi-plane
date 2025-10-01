@@ -7,7 +7,7 @@ import { TrackFileDeletionPlugin } from "./plugins/track-file-deletion";
 import { TrackFileRestorationPlugin } from "./plugins/track-file-restoration";
 import { Extension } from "@tiptap/core";
 import { Node as ProseMirrorNode } from "prosemirror-model";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { insertEmptyParagraphAtNodeBoundaries } from "@/helpers/insert-empty-paragraph-at-node-boundary";
 
 export interface InsertFileComponentProps {

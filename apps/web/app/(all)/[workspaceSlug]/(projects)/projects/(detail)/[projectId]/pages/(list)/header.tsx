@@ -15,13 +15,14 @@ import {
 import { TPage } from "@plane/types";
 // plane ui
 import { Breadcrumbs, Button, Header, setToast, TOAST_TYPE } from "@plane/ui";
+import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 // helpers
-import { BreadcrumbLink } from "@/components/common";
-import { captureError, captureSuccess, captureClick } from "@/helpers/event-tracker.helper";
+import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
-import { useProject, useCommandPalette } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
+import { useCommandPalette } from "@/hooks/store/use-command-palette";
 // plane web
-import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 // plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
 
@@ -64,6 +65,8 @@ export const PagesListHeader = observer(() => {
     return currentUrl.pathname + currentUrl.search;
   };
 
+  const folderPath = getFolderPath();
+
   // handle page create
   const handleCreatePage = async () => {
     setIsCreatingPage(true);
@@ -102,8 +105,6 @@ export const PagesListHeader = observer(() => {
       .finally(() => setIsCreatingPage(false));
   };
 
-  const folderPath = getFolderPath();
-
   return (
     <Header>
       <Header.LeftItem>
@@ -124,7 +125,7 @@ export const PagesListHeader = observer(() => {
               }
             />
             {/* 폴더 경로 브레드크럼 */}
-            {folderPath.map((folder, index) => (
+            {folderPath.map((folder) => (
               <Breadcrumbs.Item
                 key={folder.id}
                 component={

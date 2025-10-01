@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import { TIssueServiceType } from "@plane/types";
 import { TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useFileValidation } from "@/hooks/store/use-file-validation";
 // plane web hooks
 import { useFileSize } from "@/plane-web/hooks/use-file-size";
@@ -81,7 +81,7 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
           .catch((error: any) => {
             console.error("Upload error:", error);
             let errorMessage = "파일 업로드 중 오류가 발생했습니다.";
-            
+
             if (error?.serverError?.error) {
               errorMessage = error.serverError.error;
             } else if (error?.message) {
@@ -99,19 +99,43 @@ export const IssueAttachmentActionButton: FC<Props> = observer((props) => {
             setLastWidgetAction("attachments");
             setIsLoading(false);
           });
+        return;
       }
+
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Error!",
+        message:
+          totalAttachedFiles > 1
+            ? "Only one file can be uploaded at a time."
+            : `File must be of ${maxFileSize / 1024 / 1024}MB or less in size.`,
+      });
+      return;
     },
-    [attachmentOperations, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction, validateFile]
+    [
+      attachmentOperations,
+      maxFileSize,
+      workspaceSlug,
+      handleFetchPropertyActivities,
+      setLastWidgetAction,
+      validateFile,
+    ]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
+    maxSize: maxFileSize,
     multiple: false,
     disabled: isLoading || disabled,
   });
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div
+      onClick={(e) => {
+        // TODO: Remove extra div and move event propagation to button
+        e.stopPropagation();
+      }}
+    >
       <button {...getRootProps()} type="button" disabled={disabled}>
         <input {...getInputProps()} />
         {customButton ? customButton : <Plus className="h-4 w-4" />}

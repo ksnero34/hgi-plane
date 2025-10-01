@@ -4,7 +4,9 @@ import { observer } from "mobx-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Image, BrainCog, Cog, Lock, Mail, Users, FileText, LayoutTemplate, FolderKanban, Bell } from "lucide-react";
-import { Tooltip, WorkspaceIcon } from "@plane/ui";
+// plane internal packages
+import { WorkspaceIcon } from "@plane/propel/icons";
+import { Tooltip } from "@plane/propel/tooltip";
 import { cn } from "@plane/utils";
 // hooks
 import { useTheme } from "@/hooks/store";

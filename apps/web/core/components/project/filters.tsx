@@ -2,18 +2,18 @@ import { useCallback } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { ListFilter } from "lucide-react";
-// i18n
+// plane imports
 import { useTranslation } from "@plane/i18n";
-// plane types
 import { TProjectFilters } from "@plane/types";
 import { cn, calculateTotalFilters } from "@plane/utils";
-// plane utils
 // components
-import { FiltersDropdown } from "@/components/issues";
-import { ProjectFiltersSelection, ProjectOrderByDropdown } from "@/components/project";
-// helpers
+import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 // hooks
-import { useMember, useProjectFilter } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
+import { useProjectFilter } from "@/hooks/store/use-project-filter";
+// local imports
+import { ProjectFiltersSelection } from "./dropdowns/filters";
+import { ProjectOrderByDropdown } from "./dropdowns/order-by";
 
 type Props = {
   filterMenuButton?: React.ReactNode;
@@ -39,9 +39,7 @@ const HeaderFilters = observer(({ filterMenuButton, isMobile, classname = "", fi
   const handleFilters = useCallback(
     (key: keyof TProjectFilters, value: string | string[]) => {
       if (!workspaceSlug) return;
-      let newValues: string[] = Array.isArray(filters?.[key]) 
-        ? [...(filters[key] as string[])] 
-        : [];
+      let newValues = filters?.[key] ?? [];
       if (Array.isArray(value)) {
         if (key === "created_at" && newValues.find((v) => v.includes("custom"))) newValues = [];
         value.forEach((val) => {
@@ -49,12 +47,13 @@ const HeaderFilters = observer(({ filterMenuButton, isMobile, classname = "", fi
           else newValues.splice(newValues.indexOf(val), 1);
         });
       } else {
-        if (filters?.[key]?.includes?.(value)) newValues.splice(newValues.indexOf(value), 1);
+        if (filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
         else {
           if (key === "created_at") newValues = [value];
           else newValues.push(value);
         }
       }
+
       updateFilters(workspaceSlug.toString(), { [key]: newValues });
     },
     [filters, updateFilters, workspaceSlug]

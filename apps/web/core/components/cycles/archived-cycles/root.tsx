@@ -5,15 +5,17 @@ import useSWR from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { TCycleFilters } from "@plane/types";
-// components
 import { calculateTotalFilters } from "@plane/utils";
-import { ArchivedCyclesView, CycleAppliedFiltersList } from "@/components/cycles";
-import { DetailedEmptyState } from "@/components/empty-state";
-import { CycleModuleListLayout } from "@/components/ui";
-// helpers
+// components
+import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
+import { CycleModuleListLayoutLoader } from "@/components/ui/loader/cycle-module-list-loader";
 // hooks
-import { useCycle, useCycleFilter } from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
+// local imports
+import { CycleAppliedFiltersList } from "../applied-filters";
+import { ArchivedCyclesView } from "./view";
 
 export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
   // router
@@ -23,7 +25,7 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
   // hooks
   const { fetchArchivedCycles, currentProjectArchivedCycleIds, loader } = useCycle();
   // cycle filters hook
-  const { clearAllFilters, currentProjectArchivedFilters, updateFilters, currentProjectDisplayFilters, updateDisplayFilters } = useCycleFilter();
+  const { clearAllFilters, currentProjectArchivedFilters, updateFilters } = useCycleFilter();
   // derived values
   const totalArchivedCycles = currentProjectArchivedCycleIds?.length ?? 0;
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/archived/empty-cycles" });
@@ -40,22 +42,18 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
 
   const handleRemoveFilter = (key: keyof TCycleFilters, value: string | null) => {
     if (!projectId) return;
-    const newValues: string[] = Array.isArray(currentProjectArchivedFilters?.[key]) 
-      ? [...(currentProjectArchivedFilters[key] as string[])] 
-      : [];
+    let newValues = currentProjectArchivedFilters?.[key] ?? [];
 
-    if (!value) {
-      updateFilters(projectId.toString(), { [key]: [] }, "archived");
-    } else {
-      const filteredValues = newValues.filter((val: string) => val !== value);
-      updateFilters(projectId.toString(), { [key]: filteredValues }, "archived");
-    }
+    if (!value) newValues = [];
+    else newValues = newValues.filter((val) => val !== value);
+
+    updateFilters(projectId.toString(), { [key]: newValues }, "archived");
   };
 
   if (!workspaceSlug || !projectId) return <></>;
 
   if (loader || !currentProjectArchivedCycleIds) {
-    return <CycleModuleListLayout />;
+    return <CycleModuleListLayoutLoader />;
   }
 
   return (
@@ -64,10 +62,8 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
         <div className="border-b border-custom-border-200 px-5 py-3">
           <CycleAppliedFiltersList
             appliedFilters={currentProjectArchivedFilters ?? {}}
-            isFavoriteFilterApplied={currentProjectDisplayFilters?.favorites ?? false}
             handleClearAllFilters={() => clearAllFilters(projectId.toString(), "archived")}
             handleRemoveFilter={handleRemoveFilter}
-            handleDisplayFiltersUpdate={(filters) => updateDisplayFilters(projectId.toString(), filters)}
           />
         </div>
       )}

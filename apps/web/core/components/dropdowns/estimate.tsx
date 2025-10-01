@@ -10,7 +10,8 @@ import { EEstimateSystem } from "@plane/types";
 import { ComboDropDown } from "@plane/ui";
 import { convertMinutesToHoursMinutesString, cn } from "@plane/utils";
 // hooks
-import { useEstimate, useProjectEstimates } from "@/hooks/store";
+import { useProjectEstimates } from "@/hooks/store/estimates";
+import { useEstimate } from "@/hooks/store/estimates/use-estimate";
 import { useDropdown } from "@/hooks/use-dropdown";
 // components
 import { DropdownButton } from "./buttons";
@@ -33,7 +34,7 @@ type DropdownOptions =
   | {
       value: string | null;
       query: string;
-      content: JSX.Element;
+      content: React.ReactNode;
     }[]
   | undefined;
 
@@ -88,7 +89,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
   const { estimatePointIds, estimatePointById } = useEstimate(
     projectId ? currentActiveEstimateIdByProjectId(projectId) : undefined
   );
-  
+
   // 항상 controlled 컴포넌트로 동작하도록 value 처리
   const controlledValue = value === null || value === undefined ? null : value;
 

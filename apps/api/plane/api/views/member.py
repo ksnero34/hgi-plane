@@ -23,6 +23,7 @@ from plane.utils.openapi import (
 )
 from plane.utils.audit_logger import log_audit
 
+
 class WorkspaceMemberAPIEndpoint(BaseAPIView):
     permission_classes = [WorkSpaceAdminPermission]
     use_read_replica = True

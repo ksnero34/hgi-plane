@@ -78,6 +78,8 @@ services:
       - dev_env
     volumes:
       - ./apps/web:/app/apps/web
+      - web-root-node-modules:/app/node_modules
+      - web-app-node-modules:/app/apps/web/node_modules
     env_file:
       - ./apps/web/.env.dev
     depends_on:
@@ -95,6 +97,8 @@ services:
       - dev_env
     volumes:
       - ./apps/space:/app/apps/space
+      - space-root-node-modules:/app/node_modules
+      - space-app-node-modules:/app/apps/space/node_modules
     depends_on:
       - api
       - worker
@@ -111,6 +115,8 @@ services:
       - dev_env
     volumes:
       - ./apps/admin:/app/apps/admin
+      - admin-root-node-modules:/app/node_modules
+      - admin-app-node-modules:/app/apps/admin/node_modules
     depends_on:
       - api
       - worker
@@ -127,6 +133,8 @@ services:
       - dev_env
     volumes:
       - ./apps/live:/app/apps/live
+      - live-root-node-modules:/app/node_modules
+      - live-app-node-modules:/app/apps/live/node_modules
 
     depends_on:
       - api
@@ -169,6 +177,7 @@ services:
       - ./apps/api:/code
     command: ./bin/docker-entrypoint-worker.sh
     env_file:
+      - ./apps/api/.env
       - ./apps/api/.env
     depends_on:
       - api
@@ -244,6 +253,14 @@ volumes:
   uploads:
   pgdata:
   rabbitmq_data:
+  web-root-node-modules:
+  web-app-node-modules:
+  space-root-node-modules:
+  space-app-node-modules:
+  admin-root-node-modules:
+  admin-app-node-modules:
+  live-root-node-modules:
+  live-app-node-modules:
 
 networks:
   dev_env:

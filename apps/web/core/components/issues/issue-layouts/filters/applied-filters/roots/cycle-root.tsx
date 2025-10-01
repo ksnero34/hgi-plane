@@ -1,23 +1,27 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { EIssueFilterType } from "@plane/constants";
+// plane imports
+import { EIssueFilterType, PROJECT_VIEW_TRACKER_ELEMENTS } from "@plane/constants";
 import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
-// hooks
 import { Header, EHeaderVariant } from "@plane/ui";
-import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
-import { useIssues, useLabel, useProjectState, useCustomField } from "@/hooks/store";
+// hooks
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useCustomField } from "@/hooks/store/use-custom-field";
+// local imports
+import { SaveFilterView } from "../../../save-filter-view";
+import { AppliedFiltersList } from "../filters-list";
 import { calculateFilterRemovalValue } from "@plane/utils";
-// components
-// types
 
 export const CycleAppliedFiltersRoot: React.FC = observer(() => {
   // router
   const { workspaceSlug, projectId, cycleId } = useParams();
-
   // store hooks
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.CYCLE);
+
   const { projectLabels } = useLabel();
   const { projectStates } = useProjectState();
   const { customFields } = useCustomField(projectId as string);
@@ -91,6 +95,7 @@ export const CycleAppliedFiltersRoot: React.FC = observer(() => {
           display_filters: displayFilters,
           display_properties: displayProperties,
         }}
+        trackerElement={PROJECT_VIEW_TRACKER_ELEMENTS.CYCLE_HEADER_SAVE_AS_VIEW_BUTTON}
       />
     </Header>
   );

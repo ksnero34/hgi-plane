@@ -8,7 +8,8 @@ import { PageHead } from "@/components/core";
 import { IssueTypes } from "@/components/project/settings/issue-types";
 import { SettingsContentWrapper } from "@/components/settings";
 // hooks
-import { useProject, useUserPermissions } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
+import { useUserPermissions } from "@/hooks/store/user";
 
 const ProjectIssueTypesPage = observer(() => {
   // store hooks

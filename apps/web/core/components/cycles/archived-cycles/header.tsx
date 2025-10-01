@@ -10,12 +10,12 @@ import type { TCycleFilters } from "@plane/types";
 import { cn, calculateTotalFilters } from "@plane/utils";
 // components
 import { ArchiveTabsList } from "@/components/archives";
-import { CycleFiltersSelection } from "@/components/cycles";
-import { FiltersDropdown } from "@/components/issues";
-// helpers
-import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
+import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 // hooks
-import { useCycleFilter } from "@/hooks/store";
+import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
+import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
+// local imports
+import { CycleFiltersSelection } from "../dropdowns";
 
 export const ArchivedCyclesHeader: FC = observer(() => {
   // router
@@ -35,7 +35,7 @@ export const ArchivedCyclesHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
-      
+
       const updatedValue = calculateFilterValue(key as any, value, currentProjectArchivedFilters as any);
       updateFilters(projectId.toString(), { [key]: updatedValue } as TCycleFilters);
     },

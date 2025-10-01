@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 // components
 import { ProjectExports } from "@/components/project/settings/project-exports";
 // hooks
-import { useProject } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
 
 
 const ProjectExportsPage = observer(() => {

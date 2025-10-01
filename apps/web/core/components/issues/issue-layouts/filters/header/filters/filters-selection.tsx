@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-// i18n
+// plane imports
 import { EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-// types
 import {
   IIssueDisplayFilterOptions,
   IIssueFilterOptions,
@@ -31,12 +30,13 @@ import {
   FilterIssueGrouping,
   FilterCustomFields,
   FilterTitleDescription,
-} from "@/components/issues";
+} from "@/components/issues/issue-layouts/filters";
 // hooks
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 import { usePlatformOS } from "@/hooks/use-platform-os";
-// plane web components
-import { FilterIssueTypes, FilterTeamProjects } from "@/plane-web/components/issues";
+// plane web imports
+import { FilterIssueTypes } from "@/plane-web/components/issues/filters/issue-types";
+import { FilterTeamProjects } from "@/plane-web/components/issues/filters/team-project";
 
 type Props = {
   filters: IIssueFilterOptions;
@@ -78,10 +78,10 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
   const { workspaceSlug } = useParams();
   const { moduleId, cycleId } = useParams();
   const routerProjectId = useParams().projectId;
-  
+
   // 효과적인 projectId 계산 (props로 받은 projectId를 우선 사용)
   const effectiveProjectId = projectId || (routerProjectId as string);
-  
+
   const {
     project: { getProjectMemberDetails },
   } = useMember();
@@ -90,8 +90,8 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
 
   // filter guests from assignees
   const assigneeIds = memberIds?.filter((id) => {
-    if (effectiveProjectId) {
-      const memeberDetails = getProjectMemberDetails(id, effectiveProjectId);
+    if (projectId) {
+      const memeberDetails = getProjectMemberDetails(id, projectId);
       const isGuest = (memeberDetails?.role || EUserPermissions.GUEST) === EUserPermissions.GUEST;
       if (isGuest && memeberDetails) return false;
     }
@@ -306,7 +306,6 @@ export const FilterSelection: React.FC<Props> = observer((props) => {
             />
           </div>
         )}
-
         {/* start_date */}
         {isFilterEnabled("start_date") && (
           <div className="py-2">

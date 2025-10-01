@@ -21,12 +21,12 @@ import {
 // ui
 import { CustomMenu } from "@plane/ui";
 // components
-import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
-import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
-
-// helpers
+import { isIssueFilterActive } from "@plane/utils";
+import { DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
+import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
 // hooks
-import { useIssues, useLabel } from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
 
 export const ProfileIssuesMobileHeader = observer(() => {
   // plane i18n
@@ -64,13 +64,22 @@ export const ProfileIssuesMobileHeader = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !userId) return;
+      const newValues = issueFilters?.filters?.[key] ?? [];
 
-      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
+      if (Array.isArray(value)) {
+        value.forEach((val) => {
+          if (!newValues.includes(val)) newValues.push(val);
+        });
+      } else {
+        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        else newValues.push(value);
+      }
+
       updateFilters(
         workspaceSlug.toString(),
         undefined,
         EIssueFilterType.FILTERS,
-        { [key]: updatedValue },
+        { [key]: newValues },
         userId.toString()
       );
     },

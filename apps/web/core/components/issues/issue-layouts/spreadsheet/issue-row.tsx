@@ -1,24 +1,26 @@
 "use client";
 
 import { Dispatch, MouseEvent, MutableRefObject, SetStateAction, useRef, useState } from "react";
-import React from "react";
 import { observer } from "mobx-react";
-import { useParams, usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
+import { Tooltip } from "@plane/propel/tooltip";
 import { EIssueServiceType, IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
 // ui
-import { ControlLink, Row, Tooltip } from "@plane/ui";
+import { ControlLink, Row } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
-import { MultipleSelectEntityAction } from "@/components/core";
+import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 // helper
 // hooks
-import { useIssueDetail, useIssues, useProject } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useProject } from "@/hooks/store/use-project";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
 import { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { usePlatformOS } from "@/hooks/use-platform-os";
@@ -27,7 +29,7 @@ import { captureSuccess } from "@/helpers/event-tracker.helper";
 // constants
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // plane web components
-import { IssueIdentifier } from "@/plane-web/components/issues";
+import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 // local components
 import { TRenderQuickActions } from "../list/list-view-types";
 import { isIssueNew } from "../utils";
@@ -396,7 +398,7 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
         if (property.toString().startsWith('custom_field_')) {
           const customField = customFieldsMap[property.toString()];
           if (!customField) return null;
-          
+
           return (
             <td
               key={property}
@@ -421,7 +423,7 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
             </td>
           );
         }
-        
+
         // 기본 속성 컬럼
         return (
           <IssueColumn

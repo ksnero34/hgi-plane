@@ -2,7 +2,7 @@ import { FC } from "react";
 import { observer } from "mobx-react";
 import { Paperclip } from "lucide-react";
 // hooks
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
 
@@ -21,7 +21,7 @@ export const IssueAttachmentActivity: FC<TIssueAttachmentActivity> = observer((p
   const attachment = attachmentId ? getAttachmentById(attachmentId) : null;
 
   // 파일 이름 추출 (activity.new_value에서 추출하거나 attachment에서 가져옴)
-  const fileName = attachment?.attributes?.name || 
+  const fileName = attachment?.attributes?.name ||
                   (activity?.new_value ? activity.new_value.split("/").pop() : "첨부파일");
 
   if (!activity) return <></>;

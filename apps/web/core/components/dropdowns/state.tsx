@@ -12,7 +12,8 @@ import { ComboDropDown, Spinner, StateGroupIcon } from "@plane/ui";
 // helpers
 import { cn } from "@plane/utils";
 // hooks
-import { useProjectState, useWorkflow } from "@/hooks/store";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 // ui
 import { setToast, TOAST_TYPE } from "@plane/ui";
 import { useDropdown } from "@/hooks/use-dropdown";

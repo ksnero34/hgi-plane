@@ -3,9 +3,12 @@
 import { useMemo, useCallback, useEffect } from "react";
 // hooks
 import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
-import { IssueAttachmentUpload, IssueAttachmentsList } from "@/components/issues";
+import { IssueAttachmentUpload } from "@/components/issues/attachment/attachment-upload";
+import { IssueAttachmentsList } from "@/components/issues/attachment/attachments-list";
 import { TAttachmentOperations } from "@/components/issues/issue-detail-widgets/attachments/helper";
-import { useIssueDetail, useFileValidation, useInstance } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useFileValidation } from "@/hooks/store/use-file-validation";
+import { useInstance } from "@/hooks/store/use-instance";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { MAX_FILE_SIZE } from "@/constants/common";

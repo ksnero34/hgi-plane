@@ -18,7 +18,9 @@ import ProgressChart from "@/components/core/sidebar/progress-chart";
 import { ModuleProgressStats } from "@/components/modules";
 import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
-import { useIssues, useModule, useProjectEstimates } from "@/hooks/store";
+import { useProjectEstimates } from "@/hooks/store/estimates";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useModule } from "@/hooks/store/use-module";
 // plane web constants
 type TModuleAnalyticsProgress = {
   workspaceSlug: string;

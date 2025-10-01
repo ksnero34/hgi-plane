@@ -31,34 +31,33 @@ class SessionMiddleware(MiddlewareMixin):
             session_key = request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME)
         else:
             session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
-        
         request.session = self.SessionStore(session_key)
-        
+
         # 인증된 세션에 대해서만 IP 검증
         if SESSION_IP_CHECK and request.session.get('is_authenticated', False):
             # CSRF 토큰 검증
             csrf_cookie = request.COOKIES.get('csrftoken')
-            
+
             # CSRF 토큰이 쿠키에 있으면 IP 체크와 User-Agent 체크 건너뛰기
             if csrf_cookie:
                 return
             else:
                 stored_ip = request.session.get('ip_address')
                 current_ip = get_client_ip(request)
-                
+
                 # IP가 없으면 저장
                 if not stored_ip:
                     request.session['ip_address'] = current_ip
                     request.session.modified = True
                     request.session.save()
-                # IP가 다르면 세션 무효화 
+                # IP가 다르면 세션 무효화
                 elif current_ip and stored_ip != current_ip:
                     # 현재 user_id 저장
                     user_id = request.session.get('user_id')
-                    
+
                     # 세션 초기화
                     request.session.flush()
-                    
+
                     # 로그 기록
                     log_audit(
                         action="ip_mismatch",
@@ -73,7 +72,7 @@ class SessionMiddleware(MiddlewareMixin):
                         },
                         request=request,
                     )
-                    
+
                     # 새로운 세션 생성
                     request.session = self.SessionStore()
                     request.session['ip_address'] = current_ip
@@ -85,14 +84,14 @@ class SessionMiddleware(MiddlewareMixin):
                 if SESSION_USER_AGENT_CHECK:
                     stored_user_agent = request.session.get('device_info', {}).get('user_agent')
                     current_user_agent = request.META.get('HTTP_USER_AGENT', '')
-                    
+
                     if stored_user_agent and current_user_agent != stored_user_agent:
                         # 현재 user_id 저장
                         user_id = request.session.get('user_id')
-                        
+
                         # 세션 초기화
                         request.session.flush()
-                        
+
                         # 로그 기록
                         log_audit(
                             action="user_agent_mismatch",
@@ -107,7 +106,7 @@ class SessionMiddleware(MiddlewareMixin):
                             },
                             request=request,
                         )
-                        
+
                         # 새로운 세션 생성
                         request.session = self.SessionStore()
                         request.session['is_authenticated'] = False
@@ -130,11 +129,11 @@ class SessionMiddleware(MiddlewareMixin):
         # The session should be deleted only if the session is entirely empty.
         is_admin_path = "instances" in request.path and "instances/file-settings" not in request.path
         is_file_settings = "instances/file-settings" in request.path
-        
+
         if is_file_settings:
             cookie_name = (
-                settings.ADMIN_SESSION_COOKIE_NAME 
-                if request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME) 
+                settings.ADMIN_SESSION_COOKIE_NAME
+                if request.COOKIES.get(settings.ADMIN_SESSION_COOKIE_NAME)
                 else settings.SESSION_COOKIE_NAME
             )
         else:

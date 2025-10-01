@@ -7,19 +7,19 @@ import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Disclosure, Transition } from "@headlessui/react";
+// plane imports
 import { EIssueFilterType } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EIssuesStoreType, ICycle, IIssueFilterOptions, TCyclePlotType, TProgressSnapshot } from "@plane/types";
-// components
 import { getDate } from "@plane/utils";
-import { CycleProgressStats } from "@/components/cycles";
-// constants
-// helpers
 import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
-import { useIssues, useCycle } from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useIssues } from "@/hooks/store/use-issues";
 // plane web components
 import { SidebarChartRoot } from "@/plane-web/components/cycles";
+// local imports
+import { CycleProgressStats } from "./progress-stats";
 
 type TCycleAnalyticsProgress = {
   workspaceSlug: string;

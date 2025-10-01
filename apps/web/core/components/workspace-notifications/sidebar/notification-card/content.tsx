@@ -1,5 +1,6 @@
 import { FC } from "react";
-import { TNotification } from "@plane/types";
+// plane imports
+import type { TNotification } from "@plane/types";
 import {
   convertMinutesToHoursMinutesString,
   renderFormattedDate,
@@ -75,7 +76,7 @@ export const NotificationContent: FC<{
       return newValue === "restore" ? "님이 작업항목을 복구했습니다" : "님이 작업항목을 보관했습니다";
     }
     if (notificationField === "None") return "님이 작업항목을 생성하고 당신을 담당자로 할당했습니다.";
-    
+
     // 커스텀 필드 처리 - 실제 필드명 사용
     if (notificationField === "custom_field") {
       const fieldName = customFieldName || "커스텀 필드";
@@ -105,7 +106,7 @@ export const NotificationContent: FC<{
       return newValue !== ""
         ? convertMinutesToHoursMinutesString(Number(newValue))
         : convertMinutesToHoursMinutesString(Number(oldValue));
-    
+
     // 커스텀 필드 처리
     if (notificationField === "custom_field") {
       // 커스텀 필드 값이 JSON 형태인 경우 파싱해서 표시
@@ -119,7 +120,7 @@ export const NotificationContent: FC<{
         return newValue || "없음";
       }
     }
-    
+
     return newValue;
   };
 
@@ -132,7 +133,7 @@ export const NotificationContent: FC<{
       // 워크플로우 승인 정보 파싱
       const comment = data?.issue_activity?.issue_comment || "";
       const approvalMatch = comment.match(/\(approved by ([^)]+)\)(?:\s*-\s*(.+))?/);
-      
+
       if (approvalMatch) {
         const [, approverName, approvalComment] = approvalMatch;
         let suffix = ` 로 변경했습니다. (승인자: ${approverName}`;
@@ -142,7 +143,7 @@ export const NotificationContent: FC<{
         suffix += ")";
         return suffix;
       }
-      
+
       if (data?.issue?.state_group === "completed") return " 로 변경하여 완료처리했습니다.";
       else return " 로 변경했습니다.";
     }
@@ -165,7 +166,7 @@ export const NotificationContent: FC<{
     if (notificationField === "cycles") {
       if (newValue !== "") return " 를 추가했습니다.";
     }
-    
+
     // 커스텀 필드 처리
     if (notificationField === "custom_field") {
       if (verb === "updated") {
@@ -177,7 +178,7 @@ export const NotificationContent: FC<{
       }
       return ` 를 수정했습니다.`;
     }
-    
+
     return "";
   };
 
@@ -187,9 +188,26 @@ export const NotificationContent: FC<{
 
   // 마침표가 필요없는 필드 목록
   const fieldsWithCustomSuffix = [
-    "priority", "state", "estimate_time", "start_date", "target_date", 
+    "priority", "state", "estimate_time", "start_date", "target_date",
     "labels", "assignees", "parent", "cycles", "custom_field"
   ];
+  const shouldShowConnector =
+    !(approvalRequest && !notificationField) &&
+    ![
+      "comment",
+      "archived_at",
+      "None",
+      "assignees",
+      "labels",
+      "start_date",
+      "target_date",
+      "parent",
+      "state",
+      "priority",
+      "estimate_time",
+      "cycles",
+      "custom_field",
+    ].includes(notificationField || "");
 
   return (
     <>
@@ -197,17 +215,18 @@ export const NotificationContent: FC<{
       <span className="text-custom-text-300">{renderAction()} </span>
       {verb !== "deleted" && needsValueDisplay && (
         <>
+          {shouldShowConnector && <span className="text-custom-text-300">to </span>}
           <span className="text-custom-text-100 font-medium">{renderValue()}</span>
           <span className="text-custom-text-300">{renderSuffix()}</span>
           {notificationField === "comment" && renderCommentBox && (
             <div className="scale-75 origin-left">
               <LiteTextEditor
+                editable={false}
                 id=""
                 initialValue={newValue ?? ""}
                 workspaceId={workspaceId}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
-                editable={false}
                 displayConfig={{
                   fontSize: "small-font",
                 }}

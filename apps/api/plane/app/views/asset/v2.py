@@ -47,7 +47,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             'xml': ['text/xml', 'application/xml'],
             'csv': ['text/csv'],
             'rtf': ['application/rtf'],
-            
+
             # 이미지
             'jpg': ['image/jpeg', 'image/png' ,'image/gif'],
             'jpeg': ['image/jpeg', 'image/png' ,'image/gif'],
@@ -57,7 +57,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             'webp': ['image/webp'],
             'tiff': ['image/tiff'],
             'bmp': ['image/bmp'],
-            
+
             # 문서
             'pdf': ['application/pdf', 'application/octet-stream'],
             'doc': ['application/msword', 'application/octet-stream'],
@@ -70,7 +70,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
                 'application/vnd.ms-powerpoint.presentation.macroenabled.12',
                 'application/octet-stream'
             ],
-            
+
             # 오디오
             'mp3': ['audio/mpeg'],
             'wav': ['audio/wav'],
@@ -79,7 +79,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             'aac': ['audio/aac'],
             'flac': ['audio/flac'],
             'm4a': ['audio/x-m4a'],
-            
+
             # 비디오
             'mp4': ['video/mp4'],
             'mpeg': ['video/mpeg'],
@@ -88,18 +88,18 @@ class BaseFileAssetEndpoint(BaseAPIView):
             'mov': ['video/quicktime'],
             'avi': ['video/x-msvideo'],
             'wmv': ['video/x-ms-wmv'],
-            
+
             # 압축파일
             'zip': ['application/zip', 'application/x-zip-compressed'],
             'rar': ['application/x-rar-compressed'],
             'tar': ['application/x-tar'],
             'gz': ['application/gzip'],
-            
+
             # 3D 모델
             'glb': ['model/gltf-binary'],
             'gltf': ['model/gltf+json'],
             'obj': ['application/octet-stream'],
-            
+
             # 폰트
             'ttf': ['font/ttf'],
             'otf': ['font/otf'],
@@ -128,7 +128,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
-            
+
             # 파일명 안전성 검사 (특수문자 제한)
             # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
             #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
@@ -153,7 +153,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
-            
+
             # 파일명 안전성 검사 (특수문자 제한)
             # if not re.match(r'^[a-zA-Z0-9가-힣._\-() ]+$', file_name):
             #     return False, "파일명에 허용되지 않는 특수문자가 포함되어 있습니다."
@@ -179,25 +179,110 @@ def modify_presigned_post_url(request, presigned_data):
     """presigned post URL의 도메인을 요청 도메인으로 변경"""
     if not presigned_data or 'url' not in presigned_data:
         return presigned_data
-    
+
     presigned_data['url'] = replace_domain_in_url(request, presigned_data['url'])
     return presigned_data
 
-
-class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
+class UserAssetsV2Endpoint(BaseAPIView):
     """This endpoint is used to upload user profile images."""
 
+    def asset_delete(self, asset_id):
+        asset = FileAsset.objects.filter(id=asset_id).first()
+        if asset is None:
+            return
+        asset.is_deleted = True
+        asset.deleted_at = timezone.now()
+        asset.save(update_fields=["is_deleted", "deleted_at"])
+        return
+
+    def entity_asset_save(self, asset_id, entity_type, asset, request):
+        # User Avatar
+        if entity_type == FileAsset.EntityTypeContext.USER_AVATAR:
+            user = User.objects.get(id=asset.user_id)
+            user.avatar = ""
+            # Delete the previous avatar
+            if user.avatar_asset_id:
+                self.asset_delete(user.avatar_asset_id)
+            # Save the new avatar
+            user.avatar_asset_id = asset_id
+            user.save()
+            invalidate_cache_directly(
+                path="/api/users/me/", url_params=False, user=True, request=request
+            )
+            invalidate_cache_directly(
+                path="/api/users/me/settings/",
+                url_params=False,
+                user=True,
+                request=request,
+            )
+            return
+        # User Cover
+        if entity_type == FileAsset.EntityTypeContext.USER_COVER:
+            user = User.objects.get(id=asset.user_id)
+            user.cover_image = None
+            # Delete the previous cover image
+            if user.cover_image_asset_id:
+                self.asset_delete(user.cover_image_asset_id)
+            # Save the new cover image
+            user.cover_image_asset_id = asset_id
+            user.save()
+            invalidate_cache_directly(
+                path="/api/users/me/", url_params=False, user=True, request=request
+            )
+            invalidate_cache_directly(
+                path="/api/users/me/settings/",
+                url_params=False,
+                user=True,
+                request=request,
+            )
+            return
+        return
+
+    def entity_asset_delete(self, entity_type, asset, request):
+        # User Avatar
+        if entity_type == FileAsset.EntityTypeContext.USER_AVATAR:
+            user = User.objects.get(id=asset.user_id)
+            user.avatar_asset_id = None
+            user.save()
+            invalidate_cache_directly(
+                path="/api/users/me/", url_params=False, user=True, request=request
+            )
+            invalidate_cache_directly(
+                path="/api/users/me/settings/",
+                url_params=False,
+                user=True,
+                request=request,
+            )
+            return
+        # User Cover
+        if entity_type == FileAsset.EntityTypeContext.USER_COVER:
+            user = User.objects.get(id=asset.user_id)
+            user.cover_image_asset_id = None
+            user.save()
+            invalidate_cache_directly(
+                path="/api/users/me/", url_params=False, user=True, request=request
+            )
+            invalidate_cache_directly(
+                path="/api/users/me/settings/",
+                url_params=False,
+                user=True,
+                request=request,
+            )
+            return
+        return
+
     def post(self, request):
+        # get the asset key
         name = request.data.get("name")
         type = request.data.get("type", "image/jpeg")
         size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
         entity_type = request.data.get("entity_type", False)
 
-        # Check if the entity type is allowed
-        if not entity_type or entity_type not in [
-            FileAsset.EntityTypeContext.USER_AVATAR,
-            FileAsset.EntityTypeContext.USER_COVER
-        ]:
+        # Check if the file size is within the limit
+        size_limit = min(size, settings.FILE_SIZE_LIMIT)
+
+        #  Check if the entity type is allowed
+        if not entity_type or entity_type not in ["USER_AVATAR", "USER_COVER"]:
             return Response(
                 {"error": "Invalid entity type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -214,7 +299,7 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
                 'size': size
             }
             is_valid, error_message = self.validate_file(file_info=file_info)
-            
+
         if not is_valid:
             return Response(
                 {"error": "파일 검증 실패", "status": False, "message": error_message},
@@ -226,9 +311,9 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size},
+            attributes={"name": name, "type": type, "size": size_limit},
             asset=asset_key,
-            size=size,
+            size=size_limit,
             user=request.user,
             created_by=request.user,
             entity_type=entity_type,
@@ -237,11 +322,11 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_data = storage.generate_presigned_post(
-            object_name=asset_key, file_type=type, file_size=size
+        presigned_url = storage.generate_presigned_post(
+            object_name=asset_key, file_type=type, file_size=size_limit
         )
         # URL의 도메인을 요청 도메인으로 변경
-        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
+        modified_presigned_data = modify_presigned_post_url(request, presigned_url)
         # Return the presigned URL
         return Response(
             {
@@ -255,7 +340,7 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
     def patch(self, request, asset_id):
         """Update user profile image asset."""
         asset = FileAsset.objects.filter(id=asset_id).first()
-        
+
         # Check if the asset exists
         if asset is None:
             return Response(
@@ -275,7 +360,7 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
             # 먼저 is_uploaded 플래그를 True로 설정하고 저장
             asset.is_uploaded = True
             asset.save(update_fields=["is_uploaded"])
-            
+
             # Update user profile based on entity type
             user = request.user
             if asset.entity_type == FileAsset.EntityTypeContext.USER_AVATAR:
@@ -284,18 +369,18 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
                     user.avatar_asset.is_deleted = True
                     user.avatar_asset.deleted_at = timezone.now()
                     user.avatar_asset.save(update_fields=["is_deleted", "deleted_at"])
-                
+
                 user.avatar = asset.asset_url
                 user.avatar_asset = asset
                 user.save(update_fields=["avatar", "avatar_asset"])
-            
+
             elif asset.entity_type == FileAsset.EntityTypeContext.USER_COVER:
                 # Delete previous cover image asset if exists
                 if user.cover_image_asset:
                     user.cover_image_asset.is_deleted = True
                     user.cover_image_asset.deleted_at = timezone.now()
                     user.cover_image_asset.save(update_fields=["is_deleted", "deleted_at"])
-                
+
                 user.cover_image = asset.asset_url
                 user.cover_image_asset = asset
                 user.save(update_fields=["cover_image", "cover_image_asset"])
@@ -328,7 +413,7 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
             with transaction.atomic():
                 # Get the asset
                 asset = FileAsset.objects.select_for_update().filter(id=asset_id).first()
-                
+
                 # Check if the asset exists
                 if asset is None:
                     return Response(
@@ -380,15 +465,14 @@ class UserAssetsV2Endpoint(BaseFileAssetEndpoint):
                 )
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
-                
+
         except Exception as e:
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
-class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
+class WorkspaceFileAssetEndpoint(BaseAPIView):
     """This endpoint is used to upload cover images/logos etc for workspace, projects and users."""
 
     def get_entity_id_field(self, entity_type, entity_id):
@@ -534,12 +618,15 @@ class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
                 'size': size
             }
             is_valid, error_message = self.validate_file(file_info=file_info)
-            
+
         if not is_valid:
             return Response(
                 {"error": "파일 검증 실패", "status": False, "message": error_message},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Get the size limit
+        size_limit = min(settings.FILE_SIZE_LIMIT, size)
 
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
@@ -549,9 +636,9 @@ class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size},
+            attributes={"name": name, "type": type, "size": size_limit},
             asset=asset_key,
-            size=size,
+            size=size_limit,
             workspace=workspace,
             created_by=request.user,
             entity_type=entity_type,
@@ -563,11 +650,11 @@ class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_data = storage.generate_presigned_post(
-            object_name=asset_key, file_type=type, file_size=size
+        presigned_url = storage.generate_presigned_post(
+            object_name=asset_key, file_type=type, file_size=size_limit
         )
         # URL의 도메인을 요청 도메인으로 변경
-        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
+        modified_presigned_data = modify_presigned_post_url(request, presigned_url)
         # Return the presigned URL
         return Response(
             {
@@ -624,7 +711,11 @@ class WorkspaceFileAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
+        signed_url = storage.generate_presigned_url(
+            object_name=asset.asset.name,
+            disposition="attachment",
+            filename=asset.attributes.get("name"),
+        )
         # URL의 도메인을 요청 도메인으로 변경
         modified_url = replace_domain_in_url(request, signed_url)
         # Redirect to the modified signed URL
@@ -639,7 +730,7 @@ class StaticFileAssetEndpoint(BaseAPIView):
     def get(self, request, asset_id):
         # print("\n=== StaticFileAssetEndpoint GET ===")
         # print(f"asset_id: {asset_id}")
-        
+
         try:
             # get the asset id
             asset = FileAsset.objects.get(id=asset_id)
@@ -674,10 +765,10 @@ class StaticFileAssetEndpoint(BaseAPIView):
             # Generate a presigned URL to share an S3 object
             signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
             # print(f"Generated signed URL: {signed_url}")
-            
+
             # URL의 도메인을 요청 도메인으로 변경
             modified_url = replace_domain_in_url(request, signed_url)
-            
+
             # 공개 에셋이 아니고 인증이 필요한 경우, 접근 토큰 생성
             if asset.entity_type not in [
                 FileAsset.EntityTypeContext.USER_AVATAR,
@@ -687,28 +778,28 @@ class StaticFileAssetEndpoint(BaseAPIView):
             ] and request.user.is_authenticated:
                 # StorageObjectView의 토큰 생성 메서드 사용
                 from plane.api.views.storage import StorageObjectView
-                
+
                 user_id = str(request.user.id) if request.user.is_authenticated else None
                 if user_id:  # 인증된 사용자인 경우에만 토큰 생성
                     access_token = StorageObjectView.generate_access_token(
                         file_path=asset.asset.name,
                         user_id=user_id
                     )
-                    
+
                     # URL에 액세스 토큰 추가
                     url_parts = list(urlparse(modified_url))
                     query = dict(parse_qsl(url_parts[4]))
                     query.update({'access_token': access_token})
                     url_parts[4] = urlencode(query)
                     modified_url = urlunparse(url_parts)
-                    
+
                     # print(f"인증 토큰이 포함된 URL로 변경: {modified_url}")
-            
+
             # print(f"Modified URL: {modified_url}")
-            
+
             # Redirect to the modified signed URL
             return HttpResponseRedirect(modified_url)
-            
+
         except FileAsset.DoesNotExist:
             # print(f"Asset not found: {asset_id}")
             return Response(
@@ -736,7 +827,7 @@ class AssetRestoreEndpoint(BaseAPIView):
 
 
 class ProjectAssetEndpoint(BaseFileAssetEndpoint):
-    """This endpoint is used to upload files for projects."""
+    """This endpoint is used to upload cover images/logos etc for workspace, projects and users."""
 
     def get_entity_id_field(self, entity_type, entity_id):
         if entity_type == FileAsset.EntityTypeContext.WORKSPACE_LOGO:
@@ -793,12 +884,15 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
                 'size': size
             }
             is_valid, error_message = self.validate_file(file_info=file_info)
-            
+
         if not is_valid:
             return Response(
                 {"error": "파일 검증 실패", "status": False, "message": error_message},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Get the size limit
+        size_limit = min(settings.FILE_SIZE_LIMIT, size)
 
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
@@ -808,9 +902,9 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size},
+            attributes={"name": name, "type": type, "size": size_limit},
             asset=asset_key,
-            size=size,
+            size=size_limit,
             workspace=workspace,
             created_by=request.user,
             entity_type=entity_type,
@@ -821,11 +915,11 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_data = storage.generate_presigned_post(
-            object_name=asset_key, file_type=type, file_size=size
+        presigned_url = storage.generate_presigned_post(
+            object_name=asset_key, file_type=type, file_size=size_limit
         )
         # URL의 도메인을 요청 도메인으로 변경
-        modified_presigned_data = modify_presigned_post_url(request, presigned_data)
+        modified_presigned_data = modify_presigned_post_url(request, presigned_url)
         # Return the presigned URL
         return Response(
             {
@@ -882,7 +976,11 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        signed_url = storage.generate_presigned_url(object_name=asset.asset.name)
+        signed_url = storage.generate_presigned_url(
+            object_name=asset.asset.name,
+            disposition="attachment",
+            filename=asset.attributes.get("name"),
+        )
         # URL의 도메인을 요청 도메인으로 변경
         modified_url = replace_domain_in_url(request, signed_url)
         # Redirect to the modified signed URL
@@ -981,7 +1079,7 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
                 'size': size
             }
             is_valid, error_message = self.validate_file(file_info=file_info)
-            
+
         if not is_valid:
             return Response(
                 {"error": "파일 검증 실패", "status": False, "message": error_message},
@@ -1058,7 +1156,7 @@ class PageFileAssetEndpoint(BaseFileAssetEndpoint):
         page_id = request.GET.get("page_id")
         if not page_id:
             return Response(
-                {"error": "Page ID is required"}, 
+                {"error": "Page ID is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -1092,14 +1190,14 @@ def replace_domain_in_url(request, url):
     """URL의 도메인을 요청의 도메인으로 변경"""
     if not url:
         return url
-        
+
     # 원본 URL 파싱
     parsed = urlparse(url)
-    
+
     # 요청 URL에서 scheme과 netloc 가져오기
     request_url = request.build_absolute_uri('/')
     request_parsed = urlparse(request_url)
-    
+
     # 새로운 URL 생성 (scheme과 netloc만 변경)
     new_url = urlunparse((
         request_parsed.scheme,
@@ -1109,7 +1207,7 @@ def replace_domain_in_url(request, url):
         parsed.query,
         parsed.fragment
     ))
-    
+
     return new_url
 class AssetCheckEndpoint(BaseAPIView):
     """Endpoint to check if an asset exists."""
@@ -1143,7 +1241,8 @@ class WorkspaceAssetDownloadEndpoint(BaseAPIView):
         original_filename = asset.attributes.get("name", "download")
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition=f"attachment; filename=\"{original_filename}\"",
+            disposition="attachment",
+            filename=asset.attributes.get("name", uuid.uuid4().hex),
         )
 
         return HttpResponseRedirect(signed_url)
@@ -1154,7 +1253,6 @@ class ProjectAssetDownloadEndpoint(BaseAPIView):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST], level="PROJECT")
     def get(self, request, slug, project_id, asset_id):
-        print(f"[ProjectAssetDownloadEndpoint] Called with asset_id: {asset_id}")
         try:
             asset = FileAsset.objects.get(
                 id=asset_id,
@@ -1162,10 +1260,7 @@ class ProjectAssetDownloadEndpoint(BaseAPIView):
                 project_id=project_id,
                 is_uploaded=True,
             )
-            print(f"[ProjectAssetDownloadEndpoint] Asset found: {asset.asset.name}")
-            print(f"[ProjectAssetDownloadEndpoint] Asset attributes: {asset.attributes}")
         except FileAsset.DoesNotExist:
-            print(f"[ProjectAssetDownloadEndpoint] Asset not found: {asset_id}")
             return Response(
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -1174,14 +1269,15 @@ class ProjectAssetDownloadEndpoint(BaseAPIView):
         storage = S3Storage(request=request)
         # 원본 파일명 가져오기 (attributes에서)
         original_filename = asset.attributes.get("name", "download")
-        print(f"[ProjectAssetDownloadEndpoint] Original filename: {original_filename}")
+        # print(f"[ProjectAssetDownloadEndpoint] Original filename: {original_filename}")
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition=f"attachment; filename=\"{original_filename}\"",
+            disposition="attachment",
+            filename=asset.attributes.get("name", uuid.uuid4().hex),
         )
-        print(f"[ProjectAssetDownloadEndpoint] Generated signed URL: {signed_url}")
+        # print(f"[ProjectAssetDownloadEndpoint] Generated signed URL: {signed_url}")
         # URL의 도메인을 요청 도메인으로 변경
         modified_presigned_data = modify_presigned_post_url(request, signed_url)
-        print(f"[ProjectAssetDownloadEndpoint] Modified URL: {modified_presigned_data}")
+        # print(f"[ProjectAssetDownloadEndpoint] Modified URL: {modified_presigned_data}")
 
         return HttpResponseRedirect(modified_presigned_data)

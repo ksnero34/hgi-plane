@@ -7,7 +7,9 @@ import { PROJECT_SETTINGS_TRACKER_EVENTS } from "@plane/constants";
 import { Button, EModalPosition, EModalWidth, ModalCore, TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useEstimate, useProject, useProjectEstimates } from "@/hooks/store";
+import { useProjectEstimates } from "@/hooks/store/estimates";
+import { useEstimate } from "@/hooks/store/estimates/use-estimate";
+import { useProject } from "@/hooks/store/use-project";
 
 type TDeleteEstimateModal = {
   workspaceSlug: string;
@@ -70,13 +72,15 @@ export const DeleteEstimateModal: FC<TDeleteEstimateModal> = observer((props) =>
       <div className="relative space-y-6 py-5">
         {/* heading */}
         <div className="relative flex justify-between items-center gap-2 px-5">
-          <div className="text-xl font-medium text-custom-text-100">추정 시스템 삭제</div>
+          <div className="text-xl font-medium text-custom-text-100">Delete Estimate System</div>
         </div>
 
         {/* estimate steps */}
         <div className="px-5">
           <div className="text-base text-custom-text-200">
-            추정 시스템 <span className="font-bold text-custom-text-100">{estimate?.name}</span> 을 삭제하면 추정 소요 자원이 모든 작업항목에서 영구적으로 제거됩니다. 이 작업은 되돌릴 수 없습니다. 추정 시스템을 다시 추가하면 모든 작업항목에 다시 소요자원 값을 업데이트해야 합니다.
+            Deleting the estimate <span className="font-bold text-custom-text-100">{estimate?.name}</span>
+            &nbsp;system will remove it from all work items permanently. This action cannot be undone. If you add
+            estimates again, you will need to update all the work items.
           </div>
         </div>
 

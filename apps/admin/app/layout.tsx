@@ -6,11 +6,11 @@ import { ADMIN_BASE_PATH } from "@plane/constants";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Plane | 한화손해보험 이슈트래커",
+  title: "Plane | Simple, extensible, open-source project management tool.",
   description:
     "Open-source project management tool to manage work items, sprints, and product roadmaps with peace of mind.",
   openGraph: {
-    title: "Plane | 한화손해보험 이슈트래커",
+    title: "Plane | Simple, extensible, open-source project management tool.",
     description:
       "Open-source project management tool to manage work items, sprints, and product roadmaps with peace of mind.",
     url: "https://plane.so/",

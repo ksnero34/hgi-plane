@@ -12,7 +12,7 @@ import { AlertModalCore, TOAST_TYPE, setToast } from "@plane/ui";
 // helpers
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
-import { useCycle } from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 interface ICycleDelete {
@@ -46,8 +46,8 @@ export const CycleDeleteModal: React.FC<ICycleDelete> = observer((props) => {
           if (cycleId || peekCycle) router.push(`/${workspaceSlug}/projects/${projectId}/cycles`);
           setToast({
             type: TOAST_TYPE.SUCCESS,
-            title: "성공했습니다!",
-            message: "주기가 삭제되었습니다.",
+            title: "Success!",
+            message: "Cycle deleted successfully.",
           });
           captureSuccess({
             eventName: CYCLE_TRACKER_EVENTS.delete,
@@ -57,7 +57,7 @@ export const CycleDeleteModal: React.FC<ICycleDelete> = observer((props) => {
           });
         })
         .catch((errors) => {
-          const isPermissionError = errors?.error === "권한이 없습니다.";
+          const isPermissionError = errors?.error === "You don't have the required permissions.";
           const currentError = isPermissionError
             ? PROJECT_ERROR_MESSAGES.permissionError
             : PROJECT_ERROR_MESSAGES.cycleDeleteError;
@@ -78,8 +78,8 @@ export const CycleDeleteModal: React.FC<ICycleDelete> = observer((props) => {
     } catch {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "오류가 발생했습니다!",
-        message: "문제가 발생했습니다. 다시 시도해주세요.",
+        title: "Warning!",
+        message: "Something went wrong please try again later.",
       });
     }
 

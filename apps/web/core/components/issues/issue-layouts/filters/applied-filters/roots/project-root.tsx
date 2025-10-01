@@ -1,20 +1,24 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
-// types
-import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+// plane imports
+import {
+  EIssueFilterType,
+  EUserPermissions,
+  EUserPermissionsLevel,
+  PROJECT_VIEW_TRACKER_ELEMENTS,
+} from "@plane/constants";
 import { EIssuesStoreType, IIssueFilterOptions } from "@plane/types";
-// ui
 import { Header, EHeaderVariant } from "@plane/ui";
-// components
-import { AppliedFiltersList, SaveFilterView } from "@/components/issues";
-// constants
 // hooks
-import { useLabel, useProjectState, useUserPermissions } from "@/hooks/store";
 import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useUserPermissions } from "@/hooks/store/user";
+// local imports
+import { SaveFilterView } from "../../../save-filter-view";
+import { AppliedFiltersList } from "../filters-list";
 import { calculateFilterRemovalValue } from "@plane/utils";
 import { useCustomField } from "@/hooks/store/use-custom-field";
-// plane web constants
 
 type TProjectAppliedFiltersRootProps = {
   storeType?: EIssuesStoreType.PROJECT | EIssuesStoreType.EPIC;
@@ -102,6 +106,7 @@ export const ProjectAppliedFiltersRoot: React.FC<TProjectAppliedFiltersRootProps
               display_filters: issueFilters?.displayFilters,
               display_properties: issueFilters?.displayProperties,
             }}
+            trackerElement={PROJECT_VIEW_TRACKER_ELEMENTS.PROJECT_HEADER_SAVE_AS_VIEW_BUTTON}
           />
         )}
       </Header.RightItem>

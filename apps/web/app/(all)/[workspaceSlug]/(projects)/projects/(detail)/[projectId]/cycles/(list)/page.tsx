@@ -9,14 +9,20 @@ import { useTranslation } from "@plane/i18n";
 import { EUserProjectRoles, TCycleFilters } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
-import { calculateTotalFilters, calculateFilterRemovalValue } from "@plane/utils";
+import { calculateFilterRemovalValue, calculateTotalFilters } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
-import { CyclesView, CycleCreateUpdateModal, CycleAppliedFiltersList } from "@/components/cycles";
-import { ComicBoxButton, DetailedEmptyState } from "@/components/empty-state";
-import { CycleModuleListLayout } from "@/components/ui";
-// helpers
+import { CycleAppliedFiltersList } from "@/components/cycles/applied-filters";
+import { CyclesView } from "@/components/cycles/cycles-view";
+import { CycleCreateUpdateModal } from "@/components/cycles/modal";
+import { ComicBoxButton } from "@/components/empty-state/comic-box-button";
+import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
+import { CycleModuleListLayoutLoader } from "@/components/ui/loader/cycle-module-list-loader";
 // hooks
-import { useCycle, useProject, useCycleFilter, useUserPermissions } from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
+import { useCustomField } from "@/hooks/store/use-custom-field";
+import { useProject } from "@/hooks/store/use-project";
+import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -32,11 +38,19 @@ const ProjectCyclesPage = observer(() => {
   // plane hooks
   const { t } = useTranslation();
   // cycle filters hook
-  const { clearAllFilters, currentProjectFilters, updateFilters, currentProjectDisplayFilters, updateDisplayFilters } = useCycleFilter();
+  const {
+    clearAllFilters,
+    currentProjectDisplayFilters,
+    currentProjectFilters,
+    updateDisplayFilters,
+    updateFilters,
+  } = useCycleFilter();
   const { allowPermissions } = useUserPermissions();
+  const projectIdString = projectId?.toString();
+  const { customFields } = useCustomField(projectIdString);
   // derived values
   const totalCycles = currentProjectCycleIds?.length ?? 0;
-  const project = projectId ? getProjectById(projectId?.toString()) : undefined;
+  const project = projectId ? getProjectById(projectId.toString()) : undefined;
   const pageTitle = project?.name ? `${project?.name} - ${t("common.cycles", { count: 2 })}` : undefined;
   const hasAdminLevelPermission = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const hasMemberLevelPermission = allowPermissions(
@@ -46,15 +60,15 @@ const ProjectCyclesPage = observer(() => {
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/cycles" });
 
   const handleRemoveFilter = (key: keyof TCycleFilters, value: string | null) => {
-    if (!projectId) return;
+    if (!projectIdString) return;
 
-    if (!value) {
-      updateFilters(projectId.toString(), { [key]: [] });
-      return;
-    }
+    const updatedValue = calculateFilterRemovalValue<TCycleFilters>(
+      key as string,
+      value,
+      currentProjectFilters ?? {}
+    );
 
-    const updatedValue = calculateFilterRemovalValue<TCycleFilters>(key as string, value, currentProjectFilters ?? {});
-    updateFilters(projectId.toString(), { [key]: updatedValue });
+    updateFilters(projectIdString, { [key]: updatedValue } as TCycleFilters);
   };
 
   if (!workspaceSlug || !projectId) return <></>;
@@ -78,7 +92,7 @@ const ProjectCyclesPage = observer(() => {
       </div>
     );
 
-  if (loader) return <CycleModuleListLayout />;
+  if (loader) return <CycleModuleListLayoutLoader />;
 
   return (
     <>
@@ -117,9 +131,11 @@ const ProjectCyclesPage = observer(() => {
                 <CycleAppliedFiltersList
                   appliedFilters={currentProjectFilters ?? {}}
                   isFavoriteFilterApplied={currentProjectDisplayFilters?.favorites ?? false}
-                  handleClearAllFilters={() => clearAllFilters(projectId.toString())}
+                  handleClearAllFilters={() => clearAllFilters(projectIdString)}
                   handleRemoveFilter={handleRemoveFilter}
-                  handleDisplayFiltersUpdate={(filters) => updateDisplayFilters(projectId.toString(), filters)}
+                  handleDisplayFiltersUpdate={(filters) => updateDisplayFilters(projectIdString, filters)}
+                  customFields={customFields}
+                  projectId={projectIdString}
                 />
               </Header>
             )}

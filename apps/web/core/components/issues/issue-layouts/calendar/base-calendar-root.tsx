@@ -3,19 +3,19 @@
 import { FC, useCallback, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+// plane imports
 import { EIssueGroupByToServerOptions, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { EIssuesStoreType, TGroupedIssues, TIssue } from "@plane/types";
-// components
+import { EIssuesStoreType, TGroupedIssues, TIssue} from "@plane/types";
 import { TOAST_TYPE, setToast } from "@plane/ui";
-import { CalendarChart } from "@/components/issues";
-//constants
 // hooks
-import { useIssues, useCalendarView, useUserPermissions } from "@/hooks/store";
+import { useCalendarView } from "@/hooks/store/use-calendar-view";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // types
 import { IQuickActionProps } from "../list/list-view-types";
-import { handleDragAndDrop as utilsHandleDragAndDrop } from "./utils";
+import { CalendarChart } from "./calendar";
 
 export type CalendarStoreType =
   | EIssuesStoreType.PROJECT
@@ -37,7 +37,7 @@ interface IBaseCalendarRoot {
 
 const getIssuesForDate = (date: Date, issues: any) => {
   if (!issues || !Array.isArray(issues.issues)) return [];
-  
+
   return {
     date: date.toLocaleString(),
     allIssues: issues,
@@ -126,21 +126,21 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
 
     // console.log("[중요] base-calendar-root - 함수 호출 시 전달된 isStartDate:", isStartDate);
 
-    const wrappedUpdateIssue = updateIssue 
-      ? (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => 
+    const wrappedUpdateIssue = updateIssue
+      ? (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) =>
           updateIssue(projectId, issueId, data)
       : undefined;
-    
+
     // 이슈 객체 가져오기 - 직접 전달받은 객체가 있으면 사용, 없으면 스토어에서 조회
     const issueDetail = issueObject || (issueId ? issueMap[issueId] : undefined);
-    
+
     // 시작일과 종료일이 같은 경우에만 로그 출력
     const hasBothDates = !!(issueDetail?.start_date && issueDetail?.target_date);
-    const datesAreEqual = hasBothDates && 
-      (issueDetail.start_date && issueDetail.target_date) ? 
-      new Date(issueDetail.start_date).toDateString() === new Date(issueDetail.target_date).toDateString() : 
+    const datesAreEqual = hasBothDates &&
+      (issueDetail.start_date && issueDetail.target_date) ?
+      new Date(issueDetail.start_date).toDateString() === new Date(issueDetail.target_date).toDateString() :
       false;
-    
+
     // if (datesAreEqual) {
     //   console.log("[중요] base-calendar-root - 드래그 정보:", {
     //     issueId,
@@ -153,18 +153,18 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
     // }
 
     try {
-      // 직접 handleDragDrop 유틸리티 함수 사용
+      // 날짜 이동 로직을 내부에서 처리
       if (workspaceSlug && issueDetail && wrappedUpdateIssue) {
         // workspaceSlug가 배열인 경우 첫 번째 요소를 사용
         const workspaceSlugStr = Array.isArray(workspaceSlug) ? workspaceSlug[0] : workspaceSlug;
-        
+
         // 원본 이슈 객체 복사 (API 호출 전에 변경되지 않도록)
         const originalIssue = { ...issueDetail };
         // console.log("[중요] base-calendar-root - 원본 이슈 객체:", originalIssue);
-        
+
         // 업데이트할 데이터 결정
         let updateData: Partial<TIssue> = {};
-        
+
         // isStartDate 값에 따라 업데이트할 필드 결정
         if (isStartDate === null) {
           // 두 날짜 모두 업데이트 (시작일과 종료일이 같은 경우)
@@ -179,10 +179,10 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
           updateData = { target_date: destinationDate };
           // console.log("[중요] base-calendar-root - 종료일만 업데이트:", updateData);
         }
-        
+
         // API 호출
         await wrappedUpdateIssue(workspaceSlugStr, issueProjectId, issueId, updateData);
-        
+
         // 성공 메시지 표시
         setToast({
           type: TOAST_TYPE.SUCCESS,
@@ -205,7 +205,7 @@ export const BaseCalendarRoot = observer((props: IBaseCalendarRoot) => {
           }
         });
         window.dispatchEvent(event);
-        
+
         // 반환값 제거 (void 반환)
       }
     } catch (error) {

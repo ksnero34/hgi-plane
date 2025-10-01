@@ -22,6 +22,7 @@ import {
   MinusSquare,
   Palette,
   AlignCenter,
+  LinkIcon,
   FileIcon,
 } from "lucide-react";
 // constants
@@ -32,6 +33,7 @@ import {
   insertImage,
   insertFile,
   insertTableCommand,
+  setLinkEditor,
   setText,
   setTextAlign,
   toggleBackgroundColor,
@@ -46,6 +48,7 @@ import {
   toggleTaskList,
   toggleTextColor,
   toggleUnderline,
+  unsetLinkEditor,
 } from "@/helpers/editor-commands";
 // types
 import { TCommandWithProps, TEditorCommands } from "@/types";
@@ -192,21 +195,34 @@ export const ImageItem = (editor: Editor): EditorMenuItem<"image"> => ({
 });
 
 export const FileItem = (editor: Editor): EditorMenuItem<"file"> => ({
-  key: "file",
-  name: "File",
-  isActive: () => editor?.isActive("fileComponent"),
-  command: () =>
-    insertFile({ editor, event: "insert", pos: editor.state.selection.from }),
-  icon: FileIcon,
+    key: "file",
+    name: "File",
+    isActive: () => editor?.isActive("fileComponent"),
+    command: () =>
+        insertFile({ editor, event: "insert", pos: editor.state.selection.from }),
+    icon: FileIcon,
 });
 
-export const HorizontalRuleItem = (editor: Editor) =>
+export const HorizontalRuleItem = (editor: Editor): EditorMenuItem<"divider"> =>
   ({
     key: "divider",
     name: "Divider",
     isActive: () => editor?.isActive(CORE_EXTENSIONS.HORIZONTAL_RULE),
     command: () => insertHorizontalRule(editor),
     icon: MinusSquare,
+  }) as const;
+
+export const LinkItem = (editor: Editor): EditorMenuItem<"link"> =>
+  ({
+    key: "link",
+    name: "Link",
+    isActive: () => editor?.isActive("link"),
+    command: (props) => {
+      if (!props) return;
+      if (props.url) setLinkEditor(editor, props.url, props.text);
+      else unsetLinkEditor(editor);
+    },
+    icon: LinkIcon,
   }) as const;
 
 export const TextColorItem = (editor: Editor): EditorMenuItem<"text-color"> => ({
@@ -266,6 +282,7 @@ export const getEditorMenuItems = (editor: Editor | null): EditorMenuItem<TEdito
     ImageItem(editor),
     FileItem(editor),
     HorizontalRuleItem(editor),
+    LinkItem(editor),
     TextColorItem(editor),
     BackgroundColorItem(editor),
     TextAlignItem(editor),

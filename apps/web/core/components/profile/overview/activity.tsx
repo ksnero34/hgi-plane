@@ -9,13 +9,13 @@ import { Loader, Card } from "@plane/ui";
 import { TCustomField } from "@plane/types";
 import { calculateTimeAgo, getFileURL } from "@plane/utils";
 // components
-import { ActivityMessage, IssueLink } from "@/components/core";
-import { ProfileEmptyState } from "@/components/ui";
+import { ActivityMessage, IssueLink } from "@/components/core/activity";
+import { ProfileEmptyState } from "@/components/ui/profile-empty-state";
 // constants
 import { USER_PROFILE_ACTIVITY } from "@/constants/fetch-keys";
 // helpers
 // hooks
-import { useUser } from "@/hooks/store";
+import { useUser } from "@/hooks/store/user";
 // assets
 import recentActivityEmptyState from "@/public/empty-state/recent_activity.svg";
 // services
@@ -44,7 +44,7 @@ export const ProfileActivity = observer(() => {
     userProfileActivity?.results?.length ? ["project-details", userProfileActivity] : null,
     async () => {
       if (!userProfileActivity) return {};
-      
+
       const projectData = userProfileActivity.results.reduce((acc: any, activity: any) => {
         if (activity.project && activity.workspace_detail?.slug) {
           acc[activity.project] = activity.workspace_detail.slug;
@@ -87,7 +87,7 @@ export const ProfileActivity = observer(() => {
           }
         })
       );
-      
+
       const membersMap: { [projectId: string]: any[] } = {};
       Object.keys(projectData).forEach((projectId) => {
         membersMap[projectId] = workspaceMembers;
@@ -100,7 +100,7 @@ export const ProfileActivity = observer(() => {
   // 프로젝트별 멤버 정보를 제공하는 mock hook 생성
   const createMemberHook = (projectId: string) => {
     const projectMembers = projectDetails?.membersByProject?.[projectId] || [];
-    
+
     return {
       project: {
         getProjectMemberDetails: (memberId: string) => {
@@ -125,7 +125,7 @@ export const ProfileActivity = observer(() => {
               {userProfileActivity.results.map((activity) => {
                 const projectCustomFields = projectDetails?.customFieldsByProject?.[activity.project] || [];
                 const memberHook = createMemberHook(activity.project);
-                
+
                 return (
                   <div key={activity.id} className="flex gap-3">
                     <div className="flex-shrink-0 grid place-items-center overflow-hidden rounded h-6 w-6">
@@ -147,15 +147,15 @@ export const ProfileActivity = observer(() => {
                           {currentUser?.id === activity.actor_detail?.id ? "당신이" : activity.actor_detail?.display_name + " 님이"}{" "}
                         </span>
                         {activity.field ? (
-                          <ProfileActivityMessage 
-                            activity={activity} 
-                            showIssue 
+                          <ProfileActivityMessage
+                            activity={activity}
+                            showIssue
                             customFields={projectCustomFields}
                             memberHook={memberHook}
                           />
                         ) : (
                           <span>
-                            created <IssueLink activity={activity} />
+                            <IssueLink activity={activity} /> 을 생성했습니다.
                           </span>
                         )}
                       </p>
@@ -218,21 +218,21 @@ const ProfileActivityMessage = ({ activity, showIssue = false, customFields = []
 
 // 커스텀 필드 activity 메시지 생성 (core/activity.tsx에서 복사)
 const getCustomFieldActivityMessage = (
-  activity: any, 
-  showIssue: boolean, 
+  activity: any,
+  showIssue: boolean,
   workspaceSlug: string,
   memberHook: any,
   customFields: TCustomField[]
 ) => {
   const fieldKey = activity.field?.replace("custom_field_", "");
-  
+
   // 실제 커스텀 필드에서 이름 찾기
   const field = customFields.find((f: TCustomField) => f.name === fieldKey || f.key === fieldKey);
   const fieldName = field?.name || fieldKey || "알 수 없는 필드";
   const fieldType = field?.field_type || 'text';
-  
+
   const projectId = activity.project;
-  
+
   if (activity.verb === "created") {
     return (
       <>
@@ -279,7 +279,7 @@ const getCustomFieldActivityMessage = (
       </>
     );
   }
-  
+
   return (
     <>
       커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>을(를) 수정했습니다
@@ -294,25 +294,25 @@ const getCustomFieldActivityMessage = (
 
 // 프로필용 커스텀 필드 값 포맷팅 함수
 const formatCustomFieldValueForProfile = (
-  value: string | null, 
-  fieldType: string, 
-  workspaceSlug: string, 
+  value: string | null,
+  fieldType: string,
+  workspaceSlug: string,
   projectId: string,
   memberHook: any
 ): React.ReactNode => {
   if (!value) return "없음";
-  
+
   const { project: { getProjectMemberDetails, getProjectMemberIds } } = memberHook;
-  
+
   if (fieldType === "project_member") {
     // 단일 멤버인 경우 - 백엔드에서 UUID를 받음
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-    
+
     if (isUUID) {
       // UUID인 경우 멤버 정보 조회
       const memberDetails = getProjectMemberDetails(value);
       const displayName = memberDetails?.member?.display_name || memberDetails?.display_name || value;
-      
+
       return (
         <a
           href={`/${workspaceSlug}/profile/${value}`}
@@ -330,7 +330,7 @@ const formatCustomFieldValueForProfile = (
   } else if (fieldType === "project_members") {
     // 다중 멤버인 경우 - 백엔드에서 UUID 배열을 JSON으로 받음
     let memberIds: string[] = [];
-    
+
     try {
       // JSON 배열 형태인지 확인
       if (value.startsWith('[') && value.endsWith(']')) {
@@ -346,15 +346,15 @@ const formatCustomFieldValueForProfile = (
       // JSON 파싱 실패 시 쉼표로 구분된 문자열로 처리
       memberIds = value.split(',').map(id => id.trim());
     }
-    
+
     return memberIds.map((memberId, index) => {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
-      
+
       if (isUUID) {
         // UUID인 경우 멤버 정보 조회
         const memberDetails = getProjectMemberDetails(memberId);
         const displayName = memberDetails?.member?.display_name || memberDetails?.display_name || memberId;
-        
+
         const memberElement = (
           <a
             key={index}
@@ -366,10 +366,10 @@ const formatCustomFieldValueForProfile = (
             {displayName}
           </a>
         );
-        
+
         return index < memberIds.length - 1 ? (
           <span key={`wrapper-${index}`}>
-            {memberElement}, 
+            {memberElement},
           </span>
         ) : memberElement;
       } else {
@@ -377,10 +377,10 @@ const formatCustomFieldValueForProfile = (
         const memberElement = (
           <span key={index} className="font-medium text-custom-text-100">{memberId}</span>
         );
-        
+
         return index < memberIds.length - 1 ? (
           <span key={`wrapper-${index}`}>
-            {memberElement}, 
+            {memberElement},
           </span>
         ) : memberElement;
       }
@@ -393,6 +393,6 @@ const formatCustomFieldValueForProfile = (
       return value;
     }
   }
-  
+
   return value;
 };

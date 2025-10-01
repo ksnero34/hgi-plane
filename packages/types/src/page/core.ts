@@ -9,6 +9,7 @@ export type TPage = TPageExtended & {
   color: string | undefined;
   created_at: Date | undefined;
   created_by: string | undefined;
+  description: object | undefined;
   description_html: string | undefined;
   id: string | undefined;
   is_favorite: boolean;
@@ -23,7 +24,8 @@ export type TPage = TPageExtended & {
   updated_by: string | undefined;
   workspace: string | undefined;
   logo_props: TLogoProps | undefined;
-};
+  deleted_at: Date | undefined;
+} & TPageExtended;
 
 // page filters
 export type TPageNavigationTabs = "public" | "private" | "archived";

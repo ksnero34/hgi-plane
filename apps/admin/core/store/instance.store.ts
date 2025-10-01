@@ -115,15 +115,13 @@ export class InstanceStore implements IInstanceStore {
         this.store.theme.toggleNewUserPopup();
       runInAction(() => {
         // console.log("instanceInfo: ", instanceInfo);
-        // console.log("config: ", instanceInfo.config);
-        // console.log("is_oidc_enabled: ", instanceInfo.config?.is_oidc_enabled);
         this.isLoading = false;
         this.instance = instanceInfo.instance;
         this.config = instanceInfo.config;
       });
       return instanceInfo;
     } catch (error) {
-      console.error("Error fetching the instance info", error);
+      console.error("Error fetching the instance info");
       this.isLoading = false;
       this.error = { message: "Failed to fetch the instance info" };
       this.instanceStatus = {
@@ -217,13 +215,13 @@ export class InstanceStore implements IInstanceStore {
   updateInstanceMember = async (userId: string, data: { is_admin: boolean }) => {
     try {
       const response = await this.instanceService.updateInstanceMember(userId, data);
-      
+
       // 멤버 목록을 다시 불러와서 상태 업데이트
       await this.fetchInstanceMembers()
         .then(members => {
           return response;
         });
-        
+
       return response;
     } catch (error) {
       console.error("Error updating instance member");

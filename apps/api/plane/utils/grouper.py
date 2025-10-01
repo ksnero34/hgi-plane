@@ -95,6 +95,16 @@ def issue_queryset_grouper(
         ),
     }
 
+    # v1.0.0 동작과 일치하도록, 해당 필드로 그룹화할 때는 기본 annotations에서 제외
+    skip_annotation_map = {
+        "labels__id": "label_ids",
+        "assignees__id": "assignee_ids",
+        "issue_module__module_id": "module_ids",
+    }
+    for key, value in skip_annotation_map.items():
+        if key in {group_by, sub_group_by}:
+            default_annotations.pop(value, None)
+
     # parent_child 그룹화인 경우 특별 처리
     if group_by == "parent_child" or sub_group_by == "parent_child" or group_by == "top_level_only" or sub_group_by == "top_level_only":
         # 이 경우에는 Django 어노테이션 대신 Python 레벨에서 처리

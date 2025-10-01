@@ -26,7 +26,6 @@ from plane.db.models import (
 )
 from plane.utils.content_validator import (
     validate_html_content,
-    validate_json_content,
     validate_binary_data,
 )
 
@@ -64,13 +63,13 @@ class IssueSerializer(BaseSerializer):
         write_only=True,
         required=False,
     )
-    
+
     custom_field_values = serializers.ListField(
         child=serializers.DictField(),
         write_only=True,
         required=False,
     )
-    
+
     type_id = serializers.PrimaryKeyRelatedField(
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
@@ -98,20 +97,24 @@ class IssueSerializer(BaseSerializer):
             raise serializers.ValidationError("Invalid HTML passed")
 
         # Validate description content for security
-        if data.get("description"):
-            is_valid, error_msg = validate_json_content(data["description"])
-            if not is_valid:
-                raise serializers.ValidationError({"description": error_msg})
-
         if data.get("description_html"):
-            is_valid, error_msg = validate_html_content(data["description_html"])
+            is_valid, error_msg, sanitized_html = validate_html_content(
+                data["description_html"]
+            )
             if not is_valid:
-                raise serializers.ValidationError({"description_html": error_msg})
+                raise serializers.ValidationError(
+                    {"error": "html content is not valid"}
+                )
+            # Update the data with sanitized HTML if available
+            if sanitized_html is not None:
+                data["description_html"] = sanitized_html
 
         if data.get("description_binary"):
             is_valid, error_msg = validate_binary_data(data["description_binary"])
             if not is_valid:
-                raise serializers.ValidationError({"description_binary": error_msg})
+                raise serializers.ValidationError(
+                    {"description_binary": "Invalid binary data"}
+                )
 
         # Validate assignees are from project
         if data.get("assignees", []):
@@ -144,17 +147,17 @@ class IssueSerializer(BaseSerializer):
             # Only validate workflow transitions for existing issues with workflow assigned
             if self.instance.workflow:
                 from plane.db.models import WorkflowTransition
-                
+
                 from_state = self.instance.state
                 to_state = data.get("state")
-                
+
                 # Check if transition exists in workflow
                 transition = WorkflowTransition.objects.filter(
                     workflow=self.instance.workflow,
                     from_state=from_state,
                     to_state=to_state
                 ).first()
-                
+
                 if not transition:
                     raise serializers.ValidationError(
                         f"State transition from '{from_state.name}' to '{to_state.name}' is not allowed by workflow rules"
@@ -277,7 +280,7 @@ class IssueSerializer(BaseSerializer):
         if custom_field_values:
             # 현재 이슈 타입에 해당하는 커스텀 필드와 프로젝트 공통 커스텀 필드를 가져옴
             valid_custom_fields = CustomField.objects.filter(
-                Q(project_id=project_id) & 
+                Q(project_id=project_id) &
                 (Q(issue_type=issue_type) | Q(issue_type__isnull=True))
             ).values_list("id", flat=True)
 
@@ -358,19 +361,19 @@ class IssueSerializer(BaseSerializer):
         # 커스텀 필드 값 업데이트
         if custom_field_values is not None:
             print(f"[IssueSerializer] Processing custom field values: {custom_field_values}")
-            
+
             # 중복된 custom_field_id 제거 - 마지막 값만 사용
             unique_custom_fields = {}
             for field_value in custom_field_values:
                 field_id = field_value["custom_field_id"]
                 unique_custom_fields[field_id] = field_value
-            
+
             print(f"[IssueSerializer] After deduplication: {list(unique_custom_fields.values())}")
-            
+
             # 현재 이슈 타입에 해당하는 커스텀 필드와 프로젝트 공통 커스텀 필드를 가져옴
             issue_type = instance.type # 현재 이슈의 타입
             valid_custom_fields = CustomField.objects.filter(
-                Q(project_id=project_id) & 
+                Q(project_id=project_id) &
                 (Q(issue_type=issue_type) | Q(issue_type__isnull=True))
             ).values_list("id", flat=True)
 
@@ -380,7 +383,7 @@ class IssueSerializer(BaseSerializer):
                 deleted_at__isnull=True
             )
             custom_field_map = {str(field.id): field for field in custom_fields}
-            
+
             # 새로운 값들 생성/수정
             for field_value in unique_custom_fields.values():
                 field_id = field_value["custom_field_id"]
@@ -391,34 +394,34 @@ class IssueSerializer(BaseSerializer):
                     continue
 
                 field = custom_field_map.get(str(field_id))
-                
+
                 if not field:
                     print(f"[IssueSerializer] Field {field_id} not found, skipping")
                     continue
-                
+
                 print(f"[IssueSerializer] Processing field {field_id} ({field.field_type}) with value {new_value}")
-                
+
                 # 모든 타입 동일 처리: 하나의 custom_field_id에 하나의 값 (단일값 또는 JSON 배열)
                 existing_value = CustomFieldValue.objects.filter(
                     issue=instance,
                     custom_field_id=field_id,
                     deleted_at__isnull=True
                 ).first()
-                
+
                 if existing_value:
                     # 기존 값 업데이트
                     if existing_value.value != new_value:
                         existing_value.value = new_value
                         existing_value.updated_by_id = updated_by_id
                         existing_value.save()
-                        
+
                         print(f"[IssueSerializer] Successfully updated field {field_id}")
                     else:
                         print(f"[IssueSerializer] Field {field_id} value unchanged: {new_value}")
                 else:
                     # 새로운 값 생성
                     print(f"[IssueSerializer] Creating new field {field_id} with value {new_value}")
-                    
+
                     CustomFieldValue.objects.create(
                         custom_field_id=field_id,
                         issue=instance,
@@ -428,7 +431,7 @@ class IssueSerializer(BaseSerializer):
                         created_by_id=created_by_id,
                         updated_by_id=updated_by_id,
                     )
-                    
+
                     print(f"[IssueSerializer] Successfully created field {field_id}")
 
         # Time updation occues even when other related models are updated
@@ -479,7 +482,7 @@ class IssueSerializer(BaseSerializer):
             issue=instance,
             deleted_at__isnull=True
         ).select_related('custom_field')
-        
+
         data["custom_field_values"] = [
             {
                 "custom_field_id": str(cfv.custom_field_id),

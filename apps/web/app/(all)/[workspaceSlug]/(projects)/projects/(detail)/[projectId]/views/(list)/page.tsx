@@ -10,13 +10,16 @@ import { EUserProjectRoles, EViewAccess, TViewFilterProps } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
 import { calculateTotalFilters, calculateFilterRemovalValue } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
-import { DetailedEmptyState } from "@/components/empty-state";
-import { ProjectViewsList } from "@/components/views";
+import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
+import { ProjectViewsList } from "@/components/views/views-list";
 // constants
 // helpers
 // hooks
-import { useProject, useProjectView, useUserPermissions, useCustomField } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectView } from "@/hooks/store/use-project-view";
+import { useUserPermissions } from "@/hooks/store/user";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -24,16 +27,17 @@ const ProjectViewsPage = observer(() => {
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
+  // plane hooks
   const { t } = useTranslation();
   // store
-  const { filters, clearAllFilters, updateFilters } = useProjectView();
   const { getProjectById, currentProjectDetails } = useProject();
+  const { filters, updateFilters, clearAllFilters } = useProjectView();
   const { allowPermissions } = useUserPermissions();
   const { customFields } = useCustomField(projectId as string);
 
   // derived values
   const project = projectId ? getProjectById(projectId.toString()) : undefined;
-  const pageTitle = project?.name ? `${project?.name} - Views` : t("PAGES.PROJECT_VIEWS");
+  const pageTitle = project?.name ? `${project?.name} - Views` : undefined;
   const canPerformEmptyStateActions = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/views" });
 
@@ -79,7 +83,7 @@ const ProjectViewsPage = observer(() => {
       {isFiltersApplied && (
         <Header variant={EHeaderVariant.TERNARY}>
           <ViewAppliedFiltersList
-            appliedFilters={filters?.filters ?? {}}
+            appliedFilters={filters.filters ?? {}}
             handleClearAllFilters={clearAllFilters}
             handleRemoveFilter={handleRemoveFilter}
             alwaysAllowEditing

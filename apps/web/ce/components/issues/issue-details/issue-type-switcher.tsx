@@ -6,10 +6,10 @@ import { RefreshCw } from "lucide-react";
 // ui
 import { Tooltip } from "@plane/ui";
 // store hooks
-import { useIssueDetail } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueIdentifier } from "./issue-identifier";
-import { CreateUpdateIssueModal } from "@/components/issues";
+import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 
 export type TIssueTypeSwitcherProps = {
   issueId: string;

@@ -17,14 +17,15 @@ import { IWorkspace } from "@plane/types";
 import { Button, CustomSelect, Input, TOAST_TYPE, setToast } from "@plane/ui";
 import { copyUrlToClipboard, getFileURL } from "@plane/utils";
 // components
-import { LogoSpinner } from "@/components/common";
-import { WorkspaceImageUploadModal } from "@/components/core";
+import { LogoSpinner } from "@/components/common/logo-spinner";
+import { WorkspaceImageUploadModal } from "@/components/core/modals/workspace-image-upload-modal";
 // helpers
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useUserPermissions, useWorkspace } from "@/hooks/store";
+import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useUserPermissions } from "@/hooks/store/user";
 // plane web components
-import { DeleteWorkspaceSection } from "@/plane-web/components/workspace";
+import { DeleteWorkspaceSection } from "@/plane-web/components/workspace/delete-workspace-section";
 
 const defaultValues: Partial<IWorkspace> = {
   name: "",
@@ -66,15 +67,15 @@ export const WorkspaceDetails: FC = observer(() => {
     };
 
     await updateWorkspace(currentWorkspace.slug, payload)
-      .then((res) => {
+      .then(() => {
         captureSuccess({
           eventName: WORKSPACE_TRACKER_EVENTS.update,
           payload: { slug: currentWorkspace.slug },
         });
         setToast({
-          title: "성공!",
+          title: "Success!",
           type: TOAST_TYPE.SUCCESS,
-          message: "워크스페이스가 성공적으로 업데이트되었습니다.",
+          message: "Workspace updated successfully",
         });
       })
       .catch((err) => {
@@ -99,15 +100,15 @@ export const WorkspaceDetails: FC = observer(() => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "워크스페이스 이미지가 성공적으로 삭제되었습니다.",
+          title: "Success!",
+          message: "Workspace picture removed successfully.",
         });
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "워크스페이스 이미지를 삭제할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: "There was some error in deleting your profile picture. Please try again.",
         });
       });
   };
@@ -118,8 +119,7 @@ export const WorkspaceDetails: FC = observer(() => {
     copyUrlToClipboard(`${currentWorkspace.slug}`).then(() => {
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "링크가 복사되었습니다.",
-        message: "워크스페이스 링크가 클립보드에 복사되었습니다.",
+        title: "Workspace URL copied to the clipboard.",
       });
     });
   };
@@ -168,7 +168,7 @@ export const WorkspaceDetails: FC = observer(() => {
                   />
                 </div>
               ) : (
-                <div className="relative flex h-14 w-14 items-center justify-center rounded bg-gray-700 p-4 uppercase text-white">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded bg-[#026292] p-4 uppercase text-white">
                   {currentWorkspace?.name?.charAt(0) ?? "N"}
                 </div>
               )}

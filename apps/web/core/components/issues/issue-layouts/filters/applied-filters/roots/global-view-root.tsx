@@ -11,19 +11,23 @@ import {
   EIssueFilterType,
   EUserPermissions,
   EUserPermissionsLevel,
+  GLOBAL_VIEW_TRACKER_ELEMENTS,
   GLOBAL_VIEW_TRACKER_EVENTS,
 } from "@plane/constants";
 import { EIssuesStoreType, EViewAccess, IIssueFilterOptions, TStaticViewTypes, TCustomField } from "@plane/types";
 import { Header, EHeaderVariant, Loader } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
-import { AppliedFiltersList } from "@/components/issues";
 import { UpdateViewComponent } from "@/components/views/update-view-component";
-import { CreateUpdateWorkspaceViewModal } from "@/components/workspace";
+import { CreateUpdateWorkspaceViewModal } from "@/components/workspace/views/modal";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useGlobalView, useIssues, useLabel, useUser, useUserPermissions } from "@/hooks/store";
+import { useGlobalView } from "@/hooks/store/use-global-view";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { getAreFiltersEqual } from "../../../utils";
+import { AppliedFiltersList } from "../filters-list";
 import { calculateFilterRemovalValue } from "@plane/utils";
 
 type Props = {
@@ -134,7 +138,7 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
           },
           error: error,
         });
-      });
+    });
   };
 
   // add a placeholder object instead of appliedFilters if it is undefined
@@ -199,6 +203,7 @@ export const GlobalViewsAppliedFiltersRoot = observer((props: Props) => {
           isAuthorizedUser={isAuthorizedUser}
           setIsModalOpen={setIsModalOpen}
           handleUpdateView={handleUpdateView}
+          trackerElement={GLOBAL_VIEW_TRACKER_ELEMENTS.HEADER_SAVE_VIEW_BUTTON}
         />
       ) : (
         <></>

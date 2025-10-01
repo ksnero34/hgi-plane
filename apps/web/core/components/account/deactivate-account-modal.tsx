@@ -9,7 +9,7 @@ import { useTranslation } from "@plane/i18n";
 import { Button, TOAST_TYPE, setToast } from "@plane/ui";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useUser } from "@/hooks/store";
+import { useUser } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 
 type Props = {
@@ -42,8 +42,8 @@ export const DeactivateAccountModal: React.FC<Props> = (props) => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공했습니다!",
-          message: "계정이 비활성화되었습니다.",
+          title: "Success!",
+          message: "Account deactivated successfully.",
         });
         signOut();
         router.push("/");

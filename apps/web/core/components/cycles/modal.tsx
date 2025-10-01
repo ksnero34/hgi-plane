@@ -8,17 +8,17 @@ import { CYCLE_TRACKER_EVENTS } from "@plane/constants";
 import type { CycleDateCheckData, ICycle, TCycleTabOptions } from "@plane/types";
 // ui
 import { EModalPosition, EModalWidth, ModalCore, TOAST_TYPE, setToast } from "@plane/ui";
-// components
-import { CycleForm } from "@/components/cycles";
-// constants
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
-import { useCycle, useProject } from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useProject } from "@/hooks/store/use-project";
 import useKeypress from "@/hooks/use-keypress";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // services
 import { CycleService } from "@/services/cycle.service";
+// local imports
+import { CycleForm } from "./form";
 
 type CycleModalProps = {
   isOpen: boolean;
@@ -60,8 +60,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
 
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공했습니다!",
-          message: "주기가 생성되었습니다.",
+          title: "Success!",
+          message: "Cycle created successfully.",
         });
         captureSuccess({
           eventName: CYCLE_TRACKER_EVENTS.create,
@@ -73,8 +73,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: err?.detail ?? "주기 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: err?.detail ?? "Error in creating cycle. Please try again.",
         });
         captureError({
           eventName: CYCLE_TRACKER_EVENTS.create,
@@ -97,19 +97,15 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공했습니다!",
-          message: "주기가 업데이트되었습니다.",
+          title: "Success!",
+          message: "Cycle updated successfully.",
         });
       })
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: err?.detail ?? "주기 업데이트 중 오류가 발생했습니다. 다시 시도해주세요.",
-        });
-        captureError({
-          eventName: CYCLE_TRACKER_EVENTS.update,
-          error: err,
+          title: "Error!",
+          message: err?.detail ?? "Error in updating cycle. Please try again.",
         });
         captureError({
           eventName: CYCLE_TRACKER_EVENTS.update,
@@ -162,8 +158,8 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
     } else
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "오류가 발생했습니다!",
-        message: "날짜에 해당하는 주기가 이미미 있습니다. 주기를 생성하려면 날짜를 제거해주세요.",
+        title: "Error!",
+        message: "You already have a cycle on the given dates, if you want to create a draft cycle, remove the dates.",
       });
   };
 
@@ -197,7 +193,7 @@ export const CycleCreateUpdateModal: React.FC<CycleModalProps> = (props) => {
       <CycleForm
         handleFormSubmit={handleFormSubmit}
         handleClose={handleClose}
-        status={data ? true : false}
+        status={!!data}
         projectId={activeProject ?? ""}
         setActiveProject={setActiveProject}
         data={data}

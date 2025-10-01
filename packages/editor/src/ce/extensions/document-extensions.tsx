@@ -2,16 +2,13 @@ import type { HocuspocusProvider } from "@hocuspocus/provider";
 import type { AnyExtension } from "@tiptap/core";
 import { SlashCommands } from "@/extensions";
 import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
-// plane editor types
-import type { TEmbedConfig } from "@/plane-editor/types";
 // types
 import type { IEditorProps, TExtensions, TUserDetails } from "@/types";
 
 export type TDocumentEditorAdditionalExtensionsProps = Pick<
   IEditorProps,
-  "disabledExtensions" | "flaggedExtensions" | "fileHandler"
+  "disabledExtensions" | "flaggedExtensions" | "fileHandler" | "extendedEditorProps"
 > & {
-  embedConfig: TEmbedConfig | undefined;
   isEditable: boolean;
   provider?: HocuspocusProvider;
   userDetails: TUserDetails;
@@ -31,7 +28,7 @@ const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
   {
     isEnabled: (disabledExtensions) => !disabledExtensions.includes("file"),
     getExtension: ({ fileHandler, isEditable }) =>
-      CustomReadOnlyFileExtension({ 
+      CustomReadOnlyFileExtension({
         getAssetSrc: fileHandler?.getAssetSrc || (async () => ""),
         getAssetDownloadSrc: fileHandler?.getAssetDownloadSrc || (async () => "")
       }),

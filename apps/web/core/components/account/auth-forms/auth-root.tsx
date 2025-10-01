@@ -1,18 +1,17 @@
 import React, { FC, useEffect, useState } from "react";
 import { observer } from "mobx-react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useTranslation } from "@plane/i18n";
-import { IEmailCheckData } from "@plane/types";
-// components
-import {
-  AuthHeader,
-  AuthBanner,
-  AuthEmailForm,
-  AuthPasswordForm,
-  OAuthOptions,
-  TermsAndConditions,
-  AuthUniqueCodeForm,
-} from "@/components/account";
+import { useTheme } from "next-themes";
+// plane helpers
+import { API_BASE_URL } from "@plane/constants";
+import { OAuthOptions as PlaneOAuthOptions } from "@plane/ui";
+// assets
+import GithubLightLogo from "/public/logos/github-black.png";
+import GithubDarkLogo from "/public/logos/github-dark.svg";
+import GitlabLogo from "/public/logos/gitlab-logo.svg";
+import GoogleLogo from "/public/logos/google-logo.svg";
+import OidcLogo from "/public/logos/oidc-logo.svg";
 // helpers
 import {
   EAuthModes,
@@ -23,27 +22,26 @@ import {
   authErrorHandler,
 } from "@/helpers/authentication.helper";
 // hooks
-import { useInstance } from "@/hooks/store";
-import { useAppRouter } from "@/hooks/use-app-router";
-// services
-import { AuthService } from "@/services/auth.service";
-
-const authService = new AuthService();
+import { useInstance } from "@/hooks/store/use-instance";
+// local imports
+import { TermsAndConditions } from "../terms-and-conditions";
+import { AuthBanner } from "./auth-banner";
+import { AuthHeader } from "./auth-header";
+import { AuthFormRoot } from "./form-root";
 
 type TAuthRoot = {
   authMode: EAuthModes;
 };
 
 export const AuthRoot: FC<TAuthRoot> = observer((props) => {
-  //router
-  const router = useAppRouter();
   const searchParams = useSearchParams();
   // query params
   const emailParam = searchParams.get("email");
   const invitation_id = searchParams.get("invitation_id");
   const workspaceSlug = searchParams.get("slug");
   const error_code = searchParams.get("error_code");
-  const nextPath = searchParams.get("next_path");
+  const next_path = searchParams.get("next_path") || undefined;
+  const { resolvedTheme } = useTheme();
   // props
   const { authMode: currentAuthMode } = props;
   // states
@@ -51,22 +49,28 @@ export const AuthRoot: FC<TAuthRoot> = observer((props) => {
   const [authStep, setAuthStep] = useState<EAuthSteps>(EAuthSteps.EMAIL);
   const [email, setEmail] = useState(emailParam ? emailParam.toString() : "");
   const [errorInfo, setErrorInfo] = useState<TAuthErrorInfo | undefined>(undefined);
-  const [isExistingEmail, setIsExistingEmail] = useState(false);
-  const [isDevMode, setIsDevMode] = useState<boolean>(false);
-  // plane hooks
-  const { t } = useTranslation();
+  const [isDevMode, setIsDevMode] = useState(false);
+
   // hooks
   const { config } = useInstance();
 
+  // derived values
+  const isOAuthEnabled =
+    (config &&
+      (config?.is_google_enabled || config?.is_github_enabled || config?.is_gitlab_enabled || config?.is_oidc_enabled)) ||
+    false;
+  const isOIDCEnabled = config?.is_oidc_enabled || false;
+  const showEmailLogin = isDevMode || !isOIDCEnabled;
+
   useEffect(() => {
     if (!authMode && currentAuthMode) setAuthMode(currentAuthMode);
-    
-    // 개발자 모드 확인
-    if (typeof window !== "undefined") {
-      const devMode = localStorage.getItem("devMode") === "true";
-      setIsDevMode(devMode);
-    }
   }, [currentAuthMode, authMode]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsDevMode(localStorage.getItem("devMode") === "true");
+    }
+  }, []);
 
   useEffect(() => {
     if (error_code && authMode) {
@@ -110,108 +114,111 @@ export const AuthRoot: FC<TAuthRoot> = observer((props) => {
     }
   }, [error_code, authMode]);
 
-  const isSMTPConfigured = config?.is_smtp_configured || false;
-  const isOIDCEnabled = config?.is_oidc_enabled || false;
-  const showEmailLogin = isDevMode || !isOIDCEnabled;
-
-  // submit handler- email verification
-  const handleEmailVerification = async (data: IEmailCheckData) => {
-    setEmail(data.email);
-    setErrorInfo(undefined);
-    await authService
-      .emailCheck(data)
-      .then(async (response) => {
-        if (response.existing) {
-          if (currentAuthMode === EAuthModes.SIGN_UP) setAuthMode(EAuthModes.SIGN_IN);
-          if (response.status === "MAGIC_CODE") {
-            setAuthStep(EAuthSteps.UNIQUE_CODE);
-            generateEmailUniqueCode(data.email);
-          } else if (response.status === "CREDENTIAL") {
-            setAuthStep(EAuthSteps.PASSWORD);
-          }
-        } else {
-          if (currentAuthMode === EAuthModes.SIGN_IN) setAuthMode(EAuthModes.SIGN_UP);
-          if (response.status === "MAGIC_CODE") {
-            setAuthStep(EAuthSteps.UNIQUE_CODE);
-            generateEmailUniqueCode(data.email);
-          } else if (response.status === "CREDENTIAL") {
-            setAuthStep(EAuthSteps.PASSWORD);
-          }
-        }
-        setIsExistingEmail(response.existing);
-      })
-      .catch((error) => {
-        const errorhandler = authErrorHandler(error?.error_code?.toString(), data?.email || undefined);
-        if (errorhandler?.type) setErrorInfo(errorhandler);
-      });
-  };
-
-  const handleEmailClear = () => {
-    setAuthMode(currentAuthMode);
-    setErrorInfo(undefined);
-    setEmail("");
-    setAuthStep(EAuthSteps.EMAIL);
-    router.push(currentAuthMode === EAuthModes.SIGN_IN ? `/` : "/sign-up");
-  };
-
-  // generating the unique code
-  const generateEmailUniqueCode = async (email: string): Promise<{ code: string } | undefined> => {
-    if (!isSMTPConfigured) return;
-    const payload = { email: email };
-    return await authService
-      .generateUniqueCode(payload)
-      .then(() => ({ code: "" }))
-      .catch((error) => {
-        const errorhandler = authErrorHandler(error?.error_code.toString());
-        if (errorhandler?.type) setErrorInfo(errorhandler);
-        throw error;
-      });
-  };
-
   if (!authMode) return <></>;
+
+  const oauthButtonIntent = authMode === EAuthModes.SIGN_UP ? "Sign up" : "Sign in";
+
+  const handleOAuthRedirect = (provider: string) => {
+    const redirect = next_path ? `?next_path=${next_path}` : "";
+    window.location.assign(`${API_BASE_URL}/auth/${provider}/${redirect}`);
+  };
+
+  const oauthOptions = [
+    {
+      id: "google",
+      text: `${oauthButtonIntent} with Google`,
+      icon: <Image src={GoogleLogo} height={18} width={18} alt="Google Logo" />,
+      onClick: () => handleOAuthRedirect("google"),
+      enabled: config?.is_google_enabled,
+    },
+    {
+      id: "github",
+      text: `${oauthButtonIntent} with GitHub`,
+      icon: (
+        <Image
+          src={resolvedTheme === "dark" ? GithubDarkLogo : GithubLightLogo}
+          height={18}
+          width={18}
+          alt="GitHub Logo"
+        />
+      ),
+      onClick: () => handleOAuthRedirect("github"),
+      enabled: config?.is_github_enabled,
+    },
+    {
+      id: "gitlab",
+      text: `${oauthButtonIntent} with GitLab`,
+      icon: <Image src={GitlabLogo} height={18} width={18} alt="GitLab Logo" />,
+      onClick: () => handleOAuthRedirect("gitlab"),
+      enabled: config?.is_gitlab_enabled,
+    },
+    {
+      id: "oidc",
+      text: "한화손해보험 포털ID로 로그인하기",
+      icon: <Image src={OidcLogo} height={24} width={24} alt="OIDC Logo" />,
+      onClick: () => handleOAuthRedirect("oidc"),
+      enabled: config?.is_oidc_enabled,
+    },
+  ];
+
+  const enabledOAuthOptions = oauthOptions.filter((option) => option.enabled !== false);
+
   return (
-    <div className="relative flex flex-col space-y-6">
-      <AuthHeader
-        workspaceSlug={workspaceSlug?.toString() || undefined}
-        invitationId={invitation_id?.toString() || undefined}
-        invitationEmail={email || undefined}
-        authMode={authMode}
-        currentAuthStep={authStep}
-      >
+    <div className="flex flex-col justify-center items-center flex-grow w-full py-6 mt-10">
+      <div className="relative flex flex-col gap-6 max-w-[22.5rem] w-full">
         {errorInfo && errorInfo?.type === EErrorAlertType.BANNER_ALERT && (
           <AuthBanner bannerData={errorInfo} handleBannerData={(value) => setErrorInfo(value)} />
         )}
-        {showEmailLogin && (
+        <AuthHeader
+          workspaceSlug={workspaceSlug?.toString() || undefined}
+          invitationId={invitation_id?.toString() || undefined}
+          invitationEmail={email || undefined}
+          authMode={authMode}
+          currentAuthStep={authStep}
+        />
+
+        {isOAuthEnabled && enabledOAuthOptions.length > 0 && (
           <>
-            {authStep === EAuthSteps.EMAIL && <AuthEmailForm defaultEmail={email} onSubmit={handleEmailVerification} />}
-            {authStep === EAuthSteps.UNIQUE_CODE && (
-              <AuthUniqueCodeForm
-                mode={authMode}
-                email={email}
-                isExistingEmail={isExistingEmail}
-                handleEmailClear={handleEmailClear}
-                generateEmailUniqueCode={generateEmailUniqueCode}
-                nextPath={nextPath || undefined}
+            {showEmailLogin ? (
+              <PlaneOAuthOptions
+                options={oauthOptions}
+                compact={authStep === EAuthSteps.PASSWORD}
+                containerClassName={authStep === EAuthSteps.PASSWORD ? "mt-0" : ""}
               />
-            )}
-            {authStep === EAuthSteps.PASSWORD && (
-              <AuthPasswordForm
-                mode={authMode}
-                isSMTPConfigured={isSMTPConfigured}
-                email={email}
-                handleEmailClear={handleEmailClear}
-                handleAuthStep={(step: EAuthSteps) => {
-                  if (step === EAuthSteps.UNIQUE_CODE) generateEmailUniqueCode(email);
-                  setAuthStep(step);
-                }}
-                nextPath={nextPath || undefined}
-              />
+            ) : (
+              <div className="grid gap-4">
+                {enabledOAuthOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={option.onClick}
+                    className={`flex h-[42px] w-full items-center justify-center gap-2 rounded border px-2 text-sm font-medium text-custom-text-100 duration-300 bg-onboarding-background-200 hover:bg-onboarding-background-300 ${
+                      resolvedTheme === "dark" ? "border-[#43484F]" : "border-[#D9E4FF]"
+                    }`}
+                  >
+                    <span className="flex items-center justify-center">{option.icon}</span>
+                    <span className="flex items-center justify-center">{option.text}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </>
         )}
-        <OAuthOptions isSignUp={authMode === EAuthModes.SIGN_UP} showEmailLogin={showEmailLogin} />
-        <TermsAndConditions isSignUp={authMode === EAuthModes.SIGN_UP} />
-      </AuthHeader>
+
+        {showEmailLogin && (
+          <AuthFormRoot
+            authStep={authStep}
+            authMode={authMode}
+            email={email}
+            setEmail={(email) => setEmail(email)}
+            setAuthMode={(authMode) => setAuthMode(authMode)}
+            setAuthStep={(authStep) => setAuthStep(authStep)}
+            setErrorInfo={(errorInfo) => setErrorInfo(errorInfo)}
+            currentAuthMode={currentAuthMode}
+          />
+        )}
+        <TermsAndConditions authType={authMode} />
+      </div>
     </div>
   );
 });

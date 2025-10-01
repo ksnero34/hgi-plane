@@ -321,16 +321,17 @@ class OIDCOAuthProvider(OauthAdapter):
         
         import base64
         import json
-        
-        # Base64 패딩 추가
+
         payload = id_token_parts[1]
-        payload += '=' * ((4 - len(payload) % 4) % 4)
-        
+        padding = '=' * ((4 - len(payload) % 4) % 4)
+        payload += padding
+
         try:
-            claims = json.loads(base64.b64decode(payload).decode('utf-8'))
+            decoded_payload = base64.urlsafe_b64decode(payload.encode("utf-8"))
+            claims = json.loads(decoded_payload.decode("utf-8"))
             return claims
-        except Exception as e:
+        except (ValueError, json.JSONDecodeError) as e:
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["OIDC_OAUTH_PROVIDER_ERROR"],
                 error_message=f"ID 토큰 디코딩 오류: {str(e)}",
-            ) 
+            )

@@ -19,22 +19,16 @@ import { CustomMenu } from "@plane/ui";
 import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
-import {
-  DisplayFiltersSelection,
-  FilterSelection,
-  IssueLayoutIcon,
-  FiltersDropdown,
-} from "@/components/issues";
+import { DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
+import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
 // hooks
-import {
-  useIssues,
-  useModule,
-  useProject,
-  useProjectState,
-  useLabel,
-  useMember,
-  useCustomField,
-} from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useModule } from "@/hooks/store/use-module";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 
 export const ModuleIssuesMobileHeader = observer(() => {
   const [analyticsModal, setAnalyticsModal] = useState(false);
@@ -92,8 +86,8 @@ export const ModuleIssuesMobileHeader = observer(() => {
 
   const handleDisplayProperties = useCallback(
     (property: Partial<IIssueDisplayProperties>) => {
-      if (!workspaceSlug || !projectId || !moduleId) return;
-      updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.DISPLAY_PROPERTIES, property, moduleId.toString());
+      if (!workspaceSlug || !projectId) return;
+      updateFilters(workspaceSlug, projectId, EIssueFilterType.DISPLAY_PROPERTIES, property, moduleId);
     },
     [workspaceSlug, projectId, moduleId, updateFilters]
   );

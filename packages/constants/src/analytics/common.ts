@@ -174,6 +174,10 @@ export const ANALYTICS_Y_AXIS_VALUES: { value: ChartYAxisMetric; label: string }
     value: ChartYAxisMetric.ESTIMATE_POINT_COUNT,
     label: "추정값 (포인트/시간)",
   },
+  {
+    value: ChartYAxisMetric.EPIC_WORK_ITEM_COUNT,
+    label: "Epic",
+  },
 ];
 
 export const ANALYTICS_V2_DATE_KEYS = ["completed_at", "target_date", "start_date", "created_at"];

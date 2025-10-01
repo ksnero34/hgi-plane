@@ -33,6 +33,7 @@ from plane.authentication.adapter.error import (
 from plane.utils.audit_logger import log_audit
 from plane.utils.ip_address import get_client_ip
 
+
 class InstanceEndpoint(BaseAPIView):
     def get_permissions(self):
         if self.request.method == "PATCH":
@@ -103,10 +104,7 @@ class InstanceEndpoint(BaseAPIView):
                     "key": "IS_OIDC_ENABLED",
                     "default": os.environ.get("IS_OIDC_ENABLED", "0"),
                 },
-                {
-                    "key": "EMAIL_HOST",
-                    "default": os.environ.get("EMAIL_HOST", ""),
-                },
+                {"key": "EMAIL_HOST", "default": os.environ.get("EMAIL_HOST", "")},
                 {
                     "key": "ENABLE_MAGIC_LINK_LOGIN",
                     "default": os.environ.get("ENABLE_MAGIC_LINK_LOGIN", "1"),
@@ -157,7 +155,6 @@ class InstanceEndpoint(BaseAPIView):
         data["is_oidc_enabled"] = IS_OIDC_ENABLED == "1"
         data["is_magic_login_enabled"] = ENABLE_MAGIC_LINK_LOGIN == "1"
         data["is_email_password_enabled"] = ENABLE_EMAIL_PASSWORD == "1"
-        data["is_oidc_enabled"] = IS_OIDC_ENABLED == "1"
 
         # Github app name
         data["github_app_name"] = str(GITHUB_APP_NAME)
@@ -259,7 +256,7 @@ class OIDCOauthInitiateAdminEndpoint(View):
             provider = OIDCOAuthProvider(request=request, state=state)
             request.session["state"] = state
             auth_url = provider.get_auth_url()
-            
+
             # 감사 로그 추가 (로그인 시도)
             ip_address = get_client_ip(request)
             log_audit(
@@ -273,7 +270,7 @@ class OIDCOauthInitiateAdminEndpoint(View):
                 },
                 request=request,
             )
-            
+
             # print(f"[OIDC Admin] Redirecting to auth URL: {auth_url}")
             return HttpResponseRedirect(auth_url)
         except AuthenticationException as e:
@@ -303,7 +300,7 @@ class OIDCCallbackAdminEndpoint(View):
         session_state = request.session.get("state")
         if not state or not session_state or state != session_state:
             # print("[OIDC Admin Callback] Invalid state")
-            
+
             # 감사 로그 추가 (인증 실패)
             log_audit(
                 action="admin_login_failed",
@@ -316,7 +313,7 @@ class OIDCCallbackAdminEndpoint(View):
                 },
                 request=request,
             )
-            
+
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["INVALID_STATE"],
                 error_message="INVALID_STATE",
@@ -333,7 +330,7 @@ class OIDCCallbackAdminEndpoint(View):
         # Validate code
         if not code:
             # print("[OIDC Admin Callback] Invalid code")
-            
+
             # 감사 로그 추가 (인증 실패)
             log_audit(
                 action="admin_login_failed",
@@ -346,7 +343,7 @@ class OIDCCallbackAdminEndpoint(View):
                 },
                 request=request,
             )
-            
+
             exc = AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["INVALID_CODE"],
                 error_message="INVALID_CODE",
@@ -365,7 +362,7 @@ class OIDCCallbackAdminEndpoint(View):
             )
             user = provider.authenticate()
             # print(f"[OIDC Admin Callback] User authenticated: {user.email}")
-            
+
             # 감사 로그 추가
             log_audit(
                 action="admin_login",
@@ -380,23 +377,23 @@ class OIDCCallbackAdminEndpoint(View):
                 },
                 request=request,
             )
-            
+
             # admin 세션 로그인 처리 (is_admin=True로 설정)
             user_login(request=request, user=user, is_admin=True)
             # print("[OIDC Admin Callback] Admin login successful")
-            
+
             # admin 대시보드로 리다이렉트
             if next_path:
                 url = f"{base_host}{str(next_path)}"
             else:
                 # 기본 admin 대시보드 URL로 리다이렉트
                 url = f"{base_host}/general"
-            
+
             # print(f"[OIDC Admin Callback] Redirecting to: {url}")
             return HttpResponseRedirect(url)
         except AuthenticationException as e:
             # print(f"[OIDC Admin Callback] Authentication error: {str(e)}")
-            
+
             # 감사 로그 추가 (인증 실패)
             log_audit(
                 action="admin_login_failed",
@@ -410,7 +407,7 @@ class OIDCCallbackAdminEndpoint(View):
                 },
                 request=request,
             )
-            
+
             params = e.get_error_dict()
             if next_path:
                 params["next_path"] = str(next_path)

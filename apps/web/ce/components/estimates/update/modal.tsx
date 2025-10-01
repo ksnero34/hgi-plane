@@ -10,7 +10,8 @@ import { TEstimatePointsObject, TEstimateTypeError, TEstimateSystemKeys, IEstima
 // hooks
 import { useTranslation } from "@plane/i18n";
 import { convertMinutesToHoursMinutesString, convertMinutesToHoursAndMinutes } from "@plane/utils";
-import { useProjectEstimates, useEstimate } from "@/hooks/store";
+import { useProjectEstimates } from "@/hooks/store/estimates/use-project-estimate";
+import { useEstimate } from "@/hooks/store/estimates/use-estimate";
 // components
 import { EstimateCreateStageOne } from "@/components/estimates";
 import { EstimatePointCreateRoot } from "@/components/estimates/points";

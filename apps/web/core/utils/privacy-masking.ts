@@ -13,7 +13,7 @@ const PRIVACY_PATTERNS = {
 // 마스킹 처리 함수
 export const maskPrivateInformation = (text: string): string => {
   let maskedText = text;
-  
+
   // 전화번호 마스킹 (가운데 4자리)
   maskedText = maskedText.replace(PRIVACY_PATTERNS.phoneNumber, (match) => {
     // 이미 마스킹된 전화번호는 건너뛰기
@@ -56,4 +56,33 @@ export const maskPrivateInformation = (text: string): string => {
   });
 
   return maskedText;
-}; 
+};
+
+export const maskHtmlContentPreservingStructure = (html: string): string => {
+  if (!html) return html;
+
+  if (typeof window === "undefined") {
+    return maskPrivateInformation(html);
+  }
+
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  const processNode = (node: Node) => {
+    node.childNodes.forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const originalText = child.textContent ?? "";
+        const maskedText = maskPrivateInformation(originalText);
+        if (maskedText !== originalText) {
+          child.textContent = maskedText;
+        }
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        processNode(child);
+      }
+    });
+  };
+
+  processNode(template.content);
+
+  return template.innerHTML;
+};

@@ -9,7 +9,8 @@ import { Button, Input, ModalCore, EModalPosition, EModalWidth, ToggleSwitch, se
 // types
 import { IWorkflowState, IWorkflowStateFormData } from "@plane/types";
 // hooks
-import { useWorkflow, useProjectState } from "@/hooks/store";
+import { useWorkflow } from "@/hooks/store/use-workflow";
+import { useProjectState } from "@/hooks/store/use-project-state";
 
 interface Props {
   isOpen: boolean;

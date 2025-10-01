@@ -143,7 +143,7 @@ export const insertFile = ({
     const fileOptions: InsertFileComponentProps = { event };
     if (pos) fileOptions.pos = pos;
     if (file) fileOptions.file = file;
-    
+
     return editor?.chain().focus().insertFileComponent(fileOptions).run();
   } catch (error) {
     console.error("Error inserting file:", error);
@@ -155,7 +155,21 @@ export const unsetLinkEditor = (editor: Editor) => {
   editor.chain().focus().unsetLink().run();
 };
 
-export const setLinkEditor = (editor: Editor, url: string) => {
+export const setLinkEditor = (editor: Editor, url: string, text?: string) => {
+  const { selection } = editor.state;
+  const previousSelection = { from: selection.from, to: selection.to };
+  if (text) {
+    editor
+      .chain()
+      .focus()
+      .deleteRange({ from: selection.from, to: selection.to })
+      .insertContentAt(previousSelection.from, text)
+      .run();
+    // Extracting the new selection start point.
+    const previousFrom = previousSelection.from;
+
+    editor.commands.setTextSelection({ from: previousFrom, to: previousFrom + text.length });
+  }
   editor.chain().focus().setLink({ href: url }).run();
 };
 

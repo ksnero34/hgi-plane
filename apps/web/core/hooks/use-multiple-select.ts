@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // hooks
-import { useMultipleSelectStore } from "@/hooks/store";
+import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
 //
 import useReloadConfirmations from "./use-reload-confirmation";
 // types

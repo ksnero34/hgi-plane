@@ -106,8 +106,6 @@ class ProjectViewSet(BaseViewSet):
     def list_detail(self, request, slug):
         fields = [field for field in request.GET.get("fields", "").split(",") if field]
         projects = self.get_queryset().order_by("sort_order", "name")
-        
-        # For guest users, only show projects they are members of
         if WorkspaceMember.objects.filter(
             member=request.user, workspace__slug=slug, is_active=True, role=5
         ).exists():
@@ -345,7 +343,7 @@ class ProjectViewSet(BaseViewSet):
 
             # Create default issue type
             from plane.db.models import IssueType, ProjectIssueType
-                
+
             # Create default issue type for this project
             default_issue_type = IssueType.objects.create(
                 workspace=workspace,

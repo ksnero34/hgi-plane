@@ -1,24 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 import useSWR from "swr";
 // icons
 import { History, MessageSquare } from "lucide-react";
-// types
-import { TCustomField } from "@plane/types";
 import { calculateTimeAgo, getFileURL } from "@plane/utils";
+import { TCustomField } from "@plane/types";
 // hooks
-import { ActivityIcon, ActivityMessage } from "@/components/core";
-import { RichTextEditor } from "@/components/editor";
-import { ActivitySettingsLoader } from "@/components/ui";
+import { ActivityIcon, ActivityMessage } from "@/components/core/activity";
+import { RichTextEditor } from "@/components/editor/rich-text";
+import { ActivitySettingsLoader } from "@/components/ui/loader/settings/activity";
 // constants
 import { USER_ACTIVITY } from "@/constants/fetch-keys";
-// helpers
 // hooks
-import { useUser } from "@/hooks/store";
+import { useUser } from "@/hooks/store/user";
 // services
 import { UserService } from "@/services/user.service";
-
 const userService = new UserService();
 
 type Props = {
@@ -60,7 +57,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
     userProfileActivity?.results?.length ? ["custom-fields-activity", userProfileActivity] : null,
     async () => {
       if (!userProfileActivity) return {};
-      
+
       const projectData = userProfileActivity.results.reduce((acc: any, activity: any) => {
         if (activity.project && activity.workspace_detail?.slug) {
           acc[activity.project] = activity.workspace_detail.slug;
@@ -98,7 +95,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
         <ul role="list">
           {userProfileActivity.results.map((activityItem: any) => {
             const projectCustomFields = customFieldsByProject?.[activityItem.project] || [];
-            
+
             if (activityItem.field === "comment")
               return (
                 <div key={activityItem.id} className="mt-2">
@@ -132,7 +129,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
                             : activityItem.actor_detail.display_name}
                         </div>
                         <p className="mt-0.5 text-xs text-custom-text-200">
-                          Commented {calculateTimeAgo(activityItem.created_at)}
+                          댓글을 남겼습니다 {calculateTimeAgo(activityItem.created_at)}
                         </p>
                       </div>
                       <div className="issue-comments-section p-0">
@@ -203,7 +200,7 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
                                 <span className="text-gray font-medium">
                                   {currentUser?.id === activityItem.actor_detail.id
                                     ? "당신이"
-                                    : activityItem.actor_detail.display_name + " 님이"}
+                                    : `${activityItem.actor_detail.display_name}님이`}
                                 </span>
                               </Link>
                             )}{" "}

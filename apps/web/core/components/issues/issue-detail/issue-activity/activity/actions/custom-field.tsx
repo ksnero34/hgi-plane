@@ -2,7 +2,8 @@ import { FC } from "react";
 import { observer } from "mobx-react";
 import { Tag, CalendarDays, Users, User, MessageSquareIcon } from "lucide-react";
 // hooks
-import { useIssueDetail, useMember } from "@/hooks/store";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useMember } from "@/hooks/store/use-member";
 import { useParams } from "next/navigation";
 // components
 import { IssueActivityBlockComponent } from "./helpers/activity-block";

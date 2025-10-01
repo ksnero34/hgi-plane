@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "next/navigation";
 // icons
 import { Calendar, ChevronDown, Kanban, List } from "lucide-react";
@@ -15,31 +15,32 @@ import {
   EIssueLayoutTypes,
 } from "@plane/types";
 import { CustomMenu } from "@plane/ui";
-import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
+import { isIssueFilterActive } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
-import { DisplayFiltersSelection, FilterSelection, FiltersDropdown, IssueLayoutIcon } from "@/components/issues";
-// helpers
+import { DisplayFiltersSelection, FilterSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
+import { IssueLayoutIcon } from "@/components/issues/issue-layouts/layout-icon";
 // hooks
-import {
-  useCycle,
-  useIssues,
-  useProject,
-  useProjectState,
-  useLabel,
-  useUserPermissions,
-  useCustomField,
-  useMember,
-} from "@/hooks/store";
+import { useCycle } from "@/hooks/store/use-cycle";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useLabel } from "@/hooks/store/use-label";
+import { useMember } from "@/hooks/store/use-member";
+import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
 
 export const CycleIssuesMobileHeader = () => {
   // i18n
   const { t } = useTranslation();
 
-  // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
-  const { workspaceSlug, projectId, cycleId } = useParams();
   const { getCycleById } = useCycle();
+  const layouts = [
+    { key: "list", titleTranslationKey: "issue.layouts.list", icon: List },
+    { key: "kanban", titleTranslationKey: "issue.layouts.kanban", icon: Kanban },
+    { key: "calendar", titleTranslationKey: "issue.layouts.calendar", icon: Calendar },
+  ];
+
+  const { workspaceSlug, projectId, cycleId } = useParams();
   const cycleDetails = cycleId ? getCycleById(cycleId.toString()) : undefined;
 
   // store hooks
@@ -47,19 +48,6 @@ export const CycleIssuesMobileHeader = () => {
   const {
     issuesFilter: { issueFilters, updateFilters },
   } = useIssues(EIssuesStoreType.CYCLE);
-  const { projectLabels } = useLabel();
-  const { projectStates } = useProjectState();
-  const {
-    project: { projectMemberIds },
-  } = useMember();
-  const { customFields } = useCustomField(projectId as string);
-
-  const layouts = [
-    { key: "list", titleTranslationKey: "issue.layouts.list", icon: List },
-    { key: "kanban", titleTranslationKey: "issue.layouts.kanban", icon: Kanban },
-    { key: "calendar", titleTranslationKey: "issue.layouts.calendar", icon: Calendar },
-  ];
-
   const activeLayout = issueFilters?.displayFilters?.layout;
 
   const handleLayoutChange = useCallback(
@@ -76,12 +64,33 @@ export const CycleIssuesMobileHeader = () => {
     [workspaceSlug, projectId, cycleId, updateFilters]
   );
 
+  const { projectStates } = useProjectState();
+  const { projectLabels } = useLabel();
+  const {
+    project: { projectMemberIds },
+  } = useMember();
+
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
-      if (!workspaceSlug || !projectId) return;
+      if (!workspaceSlug || !projectId || !cycleId) return;
+      const newValues = issueFilters?.filters?.[key] ?? [];
 
-      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
-      updateFilters(workspaceSlug.toString(), projectId.toString(), EIssueFilterType.FILTERS, { [key]: updatedValue }, cycleId.toString());
+      if (Array.isArray(value)) {
+        value.forEach((val) => {
+          if (!newValues.includes(val)) newValues.push(val);
+        });
+      } else {
+        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        else newValues.push(value);
+      }
+
+      updateFilters(
+        workspaceSlug.toString(),
+        projectId.toString(),
+        EIssueFilterType.FILTERS,
+        { [key]: newValues },
+        cycleId.toString()
+      );
     },
     [workspaceSlug, projectId, cycleId, issueFilters, updateFilters]
   );
@@ -169,8 +178,6 @@ export const CycleIssuesMobileHeader = () => {
               labels={projectLabels}
               memberIds={projectMemberIds ?? undefined}
               states={projectStates}
-              projectId={projectId as string}
-              customFields={customFields}
               cycleViewDisabled={!currentProjectDetails?.cycle_view}
               moduleViewDisabled={!currentProjectDetails?.module_view}
             />

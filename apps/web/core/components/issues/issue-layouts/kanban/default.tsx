@@ -20,9 +20,9 @@ import {
 import { ContentWrapper } from "@plane/ui";
 // components
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
-import { KanbanColumnLoader } from "@/components/ui";
+import { KanbanColumnLoader } from "@/components/ui/loader/layouts/kanban-layout-loader";
 // hooks
-import { useKanbanView } from "@/hooks/store";
+import { useKanbanView } from "@/hooks/store/use-kanban-view";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 // types

@@ -6,7 +6,7 @@ import { TCustomField } from "@plane/types";
 // ui
 import { Avatar } from "@plane/ui";
 // hooks
-import { useMember } from "@/hooks/store";
+import { useMember } from "@/hooks/store/use-member";
 // helpers
 import { getFileURL } from "@plane/utils";
 

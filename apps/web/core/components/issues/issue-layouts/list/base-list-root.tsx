@@ -13,13 +13,14 @@ import {
 } from "@plane/types";
 // constants
 // hooks
-import { useIssues, useUserPermissions } from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useUserPermissions } from "@/hooks/store/user";
 // hooks
 import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useCustomField } from "@/hooks/store/use-custom-field";
-import { useUserSettings } from "@/hooks/store";
+import { useUserSettings } from "@/hooks/store/user";
 // components
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { List } from "./default";
@@ -31,7 +32,6 @@ type ListStoreType =
   | EIssuesStoreType.MODULE
   | EIssuesStoreType.CYCLE
   | EIssuesStoreType.PROJECT_VIEW
-  | EIssuesStoreType.DRAFT
   | EIssuesStoreType.PROFILE
   | EIssuesStoreType.ARCHIVED
   | EIssuesStoreType.WORKSPACE_DRAFT

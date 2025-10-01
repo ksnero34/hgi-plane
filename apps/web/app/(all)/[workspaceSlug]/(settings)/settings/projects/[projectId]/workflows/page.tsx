@@ -12,7 +12,8 @@ import { PageHead } from "@/components/core";
 import { SettingsContentWrapper, SettingsHeading } from "@/components/settings";
 import { WorkflowManagement } from "@/components/project/settings";
 // hooks
-import { useProject, useUserPermissions } from "@/hooks/store";
+import { useProject } from "@/hooks/store/use-project";
+import { useUserPermissions } from "@/hooks/store/user";
 
 const WorkflowSettingsPage = observer(() => {
   // router

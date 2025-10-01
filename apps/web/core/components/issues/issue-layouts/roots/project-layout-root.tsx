@@ -8,19 +8,19 @@ import useSWR from "swr";
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 // components
 import { Spinner } from "@plane/ui";
-import { LogoSpinner } from "@/components/common";
-import {
-  ListLayout,
-  CalendarLayout,
-  BaseGanttRoot,
-  KanBanLayout,
-  ProjectAppliedFiltersRoot,
-  ProjectSpreadsheetLayout,
-  IssuePeekOverview,
-} from "@/components/issues";
+import { LogoSpinner } from "@/components/common/logo-spinner";
 // hooks
-import { useIssues, useWorkflow } from "@/hooks/store";
+import { useIssues } from "@/hooks/store/use-issues";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 import { IssuesStoreContext } from "@/hooks/use-issue-layout-store";
+// local imports
+import { IssuePeekOverview } from "../../peek-overview";
+import { CalendarLayout } from "../calendar/roots/project-root";
+import { ProjectAppliedFiltersRoot } from "../filters";
+import { BaseGanttRoot } from "../gantt";
+import { KanBanLayout } from "../kanban/roots/project-root";
+import { ListLayout } from "../list/roots/project-root";
+import { ProjectSpreadsheetLayout } from "../spreadsheet/roots/project-root";
 
 const ProjectIssueLayout = (props: { activeLayout: EIssueLayoutTypes | undefined }) => {
   switch (props.activeLayout) {
@@ -64,7 +64,7 @@ export const ProjectLayoutRoot: FC = observer(() => {
         try {
           // Fetch workflow templates first
           await fetchWorkflowTemplates(workspaceSlug.toString(), projectId.toString());
-          
+
           // Get the default workflow and fetch its transitions
           const defaultWorkflow = getDefaultWorkflow(projectId.toString());
           if (defaultWorkflow) {

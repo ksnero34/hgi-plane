@@ -1,21 +1,25 @@
 "use client";
 
-import React, { ReactNode, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
 import { ChevronDown, Search } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { type IState } from "@plane/types";
-import { ComboDropDown, Spinner, StateGroupIcon } from "@plane/ui";
+import { StateGroupIcon } from "@plane/propel/icons";
+import { IState } from "@plane/types";
+import { ComboDropDown, Spinner, TOAST_TYPE, setToast } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { DropdownButton } from "@/components/dropdowns/buttons";
 import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
 import { TDropdownProps } from "@/components/dropdowns/types";
+import { WorkflowReviewerModal } from "@/components/project/settings/workflow-reviewer-modal";
 // hooks
 import { useDropdown } from "@/hooks/use-dropdown";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 // plane web imports
 import { StateOption } from "@/plane-web/components/workflow";
 
@@ -37,10 +41,22 @@ export type TWorkItemStateDropdownBaseProps = TDropdownProps & {
   showDefaultState?: boolean;
   stateIds: string[];
   value: string | undefined | null;
+  issueId?: string;
+  enableWorkflowValidation?: boolean;
 };
+
+type TReviewerModalState = {
+  issueId: string;
+  fromStateId: string;
+  toStateId: string;
+  reviewers: string[];
+  transitionId?: string;
+  approvalRequestId?: string;
+} | null;
 
 export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps> = observer((props) => {
   const {
+    alwaysAllowStateChange,
     button,
     buttonClassName,
     buttonContainerClassName,
@@ -52,17 +68,21 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     getStateById,
     hideIcon = false,
     iconSize = "size-4",
+    isForWorkItemCreation = false,
     isInitializing = false,
     onChange,
     onClose,
     onDropdownOpen,
     placement,
+    projectId,
     renderByDefault = true,
     showDefaultState = true,
     showTooltip = false,
     stateIds,
     tabIndex,
     value,
+    issueId,
+    enableWorkflowValidation = true,
   } = props;
   // refs
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -73,12 +93,19 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
   // states
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [workflowStatesLoaded, setWorkflowStatesLoaded] = useState(false);
+  const [reviewerModalData, setReviewerModalData] = useState<TReviewerModalState>(null);
   // store hooks
   const { t } = useTranslation();
-  const statesList = stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state);
-  const defaultState = statesList?.find((state) => state?.default);
-  const stateValue = !!value ? value : showDefaultState ? defaultState?.id : undefined;
-  // popper-js init
+  const { workspaceSlug } = useParams();
+  const {
+    getDefaultWorkflow,
+    getWorkflowTransitions,
+    getWorkflowStates,
+    fetchWorkflowStates,
+    fetchWorkflowTransitions,
+    validateTransition,
+  } = useWorkflow();
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: placement ?? "bottom-start",
     modifiers: [
@@ -90,7 +117,211 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
       },
     ],
   });
-  // dropdown init
+
+  const statesList = useMemo(
+    () =>
+      stateIds
+        .map((stateId) => getStateById(stateId))
+        .filter((state): state is IState => Boolean(state)),
+    [stateIds, getStateById]
+  );
+
+  const defaultState = useMemo(() => statesList.find((state) => state.default), [statesList]);
+  const stateValue = value ?? (showDefaultState ? defaultState?.id : undefined);
+  const selectedState = stateValue ? getStateById(stateValue) : undefined;
+
+  // Ensure workflow metadata is available when needed
+  useEffect(() => {
+    if (!projectId || !workspaceSlug) return;
+    if (alwaysAllowStateChange) return;
+
+    const defaultWorkflow = getDefaultWorkflow(projectId);
+    if (!defaultWorkflow) return;
+
+    if (isForWorkItemCreation) {
+      const workflowStates = getWorkflowStates(defaultWorkflow.id);
+      if (!workflowStates || workflowStates.length === 0) {
+        fetchWorkflowStates(workspaceSlug.toString(), projectId, defaultWorkflow.id)
+          .then(() => setWorkflowStatesLoaded(true))
+          .catch((error) => {
+            console.error("StateDropdown: Error fetching workflow states", error);
+          });
+      }
+      return;
+    }
+
+    if (!enableWorkflowValidation || !issueId) return;
+
+    const transitions = getWorkflowTransitions(defaultWorkflow.id);
+    if (!transitions || transitions.length === 0) {
+      fetchWorkflowTransitions(workspaceSlug.toString(), projectId, defaultWorkflow.id)
+        .then(() => setWorkflowStatesLoaded(true))
+        .catch((error) => {
+          console.error("StateDropdown: Error fetching workflow transitions", error);
+        });
+    }
+  }, [
+    alwaysAllowStateChange,
+    enableWorkflowValidation,
+    fetchWorkflowStates,
+    fetchWorkflowTransitions,
+    getDefaultWorkflow,
+    getWorkflowStates,
+    getWorkflowTransitions,
+    isForWorkItemCreation,
+    issueId,
+    projectId,
+    workspaceSlug,
+  ]);
+
+  const availableStates = useMemo(() => {
+    if (alwaysAllowStateChange) return statesList;
+
+    if (isForWorkItemCreation && projectId && workspaceSlug) {
+      const defaultWorkflow = getDefaultWorkflow(projectId);
+      if (defaultWorkflow) {
+        const workflowStates = getWorkflowStates(defaultWorkflow.id);
+        if (workflowStates && workflowStates.length > 0) {
+          const allowedStateIds = new Set(
+            workflowStates
+              .filter((workflowState) => workflowState.allow_new_issues)
+              .map((workflowState) => workflowState.state)
+          );
+          const filteredStates = statesList.filter((state) => allowedStateIds.has(state.id));
+          if (filteredStates.length > 0) {
+            return filteredStates;
+          }
+        }
+      }
+      return statesList;
+    }
+
+    if (!enableWorkflowValidation || !issueId || !projectId || !workspaceSlug) {
+      return statesList;
+    }
+
+    const defaultWorkflow = getDefaultWorkflow(projectId);
+    if (!defaultWorkflow) return statesList;
+
+    const transitions = getWorkflowTransitions(defaultWorkflow.id);
+    if (!transitions || transitions.length === 0) return statesList;
+
+    const currentStateId = stateValue;
+    if (!currentStateId) return statesList;
+
+    const permittedStateIds = new Set<string>([currentStateId]);
+    transitions
+      .filter((transition) => transition.from_state === currentStateId)
+      .forEach((transition) => permittedStateIds.add(transition.to_state));
+
+    const filteredStates = statesList.filter((state) => permittedStateIds.has(state.id));
+    return filteredStates.length > 0 ? filteredStates : statesList;
+  }, [
+    alwaysAllowStateChange,
+    enableWorkflowValidation,
+    getDefaultWorkflow,
+    getWorkflowStates,
+    getWorkflowTransitions,
+    isForWorkItemCreation,
+    issueId,
+    projectId,
+    stateValue,
+    statesList,
+    workspaceSlug,
+    workflowStatesLoaded,
+  ]);
+
+  const options = useMemo(
+    () =>
+      availableStates.map((state) => ({
+        value: state.id,
+        query: `${state.name}`,
+        content: (
+          <div className="flex items-center gap-2">
+            <StateGroupIcon
+              stateGroup={state.group ?? "backlog"}
+              color={state.color}
+              className={cn("flex-shrink-0", iconSize)}
+              percentage={state.order}
+            />
+            <span className="flex-grow truncate text-left">{state.name}</span>
+          </div>
+        ),
+      })),
+    [availableStates, iconSize]
+  );
+
+  const filteredOptions = useMemo(
+    () =>
+      query === ""
+        ? options
+        : options.filter((option) => option.query.toLowerCase().includes(query.toLowerCase())),
+    [options, query]
+  );
+
+  const validateStateTransition = async (toStateId: string) => {
+    if (
+      alwaysAllowStateChange ||
+      !enableWorkflowValidation ||
+      !issueId ||
+      !workspaceSlug ||
+      !projectId ||
+      !stateValue ||
+      stateValue === toStateId
+    ) {
+      return { allowed: true, requiresReviewer: false } as const;
+    }
+
+    try {
+      const validationResult = await validateTransition(workspaceSlug.toString(), projectId, {
+        issue_id: issueId,
+        from_state_id: stateValue,
+        to_state_id: toStateId,
+      });
+
+      return {
+        allowed: validationResult.allowed,
+        requiresReviewer: validationResult.requires_reviewer || false,
+        reviewers: validationResult.reviewers || [],
+        transitionId: validationResult.transition_id || "",
+        reason: validationResult.reason,
+      } as const;
+    } catch (error) {
+      console.warn("Workflow validation error:", error);
+      return { allowed: true, requiresReviewer: false } as const;
+    }
+  };
+
+  const dropdownOnChange = async (val: string) => {
+    if (enableWorkflowValidation && issueId && !alwaysAllowStateChange) {
+      const validation = await validateStateTransition(val);
+
+      if (!validation.allowed) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "상태 전환 불가",
+          message: validation.reason || "워크플로우 규칙에 의해 이 상태로의 전환이 허용되지 않습니다.",
+        });
+        return;
+      }
+
+      if (validation.requiresReviewer && validation.reviewers && validation.reviewers.length > 0 && stateValue) {
+        setReviewerModalData({
+          issueId,
+          fromStateId: stateValue,
+          toStateId: val,
+          reviewers: validation.reviewers,
+          transitionId: validation.transitionId,
+        });
+        handleClose();
+        return;
+      }
+    }
+
+    onChange(val);
+    handleClose();
+  };
+
   const { handleClose, handleKeyDown, handleOnClick, searchInputKeyDown } = useDropdown({
     dropdownRef,
     inputRef,
@@ -102,33 +333,6 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     setQuery,
   });
 
-  // derived values
-  const options = statesList?.map((state) => ({
-    value: state?.id,
-    query: `${state?.name}`,
-    content: (
-      <div className="flex items-center gap-2">
-        <StateGroupIcon
-          stateGroup={state?.group ?? "backlog"}
-          color={state?.color}
-          className={cn("flex-shrink-0", iconSize)}
-          percentage={state?.order}
-        />
-        <span className="flex-grow truncate text-left">{state?.name}</span>
-      </div>
-    ),
-  }));
-
-  const filteredOptions =
-    query === "" ? options : options?.filter((o) => o.query.toLowerCase().includes(query.toLowerCase()));
-
-  const selectedState = stateValue ? getStateById(stateValue) : undefined;
-
-  const dropdownOnChange = (val: string) => {
-    onChange(val);
-    handleClose();
-  };
-
   const comboButton = (
     <>
       {button ? (
@@ -138,6 +342,7 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
           className={cn("clickable block h-full w-full outline-none", buttonContainerClassName)}
           onClick={handleOnClick}
           disabled={disabled}
+          tabIndex={tabIndex}
         >
           {button}
         </button>
@@ -155,6 +360,7 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
           )}
           onClick={handleOnClick}
           disabled={disabled}
+          tabIndex={tabIndex}
         >
           <DropdownButton
             className={buttonClassName}
@@ -184,7 +390,6 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
                   <ChevronDown className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
                 )}
               </>
-
             )}
           </DropdownButton>
         </button>
@@ -192,66 +397,73 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     </>
   );
 
-
   return (
-    <ComboDropDown
-      as="div"
-      ref={dropdownRef}
-      tabIndex={tabIndex}
-      className={cn("h-full", className)}
-      value={value}
-      onChange={dropdownOnChange}
-      disabled={disabled}
-      onKeyDown={handleKeyDown}
-      button={comboButton}
-      renderByDefault={renderByDefault}
-    >
-      {isOpen && (
-        <Combobox.Options className="fixed z-10" static>
-          <div
-            className="my-1 w-48 rounded border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg focus:outline-none"
-            ref={setPopperElement}
-            style={styles.popper}
-            {...attributes.popper}
-          >
-            <div className="flex items-center gap-1.5 rounded border border-custom-border-100 bg-custom-background-90 px-2">
-              <Search className="h-3.5 w-3.5 text-custom-text-400" strokeWidth={1.5} />
-              <Combobox.Input
-                as="input"
-                ref={inputRef}
-                className="w-full bg-transparent py-1 text-xs text-custom-text-200 placeholder:text-custom-text-400 focus:outline-none"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("search")}
-                onKeyDown={searchInputKeyDown}
-              />
-            </div>
-            <div className="mt-2 max-h-48 space-y-1 overflow-y-scroll">
-              {filteredOptions ? (
-                filteredOptions.length > 0 ? (
+    <>
+      <ComboDropDown
+        as="div"
+        ref={dropdownRef}
+        className={cn("h-full", className)}
+        value={stateValue}
+        onChange={dropdownOnChange}
+        disabled={disabled}
+        onKeyDown={handleKeyDown}
+        button={comboButton}
+        renderByDefault={renderByDefault}
+      >
+        {isOpen && (
+          <Combobox.Options className="fixed z-10" static>
+            <div
+              className="my-1 w-48 rounded border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg focus:outline-none"
+              ref={setPopperElement}
+              style={styles.popper}
+              {...attributes.popper}
+            >
+              <div className="flex items-center gap-1.5 rounded border border-custom-border-100 bg-custom-background-90 px-2">
+                <Search className="h-3.5 w-3.5 text-custom-text-400" strokeWidth={1.5} />
+                <Combobox.Input
+                  as="input"
+                  ref={inputRef}
+                  className="w-full bg-transparent py-1 text-xs text-custom-text-200 placeholder:text-custom-text-400 focus:outline-none"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("common.search.label")}
+                  displayValue={(assigned: any) => assigned?.name}
+                  onKeyDown={searchInputKeyDown}
+                />
+              </div>
+              <div className="mt-2 max-h-48 space-y-1 overflow-y-scroll">
+                {filteredOptions.length > 0 ? (
                   filteredOptions.map((option) => (
-                    <Combobox.Option
+                    <StateOption
+                      {...props}
                       key={option.value}
-                      value={option.value}
-                      className={({ active, selected }) =>
-                        `w-full truncate flex items-center justify-between gap-2 rounded px-1 py-1.5 cursor-pointer select-none ${
-                          active ? "bg-custom-background-80" : ""
-                        } ${selected ? "text-custom-text-100" : "text-custom-text-200"}`
-                      }
-                    >
-                      <span className="flex-grow truncate">{option.content}</span>
-                    </Combobox.Option>
+                      option={option}
+                      selectedValue={value}
+                      className="flex w-full cursor-pointer select-none items-center justify-between gap-2 truncate rounded px-1 py-1.5"
+                    />
                   ))
                 ) : (
-                  <p className="text-custom-text-400 italic py-1 px-1.5">{t("no_matching_results")}</p>
-                )
-              ) : (
-                <p className="text-custom-text-400 italic py-1 px-1.5">{t("loading")}</p>
-              )}
+                  <p className="px-1.5 py-1 italic text-custom-text-400">{t("no_matching_results")}</p>
+                )}
+              </div>
             </div>
-          </div>
-        </Combobox.Options>
-      )}
-    </ComboDropDown>
+          </Combobox.Options>
+        )}
+      </ComboDropDown>
+
+      <WorkflowReviewerModal
+        isOpen={!!reviewerModalData}
+        onClose={() => setReviewerModalData(null)}
+        transitionData={reviewerModalData}
+        projectId={projectId}
+        onApprove={() => {
+          setToast({
+            type: TOAST_TYPE.INFO,
+            title: "승인 요청 완료",
+            message: "워크플로우 승인 모달에서 요청을 확인하세요.",
+          });
+        }}
+      />
+    </>
   );
 });

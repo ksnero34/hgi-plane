@@ -7,7 +7,7 @@ import { TModuleDisplayFilters, TModuleFilters, TCustomField } from "@plane/type
 import { Header, EHeaderVariant, Tag } from "@plane/ui";
 import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
 import { AppliedDateFilters, AppliedMembersFilters, AppliedStatusFilters } from "@/components/modules";
-import { AppliedCustomFieldFilters } from "@/components/issues";
+import { AppliedCustomFieldFilters } from "@/components/issues/issue-layouts/filters/applied-filters";
 // helpers
 import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
 // types
