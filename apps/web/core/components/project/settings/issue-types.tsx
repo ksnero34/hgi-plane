@@ -10,7 +10,7 @@ import { IIssueType, IProjectIssueType, TCustomFieldType } from "@plane/types";
 interface IIssueTypeWithNested extends IProjectIssueType {}
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useCustomField } from "@/hooks/store/use-custom-field";
-import { Logo } from "@/components/common";
+import { Logo } from "@/components/common/logo";
 import { convertHexEmojiToDecimal, getRandomEmoji } from "@plane/utils";
 
 const getDefaultLogoProp = () => ({

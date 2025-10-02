@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { FileText, Folder, ChevronRight } from "lucide-react";
+import { FileText, Folder } from "lucide-react";
 // constants
 import {
   EPageAccess,
@@ -17,7 +17,7 @@ import { TPage } from "@plane/types";
 import { Breadcrumbs, Button, Header, setToast, TOAST_TYPE } from "@plane/ui";
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 // helpers
-import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { captureClick, captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";

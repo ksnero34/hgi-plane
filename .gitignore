@@ -95,3 +95,5 @@ dev-editor
 # Redis
 *.rdb
 *.rdb.gz
+.github/workflows/pull-request-build-lint-api.yml
+.github/workflows/pull-request-build-lint-web-apps.yml

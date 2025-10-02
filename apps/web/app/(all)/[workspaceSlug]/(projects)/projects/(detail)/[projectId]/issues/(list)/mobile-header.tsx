@@ -62,16 +62,24 @@ export const ProjectIssuesMobileHeader = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !projectId) return;
-      const newValues = issueFilters?.filters?.[key] ?? [];
+
+      const existingValue = issueFilters?.filters?.[key];
+      const newValues: string[] = Array.isArray(existingValue)
+        ? [...existingValue]
+        : typeof existingValue === "string"
+          ? [existingValue]
+          : [];
 
       if (Array.isArray(value)) {
         // this validation is majorly for the filter start_date, target_date custom
         value.forEach((val) => {
-          if (!newValues.includes(val)) newValues.push(val);
-          else newValues.splice(newValues.indexOf(val), 1);
+          const valueIndex = newValues.indexOf(val);
+          if (valueIndex > -1) newValues.splice(valueIndex, 1);
+          else newValues.push(val);
         });
       } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        const valueIndex = newValues.indexOf(value);
+        if (valueIndex > -1) newValues.splice(valueIndex, 1);
         else newValues.push(value);
       }
 

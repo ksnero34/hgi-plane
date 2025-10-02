@@ -28,7 +28,7 @@ import {
   TCustomField,
   TIssue,
 } from "@plane/types";
-import { Breadcrumbs, Button, ContrastIcon, BreadcrumbNavigationSearchDropdown, Header, Tooltip, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, BreadcrumbNavigationSearchDropdown, Header, setToast, TOAST_TYPE } from "@plane/ui";
 import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
@@ -58,7 +58,7 @@ import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
-import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const CycleIssuesHeader: React.FC = observer(() => {
   // refs

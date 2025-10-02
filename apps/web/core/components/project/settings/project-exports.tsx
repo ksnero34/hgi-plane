@@ -13,9 +13,10 @@ import { EXPORTERS_LIST, EUserPermissions, EUserPermissionsLevel } from "@plane/
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/ui";
 // components
-import { DetailedEmptyState } from "@/components/empty-state";
-import { Exporter, SingleExport } from "@/components/exporter";
-import { ImportExportSettingsLoader } from "@/components/ui";
+import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
+import { Exporter } from "@/components/exporter/export-modal";
+import { SingleExport } from "@/components/exporter/single-export";
+import { ImportExportSettingsLoader } from "@/components/ui/loader/settings/import-and-export";
 // constants
 import { EXPORT_SERVICES_LIST } from "@/constants/fetch-keys";
 // hooks

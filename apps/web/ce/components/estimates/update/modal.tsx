@@ -13,10 +13,10 @@ import { convertMinutesToHoursMinutesString, convertMinutesToHoursAndMinutes } f
 import { useProjectEstimates } from "@/hooks/store/estimates/use-project-estimate";
 import { useEstimate } from "@/hooks/store/estimates/use-estimate";
 // components
-import { EstimateCreateStageOne } from "@/components/estimates";
+import { EstimateCreateStageOne } from "@/components/estimates/create/stage-one";
 import { EstimatePointCreateRoot } from "@/components/estimates/points";
-// plane web constants
-import { EEstimateSystem } from "@/plane-web/constants/estimates";
+// plane constants
+import { EEstimateSystem } from "@plane/constants";
 // services
 import estimateService from "@/plane-web/services/project/estimate.service";
 

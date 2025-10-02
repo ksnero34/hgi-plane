@@ -64,14 +64,21 @@ export const ProfileIssuesMobileHeader = observer(() => {
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
       if (!workspaceSlug || !userId) return;
-      const newValues = issueFilters?.filters?.[key] ?? [];
+
+      const existingValue = issueFilters?.filters?.[key];
+      const newValues: string[] = Array.isArray(existingValue)
+        ? [...existingValue]
+        : typeof existingValue === "string"
+          ? [existingValue]
+          : [];
 
       if (Array.isArray(value)) {
         value.forEach((val) => {
           if (!newValues.includes(val)) newValues.push(val);
         });
       } else {
-        if (issueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        const valueIndex = newValues.indexOf(value);
+        if (valueIndex > -1) newValues.splice(valueIndex, 1);
         else newValues.push(value);
       }
 

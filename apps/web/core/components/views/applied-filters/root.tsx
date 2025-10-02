@@ -5,14 +5,18 @@ import { X } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
 import { Tag } from "@plane/ui";
-import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
+import {
+  prepareCustomFieldFiltersForRender,
+  removeCustomFieldFilterField,
+  removeCustomFieldFilterValue,
+  replaceUnderscoreIfSnakeCase,
+} from "@plane/utils";
 // components
 import { AppliedDateFilters } from "@/components/common/applied-filters/date";
 import { AppliedMembersFilters } from "@/components/common/applied-filters/members";
 import { AppliedCustomFieldFilters } from "@/components/issues/issue-layouts/filters/applied-filters/custom-fields";
 // local imports
 import { AppliedAccessFilters } from "./access";
-import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
 // types
 
 type Props = {
@@ -48,10 +52,8 @@ export const ViewAppliedFiltersList: React.FC<Props> = observer((props) => {
   if (!appliedFilters) return null;
   if (Object.keys(appliedFilters).length === 0) return null;
 
-  const isEditingAllowed = alwaysAllowEditing;
+  const isEditingAllowed = alwaysAllowEditing ?? false;
   const effectiveProjectId = isProjectLevel ? projectId : viewProjectId;
-
-  // console.log("ViewAppliedFiltersList - effectiveProjectId:", effectiveProjectId);
 
   // 필터 키에 따라 한글 이름을 반환하는 함수
   const getFilterKeyLabel = (key: keyof TViewFilterProps) => {
@@ -66,97 +68,97 @@ export const ViewAppliedFiltersList: React.FC<Props> = observer((props) => {
     return filterLabels[key] || replaceUnderscoreIfSnakeCase(key);
   };
 
-  return (
-    <div className="flex flex-wrap items-stretch gap-2 bg-custom-background-100">
-      {Object.entries(appliedFilters).map(([key, value]) => {
-        const filterKey = key as keyof TViewFilterProps;
+  const serializedCustomFieldsValue =
+    typeof appliedFilters.custom_fields === "string"
+      ? appliedFilters.custom_fields
+      : JSON.stringify(appliedFilters.custom_fields || {});
 
-        if (!value) return;
-        if (Array.isArray(value) && value.length === 0) return;
+  const renderedFilters: JSX.Element[] = [];
 
-        // 커스텀 필드의 경우 새로운 헬퍼 함수 사용
-        if (filterKey === "custom_fields" && customFields && isProjectLevel && effectiveProjectId) {
-          const customFieldsForRender = prepareCustomFieldFiltersForRender(value as string, customFields);
+  Object.entries(appliedFilters).forEach(([key, value]) => {
+    const filterKey = key as keyof TViewFilterProps;
 
-          return customFieldsForRender.map(({ fieldId, field, fieldValues }) => (
-            <Tag key={`${filterKey}-${fieldId}`}>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-custom-text-300">{field.name}</span>
-                <AppliedCustomFieldFilters
-                  appliedFilters={{ [fieldId]: fieldValues }}
-                  customFields={customFields}
-                  editable={isEditingAllowed ?? false}
-                  handleRemove={(fieldId, val) => {
-                    const newValue = removeCustomFieldFilterValue(
-                      typeof appliedFilters.custom_fields === 'string'
-                        ? appliedFilters.custom_fields
-                        : JSON.stringify(appliedFilters.custom_fields || {}),
-                      fieldId,
-                      val
-                    );
+    if (!value) return;
+    if (Array.isArray(value) && value.length === 0) return;
+
+    if (filterKey === "custom_fields" && customFields && isProjectLevel && effectiveProjectId) {
+      const customFieldsForRender = prepareCustomFieldFiltersForRender(serializedCustomFieldsValue, customFields);
+
+      customFieldsForRender.forEach(({ fieldId, field, fieldValues }) => {
+        renderedFilters.push(
+          <Tag key={`${filterKey}-${fieldId}`}>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-custom-text-300">{field.name}</span>
+              <AppliedCustomFieldFilters
+                appliedFilters={{ [fieldId]: fieldValues }}
+                customFields={customFields}
+                editable={isEditingAllowed}
+                handleRemove={(fieldId, val) => {
+                  const newValue = removeCustomFieldFilterValue(serializedCustomFieldsValue, fieldId, val);
+                  handleRemoveFilter("custom_fields", newValue);
+                }}
+                workspaceSlug={workspaceSlug}
+                projectId={effectiveProjectId}
+              />
+              {isEditingAllowed && (
+                <button
+                  type="button"
+                  className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
+                  onClick={() => {
+                    const newValue = removeCustomFieldFilterField(serializedCustomFieldsValue, fieldId);
                     handleRemoveFilter("custom_fields", newValue);
                   }}
-                  workspaceSlug={workspaceSlug}
-                  projectId={effectiveProjectId}
-                />
-                {isEditingAllowed && (
-                  <button
-                    type="button"
-                    className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
-                    onClick={() => {
-                      const newValue = removeCustomFieldFilterField(
-                        typeof appliedFilters.custom_fields === 'string'
-                          ? appliedFilters.custom_fields
-                          : JSON.stringify(appliedFilters.custom_fields || {}),
-                        fieldId
-                      );
-                      handleRemoveFilter("custom_fields", newValue);
-                    }}
-                  >
-                    <X size={12} strokeWidth={2} />
-                  </button>
-                )}
-              </div>
-            </Tag>
-          ));
-        }
-
-        return (
-          <Tag key={filterKey}>
-            <span className="text-xs text-custom-text-300">{replaceUnderscoreIfSnakeCase(filterKey)}</span>
-            {VIEW_ACCESS_FILTERS.includes(filterKey) && (
-              <AppliedAccessFilters
-                editable={isEditingAllowed}
-                handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                values={Array.isArray(value) ? (value as EViewAccess[]) : []}
-              />
-            )}
-            {DATE_FILTERS.includes(filterKey) && (
-              <AppliedDateFilters
-                editable={isEditingAllowed}
-                handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                values={Array.isArray(value) ? (value as string[]) : []}
-              />
-            )}
-            {MEMBERS_FILTERS.includes(filterKey) && (
-              <AppliedMembersFilters
-                editable={isEditingAllowed}
-                handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                values={Array.isArray(value) ? (value as string[]) : []}
-              />
-            )}
-            {isEditingAllowed && (
-              <button
-                type="button"
-                className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
-                onClick={() => handleRemoveFilter(filterKey, null)}
-              >
-                <X size={12} strokeWidth={2} />
-              </button>
-            )}
+                >
+                  <X size={12} strokeWidth={2} />
+                </button>
+              )}
+            </div>
           </Tag>
         );
-      })}
+      });
+      return;
+    }
+
+    renderedFilters.push(
+      <Tag key={filterKey}>
+        <span className="text-xs text-custom-text-300">{getFilterKeyLabel(filterKey)}</span>
+        {VIEW_ACCESS_FILTERS.includes(filterKey) && (
+          <AppliedAccessFilters
+            editable={isEditingAllowed}
+            handleRemove={(val) => handleRemoveFilter(filterKey, val)}
+            values={Array.isArray(value) ? (value as EViewAccess[]) : []}
+          />
+        )}
+        {DATE_FILTERS.includes(filterKey) && (
+          <AppliedDateFilters
+            editable={isEditingAllowed}
+            handleRemove={(val) => handleRemoveFilter(filterKey, val)}
+            values={Array.isArray(value) ? (value as string[]) : []}
+          />
+        )}
+        {MEMBERS_FILTERS.includes(filterKey) && (
+          <AppliedMembersFilters
+            editable={isEditingAllowed}
+            handleRemove={(val) => handleRemoveFilter(filterKey, val)}
+            values={Array.isArray(value) ? (value as string[]) : []}
+          />
+        )}
+        {isEditingAllowed && (
+          <button
+            type="button"
+            className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
+            onClick={() => handleRemoveFilter(filterKey, null)}
+          >
+            <X size={12} strokeWidth={2} />
+          </button>
+        )}
+      </Tag>
+    );
+  });
+
+  return (
+    <div className="flex flex-wrap items-stretch gap-2 bg-custom-background-100">
+      {renderedFilters}
       {isEditingAllowed && (
         <button type="button" onClick={handleClearAllFilters}>
           <Tag>
@@ -167,4 +169,4 @@ export const ViewAppliedFiltersList: React.FC<Props> = observer((props) => {
       )}
     </div>
   );
-};
+});

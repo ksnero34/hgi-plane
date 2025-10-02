@@ -3,10 +3,10 @@
 import { observer } from "mobx-react";
 // components
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { NotAuthorizedView } from "@/components/auth-screens";
-import { PageHead } from "@/components/core";
+import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
+import { PageHead } from "@/components/core/page-title";
 import { IssueTypes } from "@/components/project/settings/issue-types";
-import { SettingsContentWrapper } from "@/components/settings";
+import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";

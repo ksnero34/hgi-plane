@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 // icons
 import { ChartNoAxesColumn, ListFilter, PanelRight, SlidersHorizontal, Edit3 } from "lucide-react";
 // plane imports
@@ -14,6 +14,7 @@ import {
   EProjectFeatureKey,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { DiceIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import {
@@ -26,7 +27,7 @@ import {
   TCustomField,
   TIssue
 } from "@plane/types";
-import { Breadcrumbs, Button, DiceIcon, Header, BreadcrumbNavigationSearchDropdown } from "@plane/ui";
+import { Breadcrumbs, Button, Header, BreadcrumbNavigationSearchDropdown, setToast, TOAST_TYPE } from "@plane/ui";
 import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
@@ -58,7 +59,7 @@ import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
-import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const ModuleIssuesHeader: React.FC = observer(() => {
   // refs
@@ -66,14 +67,11 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
-  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
-  const { storedValue: isSidebarCollapsed, setValue: setIsSidebarCollapsed } = useLocalStorage(
-    "is_sidebar_collapsed",
-    true
-  );
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId, moduleId } = useParams();
+  // i18n
+  const { t } = useTranslation();
   // hooks
   const { isMobile } = usePlatformOS();
   // store hooks
@@ -97,12 +95,18 @@ export const ModuleIssuesHeader: React.FC = observer(() => {
     project: { projectMemberIds },
   } = useMember();
   const { customFields } = useCustomField(projectId as string);
+  const {
+    setValue: setModuleSidebarCollapsed,
+    storedValue: moduleSidebarCollapsed,
+  } = useLocalStorage<string | boolean>("module_sidebar_collapsed", false);
 
-  const { setValue, storedValue } = useLocalStorage("module_sidebar_collapsed", "false");
-
-  const isSidebarCollapsed = storedValue ? (storedValue === "true" ? true : false) : false;
+  const isSidebarCollapsed = moduleSidebarCollapsed === null
+    ? false
+    : typeof moduleSidebarCollapsed === "boolean"
+      ? moduleSidebarCollapsed
+      : moduleSidebarCollapsed === "true";
   const toggleSidebar = () => {
-    setValue(`${!isSidebarCollapsed}`);
+    setModuleSidebarCollapsed(!isSidebarCollapsed);
   };
 
   const activeLayout = issueFilters?.displayFilters?.layout;

@@ -27,7 +27,7 @@ import {
   TBulkOperationsPayload,
 } from "@plane/types";
 // ui
-import { Breadcrumbs, Button, Tooltip, Header, BreadcrumbNavigationSearchDropdown, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Button, Header, BreadcrumbNavigationSearchDropdown, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { isIssueFilterActive, calculateFilterValue } from "@plane/utils";
 import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
@@ -54,7 +54,7 @@ import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
-import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations";
+import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // refs

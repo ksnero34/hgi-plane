@@ -1,22 +1,16 @@
 "use client";
 
 import { observer } from "mobx-react";
-import { Home, Shapes } from "lucide-react";
+import { Home } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { Breadcrumbs, Button, Header } from "@plane/ui";
+import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
-// hooks
-import { useHome } from "@/hooks/store/use-home";
-// local imports
-import { StarUsOnGitHubLink } from "./star-us-link";
 
 export const WorkspaceDashboardHeader = observer(() => {
   // plane hooks
   const { t } = useTranslation();
-  // hooks
-  const { toggleWidgetSettings } = useHome();
 
   return (
     <>
@@ -32,18 +26,6 @@ export const WorkspaceDashboardHeader = observer(() => {
             </Breadcrumbs>
           </div>
         </Header.LeftItem>
-        <Header.RightItem>
-          {/*<Button*/}
-          {/*  variant="neutral-primary"*/}
-          {/*  size="sm"*/}
-          {/*  onClick={() => toggleWidgetSettings(true)}*/}
-          {/*  className="my-auto mb-0"*/}
-          {/*>*/}
-          {/*  <Shapes size={16} />*/}
-          {/*  <div className="hidden text-xs font-medium sm:hidden md:block">{t("home.manage_widgets")}</div>*/}
-          {/*</Button>*/}
-          {/*<StarUsOnGitHubLink />*/}
-        </Header.RightItem>
       </Header>
     </>
   );
