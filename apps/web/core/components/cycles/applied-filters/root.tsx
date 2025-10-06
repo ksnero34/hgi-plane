@@ -96,6 +96,8 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
         if (Array.isArray(value) && value.length === 0) return null;
 
         if (filterKey === "custom_fields") {
+          if (Array.isArray(value)) return null;
+
           const customFieldsValue = getCustomFieldsValue(value);
           if (!customFieldsValue) return null;
 

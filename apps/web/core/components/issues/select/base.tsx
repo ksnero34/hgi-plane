@@ -28,7 +28,7 @@ export type TWorkItemLabelSelectBaseProps = {
   onChange: (value: string[]) => void;
   onDropdownOpen?: () => void;
   placement?: Placement;
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   createLabel?: (data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
   tabIndex?: number;
   value: string[];
@@ -89,6 +89,10 @@ export const WorkItemLabelSelectBase: React.FC<TWorkItemLabelSelectBaseProps> = 
     if (!isDropdownOpen) onOpen();
     setIsDropdownOpen((prevIsOpen) => !prevIsOpen);
   };
+
+  useEffect(() => {
+    setIsOpen?.(isDropdownOpen);
+  }, [isDropdownOpen, setIsOpen]);
 
   const dropdownOnChange = (val: string[]) => {
     onChange(val);

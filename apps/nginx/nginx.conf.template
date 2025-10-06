@@ -63,6 +63,12 @@ http {
             add_header Cache-Control "public, no-transform";
         }
 
+        location /emoji-apple/ {
+            alias /www/data/emoji/apple/64/;
+            expires 30d;
+            add_header Cache-Control "public, no-transform";
+        }
+
         location /api/ {
             proxy_http_version 1.1;
             proxy_set_header Upgrade ${dollar}http_upgrade;

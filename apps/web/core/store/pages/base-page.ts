@@ -4,7 +4,7 @@ import { action, computed, makeObservable, observable, reaction, runInAction } f
 import { EPageAccess } from "@plane/constants";
 import { TDocumentPayload, TLogoProps, TNameDescriptionLoader, TPage } from "@plane/types";
 import { TChangeHandlerProps } from "@plane/ui";
-import { convertHexEmojiToDecimal } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 // plane web store
 import { ExtendedBasePage } from "@/plane-web/store/pages/extended-base-page";
 import type { RootStore } from "@/plane-web/store/root.store";
@@ -242,7 +242,6 @@ export class BasePage extends ExtendedBasePage implements TBasePage {
       archived_at: this.archived_at,
       workspace: this.workspace,
       project_ids: this.project_ids,
-      team: this.team,
       created_by: this.created_by,
       updated_by: this.updated_by,
       created_at: this.created_at,
@@ -463,11 +462,13 @@ export class BasePage extends ExtendedBasePage implements TBasePage {
     const originalLogoProps = { ...this.logo_props };
     try {
       let logoValue = {};
-      if (value?.type === "emoji")
+      if (value?.type === "emoji") {
+        const decimalValue = value.value.decimal;
         logoValue = {
-          value: convertHexEmojiToDecimal(value.value.unified),
-          url: value.value.imageUrl,
+          value: decimalValue,
+          url: value.value.imageUrl || getEmojiImageUrlFromDecimal(decimalValue),
         };
+      }
       else if (value?.type === "icon") logoValue = value.value;
 
       const logoProps: TLogoProps = {

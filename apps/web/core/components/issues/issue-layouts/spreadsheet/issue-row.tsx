@@ -1,8 +1,8 @@
 "use client";
 
-import { Dispatch, MouseEvent, MutableRefObject, SetStateAction, useRef, useState } from "react";
+import { Dispatch, MouseEvent, MutableRefObject, SetStateAction, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
@@ -265,7 +265,7 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
   });
 
   // 커스텀 필드 맵 생성
-  const customFieldsMap = React.useMemo(() => {
+  const customFieldsMap = useMemo(() => {
     return customFields.reduce((acc, field) => {
       acc[`custom_field_${field.id}`] = field;
       return acc;

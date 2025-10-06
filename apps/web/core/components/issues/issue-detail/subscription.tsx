@@ -36,7 +36,7 @@ export const IssueSubscription: FC<TIssueSubscription> = observer((props) => {
   // state
   const [loading, setLoading] = useState(false);
   // hooks
-  const { allowPermissions } = useUserPermissions();
+  const { allowPermissions, checkIssueEditPermission } = useUserPermissions();
 
   const isSubscribed = getSubscriptionByIssueId(issueId);
   const issue = getIssueById(issueId);

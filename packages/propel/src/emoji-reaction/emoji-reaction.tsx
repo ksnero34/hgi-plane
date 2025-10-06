@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 import { AnimatedCounter } from "../animated-counter";
 import { stringToEmoji } from "../emoji-icon-picker";
 import { Tooltip } from "../tooltip";
@@ -69,6 +70,7 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
     ref
   ) => {
     const sizeClass = sizeClasses[size];
+    const emojiImageUrl = React.useMemo(() => getEmojiImageUrlFromDecimal(emoji), [emoji]);
 
     const handleClick = () => {
       onReactionClick?.(emoji);
@@ -82,7 +84,13 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
 
       return (
         <div className="text-xs">
-          <div className="font-medium mb-1">{stringToEmoji(emoji)}</div>
+          <div className="font-medium mb-1 inline-flex items-center gap-1">
+            {emojiImageUrl ? (
+              <img src={emojiImageUrl} alt="" className="h-4 w-4" loading="lazy" />
+            ) : (
+              stringToEmoji(emoji)
+            )}
+          </div>
           <div>
             {displayUsers.join(", ")}
             {remainingCount > 0 && ` and ${remainingCount} more`}
@@ -90,6 +98,8 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
         </div>
       );
     }, [emoji, users]);
+
+    const imageDimension = size === "sm" ? 16 : size === "md" ? 18 : 20;
 
     const button = (
       <button
@@ -106,7 +116,13 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
         )}
         {...props}
       >
-        <span className={sizeClass.emoji}>{emoji}</span>
+        <span className={cn(sizeClass.emoji, "inline-flex items-center justify-center")} aria-hidden>
+          {emojiImageUrl ? (
+            <img src={emojiImageUrl} alt="" style={{ height: imageDimension, width: imageDimension }} loading="lazy" />
+          ) : (
+            stringToEmoji(emoji)
+          )}
+        </span>
         {showCount && count > 0 && <AnimatedCounter count={count} size={size} className={sizeClass.count} />}
       </button>
     );

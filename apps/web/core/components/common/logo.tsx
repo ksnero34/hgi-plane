@@ -7,6 +7,7 @@ import { FC } from "react";
 import useFontFaceObserver from "use-font-face-observer";
 // plane imports
 import { getEmojiSize, LUCIDE_ICONS_LIST, stringToEmoji } from "@plane/propel/emoji-icon-picker";
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 import { TLogoProps } from "@plane/types";
 
 type Props = {
@@ -51,6 +52,7 @@ export const Logo: FC<Props> = (props) => {
 
   // emoji
   if (in_use === "emoji") {
+    const imageUrl = emoji?.url || getEmojiImageUrlFromDecimal(emoji?.value || "");
     return (
       <span
         className="flex items-center justify-center"
@@ -61,7 +63,11 @@ export const Logo: FC<Props> = (props) => {
           width: size,
         }}
       >
-        {stringToEmoji(emoji?.value || "")}
+        {imageUrl ? (
+          <img src={imageUrl} alt="" style={{ height: "100%", width: "100%" }} loading="lazy" />
+        ) : (
+          stringToEmoji(emoji?.value || "")
+        )}
       </span>
     );
   }

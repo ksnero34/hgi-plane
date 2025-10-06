@@ -10,7 +10,7 @@ import { EmojiPicker } from "@plane/propel/emoji-icon-picker";
 import { Tooltip } from "@plane/propel/tooltip";
 import { IProject, IWorkspace } from "@plane/types";
 import { Button, CustomSelect, Input, TextArea, TOAST_TYPE, setToast, EmojiIconPickerTypes } from "@plane/ui";
-import { renderFormattedDate, getFileURL } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal, renderFormattedDate, getFileURL } from "@plane/utils";
 // components
 import { Logo } from "@/components/common/logo";
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
@@ -207,11 +207,12 @@ export const ProjectDetailsForm: FC<IProjectDetailsForm> = (props) => {
                   onChange={(val: any) => {
                     let logoValue = {};
 
-                    if (val?.type === "emoji")
+                    if (val?.type === "emoji") {
                       logoValue = {
-                        value: val.value,
+                        value: val.value.decimal,
+                        url: val.value.imageUrl || getEmojiImageUrlFromDecimal(val.value.decimal),
                       };
-                    else if (val?.type === "icon") logoValue = val.value;
+                    } else if (val?.type === "icon") logoValue = val.value;
 
                     onChange({
                       in_use: val?.type,

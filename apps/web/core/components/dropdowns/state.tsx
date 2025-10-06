@@ -8,7 +8,8 @@ import { ChevronDown, Search } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 import { useTranslation } from "@plane/i18n";
 // ui
-import { ComboDropDown, Spinner, StateGroupIcon } from "@plane/ui";
+import { ComboDropDown, Spinner } from "@plane/ui";
+import { StateGroupIcon } from "@plane/propel/icons";
 // helpers
 import { cn } from "@plane/utils";
 // hooks

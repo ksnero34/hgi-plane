@@ -10,6 +10,7 @@ import { EIssueFilterType, EUserPermissionsLevel, WORK_ITEM_TRACKER_ELEMENTS } f
 import { useTranslation } from "@plane/i18n";
 import { EIssuesStoreType, EUserProjectRoles, IIssueFilterOptions, ISearchIssueResponse } from "@plane/types";
 import { TOAST_TYPE, setToast } from "@plane/ui";
+import { calculateFilterRemovalValue } from "@plane/utils";
 // components
 import { ExistingIssuesListModal } from "@/components/core/modals/existing-issues-list-modal";
 import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";

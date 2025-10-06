@@ -50,6 +50,7 @@
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-beta.2",
     "@plane/constants": "workspace:*",
+    "@plane/utils": "workspace:*",
     "@plane/hooks": "workspace:*",
     "@plane/types": "workspace:*",
     "@tanstack/react-table": "^8.21.3",

@@ -7,7 +7,7 @@ import { ETabIndices, EPageAccess } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import type { TPage } from "@plane/types";
 import { Button, EmojiIconPicker, EmojiIconPickerTypes, Input } from "@plane/ui";
-import { convertHexEmojiToDecimal, getTabIndex } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal, getTabIndex } from "@plane/utils";
 // components
 import { AccessField } from "@/components/common/access-field";
 import { Logo } from "@/components/common/logo";
@@ -84,12 +84,13 @@ export const PageForm: React.FC<Props> = (props) => {
               onChange={(val: any) => {
                 let logoValue = {};
 
-                if (val?.type === "emoji")
+                if (val?.type === "emoji") {
+                  const decimalValue = val.value.decimal;
                   logoValue = {
-                    value: convertHexEmojiToDecimal(val.value.unified),
-                    // url: val.value.imageUrl,
+                    value: decimalValue,
+                    url: val.value.imageUrl || getEmojiImageUrlFromDecimal(decimalValue),
                   };
-                else if (val?.type === "icon") logoValue = val.value;
+                } else if (val?.type === "icon") logoValue = val.value;
 
                 handleFormData("logo_props", {
                   in_use: val?.type,

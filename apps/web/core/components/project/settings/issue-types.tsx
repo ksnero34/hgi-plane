@@ -11,14 +11,18 @@ interface IIssueTypeWithNested extends IProjectIssueType {}
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 import { Logo } from "@/components/common/logo";
-import { convertHexEmojiToDecimal, getRandomEmoji } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal, getRandomEmoji } from "@plane/utils";
 
-const getDefaultLogoProp = () => ({
-  in_use: "emoji" as const,
-  emoji: {
-    value: getRandomEmoji(),
-  },
-});
+const getDefaultLogoProp = () => {
+  const value = getRandomEmoji();
+  return {
+    in_use: "emoji" as const,
+    emoji: {
+      value,
+      url: getEmojiImageUrlFromDecimal(value),
+    },
+  };
+};
 
 const FIELD_TYPES: { value: TCustomFieldType; label: string; description: string }[] = [
   { value: "text", label: "Text", description: "일반 텍스트 필드" },
@@ -579,10 +583,13 @@ export const IssueTypes: React.FC = observer(() => {
                   label={<Logo logo={newIssueType.logo_props || { in_use: "emoji", emoji: { value: "128204" } }} size={20} />}
                   onChange={(val) => {
                     let logoValue = {};
-                    if (val?.type === "emoji")
+                    if (val?.type === "emoji") {
+                      const decimalValue = val.value.decimal;
                       logoValue = {
-                        value: convertHexEmojiToDecimal(val.value.unified),
+                        value: decimalValue,
+                        url: val.value.imageUrl || getEmojiImageUrlFromDecimal(decimalValue),
                       };
+                    }
                     else if (val?.type === "icon") logoValue = val.value;
                     
                     setNewIssueType({

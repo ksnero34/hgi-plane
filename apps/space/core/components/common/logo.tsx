@@ -1,15 +1,10 @@
 "use client";
 
 import { FC } from "react";
-import { Emoji, EmojiStyle } from "emoji-picker-react";
-// Due to some weird issue with the import order, the import of useFontFaceObserver
-// should be after the imported here rather than some below helper functions as it is in the original file
-// eslint-disable-next-line import/order
-import useFontFaceObserver from "use-font-face-observer";
 // plane imports
 import { TLogoProps } from "@plane/types";
 import { LUCIDE_ICONS_LIST } from "@plane/ui";
-import { emojiCodeToUnicode } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 
 type Props = {
   logo: TLogoProps;
@@ -28,36 +23,39 @@ export const Logo: FC<Props> = (props) => {
   const color = icon?.color;
   const lucideIcon = LUCIDE_ICONS_LIST.find((item) => item.name === value);
 
-  const isMaterialSymbolsFontLoaded = useFontFaceObserver([
-    {
-      family: `Material Symbols Rounded`,
-      style: `normal`,
-      weight: `normal`,
-      stretch: `condensed`,
-    },
-  ]);
   // if no value, return empty fragment
   if (!value) return <></>;
 
-  if (!isMaterialSymbolsFontLoaded) {
-    return (
-      <span
-        style={{
-          height: size,
-          width: size,
-        }}
-        className="rounded animate-pulse bg-custom-background-80"
-      />
-    );
-  }
-
   // emoji
   if (in_use === "emoji") {
-    return (
-      <div className="emoji-container" style={{ width: size, height: size }}>
-        <Emoji unified={emojiCodeToUnicode(value)} size={size} emojiStyle={EmojiStyle.NATIVE} />
-      </div>
-    );
+    const imageUrl = emoji?.url || getEmojiImageUrlFromDecimal(value || "");
+    if (imageUrl)
+      return <img src={imageUrl} alt="" style={{ height: size, width: size }} loading="lazy" />;
+
+    const codePoints = (value || "")
+      .split("-")
+      .map((segment) => parseInt(segment, 10))
+      .filter((segment) => !Number.isNaN(segment));
+
+    if (codePoints.length) {
+      return (
+        <span
+          className="grid place-items-center"
+          style={{
+            width: size,
+            height: size,
+            fontSize: size * 0.9,
+            lineHeight: 1,
+          }}
+          aria-label="logo-emoji"
+          role="img"
+        >
+          {String.fromCodePoint(...codePoints)}
+        </span>
+      );
+    }
+
+    return null;
   }
 
   // icon

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 // plane imports
+import type { EditorRefApi } from "@plane/editor";
+import type { TDocumentPayload, TPage, TPageVersion, TWebhookConnectionQueryParams } from "@plane/types";
 // hooks
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePageFallback } from "@/hooks/use-page-fallback";
@@ -10,6 +12,7 @@ import { useQueryParams } from "@/hooks/use-query-params";
 import { PageModals } from "@/plane-web/components/pages";
 import { usePagesPaneExtensions, useExtendedEditorProps } from "@/plane-web/hooks/pages";
 import { EPageStoreType } from "@/plane-web/hooks/store";
+import type { TPageNavigationPaneTab } from "@/plane-web/components/pages/navigation-pane";
 // store
 import type { TPageInstance } from "@/store/pages/base-page";
 // local imports

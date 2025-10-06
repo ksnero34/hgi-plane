@@ -81,21 +81,21 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
               await fetchWorkspaces();
               await completeStep(workspaceResponse.id);
             })
-            .catch(() => {
+            .catch((err) => {
               captureError({
                 eventName: WORKSPACE_TRACKER_EVENTS.create,
                 payload: { slug: formData.slug },
                 error: new Error("Error creating workspace"),
               });
 
-              const errorMessage = (error as any)?.response?.data?.error === "Only instance administrators can create workspaces"
+              const errorMessage = err?.response?.data?.error === "Only instance administrators can create workspaces"
                 ? "인스턴스 관리자만 워크스페이스를 생성할 수 있습니다."
                 : "워크스페이스 생성에 실패했습니다. 다시 시도해주세요.";
 
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: t("workspace_creation.toast.error.title"),
-                message: t("workspace_creation.toast.error.message"),
+                message: errorMessage,
               });
             });
         } else setSlugError(true);

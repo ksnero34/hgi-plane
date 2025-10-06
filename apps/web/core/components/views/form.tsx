@@ -22,7 +22,12 @@ import {
 } from "@plane/types";
 // ui
 import { Button, Input, TextArea } from "@plane/ui";
-import { getComputedDisplayFilters, getComputedDisplayProperties, getTabIndex } from "@plane/utils";
+import {
+  getComputedDisplayFilters,
+  getComputedDisplayProperties,
+  getEmojiImageUrlFromDecimal,
+  getTabIndex,
+} from "@plane/utils";
 // components
 import { Logo } from "@/components/common/logo";
 import {
@@ -160,7 +165,7 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
         </h3>
         <div className="space-y-3">
           <div className="flex items-start gap-2 w-full">
-            <EmojiIconPicker
+            <EmojiPicker
               isOpen={isOpen}
               handleToggle={(val: boolean) => setIsOpen(val)}
               className="flex items-center justify-center flex-shrink0"
@@ -179,11 +184,12 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
               onChange={(val: any) => {
                 let logoValue = {};
 
-                if (val?.type === "emoji")
+                if (val?.type === "emoji") {
                   logoValue = {
-                    value: val.value,
+                    value: val.value.decimal,
+                    url: val.value.imageUrl || getEmojiImageUrlFromDecimal(val.value.decimal),
                   };
-                else if (val?.type === "icon") logoValue = val.value;
+                } else if (val?.type === "icon") logoValue = val.value;
 
                 setValue("logo_props", {
                   in_use: val?.type,

@@ -1,6 +1,4 @@
-import { Emoji, EmojiStyle } from "emoji-picker-react";
-// helpers
-import { emojiCodeToUnicode } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 
 export const renderEmoji = (
   emoji:
@@ -10,7 +8,7 @@ export const renderEmoji = (
         color: string;
       }
 ) => {
-  if (!emoji) return;
+  if (!emoji) return null;
 
   if (typeof emoji === "object")
     return (
@@ -18,14 +16,23 @@ export const renderEmoji = (
         {emoji.name}
       </span>
     );
-  else {
-    if (isNaN(parseInt(emoji))) return emoji;
+
+  if (Number.isNaN(parseInt(emoji, 10))) return emoji;
+
+  const imageUrl = getEmojiImageUrlFromDecimal(emoji);
+
+  if (!imageUrl)
     return (
-      <div className="emoji-container">
-        <Emoji unified={emojiCodeToUnicode(emoji)} size={16} emojiStyle={EmojiStyle.NATIVE} />
-      </div>
+      <span className="inline-flex items-center justify-center">
+        {String.fromCodePoint(parseInt(emoji, 10))}
+      </span>
     );
-  }
+
+  return (
+    <span className="inline-flex items-center justify-center">
+      <img src={imageUrl} alt="" className="h-4 w-4" loading="lazy" />
+    </span>
+  );
 };
 
 export const groupReactions = <T extends { reaction: string }>(reactions: T[], key: string) => {

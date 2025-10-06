@@ -1,5 +1,5 @@
 import { Placement } from "@popperjs/core";
-import { EmojiClickData, Theme } from "emoji-picker-react";
+import { convertHexEmojiToDecimal, emojiStringToUnicode, getEmojiImageUrlFromUnicode } from "@plane/utils";
 
 export enum EmojiIconPickerTypes {
   EMOJI = "emoji",
@@ -17,10 +17,18 @@ export const TABS_LIST = [
   },
 ];
 
+export type TEmojiPickerValue = {
+  emoji: string;
+  unified: string;
+  originalUnified: string;
+  decimal: string;
+  imageUrl: string;
+};
+
 export type TChangeHandlerProps =
   | {
       type: EmojiIconPickerTypes.EMOJI;
-      value: EmojiClickData;
+      value: TEmojiPickerValue;
     }
   | {
       type: EmojiIconPickerTypes.ICON;
@@ -45,7 +53,6 @@ export type TCustomEmojiPicker = {
   placement?: Placement;
   searchDisabled?: boolean;
   searchPlaceholder?: string;
-  theme?: Theme;
   iconType?: "material" | "lucide";
 };
 
@@ -55,6 +62,21 @@ export type TIconsListProps = {
   defaultColor: string;
   onChange: (val: { name: string; color: string }) => void;
   searchDisabled?: boolean;
+};
+
+export const createEmojiPickerValue = (emoji: string): TEmojiPickerValue => {
+  const unicode = emojiStringToUnicode(emoji);
+  const unified = unicode.toUpperCase();
+  const decimal = convertHexEmojiToDecimal(unified);
+  const imageUrl = getEmojiImageUrlFromUnicode(unified);
+
+  return {
+    emoji,
+    unified,
+    originalUnified: unicode,
+    decimal,
+    imageUrl,
+  };
 };
 
 /**

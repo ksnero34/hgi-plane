@@ -68,6 +68,8 @@ export const CalendarIssueBlock = observer(
 
     const [isMenuActive, setIsMenuActive] = useState(false);
 
+    const isDraggingState = isDragging;
+
     const blockRef = useRef<HTMLDivElement>(null);
     const menuActionRef = useRef<HTMLDivElement | null>(null);
 
@@ -212,7 +214,7 @@ export const CalendarIssueBlock = observer(
                   />
                 </div>
               )}
-              <Tooltip tooltipContent={issue.name} position="top-left" isMobile={isMobile}>
+              <Tooltip tooltipContent={issue.name} position="top-start" isMobile={isMobile}>
                 <span
                   className={cn("truncate text-xs font-medium", {
                     "text-custom-text-200": !isSelected,

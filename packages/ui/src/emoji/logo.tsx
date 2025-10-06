@@ -1,11 +1,10 @@
 "use client";
 
-import { Emoji } from "emoji-picker-react";
 import React, { FC } from "react";
 import useFontFaceObserver from "use-font-face-observer";
 // local imports
 import { LUCIDE_ICONS_LIST } from "..";
-import { emojiCodeToUnicode } from "./helpers";
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 
 export type TEmojiLogoProps = {
   in_use: "emoji" | "icon";
@@ -64,7 +63,44 @@ export const Logo: FC<Props> = (props) => {
 
   // emoji
   if (in_use === "emoji") {
-    return <Emoji unified={emojiCodeToUnicode(value)} size={size} />;
+    const imageUrl = emoji?.url || getEmojiImageUrlFromDecimal(emoji?.value || "");
+
+    if (imageUrl) {
+      return (
+        <span
+          className="flex items-center justify-center"
+          style={{
+            height: size,
+            width: size,
+          }}
+        >
+          <img src={imageUrl} alt="" style={{ height: size, width: size }} loading="lazy" />
+        </span>
+      );
+    }
+
+    const codePoints = (emoji?.value || "")
+      .split("-")
+      .map((segment) => parseInt(segment, 10))
+      .filter((segment) => !Number.isNaN(segment));
+
+    if (codePoints.length) {
+      return (
+        <span
+          className="flex items-center justify-center"
+          style={{
+            fontSize: `${size * 0.9}px`,
+            lineHeight: `${size}px`,
+            height: size,
+            width: size,
+          }}
+        >
+          {String.fromCodePoint(...codePoints)}
+        </span>
+      );
+    }
+
+    return null;
   }
 
   // icon

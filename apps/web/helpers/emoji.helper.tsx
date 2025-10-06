@@ -1,3 +1,5 @@
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
+
 /**
  * Renders an emoji or icon
  * @param {string | { name: string; color: string }} emoji - The emoji or icon to render
@@ -19,5 +21,16 @@ export const renderEmoji = (
         {emoji.name}
       </span>
     );
-  else return isNaN(parseInt(emoji)) ? emoji : String.fromCodePoint(parseInt(emoji));
+
+  if (Number.isNaN(parseInt(emoji, 10))) return emoji;
+
+  const imageUrl = getEmojiImageUrlFromDecimal(emoji);
+
+  if (!imageUrl) return String.fromCodePoint(parseInt(emoji, 10));
+
+  return (
+    <span className="emoji-container inline-flex items-center justify-center">
+      <img src={imageUrl} alt="" className="h-4 w-4" loading="lazy" />
+    </span>
+  );
 };

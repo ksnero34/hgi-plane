@@ -1,13 +1,42 @@
 "use client";
 
 import { FC, useState } from "react";
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
 import { observer } from "mobx-react";
 import { User, ChevronUp, ChevronDown } from "lucide-react";
 import { IUser } from "@plane/types";
 import { Avatar, ToggleSwitch } from "@plane/ui";
 import { useUser } from "@/hooks/store";
+
+
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
+
+const formatRelativeTime = (value?: string | Date | null) => {
+  if (!value) return "-";
+  const target = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(target.getTime())) return "-";
+
+  const diffInSeconds = Math.round((target.getTime() - Date.now()) / 1000);
+  const absDiff = Math.abs(diffInSeconds);
+
+  const thresholds: { limit: number; divisor: number; unit: Intl.RelativeTimeFormatUnit }[] = [
+    { limit: 60, divisor: 1, unit: "second" },
+    { limit: 3600, divisor: 60, unit: "minute" },
+    { limit: 86400, divisor: 3600, unit: "hour" },
+    { limit: 604800, divisor: 86400, unit: "day" },
+    { limit: 2629800, divisor: 604800, unit: "week" },
+    { limit: 31557600, divisor: 2629800, unit: "month" },
+    { limit: Number.POSITIVE_INFINITY, divisor: 31557600, unit: "year" },
+  ];
+
+  for (const { limit, divisor, unit } of thresholds) {
+    if (absDiff < limit) {
+      const value = Math.round(diffInSeconds / divisor);
+      return relativeTimeFormatter.format(value, unit);
+    }
+  }
+
+  return "-";
+};
 
 type TSortKey = 'display_name' | 'email' | 'date_joined' | 'last_active' | 'is_instance_admin';
 type TSortOrder = 'asc' | 'desc';
@@ -127,12 +156,10 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
                   {member.email}
                 </td>
                 <td className="px-4 py-3 text-sm text-custom-text-200">
-                  {formatDistanceToNow(new Date(member.date_joined), { addSuffix: true, locale: ko })}
+                  {formatRelativeTime(member.date_joined)}
                 </td>
                 <td className="px-4 py-3 text-sm text-custom-text-200">
-                  {member.last_active
-                    ? formatDistanceToNow(new Date(member.last_active), { addSuffix: true, locale: ko })
-                    : "-"}
+                  {member.last_active ? formatRelativeTime(member.last_active) : "-"}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-between">

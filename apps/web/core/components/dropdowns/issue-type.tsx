@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useMemo, useRef, useState } from "react";
+import React, { ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
@@ -11,7 +11,7 @@ import { useTranslation } from "@plane/i18n";
 // ui
 import { ComboDropDown, Loader } from "@plane/ui";
 // helpers
-import { cn } from "@plane/utils";
+import { cn, getEmojiImageUrlFromDecimal } from "@plane/utils";
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useDropdown } from "@/hooks/use-dropdown";
@@ -98,41 +98,56 @@ export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((pr
     setQuery,
   });
 
+  const renderEmojiFromCode = useCallback((code: string) => {
+    if (!code) return null;
+
+    const imageUrl = getEmojiImageUrlFromDecimal(code);
+    if (imageUrl) {
+      return <img src={imageUrl} alt="" className="h-4 w-4" loading="lazy" />;
+    }
+
+    const codePoints = code
+      .split("-")
+      .map((segment) => parseInt(segment, 10))
+      .filter((segment) => !Number.isNaN(segment));
+
+    if (!codePoints.length) return null;
+
+    try {
+      return <>{String.fromCodePoint(...codePoints)}</>;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
   const options = useMemo(() => {
     if (!issueTypes || issueTypes.length === 0) return [];
 
     return issueTypes.map((projectIssueType: IProjectIssueType) => {
       // 중첩된 데이터 구조 처리: projectIssueType.issue_type이 실제 이슈 타입
       const issueType = projectIssueType.issue_type || projectIssueType;
-      
-      // 이모지 코드를 실제 이모지로 변환
-      const getEmojiFromCode = (code: string) => {
-        if (!code) return "";
-        try {
-          return String.fromCodePoint(parseInt(code, 10));
-        } catch (e) {
-          return "";
-        }
-      };
 
-      const emoji = issueType.logo_props?.emoji?.value 
-        ? getEmojiFromCode(issueType.logo_props.emoji.value)
-        : issueType.icon || "";
+      const emojiNode = renderEmojiFromCode(issueType.logo_props?.emoji?.value ?? "");
+      const iconName = issueType.logo_props?.icon?.name || issueType.icon;
 
       return {
         value: projectIssueType.id, // ProjectIssueType의 ID를 사용
         query: issueType.name || "",
         content: (
           <div className="flex items-center gap-2">
-            {emoji && (
-              <span style={{ color: issueType.color }}>{emoji}</span>
-            )}
+            {emojiNode ? (
+              <span className="inline-flex h-4 w-4 items-center justify-center">{emojiNode}</span>
+            ) : iconName ? (
+              <span style={{ color: issueType.color }} className="material-symbols-rounded">
+                {iconName}
+              </span>
+            ) : null}
             <span className="flex-grow truncate">{issueType.name || "Unnamed"}</span>
           </div>
         ),
       };
     });
-  }, [issueTypes]);
+  }, [issueTypes, renderEmojiFromCode]);
 
   const filteredOptions = useMemo(() => {
     if (!options) return [];
@@ -165,21 +180,19 @@ export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((pr
     // 중첩된 데이터 구조 처리
     const issueType = projectIssueType.issue_type || projectIssueType;
     
-    const getEmojiFromCode = (code: string) => {
-      if (!code) return "";
-      try {
-        return String.fromCodePoint(parseInt(code, 10));
-      } catch (e) {
-        return "";
+    if (issueType.logo_props?.emoji?.value) {
+      const emojiNode = renderEmojiFromCode(issueType.logo_props.emoji.value);
+      if (emojiNode) {
+        return <span className="inline-flex h-4 w-4 items-center justify-center">{emojiNode}</span>;
       }
-    };
+    }
 
-    const emoji = issueType.logo_props?.emoji?.value 
-      ? getEmojiFromCode(issueType.logo_props.emoji.value)
-      : issueType.icon || "";
+    const iconName = issueType.logo_props?.icon?.name || issueType.icon;
 
-    return emoji ? (
-      <span style={{ color: issueType.color }}>{emoji}</span>
+    return iconName ? (
+      <span style={{ color: issueType.color }} className="material-symbols-rounded">
+        {iconName}
+      </span>
     ) : null;
   };
 

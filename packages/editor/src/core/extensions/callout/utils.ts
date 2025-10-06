@@ -1,6 +1,6 @@
 // plane imports
 import { TEmojiLogoProps } from "@plane/ui";
-import { sanitizeHTML } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal, sanitizeHTML } from "@plane/utils";
 // types
 import {
   EAttributeNames,
@@ -9,12 +9,14 @@ import {
   TCalloutBlockIconAttributes,
 } from "./types";
 
+const DEFAULT_EMOJI_DECIMAL = "128161";
+
 export const DEFAULT_CALLOUT_BLOCK_ATTRIBUTES: TCalloutBlockAttributes = {
   "data-logo-in-use": "emoji",
   "data-icon-color": undefined,
   "data-icon-name": undefined,
-  "data-emoji-unicode": "128161",
-  "data-emoji-url": "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4a1.png",
+  "data-emoji-unicode": DEFAULT_EMOJI_DECIMAL,
+  "data-emoji-url": getEmojiImageUrlFromDecimal(DEFAULT_EMOJI_DECIMAL),
   "data-background": undefined,
   "data-block-type": "callout-component",
 };

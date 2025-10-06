@@ -1,5 +1,4 @@
 import { Popover, Tab } from "@headlessui/react";
-import EmojiPicker from "emoji-picker-react";
 import React, { useRef, useState } from "react";
 import { usePopper } from "react-popper";
 // plane helpers
@@ -7,9 +6,9 @@ import { useOutsideClickDetector } from "@plane/hooks";
 // helpers
 import { cn } from "../utils";
 // hooks
-import { EmojiIconPickerTypes, TABS_LIST, TCustomEmojiPicker } from "./emoji-icon-helper";
+import { EmojiIconPickerTypes, TABS_LIST, TCustomEmojiPicker, createEmojiPickerValue } from "./emoji-icon-helper";
 import { LucideIconsList } from "./lucide-icons-list";
-// helpers
+import { EmojiGrid } from "./emoji-grid";
 
 export const EmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
   const {
@@ -27,7 +26,6 @@ export const EmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
     placement = "bottom-start",
     searchDisabled = false,
     searchPlaceholder = "Search",
-    theme,
   } = props;
   // refs
   const containerRef = useRef<HTMLDivElement>(null);
@@ -96,25 +94,21 @@ export const EmojiIconPicker: React.FC<TCustomEmojiPicker> = (props) => {
                   ))}
                 </Tab.List>
                 <Tab.Panels as="div" className="h-full w-full overflow-y-auto">
-                  <Tab.Panel>
-                    <EmojiPicker
-                      onEmojiClick={(val) => {
-                        onChange({
-                          type: EmojiIconPickerTypes.EMOJI,
-                          value: val,
-                        });
-                        if (closeOnSelect) handleToggle(false);
-                      }}
-                      height="20rem"
-                      width="100%"
-                      theme={theme}
-                      searchDisabled={searchDisabled}
-                      searchPlaceholder={searchPlaceholder}
-                      previewConfig={{
-                        showPreview: false,
-                      }}
-                      lazyLoadEmojis
-                    />
+                  <Tab.Panel className="h-80 w-full relative overflow-hidden overflow-y-auto">
+                    <div className="h-80">
+                      <EmojiGrid
+                        onEmojiSelect={(emoji) => {
+                          const emojiValue = createEmojiPickerValue(emoji);
+                          onChange({
+                            type: EmojiIconPickerTypes.EMOJI,
+                            value: emojiValue,
+                          });
+                          if (closeOnSelect) handleToggle(false);
+                        }}
+                        searchDisabled={searchDisabled}
+                        searchPlaceholder={searchPlaceholder}
+                      />
+                    </div>
                   </Tab.Panel>
                   <Tab.Panel className="h-80 w-full relative overflow-hidden overflow-y-auto">
                     <LucideIconsList

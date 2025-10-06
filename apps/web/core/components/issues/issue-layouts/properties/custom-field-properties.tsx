@@ -242,11 +242,10 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
               )}
               disabled={isReadOnly}
               showTooltip={true}
-              tooltipHeading={field.name}
-              tooltipContent={formattedValue || "none"}
               icon={<FieldIcon className="h-3 w-3" />}
               hideIcon={hasValue}
-              placeholder=""
+              placeholder={field.name}
+              renderByDefault={isMobile}
             />
           </div>
         );
@@ -320,4 +319,4 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
       ))}
     </>
   );
-}); 
+});

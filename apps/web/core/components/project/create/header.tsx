@@ -8,7 +8,7 @@ import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-pick
 // plane types
 import { IProject } from "@plane/types";
 // plane ui
-import { getFileURL, getTabIndex } from "@plane/utils";
+import { getEmojiImageUrlFromDecimal, getFileURL, getTabIndex } from "@plane/utils";
 // components
 import { Logo } from "@/components/common/logo";
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
@@ -82,7 +82,8 @@ const ProjectCreateHeader: React.FC<Props> = (props) => {
 
                 if (val?.type === "emoji")
                   logoValue = {
-                    value: val.value,
+                    value: val.value.decimal,
+                    url: val.value.imageUrl || getEmojiImageUrlFromDecimal(val.value.decimal),
                   };
                 else if (val?.type === "icon") logoValue = val.value;
 

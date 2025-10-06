@@ -60,9 +60,11 @@ export const CyclesListItem: FC<TCyclesListItem> = observer((props) => {
 
     const query = generateQueryParams(searchParams, ["peekCycle"]);
     if (searchParams.has("peekCycle") && searchParams.get("peekCycle") === cycleId) {
-      router.push(`${pathname}?${query}`, {}, { showProgressBar: false });
+      const url = query ? `${pathname}?${query}` : pathname;
+      router.push(url, { showProgress: false });
     } else {
-      router.push(`${pathname}?${query && `${query}&`}peekCycle=${cycleId}`, {}, { showProgressBar: false });
+      const prefix = query ? `${query}&` : "";
+      router.push(`${pathname}?${prefix}peekCycle=${cycleId}`, { showProgress: false });
     }
   };
 

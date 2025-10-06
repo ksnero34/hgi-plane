@@ -4,7 +4,7 @@ import React, { Fragment, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 // icons
-import { ChevronDown, CirclePlus, LogOut, Mails } from "lucide-react";
+import { ChevronDown, CirclePlus, LogOut, Mails, Settings } from "lucide-react";
 // ui
 import { Menu, Transition } from "@headlessui/react";
 // plane imports

@@ -1,6 +1,6 @@
 // plane imports
 import { EmojiIconPicker, EmojiIconPickerTypes, Logo, TEmojiLogoProps } from "@plane/ui";
-import { cn, convertHexEmojiToDecimal } from "@plane/utils";
+import { cn, getEmojiImageUrlFromUnicode } from "@plane/utils";
 // types
 import { TCalloutBlockAttributes } from "./types";
 // utils
@@ -25,7 +25,7 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
     },
     emoji: {
       value: blockAttributes["data-emoji-unicode"]?.toString(),
-      // url: blockAttributes["data-emoji-url"],
+      url: blockAttributes["data-emoji-url"],
     },
   };
 
@@ -47,19 +47,21 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
             in_use: "emoji",
             emoji: {
               value: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-unicode"],
-              // url: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-url"],
+              url: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-url"],
             },
           };
           if (val.type === "emoji") {
+            const decimalValue = val.value.decimal;
+            const emojiUrl = val.value.imageUrl || getEmojiImageUrlFromUnicode(val.value.unified);
             newLogoValue = {
-              "data-emoji-unicode": convertHexEmojiToDecimal(val.value.unified),
-              // "data-emoji-url": val.value.imageUrl,
+              "data-emoji-unicode": decimalValue,
+              "data-emoji-url": emojiUrl,
             };
             newLogoValueToStoreInLocalStorage = {
               in_use: "emoji",
               emoji: {
-                value: convertHexEmojiToDecimal(val.value.unified),
-                // url: val.value.imageUrl,
+                value: decimalValue,
+                url: emojiUrl,
               },
             };
           } else if (val.type === "icon") {

@@ -1,7 +1,7 @@
 // types
 import { TLogoProps } from "@plane/types";
 // helpers
-import { cn } from "@plane/utils";
+import { cn, getEmojiImageUrlFromDecimal } from "@plane/utils";
 
 type Props = {
   className?: string;
@@ -23,12 +23,17 @@ export const ProjectLogo: React.FC<Props> = (props) => {
       </span>
     );
 
-  if (logo.in_use === "emoji" && logo.emoji)
+  if (logo.in_use === "emoji" && logo.emoji) {
+    const imageUrl = logo.emoji.url || getEmojiImageUrlFromDecimal(logo.emoji.value || "");
+    if (imageUrl)
+      return <img src={imageUrl} alt="" className={cn("h-4 w-4", className)} loading="lazy" />;
+
     return (
       <span className={cn("text-base", className)}>
         {logo.emoji.value?.split("-").map((emoji) => String.fromCodePoint(parseInt(emoji, 10)))}
       </span>
     );
+  }
 
   return <span />;
 };

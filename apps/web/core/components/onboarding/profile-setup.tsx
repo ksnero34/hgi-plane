@@ -2,8 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import { observer } from "mobx-react";
-import Image from "next/image";
-import { useTheme } from "next-themes";
 import { Controller, useForm } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react";
 import {
@@ -94,8 +92,6 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
   });
   // plane hooks
   const { t } = useTranslation();
-  // hooks
-  const { resolvedTheme } = useTheme();
   // store hooks
   const { updateCurrentUser } = useUser();
   const { updateUserProfile } = useUserProfile();
@@ -300,12 +296,6 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
   return (
     <div className="flex h-full w-full">
       <div className="w-full h-full overflow-auto px-6 py-10 sm:px-7 sm:py-14 md:px-14 lg:px-28">
-        <div className="flex items-center justify-between">
-          <OnboardingHeader currentStep={isCurrentStepUserPersonalization ? 2 : 1} totalSteps={totalSteps} />
-          <div className="shrink-0 lg:hidden">
-            <SwitchAccountDropdown fullName={`${watch("last_name")} ${watch("first_name")}`} />
-          </div>
-        </div>
         <div className="flex flex-col w-full items-center justify-center p-8 mt-6">
           <div className="text-center space-y-1 py-4 mx-auto">
             <h3 className="text-3xl font-bold text-onboarding-text-100">
@@ -600,24 +590,6 @@ export const ProfileSetup: React.FC<Props> = observer((props) => {
               {isSubmitting ? <Spinner height="20px" width="20px" /> : "시작하기"}
             </Button>
           </form>
-        </div>
-      </div>
-      <div className="hidden lg:block relative w-2/5 h-screen overflow-hidden px-6 py-10 sm:px-7 sm:py-14 md:px-14 lg:px-28">
-        <SwitchAccountDropdown fullName={`${watch("last_name")} ${watch("first_name")}`} />
-        <div className="absolute inset-0 z-0">
-          {profileSetupStep === EProfileSetupSteps.USER_PERSONALIZATION ? (
-            <Image
-              src={resolvedTheme === "dark" ? UserPersonalizationDark : UserPersonalizationLight}
-              className="h-screen w-auto float-end object-cover"
-              alt="User Personalization"
-            />
-          ) : (
-            <Image
-              src={resolvedTheme === "dark" ? ProfileSetupDark : ProfileSetupLight}
-              className="h-screen w-auto float-end object-cover"
-              alt="Profile setup"
-            />
-          )}
         </div>
       </div>
     </div>

@@ -1,16 +1,16 @@
 "use client";
 
-import { Dispatch, MouseEvent, SetStateAction, useEffect, useRef } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { ChevronRight } from "lucide-react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { Dispatch, MouseEvent, SetStateAction, useEffect, useRef } from "react";
 // types
 import { Tooltip } from "@plane/propel/tooltip";
-import { EIssueServiceType, TIssue, IIssueDisplayProperties, TIssueMap, TCustomField } from "@plane/types";
+import { EIssueServiceType, IIssueDisplayProperties, TCustomField, TIssue, TIssueMap } from "@plane/types";
 // ui
-import { Spinner, ControlLink, setToast, TOAST_TYPE, Row } from "@plane/ui";
+import { ControlLink, Row, setToast, Spinner, TOAST_TYPE } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
@@ -267,7 +267,7 @@ export const IssueBlock = observer((props: IssueBlockProps) => {
             <Tooltip
               tooltipContent={issue.name}
               isMobile={isMobile}
-              position="top-left"
+              position="top-start"
               disabled={isCurrentBlockDragging}
               renderByDefault={false}
             >
