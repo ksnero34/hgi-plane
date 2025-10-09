@@ -231,7 +231,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.dev
-    image: harbor.hwgeneralins.com/plane-dev/proxy:1.1.2-dev
+    image: harbor.hwgeneralins.com/plane-dev/proxy:1.1.4-dev
     #restart: unless-stopped
     networks:
       - dev_env

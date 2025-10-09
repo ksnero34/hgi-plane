@@ -1,3 +1,4 @@
+import React from "react";
 import { EmojiPicker } from "frimousse";
 import { getEmojiImageUrlFromEmoji } from "@plane/utils";
 import { cn } from "../utils";
