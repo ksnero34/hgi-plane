@@ -1,5 +1,6 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EmojiPicker } from "frimousse";
-import { getEmojiImageUrlFromEmoji } from "@plane/utils";
+import { getEmojiImageUrlCandidatesFromEmoji } from "@plane/utils";
 import { cn } from "../../utils";
 
 type EmojiRootProps = {
@@ -49,7 +50,26 @@ export const EmojiRoot = (props: EmojiRootProps) => {
               </div>
             ),
             Emoji: ({ emoji, ...props }) => {
-              const emojiImageUrl = getEmojiImageUrlFromEmoji(emoji?.emoji ?? "");
+              const emojiImageCandidates = useMemo(
+                () => getEmojiImageUrlCandidatesFromEmoji(emoji?.emoji ?? ""),
+                [emoji?.emoji]
+              );
+              const [emojiCandidateIndex, setEmojiCandidateIndex] = useState(0);
+
+              useEffect(() => {
+                setEmojiCandidateIndex(0);
+              }, [emojiImageCandidates]);
+
+              const handleEmojiImageError = useCallback(() => {
+                setEmojiCandidateIndex((index) => {
+                  const nextIndex = index + 1;
+                  return nextIndex < emojiImageCandidates.length ? nextIndex : -1;
+                });
+              }, [emojiImageCandidates]);
+
+              const hasEmojiImage = emojiCandidateIndex >= 0 && emojiCandidateIndex < emojiImageCandidates.length;
+              const emojiImageUrl = hasEmojiImage ? emojiImageCandidates[emojiCandidateIndex] : "";
+
               return (
                 <button
                   type="button"
@@ -58,8 +78,14 @@ export const EmojiRoot = (props: EmojiRootProps) => {
                   className="data-active:bg-accent flex size-8 items-center justify-center rounded-md text-lg"
                   {...props}
                 >
-                  {emojiImageUrl ? (
-                    <img src={emojiImageUrl} alt="" className="h-6 w-6" loading="lazy" />
+                  {hasEmojiImage && emojiImageUrl ? (
+                    <img
+                      src={emojiImageUrl}
+                      alt=""
+                      className="h-6 w-6"
+                      loading="lazy"
+                      onError={handleEmojiImageError}
+                    />
                   ) : (
                     emoji.emoji
                   )}

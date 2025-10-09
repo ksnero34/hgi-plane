@@ -95,10 +95,70 @@ export const emojiStringToUnicode = (emoji: string): string => {
     .join("-");
 };
 
-const buildEmojiImageUrl = (unicode: string): string => {
-  if (!unicode) return "";
-  return `${getEmojiAssetBasePath()}/${unicode.toLowerCase()}.png`;
+const SKIN_TONE_MODIFIERS = new Set(["1f3fb", "1f3fc", "1f3fd", "1f3fe", "1f3ff"]);
+const ZERO_WIDTH_JOINER = "200d";
+const EMOJI_VARIATION_SELECTOR = "fe0f";
+
+const uniquePush = (list: string[], value: string | undefined | null) => {
+  if (!value) return;
+  if (!value.length) return;
+  if (!list.includes(value)) list.push(value);
 };
+
+const buildEmojiAssetNameCandidates = (unicode: string): string[] => {
+  if (!unicode) return [];
+
+  const normalized = unicode.toLowerCase();
+  const segments = normalized.split("-");
+  const candidates: string[] = [];
+
+  uniquePush(candidates, normalized);
+
+  if (segments.includes(EMOJI_VARIATION_SELECTOR)) {
+    const withoutTrailingVariation =
+      segments[segments.length - 1] === EMOJI_VARIATION_SELECTOR ? segments.slice(0, -1).join("-") : undefined;
+    uniquePush(candidates, withoutTrailingVariation);
+
+    const withoutAnyVariation = segments.filter((segment) => segment !== EMOJI_VARIATION_SELECTOR).join("-");
+    uniquePush(candidates, withoutAnyVariation);
+  }
+
+  const baseSegment = segments.find(
+    (segment) =>
+      segment !== ZERO_WIDTH_JOINER &&
+      segment !== EMOJI_VARIATION_SELECTOR &&
+      !SKIN_TONE_MODIFIERS.has(segment.toLowerCase())
+  );
+  uniquePush(candidates, baseSegment);
+
+  if (
+    segments.length === 2 &&
+    segments[1] === EMOJI_VARIATION_SELECTOR &&
+    Number.isFinite(parseInt(segments[0], 16)) &&
+    parseInt(segments[0], 16) >= 0x1f000
+  ) {
+    const baseIndex = candidates.indexOf(segments[0]);
+    if (baseIndex > 0) {
+      const [baseCandidate] = candidates.splice(baseIndex, 1);
+      candidates.unshift(baseCandidate);
+    }
+  }
+
+  return candidates;
+};
+
+const buildEmojiImageUrlCandidates = (unicode: string): string[] =>
+  buildEmojiAssetNameCandidates(unicode).map((candidate) => `${getEmojiAssetBasePath()}/${candidate}.png`);
+
+const buildEmojiImageUrl = (unicode: string): string => buildEmojiImageUrlCandidates(unicode)[0] ?? "";
+
+export const getEmojiImageUrlCandidatesFromDecimal = (emoji: string): string[] =>
+  buildEmojiImageUrlCandidates(emojiCodeToUnicode(emoji));
+
+export const getEmojiImageUrlCandidatesFromUnicode = (unicode: string): string[] => buildEmojiImageUrlCandidates(unicode);
+
+export const getEmojiImageUrlCandidatesFromEmoji = (emoji: string): string[] =>
+  buildEmojiImageUrlCandidates(emojiStringToUnicode(emoji));
 
 export const getEmojiImageUrlFromDecimal = (emoji: string): string => buildEmojiImageUrl(emojiCodeToUnicode(emoji));
 
