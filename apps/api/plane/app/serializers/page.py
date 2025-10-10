@@ -121,6 +121,28 @@ class PageSerializer(BaseSerializer):
                 batch_size=10,
             )
 
+        detach_from_parent = False
+
+        # If access is being set to private, ensure the page is detached from its folder
+        if "access" in validated_data:
+            new_access = validated_data["access"]
+            if (
+                new_access == Page.PRIVATE_ACCESS
+                and instance.parent_id is not None
+                and instance.access != new_access
+            ):
+                detach_from_parent = True
+
+        # When archiving a page, move it to the root as well
+        if "archived_at" in validated_data:
+            new_archived_at = validated_data["archived_at"]
+            if new_archived_at and instance.parent_id is not None:
+                if instance.archived_at != new_archived_at:
+                    detach_from_parent = True
+
+        if detach_from_parent:
+            validated_data["parent"] = None
+
         return super().update(instance, validated_data)
 
 

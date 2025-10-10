@@ -96,7 +96,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             'wmv': ['video/x-ms-wmv'],
 
             # 압축파일
-            'zip': ['application/zip', 'application/x-zip-compressed'],
+            'zip': ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
             'rar': ['application/x-rar-compressed'],
             'tar': ['application/x-tar'],
             'gz': ['application/gzip'],
@@ -317,7 +317,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             'wmv': ['video/x-ms-wmv'],
 
             # 압축파일
-            'zip': ['application/zip', 'application/x-zip-compressed'],
+            'zip': ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
             'rar': ['application/x-rar-compressed'],
             'tar': ['application/x-tar'],
             'gz': ['application/gzip'],

@@ -90,7 +90,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
             'wmv': ['video/x-ms-wmv'],
 
             # 압축파일
-            'zip': ['application/zip', 'application/x-zip-compressed'],
+            'zip': ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
             'rar': ['application/x-rar-compressed'],
             'tar': ['application/x-tar'],
             'gz': ['application/gzip'],

@@ -414,8 +414,18 @@ class PageViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        should_detach = (
+            page.parent_id is not None
+            and page.access != access
+            and access == Page.PRIVATE_ACCESS
+        )
+
         page.access = access
-        page.save()
+        if should_detach:
+            page.parent = None
+            page.save(update_fields=["access", "parent"])
+        else:
+            page.save(update_fields=["access"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @allow_permission(
@@ -466,6 +476,10 @@ class PageViewSet(BaseViewSet):
             project_id=project_id,
             workspace__slug=slug,
         ).delete()
+
+        if page.parent_id:
+            page.parent = None
+            page.save(update_fields=["parent"])
 
         unarchive_archive_page_and_descendants(pk, datetime.now())
 

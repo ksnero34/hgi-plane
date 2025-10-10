@@ -3,21 +3,35 @@
 import * as React from "react";
 import { ChevronLeft } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { ko } from "date-fns/locale";
 
 import { cn } from "../utils";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-export const Calendar = ({ className, showOutsideDays = true, ...props }: CalendarProps) => {
+export const Calendar = ({
+  className,
+  showOutsideDays = true,
+  captionLayout,
+  hideNavigation,
+  locale = ko,
+  weekStartsOn,
+  ...props
+}: CalendarProps) => {
   const currentYear = new Date().getFullYear();
   const thirtyYearsAgoFirstDay = new Date(currentYear - 30, 0, 1);
   const thirtyYearsFromNowFirstDay = new Date(currentYear + 30, 11, 31);
+
+  const computedHideNavigation = hideNavigation ?? captionLayout === "dropdown";
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
-      weekStartsOn={props.weekStartsOn}
+      captionLayout={captionLayout}
+      hideNavigation={computedHideNavigation}
+      locale={locale}
+      weekStartsOn={weekStartsOn}
       components={{
         Chevron: ({ className, ...props }) => (
           <ChevronLeft
