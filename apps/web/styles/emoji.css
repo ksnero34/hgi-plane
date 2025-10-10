@@ -66,7 +66,7 @@ button.epr-btn-clear-search:hover {
 .emoji-container {
   display: grid !important;
   place-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
+  width: var(--emoji-container-size, 1.25rem) !important;
+  height: var(--emoji-container-size, 1.25rem) !important;
   overflow: visible !important;
 }

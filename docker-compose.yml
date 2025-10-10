@@ -11,7 +11,7 @@ services:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:3.0.0
+    image: harbor.hwgeneralins.com/plane/web:3.0.3
 
   admin:
     container_name: admin
@@ -41,7 +41,7 @@ services:
     depends_on:
       - api
       - web
-    image: harbor.hwgeneralins.com/plane/space:3.0.0
+    image: harbor.hwgeneralins.com/plane/space:3.0.3
 
   api:
     container_name: api
@@ -199,7 +199,7 @@ services:
       - api
       - space
       - admin
-    image: harbor.hwgeneralins.com/plane/proxy:3.0.0
+    image: harbor.hwgeneralins.com/plane/proxy:3.0.2
 
 volumes:
   redisdata:

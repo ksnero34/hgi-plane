@@ -4,6 +4,7 @@
 import { RANDOM_EMOJI_CODES } from "@plane/constants";
 
 const DEFAULT_EMOJI_ASSET_PATH = "/emoji-apple";
+const DEFAULT_EMOJIBASE_DATA_PATH = "/emojibase-data";
 
 const formatUnicodeSegment = (codePoint: number): string => {
   if (!Number.isFinite(codePoint)) return "";
@@ -20,6 +21,17 @@ const getEmojiAssetBasePath = (): string => {
     return configured.endsWith("/") ? configured.slice(0, -1) : configured;
   }
   return DEFAULT_EMOJI_ASSET_PATH;
+};
+
+const getEmojibaseDataBasePath = (): string => {
+  if (typeof process !== "undefined") {
+    const configured =
+      process.env.NEXT_PUBLIC_EMOJIBASE_DATA_PATH ||
+      process.env.EMOJIBASE_DATA_PATH ||
+      DEFAULT_EMOJIBASE_DATA_PATH;
+    return configured.endsWith("/") ? configured.slice(0, -1) : configured;
+  }
+  return DEFAULT_EMOJIBASE_DATA_PATH;
 };
 
 /**
@@ -114,7 +126,9 @@ const buildEmojiAssetNameCandidates = (unicode: string): string[] => {
 
   uniquePush(candidates, normalized);
 
-  if (segments.includes(EMOJI_VARIATION_SELECTOR)) {
+  if (!segments.includes(EMOJI_VARIATION_SELECTOR)) {
+    uniquePush(candidates, `${normalized}-${EMOJI_VARIATION_SELECTOR}`);
+  } else {
     const withoutTrailingVariation =
       segments[segments.length - 1] === EMOJI_VARIATION_SELECTOR ? segments.slice(0, -1).join("-") : undefined;
     uniquePush(candidates, withoutTrailingVariation);
@@ -130,19 +144,6 @@ const buildEmojiAssetNameCandidates = (unicode: string): string[] => {
       !SKIN_TONE_MODIFIERS.has(segment.toLowerCase())
   );
   uniquePush(candidates, baseSegment);
-
-  if (
-    segments.length === 2 &&
-    segments[1] === EMOJI_VARIATION_SELECTOR &&
-    Number.isFinite(parseInt(segments[0], 16)) &&
-    parseInt(segments[0], 16) >= 0x1f000
-  ) {
-    const baseIndex = candidates.indexOf(segments[0]);
-    if (baseIndex > 0) {
-      const [baseCandidate] = candidates.splice(baseIndex, 1);
-      candidates.unshift(baseCandidate);
-    }
-  }
 
   return candidates;
 };
@@ -167,6 +168,8 @@ export const getEmojiImageUrlFromUnicode = (unicode: string): string => buildEmo
 export const getEmojiImageUrlFromEmoji = (emoji: string): string => buildEmojiImageUrl(emojiStringToUnicode(emoji));
 
 export const getEmojiAssetPath = (): string => getEmojiAssetBasePath();
+
+export const getEmojibaseDataPath = (): string => getEmojibaseDataBasePath();
 
 /**
  * Groups reactions by a specified key

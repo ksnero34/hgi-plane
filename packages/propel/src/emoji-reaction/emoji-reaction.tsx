@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
-import { getEmojiImageUrlFromDecimal } from "@plane/utils";
+import { getEmojiImageUrlCandidatesFromDecimal } from "@plane/utils";
 import { AnimatedCounter } from "../animated-counter";
 import { stringToEmoji } from "../emoji-icon-picker";
 import { Tooltip } from "../tooltip";
@@ -70,7 +70,22 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
     ref
   ) => {
     const sizeClass = sizeClasses[size];
-    const emojiImageUrl = React.useMemo(() => getEmojiImageUrlFromDecimal(emoji), [emoji]);
+    const emojiImageCandidates = React.useMemo(() => getEmojiImageUrlCandidatesFromDecimal(emoji), [emoji]);
+    const [emojiCandidateIndex, setEmojiCandidateIndex] = React.useState(0);
+
+    React.useEffect(() => {
+      setEmojiCandidateIndex(0);
+    }, [emojiImageCandidates]);
+
+    const handleEmojiImageError = React.useCallback(() => {
+      setEmojiCandidateIndex((index) => {
+        const nextIndex = index + 1;
+        return nextIndex < emojiImageCandidates.length ? nextIndex : -1;
+      });
+    }, [emojiImageCandidates]);
+
+    const hasEmojiImage = emojiCandidateIndex >= 0 && emojiCandidateIndex < emojiImageCandidates.length;
+    const emojiImageUrl = hasEmojiImage ? emojiImageCandidates[emojiCandidateIndex] : "";
 
     const handleClick = () => {
       onReactionClick?.(emoji);
@@ -86,7 +101,7 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
         <div className="text-xs">
           <div className="font-medium mb-1 inline-flex items-center gap-1">
             {emojiImageUrl ? (
-              <img src={emojiImageUrl} alt="" className="h-4 w-4" loading="lazy" />
+              <img src={emojiImageUrl} alt="" className="h-4 w-4" loading="lazy" onError={handleEmojiImageError} />
             ) : (
               stringToEmoji(emoji)
             )}
@@ -97,7 +112,7 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
           </div>
         </div>
       );
-    }, [emoji, users]);
+    }, [emoji, users, emojiImageUrl, handleEmojiImageError]);
 
     const imageDimension = size === "sm" ? 16 : size === "md" ? 18 : 20;
 
@@ -118,7 +133,13 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
       >
         <span className={cn(sizeClass.emoji, "inline-flex items-center justify-center")} aria-hidden>
           {emojiImageUrl ? (
-            <img src={emojiImageUrl} alt="" style={{ height: imageDimension, width: imageDimension }} loading="lazy" />
+            <img
+              src={emojiImageUrl}
+              alt=""
+              style={{ height: imageDimension, width: imageDimension }}
+              loading="lazy"
+              onError={handleEmojiImageError}
+            />
           ) : (
             stringToEmoji(emoji)
           )}

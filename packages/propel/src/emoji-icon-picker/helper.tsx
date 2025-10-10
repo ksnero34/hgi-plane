@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { convertHexEmojiToDecimal, emojiStringToUnicode, getEmojiImageUrlCandidatesFromEmoji } from "@plane/utils";
 import { TPlacement, TSide, TAlign } from "../utils/placement";
 
 export const EmojiIconPickerTypes = {
@@ -5,10 +7,19 @@ export const EmojiIconPickerTypes = {
   ICON: "icon",
 } as const;
 
+export type TEmojiPickerValue = {
+  emoji: string;
+  unified: string;
+  originalUnified: string;
+  decimal: string;
+  imageUrl: string;
+  imageUrlCandidates: string[];
+};
+
 export type TChangeHandlerProps =
   | {
       type: typeof EmojiIconPickerTypes.EMOJI;
-      value: string;
+      value: TEmojiPickerValue;
     }
   | {
       type: typeof EmojiIconPickerTypes.ICON;
@@ -30,7 +41,7 @@ export type TCustomEmojiPicker = {
   defaultOpen?: TEmojiIconPickerTypes;
   disabled?: boolean;
   dropdownClassName?: string;
-  label: React.ReactNode;
+  label: ReactNode;
   onChange: (value: TChangeHandlerProps) => void;
   placement?: TPlacement;
   searchDisabled?: boolean;
@@ -154,3 +165,18 @@ export function stringToEmoji(emojiString: string): string {
 }
 
 export const getEmojiSize = (size: number) => size * 0.9 * 0.0625;
+
+export const createEmojiPickerValue = (emoji: string): TEmojiPickerValue => {
+  const unified = emojiStringToUnicode(emoji);
+  const decimal = convertHexEmojiToDecimal(unified);
+  const imageUrlCandidates = getEmojiImageUrlCandidatesFromEmoji(emoji ?? "");
+
+  return {
+    emoji,
+    unified: unified.toUpperCase(),
+    originalUnified: unified,
+    decimal,
+    imageUrl: imageUrlCandidates[0] ?? "",
+    imageUrlCandidates,
+  };
+};

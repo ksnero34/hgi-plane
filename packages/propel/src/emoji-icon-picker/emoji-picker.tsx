@@ -4,7 +4,7 @@ import { Popover } from "../popover";
 import { cn } from "../utils/classname";
 import { convertPlacementToSideAndAlign } from "../utils/placement";
 import { EmojiRoot } from "./emoji/emoji";
-import { emojiToString, TCustomEmojiPicker, EmojiIconPickerTypes } from "./helper";
+import { createEmojiPickerValue, TCustomEmojiPicker, EmojiIconPickerTypes } from "./helper";
 import { IconRoot } from "./icon/icon-root";
 
 export const EmojiPicker: React.FC<TCustomEmojiPicker> = (props) => {
@@ -38,9 +38,10 @@ export const EmojiPicker: React.FC<TCustomEmojiPicker> = (props) => {
 
   const handleEmojiChange = useCallback(
     (value: string) => {
+      const pickerValue = createEmojiPickerValue(value);
       onChange({
         type: EmojiIconPickerTypes.EMOJI,
-        value: emojiToString(value),
+        value: pickerValue,
       });
       if (closeOnSelect) handleToggle(false);
     },

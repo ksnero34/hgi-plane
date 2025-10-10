@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EmojiPicker } from "frimousse";
-import { getEmojiImageUrlCandidatesFromEmoji } from "@plane/utils";
+import { getEmojiImageUrlCandidatesFromEmoji, getEmojibaseDataPath } from "@plane/utils";
 import { cn } from "../utils";
 
 type EmojiGridProps = {
@@ -17,6 +17,7 @@ export const EmojiGrid = (props: EmojiGridProps) => {
       data-slot="emoji-picker"
       className="isolate flex h-full w-full flex-col rounded-md border-none p-2"
       onEmojiSelect={(val) => onEmojiSelect(val.emoji)}
+      emojibaseUrl={getEmojibaseDataPath()}
     >
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-custom-background-100 px-1.5 py-2 [&>[data-slot='emoji-picker-search-wrapper']]:flex-grow [&>[data-slot='emoji-picker-search-wrapper']]:p-0">
         <div data-slot="emoji-picker-search-wrapper" className="p-2">
