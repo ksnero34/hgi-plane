@@ -62,7 +62,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.0
+    image: harbor.hwgeneralins.com/plane/api:3.0.3
 
   worker:
     container_name: bgworker
