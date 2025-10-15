@@ -26,7 +26,7 @@ export const IssueAssigneeActivity: FC<TIssueAssigneeActivity> = observer((props
       ends={ends}
     >
       <>
-        {activity.verb === "assigned" ? `님이 새로운 담당자 ` : `님이 담당자 `}
+        {activity.verb === "assigned" ? `님이 새로운 담당자 ` : `님이 담당자에서 `}
         <a
           href={`/${activity.workspace_detail?.slug}/profile/${activity.verb === "assigned" ? activity.new_identifier : activity.old_identifier}`}
           target="_blank"

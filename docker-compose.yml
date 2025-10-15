@@ -62,7 +62,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.5
+    image: harbor.hwgeneralins.com/plane/api:3.0.6
 
   worker:
     container_name: bgworker
@@ -77,7 +77,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.0
+    image: harbor.hwgeneralins.com/plane/api:3.0.6
 
   beat-worker:
     container_name: beatworker
@@ -92,7 +92,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.0
+    image: harbor.hwgeneralins.com/plane/api:3.0.6
 
   migrator:
     container_name: plane-migrator
@@ -105,7 +105,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: harbor.hwgeneralins.com/plane/api:3.0.0
+    image: harbor.hwgeneralins.com/plane/api:3.0.6
 
   live:
     container_name: plane-live
