@@ -995,6 +995,13 @@ class CustomFieldValue(ProjectBaseModel):
             models.Index(fields=["issue", "deleted_at"]),
             models.Index(fields=["custom_field", "deleted_at"]),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["custom_field", "issue"],
+                condition=Q(deleted_at__isnull=True),
+                name="unique_active_custom_field_value",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.custom_field.name}: {self.value} <{self.issue.name}>"
