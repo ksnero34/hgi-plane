@@ -69,9 +69,12 @@ def create_json_file(data: List[dict]) -> str:
 
 
 def sanitize_excel_value(value):
-    """Remove characters that Excel/openpyxl cannot handle."""
+    """Remove characters Excel cannot handle and neutralize formula prefixes."""
     if isinstance(value, str):
-        return ILLEGAL_CHARACTERS_RE.sub("", value)
+        sanitized = ILLEGAL_CHARACTERS_RE.sub("", value)
+        if sanitized.startswith(("=", "+", "-", "@")):
+            sanitized = f"'{sanitized}"
+        return sanitized
     return value
 
 
