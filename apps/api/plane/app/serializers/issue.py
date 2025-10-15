@@ -1290,6 +1290,7 @@ class IssueSerializer(DynamicBaseSerializer):
         custom_field_values = CustomFieldValue.objects.filter(
             issue=obj,
             deleted_at__isnull=True,
+            custom_field__isnull=False,
             custom_field__deleted_at__isnull=True  # 삭제된 커스텀 필드 제외
         ).select_related('custom_field')
 
