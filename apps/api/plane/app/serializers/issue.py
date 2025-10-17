@@ -4,7 +4,7 @@ from lxml import html
 from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from datetime import datetime
 import json
 
@@ -180,11 +180,19 @@ class IssueCreateSerializer(BaseSerializer):
             deleted_at__isnull=True
         )
         custom_field_map = {str(field.id): field for field in custom_fields}
+        duplicate_detector = set()
 
         for value in values:
             field_id = value.get("custom_field_id")
             if not field_id:
                 raise serializers.ValidationError("custom_field_id는 필수입니다.")
+
+            field_id_str = str(field_id)
+            if field_id_str in duplicate_detector:
+                raise serializers.ValidationError(
+                    f"커스텀 필드 {field_id} 값이 중복으로 전달되었습니다."
+                )
+            duplicate_detector.add(field_id_str)
 
             field = custom_field_map.get(str(field_id))
             if not field:
@@ -467,84 +475,85 @@ class IssueCreateSerializer(BaseSerializer):
                     validated_data["state_id"] = initial_state.state_id
 
         # Create Issue
-        issue = Issue.objects.create(**validated_data, project_id=project_id)
+        with transaction.atomic():
+            issue = Issue.objects.create(**validated_data, project_id=project_id)
 
-        # Issue Audit Users
-        created_by_id = issue.created_by_id
-        updated_by_id = issue.updated_by_id
+            # Issue Audit Users
+            created_by_id = issue.created_by_id
+            updated_by_id = issue.updated_by_id
 
-        if assignees is not None and len(assignees):
-            try:
-                IssueAssignee.objects.bulk_create(
-                    [
-                        IssueAssignee(
-                            assignee_id=assignee_id,
+            if assignees is not None and len(assignees):
+                try:
+                    IssueAssignee.objects.bulk_create(
+                        [
+                            IssueAssignee(
+                                assignee_id=assignee_id,
+                                issue=issue,
+                                project_id=project_id,
+                                workspace_id=workspace_id,
+                                created_by_id=created_by_id,
+                                updated_by_id=updated_by_id,
+                            )
+                            for assignee_id in assignees
+                        ],
+                        batch_size=10,
+                    )
+                except IntegrityError:
+                    pass
+            else:
+                # Then assign it to default assignee, if it is a valid assignee
+                if (
+                    default_assignee_id is not None
+                    and ProjectMember.objects.filter(
+                        member_id=default_assignee_id,
+                        project_id=project_id,
+                        role__gte=8,
+                        is_active=True,
+                    ).exists()
+                ):
+                    try:
+                        IssueAssignee.objects.create(
+                            assignee_id=default_assignee_id,
                             issue=issue,
                             project_id=project_id,
                             workspace_id=workspace_id,
                             created_by_id=created_by_id,
                             updated_by_id=updated_by_id,
                         )
-                        for assignee_id in assignees
-                    ],
-                    batch_size=10,
-                )
-            except IntegrityError:
-                pass
-        else:
-            # Then assign it to default assignee, if it is a valid assignee
-            if (
-                default_assignee_id is not None
-                and ProjectMember.objects.filter(
-                    member_id=default_assignee_id,
-                    project_id=project_id,
-                    role__gte=8,
-                    is_active=True,
-                ).exists()
-            ):
+                    except IntegrityError:
+                        pass
+
+            if labels is not None and len(labels):
                 try:
-                    IssueAssignee.objects.create(
-                        assignee_id=default_assignee_id,
+                    IssueLabel.objects.bulk_create(
+                        [
+                            IssueLabel(
+                                label_id=label_id,
+                                issue=issue,
+                                project_id=project_id,
+                                workspace_id=workspace_id,
+                                created_by_id=created_by_id,
+                                updated_by_id=updated_by_id,
+                            )
+                            for label_id in labels
+                        ],
+                        batch_size=10,
+                    )
+                except IntegrityError:
+                    pass
+
+            if custom_field_values:
+                for field_value in custom_field_values:
+                    # 커스텀 필드 값 생성
+                    CustomFieldValue.objects.create(
+                        custom_field_id=field_value["custom_field_id"],
                         issue=issue,
+                        value=field_value["value"],
                         project_id=project_id,
                         workspace_id=workspace_id,
                         created_by_id=created_by_id,
                         updated_by_id=updated_by_id,
                     )
-                except IntegrityError:
-                    pass
-
-        if labels is not None and len(labels):
-            try:
-                IssueLabel.objects.bulk_create(
-                    [
-                        IssueLabel(
-                            label_id=label_id,
-                            issue=issue,
-                            project_id=project_id,
-                            workspace_id=workspace_id,
-                            created_by_id=created_by_id,
-                            updated_by_id=updated_by_id,
-                        )
-                        for label_id in labels
-                    ],
-                    batch_size=10,
-                )
-            except IntegrityError:
-                pass
-
-        if custom_field_values:
-            for field_value in custom_field_values:
-                # 커스텀 필드 값 생성
-                CustomFieldValue.objects.create(
-                    custom_field_id=field_value["custom_field_id"],
-                    issue=issue,
-                    value=field_value["value"],
-                    project_id=project_id,
-                    workspace_id=workspace_id,
-                    created_by_id=created_by_id,
-                    updated_by_id=updated_by_id,
-                )
 
         return issue
 
