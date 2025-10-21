@@ -48,41 +48,41 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Check if the instance is registered
-        instance = Instance.objects.first()
+        # instance = Instance.objects.first()
 
-        current_version = self.check_for_current_version()
-        latest_version = self.check_for_latest_version(current_version)
+        # current_version = self.check_for_current_version()
+        # latest_version = self.check_for_latest_version(current_version)
 
-        # If instance is None then register this instance
-        if instance is None:
-            machine_signature = options.get("machine_signature", "machine-signature")
+        # # If instance is None then register this instance
+        # if instance is None:
+        #     machine_signature = options.get("machine_signature", "machine-signature")
 
-            if not machine_signature:
-                raise CommandError("Machine signature is required")
+        #     if not machine_signature:
+        #         raise CommandError("Machine signature is required")
 
-            instance = Instance.objects.create(
-                instance_name="Plane Community Edition",
-                instance_id=secrets.token_hex(12),
-                current_version=current_version,
-                latest_version=latest_version,
-                last_checked_at=timezone.now(),
-                is_test=os.environ.get("IS_TEST", "0") == "1",
-                edition=InstanceEdition.PLANE_COMMUNITY.value,
-            )
+        #     instance = Instance.objects.create(
+        #         instance_name="Plane Community Edition",
+        #         instance_id=secrets.token_hex(12),
+        #         current_version=current_version,
+        #         latest_version=latest_version,
+        #         last_checked_at=timezone.now(),
+        #         is_test=os.environ.get("IS_TEST", "0") == "1",
+        #         edition=InstanceEdition.PLANE_COMMUNITY.value,
+        #     )
 
-            self.stdout.write(self.style.SUCCESS("Instance registered"))
-        else:
-            self.stdout.write(self.style.SUCCESS("Instance already registered"))
+        #     self.stdout.write(self.style.SUCCESS("Instance registered"))
+        # else:
+        #     self.stdout.write(self.style.SUCCESS("Instance already registered"))
 
-            # Update the instance details
-            instance.last_checked_at = timezone.now()
-            instance.current_version = current_version
-            instance.latest_version = latest_version
-            instance.is_test = os.environ.get("IS_TEST", "0") == "1"
-            instance.edition = InstanceEdition.PLANE_COMMUNITY.value
-            instance.save()
+        #     # Update the instance details
+        #     instance.last_checked_at = timezone.now()
+        #     instance.current_version = current_version
+        #     instance.latest_version = latest_version
+        #     instance.is_test = os.environ.get("IS_TEST", "0") == "1"
+        #     instance.edition = InstanceEdition.PLANE_COMMUNITY.value
+        #     instance.save()
 
         # Call the instance traces task
-        instance_traces.delay()
+        # instance_traces.delay()
 
         return

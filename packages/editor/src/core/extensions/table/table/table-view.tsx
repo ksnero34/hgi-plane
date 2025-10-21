@@ -100,7 +100,6 @@ const selectionToolbarOptions: Partial<Props> = {
   arrow: false,
   placement: "bottom",
   theme: "light-border no-padding",
-  appendTo: () => document.body,
 };
 
 function setCellsBackgroundColor(editor: Editor, color: { backgroundColor: string; textColor: string }) {
@@ -242,6 +241,7 @@ function createSelectionToolbarContent(
     {
       className:
         "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 py-1 text-xs shadow-custom-shadow-rg min-w-[10rem] whitespace-nowrap",
+      "data-prevent-outside-click": "",
     },
     items.map((item) =>
       h(
@@ -275,8 +275,8 @@ function createToolbox({
   triggerButton: Element | null;
   items: ToolboxItem[];
   tippyOptions: any;
-  onClickItem: (item: ToolboxItem) => void;
-  onSelectColor: (color: { backgroundColor: string; textColor: string }) => void;
+  onClickItem: (item: ToolboxItem, event?: MouseEvent) => void;
+  onSelectColor: (color: { backgroundColor: string; textColor: string }, event?: MouseEvent) => void;
   colors: { [key: string]: { backgroundColor: string; textColor: string; icon?: string } };
 }): Instance<Props> {
   const toolbox = tippy(triggerButton ?? document.body, {
@@ -285,6 +285,7 @@ function createToolbox({
       {
         className:
           "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg min-w-[12rem] whitespace-nowrap",
+        "data-prevent-outside-click": "",
       },
       items.map((item) => {
         if (item.label === "Pick color") {
@@ -300,7 +301,11 @@ function createToolbox({
                   style: `background-color: ${colorValue.backgroundColor};color: ${colorValue.textColor || "inherit"};`,
                   innerHTML:
                     colorValue.icon ?? `<span class=\"text-md\" style=\"color: ${colorValue.textColor || colorValue.backgroundColor}\">A</span>` ,
-                  onClick: () => onSelectColor(colorValue),
+                  onClick: (event: MouseEvent) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onSelectColor(colorValue, event);
+                  },
                 })
               )
             ),
@@ -313,7 +318,11 @@ function createToolbox({
           {
             className:
               "flex items-center gap-2 px-1 py-1.5 bg-custom-background-100 hover:bg-custom-background-80 text-sm text-custom-text-200 rounded cursor-pointer",
-            onClick: () => onClickItem(item),
+            onClick: (event: MouseEvent) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onClickItem(item, event);
+            },
           },
           [
             h("span", {
@@ -382,13 +391,15 @@ const contextMenuItems: ContextMenuItem[] = [
   },
 ];
 
-function createContextMenu(content: HTMLElement): Instance<Props> {
+function createContextMenu(content: HTMLElement, appendTo: () => HTMLElement): Instance<Props> {
+  content.setAttribute("data-prevent-outside-click", "");
   return tippy(document.body, {
     content,
     trigger: "manual",
     placement: "right-start",
     interactive: true,
     theme: "light-border no-padding",
+    appendTo,
   }) as Instance<Props>;
 }
 
@@ -414,6 +425,7 @@ export class TableView implements NodeView {
   selectionUpdateHandler?: () => void;
   currentToolbarItemsKey: string | null = null;
   lastSelectionStateKey: string | null = null;
+  editorContainer?: HTMLElement | null;
 
   get dom() {
     return this.root;
@@ -437,6 +449,7 @@ export class TableView implements NodeView {
     this.getPos = getPos;
     this.hoveredCell = null;
     this.map = TableMap.get(node);
+    this.editorContainer = this.editor.view.dom.closest(".editor-container") as HTMLElement | null;
 
     if (editor.isEditable) {
       this.rowsControl = h(
@@ -517,12 +530,16 @@ export class TableView implements NodeView {
         },
       });
 
-      this.cellSelectionToolbar = tippy(document.body, selectionToolbarOptions as Props) as Instance<Props>;
+      this.cellSelectionToolbar = tippy(document.body, {
+        ...(selectionToolbarOptions as Props),
+        appendTo: () => this.getAppendToElement(),
+      }) as Instance<Props>;
       this.contextMenu = createContextMenu(
         createSelectionToolbarContent(contextMenuItems, {
           editor,
           selection: null,
-        })
+        }),
+        () => this.getAppendToElement()
       );
 
       this.selectionUpdateHandler = () => this.updateSelectionToolbar();
@@ -742,6 +759,10 @@ export class TableView implements NodeView {
   private handleTableClick = () => {
     this.contextMenu?.hide();
   };
+
+  private getAppendToElement(): HTMLElement {
+    return this.editorContainer ?? document.body;
+  }
 
   selectColumn() {
     if (!this.hoveredCell) return;

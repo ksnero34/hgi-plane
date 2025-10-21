@@ -1,7 +1,6 @@
 import {
   autoUpdate,
   flip,
-  FloatingOverlay,
   FloatingPortal,
   shift,
   useClick,
@@ -12,7 +11,7 @@ import {
 } from "@floating-ui/react";
 import type { Editor } from "@tiptap/core";
 import { Ellipsis } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 // plane imports
 import { cn } from "@plane/utils";
 // extensions
@@ -66,6 +65,28 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
   const dismiss = useDismiss(context);
   const role = useRole(context);
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click, role]);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleOutsideMouseDown = (event: MouseEvent) => {
+      const floating = refs.floating.current;
+      const reference = refs.reference.current;
+      const target = event.target as Node | null;
+
+      if (floating?.contains(target as Node) || reference?.contains(target as Node)) {
+        return;
+      }
+
+      setIsDropdownOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleOutsideMouseDown, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideMouseDown, true);
+    };
+  }, [isDropdownOpen, refs.floating, refs.reference]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -177,16 +198,13 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
       </div>
       {isDropdownOpen && (
         <FloatingPortal>
-          {/* Backdrop */}
-          <FloatingOverlay
-            style={{
-              zIndex: 99,
-            }}
-            lockScroll
-          />
-
           <div
             className="max-h-[90vh] w-[12rem] overflow-y-auto rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 shadow-custom-shadow-rg"
+            data-prevent-outside-click
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
             ref={refs.setFloating}
             {...getFloatingProps()}
             style={{

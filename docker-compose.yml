@@ -6,12 +6,12 @@ services:
       dockerfile: ./apps/web/Dockerfile.web
       args:
         DOCKER_BUILDKIT: 1
-    restart: always
+    # restart: always
     networks:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:3.0.6
+    image: harbor.hwgeneralins.com/plane/web:3.0.7
 
   admin:
     container_name: admin
@@ -20,7 +20,7 @@ services:
       dockerfile: ./apps/admin/Dockerfile.admin
       args:
         DOCKER_BUILDKIT: 1
-    restart: always
+    # restart: always
     networks:
       - dev_env
     depends_on:
@@ -35,7 +35,7 @@ services:
       dockerfile: ./apps/space/Dockerfile.space
       args:
         DOCKER_BUILDKIT: 1
-    restart: always
+    # restart: always
     networks:
       - dev_env
     depends_on:
@@ -50,7 +50,7 @@ services:
       dockerfile: Dockerfile.api
       args:
         DOCKER_BUILDKIT: 1
-    restart: always
+    # restart: always
     networks:
       - dev_env
     command: ./bin/docker-entrypoint-api.sh
@@ -66,7 +66,7 @@ services:
 
   worker:
     container_name: bgworker
-    restart: always
+    # restart: always
     networks:
       - dev_env
     command: ./bin/docker-entrypoint-worker.sh
@@ -81,7 +81,7 @@ services:
 
   beat-worker:
     container_name: beatworker
-    restart: always
+    # restart: always
     networks:
       - dev_env
     command: ./bin/docker-entrypoint-beat.sh
@@ -114,7 +114,7 @@ services:
       dockerfile: ./apps/live/Dockerfile.live
       args:
         DOCKER_BUILDKIT: 1
-    restart: always
+    # restart: always
     networks:
       - dev_env
     # command: ls -al live
@@ -125,7 +125,7 @@ services:
   plane-db:
     container_name: plane-db
     image: hgi-postgres:16.4
-    restart: always
+    # restart: always
     command: postgres -c 'max_connections=1000'
     volumes:
       # - ./data/postgres:/var/lib/postgresql/data
@@ -143,7 +143,7 @@ services:
   plane-redis:
     container_name: plane-redis
     image: valkey/valkey:7.2.5-alpine
-    restart: always
+    # restart: always
     networks:
       - dev_env
     volumes:
@@ -152,7 +152,7 @@ services:
   plane-mq:
     container_name: plane-mq
     image: rabbitmq:3.13.6-management-alpine
-    restart: always
+    # restart: always
     networks:
       - dev_env
     env_file:
@@ -167,7 +167,7 @@ services:
   plane-minio:
     container_name: plane-minio
     image: minio/minio
-    restart: always
+    # restart: always
     command: server /export --console-address ":9090"
     volumes:
       - ./data/uploads:/export
@@ -184,7 +184,7 @@ services:
     build:
       context: ./apps/nginx
       dockerfile: Dockerfile
-    restart: always
+    # restart: always
     ports:
       - ${NGINX_PORT}:18080
     networks:
