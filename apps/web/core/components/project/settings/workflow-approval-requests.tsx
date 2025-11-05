@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // ui
-import { Button, setToast, TOAST_TYPE } from "@plane/ui";
+import { Button } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { useWorkflow } from "@/hooks/store/use-workflow";
 

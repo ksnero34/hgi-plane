@@ -89,7 +89,7 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
 
               if (onSubmit) await onSubmit(res);
             })
-            .catch(() => {
+            .catch((error) => {
               captureError({
                 eventName: WORKSPACE_TRACKER_EVENTS.create,
                 payload: { slug: formData.slug },

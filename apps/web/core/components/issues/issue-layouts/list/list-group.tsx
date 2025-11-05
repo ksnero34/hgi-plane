@@ -18,7 +18,6 @@ import type {
   IIssueDisplayProperties,
   TIssueKanbanFilters,
   TCustomField,
-  EIssueLayoutTypes,
 } from "@plane/types";
 import { EIssueLayoutTypes } from "@plane/types";
 import { Row } from "@plane/ui";

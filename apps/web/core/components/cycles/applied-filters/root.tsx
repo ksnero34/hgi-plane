@@ -43,6 +43,9 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
         if (!value) return;
         if (Array.isArray(value) && value.length === 0) return;
 
+        // value를 항상 배열로 변환
+        const valueArray = Array.isArray(value) ? value : [value];
+
         return (
           <Tag key={filterKey}>
             <span className="text-xs text-custom-text-300">{replaceUnderscoreIfSnakeCase(filterKey)}</span>
@@ -51,14 +54,14 @@ export const CycleAppliedFiltersList: React.FC<Props> = observer((props) => {
                 <AppliedStatusFilters
                   editable={isEditingAllowed}
                   handleRemove={(val) => handleRemoveFilter("status", val)}
-                  values={value}
+                  values={valueArray}
                 />
               )}
               {DATE_FILTERS.includes(filterKey) && (
                 <AppliedDateFilters
                   editable={isEditingAllowed}
                   handleRemove={(val) => handleRemoveFilter(filterKey, val)}
-                  values={value}
+                  values={valueArray}
                 />
               )}
               {isEditingAllowed && (

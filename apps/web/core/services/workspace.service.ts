@@ -68,8 +68,8 @@ export class WorkspaceService extends APIService {
       });
   }
 
-  async inviteWorkspace(workspaceSlug: string, data: IWorkspaceBulkInviteFormData): Promise<any> {
-    return this.post(`/api/workspaces/${workspaceSlug}/invitations/`, data)
+  async inviteWorkspace(workspaceSlug: string, data: IWorkspaceBulkInviteFormData, autoAccept: boolean = false): Promise<any> {
+    return this.post(`/api/workspaces/${workspaceSlug}/invitations/`, { ...data, auto_accept: autoAccept })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

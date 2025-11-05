@@ -42,7 +42,8 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
 
   const handleRemoveFilter = (key: keyof TCycleFilters, value: string | null) => {
     if (!projectId) return;
-    let newValues = currentProjectArchivedFilters?.[key] ?? [];
+    const currentValue = currentProjectArchivedFilters?.[key];
+    let newValues: string[] = Array.isArray(currentValue) ? currentValue : [];
 
     if (!value) newValues = [];
     else newValues = newValues.filter((val) => val !== value);

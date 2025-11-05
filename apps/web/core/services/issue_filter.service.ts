@@ -135,38 +135,4 @@ export class IssueFiltersService extends APIService {
         throw error?.response?.data;
       });
   }
-
-  async updateFilters(workspaceSlug: string, projectId: string, data: IIssueFiltersRequest): Promise<IIssueFilterOptions> {
-    // 캘린더 뷰를 위한 날짜 범위 계산 (비활성화)
-    /*
-    if (data.filters?.layout === "calendar") {
-      const firstDayOfMonth = new Date(data.filters.start_date?.[0] || new Date());
-      firstDayOfMonth.setDate(1);
-
-      const lastDayOfMonth = new Date(firstDayOfMonth);
-      lastDayOfMonth.setMonth(lastDayOfMonth.getMonth() + 1);
-      lastDayOfMonth.setDate(0);
-
-      return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-filters/`, {
-        ...data,
-        filters: {
-          ...data.filters,
-          start_date: [firstDayOfMonth.toISOString().split('T')[0]],
-          target_date: [lastDayOfMonth.toISOString().split('T')[0]]
-        }
-      })
-        .then((response) => response?.data)
-        .catch((error) => {
-          throw error?.response?.data;
-        });
-    }
-    */
-
-    // 일반적인 필터 업데이트
-    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-filters/`, data)
-      .then((response) => response?.data)
-      .catch((error) => {
-        throw error?.response?.data;
-      });
-  }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // store hooks
@@ -23,8 +24,18 @@ import {
   User,
 } from "lucide-react";
 import { IIssueActivity, TCustomField } from "@plane/types";
-import { Tooltip } from "@plane/ui";
-import { BlockedIcon, BlockerIcon, RelatedIcon, EpicIcon, LayersIcon, DiceIcon, Intake } from "@plane/propel/icons";
+import {
+  BlockedIcon,
+  BlockerIcon,
+  CycleIcon,
+  EpicIcon,
+  IntakeIcon,
+  ModuleIcon,
+  RelatedIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
+import { Tooltip } from "@plane/propel/tooltip";
+
 // helpers
 import { renderFormattedDate, generateWorkItemLink, capitalizeFirstLetter } from "@plane/utils";
 import { convertMinutesToHoursMinutesString } from "@plane/utils";
@@ -671,7 +682,7 @@ const activityDetails: {
           </>
         );
     },
-    icon: <LayersIcon width={12} height={12} className="text-custom-text-200" aria-hidden="true" />,
+    icon: <WorkItemsIcon width={12} height={12} className="text-custom-text-200" aria-hidden="true" />,
   },
   epic: {
     message: (activity) => {
@@ -861,7 +872,7 @@ const activityDetails: {
           </>
         );
     },
-    icon: <ContrastIcon size={12} className="text-custom-text-200" aria-hidden="true" />,
+    icon: <CycleIcon height={12} width={12} className="text-custom-text-200" aria-hidden="true" />,
   },
   modules: {
     message: (activity, showIssue, workspaceSlug) => {
@@ -911,7 +922,7 @@ const activityDetails: {
           </>
         );
     },
-    icon: <DiceIcon className="h-3 w-3 !text-custom-text-200" aria-hidden="true" />,
+    icon: <ModuleIcon className="h-3 w-3 !text-custom-text-200" aria-hidden="true" />,
   },
   name: {
     message: (activity, showIssue) => (
@@ -1199,7 +1210,7 @@ const activityDetails: {
         {activity.verb === "2" && ` 인테이크에서 중복 작업항목으로 표시하여 거부함.`}
       </>
     ),
-    icon: <Intake className="size-3 text-custom-text-200" aria-hidden="true" />,
+    icon: <IntakeIcon className="size-3 text-custom-text-200" aria-hidden="true" />,
   },
 };
 

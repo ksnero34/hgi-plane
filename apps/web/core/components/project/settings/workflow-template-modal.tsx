@@ -5,7 +5,8 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 // ui
-import { Button, Input, ModalCore, EModalPosition, EModalWidth, TextArea, ToggleSwitch, setToast, TOAST_TYPE } from "@plane/ui";
+import { Button, Input, ModalCore, EModalPosition, EModalWidth, TextArea, ToggleSwitch} from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // types
 import { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
 // hooks

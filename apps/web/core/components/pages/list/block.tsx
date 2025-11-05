@@ -38,6 +38,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     pageId,
     storeType,
   });
+  const { getPageById } = usePageStore(storeType);
   const { isMobile } = usePlatformOS();
   // handle page check
   if (!page) return null;

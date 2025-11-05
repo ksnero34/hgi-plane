@@ -3,6 +3,7 @@
 import type { FC } from "react";
 import { useMemo } from "react";
 import { observer } from "mobx-react";
+import { usePathname } from "next/navigation";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel, WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
@@ -61,7 +62,7 @@ export const IssueDetailRoot: FC<TIssueDetailRoot> = observer((props) => {
   const { workspaceSlug, projectId, issueId, is_archived = false } = props;
   // router
   const router = useAppRouter();
-  const pathname = usePathname();
+  // const pathname = usePathname();
   // hooks
   const {
     issue: { getIssueById },

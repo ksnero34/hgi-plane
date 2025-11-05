@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback, useEffect } from "react";
 // hooks
-import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast, setPromiseToast } from "@plane/propel/toast";
 import { IssueAttachmentUpload } from "@/components/issues/attachment/attachment-upload";
 import { IssueAttachmentsList } from "@/components/issues/attachment/attachments-list";
 import { TAttachmentOperations } from "@/components/issues/issue-detail-widgets/attachments/helper";

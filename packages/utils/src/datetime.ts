@@ -562,3 +562,11 @@ export const formatDuration = (seconds: number | undefined | null): string => {
 
   return parts.join(" ");
 };
+
+/**
+ * Checks if a date is valid
+ * @param date The date to check
+ * @returns Whether the date is valid or not
+ */
+export const isValidDate = (date: unknown): date is string | Date =>
+  (typeof date === "string" || typeof date === "object") && date !== null && !isNaN(Date.parse(date as string));

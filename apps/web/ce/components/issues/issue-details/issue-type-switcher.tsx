@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { RefreshCw } from "lucide-react";
 // ui
-import { Tooltip } from "@plane/ui";
+import { Tooltip } from "@plane/propel/tooltip";
 // store hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
@@ -20,11 +20,11 @@ export type TIssueTypeSwitcherProps = {
 
 export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((props) => {
   const { issueId, disabled, onClose, onOpenModal } = props;
+  // local state
+  const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
   // store hooks
   const {
     issue: { getIssueById },
-    isEditIssueModalOpen,
-    toggleEditIssueModal,
   } = useIssueDetail();
   // derived values
   const issue = getIssueById(issueId);
@@ -47,7 +47,7 @@ export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((pr
                   setTimeout(() => onClose(), 50); // 모달이 먼저 열리도록 지연
                 } else {
                   // 일반 컨텍스트에서 호출된 경우: 내부 모달 열기
-                  toggleEditIssueModal(issueId);
+                  setIsEditIssueModalOpen(true);
                 }
               }}
             >
@@ -56,10 +56,10 @@ export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((pr
           </Tooltip>
         )}
       </div>
-      
+
       <CreateUpdateIssueModal
-        isOpen={isEditIssueModalOpen === issueId}
-        onClose={() => toggleEditIssueModal(null)}
+        isOpen={isEditIssueModalOpen}
+        onClose={() => setIsEditIssueModalOpen(false)}
         data={issue}
         storeType={undefined}
         modalTitle="작업 항목 수정"

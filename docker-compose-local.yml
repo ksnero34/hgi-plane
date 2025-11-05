@@ -78,8 +78,8 @@ services:
       - dev_env
     volumes:
       - ./apps/web:/app/apps/web
-      - web-root-node-modules:/app/node_modules
-      - web-app-node-modules:/app/apps/web/node_modules
+      - ./node_modules:/app/node_modules
+      - ./packages:/app/packages
     env_file:
       - ./apps/web/.env.dev
     depends_on:
@@ -97,8 +97,6 @@ services:
       - dev_env
     volumes:
       - ./apps/space:/app/apps/space
-      - space-root-node-modules:/app/node_modules
-      - space-app-node-modules:/app/apps/space/node_modules
     depends_on:
       - api
       - worker
@@ -115,8 +113,6 @@ services:
       - dev_env
     volumes:
       - ./apps/admin:/app/apps/admin
-      - admin-root-node-modules:/app/node_modules
-      - admin-app-node-modules:/app/apps/admin/node_modules
     depends_on:
       - api
       - worker
@@ -133,8 +129,6 @@ services:
       - dev_env
     volumes:
       - ./apps/live:/app/apps/live
-      - live-root-node-modules:/app/node_modules
-      - live-app-node-modules:/app/apps/live/node_modules
 
     depends_on:
       - api

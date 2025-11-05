@@ -36,7 +36,8 @@ export const CyclesViewHeader: React.FC<Props> = observer((props) => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
-      const newValues = currentProjectFilters?.[key] ?? [];
+      const currentValue = currentProjectFilters?.[key];
+      const newValues: string[] = Array.isArray(currentValue) ? [...currentValue] : [];
 
       if (Array.isArray(value))
         value.forEach((val) => {
@@ -44,7 +45,7 @@ export const CyclesViewHeader: React.FC<Props> = observer((props) => {
           else newValues.splice(newValues.indexOf(val), 1);
         });
       else {
-        if (currentProjectFilters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        if (newValues.includes(value)) newValues.splice(newValues.indexOf(value), 1);
         else newValues.push(value);
       }
 

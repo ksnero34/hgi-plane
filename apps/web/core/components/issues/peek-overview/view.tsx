@@ -58,6 +58,7 @@ export const IssueView: FC<IIssueView> = observer((props) => {
   const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
   // ref
   const issuePeekOverviewRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<EditorRefApi>(null);
   // store hooks
   const {
     setPeekIssue,

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Button, Input, TOAST_TYPE, setToast } from "@plane/ui";
+import { Button, Input } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { useProject } from "@/hooks/store/use-project";
 
 // CSRF 토큰을 가져오는 함수

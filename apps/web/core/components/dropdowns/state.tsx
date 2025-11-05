@@ -16,7 +16,7 @@ import { cn } from "@plane/utils";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkflow } from "@/hooks/store/use-workflow";
 // ui
-import { setToast, TOAST_TYPE } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { useDropdown } from "@/hooks/use-dropdown";
 // Plane-web
 import { StateOption } from "@/plane-web/components/workflow";

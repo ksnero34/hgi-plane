@@ -1,5 +1,5 @@
 import React from "react";
-import { Tooltip } from "@plane/ui";
+import { Tooltip } from "@plane/propel/tooltip";
 import { Logo } from "@/components/common/logo";
 import { TLogoProps } from "@plane/types";
 

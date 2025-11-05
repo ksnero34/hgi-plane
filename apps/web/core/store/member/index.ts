@@ -9,6 +9,8 @@ import type { RootStore } from "@/plane-web/store/root.store";
 // local imports
 import type { IWorkspaceMemberStore } from "./workspace/workspace-member.store";
 import { WorkspaceMemberStore } from "./workspace/workspace-member.store";
+import type{ IInstanceMemberStore } from "./instance-member.store";
+import { InstanceMemberStore } from "./instance-member.store";
 
 export interface IMemberRootStore {
   // observables

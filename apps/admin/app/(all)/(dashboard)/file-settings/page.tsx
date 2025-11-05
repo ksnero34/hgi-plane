@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { observer } from "mobx-react";
 import { useRouter, usePathname } from "next/navigation";
-import { TOAST_TYPE, setToast, Loader } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { useFileSettings, useInstance } from "@/hooks/store";
 import { useAuth, useUser } from "@/hooks/store/use-user";
 import { FileSettingsForm } from "./form";

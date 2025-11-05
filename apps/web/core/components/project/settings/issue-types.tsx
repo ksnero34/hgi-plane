@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Button, Input, TOAST_TYPE, setToast, CustomEmojiIconPicker, EmojiIconPickerTypes, CustomSelect, ToggleSwitch } from "@plane/ui";
+import { Button, Input, CustomEmojiIconPicker, EmojiIconPickerTypes, CustomSelect, ToggleSwitch } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { IIssueType, IProjectIssueType, TCustomFieldType } from "@plane/types";
 
 // API 응답에 맞춘 확장 타입 - 실제로는 IProjectIssueType과 동일

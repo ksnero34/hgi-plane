@@ -20,7 +20,6 @@ import {
   List,
   ListOrdered,
   ListTodo,
-  LucideIcon,
   Strikethrough,
   Table,
   TextQuote,

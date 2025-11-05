@@ -110,7 +110,7 @@ export class FilterConfig<P extends TFilterProperty, V extends TFilterValue = TF
    * @returns The operator config.
    */
   getOperatorConfig: IFilterConfig<P, V>["getOperatorConfig"] = computedFn((operator) =>
-    this.supportedOperatorConfigsMap.get(getOperatorForPayload(operator).operator)
+    this.supportedOperatorConfigsMap.get(getOperatorForPayload(operator).operator as any)
   );
 
   /**

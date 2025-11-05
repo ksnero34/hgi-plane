@@ -16,6 +16,4 @@ ENV NEXT_PUBLIC_ADMIN_BASE_PATH="/god-mode"
 
 EXPOSE 3000
 
-VOLUME [ "/app/node_modules", "/app/admin/node_modules" ]
-
 CMD ["pnpm", "dev", "--filter=admin"]

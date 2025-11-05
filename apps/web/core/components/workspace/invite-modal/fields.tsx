@@ -7,11 +7,12 @@ import { X } from "lucide-react";
 // plane imports
 import { ROLE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { CustomSelect, Input } from "@plane/ui";
+import { Avatar, CustomSelect, Input, CustomSearchSelect } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useUserPermissions } from "@/hooks/store/user";
 import type { InvitationFormValues } from "@/hooks/use-workspace-invitation";
+import { useMember } from "@/hooks/store/use-member";
 import { getFileURL } from "@plane/utils";
 import { useEffect, useState } from "react";
 
@@ -51,13 +52,13 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
   const currentWorkspaceRole = workspaceInfoBySlug(workspaceSlug.toString())?.role;
 
   // 워크스페이스에 등록되지 않은 인스턴스 멤버만 필터링
-  const uninvitedMembers = instanceMemberIds?.filter((userId) => {
+  const uninvitedMembers = instanceMemberIds?.filter((userId: string) => {
     const isInvited = workspaceMemberIds?.find((u) => u === userId);
     return !isInvited;
   });
 
   // 멤버 선택 옵션 생성
-  const memberOptions = uninvitedMembers?.map((userId) => {
+  const memberOptions = uninvitedMembers?.map((userId: string) => {
     const memberDetails = getInstanceMemberDetails(userId);
     if (!memberDetails) return null;
     return {
@@ -154,7 +155,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
               }}
               render={({ field: { value, onChange } }) => {
                 // 현재 선택된 멤버 찾기
-                const selectedMember = memberOptions?.filter(Boolean).find(option => (option as any).value === value);
+                const selectedMember = memberOptions?.filter(Boolean).find((option: any) => option.value === value);
                 return (
                   <CustomSearchSelect
                     value={value}

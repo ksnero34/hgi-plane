@@ -113,7 +113,7 @@ export const SubIssuesListRoot: React.FC<Props> = observer((props) => {
             workspaceSlug={workspaceSlug}
             group={group}
             serviceType={issueServiceType}
-            disabled={disabled}
+            canEdit={canEdit}
             parentIssueId={parentIssueId}
             rootIssueId={rootIssueId}
             handleIssueCrudState={handleIssueCrudState}

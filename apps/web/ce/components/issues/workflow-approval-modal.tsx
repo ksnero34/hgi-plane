@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 // icons
 import { CheckCircle, XCircle, User, Clock, MessageSquare, Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 // ui
-import { Button, ModalCore, EModalPosition, EModalWidth, setToast, TOAST_TYPE, TextArea } from "@plane/ui";
+import { Button, ModalCore, EModalPosition, EModalWidth, TextArea } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { useWorkflow } from "@/hooks/store/use-workflow";
 

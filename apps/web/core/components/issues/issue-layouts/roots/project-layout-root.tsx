@@ -48,6 +48,7 @@ export const ProjectLayoutRoot: FC = observer(() => {
   const projectId = routerProjectId ? routerProjectId.toString() : undefined;
   // hooks
   const { issues, issuesFilter } = useIssues(EIssuesStoreType.PROJECT);
+  const { fetchWorkflowTemplates, getDefaultWorkflow, fetchWorkflowTransitions } = useWorkflow();
   // derived values
   const workItemFilters = projectId ? issuesFilter?.getIssueFilters(projectId) : undefined;
   const activeLayout = workItemFilters?.displayFilters?.layout;
@@ -84,7 +85,6 @@ export const ProjectLayoutRoot: FC = observer(() => {
     { revalidateIfStale: false, revalidateOnFocus: false }
   );
 
-  const issueFilters = issuesFilter?.getIssueFilters(projectId?.toString());
 
   if (!workspaceSlug || !projectId) return <></>;
 

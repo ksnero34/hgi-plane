@@ -99,32 +99,33 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
 
     // console.log('computedFilteredParams - computedFilters.custom_fields:', computedFilters.custom_fields);
 
-    // target_date within 필터 처리
-    if (filters?.target_date && Array.isArray(filters.target_date)) {
-      const processedDates = filters.target_date.map(dateFilter => {
-        const [duration, filterType, offset] = dateFilter.split(";");
-
-        if (filterType === "within" && offset === "fromnow") {
-          const now = new Date();
-          now.setHours(0, 0, 0, 0);
-
-          const [amount, unit] = duration.split("_");
-          const futureDate = new Date(now);
-
-          if (unit === "weeks") {
-            futureDate.setDate(futureDate.getDate() + parseInt(amount) * 7);
-          } else if (unit === "days") {
-            futureDate.setDate(futureDate.getDate() + parseInt(amount));
-          }
-
-          return `${futureDate.toISOString().split('T')[0]};after;fromnow`;
-        }
-
-        return dateFilter;
-      });
-
-      computedFilters.target_date = processedDates;
-    }
+    // NOTE: target_date within 필터 처리는 Rich Filters 시스템에서 처리됨
+    // 레거시 코드 - Rich Filters로 마이그레이션 완료
+    // if (filters?.target_date && Array.isArray(filters.target_date)) {
+    //   const processedDates = filters.target_date.map(dateFilter => {
+    //     const [duration, filterType, offset] = dateFilter.split(";");
+    //
+    //     if (filterType === "within" && offset === "fromnow") {
+    //       const now = new Date();
+    //       now.setHours(0, 0, 0, 0);
+    //
+    //       const [amount, unit] = duration.split("_");
+    //       const futureDate = new Date(now);
+    //
+    //       if (unit === "weeks") {
+    //         futureDate.setDate(futureDate.getDate() + parseInt(amount) * 7);
+    //       } else if (unit === "days") {
+    //         futureDate.setDate(futureDate.getDate() + parseInt(amount));
+    //       }
+    //
+    //       return `${futureDate.toISOString().split('T')[0]};after;fromnow`;
+    //     }
+    //
+    //     return dateFilter;
+    //   });
+    //
+    //   computedFilters.target_date = processedDates;
+    // }
 
     const issueFiltersParams: Partial<Record<TIssueParams, boolean | string>> = {};
     Object.keys(computedDisplayFilters).forEach((key) => {
@@ -372,8 +373,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       const groupBy = paginationParams["group_by"] as EIssueGroupByToServerOptions | undefined;
       delete paginationParams["group_by"];
 
-      if (groupBy) {
-        const groupByFilterOption = EServerGroupByToFilterOptions[groupBy];
+      if (groupBy && groupBy in EServerGroupByToFilterOptions) {
+        const groupByFilterOption = EServerGroupByToFilterOptions[groupBy as keyof typeof EServerGroupByToFilterOptions];
         paginationParams[groupByFilterOption] = groupId;
       }
     }
@@ -383,8 +384,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       const subGroupBy = paginationParams["sub_group_by"] as EIssueGroupByToServerOptions | undefined;
       delete paginationParams["sub_group_by"];
 
-      if (subGroupBy) {
-        const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy];
+      if (subGroupBy && subGroupBy in EServerGroupByToFilterOptions) {
+        const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy as keyof typeof EServerGroupByToFilterOptions];
         paginationParams[subGroupByFilterOption] = subGroupId;
       }
     }

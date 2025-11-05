@@ -67,8 +67,8 @@ type Props = {
   readOnly?: boolean;
   updateFilters?: (
     projectId: string,
-    filterType: EIssueFilterType,
-    filters: IIssueFilterOptions | IIssueDisplayFilterOptions | IIssueDisplayProperties | TIssueKanbanFilters
+    filterType: TSupportedFilterTypeForUpdate,
+    filters: TSupportedFilterForUpdate
   ) => Promise<void>;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;

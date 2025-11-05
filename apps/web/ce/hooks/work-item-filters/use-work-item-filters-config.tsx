@@ -63,6 +63,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useFiltersOperatorConfigs } from "@/plane-web/hooks/rich-filters/use-filters-operator-configs";
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // components
 import { IssueTypeIcon } from "@/plane-web/components/issues/issue-type-icon";
 
@@ -84,11 +85,13 @@ export type TUseWorkItemFiltersConfigProps = {
 
 export type TWorkItemFiltersConfig = {
   areAllConfigsInitialized: boolean;
-  configs: TFilterConfig<TWorkItemFilterProperty, TFilterValue>[];
+  configs: TFilterConfig<TWorkItemFilterProperty | string, TFilterValue>[];
   configMap: {
     [key in TWorkItemFilterProperty]?: TFilterConfig<TWorkItemFilterProperty, TFilterValue>;
+  } & {
+    [key: string]: TFilterConfig<string, TFilterValue>;
   };
-  isFilterEnabled: (key: TWorkItemFilterProperty) => boolean;
+  isFilterEnabled: (key: TWorkItemFilterProperty | string) => boolean;
   members: IUserLite[];
 };
 
@@ -103,6 +106,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  const { customFields } = useCustomField(projectId);
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
@@ -156,7 +160,16 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
    * @param level - The level of the filter.
    * @returns True if the filter is enabled, false otherwise.
    */
-  const isFilterEnabled = useCallback((key: TWorkItemFilterProperty) => filtersToShow.has(key), [filtersToShow]);
+  const isFilterEnabled = useCallback(
+    (key: TWorkItemFilterProperty | string) => {
+      // 커스텀 필드 (customproperty_로 시작)는 항상 활성화
+      if (typeof key === "string" && key.startsWith("customproperty_")) {
+        return true;
+      }
+      return filtersToShow.has(key as TWorkItemFilterProperty);
+    },
+    [filtersToShow]
+  );
 
   // state group filter config
   const stateGroupFilterConfig = useMemo(
@@ -393,6 +406,54 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [isFilterEnabled, issueTypes, operatorConfigs]
   );
 
+  // custom field filter configs (동적 생성)
+  const customFieldConfigs = useMemo(() => {
+    if (!customFields || customFields.length === 0) return [];
+
+    return customFields.map(field => {
+      const filterKey = `customproperty_${field.id}`;
+
+      // field_type에 따라 적절한 config 생성
+      // 현재는 select/multiselect만 간단히 지원
+      if (field.field_type === "select" || field.field_type === "multiselect") {
+        const options = field.options || [];
+        return {
+          id: filterKey,
+          label: field.name,
+          isEnabled: true,
+          supportedOperatorConfigsMap: new Map([
+            ["in" as const, {
+              operator: "in" as const,
+              component: {
+                type: "multi-select",
+                options: options.map(opt => ({
+                  id: opt,
+                  label: opt,
+                  value: opt,
+                })),
+              },
+            }],
+          ]),
+        } as any;
+      }
+
+      // 다른 타입은 text input으로 처리
+      return {
+        id: filterKey,
+        label: field.name,
+        isEnabled: true,
+        supportedOperatorConfigsMap: new Map([
+          ["contains" as const, {
+            operator: "contains" as const,
+            component: {
+              type: "text-input",
+            },
+          }],
+        ]),
+      } as any;
+    });
+  }, [customFields]);
+
   return {
     areAllConfigsInitialized,
     configs: [
@@ -412,6 +473,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      ...customFieldConfigs,
     ],
     configMap: {
       project_id: projectFilterConfig,
@@ -430,6 +492,11 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       created_at: createdAtFilterConfig,
       updated_at: updatedAtFilterConfig,
       issue_type_id: issueTypeFilterConfig,
+      // 커스텀 필드 configs를 동적으로 추가
+      ...customFieldConfigs.reduce((acc, config) => {
+        acc[config.id] = config;
+        return acc;
+      }, {} as Record<string, any>),
     },
     isFilterEnabled,
     members: members ?? [],

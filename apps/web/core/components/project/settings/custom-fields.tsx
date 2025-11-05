@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { attachInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
-import { Button, Input, CustomSelect, ToggleSwitch, TOAST_TYPE, setToast, DropIndicator } from "@plane/ui";
+import { Button, Input, CustomSelect, ToggleSwitch, DropIndicator } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { TCustomField, TCustomFieldType } from "@plane/types";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 

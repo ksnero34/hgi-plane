@@ -3,7 +3,7 @@
 // store
 import { useState } from "react";
 import { FileOutput } from "lucide-react";
-import { Tooltip } from "@plane/ui";
+import { Tooltip } from "@plane/propel/tooltip";
 import { MovePageModal } from "@/plane-web/components/pages";
 import { TPageInstance } from "@/store/pages/base-page";
 

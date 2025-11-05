@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { X, Check } from "lucide-react";
 // ui
-import { Button, ModalCore, EModalPosition, EModalWidth, ToggleSwitch, setToast, TOAST_TYPE, Avatar } from "@plane/ui";
+import { Button, ModalCore, EModalPosition, EModalWidth, ToggleSwitch, Avatar } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // types
 import { IWorkflowTransition, IWorkflowTransitionFormData } from "@plane/types";
 // hooks

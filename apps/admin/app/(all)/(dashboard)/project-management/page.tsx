@@ -7,7 +7,8 @@ import { useRouter, usePathname } from "next/navigation";
 // 서비스 임포트
 import { InstanceService, InstanceWorkspaceService } from "@plane/services";
 // components
-import { Button, CustomSelect, Loader, setToast, TOAST_TYPE } from "@plane/ui";
+import { Button, CustomSelect, Loader } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 
 // hooks
 import { useAuth } from "@/hooks/store";

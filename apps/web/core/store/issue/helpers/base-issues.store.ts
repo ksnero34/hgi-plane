@@ -622,7 +622,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
         if (!validationResult.allowed) {
           // Show toast message instead of throwing error
-          const { setToast, TOAST_TYPE } = await import("@plane/ui");
+          const { setToast, TOAST_TYPE } = await import("@plane/propel/toast");
           setToast({
             type: TOAST_TYPE.ERROR,
             title: "상태 전환 실패",
@@ -641,7 +641,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               comment: `상태 변경 요청`
             });
 
-            const { setToast, TOAST_TYPE } = await import("@plane/ui");
+            const { setToast, TOAST_TYPE } = await import("@plane/propel/toast");
             setToast({
               type: TOAST_TYPE.INFO,
               title: "승인 요청됨",
@@ -649,7 +649,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
             });
             return;
           } catch (approvalError) {
-            const { setToast, TOAST_TYPE } = await import("@plane/ui");
+            const { setToast, TOAST_TYPE } = await import("@plane/propel/toast");
             setToast({
               type: TOAST_TYPE.ERROR,
               title: "승인 요청 실패",

@@ -20,7 +20,6 @@ import type {
   TSubGroupedIssues,
   TIssueGroupByOptions,
   TIssueOrderByOptions,
-  EIssueLayoutTypes,
   TCustomField,
 } from "@plane/types";
 import { EIssueLayoutTypes } from "@plane/types";

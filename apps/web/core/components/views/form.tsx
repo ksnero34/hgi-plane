@@ -18,13 +18,15 @@ import type {
 } from "@plane/types";
 import { EViewAccess, EIssuesStoreType } from "@plane/types";
 import { Input, TextArea } from "@plane/ui";
-import { getComputedDisplayFilters, getComputedDisplayProperties, getTabIndex } from "@plane/utils";
+import { getComputedDisplayFilters, getComputedDisplayProperties, getTabIndex, getEmojiImageUrlFromDecimal } from "@plane/utils";
 // components
 import { Logo } from "@/components/common/logo";
 import { DisplayFiltersSelection, FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { WorkItemFiltersRow } from "@/components/work-item-filters/filters-row";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web imports
 import { AccessController } from "@/plane-web/components/views/access-controller";
@@ -58,7 +60,6 @@ export const ProjectViewForm: React.FC<Props> = observer((props) => {
   // store hooks
   const { getProjectById } = useProject();
   const { isMobile } = usePlatformOS();
-  const { customFields } = useCustomField(projectId as string);
 
   // form info
   const defaultValues = {

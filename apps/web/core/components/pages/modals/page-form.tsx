@@ -2,7 +2,8 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import type { LucideIcon, Folder, FileText } from "lucide-react";
+import type { LucideIcon, FileText } from "lucide-react";
+import { Folder } from "lucide-react";
 import { Globe2, Lock } from "lucide-react";
 // plane imports
 import { ETabIndices, EPageAccess } from "@plane/constants";

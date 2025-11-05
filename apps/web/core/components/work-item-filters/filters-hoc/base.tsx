@@ -93,7 +93,8 @@ const WorkItemFilterRoot = observer((props: TWorkItemFilterProps) => {
   );
 
   workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);
-  workItemLayoutFilter.configManager.registerAll(workItemFiltersConfig.configs);
+  // Cast to any to support dynamic custom field keys (customproperty_*)
+  workItemLayoutFilter.configManager.registerAll(workItemFiltersConfig.configs as any);
 
   return <>{typeof children === "function" ? children({ filter: workItemLayoutFilter }) : children}</>;
 });

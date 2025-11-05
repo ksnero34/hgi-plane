@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { observer } from "mobx-react";
-import { TOAST_TYPE, setToast, Loader } from "@plane/ui";
+import { Loader } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { useAuth } from "@/hooks/store/use-user";
 import { CreateConfigModal } from "./components/create-config-modal";
 import { NotificationConfigList } from "./components/notification-config-list";

@@ -64,7 +64,8 @@ export const SubWorkItemTitleActions: FC<TSubWorkItemTitleActionsProps> = observ
 
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
-      const newValues = cloneDeep(subIssueFilters?.filters?.[key]) ?? [];
+      const currentValue = subIssueFilters?.filters?.[key];
+      const newValues: string[] = Array.isArray(currentValue) ? cloneDeep(currentValue) : [];
 
       if (Array.isArray(value)) {
         // this validation is majorly for the filter start_date, target_date custom
@@ -73,7 +74,7 @@ export const SubWorkItemTitleActions: FC<TSubWorkItemTitleActionsProps> = observ
           else newValues.splice(newValues.indexOf(val), 1);
         });
       } else {
-        if (subIssueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        if (newValues.includes(value)) newValues.splice(newValues.indexOf(value), 1);
         else newValues.push(value);
       }
       updateSubWorkItemFilters(EIssueFilterType.FILTERS, { [key]: newValues }, parentId);

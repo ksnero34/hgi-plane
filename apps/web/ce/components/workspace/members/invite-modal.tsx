@@ -17,7 +17,7 @@ import { useWorkspaceInvitationActions } from "@/hooks/use-workspace-invitation"
 export type TSendWorkspaceInvitationModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: IWorkspaceBulkInviteFormData) => Promise<void> | undefined;
+  onSubmit: (data: IWorkspaceBulkInviteFormData, autoAccept?: boolean) => Promise<void> | undefined;
 };
 
 export const SendWorkspaceInvitationModal: React.FC<TSendWorkspaceInvitationModalProps> = observer((props) => {

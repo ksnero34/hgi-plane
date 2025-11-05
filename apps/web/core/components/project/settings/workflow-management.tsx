@@ -5,7 +5,8 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Plus, Settings, Play, Pause, Trash2, Edit } from "lucide-react";
 // ui
-import { Button, Loader, setToast, TOAST_TYPE } from "@plane/ui";
+import { Button, Loader } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // types
 import { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
 // hooks

@@ -60,7 +60,7 @@ export const WorkItemDetailQuickActions: React.FC<TWorkItemDetailQuickActionProp
   } = props;
   // router
   const { workspaceSlug } = useParams();
-  const pathname = usePathname();
+  // const pathname = usePathname();
   // states
   const [createUpdateIssueModal, setCreateUpdateIssueModal] = useState(false);
   const [issueToEdit, setIssueToEdit] = useState<TIssue | undefined>(undefined);

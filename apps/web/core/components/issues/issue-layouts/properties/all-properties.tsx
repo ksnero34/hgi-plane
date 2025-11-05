@@ -62,7 +62,7 @@ export interface IIssueProperties {
 }
 
 export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, updateIssue, displayProperties, isReadOnly, className,activeLayout, isEpic = false } = props;
+  const { issue, updateIssue, displayProperties, isReadOnly, className,activeLayout, isEpic = false, customFields = [] } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
