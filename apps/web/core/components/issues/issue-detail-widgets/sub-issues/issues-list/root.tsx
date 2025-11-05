@@ -3,16 +3,10 @@ import { observer } from "mobx-react";
 // plane imports
 import { ListFilter } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
-import {
-  EIssueServiceType,
-  EIssuesStoreType,
-  GroupByColumnTypes,
-  TIssue,
-  TIssueServiceType,
-  TSubIssueOperations,
-} from "@plane/types";
+import { Button } from "@plane/propel/button";
+import type { GroupByColumnTypes, TIssue, TIssueServiceType, TSubIssueOperations } from "@plane/types";
+import { EIssueServiceType, EIssuesStoreType } from "@plane/types";
 // hooks
-import { Button } from "@plane/ui";
 import { SectionEmptyState } from "@/components/empty-state/section-empty-state-root";
 import { getGroupByColumns, isWorkspaceLevel } from "@/components/issues/issue-layouts/utils";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -25,7 +19,7 @@ type Props = {
   parentIssueId: string;
   rootIssueId: string;
   spacingLeft: number;
-  disabled: boolean;
+  canEdit: boolean;
   handleIssueCrudState: (
     key: "create" | "existing" | "update" | "delete",
     issueId: string,
@@ -42,7 +36,7 @@ export const SubIssuesListRoot: React.FC<Props> = observer((props) => {
     projectId,
     parentIssueId,
     rootIssueId,
-    disabled,
+    canEdit,
     handleIssueCrudState,
     subIssueOperations,
     issueServiceType = EIssueServiceType.ISSUES,

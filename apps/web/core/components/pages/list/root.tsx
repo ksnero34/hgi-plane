@@ -1,18 +1,19 @@
-import { FC, useState, useRef } from "react";
+import type { FC } from "react";
+import { useState, useRef } from "react";
 import { observer } from "mobx-react";
 import { useParams, useRouter } from "next/navigation";
 import { Folder } from "lucide-react";
 // types
-import { TPageNavigationTabs } from "@plane/types";
-// ui
-import { setToast, TOAST_TYPE } from "@plane/ui";
+import type { TPageNavigationTabs } from "@plane/types";
+import {setToast, TOAST_TYPE} from "@plane/propel/toast"
 // components
 import { ListLayout } from "@/components/core/list";
 import { ListItem } from "@/components/core/list";
 // helpers
 import { getPageName } from "@plane/utils";
 // plane web hooks
-import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
+import type { EPageStoreType } from "@/plane-web/hooks/store";
+import { usePageStore } from "@/plane-web/hooks/store";
 // local imports
 import { PageListBlock } from "./block";
 

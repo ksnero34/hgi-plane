@@ -4,8 +4,8 @@ import { useParams } from "next/navigation";
 import useSWR from "swr";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { TCycleFilters } from "@plane/types";
-import { calculateFilterRemovalValue, calculateTotalFilters } from "@plane/utils";
+import type { TCycleFilters } from "@plane/types";
+import { calculateTotalFilters } from "@plane/utils";
 // components
 import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
 import { CycleModuleListLayoutLoader } from "@/components/ui/loader/cycle-module-list-loader";
@@ -42,14 +42,12 @@ export const ArchivedCycleLayoutRoot: React.FC = observer(() => {
 
   const handleRemoveFilter = (key: keyof TCycleFilters, value: string | null) => {
     if (!projectId) return;
-    const projectIdString = projectId.toString();
-    const updatedValue = calculateFilterRemovalValue<TCycleFilters>(
-      key as string,
-      value,
-      currentProjectArchivedFilters ?? {}
-    );
+    let newValues = currentProjectArchivedFilters?.[key] ?? [];
 
-    updateFilters(projectIdString, { [key]: updatedValue } as TCycleFilters, "archived");
+    if (!value) newValues = [];
+    else newValues = newValues.filter((val) => val !== value);
+
+    updateFilters(projectId.toString(), { [key]: newValues }, "archived");
   };
 
   if (!workspaceSlug || !projectId) return <></>;

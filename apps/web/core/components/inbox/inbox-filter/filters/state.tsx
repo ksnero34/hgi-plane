@@ -1,10 +1,11 @@
 "use client";
 
-import { FC, useState } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { EIconSize } from "@plane/constants";
 import { StateGroupIcon } from "@plane/propel/icons";
-import { IState } from "@plane/types";
+import type { IState } from "@plane/types";
 import { Loader } from "@plane/ui";
 // components
 import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters";
@@ -74,12 +75,12 @@ export const FilterState: FC<Props> = observer((props) => {
                     className="ml-8 text-xs font-medium text-custom-primary-100"
                     onClick={handleViewToggle}
                   >
-                    {itemsToRender === filteredOptions.length ? "줄여서 보기" : "모두 보기"}
+                    {itemsToRender === filteredOptions.length ? "View less" : "View all"}
                   </button>
                 )}
               </>
             ) : (
-              <p className="text-xs italic text-custom-text-400">일치하는 항목 없음</p>
+              <p className="text-xs italic text-custom-text-400">No matches found</p>
             )
           ) : (
             <Loader className="space-y-2">

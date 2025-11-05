@@ -1,11 +1,8 @@
 import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
-// plane imports
-import { IIssueFilters } from "@plane/types";
-import { calculateCustomFieldFilterCount } from "./custom-field.helper";
-// import { IIssueFilterOptions } from "@plane/types";
-
 // local imports
 import { getDate } from "./datetime";
+import { IIssueFilters } from "@plane/types";
+import { calculateCustomFieldFilterCount } from "./custom-field.helper";
 
 /**
  * @description calculates the total number of filters applied
@@ -14,17 +11,17 @@ import { getDate } from "./datetime";
  */
 export const calculateTotalFilters = <T>(filters: T): number => {
   if (!filters || Object.keys(filters).length === 0) return 0;
-  
+
   return Object.keys(filters)
     .map((key) => {
       const value = filters[key as keyof T];
       if (value === null) return 0;
-      
+
       // 커스텀 필드의 경우 특별한 처리
       if (key === "custom_fields") {
         return calculateCustomFieldFilterCount(value);
       }
-      
+
       if (Array.isArray(value)) return value.length;
       if (typeof value === "boolean") return value ? 1 : 0;
       return 0;
@@ -79,18 +76,4 @@ export const satisfiesDateFilter = (date: Date, filter: string): boolean => {
   }
 
   return false;
-};
-
-/**
- * @description checks if the issue filter is active
- * @param {IIssueFilters} issueFilters
- * @returns {boolean}
- */
-export const isIssueFilterActive = (issueFilters: IIssueFilters | undefined): boolean => {
-  if (!issueFilters) return false;
-
-  const issueType = issueFilters?.displayFilters?.type;
-  const isFiltersApplied = calculateTotalFilters(issueFilters?.filters ?? {}) !== 0 || !!issueType;
-
-  return isFiltersApplied;
 };

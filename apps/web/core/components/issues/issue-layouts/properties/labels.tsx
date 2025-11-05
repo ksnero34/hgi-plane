@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Placement } from "@popperjs/core";
+import type { Placement } from "@popperjs/core";
 import { observer } from "mobx-react";
 import { Tags } from "lucide-react";
 // plane helpers
@@ -10,7 +10,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
 // types
 import { Tooltip } from "@plane/propel/tooltip";
-import { IIssueLabel } from "@plane/types";
+import type { IIssueLabel } from "@plane/types";
 // ui
 // hooks
 import { cn } from "@plane/utils";
@@ -41,7 +41,7 @@ export interface IIssuePropertyLabels {
 export const IssuePropertyLabels: React.FC<IIssuePropertyLabels> = observer((props) => {
   const {
     projectId,
-    value = [],
+    value,
     defaultOptions = [],
     onChange,
     onClose,
@@ -106,7 +106,7 @@ export const IssuePropertyLabels: React.FC<IIssuePropertyLabels> = observer((pro
         </div>
       </Tooltip>
     ),
-    [placeholderText, fullWidth, noLabelBorder, isMobile, t]
+    [placeholderText, fullWidth, noLabelBorder, isMobile]
   );
 
   const LabelSummary = useMemo(
@@ -124,19 +124,19 @@ export const IssuePropertyLabels: React.FC<IIssuePropertyLabels> = observer((pro
           position="top"
           tooltipHeading={t("common.labels")}
           tooltipContent={projectLabels
-            ?.filter((l) => (value || []).includes(l?.id))
+            ?.filter((l) => value.includes(l?.id))
             .map((l) => l?.name)
             .join(", ")}
           renderByDefault={false}
         >
           <div className="flex h-full items-center gap-1.5 text-custom-text-200">
             <span className="h-2 w-2 flex-shrink-0 rounded-full bg-custom-primary" />
-            {`${(value || []).length} Labels`}
+            {`${value.length} Labels`}
           </div>
         </Tooltip>
       </div>
     ),
-    [fullWidth, disabled, noLabelBorder, isMobile, projectLabels, value, t]
+    [fullWidth, disabled, noLabelBorder, isMobile, projectLabels, value]
   );
 
   const LabelItem = useCallback(
@@ -170,20 +170,20 @@ export const IssuePropertyLabels: React.FC<IIssuePropertyLabels> = observer((pro
         </div>
       </Tooltip>
     ),
-    [disabled, fullWidth, isMobile, noLabelBorder, renderByDefault, t]
+    [disabled, fullWidth, isMobile, noLabelBorder, renderByDefault]
   );
 
   return (
     <>
-      {(value || []).length > 0 ? (
-        (value || []).length <= maxRender ? (
+      {value.length > 0 ? (
+        value.length <= maxRender ? (
           projectLabels
-            ?.filter((l) => (value || []).includes(l?.id))
+            ?.filter((l) => value.includes(l?.id))
             .map((label) => (
               <LabelDropdown
                 key={label.id}
                 projectId={projectId}
-                value={value || []}
+                value={value}
                 onChange={onChange}
                 buttonClassName={buttonClassName}
                 placement={placement}
@@ -196,7 +196,7 @@ export const IssuePropertyLabels: React.FC<IIssuePropertyLabels> = observer((pro
         ) : (
           <LabelDropdown
             projectId={projectId}
-            value={value || []}
+            value={value}
             onChange={onChange}
             hideDropdownArrow={hideDropdownArrow}
             buttonClassName={buttonClassName}
@@ -209,7 +209,7 @@ export const IssuePropertyLabels: React.FC<IIssuePropertyLabels> = observer((pro
       ) : (
         <LabelDropdown
           projectId={projectId}
-          value={value || []}
+          value={value}
           onChange={onChange}
           hideDropdownArrow={hideDropdownArrow}
           buttonClassName={buttonClassName}

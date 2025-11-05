@@ -2,9 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 // icons
-import { ChartNoAxesColumn, ListFilter, PanelRight, SlidersHorizontal, Edit3 } from "lucide-react";
+import { ChartNoAxesColumn, PanelRight, SlidersHorizontal } from "lucide-react";
 // plane imports
 import {
   EIssueFilterType,
@@ -16,20 +16,13 @@ import {
 } from "@plane/constants";
 import { usePlatformOS } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
-import { ContrastIcon } from "@plane/propel/icons";
+import { Button } from "@plane/propel/button";
+import { CycleIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
-import {
-  EIssuesStoreType,
-  ICustomSearchSelectOption,
-  IIssueDisplayFilterOptions,
-  IIssueDisplayProperties,
-  IIssueFilterOptions,
-  EIssueLayoutTypes,
-  TCustomField,
-  TIssue,
-} from "@plane/types";
-import { Breadcrumbs, Button, BreadcrumbNavigationSearchDropdown, Header, setToast, TOAST_TYPE } from "@plane/ui";
-import { cn, isIssueFilterActive, calculateFilterValue } from "@plane/utils";
+import type { ICustomSearchSelectOption, IIssueDisplayFilterOptions, IIssueDisplayProperties } from "@plane/types";
+import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
+import { Breadcrumbs, BreadcrumbNavigationSearchDropdown, Header } from "@plane/ui";
+import { cn } from "@plane/utils";
 // components
 import { WorkItemsModal } from "@/components/analytics/work-items/modal";
 import { SwitcherLabel } from "@/components/common/switcher-label";
@@ -37,36 +30,26 @@ import { CycleQuickActions } from "@/components/cycles/quick-actions";
 import {
   DisplayFiltersSelection,
   FiltersDropdown,
-  FilterSelection,
   LayoutSelection,
   MobileLayoutSelection,
 } from "@/components/issues/issue-layouts/filters";
+import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useCycle } from "@/hooks/store/use-cycle";
 import { useIssues } from "@/hooks/store/use-issues";
-import { useLabel } from "@/hooks/store/use-label";
-import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
-import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
-import { useCustomField } from "@/hooks/store/use-custom-field";
-import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
-import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
 export const CycleIssuesHeader: React.FC = observer(() => {
   // refs
   const parentRef = useRef<HTMLDivElement>(null);
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
-  const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
-  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId, cycleId } = useParams() as {
@@ -81,22 +64,11 @@ export const CycleIssuesHeader: React.FC = observer(() => {
     issuesFilter: { issueFilters, updateFilters },
     issues: { getGroupIssueCount },
   } = useIssues(EIssuesStoreType.CYCLE);
-  const { fetchIssues } = useIssuesActions(EIssuesStoreType.CYCLE);
-  const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
-  const {
-    issue: { getIssueById },
-  } = useIssueDetail();
   const { currentProjectCycleIds, getCycleById } = useCycle();
   const { toggleCreateIssueModal } = useCommandPalette();
   const { currentProjectDetails, loader } = useProject();
-  const { projectStates } = useProjectState();
-  const { projectLabels } = useLabel();
-  const {
-    project: { projectMemberIds },
-  } = useMember();
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
-  const { customFields } = useCustomField(projectId as string);
 
   const activeLayout = issueFilters?.displayFilters?.layout;
 
@@ -113,15 +85,6 @@ export const CycleIssuesHeader: React.FC = observer(() => {
       updateFilters(workspaceSlug, projectId, EIssueFilterType.DISPLAY_FILTERS, { layout: layout }, cycleId);
     },
     [workspaceSlug, projectId, cycleId, updateFilters]
-  );
-
-  const handleFiltersUpdate = useCallback(
-    (key: keyof IIssueFilterOptions, value: string | string[]) => {
-      if (!workspaceSlug || !projectId) return;
-      const updatedValue = calculateFilterValue(key, value, issueFilters?.filters ?? {});
-      updateFilters(workspaceSlug, projectId, EIssueFilterType.FILTERS, { [key]: updatedValue }, cycleId);
-    },
-    [workspaceSlug, projectId, cycleId, issueFilters, updateFilters]
   );
 
   const handleDisplayFilters = useCallback(
@@ -155,72 +118,12 @@ export const CycleIssuesHeader: React.FC = observer(() => {
       return {
         value: _cycle.id,
         query: _cycle.name,
-        content: <SwitcherLabel name={_cycle.name} LabelIcon={ContrastIcon} />,
+        content: <SwitcherLabel name={_cycle.name} LabelIcon={CycleIcon} />,
       };
     })
     .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
 
   const workItemsCount = getGroupIssueCount(undefined, undefined, false);
-
-  // 일괄변경을 위한 핸들러 함수
-  const handleBulkUpdate = async (bulkUpdatePayload: any) => {
-    try {
-      const response = await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(bulkUpdatePayload),
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-
-        // 성공 메시지 표시
-        let message = `${result.updated_issues || 0}개 작업 항목이 성공적으로 업데이트되었습니다.`;
-
-        // 권한으로 인해 건너뛴 이슈가 있는 경우 경고 메시지 추가
-        if (result.skipped_issues && result.skipped_issues > 0) {
-          message += ` ${result.skipped_issues}개 작업 항목은 권한이 없어 건너뛰었습니다.`;
-        }
-
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: message,
-        });
-
-        // 이슈 목록 새로고침
-        await fetchIssues(
-          "mutation",
-          {
-            canGroup: true,
-            perPageCount: issueFilters?.displayFilters?.per_page || 100
-          }
-        );
-
-        // 선택 해제
-        clearSelection();
-
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "업데이트에 실패했습니다.");
-      }
-    } catch (error) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: `업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`,
-      });
-    }
-  };
-
-  // 선택된 이슈들의 데이터를 가져오기 (완전한 이슈 데이터가 있는 것만)
-  const selectedIssuesList = selectedEntityIds
-    .map(issueId => getIssueById(issueId))
-    .filter((issue): issue is TIssue => issue !== undefined);
 
   return (
     <>
@@ -250,7 +153,7 @@ export const CycleIssuesHeader: React.FC = observer(() => {
                     title={cycleDetails?.name}
                     icon={
                       <Breadcrumbs.Icon>
-                        <ContrastIcon className="size-4 flex-shrink-0 text-custom-text-300" />
+                        <CycleIcon className="size-4 flex-shrink-0 text-custom-text-300" />
                       </Breadcrumbs.Icon>
                     }
                     isLast
@@ -302,29 +205,7 @@ export const CycleIssuesHeader: React.FC = observer(() => {
                 activeLayout={activeLayout}
               />
             </div>
-            <FiltersDropdown
-              title={t("common.filters")}
-              placement="bottom-end"
-              isFiltersApplied={isIssueFilterActive(issueFilters)}
-              miniIcon={<ListFilter className="size-3.5" />}
-            >
-              <FilterSelection
-                filters={issueFilters?.filters ?? {}}
-                handleFiltersUpdate={handleFiltersUpdate}
-                layoutDisplayFiltersOptions={
-                  activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[activeLayout] : undefined
-                }
-                displayFilters={issueFilters?.displayFilters ?? {}}
-                handleDisplayFiltersUpdate={handleDisplayFilters}
-                labels={projectLabels}
-                memberIds={projectMemberIds ?? undefined}
-                states={projectStates}
-                projectId={projectId}
-                customFields={customFields}
-                cycleViewDisabled={!currentProjectDetails?.cycle_view}
-                moduleViewDisabled={!currentProjectDetails?.module_view}
-              />
-            </FiltersDropdown>
+            <WorkItemFiltersToggle entityType={EIssuesStoreType.CYCLE} entityId={cycleId} />
             <FiltersDropdown
               title={t("common.display")}
               placement="bottom-end"
@@ -332,7 +213,7 @@ export const CycleIssuesHeader: React.FC = observer(() => {
             >
               <DisplayFiltersSelection
                 layoutDisplayFiltersOptions={
-                  activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues[activeLayout] : undefined
+                  activeLayout ? ISSUE_DISPLAY_FILTERS_BY_PAGE.issues.layoutOptions[activeLayout] : undefined
                 }
                 displayFilters={issueFilters?.displayFilters ?? {}}
                 handleDisplayFiltersUpdate={handleDisplayFilters}
@@ -352,16 +233,6 @@ export const CycleIssuesHeader: React.FC = observer(() => {
                     <ChartNoAxesColumn className="size-3.5" />
                   </div>
                 </Button>
-                {isSelectionActive && selectedEntityIds.length > 0 && (
-                  <Button
-                    onClick={() => setIsBulkEditModalOpen(true)}
-                    size="sm"
-                    variant="neutral-primary"
-                  >
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    {t("issue.bulk_edit.label")} ({selectedEntityIds.length})
-                  </Button>
-                )}
                 {!isCompletedCycle && (
                   <Button
                     className="h-full self-start"
@@ -393,13 +264,6 @@ export const CycleIssuesHeader: React.FC = observer(() => {
           </div>
         </Header.RightItem>
       </Header>
-
-      <BulkEditModal
-        isOpen={isBulkEditModalOpen}
-        onClose={() => setIsBulkEditModalOpen(false)}
-        selectedIssues={selectedIssuesList}
-        onBulkUpdate={handleBulkUpdate}
-      />
     </>
   );
 });

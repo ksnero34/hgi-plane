@@ -5,15 +5,16 @@ import { CircleMinus } from "lucide-react";
 import { Disclosure } from "@headlessui/react";
 // plane imports
 import { ROLE, EUserPermissions, MEMBER_TRACKER_ELEMENTS, TUserPermissions } from "@plane/constants";
-import { EUserProjectRoles, IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
-import { CustomMenu, CustomSelect, TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { EUserProjectRoles, IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
+import { CustomMenu, CustomSelect } from "@plane/ui";
 import { getFileURL } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useState } from "react";
 
-export interface RowData extends Pick<TProjectMembership, "original_role" | "role"> {
+export interface RowData extends Pick<TProjectMembership, "original_role"> {
   member: IWorkspaceMember;
 }
 

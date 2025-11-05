@@ -1,16 +1,16 @@
 "use client";
 
-import { FC, useState, useEffect, useCallback, useRef } from "react";
+import type { FC } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
-import { TNameDescriptionLoader } from "@plane/types";
+import type { TNameDescriptionLoader } from "@plane/types";
 // components
 import { TextArea } from "@plane/ui";
 // types
 import { cn } from "@plane/utils";
 import useDebounce from "@/hooks/use-debounce";
-import { TIssueOperations } from "./issue-detail";
-import { maskPrivateInformation } from "@/utils/privacy-masking";
+import type { TIssueOperations } from "./issue-detail";
 // hooks
 
 export type IssueTitleInputProps = {
@@ -132,8 +132,7 @@ export const IssueTitleInput: FC<IssueTitleInputProps> = observer((props) => {
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setIsSubmitting("submitting");
       const titleFromEvent = e.target.value;
-      const maskedTitle = maskPrivateInformation(titleFromEvent);
-      setTitle(maskedTitle);
+      setTitle(titleFromEvent);
       currentTitleRef.current = titleFromEvent;
       hasUnsavedChanges.current = true;
     },

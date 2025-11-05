@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { filter } from "lodash";
 import { Rocket, Search, X } from "lucide-react";
 import { Combobox, Dialog, Transition } from "@headlessui/react";
 // i18n
 import { useTranslation } from "@plane/i18n";
 // types
+import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import { ISearchIssueResponse, TProjectIssuesSearchParams } from "@plane/types";
+import type { ISearchIssueResponse, TProjectIssuesSearchParams } from "@plane/types";
 // ui
-import { Button, Loader, ToggleSwitch, TOAST_TYPE, setToast } from "@plane/ui";
+import { Loader, ToggleSwitch } from "@plane/ui";
 import { generateWorkItemLink, getTabIndex } from "@plane/utils";
 // helpers
 // hooks
@@ -32,7 +33,7 @@ type Props = {
   handleOnSubmit: (data: ISearchIssueResponse[]) => Promise<void>;
   workspaceLevelToggle?: boolean;
   shouldHideIssue?: (issue: ISearchIssueResponse) => boolean;
-  selectedWorkItems?: ISearchIssueResponse[];
+  selectedWorkItemIds?: string[];
   workItemSearchServiceCallback?: (params: TProjectIssuesSearchParams) => Promise<ISearchIssueResponse[]>;
 };
 
@@ -50,7 +51,7 @@ export const ExistingIssuesListModal: React.FC<Props> = (props) => {
     handleOnSubmit,
     workspaceLevelToggle = false,
     shouldHideIssue,
-    selectedWorkItems,
+    selectedWorkItemIds,
     workItemSearchServiceCallback,
   } = props;
   // states
@@ -116,10 +117,10 @@ export const ExistingIssuesListModal: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
-    if (selectedWorkItems) {
-      setSelectedIssues(selectedWorkItems);
+    if (selectedWorkItemIds) {
+      setSelectedIssues(issues.filter((issue) => selectedWorkItemIds.includes(issue.id)));
     }
-  }, [isOpen, selectedWorkItems]);
+  }, [isOpen, selectedWorkItemIds]);
 
   useEffect(() => {
     handleSearch();

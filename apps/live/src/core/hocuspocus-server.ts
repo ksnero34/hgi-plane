@@ -5,12 +5,12 @@ import { v4 as uuidv4 } from "uuid";
 import { TUserDetails } from "@plane/editor";
 import { DocumentCollaborativeEvents, TDocumentEventsServer } from "@plane/editor/lib";
 // extensions
-import { getExtensions } from "@/core/extensions/index.js";
+import { getExtensions } from "@/extensions";
 // lib
-import { handleAuthentication } from "@/core/lib/authentication.js";
-import { maskPrivateInformation } from "@/core/utils/privacy-masking.js";
+import { handleAuthentication } from "@/lib/auth";
+import { maskPrivateInformation } from "@/core/utils/privacy-masking";
 // types
-import { type HocusPocusServerContext } from "@/core/types/common.js";
+import { type HocusPocusServerContext } from "@/types";
 
 export const getHocusPocusServer = async () => {
   const extensions = await getExtensions();
@@ -23,7 +23,7 @@ export const getHocusPocusServer = async () => {
     const delta = textNode.toDelta();
     let hasChanges = false;
 
-    const maskedDelta = delta.map((part) => {
+    const maskedDelta = delta.map((part: any) => {
       if (typeof part.insert === "string") {
         const maskedText = maskPrivateInformation(part.insert);
         if (maskedText !== part.insert) {

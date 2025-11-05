@@ -1,9 +1,11 @@
-import { FC, useCallback, useEffect, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
 import { ALL_ISSUES, EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { EIssuesStoreType, IIssueDisplayFilterOptions, EIssueLayoutTypes } from "@plane/types";
+import type { EIssuesStoreType, IIssueDisplayFilterOptions } from "@plane/types";
+import { EIssueLayoutTypes } from "@plane/types";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
@@ -12,7 +14,7 @@ import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useCustomField } from "@/hooks/store/use-custom-field";
 // local imports
 import { IssueLayoutHOC } from "../issue-layout-HOC";
-import { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
+import type { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
 import { SpreadsheetView } from "./spreadsheet-view";
 
 export type SpreadsheetStoreType =
@@ -61,13 +63,8 @@ export const BaseSpreadsheetRoot = observer((props: IBaseSpreadsheetRoot) => {
   );
 
   useEffect(() => {
-    const perPageFromFilter = issuesFilter?.issueFilters?.displayFilters?.per_page || 100;
-    fetchIssues("init-loader", { 
-      canGroup: false, 
-      perPageCount: perPageFromFilter,
-      perPageFromDisplayFilter: perPageFromFilter
-    }, viewId);
-  }, [fetchIssues, storeType, viewId, issuesFilter?.issueFilters?.displayFilters?.per_page]);
+    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
+  }, [fetchIssues, storeType, viewId]);
 
   const canEditProperties = useCallback(
     (projectId: string | undefined) => {

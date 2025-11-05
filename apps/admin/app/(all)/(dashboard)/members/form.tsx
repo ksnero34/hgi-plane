@@ -1,5 +1,5 @@
 "use client";
-import { FC } from "react";
+import type { FC } from "react";
 import { observer } from "mobx-react";
 import { IInstanceAdminStatus } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";

@@ -2,9 +2,8 @@ import { useRef } from "react";
 import { observer } from "mobx-react";
 // types
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
-import { IIssueDisplayProperties, TIssue } from "@plane/types";
-// ui
-import { setToast, TOAST_TYPE } from "@plane/ui";
+import type { IIssueDisplayProperties, TIssue } from "@plane/types";
+import {setToast, TOAST_TYPE} from "@plane/propel/toast"
 // hooks
 import { captureSuccess } from "@/helpers/event-tracker.helper";
 // components
@@ -40,7 +39,7 @@ export const IssueColumn = observer((props: Props) => {
     >
       <td
         tabIndex={0}
-        className="h-11 w-full min-w-36 max-w-48 text-sm after:absolute after:w-full after:bottom-[-1px] after:border after:border-custom-border-100 border-r-[1px] border-custom-border-100"
+        className="h-11 min-w-36 text-sm after:absolute after:w-full after:bottom-[-1px] after:border after:border-custom-border-100 border-r-[1px] border-custom-border-100"
         ref={tableCellRef}
       >
         <Column
@@ -63,11 +62,11 @@ export const IssueColumn = observer((props: Props) => {
                   data: error?.response?.data,
                   message: error?.message
                 });
-                
+
                 // Extract detailed error message
                 let errorMessage = "이슈 업데이트 실패";
                 let errorTitle = "업데이트 실패";
-                
+
                 // Handle workflow-specific errors
                 if (error?.response?.status === 400) {
                   if (error?.response?.data?.non_field_errors?.[0]) {
@@ -79,7 +78,7 @@ export const IssueColumn = observer((props: Props) => {
                   } else if (error?.response?.data?.message) {
                     errorMessage = error.response.data.message;
                   }
-                  
+
                   // Check for workflow-related errors
                   if (errorMessage.includes("workflow") || errorMessage.includes("transition") || errorMessage.includes("승인")) {
                     errorTitle = "워크플로우 규칙 위반";
@@ -87,7 +86,7 @@ export const IssueColumn = observer((props: Props) => {
                 } else if (error?.message) {
                   errorMessage = error.message;
                 }
-                
+
                 setToast({
                   type: TOAST_TYPE.ERROR,
                   title: errorTitle,

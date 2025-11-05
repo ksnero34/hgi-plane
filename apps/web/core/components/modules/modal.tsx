@@ -5,9 +5,10 @@ import { observer } from "mobx-react";
 import { useForm } from "react-hook-form";
 // types
 import { MODULE_TRACKER_EVENTS } from "@plane/constants";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IModule } from "@plane/types";
 // ui
-import { EModalPosition, EModalWidth, ModalCore, TOAST_TYPE, setToast } from "@plane/ui";
+import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // components
 import { ModuleForm } from "@/components/modules";
 // constants
@@ -62,8 +63,8 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
         handleClose();
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "모듈이 성공적으로 생성되었습니다.",
+          title: "Success!",
+          message: "Module created successfully.",
         });
         captureSuccess({
           eventName: MODULE_TRACKER_EVENTS.create,
@@ -73,8 +74,8 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: err?.detail ?? err?.error ?? "모듈을 생성할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: err?.detail ?? err?.error ?? "Module could not be created. Please try again.",
         });
         captureError({
           eventName: MODULE_TRACKER_EVENTS.create,
@@ -94,8 +95,8 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
 
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "모듈이 성공적으로 업데이트되었습니다.",
+          title: "Success!",
+          message: "Module updated successfully.",
         });
         captureSuccess({
           eventName: MODULE_TRACKER_EVENTS.update,
@@ -105,8 +106,8 @@ export const CreateUpdateModuleModal: React.FC<Props> = observer((props) => {
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: err?.detail ?? err?.error ?? "모듈을 업데이트할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: err?.detail ?? err?.error ?? "Module could not be updated. Please try again.",
         });
         captureError({
           eventName: MODULE_TRACKER_EVENTS.update,

@@ -1,8 +1,11 @@
 import { computePosition, flip, shift } from "@floating-ui/dom";
-import { type Editor, posToDOMRect } from "@tiptap/react";
-import { SuggestionKeyDownProps } from "@tiptap/suggestion";
+import { FloatingOverlay } from "@floating-ui/react";
+import type { Editor } from "@tiptap/core";
+import { posToDOMRect } from "@tiptap/core";
+import { SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 // plane imports
+import { useOutsideClickDetector } from "@plane/hooks";
 import { cn } from "@plane/utils";
 
 export type EmojiItem = {
@@ -36,17 +39,17 @@ export type EmojiListRef = {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;
 };
 
-type Props = {
-  items: EmojiItem[];
-  command: (item: { name: string }) => void;
-  editor: Editor;
-  query: string;
+export type EmojisListDropdownProps = SuggestionProps<EmojiItem, { name: string }> & {
+  onClose: () => void;
 };
 
-export const EmojiList = forwardRef<EmojiListRef, Props>((props, ref) => {
-  const { items, command, editor, query } = props;
+export const EmojisListDropdown = forwardRef<EmojiListRef, EmojisListDropdownProps>((props, ref) => {
+  const { items, command, query, onClose, editor } = props;
+  // states
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [isVisible, setIsVisible] = useState(false);
+  // refs
+  const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectItem = useCallback(
@@ -123,7 +126,7 @@ export const EmojiList = forwardRef<EmojiListRef, Props>((props, ref) => {
 
   // Scroll selected item into view
   useEffect(() => {
-    const container = containerRef.current;
+    const container = dropdownContainerRef.current;
     if (!container) return;
 
     const item = container.querySelector(`#emoji-item-${selectedIndex}`) as HTMLElement;
@@ -145,20 +148,37 @@ export const EmojiList = forwardRef<EmojiListRef, Props>((props, ref) => {
     [handleKeyDown]
   );
 
-  if (query.length <= 0) {
-    return null;
-  }
+  useOutsideClickDetector(dropdownContainerRef, onClose);
+
+  if (query.length <= 0) return null;
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: "absolute",
-        zIndex: 100,
-      }}
-      className={`transition-all duration-200 transform ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
-    >
-      <div className="z-10 max-h-[90vh] w-[16rem] overflow-y-auto rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 shadow-custom-shadow-rg space-y-1">
+    <>
+      {/* Backdrop */}
+      <FloatingOverlay
+        style={{
+          zIndex: 99,
+        }}
+        lockScroll
+      />
+      <div
+        ref={dropdownContainerRef}
+        className={cn(
+          "relative max-h-80 w-[14rem] overflow-y-auto rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 shadow-custom-shadow-rg space-y-2 opacity-0 invisible transition-opacity",
+          {
+            "opacity-100 visible": isVisible,
+          }
+        )}
+        style={{
+          zIndex: 100,
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+      >
         {items.length ? (
           items.map((item, index) => {
             const isSelected = index === selectedIndex;
@@ -195,8 +215,8 @@ export const EmojiList = forwardRef<EmojiListRef, Props>((props, ref) => {
           <div className="text-center text-sm text-custom-text-400 py-2">No emojis found</div>
         )}
       </div>
-    </div>
+    </>
   );
 });
 
-EmojiList.displayName = "EmojiList";
+EmojisListDropdown.displayName = "EmojisListDropdown";

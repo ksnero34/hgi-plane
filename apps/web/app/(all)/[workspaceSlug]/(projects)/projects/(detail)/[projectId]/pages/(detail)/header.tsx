@@ -3,8 +3,9 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { FileText, Folder } from "lucide-react";
 import { EProjectFeatureKey } from "@plane/constants";
+import { PageIcon } from "@plane/propel/icons";
 // types
-import { ICustomSearchSelectOption } from "@plane/types";
+import type { ICustomSearchSelectOption } from "@plane/types";
 // ui
 import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect } from "@plane/ui";
 // components

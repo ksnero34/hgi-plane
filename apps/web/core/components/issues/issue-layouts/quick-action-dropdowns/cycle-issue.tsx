@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import omit from "lodash/omit";
+import { omit } from "lodash-es";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
@@ -11,8 +11,10 @@ import {
   EUserPermissionsLevel,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
-import { EIssuesStoreType, TIssue } from "@plane/types";
-import { ContextMenu, CustomMenu, TContextMenuItem } from "@plane/ui";
+import type { TIssue } from "@plane/types";
+import { EIssuesStoreType } from "@plane/types";
+import type { TContextMenuItem } from "@plane/ui";
+import { ContextMenu, CustomMenu } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { captureClick } from "@/helpers/event-tracker.helper";
@@ -27,8 +29,9 @@ import { DuplicateWorkItemModal } from "@/plane-web/components/issues/issue-layo
 import { ArchiveIssueModal } from "../../archive-issue-modal";
 import { DeleteIssueModal } from "../../delete-issue-modal";
 import { CreateUpdateIssueModal } from "../../issue-modal/modal";
-import { IQuickActionProps } from "../list/list-view-types";
-import { useCycleIssueMenuItems, MenuItemFactoryProps } from "./helper";
+import type { IQuickActionProps } from "../list/list-view-types";
+import type { MenuItemFactoryProps } from "./helper";
+import { useCycleIssueMenuItems } from "./helper";
 
 export const CycleIssueQuickActions: React.FC<IQuickActionProps> = observer((props) => {
   const {
@@ -72,8 +75,6 @@ export const CycleIssueQuickActions: React.FC<IQuickActionProps> = observer((pro
       ...issue,
       name: `${issue.name} (copy)`,
       sourceIssueId: issue.id,
-      type_id: issue.type_id,
-      custom_field_values: issue.custom_field_values,
     },
     ["id"]
   );
@@ -137,7 +138,6 @@ export const CycleIssueQuickActions: React.FC<IQuickActionProps> = observer((pro
           if (issueToEdit && handleUpdate) await handleUpdate(data);
         }}
         storeType={EIssuesStoreType.CYCLE}
-        isDraft={false}
       />
       {issue.project_id && workspaceSlug && (
         <DuplicateWorkItemModal
@@ -195,9 +195,7 @@ export const CycleIssueQuickActions: React.FC<IQuickActionProps> = observer((pro
                 {item.nestedMenuItems.map((nestedItem) => (
                   <CustomMenu.MenuItem
                     key={nestedItem.key}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       captureClick({ elementName: WORK_ITEM_TRACKER_ELEMENTS.QUICK_ACTIONS.CYCLE });
                       nestedItem.action();
                     }}
@@ -233,9 +231,7 @@ export const CycleIssueQuickActions: React.FC<IQuickActionProps> = observer((pro
           return (
             <CustomMenu.MenuItem
               key={item.key}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onClick={() => {
                 captureClick({ elementName: WORK_ITEM_TRACKER_ELEMENTS.QUICK_ACTIONS.CYCLE });
                 item.action();
               }}

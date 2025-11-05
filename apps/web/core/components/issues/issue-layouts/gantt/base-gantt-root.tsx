@@ -4,8 +4,9 @@ import { useParams } from "next/navigation";
 // plane imports
 import { ALL_ISSUES, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { EIssuesStoreType, IBlockUpdateData, TIssue, EIssueLayoutTypes } from "@plane/types";
-import { setToast, TOAST_TYPE } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { EIssuesStoreType, IBlockUpdateData, TIssue } from "@plane/types";
+import { EIssueLayoutTypes } from "@plane/types";
 import { renderFormattedPayloadDate } from "@plane/utils";
 // components
 import { ETimeLineTypeType, TimeLineTypeContext } from "@/components/gantt-chart/contexts";
@@ -58,13 +59,8 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
   targetDate.setDate(targetDate.getDate() + 1);
 
   useEffect(() => {
-    const perPageFromFilter = appliedDisplayFilters?.per_page || 100;
-    fetchIssues("init-loader", {
-      canGroup: false,
-      perPageCount: perPageFromFilter,
-      perPageFromDisplayFilter: perPageFromFilter
-    }, viewId);
-  }, [fetchIssues, storeType, viewId, appliedDisplayFilters?.per_page]);
+    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
+  }, [fetchIssues, storeType, viewId]);
 
   useEffect(() => {
     initGantt();

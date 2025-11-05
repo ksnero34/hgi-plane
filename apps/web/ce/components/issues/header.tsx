@@ -8,20 +8,24 @@ import { useMemo, useState } from "react";
 import { CheckCircle, Circle, Edit3, ExternalLink, Upload } from "lucide-react";
 // plane imports
 import {
-  EProjectFeatureKey,
   EUserPermissions,
   EUserPermissionsLevel,
   SPACE_BASE_PATH,
   SPACE_BASE_URL,
   WORK_ITEM_TRACKER_ELEMENTS,
+  EProjectFeatureKey,
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { Button } from "@plane/propel/button";
 import { Tooltip } from "@plane/propel/tooltip";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EIssuesStoreType, TIssue } from "@plane/types";
-import { Breadcrumbs, Button, Header, TOAST_TYPE, setToast } from "@plane/ui";
+import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { CountChip } from "@/components/common/count-chip";
+// constants
 import { HeaderFilters } from "@/components/issues/filters";
+// helpers
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -48,18 +52,20 @@ export const IssuesHeader = observer(() => {
     issues: { getGroupIssueCount },
     issuesFilter: { issueFilters },
   } = useIssues(EIssuesStoreType.PROJECT);
+  // i18n
+  const { t } = useTranslation();
+
   const { fetchIssues } = useIssuesActions(EIssuesStoreType.PROJECT);
   const { isSelectionActive, selectedEntityIds, clearSelection } = useMultipleSelectStore();
   const {
     issue: { getIssueById },
   } = useIssueDetail();
   const { currentProjectDetails, loader } = useProject();
+
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
   const { isMobile } = usePlatformOS();
   const { approvalCount, refreshApprovalCount } = useWorkflowApproval();
-  // i18n
-  const { t } = useTranslation();
 
   const SPACE_APP_URL = (SPACE_BASE_URL.trim() === "" ? window.location.origin : SPACE_BASE_URL) + SPACE_BASE_PATH;
   const publishedURL = `${SPACE_APP_URL}/issues/${currentProjectDetails?.anchor}`;
@@ -231,7 +237,6 @@ export const IssuesHeader = observer(() => {
               </>
             ) : null}
             <Button
-              variant="neutral"
               size="sm"
               onClick={() => setIsApprovalModalOpen(true)}
               className="flex items-center gap-2"

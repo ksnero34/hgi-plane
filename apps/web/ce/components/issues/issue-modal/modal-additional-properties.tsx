@@ -1,4 +1,5 @@
-import React from "react";
+import type React from "react";
+
 import { observer } from "mobx-react";
 import { useFormContext } from "react-hook-form";
 import { Tag, CalendarCheck2, UserCircle2, Users, MessageSquare } from "lucide-react";
@@ -19,20 +20,20 @@ export type TWorkItemModalAdditionalPropertiesProps = {
 
 export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditionalPropertiesProps> = observer((props) => {
   const { projectId, workItemId } = props;
-  
+
   if (!projectId) return null;
-  
+
   const { control, watch, setValue } = useFormContext<TIssue>();
   const { customFields, isLoading } = useCustomField(projectId);
   const { issueTypes } = useIssueType(projectId);
-  
+
   // 현재 선택된 type_id 가져오기
   const currentTypeId = watch("type_id");
   const actualTypeId = currentTypeId;
-  
+
   // type_id에 해당하는 ProjectIssueType 찾기
   const currentProjectIssueType = issueTypes?.find(it => it.id === actualTypeId);
-  
+
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
       case "text":
@@ -69,7 +70,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             />
           </div>
         );
-      
+
       case "number":
         return (
           <div className="w-3/4 flex-grow">
@@ -85,7 +86,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             />
           </div>
         );
-      
+
       case "date":
         return (
           <DateDropdown
@@ -103,7 +104,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             clearIconClassName="h-3 w-3 hidden group-hover:inline"
           />
         );
-      
+
       case "select":
       case "multiselect":
         return (
@@ -125,7 +126,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             hideIconWhenEmpty={true}
           />
         );
-      
+
       case "project_member":
         return (
           <MemberDropdown
@@ -150,7 +151,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             multiple={false}
           />
         );
-      
+
       case "project_members":
         return (
           <MemberDropdown
@@ -172,7 +173,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             showUserDetails={true}
           />
         );
-      
+
       default:
         return (
           <div className="w-3/4 flex-grow">
@@ -185,22 +186,22 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
         );
     }
   };
-  
+
   // ProjectIssueType의 id(커스텀 필드의 issue_type)에 해당하는 커스텀 필드만 필터링
   const filteredCustomFields = customFields.filter(field => {
     if (!field.issue_type || !currentProjectIssueType) return false;
     // 커스텀 필드의 issue_type과 현재 선택된 ProjectIssueType의 id가 매칭되는지 확인
     return field.issue_type === currentProjectIssueType.id;
   });
-  
+
   if (isLoading || filteredCustomFields.length === 0) return null;
-  
+
   return (
     <div className="px-4 py-3">
       <div className="space-y-3">
         {filteredCustomFields.map((field) => {
           const FieldIcon = getFieldIcon(field.field_type);
-          
+
           return (
             <div key={field.id} className="flex w-full items-center gap-3 h-8">
               <div className="flex items-center gap-1 w-1/4 flex-shrink-0 text-sm text-custom-text-300">

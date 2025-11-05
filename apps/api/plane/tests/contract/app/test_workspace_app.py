@@ -49,9 +49,7 @@ class TestWorkspaceAPI:
 
         # Check other values
         workspace = Workspace.objects.get(slug=workspace_data["slug"])
-        workspace_member = WorkspaceMember.objects.filter(
-            workspace=workspace, member=user
-        ).first()
+        workspace_member = WorkspaceMember.objects.filter(workspace=workspace, member=user).first()
         assert workspace.owner == user
         assert workspace_member.role == 20
 
@@ -68,9 +66,7 @@ class TestWorkspaceAPI:
         session_client.post(url, {"name": "Plane", "slug": "pla-ne"}, format="json")
 
         # Try to create a workspace with the same slug
-        response = session_client.post(
-            url, {"name": "Plane", "slug": "pla-ne"}, format="json"
-        )
+        response = session_client.post(url, {"name": "Plane", "slug": "pla-ne"}, format="json")
 
         # The API returns 400 BAD REQUEST for duplicate slugs, not 409 CONFLICT
         assert response.status_code == status.HTTP_400_BAD_REQUEST

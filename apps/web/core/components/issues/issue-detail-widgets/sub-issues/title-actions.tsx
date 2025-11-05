@@ -1,14 +1,19 @@
-import { FC, useCallback } from "react";
-import cloneDeep from "lodash/cloneDeep";
+import type { FC } from "react";
+import { useCallback } from "react";
+import { cloneDeep } from "lodash-es";
 import { observer } from "mobx-react";
-import { EIssueFilterType, ISSUE_DISPLAY_FILTERS_BY_PAGE } from "@plane/constants";
 import {
-  EIssueServiceType,
+  EIssueFilterType,
+  ISSUE_DISPLAY_FILTERS_BY_PAGE,
+  SUB_WORK_ITEM_AVAILABLE_FILTERS_FOR_WORK_ITEM_PAGE,
+} from "@plane/constants";
+import type {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
   IIssueFilterOptions,
   TIssueServiceType,
 } from "@plane/types";
+import { EIssueServiceType } from "@plane/types";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -38,11 +43,10 @@ export const SubWorkItemTitleActions: FC<TSubWorkItemTitleActionsProps> = observ
   } = useMember();
 
   // derived values
-  const subIssueFilters = getSubIssueFilters(parentId);
   const projectStates = getProjectStates(projectId);
   const projectMemberIds = getProjectMemberIds(projectId, false);
-
-  const layoutDisplayFiltersOptions = ISSUE_DISPLAY_FILTERS_BY_PAGE["sub_work_items"].list;
+  const subIssueFilters = getSubIssueFilters(parentId);
+  const layoutDisplayFiltersOptions = ISSUE_DISPLAY_FILTERS_BY_PAGE["sub_work_items"].layoutOptions.list;
 
   const handleDisplayFilters = useCallback(
     (updatedDisplayFilter: Partial<IIssueDisplayFilterOptions>) => {
@@ -60,23 +64,18 @@ export const SubWorkItemTitleActions: FC<TSubWorkItemTitleActionsProps> = observ
 
   const handleFiltersUpdate = useCallback(
     (key: keyof IIssueFilterOptions, value: string | string[]) => {
-      const currentValue = subIssueFilters?.filters?.[key];
-      const newValues: string[] = Array.isArray(currentValue) ? cloneDeep(currentValue) : [];
+      const newValues = cloneDeep(subIssueFilters?.filters?.[key]) ?? [];
 
       if (Array.isArray(value)) {
         // this validation is majorly for the filter start_date, target_date custom
         value.forEach((val) => {
-          if (newValues.indexOf(val) === -1) newValues.push(val);
+          if (!newValues.includes(val)) newValues.push(val);
           else newValues.splice(newValues.indexOf(val), 1);
         });
       } else {
-        if (Array.isArray(currentValue) && currentValue.indexOf(value) !== -1) {
-          newValues.splice(newValues.indexOf(value), 1);
-        } else {
-          newValues.push(value);
-        }
+        if (subIssueFilters?.filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        else newValues.push(value);
       }
-
       updateSubWorkItemFilters(EIssueFilterType.FILTERS, { [key]: newValues }, parentId);
     },
     [subIssueFilters?.filters, updateSubWorkItemFilters, parentId]
@@ -104,7 +103,7 @@ export const SubWorkItemTitleActions: FC<TSubWorkItemTitleActionsProps> = observ
         filters={subIssueFilters?.filters ?? {}}
         memberIds={projectMemberIds ?? undefined}
         states={projectStates}
-        layoutDisplayFiltersOptions={layoutDisplayFiltersOptions}
+        availableFilters={SUB_WORK_ITEM_AVAILABLE_FILTERS_FOR_WORK_ITEM_PAGE}
       />
       {!disabled && (
         <SubIssuesActionButton issueId={parentId} disabled={disabled} issueServiceType={issueServiceType} />

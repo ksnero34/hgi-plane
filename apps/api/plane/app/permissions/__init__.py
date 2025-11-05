@@ -14,3 +14,4 @@ from .project import (
 )
 from .instance import InstanceAdminPermission
 from .base import allow_permission, ROLE
+from .page import ProjectPagePermission

@@ -2,10 +2,10 @@ import { observer } from "mobx-react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 // plane types
 import { MODULE_TRACKER_ELEMENTS } from "@plane/constants";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import { ILinkDetails } from "@plane/types";
+import type { ILinkDetails } from "@plane/types";
 // plane ui
-import { setToast, TOAST_TYPE } from "@plane/ui";
 import { getIconForLink, copyTextToClipboard, calculateTimeAgo } from "@plane/utils";
 // helpers
 //
@@ -35,8 +35,8 @@ export const ModulesLinksListItem: React.FC<Props> = observer((props) => {
     copyTextToClipboard(text).then(() =>
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "링크가 복사되었습니다.",
-        message: "URL이 클립보드에 성공적으로 복사되었습니다.",
+        title: "Copied to clipboard",
+        message: "The URL has been successfully copied to your clipboard",
       })
     );
   };

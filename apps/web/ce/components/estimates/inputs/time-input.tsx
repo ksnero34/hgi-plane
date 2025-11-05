@@ -1,4 +1,6 @@
-import { FC, useState, useEffect } from "react";
+import type { FC } from "react";
+
+import { useState, useEffect } from "react";
 import { useTranslation } from "@plane/i18n";
 import { convertMinutesToHoursAndMinutes } from "@plane/utils";
 
@@ -21,7 +23,7 @@ export const EstimateTimeInput: FC<TEstimateTimeInputProps> = (props) => {
       const { hours: h, minutes: m } = convertMinutesToHoursAndMinutes(value);
       setHours(h);
       setMinutes(m);
-      
+
       // Log for debugging
       console.log("Initial value:", value, "Converted to", h, "hours", m, "minutes");
     }
@@ -33,19 +35,19 @@ export const EstimateTimeInput: FC<TEstimateTimeInputProps> = (props) => {
     if (newHours === 0 && newMinutes === 0) {
       newMinutes = 1;
     }
-    
+
     setHours(newHours);
     setMinutes(newMinutes);
-    
+
     // Calculate total minutes
     const totalMinutes = newHours * 60 + newMinutes;
-    
+
     // Log for debugging
     console.log("New time values:", newHours, "hours", newMinutes, "minutes", "Total:", totalMinutes);
-    
+
     // Always pass a positive number as a string
     handleEstimateInputValue(String(totalMinutes));
-    
+
     // Log what was passed to the handler
     console.log("Passed to handler:", String(totalMinutes));
   };

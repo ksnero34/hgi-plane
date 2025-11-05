@@ -1,10 +1,9 @@
 "use client";
 
 // icons
-import { FileText, Layers } from "lucide-react";
-import { ContrastIcon, DiceIcon, LayersIcon } from "@plane/propel/icons";
+import { CycleIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
 // types
-import { TTourSteps } from "./root";
+import type { TTourSteps } from "./root";
 
 const sidebarOptions: {
   key: TTourSteps;
@@ -13,28 +12,28 @@ const sidebarOptions: {
 }[] = [
   {
     key: "work-items",
-    label: "작업항목",
-    Icon: LayersIcon,
+    label: "Work items",
+    Icon: WorkItemsIcon,
   },
   {
     key: "cycles",
-    label: "주기",
-    Icon: ContrastIcon,
+    label: "Cycles",
+    Icon: CycleIcon,
   },
   {
     key: "modules",
-    label: "모듈",
-    Icon: DiceIcon,
+    label: "Modules",
+    Icon: ModuleIcon,
   },
   {
     key: "views",
-    label: "보기",
-    Icon: Layers,
+    label: "Views",
+    Icon: ViewsIcon,
   },
   {
     key: "pages",
-    label: "페이지",
-    Icon: FileText,
+    label: "Pages",
+    Icon: PageIcon,
   },
 ];
 
@@ -46,10 +45,9 @@ type Props = {
 export const TourSidebar: React.FC<Props> = ({ step, setStep }) => (
   <div className="col-span-3 hidden bg-custom-background-90 p-8 lg:block">
     <h3 className="text-lg font-medium">
-      Plane에 대해 알아봅시다.
+      Let{"'"}s get started!
       <br />
-      <br />
-      이슈트래커(Plane)를 활용해서 팀과 협업하고 이슈를 정리하여 업무 효율을 높여보세요.
+      Get more out of Plane.
     </h3>
     <div className="mt-8 space-y-5">
       {sidebarOptions.map((option) => (

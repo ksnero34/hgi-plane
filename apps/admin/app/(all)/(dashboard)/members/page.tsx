@@ -2,7 +2,7 @@
 
 import { observer } from "mobx-react";
 import useSWR from "swr";
-import { TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { useInstance } from "@/hooks/store";
 import { MemberList } from "./member-list";
 

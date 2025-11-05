@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 // plane imports
-import { TModuleStatus } from "@plane/propel/icons";
-import { TModuleDisplayFilters, TModuleFilters } from "@plane/types";
+import type { TModuleStatus } from "@plane/propel/icons";
+import type { TModuleDisplayFilters, TModuleFilters } from "@plane/types";
 import { FilterCustomFields } from "@/components/issues/issue-layouts/filters/header/filters";
 // components
 import { FilterOption } from "@/components/issues/issue-layouts/filters";

@@ -3,7 +3,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 # Module import
 from plane.db.models import ProjectMember, WorkspaceMember
-from .base import ROLE
+from plane.db.models.project import ROLE
 
 
 class ProjectBasePermission(BasePermission):
@@ -26,14 +26,28 @@ class ProjectBasePermission(BasePermission):
                 is_active=True,
             ).exists()
 
-        ## Only Project Admins can update project attributes
-        return ProjectMember.objects.filter(
+        project_member_qs = ProjectMember.objects.filter(
             workspace__slug=view.workspace_slug,
             member=request.user,
             role=ROLE.ADMIN.value,
             project_id=view.project_id,
             is_active=True,
-        ).exists()
+        )
+
+        ## Only project admins or workspace admin who is part of the project can access
+
+        if project_member_qs.filter(role=ROLE.ADMIN.value).exists():
+            return True
+        else:
+            return (
+                project_member_qs.exists()
+                and WorkspaceMember.objects.filter(
+                    member=request.user,
+                    workspace__slug=view.workspace_slug,
+                    role=ROLE.ADMIN.value,
+                    is_active=True,
+                ).exists()
+            )
 
 
 class ProjectMemberPermission(BasePermission):

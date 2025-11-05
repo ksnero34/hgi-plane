@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import { observer } from "mobx-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,9 +11,10 @@ import useSWRImmutable from "swr/immutable";
 // ui
 import { LogOut } from "lucide-react";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { Button, getButtonStyling } from "@plane/propel/button";
 import { PlaneLogo } from "@plane/propel/icons";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import { Button, getButtonStyling, setToast, TOAST_TYPE } from "@plane/ui";
 // components
 import { cn } from "@plane/utils";
 import { LogoSpinner } from "@/components/common/logo-spinner";
@@ -215,7 +216,8 @@ export const WorkspaceAuthWrapper: FC<IWorkspaceAuthWrapper> = observer((props) 
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">Not Authorized!</h3>
               <p className="mx-auto w-1/2 text-sm text-custom-text-200">
-                이 워크스페이스의 멤버가 아닙니다. 초대를 받거나 대기 중인 초대를 확인하려면 워크스페이스 관리자에게 문의하세요.
+                You{"'"}re not a member of this workspace. Please contact the workspace admin to get an invitation or
+                check your pending invitations.
               </p>
             </div>
             <div className="flex items-center justify-center gap-2">

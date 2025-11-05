@@ -1,14 +1,17 @@
-import { FC, useEffect, useState } from "react";
+import type { FC } from "react";
+import { useEffect, useState } from "react";
 // constants
-import { EPageAccess, PROJECT_PAGE_TRACKER_EVENTS } from "@plane/constants";
-import { TPage } from "@plane/types";
+import type { EPageAccess } from "@plane/constants";
+import { PROJECT_PAGE_TRACKER_EVENTS } from "@plane/constants";
+import type { TPage } from "@plane/types";
 // ui
 import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // hooks
 import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 import { useAppRouter } from "@/hooks/use-app-router";
 // plane web hooks
-import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
+import type { EPageStoreType } from "@/plane-web/hooks/store";
+import { usePageStore } from "@/plane-web/hooks/store";
 // local imports
 import { PageForm } from "./page-form";
 
@@ -83,7 +86,7 @@ export const CreatePageModal: FC<Props> = (props) => {
           },
         });
         handleStateClear();
-        
+
         // 폴더인 경우와 페이지인 경우 다른 리다이렉션 처리
         if (redirectionEnabled) {
           if (pageData.is_folder) {

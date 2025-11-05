@@ -32,7 +32,6 @@ export interface IBlockUpdateDependencyData {
   id: string;
   start_date?: string;
   target_date?: string;
-  project_id?: string;
   meta?: Record<string, any>;
 }
 

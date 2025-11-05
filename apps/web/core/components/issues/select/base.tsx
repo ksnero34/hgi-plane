@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Placement } from "@popperjs/core";
+import type { Placement } from "@popperjs/core";
 import { observer } from "mobx-react";
 import { usePopper } from "react-popper";
 import { Check, Component, Loader, Search, Tag } from "lucide-react";
@@ -8,8 +8,7 @@ import { getRandomLabelColor } from "@plane/constants";
 // plane imports
 import { useOutsideClickDetector } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
-// plane imports
-import { IIssueLabel } from "@plane/types";
+import type { IIssueLabel } from "@plane/types";
 import { cn } from "@plane/utils";
 // components
 import { IssueLabelsList } from "@/components/ui/labels-list";
@@ -28,7 +27,6 @@ export type TWorkItemLabelSelectBaseProps = {
   onChange: (value: string[]) => void;
   onDropdownOpen?: () => void;
   placement?: Placement;
-  setIsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   createLabel?: (data: Partial<IIssueLabel>) => Promise<IIssueLabel>;
   tabIndex?: number;
   value: string[];
@@ -46,7 +44,6 @@ export const WorkItemLabelSelectBase: React.FC<TWorkItemLabelSelectBaseProps> = 
     onChange,
     onDropdownOpen,
     placement,
-    setIsOpen,
     createLabel,
     tabIndex,
     value,
@@ -60,7 +57,6 @@ export const WorkItemLabelSelectBase: React.FC<TWorkItemLabelSelectBaseProps> = 
   const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
-
   // plane hooks
   const { t } = useTranslation();
   // store hooks
@@ -89,10 +85,6 @@ export const WorkItemLabelSelectBase: React.FC<TWorkItemLabelSelectBaseProps> = 
     if (!isDropdownOpen) onOpen();
     setIsDropdownOpen((prevIsOpen) => !prevIsOpen);
   };
-
-  useEffect(() => {
-    setIsOpen?.(isDropdownOpen);
-  }, [isDropdownOpen, setIsOpen]);
 
   const dropdownOnChange = (val: string[]) => {
     onChange(val);

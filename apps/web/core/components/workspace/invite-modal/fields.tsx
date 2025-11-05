@@ -1,17 +1,17 @@
 "use client";
 
 import { observer } from "mobx-react";
-import { Control, Controller, FieldArrayWithId, FormState } from "react-hook-form";
+import type { Control, FieldArrayWithId, FormState } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { X } from "lucide-react";
 // plane imports
 import { ROLE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Avatar, CustomSelect, Input,CustomSearchSelect } from "@plane/ui";
+import { CustomSelect, Input } from "@plane/ui";
 import { cn } from "@plane/utils";
 // hooks
 import { useUserPermissions } from "@/hooks/store/user";
-import { useMember } from "@/hooks/store/use-member";
-import { InvitationFormValues } from "@/hooks/use-workspace-invitation";
+import type { InvitationFormValues } from "@/hooks/use-workspace-invitation";
 import { getFileURL } from "@plane/utils";
 import { useEffect, useState } from "react";
 
@@ -141,7 +141,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
     <div className={cn("mb-3 space-y-4", className)}>
       {fields.map((field, index) => (
         <div key={field.id} className="relative group mb-1 flex items-start justify-between gap-x-4 text-sm w-full">
-          <div className="flex flex-col gap-1 flex-grow w-full">
+          <div className="w-full">
             <Controller
               control={control}
               name={`emails.${index}.email`}

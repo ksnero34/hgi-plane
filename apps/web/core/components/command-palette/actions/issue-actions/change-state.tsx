@@ -3,9 +3,9 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
-import { EIssueServiceType, TIssue } from "@plane/types";
-// ui
-import { setToast, TOAST_TYPE } from "@plane/ui";
+import type { TIssue } from "@plane/types";
+import { EIssueServiceType } from "@plane/types";
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // store hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useWorkflow } from "@/hooks/store/use-workflow";

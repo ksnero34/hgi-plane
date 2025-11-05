@@ -1,6 +1,7 @@
 "use client";
 
-import { FC, useEffect } from "react";
+import type { FC } from "react";
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 // hooks
 import { useAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
@@ -20,7 +21,6 @@ export type TIssueAttachmentRoot = {
 export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = observer((props) => {
   // props
   const { workspaceSlug, projectId, issueId, disabled = false } = props;
-  
   // hooks
   const attachmentHelpers = useAttachmentOperations(workspaceSlug, projectId, issueId);
   const { validateFile } = useFileValidation();
@@ -32,18 +32,17 @@ export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = observer((props) =>
   }, [fetchFileSettings]);
 
   return (
-    <div className="relative">
-      <IssueAttachmentUpload
-        workspaceSlug={workspaceSlug}
-        disabled={disabled}
-        attachmentOperations={attachmentHelpers.operations}
-        validateFile={validateFile}
-      />
-      <IssueAttachmentsList
-        issueId={issueId}
-        disabled={disabled}
-        attachmentHelpers={attachmentHelpers}
-      />
+    <div className="relative py-3 space-y-3">
+      <h3 className="text-lg">Attachments</h3>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <IssueAttachmentUpload
+          workspaceSlug={workspaceSlug}
+          disabled={disabled}
+          attachmentOperations={attachmentHelpers.operations}
+          validateFile={validateFile}
+        />
+        <IssueAttachmentsList issueId={issueId} disabled={disabled} attachmentHelpers={attachmentHelpers} />
+      </div>
     </div>
   );
 });

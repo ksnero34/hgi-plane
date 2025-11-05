@@ -1,16 +1,19 @@
 "use client";
 
+import type { Dispatch, MouseEvent, SetStateAction } from "react";
+import { useEffect, useRef } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { ChevronRight } from "lucide-react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Dispatch, MouseEvent, SetStateAction, useEffect, useRef } from "react";
+import { ChevronRight } from "lucide-react";
 // types
 import { Tooltip } from "@plane/propel/tooltip";
-import { EIssueServiceType, IIssueDisplayProperties, TCustomField, TIssue, TIssueMap } from "@plane/types";
+import type { TIssue, IIssueDisplayProperties,TCustomField, TIssueMap } from "@plane/types";
+import { EIssueServiceType } from "@plane/types";
 // ui
-import { ControlLink, Row, setToast, Spinner, TOAST_TYPE } from "@plane/ui";
+import { Spinner, ControlLink, Row } from "@plane/ui";
+import {setToast, TOAST_TYPE} from "@plane/propel/toast"
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
@@ -20,14 +23,14 @@ import { IssueProperties } from "@/components/issues/issue-layouts/properties";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
-import { TSelectionHelper } from "@/hooks/use-multiple-select";
+import type { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-stats";
 // types
 import { WithDisplayPropertiesHOC } from "../properties/with-display-properties-HOC";
-import { TRenderQuickActions } from "./list-view-types";
+import type { TRenderQuickActions } from "./list-view-types";
 
 interface IssueBlockProps {
   issueId: string;

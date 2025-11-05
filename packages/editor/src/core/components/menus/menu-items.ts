@@ -1,4 +1,4 @@
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import {
   BoldIcon,
   Heading1,
@@ -18,12 +18,11 @@ import {
   Heading5,
   Heading6,
   CaseSensitive,
-  LucideIcon,
+  type LucideIcon,
   MinusSquare,
   Palette,
   AlignCenter,
   LinkIcon,
-  FileIcon,
 } from "lucide-react";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
@@ -31,7 +30,6 @@ import { CORE_EXTENSIONS } from "@/constants/extension";
 import {
   insertHorizontalRule,
   insertImage,
-  insertFile,
   insertTableCommand,
   setLinkEditor,
   setText,
@@ -72,7 +70,7 @@ export const TextItem = (editor: Editor): EditorMenuItem<"text"> => ({
   icon: CaseSensitive,
 });
 
-type SupportedHeadingLevels = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+type SupportedHeadingLevels = Extract<TEditorCommands, "h1" | "h2" | "h3" | "h4" | "h5" | "h6">;
 
 const HeadingItem = <T extends SupportedHeadingLevels>(
   editor: Editor,
@@ -194,15 +192,6 @@ export const ImageItem = (editor: Editor): EditorMenuItem<"image"> => ({
   icon: ImageIcon,
 });
 
-export const FileItem = (editor: Editor): EditorMenuItem<"file"> => ({
-    key: "file",
-    name: "File",
-    isActive: () => editor?.isActive("fileComponent"),
-    command: () =>
-        insertFile({ editor, event: "insert", pos: editor.state.selection.from }),
-    icon: FileIcon,
-});
-
 export const HorizontalRuleItem = (editor: Editor): EditorMenuItem<"divider"> =>
   ({
     key: "divider",
@@ -280,11 +269,10 @@ export const getEditorMenuItems = (editor: Editor | null): EditorMenuItem<TEdito
     QuoteItem(editor),
     TableItem(editor),
     ImageItem(editor),
-    FileItem(editor),
     HorizontalRuleItem(editor),
     LinkItem(editor),
     TextColorItem(editor),
     BackgroundColorItem(editor),
     TextAlignItem(editor),
-  ];
+  ] as EditorMenuItem<TEditorCommands>[];
 };

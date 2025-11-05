@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "dompurify";
 import type { Content, JSONContent } from "@plane/types";
 
 /**
@@ -250,7 +250,7 @@ export const isStringCommentEmpty = (comment: string | undefined): boolean => {
   return (
     comment?.trim() === "" ||
     comment === "<p></p>" ||
-    isEmptyHtmlString(comment ?? "", ["img", "mention-component", "image-component", "embed-component", "file-component"])
+    isEmptyHtmlString(comment ?? "", ["img", "mention-component", "image-component", "embed-component"])
   );
 };
 

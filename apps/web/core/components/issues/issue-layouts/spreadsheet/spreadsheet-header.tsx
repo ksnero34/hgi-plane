@@ -1,17 +1,16 @@
 import { observer } from "mobx-react";
-import { useMemo } from "react";
 import { useParams } from "next/navigation";
 // constants
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // ui
-import { IIssueDisplayFilterOptions, IIssueDisplayProperties, TCustomField } from "@plane/types";
+import type { IIssueDisplayFilterOptions, IIssueDisplayProperties, TCustomField } from "@plane/types";
 // components
 import { Row } from "@plane/ui";
 import { cn } from "@plane/utils";
 import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
-import { SpreadsheetHeaderColumn } from "./spreadsheet-header-column";
 // hooks
-import { TSelectionHelper } from "@/hooks/use-multiple-select";
+import type { TSelectionHelper } from "@/hooks/use-multiple-select";
+import { SpreadsheetHeaderColumn } from "./spreadsheet-header-column";
 
 interface Props {
   displayProperties: IIssueDisplayProperties;

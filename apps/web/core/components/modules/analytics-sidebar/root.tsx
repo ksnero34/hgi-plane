@@ -16,10 +16,11 @@ import {
 } from "@plane/constants";
 // plane types
 import { useTranslation } from "@plane/i18n";
-import { LayersIcon, ModuleStatusIcon } from "@plane/propel/icons";
-import { ILinkDetails, IModule, ModuleLink } from "@plane/types";
+import { ModuleStatusIcon, WorkItemsIcon } from "@plane/propel/icons";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { ILinkDetails, IModule, ModuleLink } from "@plane/types";
 // plane ui
-import { Loader, CustomSelect, TOAST_TYPE, setToast, TextArea } from "@plane/ui";
+import { Loader, CustomSelect, TextArea } from "@plane/ui";
 // components
 // helpers
 import { getDate, renderFormattedPayloadDate } from "@plane/utils";
@@ -149,15 +150,15 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
         });
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "모듈 링크가 성공적으로 삭제되었습니다.",
+          title: "Success!",
+          message: "Module link deleted successfully.",
         });
       })
       .catch(() => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "모듈 링크를 삭제할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: "Some error occurred",
         });
         captureError({
           eventName: MODULE_TRACKER_EVENTS.link.delete,
@@ -173,8 +174,8 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
     });
     setToast({
       type: TOAST_TYPE.SUCCESS,
-      title: "성공!",
-      message: "모듈이 성공적으로 업데이트되었습니다.",
+      title: "Success!",
+      message: "Module updated successfully.",
     });
   };
 
@@ -395,7 +396,7 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
           </div>
           <div className="flex items-center justify-start gap-1">
             <div className="flex w-2/5 items-center justify-start gap-2 text-custom-text-300">
-              <LayersIcon className="h-4 w-4" />
+              <WorkItemsIcon className="h-4 w-4" />
               <span className="text-base">{t("issues")}</span>
             </div>
             <div className="flex h-7 w-3/5 items-center">
@@ -409,7 +410,7 @@ export const ModuleAnalyticsSidebar: React.FC<Props> = observer((props) => {
           {isEstimatePointValid && (
             <div className="flex items-center justify-start gap-1">
               <div className="flex w-2/5 items-center justify-start gap-2 text-custom-text-300">
-                <LayersIcon className="h-4 w-4" />
+                <WorkItemsIcon className="h-4 w-4" />
                 <span className="text-base">{t("points")}</span>
               </div>
               <div className="flex h-7 w-3/5 items-center">

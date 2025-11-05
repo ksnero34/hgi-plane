@@ -1,8 +1,8 @@
-import { FC } from "react";
+import type { FC } from "react";
 // plane types
 import { useTranslation } from "@plane/i18n";
 // hooks
-import { IUser } from "@plane/types";
+import type { IUser } from "@plane/types";
 import { useCurrentTime } from "@/hooks/use-current-time";
 // types
 
@@ -38,7 +38,7 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
     minute: "2-digit",
   }).format(currentTime);
 
-  const greeting = parseInt(hour, 10) < 6 ? "dawn" : parseInt(hour, 10) < 12 ? "morning" : parseInt(hour, 10) < 18 ? "afternoon" : "evening"; 
+  const greeting = parseInt(hour, 10) < 6 ? "dawn" : parseInt(hour, 10) < 12 ? "morning" : parseInt(hour, 10) < 18 ? "afternoon" : "evening";
 
   return (
     <div>

@@ -1,7 +1,7 @@
-import { Editor } from "@tiptap/core";
-import { Node as ProseMirrorNode, ResolvedPos } from "@tiptap/pm/model";
+import type { Editor, NodeViewProps } from "@tiptap/core";
+import type { Node as ProseMirrorNode, ResolvedPos } from "@tiptap/pm/model";
 import { CellSelection, TableMap, updateColumnsOnResize } from "@tiptap/pm/tables";
-import { Decoration, NodeView } from "@tiptap/pm/view";
+import type { Decoration, NodeView } from "@tiptap/pm/view";
 import { h } from "jsx-dom-cjs";
 import tippy, { Instance, Props } from "tippy.js";
 import { CORE_EXTENSIONS } from "@/constants/extension";
@@ -216,8 +216,13 @@ const selectionToolbarItems: ContextMenuItem[] = [
   {
     label: "Distribute columns",
     icon: icons.toggleColumnHeader,
-    action: ({ editor }) => editor.chain().focus().distributeColumns().run(),
-    shouldDisplay: ({ editor }) => editor.can().distributeColumns?.() ?? false,
+    action: ({ editor }) => {
+      const canDistribute = (editor.can() as any).distributeColumns?.();
+      if (canDistribute) {
+        (editor.chain().focus() as any).distributeColumns?.().run();
+      }
+    },
+    shouldDisplay: ({ editor }) => (editor.can() as any).distributeColumns?.() ?? false,
   },
   {
     label: "Clear cell background",
@@ -239,25 +244,25 @@ function createSelectionToolbarContent(
   return h(
     "div",
     {
-      className:
+      class:
         "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 py-1 text-xs shadow-custom-shadow-rg min-w-[10rem] whitespace-nowrap",
       "data-prevent-outside-click": "",
-    },
+    } as any,
     items.map((item) =>
       h(
         "button",
         {
-          className: "flex w-full items-center gap-2 px-2 py-1.5 text-left text-custom-text-200 hover:bg-custom-background-80",
+          class: "flex w-full items-center gap-2 px-2 py-1.5 text-left text-custom-text-200 hover:bg-custom-background-80",
           disabled: item.disabled ? item.disabled(context) : false,
           onClick: (event: Event) => {
             event.preventDefault();
             event.stopPropagation();
             item.action(context);
           },
-        },
+        } as any,
         [
-          h("span", { className: "h-3 w-3 flex-shrink-0", innerHTML: item.icon }),
-          h("span", { className: "text-xs" }, item.label),
+          h("span", { class: "h-3 w-3 flex-shrink-0", innerHTML: item.icon } as any),
+          h("span", { class: "text-xs" } as any, item.label),
         ]
       )
     )
@@ -283,21 +288,21 @@ function createToolbox({
     content: h(
       "div",
       {
-        className:
+        class:
           "rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 text-xs shadow-custom-shadow-rg min-w-[12rem] whitespace-nowrap",
         "data-prevent-outside-click": "",
-      },
+      } as any,
       items.map((item) => {
         if (item.label === "Pick color") {
-          return h("div", { className: "flex flex-col" }, [
-            h("hr", { className: "my-2 border-custom-border-200" }),
-            h("div", { className: "text-custom-text-200 text-sm" }, item.label),
+          return h("div", { class: "flex flex-col" } as any, [
+            h("hr", { class: "my-2 border-custom-border-200" } as any),
+            h("div", { class: "text-custom-text-200 text-sm" } as any, item.label),
             h(
               "div",
-              { className: "grid grid-cols-6 gap-x-1 gap-y-2.5 mt-2" },
+              { class: "grid grid-cols-6 gap-x-1 gap-y-2.5 mt-2" } as any,
               Object.entries(colors).map(([_, colorValue]) =>
                 h("div", {
-                  className: "grid place-items-center size-6 rounded cursor-pointer",
+                  class: "grid place-items-center size-6 rounded cursor-pointer",
                   style: `background-color: ${colorValue.backgroundColor};color: ${colorValue.textColor || "inherit"};`,
                   innerHTML:
                     colorValue.icon ?? `<span class=\"text-md\" style=\"color: ${colorValue.textColor || colorValue.backgroundColor}\">A</span>` ,
@@ -306,30 +311,30 @@ function createToolbox({
                     event.stopPropagation();
                     onSelectColor(colorValue, event);
                   },
-                })
+                } as any)
               )
             ),
-            h("hr", { className: "my-2 border-custom-border-200" }),
+            h("hr", { class: "my-2 border-custom-border-200" } as any),
           ]);
         }
 
         return h(
           "div",
           {
-            className:
+            class:
               "flex items-center gap-2 px-1 py-1.5 bg-custom-background-100 hover:bg-custom-background-80 text-sm text-custom-text-200 rounded cursor-pointer",
             onClick: (event: MouseEvent) => {
               event.preventDefault();
               event.stopPropagation();
               onClickItem(item, event);
             },
-          },
+          } as any,
           [
             h("span", {
-              className: "h-3 w-3 flex-shrink-0",
+              class: "h-3 w-3 flex-shrink-0",
               innerHTML: item.icon,
-            }),
-            h("div", { className: "label" }, item.label),
+            } as any),
+            h("div", { class: "label" } as any, item.label),
           ]
         );
       })
@@ -406,9 +411,9 @@ function createContextMenu(content: HTMLElement, appendTo: () => HTMLElement): I
 export class TableView implements NodeView {
   node: ProseMirrorNode;
   cellMinWidth: number;
-  decorations: Decoration[];
+  decorations: readonly Decoration[];
   editor: Editor;
-  getPos: () => number;
+  getPos: NodeViewProps["getPos"];
   hoveredCell: ResolvedPos | null = null;
   map: TableMap;
   root: HTMLElement;
@@ -438,9 +443,9 @@ export class TableView implements NodeView {
   constructor(
     node: ProseMirrorNode,
     cellMinWidth: number,
-    decorations: Decoration[],
+    decorations: readonly Decoration[],
     editor: Editor,
-    getPos: () => number
+    getPos: NodeViewProps["getPos"]
   ) {
     this.node = node;
     this.cellMinWidth = cellMinWidth;
@@ -454,25 +459,25 @@ export class TableView implements NodeView {
     if (editor.isEditable) {
       this.rowsControl = h(
         "div",
-        { className: "rows-control" },
+        { class: "rows-control" },
         h("div", {
-          className: "rows-control-div",
+          class: "rows-control-div",
           onClick: () => this.selectRow(),
         })
       );
 
       this.columnsControl = h(
         "div",
-        { className: "columns-control" },
+        { class: "columns-control" },
         h("div", {
-          className: "columns-control-div",
+          class: "columns-control-div",
           onClick: () => this.selectColumn(),
         })
       );
 
       this.controls = h(
         "div",
-        { className: "table-controls", contentEditable: "false" },
+        { class: "table-controls", contentEditable: "false" },
         this.rowsControl,
         this.columnsControl
       );
@@ -557,7 +562,7 @@ export class TableView implements NodeView {
     this.root = h(
       "div",
       {
-        className: "table-wrapper editor-full-width-block horizontal-scrollbar scrollbar-sm controls--disabled",
+        class: "table-wrapper editor-full-width-block horizontal-scrollbar scrollbar-sm controls--disabled",
       },
       this.controls,
       this.table

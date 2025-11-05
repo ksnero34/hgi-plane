@@ -5,7 +5,6 @@ from .project import (
     ProjectLiteSerializer,
     ProjectCreateSerializer,
     ProjectUpdateSerializer,
-    ProjectMattermostConfigSerializer
 )
 from .issue import (
     IssueSerializer,

@@ -1,17 +1,19 @@
 "use client";
 
-import { useCallback, useMemo, SyntheticEvent, useState, useEffect } from "react";
-import xor from "lodash/xor";
+import type { SyntheticEvent } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { xor } from "lodash-es";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { CalendarCheck2, CalendarClock, Layers, Link, Paperclip } from "lucide-react";
+import { CalendarCheck2, CalendarClock, Link, Paperclip } from "lucide-react";
 // types
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
+import { ViewsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
-import { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
+import type { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
 // ui
 import {
   cn,
@@ -20,7 +22,7 @@ import {
   generateWorkItemLink,
   shouldHighlightIssueDueDate,
 } from "@plane/utils";
-import { TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // components
 import { CycleDropdown } from "@/components/dropdowns/cycle";
 import { DateDropdown } from "@/components/dropdowns/date";
@@ -60,7 +62,7 @@ export interface IIssueProperties {
 }
 
 export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, updateIssue, displayProperties, isReadOnly, className, activeLayout, isEpic = false, customFields = [] } = props;
+  const { issue, updateIssue, displayProperties, isReadOnly, className,activeLayout, isEpic = false } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
@@ -507,7 +509,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
                 }
               )}
             >
-              <Layers className="h-3 w-3 flex-shrink-0" strokeWidth={2} />
+              <ViewsIcon className="h-3 w-3 flex-shrink-0" strokeWidth={2} />
               <div className="text-xs">{subIssueCount}</div>
             </div>
           </Tooltip>

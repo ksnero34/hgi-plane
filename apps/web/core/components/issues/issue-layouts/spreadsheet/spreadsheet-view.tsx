@@ -1,9 +1,10 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef,useMemo } from "react";
 import { observer } from "mobx-react";
 // plane constants
 import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
 // types
-import { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties, EIssueLayoutTypes, TCustomField } from "@plane/types";
+import type { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties, TCustomField } from "@plane/types";
+import { EIssueLayoutTypes } from "@plane/types";
 // components
 import { LogoSpinner } from "@/components/common/logo-spinner";
 import { MultipleSelectGroup } from "@/components/core/multiple-select";

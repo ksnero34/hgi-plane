@@ -1,16 +1,12 @@
-import { FC, useCallback, useEffect, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane constants
 import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 // types
-import {
-  EIssuesStoreType,
-  GroupByColumnTypes,
-  TGroupedIssues,
-  TIssueKanbanFilters,
-  EIssueLayoutTypes,
-} from "@plane/types";
+import type { EIssuesStoreType, GroupByColumnTypes, TGroupedIssues, TIssueKanbanFilters } from "@plane/types";
+import { EIssueLayoutTypes } from "@plane/types";
 // constants
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
@@ -25,7 +21,7 @@ import { useUserSettings } from "@/hooks/store/user";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
 import { List } from "./default";
 // types
-import { IQuickActionProps, TRenderQuickActions } from "./list-view-types";
+import type { IQuickActionProps, TRenderQuickActions } from "./list-view-types";
 
 type ListStoreType =
   | EIssuesStoreType.PROJECT
@@ -98,17 +94,17 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
   useEffect(() => {
     // 사용자가 지정한 per_page 값을 우선적으로 사용
     const userPerPage = displayFilters?.per_page;
-    
+
     // 사용자 지정 값이 없을 때만 하이퍼 모드에 따른 기본값 사용
-    const defaultPerPage = canUseLocalDB ? 
-      (group_by ? 500 : 1000) : // 하이퍼 모드일 때
-      (group_by ? 50 : 100);    // 일반 모드일 때
-    
+    const defaultPerPage = canUseLocalDB ?
+      (group_by ? 500 : 500) : // 하이퍼 모드일 때
+      (group_by ? 100 : 100);    // 일반 모드일 때
+
     // 사용자 지정 값이 있으면 그것을 우선 사용, 없으면 기본값 사용
     const finalPerPage = userPerPage || defaultPerPage;
-    
-    fetchIssues("init-loader", { 
-      canGroup: true, 
+
+    fetchIssues("init-loader", {
+      canGroup: true,
       perPageCount: finalPerPage,
       perPageFromDisplayFilter: finalPerPage // 동일한 값으로 설정하여 일관성 유지
     }, viewId);
@@ -116,7 +112,7 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
 
   const groupedIssueIds = issues?.groupedIssueIds as TGroupedIssues | undefined;
   const groupByFields = (issues as any)?.groupByFields;
-  
+
   // auth
   const isEditingAllowed = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],

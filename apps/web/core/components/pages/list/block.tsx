@@ -1,11 +1,14 @@
 "use client";
 
-import { FC, useRef, useState } from "react";
+import type { FC } from "react";
+import { useRef, useState } from "react";
 import { observer } from "mobx-react";
+import { PageIcon } from "@plane/propel/icons";
+// plane imports
+import { getPageName } from "@plane/utils";
 import { FileText, Folder } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-// ui
-import { setToast, TOAST_TYPE } from "@plane/ui";
+import {setToast, TOAST_TYPE} from "@plane/propel/toast"
 // components
 import { Logo } from "@/components/common/logo";
 import { ListItem } from "@/components/core/list";
@@ -14,7 +17,6 @@ import { BlockItemAction } from "@/components/pages/list/block-item-action";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web hooks
 import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";
-import { getPageName } from "@plane/utils";
 
 type TPageListBlock = {
   pageId: string;
@@ -36,7 +38,6 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     pageId,
     storeType,
   });
-  const { getPageById } = usePageStore(storeType);
   const { isMobile } = usePlatformOS();
   // handle page check
   if (!page) return null;

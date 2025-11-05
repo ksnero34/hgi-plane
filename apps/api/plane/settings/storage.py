@@ -29,9 +29,7 @@ class S3Storage(S3Boto3Storage):
         # Use the AWS_REGION environment variable for the region
         self.aws_region = os.environ.get("AWS_REGION")
         # Use the AWS_S3_ENDPOINT_URL environment variable for the endpoint URL
-        self.aws_s3_endpoint_url = os.environ.get(
-            "AWS_S3_ENDPOINT_URL"
-        ) or os.environ.get("MINIO_ENDPOINT_URL")
+        self.aws_s3_endpoint_url = os.environ.get("AWS_S3_ENDPOINT_URL") or os.environ.get("MINIO_ENDPOINT_URL")
 
         if os.environ.get("USE_MINIO") == "1":
             # 항상 환경 변수에서 설정된 엔드포인트 사용
@@ -61,9 +59,7 @@ class S3Storage(S3Boto3Storage):
                 config=boto3.session.Config(signature_version="s3v4"),
             )
 
-    def generate_presigned_post(
-        self, object_name, file_type, file_size, expiration=3600
-    ):
+    def generate_presigned_post(self, object_name, file_type, file_size, expiration=3600):
         """Generate a presigned URL to upload an S3 object"""
         # print(f"\n=== Generate Presigned Post ===")
         # print(f"object_name: {object_name}")
@@ -138,9 +134,7 @@ class S3Storage(S3Boto3Storage):
     def get_object_metadata(self, object_name):
         """Get the metadata for an S3 object"""
         try:
-            response = self.s3_client.head_object(
-                Bucket=self.aws_storage_bucket_name, Key=object_name
-            )
+            response = self.s3_client.head_object(Bucket=self.aws_storage_bucket_name, Key=object_name)
         except ClientError as e:
             log_exception(e)
             return None
@@ -148,11 +142,7 @@ class S3Storage(S3Boto3Storage):
         return {
             "ContentType": response.get("ContentType"),
             "ContentLength": response.get("ContentLength"),
-            "LastModified": (
-                response.get("LastModified").isoformat()
-                if response.get("LastModified")
-                else None
-            ),
+            "LastModified": (response.get("LastModified").isoformat() if response.get("LastModified") else None),
             "ETag": response.get("ETag"),
             "Metadata": response.get("Metadata", {}),
         }

@@ -1,10 +1,10 @@
-import { FC } from "react";
+import type { FC } from "react";
 import { observer } from "mobx-react";
 // hooks
-import { Intake } from "@plane/propel/icons";
+import { IntakeIcon } from "@plane/propel/icons";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
-import { IssueActivityBlockComponent } from ".";
+import { IssueActivityBlockComponent } from "./";
 // icons
 
 type TIssueInboxActivity = { activityId: string; ends: "top" | "bottom" | undefined };
@@ -36,7 +36,7 @@ export const IssueInboxActivity: FC<TIssueInboxActivity> = observer((props) => {
   if (!activity) return <></>;
   return (
     <IssueActivityBlockComponent
-      icon={<Intake className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
+      icon={<IntakeIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
       activityId={activityId}
       ends={ends}
     >

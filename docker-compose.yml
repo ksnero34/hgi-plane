@@ -11,7 +11,7 @@ services:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:3.0.7
+    image: harbor.hwgeneralins.com/plane/web:3.1.0
 
   admin:
     container_name: admin
@@ -26,7 +26,7 @@ services:
     depends_on:
       - api
       - web
-    image: harbor.hwgeneralins.com/plane/admin:3.0.0
+    image: harbor.hwgeneralins.com/plane/admin:3.1.0
 
   space:
     container_name: space
@@ -41,7 +41,7 @@ services:
     depends_on:
       - api
       - web
-    image: harbor.hwgeneralins.com/plane/space:3.0.3
+    image: harbor.hwgeneralins.com/plane/space:3.1.0
 
   api:
     container_name: api
@@ -62,7 +62,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.7
+    image: harbor.hwgeneralins.com/plane/api:3.1.0
 
   worker:
     container_name: bgworker
@@ -77,7 +77,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.7
+    image: harbor.hwgeneralins.com/plane/api:3.1.0
 
   beat-worker:
     container_name: beatworker
@@ -92,7 +92,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:3.0.7
+    image: harbor.hwgeneralins.com/plane/api:3.1.0
 
   migrator:
     container_name: plane-migrator
@@ -105,7 +105,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: harbor.hwgeneralins.com/plane/api:3.0.7
+    image: harbor.hwgeneralins.com/plane/api:3.1.0
 
   live:
     container_name: plane-live
@@ -118,7 +118,7 @@ services:
     networks:
       - dev_env
     # command: ls -al live
-    image: harbor.hwgeneralins.com/plane/live:3.0.0
+    image: harbor.hwgeneralins.com/plane/live:3.1.0
     environment:
       - API_BASE_URL=http://api:8000
 
@@ -142,7 +142,7 @@ services:
 
   plane-redis:
     container_name: plane-redis
-    image: valkey/valkey:7.2.5-alpine
+    image: valkey/valkey:7.2.11-alpine
     # restart: always
     networks:
       - dev_env

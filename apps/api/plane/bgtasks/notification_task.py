@@ -72,9 +72,7 @@ def get_new_mentions(requested_instance, current_instance):
     mentions_newer = extract_mentions(requested_instance)
 
     # Getting Set Difference from mentions_newer
-    new_mentions = [
-        mention for mention in mentions_newer if mention not in mentions_older
-    ]
+    new_mentions = [mention for mention in mentions_newer if mention not in mentions_older]
 
     return new_mentions
 
@@ -89,9 +87,7 @@ def get_removed_mentions(requested_instance, current_instance):
     mentions_newer = extract_mentions(requested_instance)
 
     # Getting Set Difference from mentions_newer
-    removed_mentions = [
-        mention for mention in mentions_older if mention not in mentions_newer
-    ]
+    removed_mentions = [mention for mention in mentions_older if mention not in mentions_newer]
 
     return removed_mentions
 
@@ -103,7 +99,7 @@ def extract_mentions_as_subscribers(project_id, issue_id, mentions):
     bulk_mention_subscribers = []
 
     for mention_id in mentions:
-        # If the particular mention has not already been subscribed to the issue, he must be sent the mentioned notification
+        # If the particular mention has not already been subscribed to the issue, he must be sent the mentioned notification # noqa: E501
         if (
             not IssueSubscriber.objects.filter(
                 issue_id=issue_id, subscriber_id=mention_id, project_id=project_id
@@ -111,12 +107,8 @@ def extract_mentions_as_subscribers(project_id, issue_id, mentions):
             and not IssueAssignee.objects.filter(
                 project_id=project_id, issue_id=issue_id, assignee_id=mention_id
             ).exists()
-            and not Issue.objects.filter(
-                project_id=project_id, pk=issue_id, created_by_id=mention_id
-            ).exists()
-            and ProjectMember.objects.filter(
-                project_id=project_id, member_id=mention_id, is_active=True
-            ).exists()
+            and not Issue.objects.filter(project_id=project_id, pk=issue_id, created_by_id=mention_id).exists()
+            and ProjectMember.objects.filter(project_id=project_id, member_id=mention_id, is_active=True).exists()
         ):
             project = Project.objects.get(pk=project_id)
 
@@ -134,15 +126,13 @@ def extract_mentions_as_subscribers(project_id, issue_id, mentions):
 # Parse Issue Description & extracts mentions
 def extract_mentions(issue_instance):
     try:
-        # issue_instance has to be a dictionary passed, containing the description_html and other set of activity data.
+        # issue_instance has to be a dictionary passed, containing the description_html and other set of activity data. # noqa: E501
         mentions = []
         # Convert string to dictionary
         data = json.loads(issue_instance)
         html = data.get("description_html")
         soup = BeautifulSoup(html, "html.parser")
-        mention_tags = soup.find_all(
-            "mention-component", attrs={"entity_name": "user_mention"}
-        )
+        mention_tags = soup.find_all("mention-component", attrs={"entity_name": "user_mention"})
 
         mentions = [mention_tag["entity_identifier"] for mention_tag in mention_tags]
 
@@ -156,9 +146,7 @@ def extract_comment_mentions(comment_value):
     try:
         mentions = []
         soup = BeautifulSoup(comment_value, "html.parser")
-        mentions_tags = soup.find_all(
-            "mention-component", attrs={"entity_name": "user_mention"}
-        )
+        mentions_tags = soup.find_all("mention-component", attrs={"entity_name": "user_mention"})
         for mention_tag in mentions_tags:
             mentions.append(mention_tag["entity_identifier"])
         return list(set(mentions))
@@ -173,16 +161,12 @@ def get_new_comment_mentions(new_value, old_value):
 
     mentions_older = extract_comment_mentions(old_value)
     # Getting Set Difference from mentions_newer
-    new_mentions = [
-        mention for mention in mentions_newer if mention not in mentions_older
-    ]
+    new_mentions = [mention for mention in mentions_newer if mention not in mentions_older]
 
     return new_mentions
 
 
-def create_mention_notification(
-    project, notification_comment, issue, actor_id, mention_id, issue_id, activity
-):
+def create_mention_notification(project, notification_comment, issue, actor_id, mention_id, issue_id, activity):
     return Notification(
         workspace=project.workspace,
         sender="in_app:issue_activities:mentioned",
@@ -208,16 +192,8 @@ def create_mention_notification(
                 "actor": str(activity.get("actor_id")),
                 "new_value": str(activity.get("new_value")),
                 "old_value": str(activity.get("old_value")),
-                "old_identifier": (
-                    str(activity.get("old_identifier"))
-                    if activity.get("old_identifier")
-                    else None
-                ),
-                "new_identifier": (
-                    str(activity.get("new_identifier"))
-                    if activity.get("new_identifier")
-                    else None
-                ),
+                "old_identifier": (str(activity.get("old_identifier")) if activity.get("old_identifier") else None),
+                "new_identifier": (str(activity.get("new_identifier")) if activity.get("new_identifier") else None),
             },
         },
     )
@@ -843,16 +819,10 @@ def notifications(
                                     "verb": str(issue_activity.get("verb")),
                                     "field": str(issue_activity.get("field")),
                                     "actor": str(issue_activity.get("actor_id")),
-                                    "new_value": str(
-                                        issue_activity.get("new_value")
-                                    ),
-                                    "old_value": str(
-                                        issue_activity.get("old_value")
-                                    ),
+                                    "new_value": str(issue_activity.get("new_value")),
+                                    "old_value": str(issue_activity.get("old_value")),
                                     "issue_comment": str(
-                                        issue_comment.comment_stripped
-                                        if issue_comment is not None
-                                        else ""
+                                        issue_comment.comment_stripped if issue_comment is not None else ""
                                     ),
                                     "old_identifier": (
                                         str(issue_activity.get("old_identifier"))

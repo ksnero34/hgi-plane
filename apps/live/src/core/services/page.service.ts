@@ -1,11 +1,11 @@
 // types
 import { TPage } from "@plane/types";
 // services
-import { API_BASE_URL, APIService } from "@/core/services/api.service.js";
+import { APIService } from "@/services/api.service";
 
 export class PageService extends APIService {
   constructor() {
-    super(API_BASE_URL);
+    super();
   }
 
   async fetchDetails(workspaceSlug: string, projectId: string, pageId: string, cookie: string): Promise<TPage> {

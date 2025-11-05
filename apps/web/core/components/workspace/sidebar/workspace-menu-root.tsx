@@ -4,14 +4,14 @@ import React, { Fragment, useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 // icons
-import { ChevronDown, CirclePlus, LogOut, Mails, Settings } from "lucide-react";
+import { ChevronDown, CirclePlus, LogOut, Mails } from "lucide-react";
 // ui
 import { Menu, Transition } from "@headlessui/react";
 // plane imports
-import { GOD_MODE_URL } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { IWorkspace } from "@plane/types";
-import { Loader, TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { IWorkspace } from "@plane/types";
+import { Loader } from "@plane/ui";
 import { orderWorkspacesList, cn } from "@plane/utils";
 // helpers
 import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
@@ -24,25 +24,6 @@ import { getIsWorkspaceCreationDisabled } from "@/plane-web/helpers/instance.hel
 // components
 import { WorkspaceLogo } from "../logo";
 import SidebarDropdownItem from "./dropdown-item";
-import { EUserPermissions } from "@plane/constants";
-
-// Static Data
-const userLinks = (workspaceSlug: string) => [
-  {
-    key: "workspace_invites",
-    name: "Workspace invites",
-    href: "/invitations",
-    icon: Mails,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER,EUserPermissions.VIEWER,EUserPermissions.RESTRICTED, EUserPermissions.GUEST],
-  },
-  {
-    key: "settings",
-    name: "Workspace settings",
-    href: `/${workspaceSlug}/settings`,
-    icon: Settings,
-    access: [EUserPermissions.ADMIN],
-  },
-];
 
 type WorkspaceMenuRootProps = {
   renderLogoOnly?: boolean;

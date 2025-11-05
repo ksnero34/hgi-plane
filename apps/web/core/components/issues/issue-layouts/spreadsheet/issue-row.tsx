@@ -1,15 +1,17 @@
 "use client";
 
-import { Dispatch, MouseEvent, MutableRefObject, SetStateAction, useMemo, useRef, useState } from "react";
+import type { Dispatch, MouseEvent, MutableRefObject, SetStateAction } from "react";
+import { useRef, useState, useMemo } from "react";
 import { observer } from "mobx-react";
-import { useParams, usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
 import { Tooltip } from "@plane/propel/tooltip";
-import { EIssueServiceType, IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
+import type { IIssueDisplayProperties, TIssue } from "@plane/types";
+import { EIssueServiceType } from "@plane/types";
 // ui
 import { ControlLink, Row } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
@@ -22,19 +24,14 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import useIssuePeekOverviewRedirection from "@/hooks/use-issue-peek-overview-redirection";
-import { TSelectionHelper } from "@/hooks/use-multiple-select";
+import type { TSelectionHelper } from "@/hooks/use-multiple-select";
 import { usePlatformOS } from "@/hooks/use-platform-os";
-// helpers
-import { captureSuccess } from "@/helpers/event-tracker.helper";
-// constants
-import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 // local components
-import { TRenderQuickActions } from "../list/list-view-types";
+import type { TRenderQuickActions } from "../list/list-view-types";
 import { isIssueNew } from "../utils";
 import { IssueColumn } from "./issue-column";
-import { SpreadsheetSingleCustomFieldColumn } from "./columns/single-custom-field-column";
 
 interface Props {
   displayProperties: IIssueDisplayProperties;

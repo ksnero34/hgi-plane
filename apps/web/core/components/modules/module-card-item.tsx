@@ -1,6 +1,7 @@
 "use client";
 
-import React, { SyntheticEvent, useRef } from "react";
+import type { SyntheticEvent } from "react";
+import React, { useRef } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
@@ -16,10 +17,11 @@ import {
   MODULE_TRACKER_ELEMENTS,
 } from "@plane/constants";
 import { useLocalStorage } from "@plane/hooks";
-import { LayersIcon } from "@plane/propel/icons";
+import { WorkItemsIcon } from "@plane/propel/icons";
+import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import { IModule } from "@plane/types";
-import { Card, FavoriteStar, LinearProgressIndicator, TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
+import type { IModule } from "@plane/types";
+import { Card, FavoriteStar, LinearProgressIndicator } from "@plane/ui";
 import { getDate, renderFormattedPayloadDate, generateQueryParams } from "@plane/utils";
 // components
 import { DateRangeDropdown } from "@/components/dropdowns/date-range";
@@ -148,15 +150,15 @@ export const ModuleCardItem: React.FC<Props> = observer((props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "모듈이 성공적으로 업데이트되었습니다.",
+          title: "Success!",
+          message: "Module updated successfully.",
         });
       })
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: err?.detail ?? "모듈을 업데이트할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: err?.detail ?? "Module could not be updated. Please try again.",
         });
       });
   };
@@ -206,7 +208,7 @@ export const ModuleCardItem: React.FC<Props> = observer((props) => {
   }));
 
   return (
-    <div className="relative" data-prevent-nprogress>
+    <div className="relative" data-prevent-progress>
       <Link ref={parentRef} href={`/${workspaceSlug}/projects/${moduleDetails.project_id}/modules/${moduleDetails.id}`}>
         <Card>
           <div>
@@ -231,7 +233,7 @@ export const ModuleCardItem: React.FC<Props> = observer((props) => {
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-custom-text-200">
-                <LayersIcon className="h-4 w-4 text-custom-text-300" />
+                <WorkItemsIcon className="h-4 w-4 text-custom-text-300" />
                 <span className="text-xs text-custom-text-300">{issueCount ?? "0 Work item"}</span>
               </div>
               {moduleLeadDetails ? (

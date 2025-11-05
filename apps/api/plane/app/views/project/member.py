@@ -49,7 +49,7 @@ class ProjectMemberViewSet(BaseViewSet):
         # Check if the members array is empty
         if not len(members):
             return Response(
-                {"error": "Atleast one member is required"},
+                {"error": "At least one member is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -58,9 +58,7 @@ class ProjectMemberViewSet(BaseViewSet):
         bulk_issue_props = []
 
         # Create a dictionary of the member_id and their roles
-        member_roles = {
-            member.get("member_id"): member.get("role") for member in members
-        }
+        member_roles = {member.get("member_id"): member.get("role") for member in members}
 
         # check the workspace role of the new user
         for member in member_roles:
@@ -69,17 +67,13 @@ class ProjectMemberViewSet(BaseViewSet):
             ).role
             if workspace_member_role in [20] and member_roles.get(member) in [5, 15]:
                 return Response(
-                    {
-                        "error": "You cannot add a user with role lower than the workspace role"
-                    },
+                    {"error": "You cannot add a user with role lower than the workspace role"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             if workspace_member_role in [5] and member_roles.get(member) in [15, 20]:
                 return Response(
-                    {
-                        "error": "You cannot add a user with role higher than the workspace role"
-                    },
+                    {"error": "You cannot add a user with role higher than the workspace role"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -93,9 +87,7 @@ class ProjectMemberViewSet(BaseViewSet):
             bulk_project_members.append(project_member)
 
         # Update the roles of the existing members
-        ProjectMember.objects.bulk_update(
-            bulk_project_members, ["is_active", "role"], batch_size=100
-        )
+        ProjectMember.objects.bulk_update(bulk_project_members, ["is_active", "role"], batch_size=100)
 
         # Get the list of project members of the requested workspace with the given slug
         project_members = (
@@ -135,13 +127,9 @@ class ProjectMemberViewSet(BaseViewSet):
             )
 
         # Bulk create the project members and issue properties
-        project_members = ProjectMember.objects.bulk_create(
-            bulk_project_members, batch_size=10, ignore_conflicts=True
-        )
+        project_members = ProjectMember.objects.bulk_create(bulk_project_members, batch_size=10, ignore_conflicts=True)
 
-        _ = IssueUserProperty.objects.bulk_create(
-            bulk_issue_props, batch_size=10, ignore_conflicts=True
-        )
+        _ = IssueUserProperty.objects.bulk_create(bulk_issue_props, batch_size=10, ignore_conflicts=True)
 
         project_members = ProjectMember.objects.filter(
             project_id=project_id,
@@ -190,16 +178,12 @@ class ProjectMemberViewSet(BaseViewSet):
             member__member_workspace__is_active=True,
         ).select_related("project", "member", "workspace")
 
-        serializer = ProjectMemberRoleSerializer(
-            project_members, fields=("id", "member", "role"), many=True
-        )
+        serializer = ProjectMemberRoleSerializer(project_members, fields=("id", "member", "role"), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, pk):
-        project_member = ProjectMember.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id, is_active=True
-        )
+        project_member = ProjectMember.objects.get(pk=pk, workspace__slug=slug, project_id=project_id, is_active=True)
 
         # Fetch the workspace role of the project member
         workspace_role = WorkspaceMember.objects.get(
@@ -221,23 +205,15 @@ class ProjectMemberViewSet(BaseViewSet):
             is_active=True,
         )
 
-        workspace_role = WorkspaceMember.objects.get(
-            workspace__slug=slug, member=project_member.member, is_active=True
-        ).role
-        if workspace_role in [5, 8, 10] and int(  # Guest, Restricted, Viewer
-            request.data.get("role", project_member.role)
-        ) in [15, 20]:  # Member, Admin
+        if workspace_role in [5, 8, 10] and int(request.data.get("role", project_member.role)) in [15, 20]:
             return Response(
-                {
-                    "error": "You cannot add a user with role higher than the workspace role"
-                },
+                {"error": "You cannot add a user with role higher than the workspace role"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if (
             "role" in request.data
-            and int(request.data.get("role", project_member.role))
-            > requested_project_member.role
+            and int(request.data.get("role", project_member.role)) > requested_project_member.role
             and not is_workspace_admin
         ):
             return Response(
@@ -246,9 +222,7 @@ class ProjectMemberViewSet(BaseViewSet):
             )
 
         old_role = project_member.role
-        serializer = ProjectMemberSerializer(
-            project_member, data=request.data, partial=True
-        )
+        serializer = ProjectMemberSerializer(project_member, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -291,9 +265,7 @@ class ProjectMemberViewSet(BaseViewSet):
         # User cannot remove himself
         if str(project_member.id) == str(requesting_project_member.id):
             return Response(
-                {
-                    "error": "You cannot remove yourself from the workspace. Please use leave workspace"
-                },
+                {"error": "You cannot remove yourself from the workspace. Please use leave workspace"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # User cannot deactivate higher role
@@ -341,7 +313,7 @@ class ProjectMemberViewSet(BaseViewSet):
         ):
             return Response(
                 {
-                    "error": "You cannot leave the project as your the only admin of the project you will have to either delete the project or create an another admin"
+                    "error": "You cannot leave the project as your the only admin of the project you will have to either delete the project or create an another admin"  # noqa: E501
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -377,7 +349,5 @@ class UserProjectRolesEndpoint(BaseAPIView):
             member__member_workspace__is_active=True,
         ).values("project_id", "role")
 
-        project_members = {
-            str(member["project_id"]): member["role"] for member in project_members
-        }
+        project_members = {str(member["project_id"]): member["role"] for member in project_members}
         return Response(project_members, status=status.HTTP_200_OK)

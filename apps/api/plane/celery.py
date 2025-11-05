@@ -51,15 +51,23 @@ beat_schedule = {
     },
     "check-every-day-to-delete-email-notification-logs": {
         "task": "plane.bgtasks.cleanup_task.delete_email_notification_logs",
-        "schedule": crontab(hour=3, minute=0),  # UTC 03:00
+        "schedule": crontab(hour=2, minute=45),  # UTC 02:45
     },
     "check-every-day-to-delete-page-versions": {
         "task": "plane.bgtasks.cleanup_task.delete_page_versions",
-        "schedule": crontab(hour=3, minute=30),  # UTC 03:30
+        "schedule": crontab(hour=3, minute=0),  # UTC 03:00
     },
     "check-every-day-to-delete-issue-description-versions": {
         "task": "plane.bgtasks.cleanup_task.delete_issue_description_versions",
-        "schedule": crontab(hour=4, minute=0),  # UTC 04:00
+        "schedule": crontab(hour=3, minute=15),  # UTC 03:15
+    },
+    "check-every-day-to-delete-webhook-logs": {
+        "task": "plane.bgtasks.cleanup_task.delete_webhook_logs",
+        "schedule": crontab(hour=3, minute=30),  # UTC 03:30
+    },
+    "check-every-day-to-delete-exporter-history": {
+        "task": "plane.bgtasks.exporter_expired_task.delete_old_s3_link",
+        "schedule": crontab(hour=3, minute=45),  # UTC 03:45
     },
 }
 
@@ -76,9 +84,7 @@ app.conf.beat_schedule = beat_schedule
 # Setup logging
 @after_setup_logger.connect
 def setup_loggers(logger, *args, **kwargs):
-    formatter = JsonFormatter(
-        '"%(levelname)s %(asctime)s %(module)s %(name)s %(message)s'
-    )
+    formatter = JsonFormatter('"%(levelname)s %(asctime)s %(module)s %(name)s %(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(fmt=formatter)
     logger.addHandler(handler)
@@ -86,9 +92,7 @@ def setup_loggers(logger, *args, **kwargs):
 
 @after_setup_task_logger.connect
 def setup_task_loggers(logger, *args, **kwargs):
-    formatter = JsonFormatter(
-        '"%(levelname)s %(asctime)s %(module)s %(name)s %(message)s'
-    )
+    formatter = JsonFormatter('"%(levelname)s %(asctime)s %(module)s %(name)s %(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(fmt=formatter)
     logger.addHandler(handler)

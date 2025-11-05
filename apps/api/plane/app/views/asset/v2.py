@@ -206,9 +206,7 @@ class UserAssetsV2Endpoint(BaseAPIView):
             # Save the new avatar
             user.avatar_asset_id = asset_id
             user.save()
-            invalidate_cache_directly(
-                path="/api/users/me/", url_params=False, user=True, request=request
-            )
+            invalidate_cache_directly(path="/api/users/me/", url_params=False, user=True, request=request)
             invalidate_cache_directly(
                 path="/api/users/me/settings/",
                 url_params=False,
@@ -226,9 +224,7 @@ class UserAssetsV2Endpoint(BaseAPIView):
             # Save the new cover image
             user.cover_image_asset_id = asset_id
             user.save()
-            invalidate_cache_directly(
-                path="/api/users/me/", url_params=False, user=True, request=request
-            )
+            invalidate_cache_directly(path="/api/users/me/", url_params=False, user=True, request=request)
             invalidate_cache_directly(
                 path="/api/users/me/settings/",
                 url_params=False,
@@ -244,9 +240,7 @@ class UserAssetsV2Endpoint(BaseAPIView):
             user = User.objects.get(id=asset.user_id)
             user.avatar_asset_id = None
             user.save()
-            invalidate_cache_directly(
-                path="/api/users/me/", url_params=False, user=True, request=request
-            )
+            invalidate_cache_directly(path="/api/users/me/", url_params=False, user=True, request=request)
             invalidate_cache_directly(
                 path="/api/users/me/settings/",
                 url_params=False,
@@ -259,9 +253,7 @@ class UserAssetsV2Endpoint(BaseAPIView):
             user = User.objects.get(id=asset.user_id)
             user.cover_image_asset_id = None
             user.save()
-            invalidate_cache_directly(
-                path="/api/users/me/", url_params=False, user=True, request=request
-            )
+            invalidate_cache_directly(path="/api/users/me/", url_params=False, user=True, request=request)
             invalidate_cache_directly(
                 path="/api/users/me/settings/",
                 url_params=False,
@@ -531,18 +523,14 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
             workspace.logo = ""
             workspace.logo_asset_id = asset_id
             workspace.save()
-            invalidate_cache_directly(
-                path="/api/workspaces/", url_params=False, user=False, request=request
-            )
+            invalidate_cache_directly(path="/api/workspaces/", url_params=False, user=False, request=request)
             invalidate_cache_directly(
                 path="/api/users/me/workspaces/",
                 url_params=False,
                 user=True,
                 request=request,
             )
-            invalidate_cache_directly(
-                path="/api/instances/", url_params=False, user=False, request=request
-            )
+            invalidate_cache_directly(path="/api/instances/", url_params=False, user=False, request=request)
             return
 
         # Project Cover
@@ -569,18 +557,14 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
                 return
             workspace.logo_asset_id = None
             workspace.save()
-            invalidate_cache_directly(
-                path="/api/workspaces/", url_params=False, user=False, request=request
-            )
+            invalidate_cache_directly(path="/api/workspaces/", url_params=False, user=False, request=request)
             invalidate_cache_directly(
                 path="/api/users/me/workspaces/",
                 url_params=False,
                 user=True,
                 request=request,
             )
-            invalidate_cache_directly(
-                path="/api/instances/", url_params=False, user=False, request=request
-            )
+            invalidate_cache_directly(path="/api/instances/", url_params=False, user=False, request=request)
             return
         # Project Cover
         elif entity_type == FileAsset.EntityTypeContext.PROJECT_COVER:
@@ -642,9 +626,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
             workspace=workspace,
             created_by=request.user,
             entity_type=entity_type,
-            **self.get_entity_id_field(
-                entity_type=entity_type, entity_id=entity_identifier
-            ),
+            **self.get_entity_id_field(entity_type=entity_type, entity_id=entity_identifier),
         )
 
         # Get the presigned URL
@@ -691,9 +673,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
         asset.is_deleted = True
         asset.deleted_at = timezone.now()
         # get the entity and save the asset id for the request field
-        self.entity_asset_delete(
-            entity_type=asset.entity_type, asset=asset, request=request
-        )
+        self.entity_asset_delete(entity_type=asset.entity_type, asset=asset, request=request)
         asset.save(update_fields=["is_deleted", "deleted_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -826,7 +806,7 @@ class AssetRestoreEndpoint(BaseAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ProjectAssetEndpoint(BaseFileAssetEndpoint):
+class ProjectAssetEndpoint(BaseAPIView):
     """This endpoint is used to upload cover images/logos etc for workspace, projects and users."""
 
     def get_entity_id_field(self, entity_type, entity_id):
@@ -949,9 +929,7 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def delete(self, request, slug, project_id, pk):
         # Get the asset
-        asset = FileAsset.objects.get(
-            id=pk, workspace__slug=slug, project_id=project_id
-        )
+        asset = FileAsset.objects.get(id=pk, workspace__slug=slug, project_id=project_id)
         # Check deleted assets
         asset.is_deleted = True
         asset.deleted_at = timezone.now()
@@ -962,9 +940,7 @@ class ProjectAssetEndpoint(BaseFileAssetEndpoint):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST])
     def get(self, request, slug, project_id, pk):
         # get the asset id
-        asset = FileAsset.objects.get(
-            workspace__slug=slug, project_id=project_id, pk=pk
-        )
+        asset = FileAsset.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
 
         # Check if the asset is uploaded
         if not asset.is_uploaded:
@@ -999,9 +975,7 @@ class ProjectBulkAssetEndpoint(BaseAPIView):
 
         # Check if the asset ids are provided
         if not asset_ids:
-            return Response(
-                {"error": "No asset ids provided."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "No asset ids provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         # get the asset id
         assets = FileAsset.objects.filter(id__in=asset_ids, workspace__slug=slug)

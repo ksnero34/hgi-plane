@@ -15,7 +15,6 @@ export const Calendar = ({
   captionLayout,
   hideNavigation,
   locale = ko,
-  weekStartsOn,
   ...props
 }: CalendarProps) => {
   const currentYear = new Date().getFullYear();
@@ -30,8 +29,8 @@ export const Calendar = ({
       className={cn("p-3", className)}
       captionLayout={captionLayout}
       hideNavigation={computedHideNavigation}
+      weekStartsOn={props.weekStartsOn}
       locale={locale}
-      weekStartsOn={weekStartsOn}
       components={{
         Chevron: ({ className, ...props }) => (
           <ChevronLeft

@@ -1,14 +1,14 @@
 "use client";
 import { useMemo } from "react";
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
-import { EIssueServiceType, TIssueServiceType } from "@plane/types";
-// plane ui
-import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
+import { setPromiseToast, TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { TIssueServiceType } from "@plane/types";
+import { EIssueServiceType } from "@plane/types";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // types
-import { TAttachmentUploadStatus } from "@/store/issue/issue-details/attachment.store";
+import type { TAttachmentUploadStatus } from "@/store/issue/issue-details/attachment.store";
 
 export type TAttachmentOperations = {
   create: (file: File) => Promise<void>;
@@ -56,11 +56,6 @@ export const useAttachmentOperations = (
           captureSuccess({
             eventName: WORK_ITEM_TRACKER_EVENTS.attachment.add,
             payload: { id: issueId },
-          });
-          setToast({
-            type: TOAST_TYPE.SUCCESS,
-            title: "파일 업로드 성공",
-            message: `${file.name} 파일이 성공적으로 업로드되었습니다.`
           });
         } catch (error) {
           captureError({

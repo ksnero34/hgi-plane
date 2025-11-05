@@ -6,11 +6,11 @@ import type { IUser, IUserLite } from "./users";
 import type { IWorkspaceViewProps } from "./view-props";
 
 export enum EUserWorkspaceRoles {
-  ADMIN = 20,
-  MEMBER = 15,
-  VIEWER = 10,
-  RESTRICTED = 8,
-  GUEST = 5,
+    ADMIN = 20,
+    MEMBER = 15,
+    VIEWER = 10,
+    RESTRICTED = 8,
+    GUEST = 5,
 }
 
 export interface IWorkspace {

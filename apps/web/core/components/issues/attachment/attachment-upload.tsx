@@ -9,11 +9,11 @@ import { MAX_FILE_SIZE } from "@/constants/common";
 import { useInstance } from "@/hooks/store/use-instance";
 import { useFileValidation, ValidationResult } from "@/hooks/store/use-file-validation";
 // ui
-import { TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // icons
 import { Plus } from "lucide-react";
 // types
-import { TAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
+import type { TAttachmentOperations } from "../issue-detail-widgets/attachments/helper";
 
 type TAttachmentOperationsModal = Pick<TAttachmentOperations, "create">;
 

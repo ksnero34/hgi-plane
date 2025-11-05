@@ -5,13 +5,15 @@ import { observer } from "mobx-react";
 // ui
 import { useParams } from "next/navigation";
 import { PROJECT_PAGE_TRACKER_EVENTS } from "@plane/constants";
-import { AlertModalCore, TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import { AlertModalCore } from "@plane/ui";
 // constants
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // plane web hooks
 import { useAppRouter } from "@/hooks/use-app-router";
-import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
+import type { EPageStoreType } from "@/plane-web/hooks/store";
+import { usePageStore } from "@/plane-web/hooks/store";
 // store
 import type { TPageInstance } from "@/store/pages/base-page";
 
@@ -42,7 +44,7 @@ export const DeletePageModal: React.FC<TConfirmPageDeletionProps> = observer((pr
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    await removePage(pageId)
+    await removePage({ pageId })
       .then(() => {
         captureSuccess({
           eventName: PROJECT_PAGE_TRACKER_EVENTS.delete,
@@ -53,8 +55,8 @@ export const DeletePageModal: React.FC<TConfirmPageDeletionProps> = observer((pr
         handleClose();
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "페이지가 성공적으로 삭제되었습니다.",
+          title: "Success!",
+          message: "Page deleted successfully.",
         });
 
         if (routePageId) {
@@ -70,8 +72,8 @@ export const DeletePageModal: React.FC<TConfirmPageDeletionProps> = observer((pr
         });
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: "페이지를 삭제할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: "Page could not be deleted. Please try again.",
         });
       });
 

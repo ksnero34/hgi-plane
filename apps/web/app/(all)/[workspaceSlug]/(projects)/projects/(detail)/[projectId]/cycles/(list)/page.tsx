@@ -6,10 +6,11 @@ import { useParams } from "next/navigation";
 // plane imports
 import { EUserPermissionsLevel, CYCLE_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { EUserProjectRoles, TCycleFilters } from "@plane/types";
+import type { TCycleFilters } from "@plane/types";
+import { EUserProjectRoles } from "@plane/types";
 // components
 import { Header, EHeaderVariant } from "@plane/ui";
-import { calculateFilterRemovalValue, calculateTotalFilters } from "@plane/utils";
+import { calculateTotalFilters } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { CycleAppliedFiltersList } from "@/components/cycles/applied-filters";
 import { CyclesView } from "@/components/cycles/cycles-view";
@@ -20,7 +21,6 @@ import { CycleModuleListLayoutLoader } from "@/components/ui/loader/cycle-module
 // hooks
 import { useCycle } from "@/hooks/store/use-cycle";
 import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
@@ -38,19 +38,11 @@ const ProjectCyclesPage = observer(() => {
   // plane hooks
   const { t } = useTranslation();
   // cycle filters hook
-  const {
-    clearAllFilters,
-    currentProjectDisplayFilters,
-    currentProjectFilters,
-    updateDisplayFilters,
-    updateFilters,
-  } = useCycleFilter();
+  const { clearAllFilters, currentProjectFilters, updateFilters } = useCycleFilter();
   const { allowPermissions } = useUserPermissions();
-  const projectIdString = projectId?.toString();
-  const { customFields } = useCustomField(projectIdString);
   // derived values
   const totalCycles = currentProjectCycleIds?.length ?? 0;
-  const project = projectId ? getProjectById(projectId.toString()) : undefined;
+  const project = projectId ? getProjectById(projectId?.toString()) : undefined;
   const pageTitle = project?.name ? `${project?.name} - ${t("common.cycles", { count: 2 })}` : undefined;
   const hasAdminLevelPermission = allowPermissions([EUserProjectRoles.ADMIN], EUserPermissionsLevel.PROJECT);
   const hasMemberLevelPermission = allowPermissions(
@@ -60,15 +52,14 @@ const ProjectCyclesPage = observer(() => {
   const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/disabled-feature/cycles" });
 
   const handleRemoveFilter = (key: keyof TCycleFilters, value: string | null) => {
-    if (!projectIdString) return;
+    if (!projectId) return;
+    const currentValue = currentProjectFilters?.[key];
+    let newValues: string[] = Array.isArray(currentValue) ? currentValue : [];
 
-    const updatedValue = calculateFilterRemovalValue<TCycleFilters>(
-      key as string,
-      value,
-      currentProjectFilters ?? {}
-    );
+    if (!value) newValues = [];
+    else newValues = newValues.filter((val) => val !== value);
 
-    updateFilters(projectIdString, { [key]: updatedValue } as TCycleFilters);
+    updateFilters(projectId.toString(), { [key]: newValues });
   };
 
   if (!workspaceSlug || !projectId) return <></>;
@@ -130,12 +121,8 @@ const ProjectCyclesPage = observer(() => {
               <Header variant={EHeaderVariant.TERNARY}>
                 <CycleAppliedFiltersList
                   appliedFilters={currentProjectFilters ?? {}}
-                  isFavoriteFilterApplied={currentProjectDisplayFilters?.favorites ?? false}
-                  handleClearAllFilters={() => clearAllFilters(projectIdString)}
+                  handleClearAllFilters={() => clearAllFilters(projectId.toString())}
                   handleRemoveFilter={handleRemoveFilter}
-                  handleDisplayFiltersUpdate={(filters) => updateDisplayFilters(projectIdString, filters)}
-                  customFields={customFields}
-                  projectId={projectIdString}
                 />
               </Header>
             )}

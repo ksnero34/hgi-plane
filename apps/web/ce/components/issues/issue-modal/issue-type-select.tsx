@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import { Control, Controller } from "react-hook-form";
 // plane imports
-import { EditorRefApi } from "@plane/editor";
+import type { EditorRefApi } from "@plane/editor";
 // types
-import { TBulkIssueProperties, TIssue } from "@plane/types";
+import type { TBulkIssueProperties, TIssue } from "@plane/types";
 // components
 import { IssueTypeDropdown } from "@/components/dropdowns";
 // hooks
@@ -41,9 +41,9 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
   onTypeChange,
 }: TIssueTypeSelectProps<T>) => {
   const { issueTypes } = useIssueType(projectId || "");
-  
+
   const memoizedIssueTypes = useMemo(() => issueTypes, [issueTypes]);
-  
+
   return (
   <div className="flex flex-col gap-1">
     <div className="flex items-center gap-2">
@@ -57,8 +57,8 @@ export const IssueTypeSelect = <T extends Partial<TIssueFields>>({
               onChange={(val: string) => {
                 onChange(val);
                 // IssueType 객체 찾기
-                const selectedIssueType = projectId && val ? 
-                  memoizedIssueTypes?.find((pt: any) => pt.id === val) : 
+                const selectedIssueType = projectId && val ?
+                  memoizedIssueTypes?.find((pt: any) => pt.id === val) :
                   undefined;
                 if (onTypeChange) onTypeChange(selectedIssueType);
                 if (handleFormChange) handleFormChange();

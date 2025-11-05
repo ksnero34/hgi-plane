@@ -11,6 +11,12 @@ from .configuration import (
     DisableEmailFeatureEndpoint,
 )
 
+from .configuration import (
+    EmailCredentialCheckEndpoint,
+    InstanceConfigurationEndpoint,
+    DisableEmailFeatureEndpoint,
+)
+
 from .admin import (
     InstanceAdminEndpoint,
     InstanceAdminSignInEndpoint,

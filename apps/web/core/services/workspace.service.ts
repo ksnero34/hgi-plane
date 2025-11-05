@@ -1,4 +1,5 @@
-import {
+import { API_BASE_URL } from "@plane/constants";
+import type {
   IWorkspace,
   IWorkspaceMemberMe,
   IWorkspaceMember,
@@ -23,8 +24,8 @@ import {
 import { APIService } from "@/services/api.service";
 
 export class WorkspaceService extends APIService {
-  constructor(baseUrl: string) {
-    super(baseUrl);
+  constructor() {
+    super(API_BASE_URL);
   }
 
   async userWorkspaces(): Promise<IWorkspace[]> {
@@ -67,8 +68,8 @@ export class WorkspaceService extends APIService {
       });
   }
 
-  async inviteWorkspace(workspaceSlug: string, data: IWorkspaceBulkInviteFormData, autoAccept: boolean = false): Promise<any> {
-    return this.post(`/api/workspaces/${workspaceSlug}/invitations/`, { ...data, auto_accept: autoAccept })
+  async inviteWorkspace(workspaceSlug: string, data: IWorkspaceBulkInviteFormData): Promise<any> {
+    return this.post(`/api/workspaces/${workspaceSlug}/invitations/`, data)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

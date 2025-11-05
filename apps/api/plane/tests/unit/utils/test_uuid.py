@@ -48,6 +48,4 @@ class TestUUIDUtils:
         test_uuid = uuid.UUID(test_uuid_str)
 
         # Should get the same result whether passing UUID or string
-        assert convert_uuid_to_integer(test_uuid) == convert_uuid_to_integer(
-            test_uuid_str
-        )
+        assert convert_uuid_to_integer(test_uuid) == convert_uuid_to_integer(test_uuid_str)

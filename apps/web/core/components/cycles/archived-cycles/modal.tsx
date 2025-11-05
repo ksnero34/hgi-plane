@@ -4,7 +4,8 @@ import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 // ui
 import { CYCLE_TRACKER_EVENTS } from "@plane/constants";
-import { Button, TOAST_TYPE, setToast } from "@plane/ui";
+import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 import { useCycle } from "@/hooks/store/use-cycle";
@@ -41,8 +42,8 @@ export const ArchiveCycleModal: React.FC<Props> = (props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "보관된 모듈을 보관함에서 찾을 수 있습니다.",
+          title: "Archive success",
+          message: "Your archives can be found in project archives.",
         });
         captureSuccess({
           eventName: CYCLE_TRACKER_EVENTS.archive,

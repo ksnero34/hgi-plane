@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import type React from "react";
+import { useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import sortBy from "lodash/sortBy";
+import { sortBy } from "lodash-es";
 // hooks
 import { useIssueType } from "@/hooks/store/use-issue-type";
 // components
@@ -19,11 +20,11 @@ type Props = {
 
 export const FilterIssueTypes: React.FC<Props> = observer((props) => {
   const { appliedFilters, handleUpdate, searchQuery } = props;
-  
+
   // hooks
   const { projectId } = useParams();
   const { issueTypes, isLoading } = useIssueType(projectId as string);
-  
+
   // states
   const [itemsToRender, setItemsToRender] = useState(5);
   const [previewEnabled, setPreviewEnabled] = useState(true);

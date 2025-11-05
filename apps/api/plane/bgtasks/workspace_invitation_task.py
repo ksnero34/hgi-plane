@@ -218,9 +218,7 @@ def workspace_invitation(email, workspace_id, token, current_site, inviter):
             "abs_url": abs_url,
         }
 
-        html_content = render_to_string(
-            "emails/invitations/workspace_invitation.html", context
-        )
+        html_content = render_to_string("emails/invitations/workspace_invitation.html", context)
 
         text_content = strip_tags(html_content)
 

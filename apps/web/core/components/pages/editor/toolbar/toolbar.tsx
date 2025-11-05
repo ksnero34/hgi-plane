@@ -5,11 +5,13 @@ import { Check, ChevronDown } from "lucide-react";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import { Tooltip } from "@plane/propel/tooltip";
-import { CustomMenu, setToast, TOAST_TYPE } from "@plane/ui";
+import { CustomMenu } from "@plane/ui";
+import {setToast, TOAST_TYPE} from "@plane/propel/toast"
 import { cn } from "@plane/utils";
 import { useInstance } from "@/hooks/store/use-instance";
 // constants
-import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS, ToolbarMenuItem } from "@/constants/editor";
+import type { ToolbarMenuItem } from "@/constants/editor";
+import { TOOLBAR_ITEMS, TYPOGRAPHY_ITEMS } from "@/constants/editor";
 // local imports
 import { ColorDropdown } from "./color-dropdown";
 
@@ -21,11 +23,10 @@ type ToolbarButtonProps = {
   item: ToolbarMenuItem;
   isActive: boolean;
   executeCommand: EditorRefApi["executeMenuItemCommand"];
-  editorRef: EditorRefApi;
 };
 
 const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
-  const { item, isActive, executeCommand, editorRef } = props;
+  const { item, isActive, executeCommand} = props;
   // store hooks
   const { fileSettings } = useInstance();
 
@@ -184,7 +185,6 @@ export const PageToolbar: React.FC<Props> = (props) => {
               item={item}
               isActive={activeStates[item.renderKey]}
               executeCommand={editorRef.executeMenuItemCommand}
-              editorRef={editorRef}
             />
           ))}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Document, Font, Page, PageProps } from "@react-pdf/renderer";
+import type { PageProps } from "@react-pdf/renderer";
+import { Document, Font, Page } from "@react-pdf/renderer";
 import { Html } from "react-pdf-html";
 // constants
 import { EDITOR_PDF_DOCUMENT_STYLESHEET } from "@/constants/editor";
@@ -16,7 +17,7 @@ Font.register({
   ]
 });
 
-// 줄바꿈 처리 
+// 줄바꿈 처리
 Font.registerHyphenationCallback(word => [word]);
 
 // 내장 Courier 폰트 사용 (코드 블록용)

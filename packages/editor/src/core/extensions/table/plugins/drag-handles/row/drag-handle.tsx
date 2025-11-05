@@ -1,6 +1,7 @@
 import {
   autoUpdate,
   flip,
+  FloatingOverlay,
   FloatingPortal,
   shift,
   useClick,
@@ -14,6 +15,8 @@ import { Ellipsis } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 // plane imports
 import { cn } from "@plane/utils";
+// constants
+import { CORE_EXTENSIONS } from "@/constants/extension";
 // extensions
 import {
   findTable,
@@ -58,7 +61,16 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
       }),
     ],
     open: isDropdownOpen,
-    onOpenChange: setIsDropdownOpen,
+    onOpenChange: (open) => {
+      setIsDropdownOpen(open);
+      if (open) {
+        editor.commands.addActiveDropbarExtension(CORE_EXTENSIONS.TABLE);
+      } else {
+        setTimeout(() => {
+          editor.commands.removeActiveDropbarExtension(CORE_EXTENSIONS.TABLE);
+        }, 0);
+      }
+    },
     whileElementsMounted: autoUpdate,
   });
   const click = useClick(context);
@@ -74,7 +86,10 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
       const reference = refs.reference.current;
       const target = event.target as Node | null;
 
-      if (floating?.contains(target as Node) || reference?.contains(target as Node)) {
+      const isInsideFloating = floating instanceof HTMLElement && floating.contains(target as Node);
+      const isInsideReference = reference instanceof HTMLElement && reference.contains(target as Node);
+
+      if (isInsideFloating || isInsideReference) {
         return;
       }
 
@@ -198,6 +213,13 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
       </div>
       {isDropdownOpen && (
         <FloatingPortal>
+          {/* Backdrop */}
+          <FloatingOverlay
+            style={{
+              zIndex: 99,
+            }}
+            lockScroll
+          />
           <div
             className="max-h-[90vh] w-[12rem] overflow-y-auto rounded-md border-[0.5px] border-custom-border-300 bg-custom-background-100 px-2 py-2.5 shadow-custom-shadow-rg"
             data-prevent-outside-click
@@ -212,7 +234,7 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
               zIndex: 100,
             }}
           >
-            <RowOptionsDropdown editor={editor} onClose={() => setIsDropdownOpen(false)} />
+            <RowOptionsDropdown editor={editor} onClose={() => context.onOpenChange(false)} />
           </div>
         </FloatingPortal>
       )}

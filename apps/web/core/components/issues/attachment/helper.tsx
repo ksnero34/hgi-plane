@@ -1,4 +1,4 @@
-import { TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { ValidationResult } from "@/hooks/store/use-file-validation";
 
 export const validateFileBeforeUpload = async (

@@ -1,17 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
-import { useParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 // plane imports
-import { TCycleFilters, TCycleGroups, TCustomField } from "@plane/types";
+import type { TCycleFilters, TCycleGroups } from "@plane/types";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local imports
 import { FilterEndDate } from "./end-date";
 import { FilterStartDate } from "./start-date";
 import { FilterStatus } from "./status";
-import { FilterCustomFields } from "@/components/issues/issue-layouts/filters/header/filters";
-import { useCustomField } from "@/hooks/store/use-custom-field";
+
 type Props = {
   filters: TCycleFilters;
   handleFiltersUpdate: (key: keyof TCycleFilters, value: string | string[]) => void;
@@ -24,55 +22,6 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
   const [filtersSearchQuery, setFiltersSearchQuery] = useState("");
   // hooks
   const { isMobile } = usePlatformOS();
-  const { workspaceSlug, projectId } = useParams();
-  const { customFields } = useCustomField();
-
-  // 커스텀 필드 필터 업데이트 핸들러
-  const handleCustomFieldUpdate = (fieldId: string, value: string) => {
-    // 현재 커스텀 필드 필터를 파싱
-    let currentCustomFieldFilters: { [field_id: string]: string[] } = {};
-    if (filters.custom_fields) {
-      if (typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== '') {
-        try {
-          currentCustomFieldFilters = JSON.parse(filters.custom_fields);
-        } catch (e) {
-          console.error('Failed to parse custom_fields:', e);
-          currentCustomFieldFilters = {};
-        }
-      } else if (typeof filters.custom_fields === 'object') {
-        currentCustomFieldFilters = JSON.parse(JSON.stringify(filters.custom_fields));
-      }
-    }
-
-    const currentFieldValues = currentCustomFieldFilters[fieldId] || [];
-
-    let newFieldValues: string[];
-    if (currentFieldValues.includes(value)) {
-      newFieldValues = currentFieldValues.filter(v => v !== value);
-    } else {
-      newFieldValues = [...currentFieldValues, value];
-    }
-
-    const newCustomFieldFilters = {
-      ...currentCustomFieldFilters,
-      [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
-    };
-
-    // 빈 배열인 필드들 제거
-    Object.keys(newCustomFieldFilters).forEach(key => {
-      const fieldValues = newCustomFieldFilters[key];
-      if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) {
-        delete newCustomFieldFilters[key];
-      }
-    });
-
-    // JSON 문자열로 변환하여 전달 (빈 객체인 경우 빈 문자열)
-    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0
-      ? JSON.stringify(newCustomFieldFilters)
-      : "";
-
-    handleFiltersUpdate("custom_fields", customFieldsValue);
-  };
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
@@ -122,26 +71,6 @@ export const CycleFiltersSelection: React.FC<Props> = observer((props) => {
             handleUpdate={(val) => handleFiltersUpdate("end_date", val)}
             searchQuery={filtersSearchQuery}
           />
-        </div>
-
-        {/* custom fields */}
-        <div className="py-2">
-          {(() => {
-            return (
-              <FilterCustomFields
-                appliedFilters={
-                  filters.custom_fields && typeof filters.custom_fields === 'string' && filters.custom_fields.trim() !== ''
-                    ? JSON.parse(filters.custom_fields)
-                    : {}
-                }
-                handleUpdate={handleCustomFieldUpdate}
-                searchQuery={filtersSearchQuery}
-                customFields={customFields || []}
-                workspaceSlug={workspaceSlug as string}
-                projectId={projectId as string}
-              />
-            );
-          })()}
         </div>
       </div>
     </div>

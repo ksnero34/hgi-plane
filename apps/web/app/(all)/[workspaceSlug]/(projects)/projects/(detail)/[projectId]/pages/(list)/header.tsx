@@ -12,12 +12,14 @@ import {
   PROJECT_TRACKER_ELEMENTS,
 } from "@plane/constants";
 // plane types
-import { TPage } from "@plane/types";
+import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { TPage } from "@plane/types";
 // plane ui
-import { Breadcrumbs, Button, Header, setToast, TOAST_TYPE } from "@plane/ui";
+import { Breadcrumbs, Header } from "@plane/ui";
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 // helpers
-import { captureClick, captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import {captureClick, captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
@@ -112,8 +114,9 @@ export const PagesListHeader = observer(() => {
           <Breadcrumbs isLoading={loader === "init-loader"}>
             <CommonProjectBreadcrumbs
               workspaceSlug={workspaceSlug?.toString() ?? ""}
-              projectId={projectId?.toString() ?? ""}
+              projectId={currentProjectDetails?.toString() ?? ""}
               featureKey={EProjectFeatureKey.PAGES}
+              isLast
             />
             <Breadcrumbs.Item
               component={

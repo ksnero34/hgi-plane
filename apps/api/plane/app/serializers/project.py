@@ -18,6 +18,9 @@ from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
 )
+from plane.utils.content_validator import (
+    validate_html_content,
+)
 
 
 class ProjectSerializer(BaseSerializer):
@@ -49,9 +52,7 @@ class ProjectSerializer(BaseSerializer):
         project_id = self.instance.id if self.instance else None
         workspace_id = self.context["workspace_id"]
 
-        project = Project.objects.filter(
-            identifier=identifier, workspace_id=workspace_id
-        )
+        project = Project.objects.filter(identifier=identifier, workspace_id=workspace_id)
 
         if project_id:
             project = project.exclude(id=project_id)
@@ -66,17 +67,13 @@ class ProjectSerializer(BaseSerializer):
     def validate(self, data):
         # Validate description content for security
         if "description_html" in data and data["description_html"]:
-            is_valid, error_msg, sanitized_html = validate_html_content(
-                str(data["description_html"])
-            )
+            is_valid, error_msg, sanitized_html = validate_html_content(str(data["description_html"]))
             # Update the data with sanitized HTML if available
             if sanitized_html is not None:
                 data["description_html"] = sanitized_html
 
             if not is_valid:
-                raise serializers.ValidationError(
-                    {"error": "html content is not valid"}
-                )
+                raise serializers.ValidationError({"error": "html content is not valid"})
 
         return data
 
@@ -85,9 +82,7 @@ class ProjectSerializer(BaseSerializer):
 
         project = Project.objects.create(**validated_data, workspace_id=workspace_id)
 
-        ProjectIdentifier.objects.create(
-            name=project.identifier, project=project, workspace_id=workspace_id
-        )
+        ProjectIdentifier.objects.create(name=project.identifier, project=project, workspace_id=workspace_id)
 
         return project
 
@@ -120,11 +115,7 @@ class ProjectListSerializer(DynamicBaseSerializer):
         project_members = getattr(obj, "members_list", None)
         if project_members is not None:
             # Filter members by the project ID
-            return [
-                member.member_id
-                for member in project_members
-                if member.is_active and not member.member.is_bot
-            ]
+            return [member.member_id for member in project_members if member.is_active and not member.member.is_bot]
         return []
 
     class Meta:

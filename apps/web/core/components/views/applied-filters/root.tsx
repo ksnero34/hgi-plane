@@ -3,7 +3,7 @@ import { observer } from "mobx-react";
 import { X } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
+import type { EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
 import { Tag } from "@plane/ui";
 import {
   prepareCustomFieldFiltersForRender,
@@ -17,7 +17,6 @@ import { AppliedMembersFilters } from "@/components/common/applied-filters/membe
 import { AppliedCustomFieldFilters } from "@/components/issues/issue-layouts/filters/applied-filters/custom-fields";
 // local imports
 import { AppliedAccessFilters } from "./access";
-// types
 
 type Props = {
   appliedFilters: TViewFilterProps;

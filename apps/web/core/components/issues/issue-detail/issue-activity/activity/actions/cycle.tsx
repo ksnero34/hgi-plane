@@ -1,12 +1,12 @@
 "use client";
 
-import { FC } from "react";
+import type { FC } from "react";
 import { observer } from "mobx-react";
 // hooks
-import { ContrastIcon } from "@plane/propel/icons";
+import { CycleIcon } from "@plane/propel/icons";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
-import { IssueActivityBlockComponent } from ".";
+import { IssueActivityBlockComponent } from "./";
 // icons
 
 type TIssueCycleActivity = { activityId: string; ends: "top" | "bottom" | undefined };
@@ -23,7 +23,7 @@ export const IssueCycleActivity: FC<TIssueCycleActivity> = observer((props) => {
   if (!activity) return <></>;
   return (
     <IssueActivityBlockComponent
-      icon={<ContrastIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
+      icon={<CycleIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
       activityId={activityId}
       ends={ends}
     >
@@ -38,7 +38,7 @@ export const IssueCycleActivity: FC<TIssueCycleActivity> = observer((props) => {
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate">{activity.new_value}</span>
-            </a> 
+            </a>
             <span> 에 추가했습니다.</span>
           </>
         ) : activity.verb === "updated" ? (
@@ -51,7 +51,7 @@ export const IssueCycleActivity: FC<TIssueCycleActivity> = observer((props) => {
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate"> {activity.new_value}</span>
-            </a> 
+            </a>
             <span> 로 변경했습니다.</span>
           </>
         ) : (

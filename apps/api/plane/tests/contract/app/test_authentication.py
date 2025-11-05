@@ -145,9 +145,7 @@ class TestSignInEndpoint:
     def test_email_validity(self, django_client, setup_user, setup_instance):
         """Test sign-in with invalid email format"""
         url = reverse("sign-in")
-        response = django_client.post(
-            url, {"email": "useremail.com", "password": "user@123"}, follow=True
-        )
+        response = django_client.post(url, {"email": "useremail.com", "password": "user@123"}, follow=True)
 
         # Check redirect contains error code
         assert "INVALID_EMAIL_SIGN_IN" in response.redirect_chain[-1][0]
@@ -156,9 +154,7 @@ class TestSignInEndpoint:
     def test_user_exists(self, django_client, setup_user, setup_instance):
         """Test sign-in with non-existent user"""
         url = reverse("sign-in")
-        response = django_client.post(
-            url, {"email": "user@email.so", "password": "user123"}, follow=True
-        )
+        response = django_client.post(url, {"email": "user@email.so", "password": "user123"}, follow=True)
 
         # Check redirect contains error code
         assert "USER_DOES_NOT_EXIST" in response.redirect_chain[-1][0]
@@ -167,9 +163,7 @@ class TestSignInEndpoint:
     def test_password_validity(self, django_client, setup_user, setup_instance):
         """Test sign-in with incorrect password"""
         url = reverse("sign-in")
-        response = django_client.post(
-            url, {"email": "user@plane.so", "password": "user123"}, follow=True
-        )
+        response = django_client.post(url, {"email": "user@plane.so", "password": "user123"}, follow=True)
 
         # Check for the specific authentication error in the URL
         redirect_urls = [url for url, _ in response.redirect_chain]
@@ -184,9 +178,7 @@ class TestSignInEndpoint:
         url = reverse("sign-in")
 
         # First make the request without following redirects
-        response = django_client.post(
-            url, {"email": "user@plane.so", "password": "user@123"}, follow=False
-        )
+        response = django_client.post(url, {"email": "user@plane.so", "password": "user@123"}, follow=False)
 
         # Check that the initial response is a redirect (302) without error code
         assert response.status_code == 302
@@ -251,9 +243,7 @@ class TestMagicSignIn:
         ri.delete("magic_user@plane.so")
 
         url = reverse("magic-sign-in")
-        response = django_client.post(
-            url, {"email": "user@plane.so", "code": "xxxx-xxxxx-xxxx"}, follow=False
-        )
+        response = django_client.post(url, {"email": "user@plane.so", "code": "xxxx-xxxxx-xxxx"}, follow=False)
 
         # Check that we get a redirect
         assert response.status_code == 302
@@ -298,9 +288,7 @@ class TestMagicSignIn:
 
         # Use Django client to test the redirect flow without following redirects
         url = reverse("magic-sign-in")
-        response = django_client.post(
-            url, {"email": "user@plane.so", "code": token}, follow=False
-        )
+        response = django_client.post(url, {"email": "user@plane.so", "code": token}, follow=False)
 
         # Check that the initial response is a redirect without error code
         assert response.status_code == 302
@@ -367,9 +355,7 @@ class TestMagicSignUp:
         User.objects.create(email="existing@plane.so")
 
         url = reverse("magic-sign-up")
-        response = django_client.post(
-            url, {"email": "existing@plane.so", "code": "xxxx-xxxxx-xxxx"}, follow=True
-        )
+        response = django_client.post(url, {"email": "existing@plane.so", "code": "xxxx-xxxxx-xxxx"}, follow=True)
 
         # Check redirect contains error code
         assert "USER_ALREADY_EXIST" in response.redirect_chain[-1][0]
@@ -378,9 +364,7 @@ class TestMagicSignUp:
     def test_expired_invalid_magic_link(self, django_client, setup_instance):
         """Test magic link sign-up with expired/invalid link"""
         url = reverse("magic-sign-up")
-        response = django_client.post(
-            url, {"email": "new@plane.so", "code": "xxxx-xxxxx-xxxx"}, follow=False
-        )
+        response = django_client.post(url, {"email": "new@plane.so", "code": "xxxx-xxxxx-xxxx"}, follow=False)
 
         # Check that we get a redirect
         assert response.status_code == 302
@@ -414,9 +398,7 @@ class TestMagicSignUp:
 
         # Use Django client to test the redirect flow without following redirects
         url = reverse("magic-sign-up")
-        response = django_client.post(
-            url, {"email": email, "code": token}, follow=False
-        )
+        response = django_client.post(url, {"email": email, "code": token}, follow=False)
 
         # Check that the initial response is a redirect without error code
         assert response.status_code == 302
@@ -451,9 +433,7 @@ class TestMagicSignUp:
         # Use Django client to test the redirect flow without following redirects
         url = reverse("magic-sign-up")
         next_path = "onboarding"
-        response = django_client.post(
-            url, {"email": email, "code": token, "next_path": next_path}, follow=False
-        )
+        response = django_client.post(url, {"email": email, "code": token, "next_path": next_path}, follow=False)
 
         # Check that the initial response is a redirect without error code
         assert response.status_code == 302

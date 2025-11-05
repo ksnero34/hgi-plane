@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 // icons
 import { CalendarCheck2, CalendarClock } from "lucide-react";
 // types
-import { TIssuePriorities, TWorkspaceDraftIssue } from "@plane/types";
+import type { TIssuePriorities, TWorkspaceDraftIssue } from "@plane/types";
 import { getDate, renderFormattedPayloadDate, shouldHighlightIssueDueDate } from "@plane/utils";
 // components
 import { CycleDropdown } from "@/components/dropdowns/cycle";
@@ -257,7 +257,7 @@ export const DraftIssueProperties: React.FC<IIssueProperties> = observer((props)
       {issue.project_id && areEstimateEnabledByProjectId(issue.project_id?.toString()) && (
         <div className="h-5" onClick={handleEventPropagation}>
           <EstimateDropdown
-            value={issue.estimate_point}
+            value={issue.estimate_point ?? undefined}
             onChange={handleEstimate}
             projectId={issue.project_id}
             buttonVariant="border-with-text"

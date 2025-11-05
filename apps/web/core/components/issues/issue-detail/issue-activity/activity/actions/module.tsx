@@ -1,12 +1,12 @@
 "use client";
 
-import { FC } from "react";
+import type { FC } from "react";
 import { observer } from "mobx-react";
 // hooks
-import { DiceIcon } from "@plane/propel/icons";
+import { ModuleIcon } from "@plane/propel/icons";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
-import { IssueActivityBlockComponent } from ".";
+import { IssueActivityBlockComponent } from "./";
 // icons
 
 type TIssueModuleActivity = { activityId: string; ends: "top" | "bottom" | undefined };
@@ -23,7 +23,7 @@ export const IssueModuleActivity: FC<TIssueModuleActivity> = observer((props) =>
   if (!activity) return <></>;
   return (
     <IssueActivityBlockComponent
-      icon={<DiceIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
+      icon={<ModuleIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
       activityId={activityId}
       ends={ends}
     >
@@ -50,7 +50,7 @@ export const IssueModuleActivity: FC<TIssueModuleActivity> = observer((props) =>
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate"> {activity.new_value}</span>
-            </a> 
+            </a>
             <span> 로 변경했습니다.</span>
           </>
         ) : (
@@ -63,7 +63,7 @@ export const IssueModuleActivity: FC<TIssueModuleActivity> = observer((props) =>
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate"> {activity.old_value}</span>
-            </a> 
+            </a>
             <span> 에서 제외했습니다.</span>
           </>
         )}

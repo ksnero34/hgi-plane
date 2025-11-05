@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // store hooks
@@ -129,26 +128,26 @@ const getCustomFieldIcon = (fieldType: string) => {
 
 // 커스텀 필드 값 포맷팅 함수
 const formatCustomFieldValue = (
-  value: string | null, 
-  fieldType: string, 
-  workspaceSlug: string, 
+  value: string | null,
+  fieldType: string,
+  workspaceSlug: string,
   projectId: string,
   memberHook: any,
   activity?: IIssueActivity
 ): React.ReactNode => {
   if (!value) return "없음";
-  
+
   const { project: { getProjectMemberDetails, getProjectMemberIds } } = memberHook;
-  
+
   if (fieldType === "project_member") {
     // 단일 멤버인 경우 - 백엔드에서 UUID를 받음
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-    
+
     if (isUUID) {
       // UUID인 경우 멤버 정보 조회
       const memberDetails = getProjectMemberDetails(value, projectId);
       const displayName = memberDetails?.member?.display_name || value;
-      
+
       return (
         <a
           href={`/${workspaceSlug}/profile/${value}`}
@@ -166,7 +165,7 @@ const formatCustomFieldValue = (
   } else if (fieldType === "project_members") {
     // 다중 멤버인 경우 - 백엔드에서 UUID 배열을 JSON으로 받음
     let memberIds: string[] = [];
-    
+
     try {
       // JSON 배열 형태인지 확인
       if (value.startsWith('[') && value.endsWith(']')) {
@@ -179,15 +178,15 @@ const formatCustomFieldValue = (
       // JSON 파싱 실패 시 단일 값으로 처리
       memberIds = [value.trim()];
     }
-    
+
     return memberIds.map((memberId, index) => {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
-      
+
       if (isUUID) {
         // UUID인 경우 멤버 정보 조회
         const memberDetails = getProjectMemberDetails(memberId, projectId);
         const displayName = memberDetails?.member?.display_name || memberId;
-        
+
         const memberElement = (
           <a
             key={index}
@@ -199,10 +198,10 @@ const formatCustomFieldValue = (
             {displayName}
           </a>
         );
-        
+
         return index < memberIds.length - 1 ? (
           <span key={`wrapper-${index}`}>
-            {memberElement}, 
+            {memberElement},
           </span>
         ) : memberElement;
       } else {
@@ -210,10 +209,10 @@ const formatCustomFieldValue = (
         const memberElement = (
           <span key={index} className="font-medium text-custom-text-100">{memberId}</span>
         );
-        
+
         return index < memberIds.length - 1 ? (
           <span key={`wrapper-${index}`}>
-            {memberElement}, 
+            {memberElement},
           </span>
         ) : memberElement;
       }
@@ -225,23 +224,23 @@ const formatCustomFieldValue = (
       return value;
     }
   }
-  
+
   return value;
 };
 
 // 커스텀 필드 타입 추출 함수 (실제 커스텀 필드 정보 사용)
 const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField[]): string => {
   const fieldKey = activity.field?.replace("custom_field_", "");
-  
+
   if (!fieldKey) return 'text';
-  
+
   // 실제 커스텀 필드에서 타입 찾기
   const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
-  
+
   if (field) {
     return field.field_type;
   }
-  
+
   // 필드를 찾을 수 없는 경우 값의 형태로 타입 추정 (fallback)
   const value = activity.new_value || activity.old_value;
   if (value) {
@@ -250,7 +249,7 @@ const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField
     if (uuidPattern.test(value)) {
       return 'project_member';
     }
-    
+
     // JSON 배열 패턴 체크 (project_members)
     if (value.startsWith('[') && value.endsWith(']')) {
       try {
@@ -260,7 +259,7 @@ const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField
         }
       } catch {}
     }
-    
+
     // 쉼표로 구분된 UUID들 (project_members)
     if (value.includes(',')) {
       const parts = value.split(',').map(p => p.trim());
@@ -268,33 +267,33 @@ const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField
         return 'project_members';
       }
     }
-    
+
     // 날짜 패턴 체크
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       return 'date';
     }
   }
-  
+
   return 'text'; // 기본값
 };
 
 // 커스텀 필드 activity 메시지 생성
 const getCustomFieldActivityMessage = (
-  activity: IIssueActivity, 
-  showIssue: boolean, 
+  activity: IIssueActivity,
+  showIssue: boolean,
   workspaceSlug: string,
   memberHook: any,
   customFields: TCustomField[]
 ) => {
   const fieldKey = activity.field?.replace("custom_field_", "");
-  
+
   // 실제 커스텀 필드에서 이름 찾기
   const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
   const fieldName = field?.name || fieldKey || "알 수 없는 필드";
   const fieldType = getCustomFieldType(activity, customFields);
-  
+
   const projectId = activity.project;
-  
+
   if (activity.verb === "created") {
     return (
       <>
@@ -341,7 +340,7 @@ const getCustomFieldActivityMessage = (
       </>
     );
   }
-  
+
   return (
     <>
       커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>을(를) 수정했습니다
@@ -439,7 +438,7 @@ const activityDetails: {
           </>
         );
       }
-      
+
       // 위의 조건에 해당하지 않거나, "updated" verb가 명확한 추가/제거 패턴이 아닌 경우
       return (
         <>
@@ -546,7 +545,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에{" "} 
+                <IssueLink activity={activity} /> 에{" "}
               </>
             )}
             소요자원을 {activity.new_value} 로 설정했습니다
@@ -572,16 +571,16 @@ const activityDetails: {
         );
       else {
         // 시간 값을 분에서 시간:분 형식으로 변환
-        const timeDisplay = activity.new_value ? 
-          convertMinutesToHoursMinutesString(Number(activity.new_value)) : 
+        const timeDisplay = activity.new_value ?
+          convertMinutesToHoursMinutesString(Number(activity.new_value)) :
           activity.new_value;
-          
+
         return (
           <>
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에{" "} 
+                <IssueLink activity={activity} /> 에{" "}
               </>
             )}
             소요시간을 {timeDisplay} 으로 설정했습니다.
@@ -612,7 +611,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에{" "} 
+                <IssueLink activity={activity} /> 에{" "}
               </>
             )}
             소요자원을 {activity.new_value} 로 설정했습니다
@@ -642,7 +641,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에{" "} 
+                <IssueLink activity={activity} /> 에{" "}
               </>
             )}
             소요자원을 {activity.new_value} 로 설정했습니다
@@ -713,7 +712,7 @@ const activityDetails: {
             {showIssue && (
               <span className="">
                 {" "}
-                <IssueLink activity={activity} /> 에{" "} 
+                <IssueLink activity={activity} /> 에{" "}
               </span>
             )}
              추가했습니다.
@@ -732,7 +731,7 @@ const activityDetails: {
             {showIssue && (
               <span>
                 {" "}
-                <IssueLink activity={activity} /> 에서{" "} 
+                <IssueLink activity={activity} /> 에서{" "}
               </span>
             )}
             삭제했습니다.
@@ -758,7 +757,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에{" "} 
+                <IssueLink activity={activity} /> 에{" "}
               </>
             )}
             추가했습니다.
@@ -780,7 +779,7 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} /> 에서{" "} 
+                <IssueLink activity={activity} /> 에서{" "}
               </>
             )}
             수정 했습니다.
@@ -1060,7 +1059,7 @@ const activityDetails: {
       // 워크플로우 승인 정보 파싱
       const comment = activity.comment || "";
       const approvalMatch = comment.match(/\(approved by ([^)]+)\)(?:\s*-\s*(.+))?/);
-      
+
       return (
         <>
           상태를 <span className="font-medium text-custom-text-100 break-all">{activity.new_value}</span>
@@ -1210,7 +1209,7 @@ export const ActivityIcon = ({ activity, customFields = [] }: { activity: IIssue
     const fieldType = getCustomFieldType(activity, customFields);
     return getCustomFieldIcon(fieldType);
   }
-  
+
   return <>{activityDetails[activity.field as keyof typeof activityDetails]?.icon}</>;
 };
 

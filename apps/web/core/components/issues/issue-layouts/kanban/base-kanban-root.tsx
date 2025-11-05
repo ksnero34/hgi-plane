@@ -1,13 +1,15 @@
 "use client";
 
-import { FC, useCallback, useEffect, useRef, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { EIssueFilterType, EUserPermissions, EUserPermissionsLevel, WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
-import { EIssueServiceType, EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
+import type { EIssuesStoreType } from "@plane/types";
+import { EIssueServiceType, EIssueLayoutTypes } from "@plane/types";
 //constants
 //hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
@@ -15,7 +17,6 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
@@ -23,9 +24,8 @@ import { useIssuesActions } from "@/hooks/use-issues-actions";
 // ui
 // types
 import { DeleteIssueModal } from "../../delete-issue-modal";
-import { TCustomField } from "@plane/types";
 import { IssueLayoutHOC } from "../issue-layout-HOC";
-import { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
+import type { IQuickActionProps, TRenderQuickActions } from "../list/list-view-types";
 //components
 import { getSourceFromDropPayload } from "../utils";
 import { KanBan } from "./default";
@@ -83,7 +83,6 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
   const deleteAreaRef = useRef<HTMLDivElement | null>(null);
   const [isDragOverDelete, setIsDragOverDelete] = useState(false);
 
-  const { customFields } = useCustomField();
   const { isDragging } = useKanbanView();
 
   const displayFilters = issuesFilter?.issueFilters?.displayFilters;
@@ -95,13 +94,8 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
   const orderBy = displayFilters?.order_by;
 
   useEffect(() => {
-    const perPageFromFilter = displayFilters?.per_page || (sub_group_by ? 10 : 30);
-    fetchIssues("init-loader", {
-      canGroup: true,
-      perPageCount: perPageFromFilter,
-      perPageFromDisplayFilter: perPageFromFilter
-    }, viewId);
-  }, [fetchIssues, storeType, group_by, sub_group_by, viewId, displayFilters?.per_page]);
+    fetchIssues("init-loader", { canGroup: true, perPageCount: sub_group_by ? 10 : 30 }, viewId);
+  }, [fetchIssues, storeType, group_by, sub_group_by, viewId]);
 
   const fetchMoreIssues = useCallback(
     (groupId?: string, subgroupId?: string) => {

@@ -1,9 +1,10 @@
-import set from "lodash/set";
-import unset from "lodash/unset";
+import { unset, set } from "lodash-es";
 import { makeObservable, observable, runInAction, action, reaction, computed } from "mobx";
+import { computedFn } from "mobx-utils";
 // types
 import { EUserPermissions } from "@plane/constants";
-import { EUserProjectRoles, TPage, TPageFilters, TPageNavigationTabs } from "@plane/types";
+import type { TPage, TPageFilters, TPageNavigationTabs } from "@plane/types";
+import { EUserProjectRoles } from "@plane/types";
 // helpers
 import { filterPagesByPageType, getPageName, orderPages, shouldFilterPage } from "@plane/utils";
 // plane web constants
@@ -13,7 +14,8 @@ import type { RootStore } from "@/plane-web/store/root.store";
 import { ProjectPageService } from "@/services/page";
 // store
 import type { CoreRootStore } from "../root.store";
-import { ProjectPage, TProjectPage } from "./project-page";
+import type { TProjectPage } from "./project-page";
+import { ProjectPage } from "./project-page";
 
 type TLoader = "init-loader" | "mutation-loader" | undefined;
 
@@ -57,7 +59,7 @@ export interface IProjectPageStore {
     options?: { trackVisit?: boolean }
   ) => Promise<TPage | undefined>;
   createPage: (pageData: Partial<TPage>) => Promise<TPage | undefined>;
-  removePage: (pageId: string) => Promise<void>;
+  removePage: (params: { pageId: string; shouldSync?: boolean }) => Promise<void>;
   movePage: (workspaceSlug: string, projectId: string, pageId: string, newProjectId: string) => Promise<void>;
 }
 
@@ -132,7 +134,7 @@ export class ProjectPageStore implements IProjectPageStore {
    * @description get the current project page ids based on the pageType
    * @param {TPageNavigationTabs} pageType
    */
-  getCurrentProjectPageIdsByTab = (pageType: TPageNavigationTabs) => {
+  getCurrentProjectPageIdsByTab = computedFn((pageType: TPageNavigationTabs) => {
     const { projectId } = this.store.router;
     if (!projectId) return undefined;
     // helps to filter pages based on the pageType
@@ -142,24 +144,24 @@ export class ProjectPageStore implements IProjectPageStore {
     const pages = (pagesByType.map((page) => page.id) as string[]) || undefined;
 
     return pages ?? undefined;
-  };
+  });
 
   /**
    * @description get the current project page ids
    * @param {string} projectId
    */
-  getCurrentProjectPageIds = (projectId: string) => {
+  getCurrentProjectPageIds = computedFn((projectId: string) => {
     if (!projectId) return [];
     const pages = Object.values(this?.data || {}).filter((page) => page.project_ids?.includes(projectId));
     return pages.map((page) => page.id) as string[];
-  };
+  });
 
   /**
-   * @description get current project filtered page ids by tab
+   * @description get the current project filtered page ids based on the pageType
    * @param {TPageNavigationTabs} pageType
    * @param {string | null} folderId
    */
-  getCurrentProjectFilteredPageIdsByTab = (pageType: TPageNavigationTabs, folderId?: string | null) => {
+  getCurrentProjectFilteredPageIdsByTab = computedFn((pageType: TPageNavigationTabs, folderId?: string | null) => {
     const { projectId } = this.store.router;
     if (!projectId) return undefined;
 
@@ -175,7 +177,7 @@ export class ProjectPageStore implements IProjectPageStore {
     );
     filteredPages = orderPages(filteredPages, this.filters.sortKey, this.filters.sortBy);
     return filteredPages.map((p) => p.id).filter((id): id is string => id !== undefined);
-  };
+  });
 
   /**
    * @description get the page store by id
@@ -337,7 +339,7 @@ export class ProjectPageStore implements IProjectPageStore {
    * @description delete a page
    * @param {string} pageId
    */
-  removePage = async (pageId: string) => {
+  removePage = async ({ pageId, shouldSync = true }: { pageId: string; shouldSync?: boolean }) => {
     try {
       const { workspaceSlug, projectId } = this.store.router;
       if (!workspaceSlug || !projectId || !pageId) return undefined;

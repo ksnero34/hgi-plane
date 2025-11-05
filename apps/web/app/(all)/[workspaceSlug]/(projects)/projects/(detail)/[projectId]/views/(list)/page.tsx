@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // components
 import { EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { EUserProjectRoles, EViewAccess, TViewFilterProps } from "@plane/types";
+import type { EViewAccess, TViewFilterProps } from "@plane/types";
+import { EUserProjectRoles } from "@plane/types";
 import { Header, EHeaderVariant } from "@plane/ui";
-import { calculateTotalFilters, calculateFilterRemovalValue } from "@plane/utils";
+import { calculateTotalFilters } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
 import { ViewAppliedFiltersList } from "@/components/views/applied-filters";
@@ -19,7 +20,6 @@ import { ProjectViewsList } from "@/components/views/views-list";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectView } from "@/hooks/store/use-project-view";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -33,7 +33,6 @@ const ProjectViewsPage = observer(() => {
   const { getProjectById, currentProjectDetails } = useProject();
   const { filters, updateFilters, clearAllFilters } = useProjectView();
   const { allowPermissions } = useUserPermissions();
-  const { customFields } = useCustomField(projectId as string);
 
   // derived values
   const project = projectId ? getProjectById(projectId.toString()) : undefined;
@@ -43,15 +42,19 @@ const ProjectViewsPage = observer(() => {
 
   const handleRemoveFilter = useCallback(
     (key: keyof TViewFilterProps, value: string | EViewAccess | null) => {
-      if (!value) {
-        updateFilters("filters", { ...filters?.filters, [key]: [] });
-        return;
+      let newValues = filters.filters?.[key];
+
+      if (key === "favorites") {
+        newValues = !!value;
+      }
+      if (Array.isArray(newValues)) {
+        if (!value) newValues = [];
+        else newValues = newValues.filter((val) => val !== value) as string[];
       }
 
-      const updatedValue = calculateFilterRemovalValue<TViewFilterProps>(key as string, value as string, filters?.filters ?? {});
-      updateFilters("filters", { ...filters?.filters, [key]: updatedValue });
+      updateFilters("filters", { [key]: newValues });
     },
-    [filters, updateFilters]
+    [filters.filters, updateFilters]
   );
 
   const isFiltersApplied = calculateTotalFilters(filters?.filters ?? {}) !== 0;
@@ -87,11 +90,6 @@ const ProjectViewsPage = observer(() => {
             handleClearAllFilters={clearAllFilters}
             handleRemoveFilter={handleRemoveFilter}
             alwaysAllowEditing
-            customFields={customFields}
-            workspaceSlug={workspaceSlug as string}
-            projectId={projectId as string}
-            isProjectLevel
-            viewProjectId={projectId as string}
           />
         </Header>
       )}

@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { StoreContext } from "@/lib/store-provider";
 
 export const useWorkspaceConfig = () => {

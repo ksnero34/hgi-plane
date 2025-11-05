@@ -141,7 +141,7 @@ def issue_on_results(
 ) -> List[Dict[str, Any]]:
     from plane.app.serializers import IssueSerializer
     
-    FIELD_MAPPER = {
+    FIELD_MAPPER: Dict[str, str] = {
         "labels__id": "label_ids",
         "assignees__id": "assignee_ids",
         "issue_module__module_id": "module_ids",
@@ -463,17 +463,13 @@ def issue_group_values(
     from plane.db.models import Issue as IssueModel
     
     if field == "state_id":
-        queryset = State.objects.filter(
-            is_triage=False, workspace__slug=slug
-        ).values_list("id", flat=True)
+        queryset = State.objects.filter(is_triage=False, workspace__slug=slug).values_list("id", flat=True)
         if project_id:
             return list(queryset.filter(project_id=project_id))
         return list(queryset)
 
     if field == "labels__id":
-        queryset = Label.objects.filter(workspace__slug=slug).values_list(
-            "id", flat=True
-        )
+        queryset = Label.objects.filter(workspace__slug=slug).values_list("id", flat=True)
         if project_id:
             return list(queryset.filter(project_id=project_id)) + ["None"]
         return list(queryset) + ["None"]
@@ -481,36 +477,28 @@ def issue_group_values(
     if field == "assignees__id":
         if project_id:
             return list(
-                ProjectMember.objects.filter(
-                    workspace__slug=slug, project_id=project_id, is_active=True
-                ).values_list("member_id", flat=True)
+                ProjectMember.objects.filter(workspace__slug=slug, project_id=project_id, is_active=True).values_list(
+                    "member_id", flat=True
+                )
             )
         return list(
-            WorkspaceMember.objects.filter(
-                workspace__slug=slug, is_active=True
-            ).values_list("member_id", flat=True)
+            WorkspaceMember.objects.filter(workspace__slug=slug, is_active=True).values_list("member_id", flat=True)
         )
 
     if field == "issue_module__module_id":
-        queryset = Module.objects.filter(workspace__slug=slug).values_list(
-            "id", flat=True
-        )
+        queryset = Module.objects.filter(workspace__slug=slug).values_list("id", flat=True)
         if project_id:
             return list(queryset.filter(project_id=project_id)) + ["None"]
         return list(queryset) + ["None"]
 
     if field == "cycle_id":
-        queryset = Cycle.objects.filter(workspace__slug=slug).values_list(
-            "id", flat=True
-        )
+        queryset = Cycle.objects.filter(workspace__slug=slug).values_list("id", flat=True)
         if project_id:
             return list(queryset.filter(project_id=project_id)) + ["None"]
         return list(queryset) + ["None"]
 
     if field == "project_id":
-        queryset = Project.objects.filter(workspace__slug=slug).values_list(
-            "id", flat=True
-        )
+        queryset = Project.objects.filter(workspace__slug=slug).values_list("id", flat=True)
         return list(queryset)
 
     if field == "priority":
@@ -520,37 +508,25 @@ def issue_group_values(
         return ["backlog", "unstarted", "started", "completed", "cancelled"]
 
     if field == "target_date":
-        queryset = (
-            IssueModel.issue_objects.filter(workspace__slug=slug)
-            .filter(**filters)
-            .values_list("target_date", flat=True)
-            .distinct()
-        )
+        queryset = queryset.values_list("target_date", flat=True).distinct()
         if project_id:
             return list(queryset.filter(project_id=project_id))
-        return list(queryset)
+        else:
+            return list(queryset)
 
     if field == "start_date":
-        queryset = (
-            IssueModel.issue_objects.filter(workspace__slug=slug)
-            .filter(**filters)
-            .values_list("start_date", flat=True)
-            .distinct()
-        )
+        queryset = queryset.values_list("start_date", flat=True).distinct()
         if project_id:
             return list(queryset.filter(project_id=project_id))
-        return list(queryset)
+        else:
+            return list(queryset)
 
     if field == "created_by":
-        queryset = (
-            IssueModel.issue_objects.filter(workspace__slug=slug)
-            .filter(**filters)
-            .values_list("created_by", flat=True)
-            .distinct()
-        )
+        queryset = queryset.values_list("created_by", flat=True).distinct()
         if project_id:
             return list(queryset.filter(project_id=project_id))
-        return list(queryset)
+        else:
+            return list(queryset)
 
     if field == "parent_child":
         # 부모-자식 관계 그룹화를 위한 그룹 값들

@@ -1,4 +1,5 @@
 # Python imports
+import copy
 import json
 
 # Django imports
@@ -41,21 +42,57 @@ from plane.utils.host import base_host
 
 # Module imports
 from .. import BaseViewSet, BaseAPIView
+from plane.utils.filters import ComplexFilterBackend
+from plane.utils.filters import IssueFilterSet
 
 
 class IssueArchiveViewSet(BaseViewSet):
     serializer_class = IssueFlatSerializer
     model = Issue
 
+    filter_backends = (ComplexFilterBackend,)
+    filterset_class = IssueFilterSet
+
+    def apply_annotations(self, issues):
+        return (
+            issues.annotate(
+                cycle_id=Subquery(
+                    CycleIssue.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True).values("cycle_id")[:1]
+                )
+            )
+            .annotate(
+                link_count=Subquery(
+                    IssueLink.objects.filter(issue=OuterRef("id"))
+                    .values("issue")
+                    .annotate(count=Count("id"))
+                    .values("count")
+                )
+            )
+            .annotate(
+                attachment_count=Subquery(
+                    FileAsset.objects.filter(
+                        issue_id=OuterRef("id"),
+                        entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
+                    )
+                    .values("issue_id")
+                    .annotate(count=Count("id"))
+                    .values("count")
+                )
+            )
+            .annotate(
+                sub_issues_count=Subquery(
+                    Issue.issue_objects.filter(parent=OuterRef("id"))
+                    .values("parent")
+                    .annotate(count=Count("id"))
+                    .values("count")
+                )
+            )
+            .prefetch_related("assignees", "labels", "issue_module__module")
+        )
+
     def get_queryset(self):
         return (
-            Issue.objects.annotate(
-                sub_issues_count=Issue.objects.filter(parent=OuterRef("id"))
-                .order_by()
-                .annotate(count=Func(F("id"), function="Count"))
-                .values("count")
-            )
-            .filter(deleted_at__isnull=True)
+            Issue.objects.filter(Q(type__isnull=True) | Q(type__is_epic=False))
             .filter(archived_at__isnull=False)
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(workspace__slug=self.kwargs.get("slug"))
@@ -111,7 +148,20 @@ class IssueArchiveViewSet(BaseViewSet):
 
         order_by_param = request.GET.get("order_by", "-created_at")
 
-        issue_queryset = self.get_queryset().filter(**filters)
+        issue_queryset = self.get_queryset()
+
+        issue_queryset = issue_queryset if show_sub_issues == "true" else issue_queryset.filter(parent__isnull=True)
+        # Apply filtering from filterset
+        issue_queryset = self.filter_queryset(issue_queryset)
+
+        # Apply legacy filters
+        issue_queryset = issue_queryset.filter(**filters)
+
+        # Total count queryset
+        total_issue_queryset = copy.deepcopy(issue_queryset)
+
+        # Applying annotations to the issue queryset
+        issue_queryset = self.apply_annotations(issue_queryset)
 
         total_issue_queryset = Issue.objects.filter(
             deleted_at__isnull=True,
@@ -156,18 +206,14 @@ class IssueArchiveViewSet(BaseViewSet):
         sub_group_by = request.GET.get("sub_group_by", False)
 
         # issue queryset
-        issue_queryset = issue_queryset_grouper(
-            queryset=issue_queryset, group_by=group_by, sub_group_by=sub_group_by
-        )
+        issue_queryset = issue_queryset_grouper(queryset=issue_queryset, group_by=group_by, sub_group_by=sub_group_by)
 
         if group_by:
             # Check group and sub group value paginate
             if sub_group_by:
                 if group_by == sub_group_by:
                     return Response(
-                        {
-                            "error": "Group by and sub group by cannot have same parameters"
-                        },
+                        {"error": "Group by and sub group by cannot have same parameters"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 else:
@@ -303,9 +349,7 @@ class IssueArchiveViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def archive(self, request, slug, project_id, pk=None):
-        issue = Issue.issue_objects.get(
-            workspace__slug=slug, project_id=project_id, pk=pk
-        )
+        issue = Issue.issue_objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
         if issue.state.group not in ["completed", "cancelled"]:
             return Response(
                 {"error": "Can only archive completed or cancelled state group issue"},
@@ -313,15 +357,11 @@ class IssueArchiveViewSet(BaseViewSet):
             )
         issue_activity.delay(
             type="issue.activity.updated",
-            requested_data=json.dumps(
-                {"archived_at": str(timezone.now().date()), "automation": False}
-            ),
+            requested_data=json.dumps({"archived_at": str(timezone.now().date()), "automation": False}),
             actor_id=str(request.user.id),
             issue_id=str(issue.id),
             project_id=str(project_id),
-            current_instance=json.dumps(
-                IssueSerializer(issue).data, cls=DjangoJSONEncoder
-            ),
+            current_instance=json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder),
             epoch=int(timezone.now().timestamp()),
             notification=True,
             origin=base_host(request=request, is_app=True),
@@ -329,9 +369,7 @@ class IssueArchiveViewSet(BaseViewSet):
         issue.archived_at = timezone.now().date()
         issue.save()
 
-        return Response(
-            {"archived_at": str(issue.archived_at)}, status=status.HTTP_200_OK
-        )
+        return Response({"archived_at": str(issue.archived_at)}, status=status.HTTP_200_OK)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def unarchive(self, request, slug, project_id, pk=None):
@@ -347,9 +385,7 @@ class IssueArchiveViewSet(BaseViewSet):
             actor_id=str(request.user.id),
             issue_id=str(issue.id),
             project_id=str(project_id),
-            current_instance=json.dumps(
-                IssueSerializer(issue).data, cls=DjangoJSONEncoder
-            ),
+            current_instance=json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder),
             epoch=int(timezone.now().timestamp()),
             notification=True,
             origin=base_host(request=request, is_app=True),
@@ -368,13 +404,11 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
         issue_ids = request.data.get("issue_ids", [])
 
         if not len(issue_ids):
-            return Response(
-                {"error": "Issue IDs are required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Issue IDs are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        issues = Issue.objects.filter(
-            workspace__slug=slug, project_id=project_id, pk__in=issue_ids
-        ).select_related("state")
+        issues = Issue.objects.filter(workspace__slug=slug, project_id=project_id, pk__in=issue_ids).select_related(
+            "state"
+        )
         bulk_archive_issues = []
         for issue in issues:
             if issue.state.group not in ["completed", "cancelled"]:
@@ -387,15 +421,11 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
                 )
             issue_activity.delay(
                 type="issue.activity.updated",
-                requested_data=json.dumps(
-                    {"archived_at": str(timezone.now().date()), "automation": False}
-                ),
+                requested_data=json.dumps({"archived_at": str(timezone.now().date()), "automation": False}),
                 actor_id=str(request.user.id),
                 issue_id=str(issue.id),
                 project_id=str(project_id),
-                current_instance=json.dumps(
-                    IssueSerializer(issue).data, cls=DjangoJSONEncoder
-                ),
+                current_instance=json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder),
                 epoch=int(timezone.now().timestamp()),
                 notification=True,
                 origin=base_host(request=request, is_app=True),
@@ -404,6 +434,4 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
             bulk_archive_issues.append(issue)
         Issue.objects.bulk_update(bulk_archive_issues, ["archived_at"])
 
-        return Response(
-            {"archived_at": str(timezone.now().date())}, status=status.HTTP_200_OK
-        )
+        return Response({"archived_at": str(timezone.now().date())}, status=status.HTTP_200_OK)

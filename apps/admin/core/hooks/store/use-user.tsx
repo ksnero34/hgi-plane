@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 // store
 import { StoreContext } from "@/app/(all)/store.provider";
-import { IUserStore } from "@/store/user.store";
+import type { IUserStore } from "@/store/user.store";
 import { useInstance } from "./use-instance";
 
 export const useUser = (): IUserStore => {

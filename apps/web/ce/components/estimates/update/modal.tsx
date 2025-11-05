@@ -1,10 +1,12 @@
 "use client";
 
-import { FC, useEffect, useState, useMemo, useRef } from "react";
+import type { FC } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 import { ChevronLeft } from "lucide-react";
 // ui
-import { Button, ModalCore, EModalPosition, EModalWidth, setToast, TOAST_TYPE } from "@plane/ui";
+import { Button, ModalCore, EModalPosition, EModalWidth } from "@plane/ui";
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // types
 import { TEstimatePointsObject, TEstimateTypeError, TEstimateSystemKeys, IEstimateFormData } from "@plane/types";
 // hooks
@@ -73,13 +75,13 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     setEditingItemKey(point.key);
     setEditValue(point.value);
   };
-  
+
   // 편집 취소
   const cancelEditing = () => {
     setEditingItemKey(null);
     setEditValue("");
   };
-  
+
   // 편집 확인
   const confirmEditing = () => {
     if (editingItemKey !== null) {
@@ -92,20 +94,20 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
   // 에러 검증
   const validateEstimatePointError = () => {
     let hasError = false;
-    
+
     if (!estimatePointError) return hasError;
 
     Object.keys(estimatePointError).forEach((key) => {
       const currentKey = parseInt(key);
       // 메시지가 있거나 값이 빈 경우에만 에러로 처리
       if (
-        estimatePointError[currentKey]?.message || 
+        estimatePointError[currentKey]?.message ||
         estimatePointError[currentKey]?.newValue === ""
       ) {
         hasError = true;
       }
     });
-    
+
     // 모든 포인트에 값이 있는지 확인
     if (estimatePoints) {
       for (const point of estimatePoints) {
@@ -126,13 +128,13 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     if (!value.trim()) {
       errorMessage = "값을 입력해주세요";
     }
-    
+
     // 에러 처리
     const pointToUpdate = estimatePoints?.find(p => p.key === key);
     if (pointToUpdate) {
       handleEstimatePointError(key, pointToUpdate.value, value, errorMessage);
     }
-    
+
     // 값 업데이트
     const newPoints = estimatePoints ? [...estimatePoints] : [];
     const pointIndex = newPoints.findIndex(p => p.key === key);
@@ -151,21 +153,21 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     if (hours === 0 && minutes === 0) {
       minutes = 1;
     }
-    
+
     // 총 분으로 변환
     const totalMinutes = (hours * 60) + minutes;
-    
+
     // 에러 메시지 설정
     let errorMessage;
     if (totalMinutes <= 0) {
       errorMessage = "유효한 시간을 입력해주세요";
     }
-    
+
     // 에러 처리 및 값 업데이트
     const pointToUpdate = estimatePoints?.find(p => p.key === key);
     if (pointToUpdate) {
       handleEstimatePointError(key, pointToUpdate.value, String(totalMinutes), errorMessage);
-      
+
       // 값 업데이트
       const newPoints = estimatePoints ? [...estimatePoints] : [];
       const pointIndex = newPoints.findIndex(p => p.key === key);
@@ -195,7 +197,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
           return null;
         })
         .filter((p) => p !== null) as TEstimatePointsObject[];
-      
+
       // 포인트가 없으면 기본값 생성
       if (existingPoints.length === 0) {
         handleUpdatePoints([
@@ -233,7 +235,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
       // 추정 시스템 타입 설정
       setEstimateSystem(estimate.type as TEstimateSystemKeys);
       // console.log("현재 추정 시스템 타입:", estimate.type);
-      
+
       // 모달이 열릴 때 바로 편집 모드로 전환
       if (isOpen && !editMode) {
         loadCurrentEstimatePoints();
@@ -254,15 +256,15 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
   const handleSubmitEstimateUpdate = async (templateKey?: string) => {
     try {
       if (!workspaceSlug || !projectId || !estimateId) return;
-      
+
       // 사용자 지정 편집 모드에서 유효성 검사
       if (!templateKey && estimatePoints) {
         const hasEstimatePointError = validateEstimatePointError();
         if (hasEstimatePointError) return;
       }
-      
+
       setButtonLoader(true);
-      
+
       // 업데이트 호출
       if (templateKey) {
         // 템플릿 모드 - 서비스를 직접 호출
@@ -281,22 +283,22 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
           },
           estimate_points: estimatePoints
         };
-        
+
         await estimateService.updateEstimate(workspaceSlug, projectId, estimateId, payload);
       }
-      
+
       // 변경사항 반영을 위해 다시 불러오기
       await getProjectEstimates(workspaceSlug, projectId);
-      
+
       setButtonLoader(false);
-      
+
       // 성공 메시지
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: t("project_settings.estimates.toasts.updated.success.title"),
         message: t("project_settings.estimates.toasts.updated.success.message"),
       });
-      
+
       // 모달 닫기
       handleClose();
     } catch (error) {
@@ -316,25 +318,25 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
   const TimeInput = ({ value, onChange }: { value: string, onChange: (hours: number, minutes: number) => void }) => {
     // 문자열 값을 숫자로 변환
     const totalMinutes = parseInt(value) || 0;
-    
+
     // 시간과 분으로 변환
     const { hours, minutes } = convertMinutesToHoursAndMinutes(totalMinutes);
-    
+
     // 로컬 상태 - 문자열로 관리하여 빈 값도 허용
     const [hoursValue, setHoursValue] = useState(hours.toString());
     const [minutesValue, setMinutesValue] = useState(minutes.toString());
-    
+
     // 참조 생성
     const hoursInputRef = useRef<HTMLInputElement>(null);
     const minutesInputRef = useRef<HTMLInputElement>(null);
-    
+
     // 컴포넌트가 마운트되거나 value가 변경될 때 시간과 분 값 업데이트
     useEffect(() => {
       const { hours: h, minutes: m } = convertMinutesToHoursAndMinutes(totalMinutes);
       setHoursValue(h.toString());
       setMinutesValue(m.toString());
     }, [totalMinutes]);
-    
+
     // 부모에게 변경 알림 (마지막 포커스된 입력필드 정보 포함)
     const notifyParent = (h: number, m: number, lastFocused: 'hours' | 'minutes') => {
       // 둘 다 0인 경우 최소 1분 보장
@@ -342,10 +344,10 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
         m = 1;
         if (lastFocused === 'minutes') setMinutesValue('1');
       }
-      
+
       // 상위 컴포넌트에 값만 알리고 리렌더링 최소화
       onChange(h, m);
-      
+
       // 이전에 포커스된 필드에 포커스 유지
       setTimeout(() => {
         if (lastFocused === 'hours' && hoursInputRef.current) {
@@ -355,7 +357,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
         }
       }, 0);
     };
-    
+
     return (
       <div className="flex items-center space-x-2 w-full">
         <input
@@ -364,7 +366,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
           onChange={(e) => {
             const newValue = e.target.value;
             setHoursValue(newValue);
-            
+
             // 유효한 숫자인 경우에만 부모에게 알림
             const newHours = newValue === "" ? 0 : parseInt(newValue);
             if (!isNaN(newHours) && newHours >= 0) {
@@ -395,7 +397,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
           onChange={(e) => {
             const newValue = e.target.value;
             setMinutesValue(newValue);
-            
+
             // 유효한 숫자인 경우에만 부모에게 알림
             const newMinutes = newValue === "" ? 0 : parseInt(newValue);
             if (!isNaN(newMinutes) && newMinutes >= 0 && newMinutes < 60) {
@@ -427,12 +429,12 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
   // 사용자 정의 StageTwo 렌더링
   const renderStageTwo = () => {
     if (!estimatePoints) return null;
-    
+
     // 현재 추정 시스템 타입 로깅
     // console.log("렌더링 시 추정 시스템 타입:", estimateSystem, estimate?.type);
-    
+
     const isTimeEstimate = estimateSystem === "time" || estimate?.type === "time";
-    
+
     return (
       <div className="space-y-6">
         <div className="text-sm font-medium text-custom-text-200">추정값 편집</div>
@@ -445,12 +447,12 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                   <div className="flex items-center">
                     {isTimeEstimate ? (
                       <div className="border border-custom-border-200 rounded flex-grow">
-                        <TimeInput 
-                          value={editValue} 
+                        <TimeInput
+                          value={editValue}
                           onChange={(hours, minutes) => {
                             const totalMinutes = hours * 60 + minutes;
                             setEditValue(String(totalMinutes));
-                          }} 
+                          }}
                         />
                       </div>
                     ) : (
@@ -464,7 +466,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                       />
                     )}
                     <div className="flex ml-2">
-                      <button 
+                      <button
                         className="text-green-500 p-1 rounded hover:bg-custom-background-80"
                         onClick={confirmEditing}
                       >
@@ -472,7 +474,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </button>
-                      <button 
+                      <button
                         className="text-custom-text-200 p-1 rounded hover:bg-custom-background-80"
                         onClick={cancelEditing}
                       >
@@ -485,12 +487,12 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                   </div>
                 ) : (
                   <div className="flex items-center">
-                    <div 
+                    <div
                       className="flex-grow border border-custom-border-200 rounded px-3 py-1 text-sm cursor-pointer hover:bg-custom-background-80"
                       onClick={() => startEditing(point)}
                     >
-                      {isTimeEstimate ? 
-                        convertMinutesToHoursMinutesString(Number(point.value)) : 
+                      {isTimeEstimate ?
+                        convertMinutesToHoursMinutesString(Number(point.value)) :
                         point.value}
                     </div>
                   </div>
@@ -502,9 +504,9 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
             </div>
           ))}
         </div>
-        
+
         {/* 새 추정값 추가 버튼 */}
-        <button 
+        <button
           className="flex items-center text-sm text-custom-primary hover:text-custom-primary-hover transition-colors"
           onClick={() => {
             // 마지막 키 값 찾기

@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // types
 import { EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { EUserProjectRoles, TModuleFilters, TCustomField  } from "@plane/types";
+import type { TModuleFilters } from "@plane/types";
+import { EUserProjectRoles } from "@plane/types";
 // components
-import { calculateTotalFilters, calculateFilterRemovalValue, calculateFilterValue } from "@plane/utils";
+import { calculateTotalFilters } from "@plane/utils";
 import { PageHead } from "@/components/core/page-title";
 import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
 import { ModuleAppliedFiltersList, ModulesListView } from "@/components/modules";
@@ -17,7 +18,6 @@ import { ModuleAppliedFiltersList, ModulesListView } from "@/components/modules"
 import { useModuleFilter } from "@/hooks/store/use-module-filter";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 
@@ -32,8 +32,6 @@ const ProjectModulesPage = observer(() => {
   const { currentProjectFilters, currentProjectDisplayFilters, clearAllFilters, updateFilters, updateDisplayFilters } =
     useModuleFilter();
   const { allowPermissions } = useUserPermissions();
-  const { customFields } = useCustomField(projectId as string);
-
   // derived values
   const project = projectId ? getProjectById(projectId.toString()) : undefined;
   const pageTitle = project?.name ? `${project?.name} - Modules` : undefined;
@@ -43,14 +41,13 @@ const ProjectModulesPage = observer(() => {
   const handleRemoveFilter = useCallback(
     (key: keyof TModuleFilters, value: string | null) => {
       if (!projectId) return;
+      const currentValue = currentProjectFilters?.[key];
+      let newValues: string[] = Array.isArray(currentValue) ? currentValue : [];
 
-      if (!value) {
-        updateFilters(projectId.toString(), { [key]: [] });
-        return;
-      }
+      if (!value) newValues = [];
+      else newValues = newValues.filter((val) => val !== value);
 
-      const updatedValue = calculateFilterRemovalValue<TModuleFilters>(key as string, value, currentProjectFilters ?? {});
-      updateFilters(projectId.toString(), { [key]: updatedValue });
+      updateFilters(projectId.toString(), { [key]: newValues });
     },
     [currentProjectFilters, projectId, updateFilters]
   );
@@ -91,9 +88,6 @@ const ProjectModulesPage = observer(() => {
               updateDisplayFilters(projectId.toString(), val);
             }}
             alwaysAllowEditing
-            workspaceSlug={workspaceSlug as string}
-            projectId={projectId as string}
-            customFields={customFields}
           />
         )}
         <ModulesListView />

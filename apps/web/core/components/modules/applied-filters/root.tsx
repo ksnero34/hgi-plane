@@ -2,7 +2,7 @@ import React from "react";
 import { observer } from "mobx-react";
 import { X } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
-import { TModuleDisplayFilters, TModuleFilters, TCustomField } from "@plane/types";
+import type { TModuleDisplayFilters, TModuleFilters, TCustomField } from "@plane/types";
 // components
 import { Header, EHeaderVariant, Tag } from "@plane/ui";
 import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
@@ -74,7 +74,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
           // 커스텀 필드의 경우 새로운 헬퍼 함수 사용
           if (filterKey === "custom_fields" && customFields) {
             const customFieldsForRender = prepareCustomFieldFiltersForRender(value as string, customFields);
-            
+
             return customFieldsForRender.map(({ fieldId, field, fieldValues }) => (
               <Tag key={`${filterKey}-${fieldId}`}>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -85,8 +85,8 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                     editable={isEditingAllowed ?? false}
                     handleRemove={(fieldId, val) => {
                       const newValue = removeCustomFieldFilterValue(
-                        typeof appliedFilters.custom_fields === 'string' 
-                          ? appliedFilters.custom_fields 
+                        typeof appliedFilters.custom_fields === 'string'
+                          ? appliedFilters.custom_fields
                           : JSON.stringify(appliedFilters.custom_fields || {}),
                         fieldId,
                         val
@@ -102,8 +102,8 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                       className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
                       onClick={() => {
                         const newValue = removeCustomFieldFilterField(
-                          typeof appliedFilters.custom_fields === 'string' 
-                            ? appliedFilters.custom_fields 
+                          typeof appliedFilters.custom_fields === 'string'
+                            ? appliedFilters.custom_fields
                             : JSON.stringify(appliedFilters.custom_fields || {}),
                           fieldId
                         );

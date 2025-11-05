@@ -1,9 +1,10 @@
-import React, { FC, useEffect, useState } from "react";
+import type { FC } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
-// plane helpers
+// plane imports
 import { API_BASE_URL } from "@plane/constants";
 import { OAuthOptions as PlaneOAuthOptions } from "@plane/ui";
 // assets
@@ -13,12 +14,12 @@ import GitlabLogo from "/public/logos/gitlab-logo.svg";
 import GoogleLogo from "/public/logos/google-logo.svg";
 import OidcLogo from "/public/logos/oidc-logo.svg";
 // helpers
+import type { TAuthErrorInfo } from "@/helpers/authentication.helper";
 import {
   EAuthModes,
   EAuthSteps,
   EAuthenticationErrorCodes,
   EErrorAlertType,
-  TAuthErrorInfo,
   authErrorHandler,
 } from "@/helpers/authentication.helper";
 // hooks
@@ -34,13 +35,14 @@ type TAuthRoot = {
 };
 
 export const AuthRoot: FC<TAuthRoot> = observer((props) => {
+  //router
   const searchParams = useSearchParams();
   // query params
   const emailParam = searchParams.get("email");
   const invitation_id = searchParams.get("invitation_id");
   const workspaceSlug = searchParams.get("slug");
   const error_code = searchParams.get("error_code");
-  const next_path = searchParams.get("next_path") || undefined;
+  const next_path = searchParams.get("next_path");
   const { resolvedTheme } = useTheme();
   // props
   const { authMode: currentAuthMode } = props;

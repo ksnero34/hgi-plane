@@ -6,7 +6,11 @@ import type { NodeViewProps as TNodeViewProps } from "@tiptap/react";
 // extension types
 import type { TTextAlign } from "@/extensions";
 // plane editor imports
-import type { IEditorPropsExtended, TExtendedEditorCommands } from "@/plane-editor/types/editor-extended";
+import type {
+  IEditorPropsExtended,
+  TExtendedEditorCommands,
+  ICollaborativeDocumentEditorPropsExtended,
+} from "@/plane-editor/types/editor-extended";
 // types
 import type {
   IMarking,
@@ -119,6 +123,7 @@ export type EditorRefApi = {
   getMarkDown: () => string;
   getSelectedText: () => string | null;
   insertText: (contentHTML: string, insertOnNextLine?: boolean) => void;
+  isAnyDropbarOpen: () => boolean;
   isEditorReadyToDiscard: () => boolean;
   isMenuItemActive: <T extends TEditorCommands>(props: TCommandWithPropsWithItemKey<T>) => boolean;
   listenToRealTimeUpdate: () => TDocumentEventEmitter | undefined;
@@ -180,6 +185,7 @@ export type ICollaborativeDocumentEditorProps = Omit<IEditorProps, "initialValue
   realtimeConfig: TRealtimeConfig;
   serverHandler?: TServerHandler;
   user: TUserDetails;
+  extendedDocumentEditorProps?: ICollaborativeDocumentEditorPropsExtended;
 };
 
 export type IDocumentEditorProps = Omit<IEditorProps, "initialValue" | "onEnterKeyPress" | "value"> & {

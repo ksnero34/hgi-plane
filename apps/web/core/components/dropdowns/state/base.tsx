@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
@@ -9,13 +10,14 @@ import { Combobox } from "@headlessui/react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { StateGroupIcon } from "@plane/propel/icons";
-import { IState } from "@plane/types";
-import { ComboDropDown, Spinner, TOAST_TYPE, setToast } from "@plane/ui";
+import type { IState } from "@plane/types";
+import { ComboDropDown, Spinner } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { cn } from "@plane/utils";
 // components
 import { DropdownButton } from "@/components/dropdowns/buttons";
 import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
-import { TDropdownProps } from "@/components/dropdowns/types";
+import type { TDropdownProps } from "@/components/dropdowns/types";
 import { WorkflowReviewerModal } from "@/components/project/settings/workflow-reviewer-modal";
 // hooks
 import { useDropdown } from "@/hooks/use-dropdown";
@@ -106,6 +108,8 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     fetchWorkflowTransitions,
     validateTransition,
   } = useWorkflow();
+
+  // popper-js init
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: placement ?? "bottom-start",
     modifiers: [
@@ -348,6 +352,7 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
         </button>
       ) : (
         <button
+          tabIndex={tabIndex}
           ref={setReferenceElement}
           type="button"
           className={cn(
@@ -360,7 +365,6 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
           )}
           onClick={handleOnClick}
           disabled={disabled}
-          tabIndex={tabIndex}
         >
           <DropdownButton
             className={buttonClassName}

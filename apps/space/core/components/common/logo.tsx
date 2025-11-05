@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from "react";
+import type { FC } from "react";
 // plane imports
 import { TLogoProps } from "@plane/types";
 import { LUCIDE_ICONS_LIST } from "@plane/ui";

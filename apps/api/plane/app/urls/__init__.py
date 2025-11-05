@@ -20,6 +20,7 @@ from .instance import urlpatterns as instance_urls
 from .timezone import urlpatterns as timezone_urls
 from .workflow import urlpatterns as workflow_urls
 from .notification_template import urlpatterns as notification_template_urls
+from .exporter import urlpatterns as exporter_urls
 
 urlpatterns = [
     *analytic_urls,
@@ -44,4 +45,5 @@ urlpatterns = [
     *timezone_urls,
     *workflow_urls,
     *notification_template_urls,
+    *exporter_urls,
 ]

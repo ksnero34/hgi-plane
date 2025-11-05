@@ -1,4 +1,4 @@
-import sortBy from "lodash/sortBy";
+import { sortBy } from "lodash-es";
 // plane imports
 import { TPage, TPageFilterProps, TPageFiltersSortBy, TPageFiltersSortKey, TPageNavigationTabs } from "@plane/types";
 // local imports
@@ -112,4 +112,3 @@ export const getPageName = (name: string | undefined) => {
   if (!name || name.trim() === "") return "Untitled";
   return name;
 };
-

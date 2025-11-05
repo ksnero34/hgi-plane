@@ -1,7 +1,7 @@
 import { observable, action, makeObservable, runInAction } from "mobx";
 import { createContext, useContext } from "react";
 // types
-import { IInstance, IInstanceConfig,IFileSettings } from "@plane/types";
+import type { IInstance, IInstanceConfig,IFileSettings } from "@plane/types";
 // services
 import { InstanceService } from "@/services/instance.service";
 

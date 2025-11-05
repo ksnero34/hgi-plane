@@ -7,13 +7,13 @@ import Link from "next/link";
 import useSWR, { mutate } from "swr";
 import { CheckCircle2 } from "lucide-react";
 // plane imports
-import { MEMBER_TRACKER_EVENTS, MEMBER_TRACKER_ELEMENTS, GROUP_WORKSPACE_TRACKER_EVENT } from "@plane/constants";
+import { ROLE, MEMBER_TRACKER_EVENTS, MEMBER_TRACKER_ELEMENTS, GROUP_WORKSPACE_TRACKER_EVENT } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // types
+import { Button } from "@plane/propel/button";
 import { PlaneLogo } from "@plane/propel/icons";
-import { EUserPermissions, type IWorkspaceMemberInvitation, type TUserPermissions } from "@plane/types";
-// ui
-import { Button, TOAST_TYPE, setToast } from "@plane/ui";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { IWorkspaceMemberInvitation } from "@plane/types";
 import { truncateText } from "@plane/utils";
 // components
 import { EmptyState } from "@/components/common/empty-state";
@@ -33,14 +33,6 @@ import { WorkspaceService } from "@/plane-web/services";
 import emptyInvitation from "@/public/empty-state/invitation.svg";
 
 const workspaceService = new WorkspaceService();
-
-const INVITATION_ROLE_LABELS: Record<TUserPermissions, string> = {
-  [EUserPermissions.ADMIN]: "Admin",
-  [EUserPermissions.MEMBER]: "Member",
-  [EUserPermissions.GUEST]: "Guest",
-  [EUserPermissions.VIEWER]: "Viewer",
-  [EUserPermissions.RESTRICTED]: "Restricted",
-};
 
 const UserInvitationsPage = observer(() => {
   // states
@@ -178,9 +170,7 @@ const UserInvitationsPage = observer(() => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-medium">{truncateText(invitation.workspace.name, 30)}</div>
-                          <p className="text-xs text-custom-text-200">
-                            {INVITATION_ROLE_LABELS[invitation.role] ?? "Member"}
-                          </p>
+                          <p className="text-xs text-custom-text-200">{ROLE[invitation.role]}</p>
                         </div>
                         <span
                           className={`flex-shrink-0 ${isSelected ? "text-custom-primary-100" : "text-custom-text-200"}`}

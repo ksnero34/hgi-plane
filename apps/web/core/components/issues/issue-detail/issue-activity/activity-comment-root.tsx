@@ -1,13 +1,13 @@
-import { FC, useState, useEffect } from "react";
+import type { FC } from "react";
 import { observer } from "mobx-react";
 // plane imports
-import { E_SORT_ORDER, TActivityFilters, filterActivityOnSelectedFilters } from "@plane/constants";
-import { TCommentsOperations } from "@plane/types";
+import type { E_SORT_ORDER, TActivityFilters } from "@plane/constants";
+import { EActivityFilterType, filterActivityOnSelectedFilters } from "@plane/constants";
+import type { TCommentsOperations } from "@plane/types";
 // components
 import { CommentCard } from "@/components/comments/card/root";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web components
 import { IssueAdditionalPropertiesActivity } from "@/plane-web/components/issues/issue-details/issue-properties-activity";
 import { IssueActivityWorklog } from "@/plane-web/components/issues/worklog/activity/root";
@@ -39,9 +39,7 @@ export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer(
     disabled,
     sortOrder,
   } = props;
-
-  // hooks
-  const { customFields } = useCustomField(projectId);
+  // store hooks
   const {
     activity: { getActivityAndCommentsByIssueId },
     comment: { getCommentById },
@@ -54,6 +52,13 @@ export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer(
   if (activityAndComments.length <= 0) return null;
 
   const filteredActivityAndComments = filterActivityOnSelectedFilters(activityAndComments, selectedFilters);
+
+  const BASE_ACTIVITY_FILTER_TYPES = [
+    EActivityFilterType.ACTIVITY,
+    EActivityFilterType.STATE,
+    EActivityFilterType.ASSIGNEE,
+    EActivityFilterType.DEFAULT,
+  ];
 
   return (
     <div>
@@ -71,7 +76,7 @@ export const IssueActivityCommentRoot: FC<TIssueActivityCommentRoot> = observer(
             disabled={disabled}
             projectId={projectId}
           />
-        ) : activityComment.activity_type === "ACTIVITY" ? (
+        ) : BASE_ACTIVITY_FILTER_TYPES.includes(activityComment.activity_type as EActivityFilterType) ? (
           <IssueActivityItem
             activityId={activityComment.id}
             ends={index === 0 ? "top" : index === filteredActivityAndComments.length - 1 ? "bottom" : undefined}

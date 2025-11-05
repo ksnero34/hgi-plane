@@ -1,15 +1,21 @@
 "use client";
 
-import { FC, useEffect, useMemo, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { useTheme } from "next-themes";
 import { Eye, EyeOff } from "lucide-react";
 // plane internal packages
-import { API_BASE_URL, EAdminAuthErrorCodes, TAdminAuthErrorInfo } from "@plane/constants";
+import type { EAdminAuthErrorCodes, TAdminAuthErrorInfo } from "@plane/constants";
+import { API_BASE_URL } from "@plane/constants";
+import { Button } from "@plane/propel/button";
 import { AuthService } from "@plane/services";
-import { Button, Input, Spinner } from "@plane/ui";
+import { Input, Spinner } from "@plane/ui";
 // components
 import { Banner } from "@/components/common/banner";
-import { OAuthOptions } from "@/components/account/oauth/oauth-options";
+import { useInstance } from "@/hooks/store";
+import OIDCLogo from "@/public/logos/oidc-logo.svg";
 // local components
 import { FormHeader } from "../../../core/components/instance/form-header";
 import { AuthBanner } from "./auth-banner";
@@ -50,12 +56,17 @@ export const InstanceSignInForm: FC = () => {
   const emailParam = searchParams.get("email") || undefined;
   const errorCode = searchParams.get("error_code") || undefined;
   const errorMessage = searchParams.get("error_message") || undefined;
+  const nextPath = searchParams.get("next_path") || undefined;
   // state
   const [showPassword, setShowPassword] = useState(false);
   const [csrfToken, setCsrfToken] = useState<string | undefined>(undefined);
   const [formData, setFormData] = useState<TFormData>(defaultFromData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorInfo, setErrorInfo] = useState<TAdminAuthErrorInfo | undefined>(undefined);
+  // store
+  const { config } = useInstance();
+  // theme
+  const { resolvedTheme } = useTheme();
 
   const handleFormChange = (key: keyof TFormData, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -102,6 +113,13 @@ export const InstanceSignInForm: FC = () => {
       }
     }
   }, [errorCode]);
+
+  const isOIDCEnabled = Boolean(config?.is_oidc_enabled);
+
+  const handleOIDCSignIn = useCallback(() => {
+    const nextPathQuery = nextPath ? `?next_path=${encodeURIComponent(nextPath)}` : "";
+    window.location.assign(`${API_BASE_URL}/api/instances/admins/oidc/${nextPathQuery}`);
+  }, [nextPath]);
 
   return (
     <>
@@ -187,7 +205,27 @@ export const InstanceSignInForm: FC = () => {
               </Button>
             </div>
           </form>
-          <OAuthOptions />
+          {isOIDCEnabled && (
+            <>
+              <div className="mt-4 flex items-center">
+                <hr className="w-full border-onboarding-border-100" />
+                <p className="mx-3 flex-shrink-0 text-center text-sm text-onboarding-text-400">or</p>
+                <hr className="w-full border-onboarding-border-100" />
+              </div>
+              <div className="mt-7 grid gap-4 overflow-hidden">
+                <button
+                  type="button"
+                  className={`flex h-[42px] w-full items-center justify-center gap-2 rounded border px-2 text-sm font-medium text-custom-text-100 duration-300 hover:bg-onboarding-background-300 ${
+                    resolvedTheme === "dark" ? "border-[#43484F] bg-[#2F3135]" : "border-[#D9E4FF]"
+                  }`}
+                  onClick={handleOIDCSignIn}
+                >
+                  <Image src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />
+                  한화손해보험 포털ID로 로그인하기
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

@@ -1,30 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { useSearchParams } from "next/navigation";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import type { TDocumentPayload, TPage, TPageVersion, TWebhookConnectionQueryParams } from "@plane/types";
 // hooks
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePageFallback } from "@/hooks/use-page-fallback";
-import { useQueryParams } from "@/hooks/use-query-params";
 // plane web import
 import { PageModals } from "@/plane-web/components/pages";
 import { usePagesPaneExtensions, useExtendedEditorProps } from "@/plane-web/hooks/pages";
-import { EPageStoreType } from "@/plane-web/hooks/store";
-import type { TPageNavigationPaneTab } from "@/plane-web/components/pages/navigation-pane";
+import type { EPageStoreType } from "@/plane-web/hooks/store";
 // store
 import type { TPageInstance } from "@/store/pages/base-page";
 // local imports
-import {
-  PAGE_NAVIGATION_PANE_TAB_KEYS,
-  PAGE_NAVIGATION_PANE_TABS_QUERY_PARAM,
-  PAGE_NAVIGATION_PANE_VERSION_QUERY_PARAM,
-  PageNavigationPaneRoot,
-} from "../navigation-pane";
+import { PageNavigationPaneRoot } from "../navigation-pane";
 import { PageVersionsOverlay } from "../version";
 import { PagesVersionEditor } from "../version/editor";
-import { PageEditorBody, type TEditorBodyConfig, type TEditorBodyHandlers } from "./editor-body";
+import { PageEditorBody } from "./editor-body";
+import type { TEditorBodyConfig, TEditorBodyHandlers } from "./editor-body";
 import { PageEditorToolbarRoot } from "./toolbar";
 
 export type TPageRootHandlers = {
@@ -33,7 +26,6 @@ export type TPageRootHandlers = {
   fetchDescriptionBinary: () => Promise<any>;
   fetchVersionDetails: (pageId: string, versionId: string) => Promise<TPageVersion | undefined>;
   restoreVersion: (pageId: string, versionId: string) => Promise<void>;
-  getRedirectionLink: (pageId: string) => string;
   updateDescription: (document: TDocumentPayload) => Promise<void>;
 } & TEditorBodyHandlers;
 
@@ -58,8 +50,6 @@ export const PageRoot = observer((props: TPageRootProps) => {
   const editorRef = useRef<EditorRefApi>(null);
   // router
   const router = useAppRouter();
-  // search params
-  const searchParams = useSearchParams();
   // derived values
   const {
     isContentEditable,
@@ -72,7 +62,6 @@ export const PageRoot = observer((props: TPageRootProps) => {
     hasConnectionFailed,
     updatePageDescription: handlers.updateDescription,
   });
-  const { updateQueryParams } = useQueryParams();
 
   const handleEditorReady = useCallback(
     (status: boolean) => {
@@ -94,13 +83,13 @@ export const PageRoot = observer((props: TPageRootProps) => {
   const {
     editorExtensionHandlers,
     navigationPaneExtensions,
-    handleOpenNavigationPane: openNavigationPaneFromHook,
+    handleOpenNavigationPane,
+    handleCloseNavigationPane,
     isNavigationPaneOpen,
-  } =
-    usePagesPaneExtensions({
-      page,
-      editorRef,
-    });
+  } = usePagesPaneExtensions({
+    page,
+    editorRef,
+  });
 
   // Get extended editor extensions configuration
   const extendedEditorProps = useExtendedEditorProps({
@@ -129,23 +118,6 @@ export const PageRoot = observer((props: TPageRootProps) => {
     [setEditorRef]
   );
 
-  const navigationPaneQueryParam = searchParams.get(
-    PAGE_NAVIGATION_PANE_TABS_QUERY_PARAM
-  ) as TPageNavigationPaneTab | null;
-  const isValidNavigationPaneTab =
-    !!navigationPaneQueryParam && PAGE_NAVIGATION_PANE_TAB_KEYS.includes(navigationPaneQueryParam);
-
-  const handleOpenNavigationPane = useCallback(() => {
-    openNavigationPaneFromHook();
-  }, [openNavigationPaneFromHook]);
-
-  const handleCloseNavigationPane = useCallback(() => {
-    const updatedRoute = updateQueryParams({
-      paramsToRemove: [PAGE_NAVIGATION_PANE_TABS_QUERY_PARAM, PAGE_NAVIGATION_PANE_VERSION_QUERY_PARAM],
-    });
-    router.push(updatedRoute);
-  }, [router, updateQueryParams]);
-
   return (
     <div className="relative size-full overflow-hidden flex transition-all duration-300 ease-in-out">
       <div className="size-full flex flex-col overflow-hidden">
@@ -159,7 +131,7 @@ export const PageRoot = observer((props: TPageRootProps) => {
         />
         <PageEditorToolbarRoot
           handleOpenNavigationPane={handleOpenNavigationPane}
-          isNavigationPaneOpen={isValidNavigationPaneTab}
+          isNavigationPaneOpen={isNavigationPaneOpen}
           page={page}
         />
         <PageEditorBody
@@ -170,7 +142,7 @@ export const PageRoot = observer((props: TPageRootProps) => {
           handleEditorReady={handleEditorReady}
           handleOpenNavigationPane={handleOpenNavigationPane}
           handlers={handlers}
-          isNavigationPaneOpen={isValidNavigationPaneTab}
+          isNavigationPaneOpen={isNavigationPaneOpen}
           page={page}
           projectId={projectId}
           storeType={storeType}
@@ -182,7 +154,7 @@ export const PageRoot = observer((props: TPageRootProps) => {
       <PageNavigationPaneRoot
         storeType={storeType}
         handleClose={handleCloseNavigationPane}
-        isNavigationPaneOpen={isValidNavigationPaneTab}
+        isNavigationPaneOpen={isNavigationPaneOpen}
         page={page}
         versionHistory={{
           fetchAllVersions: handlers.fetchAllVersions,

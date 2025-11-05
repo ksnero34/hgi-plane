@@ -1,4 +1,5 @@
-import { FC, useCallback, useRef, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
@@ -13,7 +14,6 @@ import { ArchiveTabsList } from "@/components/archives";
 import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 // hooks
 import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
-import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // local imports
 import { CycleFiltersSelection } from "../dropdowns";
 
@@ -35,9 +35,19 @@ export const ArchivedCyclesHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
+      const newValues = currentProjectArchivedFilters?.[key] ?? [];
 
-      const updatedValue = calculateFilterValue(key as any, value, currentProjectArchivedFilters as any);
-      updateFilters(projectId.toString(), { [key]: updatedValue } as TCycleFilters);
+      if (Array.isArray(value))
+        value.forEach((val) => {
+          if (!newValues.includes(val)) newValues.push(val);
+          else newValues.splice(newValues.indexOf(val), 1);
+        });
+      else {
+        if (currentProjectArchivedFilters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        else newValues.push(value);
+      }
+
+      updateFilters(projectId.toString(), { [key]: newValues }, "archived");
     },
     [currentProjectArchivedFilters, projectId, updateFilters]
   );
@@ -105,7 +115,7 @@ export const ArchivedCyclesHeader: FC = observer(() => {
         </div>
         <FiltersDropdown
           icon={<ListFilter className="h-3 w-3" />}
-          title="필터"
+          title="Filters"
           placement="bottom-end"
           isFiltersApplied={isFiltersApplied}
         >

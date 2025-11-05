@@ -1,7 +1,8 @@
 import { differenceInDays, format, formatDistanceToNow, isAfter, isEqual, isValid, parseISO } from "date-fns";
+import { isNumber } from "lodash-es";
 import { ko } from "date-fns/locale";
-import isNumber from "lodash/isNumber";
 
+// Format Date Helpers
 /**
  * Returns whether a given date falls within the provided start and end bounds.
  */

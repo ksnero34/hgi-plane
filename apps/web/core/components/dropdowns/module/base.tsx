@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
@@ -13,7 +14,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // local imports
 import { DropdownButton } from "../buttons";
 import { BUTTON_VARIANTS_WITHOUT_TEXT } from "../constants";
-import { TDropdownProps } from "../types";
+import type { TDropdownProps } from "../types";
 import { ModuleButtonContent } from "./button-content";
 import { ModuleOptions } from "./module-options";
 

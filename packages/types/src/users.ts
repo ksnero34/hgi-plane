@@ -15,7 +15,7 @@ export enum EStartOfTheWeek {
   SATURDAY = 6,
 }
 
-export type TLoginMediums = "email" | "magic-code" | "github" | "gitlab" | "google" | "oidc";
+export type TLoginMediums = "email" | "magic-code" | "github" | "gitlab" | "google";
 
 export interface IUserLite {
   avatar_url: string;

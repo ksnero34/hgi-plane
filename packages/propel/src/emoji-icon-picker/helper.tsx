@@ -41,7 +41,7 @@ export type TCustomEmojiPicker = {
   defaultOpen?: TEmojiIconPickerTypes;
   disabled?: boolean;
   dropdownClassName?: string;
-  label: ReactNode;
+  label: React.ReactNode;
   onChange: (value: TChangeHandlerProps) => void;
   placement?: TPlacement;
   searchDisabled?: boolean;

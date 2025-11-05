@@ -17,12 +17,8 @@ class Command(BaseCommand):
             s3_client = boto3.client(
                 "s3",
                 endpoint_url=os.environ.get("AWS_S3_ENDPOINT_URL"),  # MinIO endpoint
-                aws_access_key_id=os.environ.get(
-                    "AWS_ACCESS_KEY_ID"
-                ),  # MinIO access key
-                aws_secret_access_key=os.environ.get(
-                    "AWS_SECRET_ACCESS_KEY"
-                ),  # MinIO secret key
+                aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),  # MinIO access key
+                aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),  # MinIO secret key
                 region_name=os.environ.get("AWS_REGION"),  # MinIO region
                 config=boto3.session.Config(signature_version="s3v4"),
             )
@@ -43,11 +39,7 @@ class Command(BaseCommand):
             bucket_name = os.environ.get("AWS_S3_BUCKET_NAME")
             if error_code == 404:
                 # Bucket does not exist, create it
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"Bucket '{bucket_name}' does not exist. Creating bucket..."
-                    )
-                )
+                self.stdout.write(self.style.WARNING(f"Bucket '{bucket_name}' does not exist. Creating bucket..."))
                 try:
                     s3_client.create_bucket(Bucket=bucket_name)
                     # Set bucket policy to private

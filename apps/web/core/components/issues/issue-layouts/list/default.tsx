@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 // plane constants
 import { ALL_ISSUES } from "@plane/constants";
 // types
-import {
+import type {
   GroupByColumnTypes,
   TGroupedIssues,
   TIssue,
@@ -28,9 +28,10 @@ import { IssueBulkOperationsRoot } from "@/plane-web/components/issues/bulk-oper
 // plane web hooks
 import { useBulkOperationStatus } from "@/plane-web/hooks/use-bulk-operation-status";
 // utils
-import { getGroupByColumns, isWorkspaceLevel, GroupDropLocation, isSubGrouped } from "../utils";
+import type { GroupDropLocation } from "../utils";
+import { getGroupByColumns, isWorkspaceLevel, isSubGrouped } from "../utils";
 import { ListGroup } from "./list-group";
-import { TRenderQuickActions } from "./list-view-types";
+import type { TRenderQuickActions } from "./list-view-types";
 
 export interface IList {
   groupedIssueIds: TGroupedIssues;

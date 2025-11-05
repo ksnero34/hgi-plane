@@ -22,20 +22,9 @@ def project_invitation(email, project_id, token, current_site, invitor):
     try:
         user = User.objects.get(email=invitor)
         project = Project.objects.get(pk=project_id)
-        project_member_invite = ProjectMemberInvite.objects.get(
-            token=token, email=email
-        )
+        project_member_invite = ProjectMemberInvite.objects.get(token=token, email=email)
 
-        # Java 알림 API 호출
-        java_notification_data = {
-            "user_id": email.split('@')[0],  # 이메일에서 도메인을 제외한 사용자 아이디
-            "title": "이슈트래커 - Plane 프로젝트 초대",
-            "message": f"{user.first_name or user.display_name or user.email}님이 {project.name} 프로젝트로 초대했습니다.",
-            "url": f"{current_site}/project-invitations/?invitation_id={project_member_invite.id}&email={email}&slug={project.workspace.slug}&project_id={str(project_id)}"
-        }
-        send_java_notification.delay(java_notification_data)
-
-        relativelink = f"/project-invitations/?invitation_id={project_member_invite.id}&email={email}&slug={project.workspace.slug}&project_id={str(project_id)}"
+        relativelink = f"/project-invitations/?invitation_id={project_member_invite.id}&email={email}&slug={project.workspace.slug}&project_id={str(project_id)}"  # noqa: E501
         abs_url = current_site + relativelink
 
         subject = f"{user.first_name or user.display_name or user.email} invited you to join {project.name} on Plane"
@@ -47,9 +36,7 @@ def project_invitation(email, project_id, token, current_site, invitor):
             "invitation_url": abs_url,
         }
 
-        html_content = render_to_string(
-            "emails/invitations/project_invitation.html", context
-        )
+        html_content = render_to_string("emails/invitations/project_invitation.html", context)
 
         text_content = strip_tags(html_content)
 

@@ -6,7 +6,7 @@ import { ListFilter, Search, X } from "lucide-react";
 import { useOutsideClickDetector } from "@plane/hooks";
 // types
 import { useTranslation } from "@plane/i18n";
-import { TCycleFilters } from "@plane/types";
+import type { TCycleFilters } from "@plane/types";
 import { cn, calculateTotalFilters } from "@plane/utils";
 // components
 import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
@@ -14,7 +14,6 @@ import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { useCycleFilter } from "@/hooks/store/use-cycle-filter";
 // local imports
 import { CycleFiltersSelection } from "./dropdowns";
-import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 
 type Props = {
   projectId: string;
@@ -37,9 +36,19 @@ export const CyclesViewHeader: React.FC<Props> = observer((props) => {
   const handleFilters = useCallback(
     (key: keyof TCycleFilters, value: string | string[]) => {
       if (!projectId) return;
+      const newValues = currentProjectFilters?.[key] ?? [];
 
-      const updatedValue = calculateFilterValue(key as any, value, currentProjectFilters as any);
-      updateFilters(projectId, { [key]: updatedValue });
+      if (Array.isArray(value))
+        value.forEach((val) => {
+          if (!newValues.includes(val)) newValues.push(val);
+          else newValues.splice(newValues.indexOf(val), 1);
+        });
+      else {
+        if (currentProjectFilters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        else newValues.push(value);
+      }
+
+      updateFilters(projectId, { [key]: newValues });
     },
     [currentProjectFilters, projectId, updateFilters]
   );

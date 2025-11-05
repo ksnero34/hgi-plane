@@ -1,6 +1,7 @@
 "use client";
 
-import React, { FC, useCallback, useEffect, useRef, useState } from "react";
+import type { FC } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { ListFilter, Search, X } from "lucide-react";
@@ -10,7 +11,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 // types
 import { useTranslation } from "@plane/i18n";
 import { Tooltip } from "@plane/propel/tooltip";
-import { TModuleFilters } from "@plane/types";
+import type { TModuleFilters } from "@plane/types";
 // ui
 import { cn, calculateTotalFilters } from "@plane/utils";
 // plane utils
@@ -19,7 +20,6 @@ import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 import { ModuleFiltersSelection, ModuleOrderByDropdown } from "@/components/modules/dropdowns";
 // constants
 // helpers
-import { calculateFilterValue , calculateFilterRemovalValue } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useModuleFilter } from "@/hooks/store/use-module-filter";
@@ -55,9 +55,19 @@ export const ModuleViewHeader: FC = observer(() => {
   const handleFilters = useCallback(
     (key: keyof TModuleFilters, value: string | string[]) => {
       if (!projectId) return;
+      const newValues = filters?.[key] ?? [];
 
-      const updatedValue = calculateFilterValue(key as any, value, filters as any);
-      updateFilters(projectId.toString(), { [key]: updatedValue });
+      if (Array.isArray(value))
+        value.forEach((val) => {
+          if (!newValues.includes(val)) newValues.push(val);
+          else newValues.splice(newValues.indexOf(val), 1);
+        });
+      else {
+        if (filters?.[key]?.includes(value)) newValues.splice(newValues.indexOf(value), 1);
+        else newValues.push(value);
+      }
+
+      updateFilters(projectId.toString(), { [key]: newValues });
     },
     [filters, projectId, updateFilters]
   );
@@ -141,7 +151,7 @@ export const ModuleViewHeader: FC = observer(() => {
       />
       <FiltersDropdown
         icon={<ListFilter className="h-3 w-3" />}
-        title="필터"
+        title="Filters"
         placement="bottom-end"
         isFiltersApplied={isFiltersApplied}
       >

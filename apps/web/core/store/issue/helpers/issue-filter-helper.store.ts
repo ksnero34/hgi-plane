@@ -1,12 +1,12 @@
-import isEmpty from "lodash/isEmpty";
+import { isEmpty } from "lodash-es";
 // plane constants
+import type { EIssueFilterType } from "@plane/constants";
 import {
   EIssueGroupByToServerOptions,
   EServerGroupByToFilterOptions,
-  EIssueFilterType,
   ENABLE_ISSUE_DEPENDENCIES,
 } from "@plane/constants";
-import {
+import type {
   EIssuesStoreType,
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
@@ -17,8 +17,9 @@ import {
   TIssueKanbanFilters,
   TIssueParams,
   TStaticViewTypes,
-  EIssueLayoutTypes,
+  TWorkItemFilterExpression,
 } from "@plane/types";
+import { EIssueLayoutTypes } from "@plane/types";
 // helpers
 import { getComputedDisplayFilters, getComputedDisplayProperties } from "@plane/utils";
 // lib
@@ -43,11 +44,15 @@ export interface IBaseIssueFilterStore {
 export interface IIssueFilterHelperStore {
   computedIssueFilters(filters: IIssueFilters): IIssueFilters;
   computedFilteredParams(
-    filters: IIssueFilterOptions,
-    displayFilters: IIssueDisplayFilterOptions,
-    filteredParams: TIssueParams[]
+    richFilters: TWorkItemFilterExpression,
+    displayFilters: IIssueDisplayFilterOptions | undefined,
+    acceptableParamsByLayout: TIssueParams[]
   ): Partial<Record<TIssueParams, string | boolean>>;
   computedFilters(filters: IIssueFilterOptions): IIssueFilterOptions;
+  getFilterConditionBasedOnViews: (
+    currentUserId: string | undefined,
+    type: TStaticViewTypes
+  ) => Partial<Record<TIssueParams, string>> | undefined;
   computedDisplayFilters(
     displayFilters: IIssueDisplayFilterOptions,
     defaultValues?: IIssueDisplayFilterOptions
@@ -64,7 +69,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
    * @returns {IIssueFilters}
    */
   computedIssueFilters = (filters: IIssueFilters): IIssueFilters => ({
-    filters: isEmpty(filters?.filters) ? undefined : filters?.filters,
+    richFilters: isEmpty(filters?.richFilters) ? {} : filters?.richFilters,
     displayFilters: isEmpty(filters?.displayFilters) ? undefined : filters?.displayFilters,
     displayProperties: isEmpty(filters?.displayProperties) ? undefined : filters?.displayProperties,
     kanbanFilters: isEmpty(filters?.kanbanFilters) ? undefined : filters?.kanbanFilters,
@@ -72,44 +77,22 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
 
   /**
    * @description This method is used to convert the filters array params to string params
-   * @param {IIssueFilterOptions} filters
+   * @param {TWorkItemFilterExpression} richFilters
    * @param {IIssueDisplayFilterOptions} displayFilters
    * @param {string[]} acceptableParamsByLayout
    * @returns {Partial<Record<TIssueParams, string | boolean>>}
    */
   computedFilteredParams = (
-    filters: IIssueFilterOptions,
-    displayFilters: IIssueDisplayFilterOptions,
+    richFilters: TWorkItemFilterExpression,
+    displayFilters: IIssueDisplayFilterOptions | undefined,
     acceptableParamsByLayout: TIssueParams[]
-  ) => {
-    const computedFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string | { [field_id: string]: string[]; }>> = {
-      // issue filters
-      priority: filters?.priority || undefined,
-      state_group: filters?.state_group || undefined,
-      state: filters?.state || undefined,
-      assignees: filters?.assignees || undefined,
-      mentions: filters?.mentions || undefined,
-      created_by: filters?.created_by || undefined,
-      labels: filters?.labels || undefined,
-      cycle: filters?.cycle || undefined,
-      module: filters?.module || undefined,
-      start_date: filters?.start_date || undefined,
-      target_date: filters?.target_date || undefined,
-      project: filters?.project || undefined,
-      team_project: filters?.team_project || undefined,
-      parent_id: filters?.parent_id || undefined,
-      subscriber: filters?.subscriber || undefined,
-      issue_type: filters?.issue_type || undefined,
-      custom_fields: filters?.custom_fields || undefined,
-      search: filters?.search || undefined,
-      name: filters?.name || undefined,
-      // display filters
+  ): Partial<Record<TIssueParams, string | boolean>> => {
+    const computedDisplayFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
       group_by: displayFilters?.group_by ? EIssueGroupByToServerOptions[displayFilters.group_by] : undefined,
       sub_group_by: displayFilters?.sub_group_by
         ? EIssueGroupByToServerOptions[displayFilters.sub_group_by]
         : undefined,
       order_by: displayFilters?.order_by || undefined,
-      type: displayFilters?.type || undefined,
       sub_issue: displayFilters?.sub_issue ?? true,
       my_issues_only: displayFilters?.my_issues_only ?? false,
     };
@@ -120,41 +103,41 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     if (filters?.target_date && Array.isArray(filters.target_date)) {
       const processedDates = filters.target_date.map(dateFilter => {
         const [duration, filterType, offset] = dateFilter.split(";");
-        
+
         if (filterType === "within" && offset === "fromnow") {
           const now = new Date();
           now.setHours(0, 0, 0, 0);
-          
+
           const [amount, unit] = duration.split("_");
           const futureDate = new Date(now);
-          
+
           if (unit === "weeks") {
             futureDate.setDate(futureDate.getDate() + parseInt(amount) * 7);
           } else if (unit === "days") {
             futureDate.setDate(futureDate.getDate() + parseInt(amount));
           }
-          
+
           return `${futureDate.toISOString().split('T')[0]};after;fromnow`;
         }
-        
+
         return dateFilter;
       });
-      
+
       computedFilters.target_date = processedDates;
     }
 
     const issueFiltersParams: Partial<Record<TIssueParams, boolean | string>> = {};
-    Object.keys(computedFilters).forEach((key) => {
+    Object.keys(computedDisplayFilters).forEach((key) => {
       const _key = key as TIssueParams;
-      const _value: string | boolean | string[] | { [field_id: string]: string[]; } | undefined = computedFilters[_key];
+      const _value: string | boolean | string[] | undefined = computedDisplayFilters[_key];
       const nonEmptyArrayValue = Array.isArray(_value) && _value.length === 0 ? undefined : _value;
-      
+
       // console.log(`Processing filter ${_key}:`, {
       //   value: _value,
       //   nonEmptyArrayValue,
       //   isAcceptable: acceptableParamsByLayout.includes(_key)
       // });
-      
+
       if (nonEmptyArrayValue != undefined && acceptableParamsByLayout.includes(_key)) {
         // custom_fields는 특별한 처리가 필요 (객체를 JSON 문자열로 변환)
         if (_key === "custom_fields" && typeof nonEmptyArrayValue === "object" && !Array.isArray(nonEmptyArrayValue)) {
@@ -167,9 +150,12 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       }
     });
 
+    // work item filters
+    if (richFilters) issueFiltersParams.filters = JSON.stringify(richFilters);
+
     if (displayFilters?.layout) issueFiltersParams.layout = displayFilters?.layout;
 
-    if (ENABLE_ISSUE_DEPENDENCIES && displayFilters.layout === EIssueLayoutTypes.GANTT)
+    if (ENABLE_ISSUE_DEPENDENCIES && displayFilters?.layout === EIssueLayoutTypes.GANTT)
       issueFiltersParams["expand"] = "issue_relation,issue_related";
 
     return issueFiltersParams;
@@ -203,35 +189,29 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   });
 
   /**
-   * This PR is to get the filters of the fixed global views
-   * @param currentUserId current logged in user id
-   * @param type fixed view type
-   * @returns filterOptions based on views
+   * @description This method is used to get the filter conditions based on the views
+   * @param currentUserId
+   * @param type
+   * @returns
    */
-  getComputedFiltersBasedOnViews = (currentUserId: string | undefined, type: TStaticViewTypes) => {
-    const noFilters = this.computedFilters({});
-
-    if (!currentUserId) return noFilters;
-
+  getFilterConditionBasedOnViews: IIssueFilterHelperStore["getFilterConditionBasedOnViews"] = (currentUserId, type) => {
+    if (!currentUserId) return undefined;
     switch (type) {
       case "assigned":
         return {
-          ...noFilters,
-          assignees: [currentUserId],
+          assignees: currentUserId,
         };
       case "created":
         return {
-          ...noFilters,
-          created_by: [currentUserId],
+          created_by: currentUserId,
         };
       case "subscribed":
         return {
-          ...noFilters,
-          subscriber: [currentUserId],
+          subscriber: currentUserId,
         };
       case "all-issues":
       default:
-        return noFilters;
+        return undefined;
     }
   };
 
@@ -344,7 +324,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     const displayFilterKeys = Object.keys(displayFilters);
 
     return NON_SERVER_DISPLAY_FILTERS.some((serverDisplayfilter: string) =>
-      displayFilterKeys.indexOf(serverDisplayfilter) !== -1
+      displayFilterKeys.includes(serverDisplayfilter)
     );
   };
 
@@ -366,7 +346,7 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   ) {
     // Use perPageFromDisplayFilter if available, otherwise use perPageCount
     const perPage = options.perPageFromDisplayFilter || options.perPageCount;
-    
+
     // if cursor exists, use the cursor. If it doesn't exist construct the cursor based on per page count
     const pageCursor = cursor ? cursor : groupId ? `${perPage}:1:0` : `${perPage}:0:0`;
 

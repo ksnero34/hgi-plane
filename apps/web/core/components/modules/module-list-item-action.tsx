@@ -1,6 +1,7 @@
 "use client";
 
-import React, { FC } from "react";
+import type { FC } from "react";
+import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
@@ -16,10 +17,11 @@ import {
 } from "@plane/constants";
 import { useLocalStorage } from "@plane/hooks";
 import { useTranslation } from "@plane/i18n";
+import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import { IModule } from "@plane/types";
+import type { IModule } from "@plane/types";
 // ui
-import { FavoriteStar, TOAST_TYPE, setPromiseToast, setToast } from "@plane/ui";
+import { FavoriteStar } from "@plane/ui";
 // components
 import { renderFormattedPayloadDate, getDate } from "@plane/utils";
 import { DateRangeDropdown } from "@/components/dropdowns/date-range";
@@ -155,15 +157,15 @@ export const ModuleListItemAction: FC<Props> = observer((props) => {
       .then(() => {
         setToast({
           type: TOAST_TYPE.SUCCESS,
-          title: "성공!",
-          message: "모듈이 성공적으로 업데이트되었습니다.",
+          title: "Success!",
+          message: "Module updated successfully.",
         });
       })
       .catch((err) => {
         setToast({
           type: TOAST_TYPE.ERROR,
-          title: "오류가 발생했습니다!",
-          message: err?.detail ?? "모듈을 업데이트할 수 없습니다. 다시 시도해주세요.",
+          title: "Error!",
+          message: err?.detail ?? "Module could not be updated. Please try again.",
         });
       });
   };

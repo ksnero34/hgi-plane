@@ -12,9 +12,11 @@ import {
 } from "@plane/constants";
 // types
 import { useTranslation } from "@plane/i18n";
-import { IUser, IWorkspace, TOnboardingSteps } from "@plane/types";
+import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+import type { IUser, IWorkspace, TOnboardingSteps } from "@plane/types";
 // ui
-import { Button, CustomSelect, Input, Spinner, TOAST_TYPE, setToast } from "@plane/ui";
+import { CustomSelect, Input, Spinner } from "@plane/ui";
 // hooks
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 import { useWorkspace } from "@/hooks/store/use-workspace";
@@ -81,21 +83,16 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
               await fetchWorkspaces();
               await completeStep(workspaceResponse.id);
             })
-            .catch((err) => {
+            .catch(() => {
               captureError({
                 eventName: WORKSPACE_TRACKER_EVENTS.create,
                 payload: { slug: formData.slug },
                 error: new Error("Error creating workspace"),
               });
-
-              const errorMessage = err?.response?.data?.error === "Only instance administrators can create workspaces"
-                ? "인스턴스 관리자만 워크스페이스를 생성할 수 있습니다."
-                : "워크스페이스 생성에 실패했습니다. 다시 시도해주세요.";
-
               setToast({
                 type: TOAST_TYPE.ERROR,
                 title: t("workspace_creation.toast.error.title"),
-                message: errorMessage,
+                message: t("workspace_creation.toast.error.message"),
               });
             });
         } else setSlugError(true);
@@ -141,20 +138,20 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
             </span>
           </Button>
           <div className="mx-auto mt-4 flex items-center sm:w-96">
-            <hr className="w-full border-onboarding-border-100" />
-            <p className="mx-3 flex-shrink-0 text-center text-sm text-onboarding-text-400">or</p>
-            <hr className="w-full border-onboarding-border-100" />
+            <hr className="w-full border-custom-border-300" />
+            <p className="mx-3 flex-shrink-0 text-center text-sm text-custom-text-400">or</p>
+            <hr className="w-full border-custom-border-300" />
           </div>
         </>
       )}
       <div className="text-center space-y-1 py-4 mx-auto">
-        <h3 className="text-3xl font-bold text-onboarding-text-100">{t("workspace_creation.heading")}</h3>
-        <p className="font-medium text-onboarding-text-400">{t("workspace_creation.subheading")}</p>
+        <h3 className="text-3xl font-bold text-custom-text-100">{t("workspace_creation.heading")}</h3>
+        <p className="font-medium text-custom-text-400">{t("workspace_creation.subheading")}</p>
       </div>
       <form className="w-full mx-auto mt-2 space-y-4" onSubmit={handleSubmit(handleCreateWorkspace)}>
         <div className="space-y-1">
           <label
-            className="text-sm text-onboarding-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
+            className="text-sm text-custom-text-300 font-medium after:content-['*'] after:ml-0.5 after:text-red-500"
             htmlFor="name"
           >
             {t("workspace_creation.form.name.label")}
@@ -165,11 +162,10 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
             rules={{
               required: t("common.errors.required"),
               validate: (value) =>
-                /^[a-zA-Z0-9가-힣\s_-]*$/.test(value) ||
-                `워크스페이스 이름에는 한글, 영문자, 숫자, 공백(" "), 하이픈(-), 언더스코어(_)만 사용할 수 있습니다.`,
-                maxLength: {
-                  value: 80,
-                  message: t("workspace_creation.errors.validation.name_length"),
+                /^[\w\s-]*$/.test(value) || t("workspace_creation.errors.validation.name_alphanumeric"),
+              maxLength: {
+                value: 80,
+                message: t("workspace_creation.errors.validation.name_length"),
               },
             }}
             render={({ field: { value, ref, onChange } }) => (
@@ -182,21 +178,14 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
                   onChange={(event) => {
                     onChange(event.target.value);
                     setValue("name", event.target.value);
-                    // 한글을 제외한 영문, 숫자, 특수문자만 허용
-                    const englishOnly = event.target.value
-                      .replace(/[가-힣]/g, '')
-                      .toLowerCase()
-                      .trim()
-                      .replace(/ /g, "-")
-                      .replace(/[^a-z0-9-_]/g, '');
-                    setValue("slug", englishOnly, {
+                    setValue("slug", event.target.value.toLocaleLowerCase().trim().replace(/ /g, "-"), {
                       shouldValidate: true,
                     });
                   }}
                   placeholder={t("workspace_creation.form.name.placeholder")}
                   ref={ref}
                   hasError={Boolean(errors.name)}
-                  className="w-full border-onboarding-border-100 placeholder:text-custom-text-400"
+                  className="w-full border-custom-border-300 placeholder:text-custom-text-400"
                   autoFocus
                 />
               </div>
@@ -246,7 +235,7 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
               </div>
             )}
           />
-          <p className="text-sm text-onboarding-text-300">{t("workspace_creation.form.url.edit_slug")}</p>
+          <p className="text-sm text-custom-text-300">{t("workspace_creation.form.url.edit_slug")}</p>
           {slugError && (
             <p className="-mt-3 text-sm text-red-500">{t("workspace_creation.errors.validation.url_already_taken")}</p>
           )}
@@ -279,9 +268,8 @@ export const CreateWorkspace: React.FC<Props> = observer((props) => {
                       </span>
                     )
                   }
-                  buttonClassName="!border-[0.5px] !border-onboarding-border-100 !shadow-none !rounded-md"
+                  buttonClassName="!border-[0.5px] !border-custom-border-300 !shadow-none !rounded-md"
                   input
-                  optionsClassName="w-full"
                 >
                   {ORGANIZATION_SIZE.map((item) => (
                     <CustomSelect.Option key={item} value={item}>
