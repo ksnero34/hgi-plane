@@ -2,6 +2,7 @@ import type React from "react";
 
 import { observer } from "mobx-react";
 import { useFormContext } from "react-hook-form";
+import { useMemo } from "react";
 import { Tag, CalendarCheck2, UserCircle2, Users, MessageSquare } from "lucide-react";
 import { TIssue, TCustomField } from "@plane/types";
 // components
@@ -29,10 +30,12 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
 
   // 현재 선택된 type_id 가져오기
   const currentTypeId = watch("type_id");
-  const actualTypeId = currentTypeId;
 
-  // type_id에 해당하는 ProjectIssueType 찾기
-  const currentProjectIssueType = issueTypes?.find(it => it.id === actualTypeId);
+  // type_id에 해당하는 ProjectIssueType 찾기 (useMemo로 캐싱)
+  const currentProjectIssueType = useMemo(() => {
+    if (!issueTypes || !currentTypeId) return null;
+    return issueTypes.find(it => it.id === currentTypeId);
+  }, [issueTypes, currentTypeId]);
 
   const getFieldIcon = (fieldType: string) => {
     switch (fieldType) {
@@ -187,14 +190,18 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
     }
   };
 
-  // ProjectIssueType의 id(커스텀 필드의 issue_type)에 해당하는 커스텀 필드만 필터링
-  const filteredCustomFields = customFields.filter(field => {
-    if (!field.issue_type || !currentProjectIssueType) return false;
-    // 커스텀 필드의 issue_type과 현재 선택된 ProjectIssueType의 id가 매칭되는지 확인
-    return field.issue_type === currentProjectIssueType.id;
-  });
+  // ProjectIssueType의 id(커스텀 필드의 issue_type)에 해당하는 커스텀 필드만 필터링 (useMemo로 캐싱)
+  const filteredCustomFields = useMemo(() => {
+    if (!currentProjectIssueType || !customFields) return [];
+    return customFields.filter(field => {
+      if (!field.issue_type) return false;
+      // 커스텀 필드의 issue_type과 현재 선택된 ProjectIssueType의 id가 매칭되는지 확인
+      return field.issue_type === currentProjectIssueType.id;
+    });
+  }, [customFields, currentProjectIssueType]);
 
-  if (isLoading || filteredCustomFields.length === 0) return null;
+  // 데이터가 로딩 중이거나, issue type이 선택되지 않았거나, 필터링된 커스텀 필드가 없으면 렌더링하지 않음
+  if (isLoading || !currentTypeId || !currentProjectIssueType || filteredCustomFields.length === 0) return null;
 
   return (
     <div className="px-4 py-3">

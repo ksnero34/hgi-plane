@@ -9,6 +9,10 @@ import {
   SignalHigh,
   Tag,
   Users,
+  UserCircle2,
+  MessageSquare,
+  Hash,
+  User,
 } from "lucide-react";
 // plane imports
 import {
@@ -18,6 +22,7 @@ import {
   DoubleCircleIcon,
   PriorityIcon,
   StateGroupIcon,
+  WorkItemsIcon,
 } from "@plane/propel/icons";
 import type {
   ICycle,
@@ -30,6 +35,11 @@ import type {
   IProject,
   IProjectIssueType,
   TWorkItemFilterProperty,
+} from "@plane/types";
+import {
+  COLLECTION_OPERATOR,
+  EQUALITY_OPERATOR,
+  TEXT_OPERATOR,
 } from "@plane/types";
 import { Avatar, Logo } from "@plane/ui";
 import {
@@ -51,6 +61,10 @@ import {
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
   isLoaderReady,
+  createFilterConfig,
+  createOperatorConfigEntry,
+  getMultiSelectConfig,
+  getTextInputConfig,
 } from "@plane/utils";
 // store hooks
 import { useCycle } from "@/hooks/store/use-cycle";
@@ -329,6 +343,36 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [isFilterEnabled, operatorConfigs]
   );
 
+  // my issues only filter config
+  const myIssuesOnlyFilterConfig = useMemo(
+    () =>
+      createFilterConfig<"my_issues_only", boolean>({
+        id: "my_issues_only",
+        label: "내 작업항목만",
+        isEnabled: true,
+        icon: User,
+        supportedOperatorConfigsMap: new Map([
+          createOperatorConfigEntry(EQUALITY_OPERATOR.EXACT, operatorConfigs, (updatedParams) =>
+            getMultiSelectConfig<boolean, boolean, boolean>(
+              {
+                items: [true],
+                getId: (val: boolean) => String(val),
+                getLabel: (val: boolean) => (val ? "예" : "아니오"),
+                getValue: (val: boolean) => val,
+                getIconData: (val: boolean) => val,
+              },
+              {
+                singleValueOperator: EQUALITY_OPERATOR.EXACT,
+                ...updatedParams,
+              },
+              {}
+            )
+          ),
+        ]),
+      }),
+    [operatorConfigs]
+  );
+
   // start date filter config
   const startDateFilterConfig = useMemo(
     () =>
@@ -391,7 +435,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getIssueTypeFilterConfig<TWorkItemFilterProperty>("issue_type_id")({
         isEnabled: isFilterEnabled("issue_type_id") && issueTypes !== undefined,
-        filterIcon: Tag,
+        filterIcon: WorkItemsIcon,
         issueTypes: issueTypes ?? [],
         getOptionIcon: (issueType) => (
           <IssueTypeIcon
@@ -406,6 +450,27 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [isFilterEnabled, issueTypes, operatorConfigs]
   );
 
+  // 필드 타입에 따른 아이콘 선택
+  const getCustomFieldIcon = (fieldType: string) => {
+    switch (fieldType) {
+      case "select":
+      case "multiselect":
+        return Tag;
+      case "date":
+        return CalendarCheck2;
+      case "project_member":
+        return UserCircle2;
+      case "project_members":
+        return Users;
+      case "text":
+        return MessageSquare;
+      case "number":
+        return Hash;
+      default:
+        return Tag;
+    }
+  };
+
   // custom field filter configs (동적 생성)
   const customFieldConfigs = useMemo(() => {
     if (!customFields || customFields.length === 0) return [];
@@ -413,46 +478,153 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     return customFields.map(field => {
       const filterKey = `customproperty_${field.id}`;
 
+      const baseParams = {
+        isEnabled: true,
+        ...operatorConfigs,
+      };
+
+      const fieldIcon = getCustomFieldIcon(field.field_type);
+
       // field_type에 따라 적절한 config 생성
-      // 현재는 select/multiselect만 간단히 지원
       if (field.field_type === "select" || field.field_type === "multiselect") {
         const options = field.options || [];
-        return {
+
+        return createFilterConfig<string, string>({
           id: filterKey,
           label: field.name,
           isEnabled: true,
+          icon: fieldIcon,
           supportedOperatorConfigsMap: new Map([
-            ["in" as const, {
-              operator: "in" as const,
-              component: {
-                type: "multi-select",
-                options: options.map(opt => ({
-                  id: opt,
-                  label: opt,
-                  value: opt,
-                })),
-              },
-            }],
+            createOperatorConfigEntry(COLLECTION_OPERATOR.IN, baseParams, (updatedParams) =>
+              getMultiSelectConfig<string, string, string>(
+                {
+                  items: options,
+                  getId: (opt: string) => opt,
+                  getLabel: (opt: string) => opt,
+                  getValue: (opt: string) => opt,
+                  getIconData: (opt: string) => opt,
+                },
+                {
+                  singleValueOperator: EQUALITY_OPERATOR.EXACT,
+                  ...updatedParams,
+                },
+                {}
+              )
+            ),
           ]),
-        } as any;
+        });
       }
 
-      // 다른 타입은 text input으로 처리
-      return {
+      // project_member 타입 - 단일 멤버 선택
+      if (field.field_type === "project_member") {
+        return createFilterConfig<string, IUserLite>({
+          id: filterKey,
+          label: field.name,
+          isEnabled: members !== undefined,
+          icon: fieldIcon,
+          supportedOperatorConfigsMap: new Map([
+            createOperatorConfigEntry(COLLECTION_OPERATOR.IN, baseParams, (updatedParams) =>
+              getMultiSelectConfig<string, IUserLite, IUserLite>(
+                {
+                  items: members ?? [],
+                  getId: (member: IUserLite) => member.id,
+                  getLabel: (member: IUserLite) => member.display_name,
+                  getValue: (member: IUserLite) => member,
+                  getIconData: (member: IUserLite) => member,
+                },
+                {
+                  singleValueOperator: EQUALITY_OPERATOR.EXACT,
+                  ...updatedParams,
+                },
+                {
+                  renderOption: (memberDetails: IUserLite) => (
+                    <Avatar
+                      name={memberDetails.display_name}
+                      src={getFileURL(memberDetails.avatar_url)}
+                      showTooltip={false}
+                      size="sm"
+                    />
+                  ),
+                }
+              )
+            ),
+          ]),
+        });
+      }
+
+      // project_members 타입 - 복수 멤버 선택
+      if (field.field_type === "project_members") {
+        return createFilterConfig<string, IUserLite>({
+          id: filterKey,
+          label: field.name,
+          isEnabled: members !== undefined,
+          icon: fieldIcon,
+          supportedOperatorConfigsMap: new Map([
+            createOperatorConfigEntry(COLLECTION_OPERATOR.IN, baseParams, (updatedParams) =>
+              getMultiSelectConfig<string, IUserLite, IUserLite>(
+                {
+                  items: members ?? [],
+                  getId: (member: IUserLite) => member.id,
+                  getLabel: (member: IUserLite) => member.display_name,
+                  getValue: (member: IUserLite) => member,
+                  getIconData: (member: IUserLite) => member,
+                },
+                {
+                  singleValueOperator: EQUALITY_OPERATOR.EXACT,
+                  ...updatedParams,
+                },
+                {
+                  renderOption: (memberDetails: IUserLite) => (
+                    <Avatar
+                      name={memberDetails.display_name}
+                      src={getFileURL(memberDetails.avatar_url)}
+                      showTooltip={false}
+                      size="sm"
+                    />
+                  ),
+                }
+              )
+            ),
+          ]),
+        });
+      }
+
+      // date 타입 처리
+      if (field.field_type === "date") {
+        // date 필터는 아직 구현되지 않음 - 향후 추가 예정
+        return createFilterConfig<string, string>({
+          id: filterKey,
+          label: field.name,
+          isEnabled: true,
+          icon: fieldIcon,
+          supportedOperatorConfigsMap: new Map([
+            createOperatorConfigEntry(TEXT_OPERATOR.CONTAINS, baseParams, (updatedParams) =>
+              getTextInputConfig({
+                placeholder: `Search ${field.name.toLowerCase()}...`,
+                ...updatedParams,
+              })
+            ),
+          ]),
+        });
+      }
+
+      // 다른 타입 (text, number)은 text input으로 처리
+      return createFilterConfig<string, string>({
         id: filterKey,
         label: field.name,
         isEnabled: true,
+        icon: fieldIcon,
         supportedOperatorConfigsMap: new Map([
-          ["contains" as const, {
-            operator: "contains" as const,
-            component: {
-              type: "text-input",
-            },
-          }],
+          createOperatorConfigEntry(TEXT_OPERATOR.CONTAINS, baseParams, (updatedParams) =>
+            getTextInputConfig({
+              placeholder: `Search ${field.name.toLowerCase()}...`,
+              ...updatedParams,
+            })
+          ),
         ]),
-      } as any;
+      });
     });
-  }, [customFields]);
+  }, [customFields, operatorConfigs, members]);
 
   return {
     areAllConfigsInitialized,
@@ -473,6 +645,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      myIssuesOnlyFilterConfig,
       ...customFieldConfigs,
     ],
     configMap: {
@@ -492,6 +665,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       created_at: createdAtFilterConfig,
       updated_at: updatedAtFilterConfig,
       issue_type_id: issueTypeFilterConfig,
+      my_issues_only: myIssuesOnlyFilterConfig,
       // 커스텀 필드 configs를 동적으로 추가
       ...customFieldConfigs.reduce((acc, config) => {
         acc[config.id] = config;

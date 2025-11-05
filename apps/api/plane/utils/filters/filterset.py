@@ -38,43 +38,6 @@ class BaseFilterSet(FilterSet):
         filters.update(exact_filters)
         return filters
 
-    def filter_queryset(self, queryset):
-        """
-        Override to handle dynamic custom property filters (customproperty_*).
-        """
-        # Check for any customproperty_ filters in the request data
-        if self.data:
-            custom_prop_filters = Q()
-            for key, value in self.data.items():
-                if key.startswith("customproperty_"):
-                    # Extract field_id and operator
-                    parts = key.split("__")
-                    if len(parts) >= 2:
-                        # Format: customproperty_{field_id}__{operator}
-                        field_id = parts[0].replace("customproperty_", "")
-                        operator = parts[1] if len(parts) > 1 else "in"
-
-                        # Parse value (comma-separated for 'in' operator)
-                        if operator == "in" and isinstance(value, str):
-                            values = [v.strip() for v in value.split(",") if v.strip()]
-                        else:
-                            values = [value] if not isinstance(value, list) else value
-
-                        if values:
-                            # Create Q object for custom field filtering
-                            custom_prop_filters &= Q(
-                                custom_field_values__custom_field_id=field_id,
-                                custom_field_values__value__in=values,
-                                custom_field_values__deleted_at__isnull=True,
-                            )
-
-            # Apply custom property filters if any
-            if custom_prop_filters and custom_prop_filters.children:
-                queryset = queryset.filter(custom_prop_filters).distinct()
-
-        # Continue with standard filtering
-        return super().filter_queryset(queryset)
-
     def build_combined_q(self):
         """
         Build a combined Q object from all bound filters.
@@ -135,6 +98,7 @@ class BaseFilterSet(FilterSet):
     def filter_queryset(self, queryset):
         """
         Override to use Q-based filtering for compatibility with DjangoFilterBackend.
+        Also handles dynamic custom property filters (customproperty_*).
 
         This allows the same filterset to work with both ComplexFilterBackend
         (which calls build_combined_q directly) and DjangoFilterBackend
@@ -146,6 +110,36 @@ class BaseFilterSet(FilterSet):
         # Build combined Q and apply to queryset
         combined_q = self.build_combined_q()
         qs = queryset.filter(combined_q)
+
+        # Handle dynamic custom property filters (customproperty_*)
+        if self.data:
+            custom_prop_filters = Q()
+            for key, value in self.data.items():
+                if key.startswith("customproperty_"):
+                    # Extract field_id and operator
+                    parts = key.split("__")
+                    if len(parts) >= 2:
+                        # Format: customproperty_{field_id}__{operator}
+                        field_id = parts[0].replace("customproperty_", "")
+                        operator = parts[1] if len(parts) > 1 else "in"
+
+                        # Parse value (comma-separated for 'in' operator)
+                        if operator == "in" and isinstance(value, str):
+                            values = [v.strip() for v in value.split(",") if v.strip()]
+                        else:
+                            values = [value] if not isinstance(value, list) else value
+
+                        if values:
+                            # Create Q object for custom field filtering
+                            custom_prop_filters &= Q(
+                                custom_field_values__custom_field_id=field_id,
+                                custom_field_values__value__in=values,
+                                custom_field_values__deleted_at__isnull=True,
+                            )
+
+            # Apply custom property filters if any
+            if custom_prop_filters and custom_prop_filters.children:
+                qs = qs.filter(custom_prop_filters).distinct()
 
         # Apply distinct if any filter requires it (typically for many-to-many relations)
         for f in self.filters.values():

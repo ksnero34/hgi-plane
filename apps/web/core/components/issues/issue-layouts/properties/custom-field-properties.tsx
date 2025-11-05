@@ -34,7 +34,12 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   
   // text 필드의 로컬 상태 관리
   const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
-  
+
+  // MobX 반응성을 위해 computed 값 사용
+  const customFieldValues = useMemo(() => {
+    return issue?.custom_field_values || [];
+  }, [issue?.custom_field_values, issue?.updated_at]); // updated_at을 의존성에 추가
+
   // Filter custom fields based on current issue type
   const filteredCustomFields = customFields.filter(field => {
     // If custom field has no issue_type restriction, show for all issue types
@@ -46,11 +51,6 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   });
   
   if (!filteredCustomFields || filteredCustomFields.length === 0 || !displayProperties?.custom_fields) return null;
-
-  // MobX 반응성을 위해 computed 값 사용
-  const customFieldValues = useMemo(() => {
-    return issue?.custom_field_values || [];
-  }, [issue?.custom_field_values, issue?.updated_at]); // updated_at을 의존성에 추가
 
   // 특정 필드의 현재 값 가져오기
   const getFieldValue = (fieldId: string) => {

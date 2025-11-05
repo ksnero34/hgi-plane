@@ -224,9 +224,10 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       list: {
         display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
-          group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", null],
+          group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by","issue_type", "parent_child","top_level_only", null],
           order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
           type: ["active", "backlog"],
+          per_page: [25, 50, 100, 200, 500, 1000, 3000, 5000],
         },
         extra_options: {
           access: true,
@@ -236,14 +237,14 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       kanban: {
         display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
-          group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by"],
-          sub_group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", null],
+        group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", "issue_type"],
+        sub_group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", "issue_type", null],
           order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
-          type: ["active", "backlog"],
+        per_page: [25, 50, 100, 200, 500, 1000, 3000, 5000],
         },
         extra_options: {
           access: true,
-          values: ["show_empty_groups", "sub_issue"],
+        values: ["show_empty_groups", "sub_issue", "my_issues_only"],
         },
       },
       calendar: {

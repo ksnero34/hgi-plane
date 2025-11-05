@@ -40,10 +40,11 @@ type Props = {
   isArchived: boolean;
   isSubmitting: TNameDescriptionLoader;
   setIsSubmitting: (value: TNameDescriptionLoader) => void;
+  toggleEditIssueModal: (value: boolean) => void;
 };
 
 export const PeekOverviewIssueDetails: FC<Props> = observer((props) => {
-  const { editorRef, workspaceSlug, issueId, issueOperations, disabled, isArchived, isSubmitting, setIsSubmitting } =
+  const { editorRef, workspaceSlug, issueId, issueOperations, disabled, isArchived, isSubmitting, setIsSubmitting, toggleEditIssueModal } =
     props;
   // store hooks
   const { data: currentUser } = useUser();
@@ -105,6 +106,7 @@ export const PeekOverviewIssueDetails: FC<Props> = observer((props) => {
         <IssueTypeSwitcher
           issueId={issueId}
           disabled={isArchived || disabled}
+          onOpenModal={() => toggleEditIssueModal(true)}
         />
         {duplicateIssues?.length > 0 && (
           <DeDupeIssuePopoverRoot

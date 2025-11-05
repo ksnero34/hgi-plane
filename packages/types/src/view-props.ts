@@ -115,6 +115,7 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "updated_at",
   "issue_type_id",
   "search",
+  "my_issues_only",
 ] as const;
 export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number];
 

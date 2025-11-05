@@ -22,6 +22,8 @@ import { PeekOverviewIssueDetails } from "./issue-detail";
 import { IssuePeekOverviewLoader } from "./loader";
 import { PeekOverviewProperties } from "./properties";
 import { isEditorFocused } from "@plane/utils";
+// plane web components
+import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 
 interface IIssueView {
   workspaceSlug: string;
@@ -183,6 +185,7 @@ export const IssueView: FC<IIssueView> = observer((props) => {
                       isArchived={is_archived}
                       isSubmitting={isSubmitting}
                       setIsSubmitting={(value) => setIsSubmitting(value)}
+                      toggleEditIssueModal={toggleEditIssueModal}
                     />
 
                     <div className="py-2">
@@ -224,6 +227,7 @@ export const IssueView: FC<IIssueView> = observer((props) => {
                           isArchived={is_archived}
                           isSubmitting={isSubmitting}
                           setIsSubmitting={(value) => setIsSubmitting(value)}
+                          toggleEditIssueModal={toggleEditIssueModal}
                         />
 
                         <div className="py-2">
@@ -267,5 +271,23 @@ export const IssueView: FC<IIssueView> = observer((props) => {
     </div>
   );
 
-  return <>{shouldUsePortal && portalContainer ? createPortal(content, portalContainer) : content}</>;
+  return (
+    <>
+      {shouldUsePortal && portalContainer ? createPortal(content, portalContainer) : content}
+      {/* Edit Issue Modal for peek-overview */}
+      {issue && (
+        <CreateUpdateIssueModal
+          isOpen={isEditIssueModalOpen}
+          onClose={() => toggleEditIssueModal(false)}
+          data={issue}
+          storeType={undefined}
+          modalTitle="작업 항목 수정"
+          primaryButtonText={{
+            default: "수정",
+            loading: "수정 중...",
+          }}
+        />
+      )}
+    </>
+  );
 });

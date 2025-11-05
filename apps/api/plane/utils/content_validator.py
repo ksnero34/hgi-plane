@@ -164,6 +164,7 @@ CUSTOM_TAGS = {
     "label",
     "input",
     "image-component",
+    "file-component",
 }
 ALLOWED_TAGS = nh3.ALLOWED_TAGS | CUSTOM_TAGS
 
@@ -221,6 +222,19 @@ ATTRIBUTES = {
         "title",
     },
     "mention-component": {"id", "entity_identifier", "entity_name"},
+    "file-component": {
+        "id",
+        "fileId",
+        "fileName",
+        "filename",
+        "fileSize",
+        "filesize",
+        "fileType",
+        "filetype",
+        "uploadStatus",
+        "uploadstatus",
+        "errorMessage",
+    },
     "th": {
         "colspan",
         "rowspan",

@@ -237,13 +237,14 @@ export const IssuesHeader = observer(() => {
               </>
             ) : null}
             <Button
+              variant={approvalCount > 0 ? "primary" : "neutral-primary"}
               size="sm"
               onClick={() => setIsApprovalModalOpen(true)}
               className="flex items-center gap-2"
             >
               <CheckCircle className="h-4 w-4" />
               {t("workflow.approval.button", { defaultValue: "Approval requests" })}
-              {approvalCount > 0 ? <CountChip count={approvalCount} /> : null}
+              {approvalCount > 0 ? <span className="text-xs">({approvalCount})</span> : null}
             </Button>
           </div>
           {canUserCreateIssue ? (

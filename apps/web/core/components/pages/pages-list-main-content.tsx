@@ -48,7 +48,7 @@ export const PagesListMainContent: React.FC<Props> = observer((props) => {
   const { workspaceSlug } = useParams();
   // derived values
   const pageIds = getCurrentProjectPageIdsByTab(pageType);
-  const filteredPageIds = getCurrentProjectFilteredPageIdsByTab(pageType);
+  const filteredPageIds = getCurrentProjectFilteredPageIdsByTab(pageType, folderId);
   const canPerformEmptyStateActions = allowPermissions(
     [EUserProjectRoles.ADMIN, EUserProjectRoles.MEMBER],
     EUserPermissionsLevel.PROJECT
@@ -177,6 +177,8 @@ export const PagesListMainContent: React.FC<Props> = observer((props) => {
             src={filters.searchQuery.length > 0 ? resolvedNameFilterImage : resolvedFiltersImage}
             className="h-36 sm:h-48 w-36 sm:w-48 mx-auto"
             alt="No matching modules"
+            width={192}
+            height={192}
           />
           <h5 className="text-xl font-medium mt-7 mb-1">No matching pages</h5>
           <p className="text-custom-text-400 text-base">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { observer } from "mobx-react";
 import { RefreshCw } from "lucide-react";
 // ui
@@ -20,16 +20,20 @@ export type TIssueTypeSwitcherProps = {
 
 export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((props) => {
   const { issueId, disabled, onClose, onOpenModal } = props;
-  // local state
-  const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
   // store hooks
   const {
     issue: { getIssueById },
+    isEditIssueModalOpen,
+    toggleEditIssueModal,
+    peekIssue,
   } = useIssueDetail();
   // derived values
   const issue = getIssueById(issueId);
 
   if (!issue || !issue.project_id) return <></>;
+
+  // 이 issue가 현재 peek되고 있는지 확인
+  const isCurrentlyPeeked = peekIssue?.issueId === issueId;
 
   return (
     <>
@@ -41,13 +45,12 @@ export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((pr
               type="button"
               className="flex items-center justify-center w-6 h-6 text-custom-text-400 hover:text-custom-text-300 transition-colors"
               onClick={() => {
-                if (onOpenModal && onClose) {
-                  // peek-overview에서 호출된 경우: 외부 모달 열기
+                if (onOpenModal) {
+                  // peek-overview에서 호출된 경우: peek 내부의 local modal 열기
                   onOpenModal(issueId);
-                  setTimeout(() => onClose(), 50); // 모달이 먼저 열리도록 지연
                 } else {
-                  // 일반 컨텍스트에서 호출된 경우: 내부 모달 열기
-                  setIsEditIssueModalOpen(true);
+                  // 일반 페이지에서 호출된 경우: store의 global modal 열기
+                  toggleEditIssueModal(issueId);
                 }
               }}
             >
@@ -57,17 +60,20 @@ export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((pr
         )}
       </div>
 
-      <CreateUpdateIssueModal
-        isOpen={isEditIssueModalOpen}
-        onClose={() => setIsEditIssueModalOpen(false)}
-        data={issue}
-        storeType={undefined}
-        modalTitle="작업 항목 수정"
-        primaryButtonText={{
-          default: "수정",
-          loading: "수정 중...",
-        }}
-      />
+      {/* 현재 peek되고 있는 issue가 아닐 때만 modal 렌더링 */}
+      {!isCurrentlyPeeked && (
+        <CreateUpdateIssueModal
+          isOpen={isEditIssueModalOpen === issueId}
+          onClose={() => toggleEditIssueModal(null)}
+          data={issue}
+          storeType={undefined}
+          modalTitle="작업 항목 수정"
+          primaryButtonText={{
+            default: "수정",
+            loading: "수정 중...",
+          }}
+        />
+      )}
     </>
   );
 });

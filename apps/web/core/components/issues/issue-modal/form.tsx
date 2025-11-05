@@ -214,19 +214,19 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dataResetProperties]);
 
-  // Update the issue type id when the project id changes
+  // Update the issue type id when the project id changes or on initial load
   useEffect(() => {
     const issueTypeId = watch("type_id");
 
     // if issue type id is present or project not available, return
     if (issueTypeId || !projectId) return;
 
-    // get issue type id on project change
-    const issueTypeIdOnProjectChange = getIssueTypeIdOnProjectChange(projectId);
-    if (issueTypeIdOnProjectChange) setValue("type_id", issueTypeIdOnProjectChange, { shouldValidate: true });
+    // get default issue type for this project
+    const defaultIssueType = getDefaultIssueType();
+    if (defaultIssueType?.id) setValue("type_id", defaultIssueType.id, { shouldValidate: true, shouldDirty: true });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, projectId]);
+  }, [data, projectId, getDefaultIssueType]);
 
   useEffect(() => {
     if (workItemTemplateId && editorRef.current) {

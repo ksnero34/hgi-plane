@@ -82,6 +82,7 @@ export interface IIssueDetail
   isParentIssueModalOpen: string | null;
   isDeleteIssueModalOpen: string | null;
   isArchiveIssueModalOpen: string | null;
+  isEditIssueModalOpen: string | null;
   isRelationModalOpen: TIssueRelationModal | null;
   isSubIssuesModalOpen: string | null;
   attachmentDeleteModalId: string | null;
@@ -98,6 +99,7 @@ export interface IIssueDetail
   toggleParentIssueModal: (issueId: string | null) => void;
   toggleDeleteIssueModal: (issueId: string | null) => void;
   toggleArchiveIssueModal: (value: string | null) => void;
+  toggleEditIssueModal: (issueId: string | null) => void;
   toggleRelationModal: (issueId: string | null, relationType: TIssueRelationTypes | null) => void;
   toggleSubIssuesModal: (value: string | null) => void;
   toggleDeleteAttachmentModal: (attachmentId: string | null) => void;
@@ -144,6 +146,7 @@ export abstract class IssueDetail implements IIssueDetail {
   isParentIssueModalOpen: string | null = null;
   isDeleteIssueModalOpen: string | null = null;
   isArchiveIssueModalOpen: string | null = null;
+  isEditIssueModalOpen: string | null = null;
   isRelationModalOpen: TIssueRelationModal | null = null;
   isSubIssuesModalOpen: string | null = null;
   attachmentDeleteModalId: string | null = null;
@@ -174,6 +177,7 @@ export abstract class IssueDetail implements IIssueDetail {
       isParentIssueModalOpen: observable.ref,
       isDeleteIssueModalOpen: observable.ref,
       isArchiveIssueModalOpen: observable.ref,
+      isEditIssueModalOpen: observable.ref,
       isRelationModalOpen: observable.ref,
       isSubIssuesModalOpen: observable.ref,
       attachmentDeleteModalId: observable.ref,
@@ -190,6 +194,7 @@ export abstract class IssueDetail implements IIssueDetail {
       toggleParentIssueModal: action,
       toggleDeleteIssueModal: action,
       toggleArchiveIssueModal: action,
+      toggleEditIssueModal: action,
       toggleRelationModal: action,
       toggleSubIssuesModal: action,
       toggleDeleteAttachmentModal: action,
@@ -223,6 +228,7 @@ export abstract class IssueDetail implements IIssueDetail {
       !!this.isParentIssueModalOpen ||
       !!this.isDeleteIssueModalOpen ||
       !!this.isArchiveIssueModalOpen ||
+      !!this.isEditIssueModalOpen ||
       !!this.isRelationModalOpen?.issueId ||
       !!this.isSubIssuesModalOpen ||
       !!this.attachmentDeleteModalId
@@ -245,6 +251,7 @@ export abstract class IssueDetail implements IIssueDetail {
   toggleParentIssueModal = (issueId: string | null) => (this.isParentIssueModalOpen = issueId);
   toggleDeleteIssueModal = (issueId: string | null) => (this.isDeleteIssueModalOpen = issueId);
   toggleArchiveIssueModal = (issueId: string | null) => (this.isArchiveIssueModalOpen = issueId);
+  toggleEditIssueModal = (issueId: string | null) => (this.isEditIssueModalOpen = issueId);
   toggleRelationModal = (issueId: string | null, relationType: TIssueRelationTypes | null) =>
     (this.isRelationModalOpen = { issueId, relationType });
   toggleSubIssuesModal = (issueId: string | null) => (this.isSubIssuesModalOpen = issueId);

@@ -124,7 +124,9 @@ class BaseFileAssetEndpoint(BaseAPIView):
 
         if file:  # 실제 파일이 있는 경우
             # 파일명 검증 (널 바이트 및 변조 검사)
-            file_name = file.name
+            file_name = getattr(file, "name", "") or ""
+            if not file_name:
+                return False, "파일명이 유효하지 않습니다."
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
@@ -138,7 +140,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
 
             # 파일 확장자 검증
-            file_extension = file.name.split('.')[-1].lower()
+            file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
             if file_extension not in file_settings.allowed_extensions:
                 return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
 
@@ -149,7 +151,12 @@ class BaseFileAssetEndpoint(BaseAPIView):
 
         elif file_info:  # 파일 정보만 있는 경우
             # 파일명 검증 (널 바이트 및 변조 검사)
-            file_name = file_info.get('name', '')
+            file_name = file_info.get('name')
+            if not isinstance(file_name, str):
+                return False, "파일명이 유효하지 않습니다."
+            file_name = file_name.strip()
+            if not file_name:
+                return False, "파일명이 유효하지 않습니다."
             # 널 바이트 검사 (%00, \x00, 0x00 등)
             if '%00' in file_name or '\x00' in file_name or re.search(r'\\x00', file_name) or re.search(r'0x00', file_name):
                 return False, "파일명에 널 바이트가 포함되어 있어 보안상 위험합니다."
@@ -163,7 +170,7 @@ class BaseFileAssetEndpoint(BaseAPIView):
                 return False, f"파일의 용량이 허용치인 {file_settings.max_file_size / (1024*1024)}MB를 초과했습니다."
 
             # 파일 확장자 검증
-            file_extension = file_info.get('name', '').split('.')[-1].lower() if '.' in file_info.get('name', '') else ''
+            file_extension = file_name.split('.')[-1].lower() if '.' in file_name else ''
             if file_extension not in file_settings.allowed_extensions:
                 return False, f"허용되지 않는 파일 형식입니다. 허용된 형식: {', '.join(file_settings.allowed_extensions)}"
 
@@ -584,6 +591,13 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
         entity_type = request.data.get("entity_type")
         entity_identifier = request.data.get("entity_identifier", False)
 
+        if not name or not isinstance(name, str) or not name.strip():
+            return Response(
+                {"error": "유효한 파일명이 필요합니다.", "status": False},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        name = name.strip()
+
         # Check if the entity type is allowed
         if entity_type not in FileAsset.EntityTypeContext.values:
             return Response(
@@ -806,7 +820,7 @@ class AssetRestoreEndpoint(BaseAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ProjectAssetEndpoint(BaseAPIView):
+class ProjectAssetEndpoint(BaseFileAssetEndpoint):
     """This endpoint is used to upload cover images/logos etc for workspace, projects and users."""
 
     def get_entity_id_field(self, entity_type, entity_id):

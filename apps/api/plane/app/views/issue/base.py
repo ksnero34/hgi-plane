@@ -81,6 +81,7 @@ from plane.utils.grouper import (
 )
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
+from plane.utils.filters.filterset import IssueFilterSet
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator, ParentChildOffsetPaginator
 from .. import BaseAPIView, BaseViewSet
 from plane.utils.timezone_converter import user_timezone_converter
@@ -249,12 +250,15 @@ class IssueListEndpoint(BaseAPIView):
             return Response(issues, status=status.HTTP_200_OK)
 
         filters = issue_filters(request.query_params, "GET")
-        
+
         # search_q_filter 처리 (제목 + 설명 검색)
         search_q_filter = filters.pop('search_q_filter', None)
-        
+
         # 커스텀 필드 필터 처리
         custom_field_filters = filters.pop('custom_field_filters', None)
+
+        # Rich filters 처리 (새로운 필터 시스템)
+        rich_filters_param = request.GET.get("filters")
 
         # Custom ordering for priority and state
         priority_order = ["urgent", "high", "medium", "low", "none"]
@@ -267,10 +271,39 @@ class IssueListEndpoint(BaseAPIView):
             .filter(project_id=project_id)
             .filter(**filters)
         )
-        
+
         # search_q_filter 적용 (제목 + 설명 검색)
         if search_q_filter:
             issue_queryset = issue_queryset.filter(search_q_filter)
+
+        # Rich filters 적용
+        if rich_filters_param:
+            try:
+                rich_filters = json.loads(rich_filters_param) if isinstance(rich_filters_param, str) else rich_filters_param
+                if rich_filters:
+                    # rich_filters를 평탄화 ({"and": [{...}, {...}]} -> {...})
+                    flattened_filters = {}
+                    if isinstance(rich_filters, dict) and "and" in rich_filters:
+                        for filter_obj in rich_filters["and"]:
+                            if isinstance(filter_obj, dict):
+                                flattened_filters.update(filter_obj)
+                    elif isinstance(rich_filters, dict):
+                        flattened_filters = rich_filters
+
+                    # my_issues_only 처리 (rich_filters에서)
+                    my_issues_only_from_rich = flattened_filters.pop("my_issues_only__exact", None)
+                    if my_issues_only_from_rich in [True, "true", "True"]:
+                        issue_queryset = issue_queryset.filter(
+                            assignees__id=request.user.id,
+                            issue_assignee__deleted_at__isnull=True
+                        ).distinct()
+
+                    # IssueFilterSet을 사용하여 나머지 rich_filters 적용
+                    if flattened_filters:
+                        filterset = IssueFilterSet(data=flattened_filters, queryset=issue_queryset, request=request)
+                        issue_queryset = filterset.qs
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.error(f"Error parsing rich_filters: {e}")
         
         issue_queryset = (
             issue_queryset
@@ -458,7 +491,6 @@ class IssueListEndpoint(BaseAPIView):
                                     )
                         else:
                             # 정확한 날짜 매칭
-                            import json
                             json_value = json.dumps(value, ensure_ascii=False)
                             q_objects |= Q(
                                 custom_field_values__custom_field_id=field_id,
@@ -597,20 +629,23 @@ class IssueViewSet(BaseViewSet):
         
         # 모든 필터 적용 (날짜 필터 포함)
         filters = issue_filters(request.query_params, "GET")
-        
+
         # search_q_filter 처리 (제목 + 설명 검색)
         search_q_filter = filters.pop('search_q_filter', None)
-        
+
         # 커스텀 필드 필터 처리
         custom_field_filters = filters.pop('custom_field_filters', None)
         # print(f"[DEBUG] IssueViewSet - custom_field_filters: {custom_field_filters}")
         # print(f"[DEBUG] IssueViewSet - remaining filters: {filters}")
-        
+
+        # Rich filters 처리 (새로운 필터 시스템)
+        rich_filters_param = request.GET.get("filters")
+
         # print("적용된 필터:", filters)
-        
+
         # 기본 queryset 가져오기
         issue_queryset = self.get_queryset()
-        
+
         # RESTRICTED 사용자는 자신에게 할당된 이슈만 볼 수 있음
         if user_role and user_role.role == ROLE.RESTRICTED.value:
             issue_queryset = issue_queryset.filter(assignees__id=request.user.id)
@@ -627,6 +662,35 @@ class IssueViewSet(BaseViewSet):
 
         # 기본 필터와 extra 필터 적용
         issue_queryset = issue_queryset.filter(**filters, **extra_filters)
+
+        # Rich filters 적용
+        if rich_filters_param:
+            try:
+                rich_filters = json.loads(rich_filters_param) if isinstance(rich_filters_param, str) else rich_filters_param
+                if rich_filters:
+                    # rich_filters를 평탄화 ({"and": [{...}, {...}]} -> {...})
+                    flattened_filters = {}
+                    if isinstance(rich_filters, dict) and "and" in rich_filters:
+                        for filter_obj in rich_filters["and"]:
+                            if isinstance(filter_obj, dict):
+                                flattened_filters.update(filter_obj)
+                    elif isinstance(rich_filters, dict):
+                        flattened_filters = rich_filters
+
+                    # my_issues_only 처리 (rich_filters에서)
+                    my_issues_only_from_rich = flattened_filters.pop("my_issues_only__exact", None)
+                    if my_issues_only_from_rich in [True, "true", "True"]:
+                        issue_queryset = issue_queryset.filter(
+                            assignees__id=request.user.id,
+                            issue_assignee__deleted_at__isnull=True
+                        ).distinct()
+
+                    # IssueFilterSet을 사용하여 나머지 rich_filters 적용
+                    if flattened_filters:
+                        filterset = IssueFilterSet(data=flattened_filters, queryset=issue_queryset, request=request)
+                        issue_queryset = filterset.qs
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.error(f"Error parsing rich_filters: {e}")
         
         # search_q_filter 적용 (제목 + 설명 검색)
         if search_q_filter:
@@ -765,7 +829,6 @@ class IssueViewSet(BaseViewSet):
                                     # print(f"[DEBUG] IssueViewSet - Date filter: {date_str} {condition}")
                         else:
                             # 정확한 날짜 매칭
-                            import json
                             json_value = json.dumps(value, ensure_ascii=False)
                             q_objects |= Q(
                                 custom_field_values__custom_field_id=field_id,
@@ -1211,10 +1274,8 @@ class IssueViewSet(BaseViewSet):
 
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED], creator=True, model=Issue)
     def partial_update(self, request, slug, project_id, pk=None):
-        queryset = self.get_queryset()
-        queryset = self.apply_annotations(queryset)
         issue = (
-            queryset.annotate(
+            self.get_queryset().annotate(
                 label_ids=Coalesce(
                     ArrayAgg(
                         "labels__id",
