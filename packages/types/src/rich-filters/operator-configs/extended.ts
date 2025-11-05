@@ -9,5 +9,8 @@ export type TExtendedInOperatorConfigs<_V extends TFilterValue> = never;
 // ----------------------------- RANGE Operator -----------------------------
 export type TExtendedRangeOperatorConfigs<_V extends TFilterValue> = never;
 
+// ----------------------------- CONTAINS Operator -----------------------------
+export type TExtendedContainsOperatorConfigs<_V extends TFilterValue> = never;
+
 // ----------------------------- Extended Operator Specific Configs -----------------------------
-export type TExtendedOperatorSpecificConfigs<_V extends TFilterValue> = unknown;
+export type TExtendedOperatorSpecificConfigs<_V extends TFilterValue> = Record<never, never>;

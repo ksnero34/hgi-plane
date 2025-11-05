@@ -2,6 +2,7 @@ import {
   CORE_EQUALITY_OPERATOR,
   CORE_COLLECTION_OPERATOR,
   CORE_COMPARISON_OPERATOR,
+  CORE_TEXT_OPERATOR,
   TCoreSupportedOperators,
   TCoreSupportedDateFilterOperators,
 } from "@plane/types";
@@ -13,6 +14,7 @@ export const CORE_OPERATOR_LABELS_MAP: Record<TCoreSupportedOperators, string> =
   [CORE_EQUALITY_OPERATOR.EXACT]: "is",
   [CORE_COLLECTION_OPERATOR.IN]: "is any of",
   [CORE_COMPARISON_OPERATOR.RANGE]: "between",
+  [CORE_TEXT_OPERATOR.CONTAINS]: "contains",
 } as const;
 
 /**

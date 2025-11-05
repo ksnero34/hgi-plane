@@ -1,11 +1,17 @@
 import { TFilterValue } from "../expression";
-import { EQUALITY_OPERATOR, COLLECTION_OPERATOR, COMPARISON_OPERATOR } from "../operators";
-import { TCoreExactOperatorConfigs, TCoreInOperatorConfigs, TCoreRangeOperatorConfigs } from "./core";
+import { EQUALITY_OPERATOR, COLLECTION_OPERATOR, COMPARISON_OPERATOR, TEXT_OPERATOR } from "../operators";
+import {
+  TCoreExactOperatorConfigs,
+  TCoreInOperatorConfigs,
+  TCoreRangeOperatorConfigs,
+  TCoreContainsOperatorConfigs,
+} from "./core";
 import {
   TExtendedExactOperatorConfigs,
   TExtendedInOperatorConfigs,
   TExtendedOperatorSpecificConfigs,
   TExtendedRangeOperatorConfigs,
+  TExtendedContainsOperatorConfigs,
 } from "./extended";
 
 // ----------------------------- Composed Operator Configs -----------------------------
@@ -29,6 +35,13 @@ export type TRangeOperatorConfigs<V extends TFilterValue> =
   | TCoreRangeOperatorConfigs<V>
   | TExtendedRangeOperatorConfigs<V>;
 
+/**
+ * CONTAINS operator - combines core and extended configurations
+ */
+export type TContainsOperatorConfigs<V extends TFilterValue> =
+  | TCoreContainsOperatorConfigs<V>
+  | TExtendedContainsOperatorConfigs<V>;
+
 // ----------------------------- Final Operator Specific Configs -----------------------------
 
 /**
@@ -39,6 +52,7 @@ export type TOperatorSpecificConfigs<V extends TFilterValue> = {
   [EQUALITY_OPERATOR.EXACT]: TExactOperatorConfigs<V>;
   [COLLECTION_OPERATOR.IN]: TInOperatorConfigs<V>;
   [COMPARISON_OPERATOR.RANGE]: TRangeOperatorConfigs<V>;
+  [TEXT_OPERATOR.CONTAINS]: TContainsOperatorConfigs<V>;
 } & TExtendedOperatorSpecificConfigs<V>;
 
 /**

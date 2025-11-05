@@ -1,5 +1,11 @@
 // plane imports
-import { FILTER_FIELD_TYPE, TFilterValue, TSupportedOperators, TBaseFilterFieldConfig } from "@plane/types";
+import {
+  FILTER_FIELD_TYPE,
+  TFilterValue,
+  TSupportedOperators,
+  TBaseFilterFieldConfig,
+  TTextFilterFieldConfig,
+} from "@plane/types";
 // local imports
 import { createFilterFieldConfig, IFilterIconConfig } from "./shared";
 
@@ -86,6 +92,21 @@ export const getMultiSelectConfig = <
         value: transforms.getValue(item),
         icon: iconConfig?.getOptionIcon?.(transforms.getIconData?.(item) as TIconData),
       })),
+  });
+
+// ------------ Text filters ------------
+
+export type TTextInputConfig = Omit<TTextFilterFieldConfig<string>, "type">;
+
+/**
+ * Helper to get the text input config
+ * @param config - Text input specific configuration
+ * @returns The text input config
+ */
+export const getTextInputConfig = (config: TTextInputConfig) =>
+  createFilterFieldConfig<typeof FILTER_FIELD_TYPE.TEXT, string>({
+    type: FILTER_FIELD_TYPE.TEXT,
+    ...config,
   });
 
 // ------------ Date filters ------------

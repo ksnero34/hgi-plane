@@ -4,10 +4,11 @@ import { useState } from "react";
 import { observer } from "mobx-react";
 import Image from "next/image";
 import useSWR from "swr";
-import { Loader, ToggleSwitch, setPromiseToast } from "@plane/ui";
+import { Loader, ToggleSwitch } from "@plane/ui";
 // components
-import { AuthenticationMethodCard } from "@/components/authentication";
-import { PageHeader } from "@/components/common";
+import { AuthenticationMethodCard } from "@/components/authentication/authentication-method-card";
+import { PageHeader } from "@/components/common/page-header";
+import { setPromiseToast } from "@plane/propel/toast";
 // hooks
 import { useInstance } from "@/hooks/store";
 // icons

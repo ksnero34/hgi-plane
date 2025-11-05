@@ -12,6 +12,7 @@ import type {
   TDateFilterFieldConfig,
   TDateRangeFilterFieldConfig,
   TFilterConditionNodeForDisplay,
+  TTextFilterFieldConfig,
 } from "@plane/types";
 import { FILTER_FIELD_TYPE } from "@plane/types";
 // local imports
@@ -21,6 +22,7 @@ import { DateRangeFilterValueInput } from "./date/range";
 import { SingleDateFilterValueInput } from "./date/single";
 import { MultiSelectFilterValueInput } from "./select/multi";
 import { SingleSelectFilterValueInput } from "./select/single";
+import { TextFilterValueInput } from "./text";
 
 export const FilterValueInput = observer(
   <P extends TFilterProperty, V extends TFilterValue>(props: TFilterValueInputProps<P, V>) => {
@@ -70,6 +72,18 @@ export const FilterValueInput = observer(
           condition={condition as TFilterConditionNodeForDisplay<P, string>}
           isDisabled={isDisabled}
           onChange={(value) => onChange(value as SingleOrArray<V>)}
+        />
+      );
+    }
+
+    // Text input
+    if (filterFieldConfig?.type === FILTER_FIELD_TYPE.TEXT) {
+      return (
+        <TextFilterValueInput<P>
+          config={filterFieldConfig as TTextFilterFieldConfig<string>}
+          condition={condition as TFilterConditionNodeForDisplay<P, string>}
+          isDisabled={isDisabled}
+          onChange={(value) => onChange((value ?? null) as SingleOrArray<V>)}
         />
       );
     }

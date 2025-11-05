@@ -9,6 +9,7 @@ import {
   TFilterValue,
   TMultiSelectFilterFieldConfig,
   TSingleSelectFilterFieldConfig,
+  TTextFilterFieldConfig,
   TSupportedFilterFieldConfigs,
   TSupportedOperators,
 } from "@plane/types";
@@ -89,5 +90,7 @@ export const createFilterFieldConfig = <T extends TFilterFieldType, V extends TF
         ? TDateFilterFieldConfig<V>
         : T extends typeof FILTER_FIELD_TYPE.DATE_RANGE
           ? TDateRangeFilterFieldConfig<V>
+          : T extends typeof FILTER_FIELD_TYPE.TEXT
+            ? TTextFilterFieldConfig<V>
           : never
 ): TSupportedFilterFieldConfigs<V> => config as TSupportedFilterFieldConfigs<V>;

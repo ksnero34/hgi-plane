@@ -10,6 +10,7 @@ export const CORE_FILTER_FIELD_TYPE = {
   DATE_RANGE: "date_range",
   SINGLE_SELECT: "single_select",
   MULTI_SELECT: "multi_select",
+  TEXT: "text",
 } as const;
 
 // -------- DATE FILTER CONFIGURATIONS --------
@@ -67,6 +68,19 @@ export type TMultiSelectFilterFieldConfig<V extends TFilterValue> = TBaseFilterF
   singleValueOperator: TSupportedOperators;
 };
 
+/**
+ * Text filter configuration - free-form text input.
+ * - defaultValue: Initial text value
+ * - placeholder: Placeholder text for the input
+ * - singleValueOperator: Operator to use when displaying single values
+ */
+export type TTextFilterFieldConfig<V extends TFilterValue> = TBaseFilterFieldConfig & {
+  type: typeof CORE_FILTER_FIELD_TYPE.TEXT;
+  defaultValue?: V;
+  placeholder?: string;
+  singleValueOperator?: TSupportedOperators;
+};
+
 // -------- UNION TYPES --------
 
 /**
@@ -76,4 +90,5 @@ export type TCoreFilterFieldConfigs<V extends TFilterValue = TFilterValue> =
   | TDateFilterFieldConfig<V>
   | TDateRangeFilterFieldConfig<V>
   | TSingleSelectFilterFieldConfig<V>
-  | TMultiSelectFilterFieldConfig<V>;
+  | TMultiSelectFilterFieldConfig<V>
+  | TTextFilterFieldConfig<V>;

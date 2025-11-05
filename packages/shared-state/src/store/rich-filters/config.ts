@@ -144,6 +144,14 @@ export class FilterConfig<P extends TFilterProperty, V extends TFilterValue = TF
     if (operatorConfig?.type === FILTER_FIELD_TYPE.MULTI_SELECT && (Array.isArray(value) ? value.length : 0) <= 1) {
       return operatorConfig.singleValueOperator as typeof operator;
     }
+    if (
+      operatorConfig?.type === FILTER_FIELD_TYPE.TEXT &&
+      operatorConfig.singleValueOperator &&
+      typeof value === "string" &&
+      value.trim().length > 0
+    ) {
+      return operatorConfig.singleValueOperator as typeof operator;
+    }
     return operator;
   });
 
