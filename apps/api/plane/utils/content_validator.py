@@ -165,6 +165,8 @@ CUSTOM_TAGS = {
     "input",
     "image-component",
     "file-component",
+    "embed-component",
+    "iframe",
 }
 ALLOWED_TAGS = nh3.ALLOWED_TAGS | CUSTOM_TAGS
 
@@ -181,6 +183,8 @@ ATTRIBUTES = {
         "start",
         "type",
         "xmlns",
+        "tabindex",
+        "contenteditable",
         # common editor data-* attributes seen in stored HTML
         # (wildcards like data-* are NOT supported by nh3; we add known keys
         # here and dynamically include all data-* seen in the input below)
@@ -199,8 +203,33 @@ ATTRIBUTES = {
         "data-emoji-url",
         "data-logo-in-use",
         "data-block-type",
+        # embed component attributes
+        "data-testid",
+        "data-node-view-wrapper",
+        "data-ignore-dnd",
+        "data-node",
+        "data-url",
+        "data-title",
+        "data-description",
+        "data-provider",
+        "data-thumbnail",
+        "data-html",
     },
     "a": {"href", "target"},
+    "button": {"type", "tabindex"},
+    "svg": {
+        "xmlns",
+        "width",
+        "height",
+        "viewBox",
+        "fill",
+        "stroke",
+        "stroke-width",
+        "stroke-linecap",
+        "stroke-linejoin",
+    },
+    "path": {"d", "fill", "stroke"},
+    "line": {"x1", "x2", "y1", "y2"},
     # editor node/tag attributes
     "image-component": {
         "id",
@@ -220,6 +249,7 @@ ATTRIBUTES = {
         "src",
         "alt",
         "title",
+        "loading",
     },
     "mention-component": {"id", "entity_identifier", "entity_name"},
     "file-component": {
@@ -234,6 +264,22 @@ ATTRIBUTES = {
         "uploadStatus",
         "uploadstatus",
         "errorMessage",
+    },
+    "embed-component": {
+        "id",
+        "url",
+        "title",
+        "description",
+        "provider",
+        "thumbnail",
+        "html",
+        "data-url",
+        "data-title",
+        "data-description",
+        "data-provider",
+        "data-thumbnail",
+        "data-html",
+        "data-node",
     },
     "th": {
         "colspan",
@@ -259,6 +305,16 @@ ATTRIBUTES = {
     "pre": {"language"},
     "code": {"language", "spellcheck"},
     "input": {"type", "checked"},
+    "iframe": {
+        "src",
+        "width",
+        "height",
+        "style",
+        "title",
+        "loading",
+        "allowfullscreen",
+        "allow",
+    },
 }
 
 SAFE_PROTOCOLS = {"http", "https", "mailto", "tel"}

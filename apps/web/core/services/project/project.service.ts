@@ -7,6 +7,7 @@ import type {
   TProjectIssuesSearchParams,
   IIssueType,
   IProjectIssueType,
+  TProjectOverviewSnapshot,
 } from "@plane/types";
 // helpers
 // plane web types
@@ -57,6 +58,14 @@ export class ProjectService extends APIService {
 
   async getProject(workspaceSlug: string, projectId: string): Promise<TProject> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getProjectOverview(workspaceSlug: string, projectId: string): Promise<TProjectOverviewSnapshot> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/overview/`)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

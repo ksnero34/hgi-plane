@@ -4,6 +4,7 @@ export default {
     pages: "页面",
     new_work_item: "新工作项",
     home: "主页",
+    overview: "Overview",
     your_work: "我的工作",
     inbox: "收件箱",
     workspace: "工作区",

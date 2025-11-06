@@ -4,6 +4,7 @@ export default {
     pages: "Sayfalar",
     new_work_item: "Yeni iş öğesi",
     home: "Ana Sayfa",
+    overview: "Overview",
     your_work: "Çalışmalarınız",
     inbox: "Gelen Kutusu",
     workspace: "Çalışma Alanı",

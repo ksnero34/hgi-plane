@@ -46,6 +46,11 @@ export interface IProject extends IPartialProject {
   default_assignee?: IUser | string | null;
   default_state?: string | null;
   description?: string;
+  description_html?: string | null;
+  description_text?: any;
+  overview?: string;
+  overview_html?: string | null;
+  overview_text?: any;
   estimate?: string | null;
   anchor?: string | null;
   is_favorite?: boolean;
@@ -153,3 +158,17 @@ export interface ISearchIssueResponse {
 export type TPartialProject = IPartialProject;
 
 export type TProject = TPartialProject & IProject;
+
+export type TProjectOverviewStateDistribution = Record<TStateGroups, number>;
+
+export interface TProjectOverviewSnapshot {
+  project_id: string;
+  state_distribution: TProjectOverviewStateDistribution;
+  open_issues: number;
+  completed_issues: number;
+  cancelled_issues: number;
+  total_issues: number;
+  cycles: number;
+  modules: number;
+  members: number;
+}

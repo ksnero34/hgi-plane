@@ -65,6 +65,45 @@ class BaseViewSet(TimezoneMixin, ReadReplicaControlMixin, ModelViewSet, BasePagi
             log_exception(e)
             raise APIException("Please check the view", status.HTTP_400_BAD_REQUEST)
 
+    def apply_annotations(self, queryset):
+        """
+        Apply common annotations to issue queryset.
+        This method can be overridden in subclasses for custom annotations.
+        """
+        from plane.db.models import Issue, CycleIssue, IssueLink, FileAsset
+        from django.db.models import OuterRef, Subquery, Count, F
+        from django.db.models.functions import Coalesce
+        from django.contrib.postgres.aggregates import ArrayAgg
+
+        return (
+            queryset.annotate(
+                cycle_id=Subquery(
+                    CycleIssue.objects.filter(issue=OuterRef("id"), deleted_at__isnull=True).values("cycle_id")[:1]
+                )
+            )
+            .annotate(
+                link_count=IssueLink.objects.filter(issue=OuterRef("id"))
+                .order_by()
+                .annotate(count=Count("id"))
+                .values("count")
+            )
+            .annotate(
+                attachment_count=FileAsset.objects.filter(
+                    issue_id=OuterRef("id"),
+                    entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
+                )
+                .order_by()
+                .annotate(count=Count("id"))
+                .values("count")
+            )
+            .annotate(
+                sub_issues_count=Issue.issue_objects.filter(parent=OuterRef("id"))
+                .order_by()
+                .annotate(count=Count("id"))
+                .values("count")
+            )
+        )
+
     def handle_exception(self, exc):
         """
         Handle any exception that occurs, by returning an appropriate response,

@@ -4,6 +4,7 @@ export default {
     pages: "ページ",
     new_work_item: "新規作業項目",
     home: "ホーム",
+    overview: "Overview",
     your_work: "あなたの作業",
     inbox: "受信トレイ",
     workspace: "ワークスペース",

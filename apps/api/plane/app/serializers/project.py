@@ -75,6 +75,14 @@ class ProjectSerializer(BaseSerializer):
             if not is_valid:
                 raise serializers.ValidationError({"error": "html content is not valid"})
 
+        if "overview_html" in data and data["overview_html"]:
+            is_valid, error_msg, sanitized_overview = validate_html_content(str(data["overview_html"]))
+            if sanitized_overview is not None:
+                data["overview_html"] = sanitized_overview
+
+            if not is_valid:
+                raise serializers.ValidationError({"error": "overview html content is not valid"})
+
         return data
 
     def create(self, validated_data):
@@ -98,6 +106,9 @@ class ProjectLiteSerializer(BaseSerializer):
             "cover_image_url",
             "logo_props",
             "description",
+            "overview",
+            "overview_html",
+            "overview_text",
         ]
         read_only_fields = fields
 

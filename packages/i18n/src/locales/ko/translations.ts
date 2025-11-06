@@ -4,6 +4,7 @@ export default {
     pages: "페이지",
     new_work_item: "새 작업 항목",
     home: "홈",
+    overview: "오버뷰",
     your_work: "나의 작업",
     inbox: "받은 편지함",
     workspace: "작업 공간",

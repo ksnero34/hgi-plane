@@ -17,6 +17,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
@@ -79,6 +80,13 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
     restoreIssue,
     updateFilters,
   } = useIssuesActions(storeType);
+  const { customFields, error: customFieldsError } = useCustomField(projectId as string);
+
+  useEffect(() => {
+    if (customFieldsError) {
+      console.error("Error fetching custom fields:", customFieldsError);
+    }
+  }, [customFieldsError]);
 
   const deleteAreaRef = useRef<HTMLDivElement | null>(null);
   const [isDragOverDelete, setIsDragOverDelete] = useState(false);
@@ -295,6 +303,7 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
                 handleOnDrop={handleOnDrop}
                 loadMoreIssues={fetchMoreIssues}
                 isEpic={isEpic}
+                customFields={customFields}
               />
             </div>
           </div>

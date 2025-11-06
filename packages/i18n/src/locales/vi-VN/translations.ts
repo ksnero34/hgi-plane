@@ -4,6 +4,7 @@ export default {
     pages: "Trang",
     new_work_item: "Mục công việc mới",
     home: "Trang chủ",
+    overview: "Overview",
     your_work: "Công việc của tôi",
     inbox: "Hộp thư đến",
     workspace: "Không gian làm việc",

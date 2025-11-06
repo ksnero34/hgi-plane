@@ -4,6 +4,7 @@ export default {
     pages: "Halaman",
     new_work_item: "Item kerja baru",
     home: "Beranda",
+    overview: "Overview",
     your_work: "Pekerjaan anda",
     inbox: "Inbox",
     workspace: "Workspace",

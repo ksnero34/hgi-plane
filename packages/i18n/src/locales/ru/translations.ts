@@ -4,6 +4,7 @@ export default {
     pages: "Страницы",
     new_work_item: "Новый рабочий элемент",
     home: "Главная",
+    overview: "Overview",
     your_work: "Ваша работа",
     inbox: "Входящие",
     workspace: "Рабочие пространства",

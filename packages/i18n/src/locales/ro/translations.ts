@@ -4,6 +4,7 @@ export default {
     pages: "Documentație",
     new_work_item: "Activitate nouă",
     home: "Acasă",
+    overview: "Overview",
     your_work: "Munca ta",
     inbox: "Căsuță de mesaje",
     workspace: "Spațiu de lucru",

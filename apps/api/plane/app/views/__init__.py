@@ -7,6 +7,7 @@ from .project.base import (
     DeployBoardViewSet,
     ProjectArchiveUnarchiveEndpoint,
 )
+from .project.overview import ProjectOverviewEndpoint
 
 from .project.custom_field import CustomFieldViewSet
 

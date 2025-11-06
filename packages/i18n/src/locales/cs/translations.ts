@@ -4,6 +4,7 @@ export default {
     pages: "Stránky",
     new_work_item: "Nová pracovní položka",
     home: "Domov",
+    overview: "Overview",
     your_work: "Vaše práce",
     inbox: "Doručená pošta",
     workspace: "Pracovní prostor",
