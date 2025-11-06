@@ -1,13 +1,15 @@
 "use client";
 
 import type { FC } from "react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { observer } from "mobx-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { DEFAULT_PROJECT_FORM_VALUES, PROJECT_TRACKER_EVENTS } from "@plane/constants";
+import { DEFAULT_PROJECT_FORM_VALUES, PROJECT_TRACKER_EVENTS, PROJECT_UNSPLASH_COVERS, RANDOM_EMOJI_CODES } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
+// utils
+import { getEmojiImageUrlFromDecimal } from "@plane/utils";
 // constants
 import ProjectCommonAttributes from "@/components/project/create/common-attributes";
 import ProjectCreateHeader from "@/components/project/create/header";
@@ -37,9 +39,33 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
   const { addProjectToFavorites, createProject } = useProject();
   // states
   const [isChangeInIdentifierRequired, setIsChangeInIdentifierRequired] = useState(true);
+
+  // Generate random cover image for each form instance
+  const randomCoverImage = useMemo(
+    () => PROJECT_UNSPLASH_COVERS[Math.floor(Math.random() * PROJECT_UNSPLASH_COVERS.length)],
+    []
+  );
+
+  // Generate random emoji for each form instance
+  const randomEmoji = useMemo(
+    () => RANDOM_EMOJI_CODES[Math.floor(Math.random() * RANDOM_EMOJI_CODES.length)],
+    []
+  );
+
   // form info
   const methods = useForm<TProject>({
-    defaultValues: { ...DEFAULT_PROJECT_FORM_VALUES, ...data },
+    defaultValues: {
+      ...DEFAULT_PROJECT_FORM_VALUES,
+      cover_image_url: randomCoverImage,
+      logo_props: {
+        in_use: "emoji",
+        emoji: {
+          value: randomEmoji,
+          url: getEmojiImageUrlFromDecimal(randomEmoji),
+        },
+      },
+      ...data
+    },
     reValidateMode: "onChange",
   });
   const { handleSubmit, reset, setValue } = methods;
@@ -60,8 +86,8 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
     // Upper case identifier
     formData.identifier = formData.identifier?.toUpperCase();
     const coverImage = formData.cover_image_url;
-    // if unsplash or a pre-defined image is uploaded, delete the old uploaded asset
-    if (coverImage?.startsWith("http")) {
+    // if unsplash, pre-defined image, or local path is provided, set it as cover_image
+    if (coverImage && (coverImage.startsWith("http") || coverImage.startsWith("/"))) {
       formData.cover_image = coverImage;
       formData.cover_image_asset = null;
     }

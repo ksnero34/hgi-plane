@@ -49,7 +49,9 @@ export const CreateProjectModal: FC<Props> = (props) => {
   };
 
   const handleCoverImageStatusUpdate = async (projectId: string, coverImage: string) => {
-    if (!checkURLValidity(coverImage)) {
+    // Only update asset status if it's an asset URL (contains /api/assets/)
+    // Skip for external URLs, local static files (like /cover-images/...), etc.
+    if (!checkURLValidity(coverImage) && coverImage.includes("/api/assets/")) {
       await fileService.updateBulkProjectAssetsUploadStatus(workspaceSlug, projectId, projectId, {
         asset_ids: [getAssetIdFromUrl(coverImage)],
       });

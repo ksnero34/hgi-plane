@@ -1,24 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { observer } from "mobx-react";
 import { useForm } from "react-hook-form";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { EFileAssetType, TLogoProps } from "@plane/types";
+import { CORE_EXTENSIONS } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
-import type { TProjectOverviewSnapshot } from "@plane/types";
+import { EFileAssetType } from "@plane/types";
+import type { ISearchIssueResponse, TLogoProps, TProjectOverviewSnapshot } from "@plane/types";
 import { Button } from "@plane/propel/button";
 import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { Avatar, Loader } from "@plane/ui";
+import { Loader } from "@plane/ui";
 import { getEmojiImageUrlFromDecimal, getFileURL, getTextContent } from "@plane/utils";
 // plane web components
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
 import { PageHead } from "@/components/core/page-title";
 import { RichTextEditor } from "@/components/editor/rich-text";
+import { ExistingIssuesListModal } from "@/components/core/modals/existing-issues-list-modal";
 import { Logo } from "@/components/common/logo";
 // hooks
 import { useEditorAsset } from "@/hooks/store/use-editor-asset";
@@ -28,6 +30,7 @@ import { useWorkspace } from "@/hooks/store/use-workspace";
 // services
 import { ProjectService } from "@/services/project";
 import { WorkspaceService } from "@/services/workspace.service";
+import { useIssueEmbed } from "@/plane-web/hooks/use-issue-embed";
 // local
 import { DEFAULT_PROJECT_OVERVIEW_HTML } from "./constants";
 import { ProjectOverviewProgress } from "./progress";
@@ -81,6 +84,8 @@ export const ProjectOverviewRoot = observer(() => {
   const [isCoverUpdating, setIsCoverUpdating] = useState<boolean>(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false);
   const [isLogoUpdating, setIsLogoUpdating] = useState<boolean>(false);
+  const [isIssueEmbedModalOpen, setIsIssueEmbedModalOpen] = useState<boolean>(false);
+  const [issueEmbedContext, setIssueEmbedContext] = useState<{ editor: any; position: number } | null>(null);
 
   useEffect(() => {
     const incoming = project?.overview_html ?? project?.description_html;
@@ -253,6 +258,74 @@ export const ProjectOverviewRoot = observer(() => {
           },
         ]
       : [];
+
+  const handleIssueEmbedModalClose = useCallback(() => {
+    setIsIssueEmbedModalOpen(false);
+    setIssueEmbedContext(null);
+  }, []);
+
+  const handleIssueEmbedInsertRequest = useCallback((payload: any) => {
+    const editor = payload?.editor;
+    const range = payload?.range;
+    if (!editor || !range) return;
+
+    const position = range.from;
+    editor.chain().focus().deleteRange(range).setTextSelection(position).run();
+    setIssueEmbedContext({ editor, position });
+    setIsIssueEmbedModalOpen(true);
+  }, []);
+
+  const { widgetCallback: issueEmbedWidgetCallback } = useIssueEmbed();
+
+  const extendedEditorProps = useMemo(
+    () => ({
+      embeds: {
+        issue: {
+          widgetCallback: issueEmbedWidgetCallback,
+          onInsertRequest: handleIssueEmbedInsertRequest,
+        },
+      },
+    }),
+    [handleIssueEmbedInsertRequest, issueEmbedWidgetCallback]
+  );
+
+  const handleIssueEmbedSubmit = useCallback(
+    async (issues: ISearchIssueResponse[]) => {
+      const selectedIssue = issues[0];
+      if (!selectedIssue || !issueEmbedContext) {
+        handleIssueEmbedModalClose();
+        return;
+      }
+
+      const { editor, position } = issueEmbedContext;
+
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(position, {
+          type: CORE_EXTENSIONS.WORK_ITEM_EMBED,
+          attrs: {
+            entity_identifier: selectedIssue.id,
+            project_identifier: selectedIssue.project_id,
+            workspace_identifier: selectedIssue.workspace__slug,
+            id: selectedIssue.id,
+            entity_name: "issue",
+            project_slug: selectedIssue.project__identifier,
+            issue_title: selectedIssue.name,
+            issue_sequence_id: selectedIssue.sequence_id,
+            issue_state_name: selectedIssue.state__name,
+            issue_state_group: selectedIssue.state__group,
+            issue_state_color: selectedIssue.state__color,
+          },
+        })
+        .setTextSelection(position + 1)
+        .run();
+
+      handleIssueEmbedModalClose();
+    },
+    [handleIssueEmbedModalClose, issueEmbedContext]
+  );
+
   const pageTitle = project?.name ? `${project.name} - Overview` : undefined;
 
   const handleMentionSearch = async (payload: any) =>
@@ -373,6 +446,7 @@ export const ProjectOverviewRoot = observer(() => {
                 projectId={pid}
                 containerClassName="min-h-[480px] pt-6"
                 {...editorEditableProps}
+                extendedEditorProps={extendedEditorProps}
                 onChange={(_value, html) => {
                   if (!isAdmin) return;
                   setEditorContent(html);
@@ -412,6 +486,15 @@ export const ProjectOverviewRoot = observer(() => {
           </div>
         </div>
       </div>
+      <ExistingIssuesListModal
+        isOpen={isIssueEmbedModalOpen}
+        handleClose={handleIssueEmbedModalClose}
+        workspaceSlug={slug}
+        projectId={pid}
+        searchParams={{}}
+        handleOnSubmit={handleIssueEmbedSubmit}
+        workspaceLevelToggle
+      />
     </>
   );
 });
