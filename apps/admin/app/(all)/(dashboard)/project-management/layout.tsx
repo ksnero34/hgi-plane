@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Metadata } from "next";
+import type { ReactNode } from "react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "프로젝트 관리 - Plane Admin",

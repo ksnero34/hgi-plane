@@ -1,4 +1,5 @@
-import { FC, useState } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
 import { X } from "lucide-react";

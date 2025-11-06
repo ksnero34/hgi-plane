@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@plane/ui";
-import { INotificationTemplate } from "../page";
+import type { INotificationTemplate } from "../page";
 import { CreateTemplateModal } from "./create-template-modal";
 
 interface NotificationTemplateListProps {

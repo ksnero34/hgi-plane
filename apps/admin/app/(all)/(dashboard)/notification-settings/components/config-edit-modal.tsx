@@ -3,7 +3,7 @@
 import { useState, Fragment } from "react";
 import { Button, Input, CustomSelect } from "@plane/ui";
 import { Dialog, Transition } from "@headlessui/react";
-import { INotificationConfig } from "../page";
+import type { INotificationConfig } from "../page";
 
 interface ConfigEditModalProps {
   isOpen: boolean;

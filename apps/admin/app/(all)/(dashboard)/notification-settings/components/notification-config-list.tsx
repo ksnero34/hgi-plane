@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@plane/ui";
-import { INotificationConfig } from "../page";
+import type { INotificationConfig } from "../page";
 import { ConfigEditModal } from "./config-edit-modal";
 
 interface NotificationConfigListProps {

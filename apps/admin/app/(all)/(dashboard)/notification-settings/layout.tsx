@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { Metadata } from "next";
+import type { ReactNode } from "react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "알림 설정 - Plane Admin",

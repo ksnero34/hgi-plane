@@ -3,7 +3,7 @@
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button, Input } from "@plane/ui";
-import { INotificationConfig } from "../page";
+import type { INotificationConfig } from "../page";
 
 interface TestNotificationModalProps {
   isOpen: boolean;

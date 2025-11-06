@@ -3,7 +3,7 @@
 import { useState, Fragment } from "react";
 import { Button, Input, CustomSelect } from "@plane/ui";
 import { Dialog, Transition } from "@headlessui/react";
-import { INotificationConfig, INotificationTemplate, IWorkspace } from "../page";
+import type { INotificationConfig, INotificationTemplate, IWorkspace } from "../page";
 
 interface CreateConfigModalProps {
   isOpen: boolean;

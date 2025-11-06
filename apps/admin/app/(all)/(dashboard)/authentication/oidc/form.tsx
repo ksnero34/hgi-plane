@@ -1,19 +1,22 @@
-import { FC, useState } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import { isEmpty } from "lodash-es";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 // constants
 import { API_BASE_URL } from "@plane/constants";
 // types
-import { IFormattedInstanceConfiguration } from "@plane/types";
+import type { IFormattedInstanceConfiguration } from "@plane/types";
 // ui
 import { Button, getButtonStyling } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { cn } from "@plane/utils";
 // components
 import { ConfirmDiscardModal } from "@/components/common/confirm-discard-modal";
-import { ControllerInput, TControllerInputFormField } from "@/components/common/controller-input";
-import { CopyField, TCopyField } from "@/components/common/copy-field";
+import type { TControllerInputFormField } from "@/components/common/controller-input";
+import { ControllerInput } from "@/components/common/controller-input";
+import type { TCopyField } from "@/components/common/copy-field";
+import { CopyField } from "@/components/common/copy-field";
 // helpers
 // import { API_BASE_URL, cn } from "@/helpers/common.helper";
 // hooks

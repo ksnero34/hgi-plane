@@ -52,8 +52,9 @@ export const getPaginationParams = (
     const groupBy = paginationParams["group_by"] as EIssueGroupByToServerOptions | undefined;
     delete paginationParams["group_by"];
 
-    if (groupBy) {
-      const groupByFilterOption = EServerGroupByToFilterOptions[groupBy];
+    if (groupBy && groupBy in EServerGroupByToFilterOptions) {
+      const groupByFilterOption =
+        EServerGroupByToFilterOptions[groupBy as keyof typeof EServerGroupByToFilterOptions];
       paginationParams[groupByFilterOption] = groupId;
     }
   }
@@ -63,8 +64,9 @@ export const getPaginationParams = (
     const subGroupBy = paginationParams["sub_group_by"] as EIssueGroupByToServerOptions | undefined;
     delete paginationParams["sub_group_by"];
 
-    if (subGroupBy) {
-      const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy];
+    if (subGroupBy && subGroupBy in EServerGroupByToFilterOptions) {
+      const subGroupByFilterOption =
+        EServerGroupByToFilterOptions[subGroupBy as keyof typeof EServerGroupByToFilterOptions];
       paginationParams[subGroupByFilterOption] = subGroupId;
     }
   }

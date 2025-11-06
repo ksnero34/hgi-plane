@@ -1,9 +1,10 @@
 "use client";
 
-import { FC, useState } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import { observer } from "mobx-react";
 import { User, ChevronUp, ChevronDown } from "lucide-react";
-import { IUser } from "@plane/types";
+import type { IUser } from "@plane/types";
 import { Avatar, ToggleSwitch } from "@plane/ui";
 import { useUser } from "@/hooks/store";
 
