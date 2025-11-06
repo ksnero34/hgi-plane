@@ -7,10 +7,12 @@ type Props = {
     issueId,
     projectId,
     workspaceSlug,
+    attributes,
   }: {
     issueId: string;
     projectId: string | undefined;
     workspaceSlug: string | undefined;
+    attributes: Record<string, any>;
   }) => React.ReactNode;
 };
 
@@ -23,6 +25,7 @@ export const WorkItemEmbedExtension = (props: Props) =>
             issueId: issueProps.node.attrs.entity_identifier,
             projectId: issueProps.node.attrs.project_identifier,
             workspaceSlug: issueProps.node.attrs.workspace_identifier,
+            attributes: issueProps.node.attrs,
           })}
         </NodeViewWrapper>
       ));

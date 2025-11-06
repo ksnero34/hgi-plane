@@ -26,6 +26,30 @@ export const WorkItemEmbedExtensionConfig = Node.create({
       entity_name: {
         default: undefined,
       },
+      project_slug: {
+        default: undefined,
+      },
+      issue_title: {
+        default: undefined,
+      },
+      issue_sequence_id: {
+        default: undefined,
+      },
+      issue_state_id: {
+        default: undefined,
+      },
+      issue_priority: {
+        default: undefined,
+      },
+      issue_state_name: {
+        default: undefined,
+      },
+      issue_state_group: {
+        default: undefined,
+      },
+      issue_state_color: {
+        default: undefined,
+      },
     };
   },
 

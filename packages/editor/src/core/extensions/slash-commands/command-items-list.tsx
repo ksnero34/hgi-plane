@@ -18,9 +18,11 @@ import {
   Table,
   TextQuote,
   FileIcon,
+  FileCode2,
 } from "lucide-react";
 // constants
 import { COLORS_LIST } from "@/constants/common";
+import { CORE_EXTENSIONS } from "@/constants/extension";
 // helpers
 import {
   insertTableCommand,
@@ -52,7 +54,12 @@ export type TSlashCommandSection = {
 export const getSlashCommandFilteredSections =
   (args: TExtensionProps) =>
   ({ query }: { query: string }): TSlashCommandSection[] => {
-    const { additionalOptions: externalAdditionalOptions, disabledExtensions, flaggedExtensions } = args;
+    const {
+      additionalOptions: externalAdditionalOptions,
+      disabledExtensions,
+      extendedEditorProps,
+      flaggedExtensions,
+    } = args;
     const SLASH_COMMAND_SECTIONS: TSlashCommandSection[] = [
       {
         key: "general",
@@ -173,6 +180,23 @@ export const getSlashCommandFilteredSections =
             searchTerms: ["codeblock"],
             icon: <Code2 className="size-3.5" />,
             command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run(),
+          },
+          {
+            commandKey: "external-embed",
+            key: "external-embed",
+            title: "Embed",
+            description: "Embed external content like videos or designs.",
+            searchTerms: ["iframe", "video", "figma", "embed", "link"],
+            icon: <FileCode2 className="size-3.5" />,
+            command: ({ editor, range }) =>
+              editor
+                .chain()
+                .focus()
+                .deleteRange(range)
+                .insertContent({
+                  type: CORE_EXTENSIONS.EXTERNAL_EMBED,
+                })
+                .run(),
           },
           // {
           //   commandKey: "image",
@@ -323,6 +347,7 @@ export const getSlashCommandFilteredSections =
       ...coreEditorAdditionalSlashCommandOptions({
         disabledExtensions,
         flaggedExtensions,
+        extendedEditorProps,
       }),
     ]?.forEach((item) => {
       const sectionToPushTo = SLASH_COMMAND_SECTIONS.find((s) => s.key === item.section) ?? SLASH_COMMAND_SECTIONS[0];
@@ -337,6 +362,9 @@ export const getSlashCommandFilteredSections =
     const filteredSlashSections = SLASH_COMMAND_SECTIONS.map((section) => ({
       ...section,
       items: section.items.filter((item) => {
+        if (item.commandKey === "external-embed" && disabledExtensions?.includes("external-embed")) {
+          return false;
+        }
         if (typeof query !== "string") return;
 
         const lowercaseQuery = query.toLowerCase();

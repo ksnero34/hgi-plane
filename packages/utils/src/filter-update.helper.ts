@@ -44,7 +44,8 @@ export const calculateFilterValue = (
 
   // 문자열 타입 필터의 경우 (search, name 등)
   if (key === "search" || key === "name") {
-    return value || null;
+    if (Array.isArray(value)) return value;
+    return typeof value === "string" ? value : "";
   }
 
   // 일반 필터의 경우 기존 로직 적용

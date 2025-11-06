@@ -123,19 +123,45 @@ class BaseFilterSet(FilterSet):
                         field_id = parts[0].replace("customproperty_", "")
                         operator = parts[1] if len(parts) > 1 else "in"
 
-                        # Parse value (comma-separated for 'in' operator)
-                        if operator == "in" and isinstance(value, str):
-                            values = [v.strip() for v in value.split(",") if v.strip()]
+                        # Parse value based on operator
+                        if operator == "in":
+                            if isinstance(value, str):
+                                values = [v.strip() for v in value.split(",") if v.strip()]
+                            elif isinstance(value, list):
+                                values = value
+                            else:
+                                values = [value]
+                        elif operator == "contains":
+                            # For contains, treat as single value
+                            values = [value] if not isinstance(value, list) else value
                         else:
                             values = [value] if not isinstance(value, list) else value
 
                         if values:
-                            # Create Q object for custom field filtering
-                            custom_prop_filters &= Q(
-                                custom_field_values__custom_field_id=field_id,
-                                custom_field_values__value__in=values,
-                                custom_field_values__deleted_at__isnull=True,
-                            )
+                            # Create Q object for custom field filtering based on operator
+                            if operator == "in":
+                                custom_prop_filters &= Q(
+                                    custom_field_values__custom_field_id=field_id,
+                                    custom_field_values__value__in=values,
+                                    custom_field_values__deleted_at__isnull=True,
+                                )
+                            elif operator == "contains":
+                                # Use icontains for case-insensitive partial matching
+                                q_contains = Q()
+                                for val in values:
+                                    q_contains |= Q(
+                                        custom_field_values__custom_field_id=field_id,
+                                        custom_field_values__value__icontains=val,
+                                        custom_field_values__deleted_at__isnull=True,
+                                    )
+                                custom_prop_filters &= q_contains
+                            else:
+                                # Default to exact match for unknown operators
+                                custom_prop_filters &= Q(
+                                    custom_field_values__custom_field_id=field_id,
+                                    custom_field_values__value__in=values,
+                                    custom_field_values__deleted_at__isnull=True,
+                                )
 
             # Apply custom property filters if any
             if custom_prop_filters and custom_prop_filters.children:

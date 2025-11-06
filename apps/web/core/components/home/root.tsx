@@ -60,8 +60,8 @@ export const WorkspaceHomeView = observer(() => {
       )}
       <>
         <HomePeekOverviewsRoot />
-        <ContentWrapper className={cn("gap-6 bg-custom-background-100 mx-auto scrollbar-hide px-page-x lg:px-0")}>
-          <div className="max-w-[800px] mx-auto w-full">
+        <ContentWrapper className={cn("gap-6 bg-custom-background-100 mx-auto scrollbar-hide px-page-x lg:px-12")}>
+          <div className="mx-auto w-full">
             {currentUser && <UserGreetingsView user={currentUser} />}
             <DashboardWidgets />
           </div>

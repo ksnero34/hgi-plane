@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Hash,
   User,
+  Search,
 } from "lucide-react";
 // plane imports
 import {
@@ -54,10 +55,12 @@ import {
   getModuleFilterConfig,
   getPriorityFilterConfig,
   getProjectFilterConfig,
+  getSearchFilterConfig,
   getStartDateFilterConfig,
   getStateFilterConfig,
   getStateGroupFilterConfig,
   getSubscriberFilterConfig,
+  getSupportedDateOperators,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
   isLoaderReady,
@@ -352,7 +355,10 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         isEnabled: true,
         icon: User,
         supportedOperatorConfigsMap: new Map([
-          createOperatorConfigEntry(EQUALITY_OPERATOR.EXACT, operatorConfigs, (updatedParams) =>
+          createOperatorConfigEntry(
+            EQUALITY_OPERATOR.EXACT,
+            { ...operatorConfigs, isEnabled: true },
+            (updatedParams) =>
             getMultiSelectConfig<boolean, boolean, boolean>(
               {
                 items: [true],
@@ -367,10 +373,21 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
               },
               {}
             )
-          ),
+          )
         ]),
       }),
     [operatorConfigs]
+  );
+
+  // search filter config
+  const searchFilterConfig = useMemo(
+    () =>
+      getSearchFilterConfig<TWorkItemFilterProperty>("search")({
+        isEnabled: isFilterEnabled("search"),
+        filterIcon: Search,
+        ...operatorConfigs,
+      }),
+    [isFilterEnabled, operatorConfigs]
   );
 
   // start date filter config
@@ -517,19 +534,19 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
 
       // project_member 타입 - 단일 멤버 선택
       if (field.field_type === "project_member") {
-        return createFilterConfig<string, IUserLite>({
+        return createFilterConfig<string, string>({
           id: filterKey,
           label: field.name,
           isEnabled: members !== undefined,
           icon: fieldIcon,
           supportedOperatorConfigsMap: new Map([
             createOperatorConfigEntry(COLLECTION_OPERATOR.IN, baseParams, (updatedParams) =>
-              getMultiSelectConfig<string, IUserLite, IUserLite>(
+              getMultiSelectConfig<IUserLite, string, IUserLite>(
                 {
                   items: members ?? [],
                   getId: (member: IUserLite) => member.id,
                   getLabel: (member: IUserLite) => member.display_name,
-                  getValue: (member: IUserLite) => member,
+                  getValue: (member: IUserLite) => member.id,
                   getIconData: (member: IUserLite) => member,
                 },
                 {
@@ -537,7 +554,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
                   ...updatedParams,
                 },
                 {
-                  renderOption: (memberDetails: IUserLite) => (
+                  getOptionIcon: (memberDetails: IUserLite) => (
                     <Avatar
                       name={memberDetails.display_name}
                       src={getFileURL(memberDetails.avatar_url)}
@@ -554,19 +571,19 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
 
       // project_members 타입 - 복수 멤버 선택
       if (field.field_type === "project_members") {
-        return createFilterConfig<string, IUserLite>({
+        return createFilterConfig<string, string>({
           id: filterKey,
           label: field.name,
           isEnabled: members !== undefined,
           icon: fieldIcon,
           supportedOperatorConfigsMap: new Map([
             createOperatorConfigEntry(COLLECTION_OPERATOR.IN, baseParams, (updatedParams) =>
-              getMultiSelectConfig<string, IUserLite, IUserLite>(
+              getMultiSelectConfig<IUserLite, string, IUserLite>(
                 {
                   items: members ?? [],
                   getId: (member: IUserLite) => member.id,
                   getLabel: (member: IUserLite) => member.display_name,
-                  getValue: (member: IUserLite) => member,
+                  getValue: (member: IUserLite) => member.id,
                   getIconData: (member: IUserLite) => member,
                 },
                 {
@@ -574,7 +591,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
                   ...updatedParams,
                 },
                 {
-                  renderOption: (memberDetails: IUserLite) => (
+                  getOptionIcon: (memberDetails: IUserLite) => (
                     <Avatar
                       name={memberDetails.display_name}
                       src={getFileURL(memberDetails.avatar_url)}
@@ -591,20 +608,13 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
 
       // date 타입 처리
       if (field.field_type === "date") {
-        // date 필터는 아직 구현되지 않음 - 향후 추가 예정
-        return createFilterConfig<string, string>({
+        return createFilterConfig<string, Date>({
           id: filterKey,
           label: field.name,
           isEnabled: true,
           icon: fieldIcon,
-          supportedOperatorConfigsMap: new Map([
-            createOperatorConfigEntry(TEXT_OPERATOR.CONTAINS, baseParams, (updatedParams) =>
-              getTextInputConfig({
-                placeholder: `Search ${field.name.toLowerCase()}...`,
-                ...updatedParams,
-              })
-            ),
-          ]),
+          allowMultipleFilters: true,
+          supportedOperatorConfigsMap: getSupportedDateOperators(baseParams),
         });
       }
 
@@ -629,6 +639,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   return {
     areAllConfigsInitialized,
     configs: [
+      searchFilterConfig,
       stateFilterConfig,
       stateGroupFilterConfig,
       assigneeFilterConfig,
@@ -649,6 +660,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       ...customFieldConfigs,
     ],
     configMap: {
+      search: searchFilterConfig,
       project_id: projectFilterConfig,
       state_group: stateGroupFilterConfig,
       state_id: stateFilterConfig,

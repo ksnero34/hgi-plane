@@ -76,7 +76,7 @@ export const DocumentEditor = forwardRef<EditorRefApi, DocumentEditorWrapperProp
         renderComponent: EditorMentionsRoot,
         getMentionedEntityDetails: (id: string) => ({ display_name: getUserDetails(id)?.display_name ?? "" }),
       }}
-      extendedEditorProps={extendedEditorProps}
+      extendedEditorProps={extendedEditorProps ?? {}}
       {...rest}
       containerClassName={cn("relative pl-3 pb-3", containerClassName)}
     />

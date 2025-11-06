@@ -863,6 +863,7 @@ export default {
       extra: {
         show_sub_issues: "Show sub-work items",
         show_empty_groups: "Show empty groups",
+        my_issues_only: "My issues only",
       },
     },
     layouts: {

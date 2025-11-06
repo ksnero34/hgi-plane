@@ -93,13 +93,29 @@ export const useEditor = (props: TEditorHookProps) => {
       const { uploadInProgress: isUploadInProgress } = editor.storage.utility;
       if (!editor.isDestroyed && !isUploadInProgress) {
         try {
+          // Save current selection state before updating content
+          const currentSelection = editor.state.selection;
+          const { anchor, head } = currentSelection;
+          const wasEditorFocused = editor.isFocused;
+
           editor.commands.setContent(value, false, {
             preserveWhitespace: true,
           });
-          if (editor.state.selection) {
+
+          // Restore selection with full range
+          if (currentSelection) {
             const docLength = editor.state.doc.content.size;
-            const relativePosition = Math.min(editor.state.selection.from, docLength - 1);
-            editor.commands.setTextSelection(relativePosition);
+            // Ensure positions are within valid range
+            const validAnchor = Math.min(Math.max(0, anchor), docLength - 1);
+            const validHead = Math.min(Math.max(0, head), docLength - 1);
+
+            // Restore the complete selection range
+            editor.commands.setTextSelection({ from: validAnchor, to: validHead });
+
+            // Restore focus if editor was focused
+            if (wasEditorFocused) {
+              editor.commands.focus();
+            }
           }
         } catch (error) {
           console.error("Error syncing editor content with external value:", error);

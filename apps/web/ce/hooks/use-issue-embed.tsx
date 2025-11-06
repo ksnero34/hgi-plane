@@ -1,25 +1,22 @@
-// editor
-import type { TEmbedConfig } from "@plane/editor";
-// plane types
-import type { TSearchEntityRequestPayload, TSearchResponse } from "@plane/types";
+import { useCallback } from "react";
 // plane web components
-import { IssueEmbedUpgradeCard } from "@/plane-web/components/pages";
+import { IssueEmbedCard } from "@/components/pages/editor/embed/issue-embed-card";
 
-export type TIssueEmbedHookProps = {
-  fetchEmbedSuggestions?: (payload: TSearchEntityRequestPayload) => Promise<TSearchResponse>;
-  projectId?: string;
-  workspaceSlug?: string;
-};
+export const useIssueEmbed = () => {
+  const widgetCallback = useCallback((payload: any) => {
+    const { issueId, projectId, workspaceSlug, attributes = {} } = payload ?? {};
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const useIssueEmbed = (props: TIssueEmbedHookProps) => {
-  const widgetCallback = () => <IssueEmbedUpgradeCard />;
-
-  const issueEmbedProps: TEmbedConfig["issue"] = {
-    widgetCallback,
-  };
+    return (
+      <IssueEmbedCard
+        issueId={issueId}
+        projectId={projectId}
+        workspaceSlug={workspaceSlug}
+        attributes={attributes}
+      />
+    );
+  }, []);
 
   return {
-    issueEmbedProps,
+    widgetCallback,
   };
 };

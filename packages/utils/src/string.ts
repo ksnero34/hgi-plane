@@ -187,7 +187,9 @@ export const isJSONContentEmpty = (content: JSONContent | undefined): boolean =>
       content.type !== "hardBreak" &&
       content.type !== "image" &&
       content.type !== "mention-component" &&
-      content.type !== "image-component"
+      content.type !== "image-component" &&
+      content.type !== "embed-component" &&
+      content.type !== "issue-embed-component"
     );
   }
 
@@ -224,7 +226,7 @@ export const isCommentEmpty = (comment: Content | undefined): boolean => {
     return (
       comment.trim() === "" ||
       comment === "<p></p>" ||
-      isEmptyHtmlString(comment, ["img", "mention-component", "image-component"])
+      isEmptyHtmlString(comment, ["img", "mention-component", "image-component", "embed-component"])
     );
   }
 

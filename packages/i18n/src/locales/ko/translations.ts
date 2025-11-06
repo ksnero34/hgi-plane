@@ -1034,6 +1034,7 @@ export default {
       extra: {
         show_sub_issues: "하위 작업 항목 표시",
         show_empty_groups: "빈 그룹 표시",
+        my_issues_only: "내 작업 항목만 보기",
       },
     },
     layouts: {

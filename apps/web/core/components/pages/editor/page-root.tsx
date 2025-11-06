@@ -92,7 +92,7 @@ export const PageRoot = observer((props: TPageRootProps) => {
   });
 
   // Get extended editor extensions configuration
-  const extendedEditorProps = useExtendedEditorProps({
+  const { config: extendedEditorProps, modals: extendedEditorModals } = useExtendedEditorProps({
     workspaceSlug,
     page,
     storeType,
@@ -151,6 +151,7 @@ export const PageRoot = observer((props: TPageRootProps) => {
           extendedEditorProps={extendedEditorProps}
         />
       </div>
+      {extendedEditorModals}
       <PageNavigationPaneRoot
         storeType={storeType}
         handleClose={handleCloseNavigationPane}

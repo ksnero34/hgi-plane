@@ -225,6 +225,26 @@ export const useParseEditorContent = () => {
         // replace the input element with the div element
         component.replaceWith(div);
       });
+      // replace external embed components with simple links
+      const externalEmbedComponents = doc.querySelectorAll("embed-component, div[data-node='embed-component']");
+      externalEmbedComponents.forEach((component) => {
+        const url = component.getAttribute("data-url") ?? component.getAttribute("url") ?? "";
+        const title =
+          component.getAttribute("data-title") ?? component.getAttribute("title") ?? component.textContent ?? "";
+        if (!url) {
+          component.remove();
+          return;
+        }
+        const paragraph = doc.createElement("p");
+        paragraph.setAttribute("data-node-type", "embed-component");
+        const anchor = doc.createElement("a");
+        anchor.setAttribute("href", url);
+        anchor.setAttribute("target", "_blank");
+        anchor.setAttribute("rel", "noopener noreferrer");
+        anchor.textContent = title?.trim() || url;
+        paragraph.appendChild(anchor);
+        component.replaceWith(paragraph);
+      });
       // remove all issue-embed-component elements
       const issueEmbedComponents = doc.querySelectorAll("issue-embed-component");
       issueEmbedComponents.forEach((component) => component.remove());
@@ -588,6 +608,18 @@ export const useParseEditorContent = () => {
           (_match, src) => `<img src="${src}" >`
         );
       }
+      // replace external embed components with markdown links
+      const externalEmbedRegex =
+        /<(embed-component|div)[^>]*(?:data-node=['"]embed-component['"][^>]*)[^>]*>([\s\S]*?)<\/\1>/g;
+      parsedMarkdownContent = parsedMarkdownContent.replace(externalEmbedRegex, (match, _tag, innerContent) => {
+        const urlMatch = match.match(/(?:data-url|url)="([^"]+)"/i);
+        const titleMatch = match.match(/(?:data-title|title)="([^"]+)"/i);
+        const anchorTextMatch = innerContent?.match(/<a[^>]*>([^<]*)<\/a>/i);
+        const url = urlMatch?.[1] ?? "";
+        if (!url) return "";
+        const label = (titleMatch?.[1] ?? anchorTextMatch?.[1] ?? url).trim();
+        return `[${label || url}](${url})`;
+      });
       // remove all issue-embed components
       const issueEmbedRegex = /<issue-embed-component[^>]*>[^]*<\/issue-embed-component>/g;
       parsedMarkdownContent = parsedMarkdownContent.replace(issueEmbedRegex, "");

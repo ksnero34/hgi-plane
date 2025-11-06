@@ -1,8 +1,12 @@
+import type { TEmbedConfig } from "./issue-embed";
+
 export type IEditorExtensionOptions = unknown;
 
-export type IEditorPropsExtended = unknown;
+export type IEditorPropsExtended = {
+  embeds?: TEmbedConfig;
+};
 
-export type ICollaborativeDocumentEditorPropsExtended = unknown;
+export type ICollaborativeDocumentEditorPropsExtended = IEditorPropsExtended;
 
 export type TExtendedEditorCommands = never;
 

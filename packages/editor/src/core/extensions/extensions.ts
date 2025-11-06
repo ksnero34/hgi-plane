@@ -37,6 +37,7 @@ import { CustomImageExtension } from "./custom-image/extension";
 import { EmojiExtension } from "./emoji/extension";
 import { CustomPlaceholderExtension } from "./placeholder";
 import { CustomStarterKitExtension } from "./starter-kit";
+import { ExternalEmbedExtension } from "./external-embed";
 
 type TArguments = Pick<
   IEditorProps,
@@ -142,6 +143,10 @@ export const CoreEditorExtensions = (args: TArguments): Extensions => {
       extendedEditorProps,
     }),
   ];
+
+  if (!disabledExtensions.includes("external-embed")) {
+    extensions.push(ExternalEmbedExtension());
+  }
 
   if (!disabledExtensions.includes("image")) {
     extensions.push(

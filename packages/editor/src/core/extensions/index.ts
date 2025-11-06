@@ -21,3 +21,4 @@ export * from "./side-menu";
 export * from "./text-align";
 export * from "./custom-file";
 export * from "./utility";
+export * from "./external-embed";

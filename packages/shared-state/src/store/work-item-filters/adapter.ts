@@ -246,11 +246,13 @@ class WorkItemFiltersAdapter extends FilterAdapter<TWorkItemFilterProperty, TWor
   ): TWorkItemFilterConditionData => {
     const conditionKey = `${property}__${operator}` as TWorkItemFilterConditionKey;
 
-    // Convert value to string format
-    const stringValue = Array.isArray(value) ? value.join(",") : value;
+    // Keep array format for multi-value operators, otherwise convert to string
+    const finalValue = MULTI_VALUE_OPERATORS.includes(operator) && Array.isArray(value)
+      ? value
+      : (Array.isArray(value) ? value.join(",") : value);
 
     return {
-      [conditionKey]: stringValue,
+      [conditionKey]: finalValue,
     } as TWorkItemFilterConditionData;
   };
 }

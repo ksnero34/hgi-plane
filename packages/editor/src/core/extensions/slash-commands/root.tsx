@@ -7,7 +7,13 @@ import { CORE_EXTENSIONS } from "@/constants/extension";
 import { updateFloatingUIFloaterPosition } from "@/helpers/floating-ui";
 import { CommandListInstance, DROPDOWN_NAVIGATION_KEYS } from "@/helpers/tippy";
 // types
-import { IEditorProps, ISlashCommandItem, TEditorCommands, TSlashCommandSectionKeys } from "@/types";
+import {
+  IEditorProps,
+  IEditorPropsExtended,
+  ISlashCommandItem,
+  TEditorCommands,
+  TSlashCommandSectionKeys,
+} from "@/types";
 // components
 import { getSlashCommandFilteredSections } from "./command-items-list";
 import { SlashCommandsMenu, SlashCommandsMenuProps } from "./command-menu";
@@ -115,6 +121,7 @@ const Command = Extension.create<SlashCommandOptions>({
 
 export type TExtensionProps = Pick<IEditorProps, "disabledExtensions" | "flaggedExtensions"> & {
   additionalOptions?: TSlashCommandAdditionalOption[];
+  extendedEditorProps?: IEditorPropsExtended;
 };
 
 export const SlashCommands = (props: TExtensionProps) =>

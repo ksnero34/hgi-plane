@@ -37,7 +37,7 @@ export const TextFilterValueInput = observer(
       if (isDisabled) return;
 
       const nextValue = event.target.value;
-      onChange(nextValue.trim().length === 0 ? null : nextValue);
+      onChange(nextValue);
     };
 
     return (

@@ -1,6 +1,6 @@
 import type { HocuspocusProvider } from "@hocuspocus/provider";
 import type { AnyExtension } from "@tiptap/core";
-import { SlashCommands } from "@/extensions";
+import { SlashCommands, WorkItemEmbedExtension } from "@/extensions";
 import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
 // types
 import type { IEditorProps, TExtensions, TUserDetails } from "@/types";
@@ -22,8 +22,8 @@ export type TDocumentEditorAdditionalExtensionsRegistry = {
 const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
   {
     isEnabled: (disabledExtensions) => !disabledExtensions.includes("slash-commands"),
-    getExtension: ({ disabledExtensions, flaggedExtensions }) =>
-      SlashCommands({ disabledExtensions, flaggedExtensions }),
+    getExtension: ({ disabledExtensions, flaggedExtensions, extendedEditorProps }) =>
+      SlashCommands({ disabledExtensions, flaggedExtensions, extendedEditorProps }),
   },
   {
     isEnabled: (disabledExtensions) => !disabledExtensions.includes("file"),
@@ -36,11 +36,21 @@ const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
 ];
 
 export const DocumentEditorAdditionalExtensions = (props: TDocumentEditorAdditionalExtensionsProps) => {
-  const { disabledExtensions, flaggedExtensions } = props;
+  const { disabledExtensions, extendedEditorProps, flaggedExtensions } = props;
 
   const documentExtensions = extensionRegistry
     .filter((config) => config.isEnabled(disabledExtensions, flaggedExtensions))
     .map((config) => config.getExtension(props));
+
+  const issueEmbedConfig = extendedEditorProps?.embeds?.issue;
+
+  if (!disabledExtensions.includes("issue-embed") && issueEmbedConfig?.widgetCallback) {
+    documentExtensions.push(
+      WorkItemEmbedExtension({
+        widgetCallback: issueEmbedConfig.widgetCallback,
+      })
+    );
+  }
 
   return documentExtensions;
 };
