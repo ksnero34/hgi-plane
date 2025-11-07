@@ -55,7 +55,7 @@ export const getPriorityFilterConfig =
   (params: TCreatePriorityFilterParams) =>
     createFilterConfig<P, TIssuePriorities>({
       id: key,
-      label: "Priority",
+      label: "우선순위",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

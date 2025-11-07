@@ -61,7 +61,7 @@ export const getIssueTypeFilterConfig =
   (params: TCreateIssueTypeFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Issue Type",
+      label: "작업항목 타입",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

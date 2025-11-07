@@ -62,7 +62,7 @@ export const getStateGroupFilterConfig =
   (params: TCreateStateGroupFilterParams) =>
     createFilterConfig<P, TStateGroups>({
       id: key,
-      label: "State Group",
+      label: "상태 그룹",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([
@@ -116,7 +116,7 @@ export const getStateFilterConfig =
   (params: TCreateStateFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "State",
+      label: "상태",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

@@ -58,7 +58,7 @@ export const getLabelFilterConfig =
   (params: TCreateLabelFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Label",
+      label: "레이블",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

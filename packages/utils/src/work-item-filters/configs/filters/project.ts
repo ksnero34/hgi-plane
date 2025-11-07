@@ -22,7 +22,7 @@ export const getProjectFilterConfig =
   (params: TCreateProjectFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Projects",
+      label: "프로젝트",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

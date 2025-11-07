@@ -26,7 +26,7 @@ export const getSearchFilterConfig =
   (params: TCreateSearchFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Search",
+      label: "제목 또는 내용으로 검색",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

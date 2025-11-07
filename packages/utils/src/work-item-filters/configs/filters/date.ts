@@ -21,7 +21,7 @@ export const getStartDateFilterConfig =
   (params: TCreateDateFilterParams) =>
     createFilterConfig<P, Date>({
       id: key,
-      label: "Start date",
+      label: "시작 날짜",
       ...params,
       icon: params.filterIcon,
       allowMultipleFilters: true,
@@ -39,7 +39,7 @@ export const getTargetDateFilterConfig =
   (params: TCreateDateFilterParams) =>
     createFilterConfig<P, Date>({
       id: key,
-      label: "Target date",
+      label: "마감일",
       ...params,
       icon: params.filterIcon,
       allowMultipleFilters: true,
@@ -57,7 +57,7 @@ export const getCreatedAtFilterConfig =
   (params: TCreateDateFilterParams) =>
     createFilterConfig<P, Date>({
       id: key,
-      label: "Created at",
+      label: "생성일",
       ...params,
       icon: params.filterIcon,
       allowMultipleFilters: true,
@@ -75,7 +75,7 @@ export const getUpdatedAtFilterConfig =
   (params: TCreateDateFilterParams) =>
     createFilterConfig<P, Date>({
       id: key,
-      label: "Updated at",
+      label: "수정일",
       ...params,
       icon: params.filterIcon,
       allowMultipleFilters: true,

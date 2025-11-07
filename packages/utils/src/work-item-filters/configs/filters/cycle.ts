@@ -59,7 +59,7 @@ export const getCycleFilterConfig =
   (params: TCreateCycleFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Cycle",
+      label: "주기",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([

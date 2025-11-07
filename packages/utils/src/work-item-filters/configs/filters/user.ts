@@ -27,7 +27,7 @@ export const getAssigneeFilterConfig =
   (params: TCreateAssigneeFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Assignees",
+      label: "담당자",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([
@@ -55,7 +55,7 @@ export const getMentionFilterConfig =
   (params: TCreateMentionFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Mentions",
+      label: "멘션",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([
@@ -83,7 +83,7 @@ export const getCreatedByFilterConfig =
   (params: TCreateCreatedByFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Created by",
+      label: "생성자",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([
@@ -111,7 +111,7 @@ export const getSubscriberFilterConfig =
   (params: TCreateSubscriberFilterParams) =>
     createFilterConfig<P, string>({
       id: key,
-      label: "Subscriber",
+      label: "구독자",
       ...params,
       icon: params.filterIcon,
       supportedOperatorConfigsMap: new Map([
