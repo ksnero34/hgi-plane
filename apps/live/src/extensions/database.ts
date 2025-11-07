@@ -19,15 +19,31 @@ import { forceCloseDocumentAcrossServers } from "./force-close-handler";
 const fetchDocument = async ({ context, documentName: pageId, instance }: FetchPayloadWithContext) => {
   try {
     const service = getPageService(context.documentType, context);
-    // fetch details
-    const response = await service.fetchDescriptionBinary(pageId);
+
+    // For project_overview, fetchDescriptionBinary doesn't need pageId
+    let response;
+    if (context.documentType === "project_overview") {
+      response = await (service as any).fetchDescriptionBinary();
+    } else {
+      response = await (service as any).fetchDescriptionBinary(pageId);
+    }
+
     const binaryData = new Uint8Array(response);
+
     // if binary data is empty, convert HTML to binary data
     if (binaryData.byteLength === 0) {
-      const pageDetails = await service.fetchDetails(pageId);
-      const convertedBinaryData = getBinaryDataFromDocumentEditorHTMLString(pageDetails.description_html ?? "<p></p>");
-      if (convertedBinaryData) {
-        return convertedBinaryData;
+      // project_overview doesn't have fetchDetails, so we return empty document
+      if (context.documentType === "project_overview") {
+        const convertedBinaryData = getBinaryDataFromDocumentEditorHTMLString("<p></p>");
+        if (convertedBinaryData) {
+          return convertedBinaryData;
+        }
+      } else {
+        const pageDetails = await (service as any).fetchDetails(pageId);
+        const convertedBinaryData = getBinaryDataFromDocumentEditorHTMLString(pageDetails.description_html ?? "<p></p>");
+        if (convertedBinaryData) {
+          return convertedBinaryData;
+        }
       }
     }
     // return binary data
@@ -54,13 +70,24 @@ const storeDocument = async ({
     // convert binary data to all formats
     const { contentBinaryEncoded, contentHTML, contentJSON } =
       getAllDocumentFormatsFromDocumentEditorBinaryData(pageBinaryData);
-    // create payload
-    const payload = {
-      description_binary: contentBinaryEncoded,
-      description_html: contentHTML,
-      description: contentJSON,
-    };
-    await service.updateDescriptionBinary(pageId, payload);
+
+    // For project_overview, use different payload structure
+    if (context.documentType === "project_overview") {
+      const payload = {
+        overview_binary: contentBinaryEncoded,
+        overview_html: contentHTML,
+        overview: contentJSON,
+      };
+      await (service as any).updateDescriptionBinary(payload);
+    } else {
+      // create payload for pages
+      const payload = {
+        description_binary: contentBinaryEncoded,
+        description_html: contentHTML,
+        description: contentJSON,
+      };
+      await (service as any).updateDescriptionBinary(pageId, payload);
+    }
   } catch (error) {
     const appError = new AppError(error, { context: { pageId } });
     logger.error("Error in updating document:", appError);

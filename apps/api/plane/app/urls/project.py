@@ -18,6 +18,7 @@ from plane.app.views import (
     CustomFieldViewSet,
     ProjectIssueTypeViewSet,
     ProjectOverviewEndpoint,
+    ProjectOverviewDescriptionEndpoint,
 )
 
 
@@ -36,6 +37,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/overview/",
         ProjectOverviewEndpoint.as_view(),
         name="project-overview",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/overview-description/",
+        ProjectOverviewDescriptionEndpoint.as_view(),
+        name="project-overview-description",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:pk>/",

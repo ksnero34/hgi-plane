@@ -257,7 +257,7 @@ export const SidebarProjectsListItem: React.FC<Props> = observer((props) => {
             )}
             <>
               <ControlLink
-                href={`/${workspaceSlug}/projects/${project.id}/issues`}
+                href={`/${workspaceSlug}/projects/${project.id}/overview`}
                 className="flex-grow flex truncate"
                 onClick={handleItemClick}
               >

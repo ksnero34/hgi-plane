@@ -1,36 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { observer } from "mobx-react";
 import { useForm } from "react-hook-form";
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { CORE_EXTENSIONS } from "@plane/editor";
+import { EUserPermissions, EUserPermissionsLevel, LIVE_BASE_PATH, LIVE_BASE_URL } from "@plane/constants";
+import { CollaborativeDocumentEditorWithRef } from "@plane/editor";
+import type { EditorRefApi, TRealtimeConfig, TServerHandler, TFileHandler } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { EFileAssetType } from "@plane/types";
-import type { ISearchIssueResponse, TLogoProps, TProjectOverviewSnapshot } from "@plane/types";
-import { Button } from "@plane/propel/button";
+import type { TLogoProps, TProjectOverviewSnapshot, TSearchEntityRequestPayload, TWebhookConnectionQueryParams } from "@plane/types";
 import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import { Loader } from "@plane/ui";
-import { getEmojiImageUrlFromDecimal, getFileURL, getTextContent } from "@plane/utils";
+import { Loader, Spinner } from "@plane/ui";
+import { getEmojiImageUrlFromDecimal, getFileURL, getTextContent, generateRandomColor, hslToHex } from "@plane/utils";
 // plane web components
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
 import { PageHead } from "@/components/core/page-title";
-import { RichTextEditor } from "@/components/editor/rich-text";
-import { ExistingIssuesListModal } from "@/components/core/modals/existing-issues-list-modal";
+import { EditorMentionsRoot } from "@/components/editor/embeds/mentions";
+import { IssuePeekOverview } from "@/components/issues/peek-overview";
 import { Logo } from "@/components/common/logo";
 // hooks
+import { useEditorConfig, useEditorMention } from "@/hooks/editor";
 import { useEditorAsset } from "@/hooks/store/use-editor-asset";
+import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
-import { useUserPermissions } from "@/hooks/store/user";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 import { useWorkspace } from "@/hooks/store/use-workspace";
+import { useUserPermissions, useUser } from "@/hooks/store/user";
 // services
 import { ProjectService } from "@/services/project";
 import { WorkspaceService } from "@/services/workspace.service";
-import { useIssueEmbed } from "@/plane-web/hooks/use-issue-embed";
+import { useEditorFlagging } from "@/plane-web/hooks/use-editor-flagging";
+import { useExtendedEditorProps } from "@/plane-web/hooks/pages";
 // local
 import { DEFAULT_PROJECT_OVERVIEW_HTML } from "./constants";
 import { ProjectOverviewProgress } from "./progress";
@@ -47,14 +51,19 @@ export const ProjectOverviewRoot = observer(() => {
   const pid = projectId?.toString();
   // hooks
   const { t } = useTranslation();
+  const { data: currentUser } = useUser();
   const { getProjectById, updateProject } = useProject();
   const { getWorkspaceBySlug } = useWorkspace();
   const { uploadEditorAsset } = useEditorAsset();
   const { allowPermissions } = useUserPermissions();
+  const { getUserDetails } = useMember();
+  const { getEditorFileHandlers } = useEditorConfig();
+  const { getDefaultWorkflow, fetchWorkflowTransitions } = useWorkflow();
   const workspaceService = useMemo(() => new WorkspaceService(), []);
   const { control: coverPickerControl } = useForm<TCoverPickerForm>({
     defaultValues: { search: "" },
   });
+  const editorRef = useRef<EditorRefApi>(null);
 
   const project = pid ? getProjectById(pid) : undefined;
   const workspaceId = slug ? getWorkspaceBySlug(slug)?.id?.toString() ?? "" : "";
@@ -74,33 +83,24 @@ export const ProjectOverviewRoot = observer(() => {
     }
   );
 
-  const [editorContent, setEditorContent] = useState<string>(() => {
-    const initial = project?.overview_html ?? project?.description_html;
-    if (initial && initial.trim() !== "" && initial !== "<p></p>") return initial;
-    return DEFAULT_PROJECT_OVERVIEW_HTML;
-  });
-  const [hasChanges, setHasChanges] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isCoverUpdating, setIsCoverUpdating] = useState<boolean>(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false);
   const [isLogoUpdating, setIsLogoUpdating] = useState<boolean>(false);
-  const [isIssueEmbedModalOpen, setIsIssueEmbedModalOpen] = useState<boolean>(false);
-  const [issueEmbedContext, setIssueEmbedContext] = useState<{ editor: any; position: number } | null>(null);
+  const [hasConnectionFailed, setHasConnectionFailed] = useState<boolean>(false);
+  const [editorReady, setEditorReady] = useState<boolean>(false);
 
+  // Preload workflow transitions for peek overview
   useEffect(() => {
-    const incoming = project?.overview_html ?? project?.description_html;
-    if (!incoming || incoming.trim() === "" || incoming === "<p></p>") {
-      if (!hasChanges) {
-        setEditorContent(DEFAULT_PROJECT_OVERVIEW_HTML);
-        setHasChanges(false);
-      }
-      return;
-    }
-    if (!hasChanges) {
-      setEditorContent(incoming);
-      setHasChanges(false);
-    }
-  }, [project?.overview_html, project?.description_html, hasChanges]);
+    if (!pid || !slug) return;
+
+    const defaultWorkflow = getDefaultWorkflow(pid);
+    if (!defaultWorkflow) return;
+
+    // Fetch workflow transitions so they're available when peek overview opens
+    fetchWorkflowTransitions(slug, pid, defaultWorkflow.id).catch((error) => {
+      console.error("Failed to preload workflow transitions:", error);
+    });
+  }, [pid, slug, getDefaultWorkflow, fetchWorkflowTransitions]);
 
   const handleCoverChange = async (url: string) => {
     if (!slug || !pid) return;
@@ -127,33 +127,27 @@ export const ProjectOverviewRoot = observer(() => {
     }
   };
 
-  const handleSaveOverview = async () => {
-    if (!slug || !pid) return;
-    setIsSaving(true);
-    try {
-      const plainText = getTextContent(editorContent || "");
-      await updateProject(slug, pid, {
-        overview: plainText,
-        overview_html: editorContent || "<p></p>",
-        overview_text: plainText,
-      });
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: t("toast.success"),
-        message: "Project overview updated.",
-      });
-      setHasChanges(false);
-    } catch (error) {
-      console.error(error);
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: t("toast.error"),
-        message: "Unable to save overview. Please try again.",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleUpdateDescription = useCallback(
+    async (descriptionHTML: string, descriptionJSON: object) => {
+      if (!slug || !pid) return;
+      try {
+        const plainText = getTextContent(descriptionHTML || "");
+        await updateProject(slug, pid, {
+          overview: plainText,
+          overview_html: descriptionHTML || "<p></p>",
+          overview_text: plainText,
+        });
+      } catch (error) {
+        console.error(error);
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message: "Unable to save overview. Please try again.",
+        });
+      }
+    },
+    [slug, pid, updateProject, t]
+  );
 
   const handleLogoChange = async (val: any) => {
     if (!slug || !pid) return;
@@ -259,80 +253,41 @@ export const ProjectOverviewRoot = observer(() => {
         ]
       : [];
 
-  const handleIssueEmbedModalClose = useCallback(() => {
-    setIsIssueEmbedModalOpen(false);
-    setIssueEmbedContext(null);
-  }, []);
-
-  const handleIssueEmbedInsertRequest = useCallback((payload: any) => {
-    const editor = payload?.editor;
-    const range = payload?.range;
-    if (!editor || !range) return;
-
-    const position = range.from;
-    editor.chain().focus().deleteRange(range).setTextSelection(position).run();
-    setIssueEmbedContext({ editor, position });
-    setIsIssueEmbedModalOpen(true);
-  }, []);
-
-  const { widgetCallback: issueEmbedWidgetCallback } = useIssueEmbed();
-
-  const extendedEditorProps = useMemo(
-    () => ({
-      embeds: {
-        issue: {
-          widgetCallback: issueEmbedWidgetCallback,
-          onInsertRequest: handleIssueEmbedInsertRequest,
-        },
-      },
-    }),
-    [handleIssueEmbedInsertRequest, issueEmbedWidgetCallback]
-  );
-
-  const handleIssueEmbedSubmit = useCallback(
-    async (issues: ISearchIssueResponse[]) => {
-      const selectedIssue = issues[0];
-      if (!selectedIssue || !issueEmbedContext) {
-        handleIssueEmbedModalClose();
-        return;
-      }
-
-      const { editor, position } = issueEmbedContext;
-
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(position, {
-          type: CORE_EXTENSIONS.WORK_ITEM_EMBED,
-          attrs: {
-            entity_identifier: selectedIssue.id,
-            project_identifier: selectedIssue.project_id,
-            workspace_identifier: selectedIssue.workspace__slug,
-            id: selectedIssue.id,
-            entity_name: "issue",
-            project_slug: selectedIssue.project__identifier,
-            issue_title: selectedIssue.name,
-            issue_sequence_id: selectedIssue.sequence_id,
-            issue_state_name: selectedIssue.state__name,
-            issue_state_group: selectedIssue.state__group,
-            issue_state_color: selectedIssue.state__color,
-          },
-        })
-        .setTextSelection(position + 1)
-        .run();
-
-      handleIssueEmbedModalClose();
-    },
-    [handleIssueEmbedModalClose, issueEmbedContext]
-  );
+  // Extended editor props for issue embed
+  const { config: extendedEditorProps, modals: extendedEditorModals } = useExtendedEditorProps({
+    workspaceSlug: slug ?? "",
+    page: {} as any, // We don't need page instance for overview
+    storeType: "project" as any,
+    fetchEntity: useCallback(
+      async (payload: TSearchEntityRequestPayload) =>
+        await workspaceService.searchEntity(slug ?? "", {
+          ...payload,
+          project_id: pid ?? "",
+        }),
+      [slug, pid, workspaceService]
+    ),
+    getRedirectionLink: useCallback(() => "", []),
+    projectId: pid,
+  });
 
   const pageTitle = project?.name ? `${project.name} - Overview` : undefined;
 
-  const handleMentionSearch = async (payload: any) =>
-    workspaceService.searchEntity(slug ?? "", {
-      ...payload,
-      project_id: pid ?? "",
-    });
+  // Editor flagging
+  const { document: documentEditorExtensions } = useEditorFlagging({
+    workspaceSlug: slug ?? "",
+  });
+
+  // Mention handler
+  const { fetchMentions } = useEditorMention({
+    searchEntity: useCallback(
+      async (payload: TSearchEntityRequestPayload) =>
+        await workspaceService.searchEntity(slug ?? "", {
+          ...payload,
+          project_id: pid ?? "",
+        }),
+      [slug, pid, workspaceService]
+    ),
+  });
 
   const handleAssetUpload = async (blockId: string, file: File) => {
     if (!slug || !pid) return "";
@@ -359,16 +314,78 @@ export const ProjectOverviewRoot = observer(() => {
     }
   };
 
-  const editorEditableProps = isAdmin
-    ? {
-        editable: true as const,
-        dragDropEnabled: true,
-        searchMentionCallback: handleMentionSearch,
-        uploadFile: handleAssetUpload,
-      }
-    : {
-        editable: false as const,
+  // Realtime configuration for collaborative editing
+  const webhookConnectionParams: TWebhookConnectionQueryParams = useMemo(
+    () => ({
+      documentType: "project_overview",
+      projectId: pid ?? "",
+      workspaceSlug: slug ?? "",
+    }),
+    [pid, slug]
+  );
+
+  const realtimeConfig: TRealtimeConfig | undefined = useMemo(() => {
+    try {
+      const LIVE_SERVER_BASE_URL = LIVE_BASE_URL?.trim() || window.location.origin;
+      const WS_LIVE_URL = new URL(LIVE_SERVER_BASE_URL);
+      const isSecureEnvironment = window.location.protocol === "https:";
+      WS_LIVE_URL.protocol = isSecureEnvironment ? "wss" : "ws";
+      WS_LIVE_URL.pathname = `${LIVE_BASE_PATH}/collaboration`;
+
+      Object.entries(webhookConnectionParams)
+        .filter(([_, value]) => value !== undefined && value !== null)
+        .forEach(([key, value]) => {
+          WS_LIVE_URL.searchParams.set(key, String(value));
+        });
+
+      return {
+        url: WS_LIVE_URL.toString(),
       };
+    } catch (error) {
+      console.error("Error creating realtime config", error);
+      return undefined;
+    }
+  }, [webhookConnectionParams]);
+
+  const handleServerConnect = useCallback(() => {
+    setHasConnectionFailed(false);
+  }, []);
+
+  const handleServerError = useCallback(() => {
+    setHasConnectionFailed(true);
+  }, []);
+
+  const serverHandler: TServerHandler = useMemo(
+    () => ({
+      onConnect: handleServerConnect,
+      onServerError: handleServerError,
+    }),
+    [handleServerConnect, handleServerError]
+  );
+
+  const userConfig = useMemo(
+    () => ({
+      id: currentUser?.id ?? "",
+      name: currentUser?.display_name ?? "",
+      color: hslToHex(generateRandomColor(currentUser?.id ?? "")),
+    }),
+    [currentUser?.display_name, currentUser?.id]
+  );
+
+  const fileHandler: TFileHandler = useMemo(
+    () =>
+      getEditorFileHandlers({
+        projectId: pid ?? "",
+        uploadFile: handleAssetUpload,
+        workspaceId,
+        workspaceSlug: slug ?? "",
+      }),
+    [getEditorFileHandlers, pid, workspaceId, slug]
+  );
+
+  const handleEditorReady = useCallback((status: boolean) => {
+    setEditorReady(status);
+  }, []);
 
   return (
     <>
@@ -423,36 +440,38 @@ export const ProjectOverviewRoot = observer(() => {
 
         <div className="flex-1 overflow-y-auto pb-12">
           <div className="mx-auto flex w-full max-w-8xl flex-col gap-6 px-4 py-8 md:px-10">
-            {isAdmin && (
-              <div className="flex items-center justify-end">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={!hasChanges || isSaving}
-                  onClick={handleSaveOverview}
-                >
-                  {isSaving ? t("saving") : t("save_changes")}
-                </Button>
-              </div>
-            )}
-
             <div className="rounded-lg border border-custom-border-200 bg-custom-background-100">
-              <RichTextEditor
-                id="project-overview-editor"
-                initialValue={editorContent}
-                value={editorContent}
-                workspaceSlug={slug ?? ""}
-                workspaceId={workspaceId}
-                projectId={pid}
-                containerClassName="min-h-[480px] pt-6"
-                {...editorEditableProps}
-                extendedEditorProps={extendedEditorProps}
-                onChange={(_value, html) => {
-                  if (!isAdmin) return;
-                  setEditorContent(html);
-                  setHasChanges(true);
-                }}
-              />
+              {pid && realtimeConfig ? (
+                <CollaborativeDocumentEditorWithRef
+                  ref={editorRef}
+                  id={`project-overview-${pid}`}
+                  editable={isAdmin}
+                  fileHandler={fileHandler}
+                  handleEditorReady={handleEditorReady}
+                  containerClassName="min-h-[480px] p-6"
+                  realtimeConfig={realtimeConfig}
+                  serverHandler={serverHandler}
+                  user={userConfig}
+                  disabledExtensions={documentEditorExtensions.disabled}
+                  flaggedExtensions={documentEditorExtensions.flagged}
+                  mentionHandler={{
+                    searchCallback: async (query) => {
+                      const res = await fetchMentions(query);
+                      if (!res) throw new Error("Failed in fetching mentions");
+                      return res;
+                    },
+                    renderComponent: EditorMentionsRoot,
+                    getMentionedEntityDetails: (id) => ({
+                      display_name: getUserDetails(id)?.display_name ?? "",
+                    }),
+                  }}
+                  extendedEditorProps={extendedEditorProps}
+                />
+              ) : (
+                <div className="grid place-items-center min-h-[480px]">
+                  <Spinner />
+                </div>
+              )}
             </div>
 
             <ProjectOverviewProgress data={overviewData} isLoading={isOverviewLoading} />
@@ -486,15 +505,8 @@ export const ProjectOverviewRoot = observer(() => {
           </div>
         </div>
       </div>
-      <ExistingIssuesListModal
-        isOpen={isIssueEmbedModalOpen}
-        handleClose={handleIssueEmbedModalClose}
-        workspaceSlug={slug}
-        projectId={pid}
-        searchParams={{}}
-        handleOnSubmit={handleIssueEmbedSubmit}
-        workspaceLevelToggle
-      />
+      {extendedEditorModals}
+      <IssuePeekOverview />
     </>
   );
 });

@@ -2,6 +2,7 @@ from collections import defaultdict
 
 # Django imports
 from django.db.models import Count, Q
+from django.http import HttpResponse
 
 # Third party imports
 from rest_framework import status
@@ -10,6 +11,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.views.base import BaseAPIView
 from plane.app.permissions import allow_permission, ROLE
+from plane.app.serializers.project import ProjectOverviewBinarySerializer
 from plane.db.models import (
     Cycle,
     Issue,
@@ -106,3 +108,74 @@ class ProjectOverviewEndpoint(BaseAPIView):
         }
 
         return Response(response_payload, status=status.HTTP_200_OK)
+
+
+class ProjectOverviewDescriptionEndpoint(BaseAPIView):
+    """
+    API endpoint for project overview description (binary format for real-time collaboration).
+    """
+
+    @allow_permission(
+        [ROLE.ADMIN, ROLE.MEMBER, ROLE.VIEWER, ROLE.RESTRICTED, ROLE.GUEST],
+        level="PROJECT",
+    )
+    def get(self, request, slug: str, project_id: str):
+        """Fetch project overview description in binary format."""
+        project = Project.objects.filter(
+            workspace__slug=slug,
+            id=project_id,
+            deleted_at__isnull=True
+        ).first()
+
+        if not project:
+            return Response(
+                {"error": "Project not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Return binary data if available, otherwise empty
+        overview_binary = getattr(project, 'overview_binary', b'')
+        return HttpResponse(
+            overview_binary or b'',
+            content_type='application/octet-stream'
+        )
+
+    @allow_permission(
+        [ROLE.ADMIN, ROLE.MEMBER],
+        level="PROJECT",
+    )
+    def patch(self, request, slug: str, project_id: str):
+        """Update project overview description."""
+        project = Project.objects.filter(workspace__slug=slug, id=project_id, deleted_at__isnull=True).first()
+
+        if not project:
+            return Response({"error": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProjectOverviewBinarySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        update_fields = []
+
+        if "overview_binary" in validated_data:
+            project.overview_binary = validated_data.get("overview_binary")
+            update_fields.append("overview_binary")
+
+        if "overview_html" in validated_data:
+            project.overview_html = validated_data.get("overview_html")
+            update_fields.append("overview_html")
+
+        if "overview" in validated_data:
+            project.overview = validated_data.get("overview")
+            update_fields.append("overview")
+
+        if not update_fields:
+            return Response({"detail": "No valid fields provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        update_fields.append("updated_at")
+        project.save(update_fields=update_fields)
+
+        return Response(
+            {"message": "Project overview updated successfully."},
+            status=status.HTTP_200_OK
+        )

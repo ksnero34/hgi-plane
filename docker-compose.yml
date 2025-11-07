@@ -119,6 +119,8 @@ services:
       - dev_env
     # command: ls -al live
     image: harbor.hwgeneralins.com/plane/live:3.1.0
+    env_file:
+      - ./apps/live/.env
     environment:
       - API_BASE_URL=http://api:8000
 

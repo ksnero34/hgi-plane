@@ -1,7 +1,7 @@
 import React, { forwardRef } from "react";
 // plane imports
 import { RichTextEditorWithRef } from "@plane/editor";
-import type { EditorRefApi, IRichTextEditorProps, TFileHandler, IEditorPropsExtended } from "@plane/editor";
+import type { EditorRefApi, IRichTextEditorProps, TFileHandler } from "@plane/editor";
 import type { MakeOptional, TSearchEntityRequestPayload, TSearchResponse } from "@plane/types";
 import { cn } from "@plane/utils";
 // components
@@ -13,10 +13,9 @@ import { useMember } from "@/hooks/store/use-member";
 import { useEditorFlagging } from "@/plane-web/hooks/use-editor-flagging";
 
 type RichTextEditorWrapperProps = MakeOptional<
-  Omit<IRichTextEditorProps, "fileHandler" | "mentionHandler">,
+  Omit<IRichTextEditorProps, "fileHandler" | "mentionHandler" | "extendedEditorProps">,
   "disabledExtensions" | "editable" | "flaggedExtensions"
 > & {
-  extendedEditorProps?: Partial<IEditorPropsExtended>;
   workspaceSlug: string;
   workspaceId: string;
   projectId?: string;
@@ -38,7 +37,6 @@ export const RichTextEditor = forwardRef<EditorRefApi, RichTextEditorWrapperProp
     workspaceSlug,
     workspaceId,
     projectId,
-    extendedEditorProps,
     disabledExtensions: additionalDisabledExtensions = [],
     ...rest
   } = props;
@@ -78,7 +76,7 @@ export const RichTextEditor = forwardRef<EditorRefApi, RichTextEditorWrapperProp
           display_name: getUserDetails(id)?.display_name ?? "",
         }),
       }}
-      extendedEditorProps={extendedEditorProps ?? {}}
+      extendedEditorProps={{}}
       {...rest}
       containerClassName={cn("relative pl-3 pb-3", containerClassName)}
     />

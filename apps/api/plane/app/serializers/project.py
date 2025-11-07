@@ -1,5 +1,6 @@
 # Third party imports
 from rest_framework import serializers
+import base64
 
 # Module imports
 from .base import BaseSerializer, DynamicBaseSerializer
@@ -17,9 +18,6 @@ from plane.db.models import (
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
-)
-from plane.utils.content_validator import (
-    validate_html_content,
 )
 
 
@@ -200,6 +198,38 @@ class ProjectMemberLiteSerializer(BaseSerializer):
         model = ProjectMember
         fields = ["member", "id", "is_subscribed"]
         read_only_fields = fields
+
+
+class ProjectOverviewBinarySerializer(serializers.Serializer):
+    """Serializer to validate project overview binary updates."""
+
+    overview_binary = serializers.CharField(required=False, allow_blank=True)
+    overview_html = serializers.CharField(required=False, allow_blank=True)
+    overview = serializers.JSONField(required=False, allow_null=True)
+
+    def validate_overview_binary(self, value: str):
+        if value == "":
+            return b""
+        if value is None or not value:
+            return value
+        try:
+            binary_data = base64.b64decode(value)
+        except Exception as error:  # pragma: no cover - defensive guard
+            raise serializers.ValidationError("Failed to decode base64 data") from error
+
+        is_valid, error_message = validate_binary_data(binary_data)
+        if not is_valid:
+            raise serializers.ValidationError(f"Invalid binary data: {error_message}")
+
+        return binary_data
+
+    def validate_overview_html(self, value: str):
+        if not value:
+            return value
+        is_valid, error_message, sanitized_html = validate_html_content(value)
+        if not is_valid:
+            raise serializers.ValidationError(error_message or "Invalid HTML content")
+        return sanitized_html if sanitized_html is not None else value
 
 
 class DeployBoardSerializer(BaseSerializer):

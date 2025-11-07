@@ -105,7 +105,7 @@ export const ProjectCard: React.FC<Props> = observer((props) => {
     });
   };
 
-  const projectLink = `${workspaceSlug}/projects/${project.id}/issues`;
+  const projectLink = `${workspaceSlug}/projects/${project.id}/overview`;
   const handleCopyText = () =>
     copyUrlToClipboard(projectLink).then(() =>
       setToast({
@@ -190,7 +190,7 @@ export const ProjectCard: React.FC<Props> = observer((props) => {
       )}
       <Link
         ref={projectCardRef}
-        href={`/${workspaceSlug}/projects/${project.id}/issues`}
+        href={`/${workspaceSlug}/projects/${project.id}/overview`}
         onClick={(e) => {
           if (!isMemberOfProject || isArchived) {
             e.preventDefault();

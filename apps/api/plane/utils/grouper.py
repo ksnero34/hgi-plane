@@ -508,25 +508,22 @@ def issue_group_values(
         return ["backlog", "unstarted", "started", "completed", "cancelled"]
 
     if field == "target_date":
-        queryset = queryset.values_list("target_date", flat=True).distinct()
+        queryset = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
-            return list(queryset.filter(project_id=project_id))
-        else:
-            return list(queryset)
+            queryset = queryset.filter(project_id=project_id)
+        return list(queryset.values_list("target_date", flat=True).distinct())
 
     if field == "start_date":
-        queryset = queryset.values_list("start_date", flat=True).distinct()
+        queryset = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
-            return list(queryset.filter(project_id=project_id))
-        else:
-            return list(queryset)
+            queryset = queryset.filter(project_id=project_id)
+        return list(queryset.values_list("start_date", flat=True).distinct())
 
     if field == "created_by":
-        queryset = queryset.values_list("created_by", flat=True).distinct()
+        queryset = IssueModel.issue_objects.filter(workspace__slug=slug)
         if project_id:
-            return list(queryset.filter(project_id=project_id))
-        else:
-            return list(queryset)
+            queryset = queryset.filter(project_id=project_id)
+        return list(queryset.values_list("created_by", flat=True).distinct())
 
     if field == "parent_child":
         # 부모-자식 관계 그룹화를 위한 그룹 값들

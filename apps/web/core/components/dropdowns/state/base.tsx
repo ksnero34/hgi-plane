@@ -95,7 +95,6 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
   // states
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [workflowStatesLoaded, setWorkflowStatesLoaded] = useState(false);
   const [reviewerModalData, setReviewerModalData] = useState<TReviewerModalState>(null);
   // store hooks
   const { t } = useTranslation();
@@ -130,6 +129,14 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     [stateIds, getStateById]
   );
 
+  const defaultWorkflow = projectId ? getDefaultWorkflow(projectId) : undefined;
+  const workflowStates = defaultWorkflow ? getWorkflowStates(defaultWorkflow.id) : [];
+  const workflowTransitions = defaultWorkflow ? getWorkflowTransitions(defaultWorkflow.id) : [];
+  const workflowStatesSignature = workflowStates.map((state) => `${state.id}:${state.allow_new_issues ? 1 : 0}`).join("|");
+  const workflowTransitionsSignature = workflowTransitions
+    .map((transition) => `${transition.id}:${transition.from_state}->${transition.to_state}`)
+    .join("|");
+
   const defaultState = useMemo(() => statesList.find((state) => state.default), [statesList]);
   const stateValue = value ?? (showDefaultState ? defaultState?.id : undefined);
   const selectedState = stateValue ? getStateById(stateValue) : undefined;
@@ -139,14 +146,11 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     if (!projectId || !workspaceSlug) return;
     if (alwaysAllowStateChange) return;
 
-    const defaultWorkflow = getDefaultWorkflow(projectId);
     if (!defaultWorkflow) return;
 
     if (isForWorkItemCreation) {
-      const workflowStates = getWorkflowStates(defaultWorkflow.id);
       if (!workflowStates || workflowStates.length === 0) {
         fetchWorkflowStates(workspaceSlug.toString(), projectId, defaultWorkflow.id)
-          .then(() => setWorkflowStatesLoaded(true))
           .catch((error) => {
             console.error("StateDropdown: Error fetching workflow states", error);
           });
@@ -156,10 +160,8 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
 
     if (!enableWorkflowValidation || !issueId) return;
 
-    const transitions = getWorkflowTransitions(defaultWorkflow.id);
-    if (!transitions || transitions.length === 0) {
+    if (!workflowTransitions || workflowTransitions.length === 0) {
       fetchWorkflowTransitions(workspaceSlug.toString(), projectId, defaultWorkflow.id)
-        .then(() => setWorkflowStatesLoaded(true))
         .catch((error) => {
           console.error("StateDropdown: Error fetching workflow transitions", error);
         });
@@ -169,52 +171,44 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     enableWorkflowValidation,
     fetchWorkflowStates,
     fetchWorkflowTransitions,
-    getDefaultWorkflow,
-    getWorkflowStates,
-    getWorkflowTransitions,
+    defaultWorkflow?.id,
     isForWorkItemCreation,
     issueId,
     projectId,
     workspaceSlug,
+    workflowStates.length,
+    workflowTransitions.length,
   ]);
 
   const availableStates = useMemo(() => {
     if (alwaysAllowStateChange) return statesList;
 
-    if (isForWorkItemCreation && projectId && workspaceSlug) {
-      const defaultWorkflow = getDefaultWorkflow(projectId);
-      if (defaultWorkflow) {
-        const workflowStates = getWorkflowStates(defaultWorkflow.id);
-        if (workflowStates && workflowStates.length > 0) {
-          const allowedStateIds = new Set(
-            workflowStates
-              .filter((workflowState) => workflowState.allow_new_issues)
-              .map((workflowState) => workflowState.state)
-          );
-          const filteredStates = statesList.filter((state) => allowedStateIds.has(state.id));
-          if (filteredStates.length > 0) {
-            return filteredStates;
-          }
+    if (isForWorkItemCreation && projectId && workspaceSlug && defaultWorkflow) {
+      if (workflowStates && workflowStates.length > 0) {
+        const allowedStateIds = new Set(
+          workflowStates
+            .filter((workflowState) => workflowState.allow_new_issues)
+            .map((workflowState) => workflowState.state)
+        );
+        const filteredStates = statesList.filter((state) => allowedStateIds.has(state.id));
+        if (filteredStates.length > 0) {
+          return filteredStates;
         }
       }
       return statesList;
     }
 
-    if (!enableWorkflowValidation || !issueId || !projectId || !workspaceSlug) {
+    if (!enableWorkflowValidation || !issueId || !projectId || !workspaceSlug || !defaultWorkflow) {
       return statesList;
     }
 
-    const defaultWorkflow = getDefaultWorkflow(projectId);
-    if (!defaultWorkflow) return statesList;
-
-    const transitions = getWorkflowTransitions(defaultWorkflow.id);
-    if (!transitions || transitions.length === 0) return statesList;
+    if (!workflowTransitions || workflowTransitions.length === 0) return statesList;
 
     const currentStateId = stateValue;
     if (!currentStateId) return statesList;
 
     const permittedStateIds = new Set<string>([currentStateId]);
-    transitions
+    workflowTransitions
       .filter((transition) => transition.from_state === currentStateId)
       .forEach((transition) => permittedStateIds.add(transition.to_state));
 
@@ -222,17 +216,16 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     return filteredStates.length > 0 ? filteredStates : statesList;
   }, [
     alwaysAllowStateChange,
+    defaultWorkflow,
     enableWorkflowValidation,
-    getDefaultWorkflow,
-    getWorkflowStates,
-    getWorkflowTransitions,
     isForWorkItemCreation,
     issueId,
     projectId,
     stateValue,
     statesList,
     workspaceSlug,
-    workflowStatesLoaded,
+    workflowStatesSignature,
+    workflowTransitionsSignature,
   ]);
 
   const options = useMemo(

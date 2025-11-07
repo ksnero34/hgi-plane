@@ -6,6 +6,7 @@ import type { TDocumentPayload, TPage, TPageVersion, TWebhookConnectionQueryPara
 // hooks
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePageFallback } from "@/hooks/use-page-fallback";
+import { useWorkflow } from "@/hooks/store/use-workflow";
 // plane web import
 import { PageModals } from "@/plane-web/components/pages";
 import { usePagesPaneExtensions, useExtendedEditorProps } from "@/plane-web/hooks/pages";
@@ -50,6 +51,8 @@ export const PageRoot = observer((props: TPageRootProps) => {
   const editorRef = useRef<EditorRefApi>(null);
   // router
   const router = useAppRouter();
+  // hooks
+  const { getDefaultWorkflow, fetchWorkflowTransitions } = useWorkflow();
   // derived values
   const {
     isContentEditable,
@@ -78,6 +81,19 @@ export const PageRoot = observer((props: TPageRootProps) => {
       setEditorRef(editorRef.current);
     }, 0);
   }, [isContentEditable, setEditorRef]);
+
+  // Preload workflow transitions for peek overview
+  useEffect(() => {
+    if (!projectId || !workspaceSlug) return;
+
+    const defaultWorkflow = getDefaultWorkflow(projectId);
+    if (!defaultWorkflow) return;
+
+    // Fetch workflow transitions so they're available when peek overview opens
+    fetchWorkflowTransitions(workspaceSlug, projectId, defaultWorkflow.id).catch((error) => {
+      console.error("Failed to preload workflow transitions:", error);
+    });
+  }, [projectId, workspaceSlug, getDefaultWorkflow, fetchWorkflowTransitions]);
 
   // Get extensions and navigation logic from hook
   const {
