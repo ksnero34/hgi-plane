@@ -140,11 +140,26 @@ class BaseFilterSet(FilterSet):
                         if values:
                             # Create Q object for custom field filtering based on operator
                             if operator == "in":
-                                custom_prop_filters &= Q(
-                                    custom_field_values__custom_field_id=field_id,
-                                    custom_field_values__value__in=values,
-                                    custom_field_values__deleted_at__isnull=True,
-                                )
+                                # For "any of" filtering on array fields (like project_members)
+                                # we need to check if the JSON array contains any of the values
+                                q_any_of = Q()
+                                for val in values:
+                                    # For JSON array fields, we need to check if the array contains the value
+                                    # PostgreSQL's @> operator needs a JSON array, not a single value
+                                    # So we wrap the value in a list for the contains lookup
+                                    # This handles both single values (stored as strings) and arrays
+                                    q_any_of |= (
+                                        Q(
+                                            custom_field_values__custom_field_id=field_id,
+                                            custom_field_values__value__contains=[val],  # Wrap in array for JSON contains
+                                            custom_field_values__deleted_at__isnull=True,
+                                        ) | Q(
+                                            custom_field_values__custom_field_id=field_id,
+                                            custom_field_values__value=val,  # Also check for exact match (single value fields)
+                                            custom_field_values__deleted_at__isnull=True,
+                                        )
+                                    )
+                                custom_prop_filters &= q_any_of
                             elif operator == "contains":
                                 # Use icontains for case-insensitive partial matching
                                 q_contains = Q()

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Button, Input, CustomEmojiIconPicker, EmojiIconPickerTypes, CustomSelect, ToggleSwitch } from "@plane/ui";
+import { Button, Input, CustomSelect, ToggleSwitch } from "@plane/ui";
+import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { IIssueType, IProjectIssueType, TCustomFieldType } from "@plane/types";
 
@@ -575,15 +576,20 @@ export const IssueTypes: React.FC = observer(() => {
             <div className="space-y-1">
               <label className="text-sm font-medium text-custom-text-300">아이콘</label>
               <div className="flex items-center gap-4">
-                <CustomEmojiIconPicker
-                  closeOnSelect={false}
+                <EmojiPicker
+                  iconType="material"
                   isOpen={isIconPickerOpen}
                   handleToggle={(val: boolean) => setIsIconPickerOpen(val)}
-                  className="flex items-center justify-center"
-                  buttonClassName="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-custom-border-200 hover:bg-custom-background-90 transition-colors"
                   label={<Logo logo={newIssueType.logo_props || { in_use: "emoji", emoji: { value: "128204" } }} size={20} />}
+                  buttonClassName="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-custom-border-200 hover:bg-custom-background-90 transition-colors"
+                  closeOnSelect
                   onChange={(val) => {
-                    let logoValue = {};
+                    if (!val) {
+                      setIsIconPickerOpen(false);
+                      return;
+                    }
+
+                    let logoValue: Record<string, any> = {};
                     if (val?.type === "emoji") {
                       const decimalValue = val.value.decimal;
                       logoValue = {
@@ -592,7 +598,7 @@ export const IssueTypes: React.FC = observer(() => {
                       };
                     }
                     else if (val?.type === "icon") logoValue = val.value;
-                    
+
                     setNewIssueType({
                       ...newIssueType,
                       logo_props: {
@@ -604,8 +610,8 @@ export const IssueTypes: React.FC = observer(() => {
                   }}
                   defaultIconColor={newIssueType.logo_props?.in_use === "icon" ? newIssueType.logo_props?.icon?.color : undefined}
                   defaultOpen={
-                    newIssueType.logo_props?.in_use === "emoji" 
-                      ? EmojiIconPickerTypes.EMOJI 
+                    newIssueType.logo_props?.in_use === "emoji"
+                      ? EmojiIconPickerTypes.EMOJI
                       : EmojiIconPickerTypes.ICON
                   }
                 />
