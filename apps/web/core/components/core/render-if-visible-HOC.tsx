@@ -44,13 +44,16 @@ const RenderIfVisible: React.FC<Props> = (props) => {
     if (intersectionRef.current) {
       const observer = new IntersectionObserver(
         (entries) => {
+          // Check if any entry is intersecting
+          const isAnyIntersecting = entries.some(entry => entry.isIntersecting);
+
           //DO no remove comments for future
           if (typeof window !== undefined && window.requestIdleCallback && useIdletime) {
-            window.requestIdleCallback(() => setShouldVisible(entries[entries.length - 1].isIntersecting), {
+            window.requestIdleCallback(() => setShouldVisible(isAnyIntersecting), {
               timeout: 300,
             });
           } else {
-            setShouldVisible(entries[entries.length - 1].isIntersecting);
+            setShouldVisible(isAnyIntersecting);
           }
         },
         {

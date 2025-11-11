@@ -233,8 +233,25 @@ def issue_on_results(
                 if group_by == "parent_child" or sub_group_by == "parent_child":
                     # 최상단 부모 찾기
                     if parent_id is None:
-                        # 부모가 없으면 최상단 이슈
-                        parent_child_value = "None"
+                        # 부모가 없는 경우, 자식이 있는지 확인
+                        # sub_issues_count 필드를 우선 사용 (DB에 저장된 실제 자식 수)
+                        sub_issues_count = issue_value.get("sub_issues_count", 0)
+
+                        # sub_issues_count가 없으면 현재 로드된 이슈들에서 확인
+                        if sub_issues_count is None:
+                            has_children = any(
+                                child_issue.get("parent_id") == issue_value["id"]
+                                for child_issue in all_issues_dict.values()
+                            )
+                        else:
+                            has_children = sub_issues_count > 0
+                            
+                        if has_children:
+                            # 자식이 있으면 자신의 ID를 그룹 값으로 사용
+                            parent_child_value = issue_id
+                        else:
+                            # 자식도 없고 부모도 없으면 "None" 그룹
+                            parent_child_value = "None"
                     else:
                         # 부모가 있으면 최상단 부모 찾기
                         root_parent = find_root_parent(issue_id, all_issues_dict)
@@ -402,10 +419,10 @@ def _handle_parent_child_grouping(
             for issue_id in filtered_issue_ids:
                 if issue_id not in all_issues_dict:
                     continue
-                    
+
                 issue_data = all_issues_dict[issue_id]
                 parent_id = issue_data.get("parent_id")
-                
+
                 if parent_id is None:
                     # 최상단 이슈인 경우, 자기 자신이 그룹 ID와 같은지 확인
                     if issue_id == group_id:
@@ -414,7 +431,8 @@ def _handle_parent_child_grouping(
                 else:
                     # 하위 이슈인 경우, 최상단 부모가 그룹 ID와 같은지 확인
                     root_parent = find_root_parent(issue_id, all_issues_dict)
-                    if root_parent == group_id:
+                    # 부모 이슈 자체도 자신의 그룹에 포함
+                    if root_parent == group_id or issue_id == group_id:
                         group_issue_ids.append(issue_id)
                         # print(f"[_handle_parent_child_grouping] Group {group_id}: found child issue {issue_id} with root parent {root_parent}")
             
@@ -426,14 +444,40 @@ def _handle_parent_child_grouping(
             else:
                 # 빈 쿼리셋 생성
                 group_issues = issues.none()
-        
+
         # 그룹당 제한된 수의 이슈만 가져오기
-        limited_issues = list(group_issues[:per_group_limit + 1])  # +1 for checking if more exist
-        
-        # 더 많은 이슈가 있는지 확인
-        has_more = len(limited_issues) > per_group_limit
+        all_group_issues = list(group_issues[:per_group_limit + 1])  # +1 for checking if more exist
+
+        # 더 많은 이슈가 있는지 확인 (정렬 전에 수행)
+        has_more = len(all_group_issues) > per_group_limit
         if has_more:
-            limited_issues = limited_issues[:per_group_limit]
+            all_group_issues = all_group_issues[:per_group_limit]
+
+        # parent_child 그룹화인 경우, 부모 이슈를 맨 위로 정렬
+        if group_id != "None":
+            # group_id와 일치하는 부모 이슈를 찾아 맨 앞으로 이동
+            parent_issue = None
+            other_issues = []
+
+            # print(f"[DEBUG] Group {group_id}: Sorting {len(all_group_issues)} issues")
+            for issue in all_group_issues:
+                issue_id_str = str(issue.id)
+                # print(f"[DEBUG] Checking issue {issue_id_str} (sequence_id: {getattr(issue, 'sequence_id', 'N/A')}) against group {group_id}")
+                if issue_id_str == str(group_id):
+                    parent_issue = issue
+                    # print(f"[DEBUG] Found parent issue: {issue_id_str}")
+                else:
+                    other_issues.append(issue)
+
+            # 부모 이슈가 있으면 맨 앞에 배치
+            if parent_issue:
+                limited_issues = [parent_issue] + other_issues
+                # print(f"[DEBUG] After sorting: First issue is {limited_issues[0].id} (sequence_id: {getattr(limited_issues[0], 'sequence_id', 'N/A')})")
+            else:
+                limited_issues = all_group_issues
+                # print(f"[DEBUG] No parent issue found for group {group_id}")
+        else:
+            limited_issues = all_group_issues
         
         # 이슈들을 직렬화
         serializer = IssueSerializer(limited_issues, many=True)
@@ -458,6 +502,7 @@ def issue_group_values(
     slug: str,
     project_id: Optional[str] = None,
     filters: Dict[str, Any] = {},
+    order_by: Optional[str] = None,
 ) -> List[Union[str, Any]]:
     # Issue 모델을 함수 시작 부분에서 임포트
     from plane.db.models import Issue as IssueModel
@@ -486,16 +531,31 @@ def issue_group_values(
         )
 
     if field == "issue_module__module_id":
-        queryset = Module.objects.filter(workspace__slug=slug).values_list("id", flat=True)
+        queryset = Module.objects.filter(workspace__slug=slug)
         if project_id:
-            return list(queryset.filter(project_id=project_id)) + ["None"]
-        return list(queryset) + ["None"]
+            queryset = queryset.filter(project_id=project_id)
+
+        # order_by가 날짜 기반인 경우 모듈의 날짜로 정렬
+        if order_by:
+            if order_by.lstrip('-') in ['start_date', 'target_date', 'created_at', 'updated_at']:
+                # 모듈에도 같은 필드가 있으면 그것으로 정렬
+                queryset = queryset.order_by(order_by)
+
+        return list(queryset.values_list("id", flat=True)) + ["None"]
 
     if field == "cycle_id":
-        queryset = Cycle.objects.filter(workspace__slug=slug).values_list("id", flat=True)
+        queryset = Cycle.objects.filter(workspace__slug=slug)
         if project_id:
-            return list(queryset.filter(project_id=project_id)) + ["None"]
-        return list(queryset) + ["None"]
+            queryset = queryset.filter(project_id=project_id)
+
+        # order_by가 날짜 기반인 경우 주기의 날짜로 정렬
+        if order_by:
+            if order_by.lstrip('-') in ['start_date', 'end_date', 'created_at', 'updated_at']:
+                # 주기의 경우 target_date 대신 end_date 사용
+                cycle_order_by = order_by.replace('target_date', 'end_date')
+                queryset = queryset.order_by(cycle_order_by)
+
+        return list(queryset.values_list("id", flat=True)) + ["None"]
 
     if field == "project_id":
         queryset = Project.objects.filter(workspace__slug=slug).values_list("id", flat=True)
@@ -561,14 +621,22 @@ def issue_group_values(
         
         # 모든 이슈들에서 실제로 그룹화될 최상위 부모들 찾기
         group_parent_ids = set()
-        
+
+        # 먼저 자식이 있는 부모 이슈들을 찾기
+        parent_ids_with_children = set()
+        for issue in all_issues_data:
+            parent_id = issue.get("parent_id")
+            if parent_id is not None:
+                parent_ids_with_children.add(str(parent_id))
+
         for issue in all_issues_data:
             issue_id = str(issue["id"])
             parent_id = issue.get("parent_id")
-            
+
             if parent_id is None:
-                # 부모가 없는 이슈는 자기 자신이 그룹의 대표
-                group_parent_ids.add(issue_id)
+                # 부모가 없는 이슈 중 자식이 있는 이슈만 그룹의 대표로 추가
+                if issue_id in parent_ids_with_children:
+                    group_parent_ids.add(issue_id)
             else:
                 # 부모가 있는 이슈는 최상위 부모를 찾아서 그룹에 추가
                 root_parent = find_root_parent(issue_id, all_issues_dict)

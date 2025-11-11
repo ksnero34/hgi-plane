@@ -314,7 +314,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     return layout === EIssueLayoutTypes.CALENDAR
       ? "target_date"
-      : [EIssueLayoutTypes.LIST, EIssueLayoutTypes.KANBAN]?.includes(layout)
+      : [EIssueLayoutTypes.LIST, EIssueLayoutTypes.KANBAN, EIssueLayoutTypes.GANTT]?.includes(layout)
         ? displayFilters?.group_by
         : undefined;
   }
@@ -1572,9 +1572,17 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     // if groupedIssueIds is an array, update the `groupedIssueIds` store at the issuePath
     if (groupedIssueIds && Array.isArray(groupedIssueIds)) {
-      update(this, ["groupedIssueIds", ...issuePath], (issueIds: string[] = []) =>
-        this.issuesSortWithOrderBy(uniq(concat(issueIds, groupedIssueIds as string[])), this.orderBy)
-      );
+      update(this, ["groupedIssueIds", ...issuePath], (issueIds: string[] = []) => {
+        // For parent_child grouping, preserve backend order instead of re-sorting
+        // The backend already sorts parent issues before children
+        if (this.orderBy === "parent_child" || this.groupBy === "parent_child") {
+          const combinedIds = uniq(concat(issueIds, groupedIssueIds as string[]));
+          return combinedIds;
+        }
+
+        const combinedIds = uniq(concat(issueIds, groupedIssueIds as string[]));
+        return this.issuesSortWithOrderBy(combinedIds, this.orderBy);
+      });
       // return true to indicate the store has been updated
       return true;
     }

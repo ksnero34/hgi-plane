@@ -15,6 +15,7 @@ import { IssueGanttSidebar } from "@/components/gantt-chart/sidebar/issues/sideb
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useTimeLineChart } from "@/hooks/use-timeline-chart";
@@ -45,13 +46,15 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
   const { workspaceSlug, projectId } = useParams();
 
   const storeType = useIssueStoreType() as GanttStoreType;
-  const { issues, issuesFilter } = useIssues(storeType);
+  const { issues, issuesFilter, issueMap } = useIssues(storeType);
   const { fetchIssues, fetchNextIssues, updateIssue, quickAddIssue } = useIssuesActions(storeType);
   const { initGantt } = useTimeLineChart(ETimeLineTypeType.ISSUE);
   // store hooks
   const { allowPermissions } = useUserPermissions();
+  const { issueTypes } = useIssueType(projectId as string);
 
   const appliedDisplayFilters = issuesFilter.issueFilters?.displayFilters;
+  const groupBy = appliedDisplayFilters?.group_by || null;
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
   // derived values
@@ -59,14 +62,36 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
   targetDate.setDate(targetDate.getDate() + 1);
 
   useEffect(() => {
-    fetchIssues("init-loader", { canGroup: false, perPageCount: 100 }, viewId);
+    fetchIssues("init-loader", { canGroup: true, perPageCount: 100 }, viewId);
   }, [fetchIssues, storeType, viewId]);
 
   useEffect(() => {
     initGantt();
   }, []);
 
-  const issuesIds = (issues.groupedIssueIds?.[ALL_ISSUES] as string[]) ?? [];
+  // Get grouped issue IDs and group fields
+  const groupedIssueIds = issues.groupedIssueIds;
+  const groupByFields = (issues as any)?.groupByFields;
+
+  // Get all issue IDs from all groups
+  const issuesIds = groupBy
+    ? (() => {
+        // For parent_child grouping, preserve the order from groupByFields
+        if (groupBy === "parent_child" && groupByFields && Array.isArray(groupByFields)) {
+          const orderedIds: string[] = [];
+          groupByFields.forEach(field => {
+            const groupId = typeof field === "object" ? field.id : field;
+            const groupIssues = groupedIssueIds?.[groupId];
+            if (Array.isArray(groupIssues)) {
+              orderedIds.push(...groupIssues);
+            }
+          });
+          return orderedIds;
+        }
+        // For other groupings, use the original logic
+        return Object.values(groupedIssueIds || {}).flat() as string[];
+      })()
+    : (groupedIssueIds?.[ALL_ISSUES] as string[]) ?? [];
   const nextPageResults = issues.getPaginationData(undefined, undefined)?.nextPageResults;
 
   const { enableIssueCreation } = issues?.viewFlags || {};
@@ -129,7 +154,11 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
             blockIds={issuesIds}
             blockUpdateHandler={updateIssueBlockStructure}
             blockToRender={(data: TIssue) => <IssueGanttBlock issueId={data.id} isEpic={isEpic} />}
-            sidebarToRender={(props) => <IssueGanttSidebar {...props} showAllBlocks isEpic={isEpic} />}
+            sidebarToRender={(props) => <IssueGanttSidebar {...props} showAllBlocks isEpic={isEpic} groupBy={groupBy} groupedIssueIds={groupedIssueIds} groupByFields={groupByFields} issueTypes={issueTypes} />}
+            groupBy={groupBy}
+            groupedIssueIds={groupedIssueIds}
+            groupByFields={groupByFields}
+            issueTypes={issueTypes}
             enableBlockLeftResize={isAllowed}
             enableBlockRightResize={isAllowed}
             enableBlockMove={isAllowed}

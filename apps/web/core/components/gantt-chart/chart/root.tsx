@@ -40,6 +40,10 @@ type ChartViewRootProps = {
   quickAdd?: React.ReactNode | undefined;
   showToday: boolean;
   isEpic?: boolean;
+  groupBy?: any;
+  groupedIssueIds?: any;
+  groupByFields?: any[];
+  issueTypes?: any[];
 };
 
 const timelineViewHelpers = {
@@ -72,6 +76,10 @@ export const ChartViewRoot: FC<ChartViewRootProps> = observer((props) => {
     showToday,
     updateBlockDates,
     isEpic = false,
+    groupBy,
+    groupedIssueIds,
+    groupByFields,
+    issueTypes,
   } = props;
   // states
   const [itemsContainerWidth, setItemsContainerWidth] = useState(0);
@@ -211,6 +219,10 @@ export const ChartViewRoot: FC<ChartViewRootProps> = observer((props) => {
         quickAdd={quickAdd}
         updateBlockDates={updateBlockDates}
         isEpic={isEpic}
+        groupBy={groupBy}
+        groupedIssueIds={groupedIssueIds}
+        groupByFields={groupByFields}
+        issueTypes={issueTypes}
       />
     </div>
   );

@@ -30,6 +30,10 @@ type GanttChartRootProps = {
   showAllBlocks?: boolean;
   showToday?: boolean;
   isEpic?: boolean;
+  groupBy?: any;
+  groupedIssueIds?: any;
+  groupByFields?: any[];
+  issueTypes?: any[];
 };
 
 export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
@@ -56,6 +60,10 @@ export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
     quickAdd,
     updateBlockDates,
     isEpic = false,
+    groupBy,
+    groupedIssueIds,
+    groupByFields,
+    issueTypes,
   } = props;
 
   const { setBlockIds } = useTimeLineChartStore();
@@ -89,6 +97,10 @@ export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
       showToday={showToday}
       updateBlockDates={updateBlockDates}
       isEpic={isEpic}
+      groupBy={groupBy}
+      groupedIssueIds={groupedIssueIds}
+      groupByFields={groupByFields}
+      issueTypes={issueTypes}
     />
   );
 });

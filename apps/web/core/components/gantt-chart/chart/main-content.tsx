@@ -19,7 +19,7 @@ import { useTimeLineChartStore } from "@/hooks/use-timeline-chart";
 // plane web components
 import { TimelineDependencyPaths, TimelineDraggablePath } from "@/plane-web/components/gantt-chart";
 import { GanttChartRowList } from "@/plane-web/components/gantt-chart/blocks/block-row-list";
-import { GanttChartBlocksList } from "@/plane-web/components/gantt-chart/blocks/blocks-list";
+import { GroupedGanttChartBlocksList } from "@/plane-web/components/gantt-chart/blocks/grouped-blocks-list";
 import { IssueBulkOperationsRoot } from "@/plane-web/components/issues/bulk-operations";
 // plane web hooks
 import { useBulkOperationStatus } from "@/plane-web/hooks/use-bulk-operation-status";
@@ -54,6 +54,10 @@ type Props = {
   ) => ChartDataType | undefined;
   quickAdd?: React.ReactNode | undefined;
   isEpic?: boolean;
+  groupBy?: any;
+  groupedIssueIds?: any;
+  groupByFields?: any[];
+  issueTypes?: any[];
 };
 
 export const GanttChartMainContent: React.FC<Props> = observer((props) => {
@@ -79,6 +83,10 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
     quickAdd,
     updateBlockDates,
     isEpic = false,
+    groupBy,
+    groupedIssueIds,
+    groupByFields,
+    issueTypes,
   } = props;
   // refs
   const ganttContainerRef = useRef<HTMLDivElement>(null);
@@ -208,10 +216,15 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
                       showAllBlocks={showAllBlocks}
                       selectionHelpers={helpers}
                       ganttContainerRef={ganttContainerRef}
+                      groupBy={groupBy}
+                      groupedIssueIds={groupedIssueIds}
+                      groupByFields={groupByFields}
+                      issueTypes={issueTypes}
+                      isEpic={isEpic}
                     />
                     <TimelineDependencyPaths isEpic={isEpic} />
                     <TimelineDraggablePath />
-                    <GanttChartBlocksList
+                    <GroupedGanttChartBlocksList
                       blockIds={blockIds}
                       blockToRender={blockToRender}
                       enableBlockLeftResize={enableBlockLeftResize}
@@ -221,6 +234,11 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
                       enableDependency={enableDependency}
                       showAllBlocks={showAllBlocks}
                       updateBlockDates={updateBlockDates}
+                      groupBy={groupBy}
+                      groupedIssueIds={groupedIssueIds}
+                      groupByFields={groupByFields}
+                      issueTypes={issueTypes}
+                      isEpic={isEpic}
                     />
                   </div>
                 )}

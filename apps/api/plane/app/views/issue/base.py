@@ -924,12 +924,14 @@ class IssueViewSet(BaseViewSet):
                             slug=slug,
                             project_id=project_id,
                             filters=filters,
+                            order_by=order_by_param,
                         ),
                         sub_group_by_fields=issue_group_values(
                             field=sub_group_by,
                             slug=slug,
                             project_id=project_id,
                             filters=filters,
+                            order_by=order_by_param,
                         ),
                         group_by_field_name=group_by,
                         sub_group_by_field_name=sub_group_by,
@@ -961,9 +963,7 @@ class IssueViewSet(BaseViewSet):
                         request=request,
                         order_by=pagination_order_by,
                         queryset=issue_queryset,
-                        on_results=lambda issues: issue_on_results(
-                            group_by=group_by, issues=issues, sub_group_by=sub_group_by
-                        ),
+                        on_results=None,  # ParentChildOffsetPaginator가 직렬화를 담당
                         paginator_cls=ParentChildOffsetPaginator,
                         group_by_field_name=group_by,
                         group_by_fields=issue_group_values(
@@ -971,6 +971,7 @@ class IssueViewSet(BaseViewSet):
                             slug=slug,
                             project_id=project_id,
                             filters=filters,
+                            order_by=order_by_param,
                         ),
                         count_filter=Q(
                             Q(issue_intake__status=1)
@@ -1004,6 +1005,7 @@ class IssueViewSet(BaseViewSet):
                             slug=slug,
                             project_id=project_id,
                             filters=filters,
+                            order_by=order_by_param,
                         ),
                         group_by_field_name=group_by,
                         count_filter=Q(
