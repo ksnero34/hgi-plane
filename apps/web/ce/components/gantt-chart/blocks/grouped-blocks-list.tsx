@@ -1,7 +1,12 @@
 import type { FC } from "react";
 import { useMemo } from "react";
 //
-import type { IBlockUpdateDependencyData, TGroupedIssues, TIssueGroupByOptions } from "@plane/types";
+import type {
+  IBlockUpdateDependencyData,
+  TGroupedIssues,
+  TIssueGroupByOptions,
+  TIssueOrderByOptions,
+} from "@plane/types";
 import { GanttChartGroupHeader } from "@/components/gantt-chart/blocks/group-header";
 import { GanttChartBlock } from "@/components/gantt-chart/blocks/block";
 import { getGroupByColumns } from "@/components/issues/issue-layouts/utils";
@@ -22,6 +27,7 @@ export type GroupedGanttChartBlocksProps = {
   groupByFields?: any[];
   issueTypes?: any[];
   isEpic?: boolean;
+  orderBy?: TIssueOrderByOptions;
 };
 
 export const GroupedGanttChartBlocksList: FC<GroupedGanttChartBlocksProps> = (props) => {
@@ -40,6 +46,7 @@ export const GroupedGanttChartBlocksList: FC<GroupedGanttChartBlocksProps> = (pr
     groupByFields,
     issueTypes,
     isEpic = false,
+    orderBy,
   } = props;
 
   const { issueMap } = useIssues();
@@ -58,8 +65,9 @@ export const GroupedGanttChartBlocksList: FC<GroupedGanttChartBlocksProps> = (pr
       projectId: undefined,
       groupByFields: groupByFields,
       issueTypes: issueTypes,
+      orderBy,
     });
-  }, [groupBy, groupedIssueIds, groupByFields, issueMap, isEpic, issueTypes]);
+  }, [groupBy, groupedIssueIds, groupByFields, issueMap, isEpic, issueTypes, orderBy]);
 
   // Group blocks by group ID
   const groupedBlocks = useMemo(() => {

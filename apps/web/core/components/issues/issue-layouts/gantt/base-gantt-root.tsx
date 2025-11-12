@@ -54,6 +54,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
   const { issueTypes } = useIssueType(projectId as string);
 
   const appliedDisplayFilters = issuesFilter.issueFilters?.displayFilters;
+  const orderBy = appliedDisplayFilters?.order_by;
   const groupBy = appliedDisplayFilters?.group_by || null;
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
@@ -154,11 +155,23 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
             blockIds={issuesIds}
             blockUpdateHandler={updateIssueBlockStructure}
             blockToRender={(data: TIssue) => <IssueGanttBlock issueId={data.id} isEpic={isEpic} />}
-            sidebarToRender={(props) => <IssueGanttSidebar {...props} showAllBlocks isEpic={isEpic} groupBy={groupBy} groupedIssueIds={groupedIssueIds} groupByFields={groupByFields} issueTypes={issueTypes} />}
+            sidebarToRender={(props) => (
+              <IssueGanttSidebar
+                {...props}
+                showAllBlocks
+                isEpic={isEpic}
+                groupBy={groupBy}
+                groupedIssueIds={groupedIssueIds}
+                groupByFields={groupByFields}
+                issueTypes={issueTypes}
+                orderBy={orderBy}
+              />
+            )}
             groupBy={groupBy}
             groupedIssueIds={groupedIssueIds}
             groupByFields={groupByFields}
             issueTypes={issueTypes}
+            orderBy={orderBy}
             enableBlockLeftResize={isAllowed}
             enableBlockRightResize={isAllowed}
             enableBlockMove={isAllowed}

@@ -123,6 +123,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
     projectId: projectId as string,
     groupByFields: groupByFields,
     issueTypes: issueTypes,
+    orderBy,
   });
 
   if (!groups) return null;

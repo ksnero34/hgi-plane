@@ -102,6 +102,7 @@ export const List: React.FC<IList> = observer((props) => {
     projectId: projectId as string,
     groupByFields: groupByFields,
     issueTypes: issueTypes,
+    orderBy,
   });
 
   // Enable Auto Scroll for Main Kanban

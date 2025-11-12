@@ -16,6 +16,7 @@ import type {
   IPragmaticDropPayload,
   TIssue,
   TIssueGroupByOptions,
+  TIssueOrderByOptions,
   IIssueFilterOptions,
   IIssueFilters,
   TGroupedIssues,
@@ -83,6 +84,7 @@ type TGetGroupByColumns = {
   projectId?: string;
   groupByFields?: any[];
   issueTypes?: any[];
+  orderBy?: TIssueOrderByOptions | undefined;
 };
 
 // NOTE: Type of groupBy is different compared to what's being passed from the components.
@@ -98,6 +100,7 @@ export const getGroupByColumns = ({
   projectId,
   groupByFields,
   issueTypes,
+  orderBy,
 }: TGetGroupByColumns): IGroupByColumn[] | undefined => {
   // If no groupBy is specified and includeNone is true, return "All Issues" group
   if (!groupBy && includeNone) {
@@ -117,25 +120,25 @@ export const getGroupByColumns = ({
   // Map of group by options to their corresponding column getter functions
   const groupByColumnMap: Record<
     GroupByColumnTypes,
-    ({ isWorkspaceLevel, projectId }: TGetColumns) => IGroupByColumn[] | undefined
+    (params: TGetColumns & { orderBy?: TIssueOrderByOptions }) => IGroupByColumn[] | undefined
   > = {
-    project: getProjectColumns,
-    cycle: getCycleColumns,
-    module: getModuleColumns,
-    state: getStateColumns,
-    "state_detail.group": getStateGroupColumns,
-    priority: getPriorityColumns,
-    labels: getLabelsColumns,
-    assignees: getAssigneeColumns,
-    created_by: getCreatedByColumns,
-    team_project: getTeamProjectColumns,
+    project: () => getProjectColumns(),
+    cycle: ({ orderBy }) => getCycleColumns(orderBy),
+    module: ({ orderBy }) => getModuleColumns(orderBy),
+    state: ({ projectId }) => getStateColumns({ projectId }),
+    "state_detail.group": () => getStateGroupColumns(),
+    priority: () => getPriorityColumns(),
+    labels: ({ isWorkspaceLevel }) => getLabelsColumns({ isWorkspaceLevel }),
+    assignees: ({ isWorkspaceLevel, projectId }) => getAssigneeColumns({ isWorkspaceLevel, projectId }),
+    created_by: () => getCreatedByColumns(),
+    team_project: () => getTeamProjectColumns(),
     parent_child: () => getParentChildColumns(groupedIssueIds, issuesMap, groupByFields),
-    top_level_only: getTopLevelOnlyColumns,
+    top_level_only: () => getTopLevelOnlyColumns(),
     issue_type: () => getIssueTypeColumns(issueTypes),
   };
 
   // Get and return the columns for the specified group by option
-  return groupByColumnMap[groupBy]?.({ isWorkspaceLevel, projectId });
+  return groupByColumnMap[groupBy]?.({ isWorkspaceLevel, projectId, orderBy });
 };
 
 const getProjectColumns = (): IGroupByColumn[] | undefined => {
@@ -161,7 +164,7 @@ const getProjectColumns = (): IGroupByColumn[] | undefined => {
     .filter((column) => column !== undefined) as IGroupByColumn[];
 };
 
-const getCycleColumns = (): IGroupByColumn[] | undefined => {
+const getCycleColumns = (orderBy?: TIssueOrderByOptions): IGroupByColumn[] | undefined => {
   const { currentProjectDetails } = store.projectRoot.project;
   // Check for the current project details
   if (!currentProjectDetails || !currentProjectDetails?.id) return;
@@ -170,7 +173,9 @@ const getCycleColumns = (): IGroupByColumn[] | undefined => {
   const cycleDetails = currentProjectDetails?.id ? getProjectCycleDetails(currentProjectDetails?.id) : undefined;
   // Map the cycle details to the group by columns
   const cycles: IGroupByColumn[] = [];
-  cycleDetails?.map((cycle) => {
+  const sortedCycles = sortTimelineGroups(cycleDetails ?? [], orderBy, "cycle");
+
+  sortedCycles?.forEach((cycle) => {
     const cycleStatus = cycle.status ? (cycle.status.toLocaleLowerCase() as TCycleGroups) : "draft";
     const isDropDisabled = cycleStatus === "completed";
     cycles.push({
@@ -191,7 +196,7 @@ const getCycleColumns = (): IGroupByColumn[] | undefined => {
   return cycles;
 };
 
-const getModuleColumns = (): IGroupByColumn[] | undefined => {
+const getModuleColumns = (orderBy?: TIssueOrderByOptions): IGroupByColumn[] | undefined => {
   // get current project details
   const { currentProjectDetails } = store.projectRoot.project;
   if (!currentProjectDetails || !currentProjectDetails?.id) return;
@@ -201,7 +206,9 @@ const getModuleColumns = (): IGroupByColumn[] | undefined => {
   const moduleDetails = currentProjectDetails?.id ? getProjectModuleDetails(currentProjectDetails?.id) : undefined;
   // map module details to group by columns
   const modules: IGroupByColumn[] = [];
-  moduleDetails?.map((module) => {
+  const sortedModules = sortTimelineGroups(moduleDetails ?? [], orderBy, "module");
+
+  sortedModules?.forEach((module) => {
     modules.push({
       id: module.id,
       name: module.name,
@@ -216,6 +223,45 @@ const getModuleColumns = (): IGroupByColumn[] | undefined => {
     payload: {},
   });
   return modules;
+};
+
+type TTimelineGroupType = "cycle" | "module";
+
+const isDateOrderBy = (orderBy?: TIssueOrderByOptions) =>
+  orderBy ? ["start_date", "-start_date", "target_date", "-target_date"].includes(orderBy) : false;
+
+const getDateComparator = (direction: "asc" | "desc") => (firstValue?: string | null, secondValue?: string | null) => {
+  const first = firstValue ? new Date(firstValue).getTime() : null;
+  const second = secondValue ? new Date(secondValue).getTime() : null;
+
+  if (first === null && second === null) return 0;
+  if (first === null) return direction === "asc" ? 1 : -1;
+  if (second === null) return direction === "asc" ? -1 : 1;
+
+  if (first === second) return 0;
+
+  return direction === "asc" ? first - second : second - first;
+};
+
+const sortTimelineGroups = <T extends Record<string, any>>(items: T[], orderBy: TIssueOrderByOptions | undefined, type: TTimelineGroupType) => {
+  if (!isDateOrderBy(orderBy)) return items;
+
+  const isTargetDate = orderBy?.includes("target_date");
+  const direction: "asc" | "desc" = orderBy?.startsWith("-") ? "desc" : "asc";
+  const comparator = getDateComparator(direction);
+  const cloned = [...items];
+
+  return cloned.sort((first, second) => {
+    if (type === "cycle") {
+      const firstDate = isTargetDate ? first?.end_date : first?.start_date;
+      const secondDate = isTargetDate ? second?.end_date : second?.start_date;
+      return comparator(firstDate, secondDate);
+    }
+
+    const firstDate = isTargetDate ? first?.target_date : first?.start_date;
+    const secondDate = isTargetDate ? second?.target_date : second?.start_date;
+    return comparator(firstDate, secondDate);
+  });
 };
 
 const getStateColumns = ({ projectId }: TGetColumns): IGroupByColumn[] | undefined => {

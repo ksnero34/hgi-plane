@@ -76,6 +76,8 @@ export const CreatePageModal: FC<Props> = (props) => {
   const handleFormSubmit = async () => {
     if (!workspaceSlug || !projectId) return;
 
+    console.log('handleFormSubmit - pageFormData:', pageFormData);
+
     try {
       const pageData = await createPage(pageFormData);
       if (pageData) {

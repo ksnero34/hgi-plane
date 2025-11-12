@@ -4,7 +4,13 @@ import { observer } from "mobx-react";
 import { createPortal } from "react-dom";
 // plane imports
 // components
-import type { ChartDataType, IBlockUpdateData, IBlockUpdateDependencyData, TGanttViews } from "@plane/types";
+import type {
+  ChartDataType,
+  IBlockUpdateData,
+  IBlockUpdateDependencyData,
+  TGanttViews,
+  TIssueOrderByOptions,
+} from "@plane/types";
 import { cn } from "@plane/utils";
 import { GanttChartHeader, GanttChartMainContent } from "@/components/gantt-chart";
 // helpers
@@ -44,6 +50,7 @@ type ChartViewRootProps = {
   groupedIssueIds?: any;
   groupByFields?: any[];
   issueTypes?: any[];
+  orderBy?: TIssueOrderByOptions;
 };
 
 const timelineViewHelpers = {
@@ -80,6 +87,7 @@ export const ChartViewRoot: FC<ChartViewRootProps> = observer((props) => {
     groupedIssueIds,
     groupByFields,
     issueTypes,
+    orderBy,
   } = props;
   // states
   const [itemsContainerWidth, setItemsContainerWidth] = useState(0);
@@ -223,6 +231,7 @@ export const ChartViewRoot: FC<ChartViewRootProps> = observer((props) => {
         groupedIssueIds={groupedIssueIds}
         groupByFields={groupByFields}
         issueTypes={issueTypes}
+        orderBy={orderBy}
       />
     </div>
   );

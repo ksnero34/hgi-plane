@@ -213,7 +213,6 @@ export const PagesListRoot: FC<TPagesListRoot> = observer((props) => {
     }
   };
 
-  if (!filteredPageIds) return <></>;
   return (
     <div
       onDragOver={handleRootDragOver}
@@ -231,7 +230,7 @@ export const PagesListRoot: FC<TPagesListRoot> = observer((props) => {
           />
         )}
 
-        {filteredPageIds.map((pageId) => (
+        {filteredPageIds && filteredPageIds.map((pageId) => (
           <PageListBlock key={pageId} pageId={pageId} storeType={storeType} />
         ))}
       </ListLayout>

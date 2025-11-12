@@ -1,7 +1,7 @@
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // PLane
-import type { IBlockUpdateData, IBlockUpdateDependencyData, IModule } from "@plane/types";
+import type { IBlockUpdateData, IBlockUpdateDependencyData, IModule, TIssueOrderByOptions } from "@plane/types";
 // components
 import { GanttChartRoot, ModuleGanttSidebar } from "@/components/gantt-chart";
 import { ETimeLineTypeType, TimeLineTypeContext } from "@/components/gantt-chart/contexts";
@@ -48,6 +48,11 @@ export const ModulesListGanttChartView: React.FC = observer(() => {
 
   if (!filteredModuleIds) return null;
 
+  const isTimelineSort = (value: string | undefined): value is TIssueOrderByOptions =>
+    value ? ["start_date", "-start_date", "target_date", "-target_date"].includes(value) : false;
+
+  const ganttOrderBy = isTimelineSort(displayFilters?.order_by) ? displayFilters?.order_by : undefined;
+
   return (
     <TimeLineTypeContext.Provider value={ETimeLineTypeType.MODULE}>
       <GanttChartRoot
@@ -57,6 +62,7 @@ export const ModulesListGanttChartView: React.FC = observer(() => {
         sidebarToRender={(props) => <ModuleGanttSidebar {...props} />}
         blockUpdateHandler={(block, payload) => handleModuleUpdate(block, payload)}
         blockToRender={(data: IModule) => <ModuleGanttBlock moduleId={data.id} />}
+        orderBy={ganttOrderBy}
         enableBlockLeftResize={isAllowed}
         enableBlockRightResize={isAllowed}
         enableBlockMove={isAllowed}

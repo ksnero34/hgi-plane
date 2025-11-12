@@ -8,6 +8,7 @@ import type {
   IBlockUpdateDependencyData,
   IGanttBlock,
   TGanttViews,
+  TIssueOrderByOptions,
 } from "@plane/types";
 import { cn, getDate } from "@plane/utils";
 // components
@@ -58,6 +59,7 @@ type Props = {
   groupedIssueIds?: any;
   groupByFields?: any[];
   issueTypes?: any[];
+  orderBy?: TIssueOrderByOptions;
 };
 
 export const GanttChartMainContent: React.FC<Props> = observer((props) => {
@@ -87,6 +89,7 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
     groupedIssueIds,
     groupByFields,
     issueTypes,
+    orderBy,
   } = props;
   // refs
   const ganttContainerRef = useRef<HTMLDivElement>(null);
@@ -196,6 +199,7 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
                 quickAdd={quickAdd}
                 selectionHelpers={helpers}
                 isEpic={isEpic}
+                orderBy={orderBy}
               />
               <div className="relative min-h-full h-max flex-shrink-0 flex-grow">
                 <ActiveChartView />
@@ -221,6 +225,7 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
                       groupByFields={groupByFields}
                       issueTypes={issueTypes}
                       isEpic={isEpic}
+                      orderBy={orderBy}
                     />
                     <TimelineDependencyPaths isEpic={isEpic} />
                     <TimelineDraggablePath />
@@ -239,6 +244,7 @@ export const GanttChartMainContent: React.FC<Props> = observer((props) => {
                       groupByFields={groupByFields}
                       issueTypes={issueTypes}
                       isEpic={isEpic}
+                      orderBy={orderBy}
                     />
                   </div>
                 )}

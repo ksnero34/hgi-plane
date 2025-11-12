@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { useEffect } from "react";
 import { observer } from "mobx-react";
 // components
-import type { IBlockUpdateData, IBlockUpdateDependencyData } from "@plane/types";
+import type { IBlockUpdateData, IBlockUpdateDependencyData, TIssueOrderByOptions } from "@plane/types";
 // hooks
 import { useTimeLineChartStore } from "@/hooks/use-timeline-chart";
 import { ChartViewRoot } from "./chart/root";
@@ -34,6 +34,7 @@ type GanttChartRootProps = {
   groupedIssueIds?: any;
   groupByFields?: any[];
   issueTypes?: any[];
+  orderBy?: TIssueOrderByOptions;
 };
 
 export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
@@ -64,6 +65,7 @@ export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
     groupedIssueIds,
     groupByFields,
     issueTypes,
+    orderBy,
   } = props;
 
   const { setBlockIds } = useTimeLineChartStore();
@@ -101,6 +103,7 @@ export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
       groupedIssueIds={groupedIssueIds}
       groupByFields={groupByFields}
       issueTypes={issueTypes}
+      orderBy={orderBy}
     />
   );
 });

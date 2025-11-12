@@ -288,6 +288,7 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     projectId: projectId as string,
     issueTypes: issueTypes,
+    orderBy,
   });
   const subGroupByList = getGroupByColumns({
     groupBy: sub_group_by as GroupByColumnTypes,
@@ -295,6 +296,7 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     projectId: projectId as string,
     issueTypes: issueTypes,
+    orderBy,
   });
 
   if (!groupByList || !subGroupByList) return null;

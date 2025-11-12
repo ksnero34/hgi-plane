@@ -1,6 +1,12 @@
 import { FC, useMemo } from "react";
 // components
-import type { IBlockUpdateData, IGanttBlock, TGroupedIssues, TIssueGroupByOptions } from "@plane/types";
+import type {
+  IBlockUpdateData,
+  IGanttBlock,
+  TGroupedIssues,
+  TIssueGroupByOptions,
+  TIssueOrderByOptions,
+} from "@plane/types";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 import { GanttChartGroupHeader } from "@/components/gantt-chart/blocks/group-header";
 import { BlockRow } from "@/components/gantt-chart/blocks/block-row";
@@ -24,6 +30,7 @@ export type GanttChartBlocksProps = {
   groupByFields?: any[];
   issueTypes?: any[];
   isEpic?: boolean;
+  orderBy?: TIssueOrderByOptions;
 };
 
 export const GanttChartRowList: FC<GanttChartBlocksProps> = (props) => {
@@ -40,6 +47,7 @@ export const GanttChartRowList: FC<GanttChartBlocksProps> = (props) => {
     groupByFields,
     issueTypes,
     isEpic = false,
+    orderBy,
   } = props;
   const { issueMap } = useIssues();
   const { getBlockById } = useTimeLineChartStore();
@@ -57,8 +65,9 @@ export const GanttChartRowList: FC<GanttChartBlocksProps> = (props) => {
       projectId: undefined,
       groupByFields,
       issueTypes,
+      orderBy,
     });
-  }, [groupBy, groupedIssueIds, groupByFields, issueMap, isEpic, issueTypes]);
+  }, [groupBy, groupedIssueIds, groupByFields, issueMap, isEpic, issueTypes, orderBy]);
 
   const groupedBlocks = useMemo(() => {
     if (!groups || !groupedIssueIds || !groupBy) return null;

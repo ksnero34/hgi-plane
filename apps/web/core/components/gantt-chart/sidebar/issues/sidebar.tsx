@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 import { useState, useMemo } from "react";
 import { observer } from "mobx-react";
 // ui
-import type { IBlockUpdateData, TGroupedIssues, TIssueGroupByOptions } from "@plane/types";
+import type { IBlockUpdateData, TGroupedIssues, TIssueGroupByOptions, TIssueOrderByOptions } from "@plane/types";
 import { Loader } from "@plane/ui";
 // components
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
@@ -37,6 +37,7 @@ type Props = {
   groupedIssueIds?: TGroupedIssues;
   groupByFields?: any[];
   issueTypes?: any[];
+  orderBy?: TIssueOrderByOptions;
 };
 
 export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
@@ -55,6 +56,7 @@ export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
     groupedIssueIds,
     groupByFields,
     issueTypes = [],
+    orderBy,
   } = props;
 
   const { getBlockById } = useTimeLineChart(ETimeLineTypeType.ISSUE);
@@ -98,8 +100,9 @@ export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
       projectId: undefined,
       groupByFields: groupByFields,
       issueTypes: issueTypes,
+      orderBy,
     });
-  }, [groupBy, groupedIssueIds, groupByFields, issueMap, isEpic, issueTypes]);
+  }, [groupBy, groupedIssueIds, groupByFields, issueMap, isEpic, issueTypes, orderBy]);
 
   // Group blocks by group ID
   const groupedBlocks = useMemo(() => {

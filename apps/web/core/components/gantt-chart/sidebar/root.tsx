@@ -2,7 +2,7 @@ import type { RefObject } from "react";
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 // components
-import type { IBlockUpdateData } from "@plane/types";
+import type { IBlockUpdateData, TIssueOrderByOptions } from "@plane/types";
 import { Row, ERowVariant } from "@plane/ui";
 import { cn } from "@plane/utils";
 import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
@@ -25,6 +25,7 @@ type Props = {
   quickAdd?: React.ReactNode | undefined;
   selectionHelpers: TSelectionHelper;
   isEpic?: boolean;
+  orderBy?: TIssueOrderByOptions;
 };
 
 export const GanttChartSidebar: React.FC<Props> = observer((props) => {
@@ -42,6 +43,7 @@ export const GanttChartSidebar: React.FC<Props> = observer((props) => {
     quickAdd,
     selectionHelpers,
     isEpic = false,
+    orderBy,
   } = props;
 
   const isGroupSelectionEmpty = selectionHelpers.isGroupSelected(GANTT_SELECT_GROUP) === "empty";
@@ -95,6 +97,7 @@ export const GanttChartSidebar: React.FC<Props> = observer((props) => {
             loadMoreBlocks,
             selectionHelpers,
             isEpic,
+            orderBy,
           })}
       </Row>
       {quickAdd ? quickAdd : null}

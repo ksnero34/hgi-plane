@@ -9,9 +9,10 @@ import { Globe2, Lock } from "lucide-react";
 import { ETabIndices, EPageAccess } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
+import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
 import { PageIcon } from "@plane/propel/icons";
 import type { TPage } from "@plane/types";
-import { EmojiIconPicker, EmojiIconPickerTypes, Input } from "@plane/ui";
+import { Input } from "@plane/ui";
 import { getEmojiImageUrlFromDecimal, getTabIndex } from "@plane/utils";
 // components
 import { AccessField } from "@/components/common/access-field";
@@ -70,10 +71,9 @@ export const PageForm: React.FC<Props> = (props) => {
         </h3>
         <div className="flex items-start gap-2 h-9 w-full">
           {!isFolder && (
-            <EmojiIconPicker
+            <EmojiPicker
               isOpen={isOpen}
               handleToggle={(val: boolean) => setIsOpen(val)}
-              className="flex items-center justify-center flex-shrink0"
               buttonClassName="flex items-center justify-center"
               label={
                 <span className="grid h-9 w-9 place-items-center rounded-md bg-custom-background-90">

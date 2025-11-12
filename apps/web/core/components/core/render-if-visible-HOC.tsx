@@ -36,10 +36,27 @@ const RenderIfVisible: React.FC<Props> = (props) => {
   const [shouldVisible, setShouldVisible] = useState<boolean>(defaultValue);
   const placeholderHeight = useRef<string>(defaultHeight);
   const intersectionRef = useRef<HTMLElement | null>(null);
+  const [visibilityChangeCount, setVisibilityChangeCount] = useState(0);
 
   const isVisible = shouldVisible || forceRender;
 
   // Set visibility with intersection observer
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setVisibilityChangeCount((count) => count + 1);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   useEffect(() => {
     if (intersectionRef.current) {
       const observer = new IntersectionObserver(
@@ -67,9 +84,10 @@ const RenderIfVisible: React.FC<Props> = (props) => {
           // eslint-disable-next-line react-hooks/exhaustive-deps
           observer.unobserve(intersectionRef.current);
         }
+        observer.disconnect();
       };
     }
-  }, [intersectionRef, children, root, verticalOffset, horizontalOffset]);
+  }, [intersectionRef, children, root, verticalOffset, horizontalOffset, visibilityChangeCount]);
 
   //Set height after render
   useEffect(() => {
