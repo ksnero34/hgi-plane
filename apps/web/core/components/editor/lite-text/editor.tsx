@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 // plane constants
 import type { EIssueCommentAccessSpecifier } from "@plane/constants";
 // plane imports
@@ -67,12 +67,14 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
     placeholder = t("issue.comments.placeholder"),
     disabledExtensions: additionalDisabledExtensions = [],
     editorClassName = "",
+    handleEditorReady: externalHandleEditorReady,
     ...rest
   } = props;
   // states
   const isLiteVariant = variant === "lite";
   const isFullVariant = variant === "full";
   const [isFocused, setIsFocused] = useState(isFullVariant ? showToolbarInitially : true);
+  const [editorInstance, setEditorInstance] = useState<EditorRefApi | null>(null);
   // editor flaggings
   const { liteText: liteTextEditorExtensions } = useEditorFlagging({
     workspaceSlug: workspaceSlug?.toString() ?? "",
@@ -95,7 +97,23 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
   }
   // derived values
   const isEmpty = isCommentEmpty(props.initialValue);
-  const editorRef = isMutableRefObject<EditorRefApi>(ref) ? ref.current : null;
+
+  const handleEditorReady = useCallback(
+    (status: boolean) => {
+      if (status && isMutableRefObject<EditorRefApi>(ref)) {
+        setEditorInstance(ref.current);
+      }
+
+      if (!status) {
+        setEditorInstance(null);
+      }
+
+      externalHandleEditorReady?.(status);
+    },
+    [externalHandleEditorReady, ref]
+  );
+
+  const editorRef = editorInstance;
   return (
     <div
       className={cn(
@@ -141,6 +159,7 @@ export const LiteTextEditor = React.forwardRef<EditorRefApi, LiteTextEditorWrapp
             extendedEditorProps={{}}
             editorClassName={editorClassName}
             {...rest}
+            handleEditorReady={handleEditorReady}
           />
         </div>
 
