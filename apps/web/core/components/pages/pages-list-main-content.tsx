@@ -169,7 +169,8 @@ export const PagesListMainContent: React.FC<Props> = observer((props) => {
       );
   }
   // if no pages match the filter criteria
-  if (filteredPageIds?.length === 0)
+  // folderId가 있으면 빈 폴더여도 children을 렌더링해야 '..' 항목이 보임
+  if (filteredPageIds?.length === 0 && !folderId)
     return (
       <div className="h-full w-full grid place-items-center">
         <div className="text-center">
