@@ -79,6 +79,16 @@ export const ExternalEmbedExtensionConfig = Node.create({
           };
         },
       },
+      isIframe: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-is-iframe") === "true",
+        renderHTML: (attributes) => {
+          if (!attributes.isIframe) return {};
+          return {
+            "data-is-iframe": "true",
+          };
+        },
+      },
     };
   },
 

@@ -8,6 +8,8 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TPageVersion } from "@plane/types";
 import { renderFormattedDate, renderFormattedTime } from "@plane/utils";
 // helpers
+// helpers
+import type { TExtendedEditorExtensionsConfig } from "@/plane-web/hooks/pages";
 import type { EPageStoreType } from "@/plane-web/hooks/store";
 // local imports
 import type { TVersionEditorProps } from "./editor";
@@ -21,6 +23,7 @@ type Props = {
   pageId: string;
   restoreEnabled: boolean;
   storeType: EPageStoreType;
+  extendedEditorProps: TExtendedEditorExtensionsConfig;
 };
 
 export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
@@ -33,6 +36,7 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
     pageId,
     restoreEnabled,
     storeType,
+    extendedEditorProps,
   } = props;
   // states
   const [isRestoring, setIsRestoring] = useState(false);
@@ -119,7 +123,7 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
             )}
           </div>
           <div className="pt-8 h-full overflow-y-scroll vertical-scrollbar scrollbar-sm">
-            <VersionEditor activeVersion={activeVersion} storeType={storeType} versionDetails={versionDetails} />
+            <VersionEditor activeVersion={activeVersion} storeType={storeType} versionDetails={versionDetails} extendedEditorProps={extendedEditorProps} />
           </div>
         </>
       )}

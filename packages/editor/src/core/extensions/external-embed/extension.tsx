@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { ExternalLink, Link2, Pencil, Trash2 } from "lucide-react";
 import { ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 // plane utils
-import { checkURLValidity, cn, ensureUrlHasProtocol, truncateText } from "@plane/utils";
+import { cn, ensureUrlHasProtocol, truncateText } from "@plane/utils";
 // local imports
 import { ExternalEmbedExtensionConfig } from "./extension-config";
 
@@ -230,17 +230,43 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
         return;
       }
 
-      const normalizedUrl = ensureUrlHasProtocol(trimmed);
-      if (!checkURLValidity(normalizedUrl)) {
-        setError("올바른 URL 형식이 아닙니다.");
-        return;
+      // Check if input is an iframe tag
+      if (trimmed.startsWith("<iframe")) {
+        const srcMatch = trimmed.match(/src=["'](.*?)["']/);
+        if (srcMatch && srcMatch[1]) {
+          const src = srcMatch[1];
+          try {
+            // Validate the extracted URL
+            new URL(src);
+            updateAttributes?.({
+              url: src,
+              isIframe: true,
+            });
+            setError(null);
+            setIsEditing(false);
+            return;
+          } catch {
+            setError("iframe 소스 URL이 유효하지 않습니다.");
+            return;
+          }
+        } else {
+          setError("iframe 태그에서 src 속성을 찾을 수 없습니다.");
+          return;
+        }
       }
 
-      updateAttributes?.({
-        url: normalizedUrl,
-      });
-      setError(null);
-      setIsEditing(false);
+      const normalizedUrl = ensureUrlHasProtocol(trimmed);
+      try {
+        new URL(normalizedUrl);
+        updateAttributes?.({
+          url: normalizedUrl,
+          isIframe: false,
+        });
+        setError(null);
+        setIsEditing(false);
+      } catch {
+        setError("올바른 URL 형식이 아닙니다.");
+      }
     },
     [inputValue, updateAttributes]
   );
@@ -406,10 +432,10 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
             </div>
 
             {/* Embed iframe or link preview card */}
-            {embedInfo.embedUrl ? (
+            {embedInfo.embedUrl || (node.attrs.isIframe && node.attrs.url) ? (
               <div className="relative w-full overflow-hidden rounded-lg bg-custom-background-100" style={{ paddingBottom: "56.25%" }}>
                 <iframe
-                  src={embedInfo.embedUrl}
+                  src={embedInfo.embedUrl || node.attrs.url}
                   className="absolute inset-0 size-full border-0"
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

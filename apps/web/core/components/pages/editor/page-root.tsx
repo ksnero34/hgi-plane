@@ -144,6 +144,7 @@ export const PageRoot = observer((props: TPageRootProps) => {
           pageId={page.id ?? ""}
           restoreEnabled={isContentEditable}
           storeType={storeType}
+          extendedEditorProps={extendedEditorProps}
         />
         <PageEditorToolbarRoot
           handleOpenNavigationPane={handleOpenNavigationPane}

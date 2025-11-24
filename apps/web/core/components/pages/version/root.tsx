@@ -7,6 +7,8 @@ import { cn } from "@plane/utils";
 // hooks
 import { useQueryParams } from "@/hooks/use-query-params";
 // plane web imports
+// plane web imports
+import type { TExtendedEditorExtensionsConfig } from "@/plane-web/hooks/pages";
 import type { EPageStoreType } from "@/plane-web/hooks/store";
 // local imports
 import { PAGE_NAVIGATION_PANE_VERSION_QUERY_PARAM, PAGE_NAVIGATION_PANE_WIDTH } from "../navigation-pane";
@@ -20,10 +22,11 @@ type Props = {
   pageId: string;
   restoreEnabled: boolean;
   storeType: EPageStoreType;
+  extendedEditorProps: TExtendedEditorExtensionsConfig;
 };
 
 export const PageVersionsOverlay: React.FC<Props> = observer((props) => {
-  const { editorComponent, fetchVersionDetails, handleRestore, pageId, restoreEnabled, storeType } = props;
+  const { editorComponent, fetchVersionDetails, handleRestore, pageId, restoreEnabled, storeType, extendedEditorProps } = props;
   // navigation
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,6 +64,7 @@ export const PageVersionsOverlay: React.FC<Props> = observer((props) => {
         pageId={pageId}
         restoreEnabled={restoreEnabled}
         storeType={storeType}
+        extendedEditorProps={extendedEditorProps}
       />
     </div>
   );
