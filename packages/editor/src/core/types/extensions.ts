@@ -6,4 +6,5 @@ export type TExtensions =
   | "enter-key"
   | "image"
   | "file"
-  | "external-embed";
+  | "external-embed"
+  | "custom-file";

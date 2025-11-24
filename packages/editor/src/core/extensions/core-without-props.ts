@@ -56,6 +56,10 @@ export const CoreEditorExtensionsWithoutProps = [
   CustomTextAlignExtension,
   CustomCalloutExtensionConfig,
   CustomColorExtension,
+  CustomReadOnlyFileExtension({
+    getAssetSrc: async (path: string) => path,
+    getAssetDownloadSrc: async (path: string) => path,
+  }),
   ExternalEmbedExtensionConfig,
   ...CoreEditorAdditionalExtensionsWithoutProps,
 ];

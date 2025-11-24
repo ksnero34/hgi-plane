@@ -15,8 +15,8 @@ export type TDocumentEditorAdditionalExtensionsProps = Pick<
 };
 
 export type TDocumentEditorAdditionalExtensionsRegistry = {
-  isEnabled: (disabledExtensions: TExtensions[], flaggedExtensions: TExtensions[]) => boolean;
-  getExtension: (props: TDocumentEditorAdditionalExtensionsProps) => AnyExtension;
+  isEnabled: (disabledExtensions: TExtensions[], flaggedExtensions: TExtensions[], isEditable: boolean) => boolean;
+  getExtension: (props: TDocumentEditorAdditionalExtensionsProps) => AnyExtension | undefined;
 };
 
 const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
@@ -25,22 +25,18 @@ const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
     getExtension: ({ disabledExtensions, flaggedExtensions, extendedEditorProps }) =>
       SlashCommands({ disabledExtensions, flaggedExtensions, extendedEditorProps }),
   },
-  {
-    isEnabled: (disabledExtensions) => !disabledExtensions.includes("file"),
-    getExtension: ({ fileHandler, isEditable }) =>
-      CustomReadOnlyFileExtension({
-        getAssetSrc: fileHandler?.getAssetSrc || (async () => ""),
-        getAssetDownloadSrc: fileHandler?.getAssetDownloadSrc || (async () => "")
-      }),
-  },
+
+
+
 ];
 
 export const DocumentEditorAdditionalExtensions = (props: TDocumentEditorAdditionalExtensionsProps) => {
   const { disabledExtensions, extendedEditorProps, flaggedExtensions } = props;
 
   const documentExtensions = extensionRegistry
-    .filter((config) => config.isEnabled(disabledExtensions, flaggedExtensions))
-    .map((config) => config.getExtension(props));
+    .filter((config) => config.isEnabled(disabledExtensions, flaggedExtensions, props.isEditable))
+    .map((config) => config.getExtension(props))
+    .filter((extension): extension is AnyExtension => extension !== undefined);
 
   const issueEmbedConfig = extendedEditorProps?.embeds?.issue;
 

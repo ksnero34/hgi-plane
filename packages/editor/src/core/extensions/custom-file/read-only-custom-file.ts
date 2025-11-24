@@ -1,4 +1,4 @@
-import { mergeAttributes, Node } from "@tiptap/core";
+import { mergeAttributes, Node, Extension } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 // components
 import { FileNode } from "./components/file-node";
@@ -8,7 +8,7 @@ import { TFileHandler } from "@/types";
 export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetSrc" | "getAssetDownloadSrc">) => {
   const { getAssetSrc, getAssetDownloadSrc } = props;
 
-  return Node.create({
+  const FileComponent = Node.create({
     name: "fileComponent",
     selectable: false,
     group: "block",
@@ -19,24 +19,34 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
       return {
         id: {
           default: null,
+          parseHTML: (element) => element.getAttribute("id") || element.getAttribute("fileId"),
         },
         fileId: {
           default: null,
+          parseHTML: (element) => element.getAttribute("fileId") || element.getAttribute("id"),
         },
         fileName: {
           default: null,
+          parseHTML: (element) => element.getAttribute("fileName") || element.getAttribute("filename"),
         },
         fileSize: {
           default: null,
+          parseHTML: (element) => {
+            const size = element.getAttribute("fileSize") || element.getAttribute("filesize");
+            return size ? parseInt(size, 10) : null;
+          },
         },
         fileType: {
           default: null,
+          parseHTML: (element) => element.getAttribute("fileType") || element.getAttribute("filetype"),
         },
         uploadStatus: {
           default: "success",
+          parseHTML: (element) => element.getAttribute("uploadStatus") || element.getAttribute("uploadstatus"),
         },
         errorMessage: {
           default: null,
+          parseHTML: (element) => element.getAttribute("errorMessage") || element.getAttribute("errormessage"),
         },
       };
     },
@@ -46,18 +56,33 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
         {
           tag: "file-component",
         },
+        {
+          tag: "div[data-type='file-component']",
+        },
       ];
     },
 
     renderHTML({ HTMLAttributes }) {
-      return ["file-component", mergeAttributes(HTMLAttributes)];
+      return ["file-component", mergeAttributes(HTMLAttributes, { "data-type": "file-component" })];
+    },
+
+    addNodeView() {
+      return ReactNodeViewRenderer(FileNode as any);
+    },
+  });
+
+  return Extension.create({
+    name: "customFile",
+
+    addExtensions() {
+      return [FileComponent];
     },
 
     addStorage() {
       return {
         fileMap: new Map(),
         markdown: {
-          serialize() {},
+          serialize() { },
         },
         fileHandler: {
           getAssetSrc: async (path: string) => {
@@ -77,15 +102,11 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
             }
           },
           upload: async () => "",
-          delete: async () => {},
-          restore: async () => {},
+          delete: async () => { },
+          restore: async () => { },
           validateFile: async () => true,
-        }
+        },
       };
-    },
-
-    addNodeView() {
-      return ReactNodeViewRenderer(FileNode as any);
     },
   });
 }; 

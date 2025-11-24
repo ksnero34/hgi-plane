@@ -1,11 +1,9 @@
-import { Node, Editor } from "@tiptap/core";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+import { Node, Editor, Extension, mergeAttributes } from "@tiptap/core";
+import { ReactNodeViewRenderer, NodeViewProps } from "@tiptap/react";
 import { v4 as uuid } from "uuid";
-import { NodeViewProps } from "@tiptap/react";
 import { FileNode } from "./components/file-node";
 import { TrackFileDeletionPlugin } from "./plugins/track-file-deletion";
 import { TrackFileRestorationPlugin } from "./plugins/track-file-restoration";
-import { Extension } from "@tiptap/core";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { insertEmptyParagraphAtNodeBoundaries } from "@/helpers/insert-empty-paragraph-at-node-boundary";
@@ -86,21 +84,30 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
       return {
         id: {
           default: null,
+          parseHTML: (element) => element.getAttribute("id") || element.getAttribute("fileId"),
         },
         fileName: {
           default: null,
+          parseHTML: (element) => element.getAttribute("fileName") || element.getAttribute("filename"),
         },
         fileSize: {
           default: null,
+          parseHTML: (element) => {
+            const size = element.getAttribute("fileSize") || element.getAttribute("filesize");
+            return size ? parseInt(size, 10) : null;
+          },
         },
         fileType: {
           default: null,
+          parseHTML: (element) => element.getAttribute("fileType") || element.getAttribute("filetype"),
         },
         uploadStatus: {
           default: "uploading",
+          parseHTML: (element) => element.getAttribute("uploadStatus") || element.getAttribute("uploadstatus"),
         },
         errorMessage: {
           default: null,
+          parseHTML: (element) => element.getAttribute("errorMessage") || element.getAttribute("errormessage"),
         },
       };
     },
@@ -110,11 +117,14 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
         {
           tag: "file-component",
         },
+        {
+          tag: "div[data-type='file-component']",
+        },
       ];
     },
 
     renderHTML({ HTMLAttributes }) {
-      return ["file-component", { ...HTMLAttributes }];
+      return ["file-component", mergeAttributes(HTMLAttributes, { "data-type": "file-component" })];
     },
 
     addKeyboardShortcuts() {
@@ -124,7 +134,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
         "Backspace": ({ editor }) => {
           const { selection } = editor.state;
           const { empty, anchor } = selection;
-          
+
           if (!empty) {
             const node = editor.state.doc.nodeAt(anchor);
             if (node?.type.name === this.name) {
@@ -141,7 +151,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
         "Delete": ({ editor }) => {
           const { selection } = editor.state;
           const { empty, anchor } = selection;
-          
+
           if (!empty) {
             const node = editor.state.doc.nodeAt(anchor);
             if (node?.type.name === this.name) {
@@ -175,7 +185,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
         fileMap: new Map<string, FileEntity>(),
         uploadInProgress: false,
         markdown: {
-          serialize: () => {},
+          serialize: () => { },
         },
         fileHandler,
         workspaceSlug: workspaceSlug || (fileHandler as any).workspaceSlug || "",
@@ -187,87 +197,87 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
       return {
         insertFileComponent:
           (props: InsertFileComponentProps) =>
-          ({ commands }) => {
-            const id = uuid();
-            
-            this.editor.storage.customFile.fileMap.set(id, {
-              event: props.event,
-              file: props.file,
-              hasOpenedFileInputOnce: false,
-            });
+            ({ commands }) => {
+              const id = uuid();
 
-            const attributes = {
-              id,
-              uploadStatus: "uploading",
-            };
+              this.editor.storage.customFile.fileMap.set(id, {
+                event: props.event,
+                file: props.file,
+                hasOpenedFileInputOnce: false,
+              });
 
-            if (props.pos) {
-              return commands.insertContentAt(props.pos, {
+              const attributes = {
+                id,
+                uploadStatus: "uploading",
+              };
+
+              if (props.pos) {
+                return commands.insertContentAt(props.pos, {
+                  type: "fileComponent",
+                  attrs: attributes,
+                });
+              }
+
+              return commands.insertContent({
                 type: "fileComponent",
                 attrs: attributes,
               });
-            }
-
-            return commands.insertContent({
-              type: "fileComponent",
-              attrs: attributes,
-            });
-          },
+            },
         uploadFile:
           (file: File) =>
-          async () => {
-            try {
-              const url = await fileHandler.upload(file);
-              return url;
-            } catch (error) {
-              console.error("Error uploading file:", error);
-              throw error;
-            }
-          },
+            async () => {
+              try {
+                const url = await fileHandler.upload(file);
+                return url;
+              } catch (error) {
+                console.error("Error uploading file:", error);
+                throw error;
+              }
+            },
         deleteFile:
           (fileId: string) =>
-          async () => {
-            try {
-              let fileNode: ProseMirrorNode | null = null;
-              this.editor.state.doc.descendants((node) => {
-                if (node.type.name === "fileComponent" && node.attrs.id === fileId) {
-                  fileNode = node;
-                  return false;
+            async () => {
+              try {
+                let fileNode: ProseMirrorNode | null = null;
+                this.editor.state.doc.descendants((node) => {
+                  if (node.type.name === "fileComponent" && node.attrs.id === fileId) {
+                    fileNode = node;
+                    return false;
+                  }
+                  return true;
+                });
+
+                if (!fileNode) {
+                  throw new Error("파일을 찾을 수 없습니다.");
                 }
-                return true;
-              });
 
-              if (!fileNode) {
-                throw new Error("파일을 찾을 수 없습니다.");
+                await fileHandler.delete(fileId);
+              } catch (error) {
+                console.error("Error deleting file:", error);
+                throw error;
               }
-
-              await fileHandler.delete(fileId);
-            } catch (error) {
-              console.error("Error deleting file:", error);
-              throw error;
-            }
-          },
+            },
         restoreFile:
           (fileId: string) =>
-          async () => {
-            try {
-              await fileHandler.restore(fileId);
-            } catch (error) {
-              console.error("Error restoring file:", error);
-              throw error;
-            }
-          },
+            async () => {
+              try {
+                await fileHandler.restore(fileId);
+              } catch (error) {
+                console.error("Error restoring file:", error);
+                throw error;
+              }
+            },
         getFileUrl:
           (path: string) =>
-          () => {
-            if (!fileHandler.getAssetSrc) {
-              return Promise.resolve(path);
-            }
-            return fileHandler.getAssetSrc(path).catch((error) => {
-              console.error("Error getting file URL:", error);
-              return path;
-            });
-          },
+            () => {
+              if (!fileHandler.getAssetSrc) {
+                return Promise.resolve(path);
+              }
+              return fileHandler.getAssetSrc(path).catch((error) => {
+                console.error("Error getting file URL:", error);
+                return path;
+              });
+            },
       };
     },
 
@@ -279,7 +289,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
 
           const { state, dispatch } = this.editor.view;
           const node = state.doc.nodeAt(pos);
-          
+
           if (node) {
             dispatch(
               state.tr.setNodeMarkup(pos, undefined, {
@@ -295,7 +305,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
           console.error("Error uploading file:", error);
           const { state, dispatch } = this.editor.view;
           const node = state.doc.nodeAt(pos);
-          
+
           if (node) {
             dispatch(
               state.tr.setNodeMarkup(pos, undefined, {

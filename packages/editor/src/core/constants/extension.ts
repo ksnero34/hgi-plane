@@ -8,6 +8,7 @@ export enum CORE_EXTENSIONS {
   CODE_INLINE = "code",
   CUSTOM_COLOR = "customColor",
   CUSTOM_IMAGE = "imageComponent",
+  CUSTOM_FILE = "file-component",
   CUSTOM_LINK = "link",
   DOCUMENT = "doc",
   DROP_CURSOR = "dropCursor",

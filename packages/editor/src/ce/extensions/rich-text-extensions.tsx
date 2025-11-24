@@ -8,7 +8,9 @@ import { IEditorProps, TExtensions } from "@/types";
 export type TRichTextEditorAdditionalExtensionsProps = Pick<
   IEditorProps,
   "disabledExtensions" | "flaggedExtensions" | "fileHandler" | "extendedEditorProps"
->;
+> & {
+  isEditable?: boolean;
+};
 
 /**
  * Registry entry configuration for extensions
@@ -29,14 +31,8 @@ const extensionRegistry: TRichTextEditorAdditionalExtensionsRegistry[] = [
         flaggedExtensions,
       }),
   },
-  {
-    isEnabled: (disabledExtensions) => !disabledExtensions.includes("file"),
-    getExtension: ({ fileHandler }) =>
-      CustomReadOnlyFileExtension({
-        getAssetSrc: fileHandler?.getAssetSrc || (async () => ""),
-        getAssetDownloadSrc: fileHandler?.getAssetDownloadSrc || (async () => ""),
-      }),
-  },
+
+
 ];
 
 export const RichTextEditorAdditionalExtensions = (props: TRichTextEditorAdditionalExtensionsProps) => {

@@ -32,6 +32,7 @@ const RichTextEditor: React.FC<IRichTextEditorProps> = (props) => {
         fileHandler,
         flaggedExtensions,
         extendedEditorProps,
+        isEditable: props.editable,
       }),
     ];
 

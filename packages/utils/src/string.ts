@@ -189,7 +189,9 @@ export const isJSONContentEmpty = (content: JSONContent | undefined): boolean =>
       content.type !== "mention-component" &&
       content.type !== "image-component" &&
       content.type !== "embed-component" &&
-      content.type !== "issue-embed-component"
+      content.type !== "issue-embed-component" &&
+      content.type !== "fileComponent" &&
+      content.type !== "file-component"
     );
   }
 

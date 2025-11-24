@@ -11,7 +11,7 @@ services:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:1.1.10
+    image: harbor.hwgeneralins.com/plane/web:1.1.11
 
   admin:
     container_name: admin
@@ -118,7 +118,7 @@ services:
     networks:
       - dev_env
     # command: ls -al live
-    image: harbor.hwgeneralins.com/plane/live:1.1.1
+    image: harbor.hwgeneralins.com/plane/live:1.1.11
     env_file:
       - ./apps/live/.env
     environment:
