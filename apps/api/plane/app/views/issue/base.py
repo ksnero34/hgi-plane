@@ -46,11 +46,19 @@ from plane.app.serializers import (
     IssueDetailSerializer,
     IssueUserPropertySerializer,
     IssueSerializer,
+    IssueCreateSerializer,
+    IssueDetailSerializer,
+    IssueUserPropertySerializer,
+    IssueSerializer,
     IssueListDetailSerializer,
+    IssueActivitySerializer,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.bgtasks.notification_task import workflow_approval_request_notifications
 from plane.bgtasks.import_task import issue_import_task
 from plane.db.models import (
+    WorkflowApprovalRequest,
+    WorkflowTransition,
     CycleIssue,
     CustomField,
     CustomFieldValue,
@@ -2775,10 +2783,6 @@ class BulkOperationsEndpoint(BaseAPIView):
                     
                     # Consolidated ASYNC Notification (IF any activity was created for this issue)
                     if activity_created_for_this_issue:
-                        # IssueActivitySerializer 임포트
-                        from plane.app.serializers.issue import IssueActivitySerializer
-                        from django.core.serializers.json import DjangoJSONEncoder
-
                         serialized_activities_for_notification = json.dumps(
                             IssueActivitySerializer(created_activities_for_notification, many=True).data,
                             cls=DjangoJSONEncoder
@@ -2817,6 +2821,17 @@ class BulkOperationsEndpoint(BaseAPIView):
                                 from_state_name = from_state.name if from_state else "Unknown"
                                 to_state_name = to_state.name if to_state else "Unknown"
                                 
+                                # Check if there's already a pending request
+                                existing_request = WorkflowApprovalRequest.objects.filter(
+                                    issue=issue,
+                                    transition=transition,
+                                    requester=request.user,
+                                    status="pending"
+                                ).exists()
+
+                                if existing_request:
+                                    continue
+
                                 # Create actual workflow approval request
                                 approval_request = WorkflowApprovalRequest.objects.create(
                                     issue=issue,
@@ -2831,6 +2846,16 @@ class BulkOperationsEndpoint(BaseAPIView):
                                     status="pending",
                                     created_by=request.user,
                                     updated_by=request.user
+                                )
+                                
+                                # Send notifications to reviewers after transaction commit
+                                # Use default argument to bind approval_request.id immediately to avoid closure loop variable issue
+                                transaction.on_commit(
+                                    lambda approval_request_id=str(approval_request.id): workflow_approval_request_notifications.delay(
+                                        approval_request_id=approval_request_id,
+                                        project_id=str(project_id),
+                                        actor_id=str(request.user.id)
+                                    )
                                 )
                                 
                                 # Create activity log for the approval request

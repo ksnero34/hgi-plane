@@ -939,55 +939,78 @@ class WorkflowValidationViewSet(BaseViewSet):
                     activity_comment += f" - {approval_comment}"
                 
                 # 워크플로우 승인을 별도 필드로 표시하기 위한 추가 데이터 생성
-                workflow_approval_data = {
-                    "approver_id": str(request.user.id),
-                    "approver_name": request.user.display_name,
-                    "approval_comment": approval_comment,
-                    "is_self_approval": request.user.id == approval_request.requester.id,
-                    "approval_request_id": str(approval_request.id)
-                }
-                
-                # JSON 데이터를 문자열로 직렬화하여 저장
-                workflow_approval_json = json.dumps(workflow_approval_data, cls=DjangoJSONEncoder)
-                
-                IssueActivity.objects.create(
-                    issue=issue,
-                    actor=approval_request.requester,  # Show as requester's action
-                    verb="updated",
-                    old_value=from_state.name,
-                    new_value=f"{to_state.name}|{workflow_approval_json}",  # 상태명과 JSON 데이터를 구분자로 연결
-                    field="state",
-                    project_id=project_id,
-                    workspace_id=issue.workspace_id,
-                    comment=activity_comment,
-                    old_identifier=from_state.id,
-                    new_identifier=to_state.id,
-                    epoch=current_epoch,
-                )
+                try:
+                    workflow_approval_data = {
+                        "approver_id": str(request.user.id),
+                        "approver_name": request.user.display_name,
+                        "approval_comment": approval_comment,
+                        "is_self_approval": request.user.id == approval_request.requester.id,
+                        "approval_request_id": str(approval_request.id)
+                    }
+                    
+                    # JSON 데이터를 문자열로 직렬화하여 저장
+                    workflow_approval_json = json.dumps(workflow_approval_data, cls=DjangoJSONEncoder)
+                    
+                    IssueActivity.objects.create(
+                        issue=issue,
+                        actor=approval_request.requester,  # Show as requester's action
+                        verb="updated",
+                        old_value=from_state.name,
+                        new_value=f"{to_state.name}|{workflow_approval_json}",  # 상태명과 JSON 데이터를 구분자로 연결
+                        field="state",
+                        project_id=project_id,
+                        workspace_id=issue.workspace_id,
+                        comment=activity_comment,
+                        old_identifier=from_state.id,
+                        new_identifier=to_state.id,
+                        epoch=current_epoch,
+                    )
+                except Exception as e:
+                    print(f"Error creating state change activity log: {e}")
+                    # Fallback to simple state change log if JSON fails
+                    IssueActivity.objects.create(
+                        issue=issue,
+                        actor=approval_request.requester,
+                        verb="updated",
+                        old_value=from_state.name,
+                        new_value=to_state.name,
+                        field="state",
+                        project_id=project_id,
+                        workspace_id=issue.workspace_id,
+                        comment=activity_comment,
+                        old_identifier=from_state.id,
+                        new_identifier=to_state.id,
+                        epoch=current_epoch,
+                    )
                 
                 # Create separate activity for approval with approver information
-                if request.user.id == approval_request.requester.id:
-                    approval_activity_comment = f"self-approved the state transition"
-                else:
-                    approval_activity_comment = f"approved the state transition"
-                
-                if approval_comment:
-                    approval_activity_comment += f": {approval_comment}"
-                
-                IssueActivity.objects.create(
-                    issue=issue,
-                    actor=request.user,  # Show as approver's action
-                    verb="approved",
-                    old_value=from_state.name,
-                    new_value=to_state.name,
-                    field="workflow_approval",
-                    project_id=project_id,
-                    workspace_id=issue.workspace_id,
-                    comment=approval_activity_comment,
-                    old_identifier=from_state.id,
-                    new_identifier=to_state.id,
-                    epoch=current_epoch,
-                )
+                try:
+                    if request.user.id == approval_request.requester.id:
+                        approval_activity_comment = f"self-approved the state transition"
+                    else:
+                        approval_activity_comment = f"approved the state transition"
+                    
+                    if approval_comment:
+                        approval_activity_comment += f": {approval_comment}"
+                    
+                    IssueActivity.objects.create(
+                        issue=issue,
+                        actor=request.user,  # Show as approver's action
+                        verb="approved",
+                        old_value=from_state.name,
+                        new_value=to_state.name,
+                        field="workflow_approval",
+                        project_id=project_id,
+                        workspace_id=issue.workspace_id,
+                        comment=approval_activity_comment,
+                        old_identifier=from_state.id,
+                        new_identifier=to_state.id,
+                        epoch=current_epoch,
+                    )
+                except Exception as e:
+                    print(f"Error creating approval activity log: {e}")
+                    # Don't fail the transaction just because of this log
+                    pass
 
                 # Log the transition
                 log_comment = f"Approved by {request.user.display_name}"
@@ -1018,6 +1041,11 @@ class WorkflowValidationViewSet(BaseViewSet):
                     notification_comment = f"updated the state to (self-approved by {request.user.display_name})"
                 
                 # Create activity data that matches expected format
+                # Ensure we use the same new_value as the DB record (including JSON if available)
+                activity_new_value = to_state.name
+                if 'workflow_approval_json' in locals() and workflow_approval_json:
+                    activity_new_value = f"{to_state.name}|{workflow_approval_json}"
+
                 activity_data = [{
                     "id": str(uuid.uuid4()),
                     "issue": str(issue.id),
@@ -1025,7 +1053,7 @@ class WorkflowValidationViewSet(BaseViewSet):
                     "verb": "updated",
                     "field": "state",
                     "old_value": from_state.name,
-                    "new_value": to_state.name,
+                    "new_value": activity_new_value,
                     "old_identifier": str(from_state.id),
                     "new_identifier": str(to_state.id),
                     "comment": notification_comment,
