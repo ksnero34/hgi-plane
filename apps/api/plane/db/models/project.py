@@ -27,6 +27,8 @@ ROLE_CHOICES = (
 class ROLE(Enum):
     ADMIN = 20
     MEMBER = 15
+    VIEWER = 10
+    RESTRICTED = 8
     GUEST = 5
 
 
