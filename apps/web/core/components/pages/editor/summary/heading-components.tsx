@@ -27,3 +27,21 @@ export const OutlineHeading3 = ({ marking, onClick }: THeadingComponentProps) =>
     {marking.text}
   </button>
 );
+
+export const OutlineHeading4 = ({ marking, onClick }: THeadingComponentProps) => (
+  <button type="button" onClick={onClick} className={cn(COMMON_CLASSNAME, "text-xs pl-6")}>
+    {marking.text}
+  </button>
+);
+
+export const OutlineHeading5 = ({ marking, onClick }: THeadingComponentProps) => (
+  <button type="button" onClick={onClick} className={cn(COMMON_CLASSNAME, "text-xs pl-8")}>
+    {marking.text}
+  </button>
+);
+
+export const OutlineHeading6 = ({ marking, onClick }: THeadingComponentProps) => (
+  <button type="button" onClick={onClick} className={cn(COMMON_CLASSNAME, "text-xs pl-10")}>
+    {marking.text}
+  </button>
+);

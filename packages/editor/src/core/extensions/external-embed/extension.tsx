@@ -168,6 +168,7 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
   const [error, setError] = useState<string | null>(null);
   const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [forceIframe, setForceIframe] = useState<boolean>(node.attrs.isIframe ?? false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -178,10 +179,21 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
     }
   }, [node.attrs.url, isEditable]);
 
+  useEffect(() => {
+    if (!isEditing) {
+      setForceIframe(!!node.attrs.isIframe);
+    }
+  }, [node.attrs.isIframe, isEditing]);
+
   // Fetch link preview for non-embeddable URLs
   useEffect(() => {
     const url = node.attrs.url;
     if (!url) return;
+
+    if (node.attrs.isIframe) {
+      setLinkPreview(null);
+      return;
+    }
 
     const embedInfo = getEmbedInfo(url);
     if (embedInfo.isEmbeddable) {
@@ -212,7 +224,7 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
     };
 
     fetchLinkPreview();
-  }, [node.attrs.url, node.attrs.title, node.attrs.description, node.attrs.thumbnail]);
+  }, [node.attrs.description, node.attrs.isIframe, node.attrs.thumbnail, node.attrs.title, node.attrs.url]);
 
   useEffect(() => {
     if (isEditing) {
@@ -242,6 +254,7 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
               url: src,
               isIframe: true,
             });
+            setForceIframe(true);
             setError(null);
             setIsEditing(false);
             return;
@@ -260,7 +273,7 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
         new URL(normalizedUrl);
         updateAttributes?.({
           url: normalizedUrl,
-          isIframe: false,
+          isIframe: forceIframe,
         });
         setError(null);
         setIsEditing(false);
@@ -268,7 +281,7 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
         setError("올바른 URL 형식이 아닙니다.");
       }
     },
-    [inputValue, updateAttributes]
+    [forceIframe, inputValue, updateAttributes]
   );
 
   const handleEditToggle = useCallback(() => {
@@ -291,7 +304,17 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
 
   const displayUrl = useMemo(() => getDisplayUrl(node.attrs.url ?? ""), [node.attrs.url]);
 
-  const embedInfo = useMemo(() => getEmbedInfo(node.attrs.url ?? ""), [node.attrs.url]);
+  const embedInfo = useMemo(() => {
+    if (node.attrs.isIframe) {
+      return {
+        embedUrl: node.attrs.url ?? "",
+        provider: node.attrs.provider ?? null,
+        isEmbeddable: true,
+      };
+    }
+
+    return getEmbedInfo(node.attrs.url ?? "");
+  }, [node.attrs.isIframe, node.attrs.provider, node.attrs.url]);
 
   const openUrl = useCallback(() => {
     if (!node.attrs.url) return;
@@ -373,6 +396,28 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
                   저장
                 </button>
               </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-xs text-custom-text-300">
+              <label
+                className="inline-flex items-center gap-2"
+                onClick={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <input
+                  type="checkbox"
+                  className="size-3.5"
+                  checked={forceIframe}
+                  onChange={(event) => {
+                    event.stopPropagation();
+                    setForceIframe(event.target.checked);
+                  }}
+                  onClick={(event) => event.stopPropagation()}
+                />
+                iframe으로 삽입
+              </label>
+              <span className="text-custom-text-400">
+                지원되지 않는 링크도 iframe으로 직접 표시할 수 있어요.
+              </span>
             </div>
             {error && <p className="text-xs font-medium text-red-500">{error}</p>}
           </form>

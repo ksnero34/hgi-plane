@@ -11,7 +11,7 @@ services:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:1.1.11
+    image: harbor.hwgeneralins.com/plane/web:1.1.15
 
   admin:
     container_name: admin
@@ -58,11 +58,13 @@ services:
       - ./apps/api/.env
     environment:
       - DISABLE_TELEMETRY=true
+    extra_hosts:
+      - 'auth.hwgeneralins.com:172.17.0.1'
     depends_on:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.1.12
+    image: harbor.hwgeneralins.com/plane/api:1.1.13
 
   worker:
     container_name: bgworker
@@ -77,7 +79,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.1.12
+    image: harbor.hwgeneralins.com/plane/api:1.1.13
 
   beat-worker:
     container_name: beatworker
@@ -92,7 +94,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.1.12
+    image: harbor.hwgeneralins.com/plane/api:1.1.13
 
   migrator:
     container_name: plane-migrator
@@ -105,7 +107,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: harbor.hwgeneralins.com/plane/api:1.1.12
+    image: harbor.hwgeneralins.com/plane/api:1.1.13
 
   live:
     container_name: plane-live

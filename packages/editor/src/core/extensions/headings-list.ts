@@ -32,17 +32,28 @@ export const HeadingListExtension = Extension.create<unknown, HeadingExtensionSt
         let h1Sequence = 0;
         let h2Sequence = 0;
         let h3Sequence = 0;
+        let h4Sequence = 0;
+        let h5Sequence = 0;
+        let h6Sequence = 0;
 
         newState.doc.descendants((node) => {
           if (node.type.name === "heading") {
             const level = node.attrs.level;
             const text = node.textContent;
 
+            let sequence = 0;
+            if (level === 1) sequence = ++h1Sequence;
+            else if (level === 2) sequence = ++h2Sequence;
+            else if (level === 3) sequence = ++h3Sequence;
+            else if (level === 4) sequence = ++h4Sequence;
+            else if (level === 5) sequence = ++h5Sequence;
+            else if (level === 6) sequence = ++h6Sequence;
+
             headings.push({
               type: "heading",
               level: level,
               text: text,
-              sequence: level === 1 ? ++h1Sequence : level === 2 ? ++h2Sequence : ++h3Sequence,
+              sequence: sequence,
             });
           }
         });

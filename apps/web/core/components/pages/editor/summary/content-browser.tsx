@@ -4,7 +4,14 @@ import type { EditorRefApi, IMarking } from "@plane/editor";
 import { cn } from "@plane/utils";
 // components
 import type { THeadingComponentProps } from "./heading-components";
-import { OutlineHeading1, OutlineHeading2, OutlineHeading3 } from "./heading-components";
+import {
+  OutlineHeading1,
+  OutlineHeading2,
+  OutlineHeading3,
+  OutlineHeading4,
+  OutlineHeading5,
+  OutlineHeading6,
+} from "./heading-components";
 
 type Props = {
   className?: string;
@@ -42,6 +49,9 @@ export const PageContentBrowser: React.FC<Props> = (props) => {
     1: OutlineHeading1,
     2: OutlineHeading2,
     3: OutlineHeading3,
+    4: OutlineHeading4,
+    5: OutlineHeading5,
+    6: OutlineHeading6,
   };
 
   if (headings.length === 0) return emptyState ?? null;
@@ -65,7 +75,14 @@ export const PageContentBrowser: React.FC<Props> = (props) => {
               key={`${marking.level}-${marking.sequence}`}
               className="flex-shrink-0 h-0.5 bg-custom-border-400 self-end rounded-sm"
               style={{
-                width: marking.level === 1 ? "20px" : marking.level === 2 ? "18px" : "14px",
+                width:
+                  marking.level === 1
+                    ? "20px"
+                    : marking.level === 2
+                      ? "18px"
+                      : marking.level === 3
+                        ? "14px"
+                        : "10px",
               }}
             />
           );

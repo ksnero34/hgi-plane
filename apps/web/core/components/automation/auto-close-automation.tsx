@@ -47,7 +47,7 @@ export const AutoCloseAutomation: React.FC<Props> = observer((props) => {
   // const stateGroups = projectStateStore.groupedProjectStates ?? undefined;
 
   const options = projectStates
-    ?.filter((state) => state.group === "cancelled")
+    ?.filter((state) => state.group === "cancelled" || state.group === "completed")
     .map((state) => ({
       value: state.id,
       query: state.name,

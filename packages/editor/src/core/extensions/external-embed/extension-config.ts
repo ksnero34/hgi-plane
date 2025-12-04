@@ -99,10 +99,7 @@ export const ExternalEmbedExtensionConfig = Node.create({
         tag: "embed-component",
       },
       {
-        tag: "div",
-        attrs: {
-          "data-node": "embed-component",
-        },
+        tag: 'div[data-node="embed-component"]',
       },
     ];
   },
