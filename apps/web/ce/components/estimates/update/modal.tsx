@@ -1,6 +1,3 @@
-"use client";
-
-import type { FC } from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 import { ChevronLeft } from "lucide-react";
@@ -8,7 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { Button, ModalCore, EModalPosition, EModalWidth } from "@plane/ui";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // types
-import { TEstimatePointsObject, TEstimateTypeError, TEstimateSystemKeys, IEstimateFormData } from "@plane/types";
+import type { TEstimatePointsObject, TEstimateTypeError, TEstimateSystemKeys, IEstimateFormData } from "@plane/types";
 // hooks
 import { useTranslation } from "@plane/i18n";
 import { convertMinutesToHoursMinutesString, convertMinutesToHoursAndMinutes } from "@plane/utils";
@@ -30,7 +27,7 @@ type TUpdateEstimateModal = {
   handleClose: () => void;
 };
 
-export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) => {
+export const UpdateEstimateModal = observer((props: TUpdateEstimateModal) => {
   // props
   const { workspaceSlug, projectId, estimateId, isOpen, handleClose } = props;
   // hooks
@@ -100,10 +97,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     Object.keys(estimatePointError).forEach((key) => {
       const currentKey = parseInt(key);
       // 메시지가 있거나 값이 빈 경우에만 에러로 처리
-      if (
-        estimatePointError[currentKey]?.message ||
-        estimatePointError[currentKey]?.newValue === ""
-      ) {
+      if (estimatePointError[currentKey]?.message || estimatePointError[currentKey]?.newValue === "") {
         hasError = true;
       }
     });
@@ -130,18 +124,18 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     }
 
     // 에러 처리
-    const pointToUpdate = estimatePoints?.find(p => p.key === key);
+    const pointToUpdate = estimatePoints?.find((p) => p.key === key);
     if (pointToUpdate) {
       handleEstimatePointError(key, pointToUpdate.value, value, errorMessage);
     }
 
     // 값 업데이트
     const newPoints = estimatePoints ? [...estimatePoints] : [];
-    const pointIndex = newPoints.findIndex(p => p.key === key);
+    const pointIndex = newPoints.findIndex((p) => p.key === key);
     if (pointIndex !== -1) {
       newPoints[pointIndex] = {
         ...newPoints[pointIndex],
-        value: value
+        value: value,
       };
       setEstimatePoints(newPoints);
     }
@@ -155,7 +149,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     }
 
     // 총 분으로 변환
-    const totalMinutes = (hours * 60) + minutes;
+    const totalMinutes = hours * 60 + minutes;
 
     // 에러 메시지 설정
     let errorMessage;
@@ -164,17 +158,17 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     }
 
     // 에러 처리 및 값 업데이트
-    const pointToUpdate = estimatePoints?.find(p => p.key === key);
+    const pointToUpdate = estimatePoints?.find((p) => p.key === key);
     if (pointToUpdate) {
       handleEstimatePointError(key, pointToUpdate.value, String(totalMinutes), errorMessage);
 
       // 값 업데이트
       const newPoints = estimatePoints ? [...estimatePoints] : [];
-      const pointIndex = newPoints.findIndex(p => p.key === key);
+      const pointIndex = newPoints.findIndex((p) => p.key === key);
       if (pointIndex !== -1) {
         newPoints[pointIndex] = {
           ...newPoints[pointIndex],
-          value: String(totalMinutes)
+          value: String(totalMinutes),
         };
         setEstimatePoints(newPoints);
       }
@@ -270,18 +264,18 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
         // 템플릿 모드 - 서비스를 직접 호출
         await estimateService.updateEstimate(workspaceSlug, projectId, estimateId, {
           estimate: {
-            type: templateKey
+            type: templateKey,
           },
-          estimate_points: [] // 템플릿 키를 전달할 때는 빈 배열로 전송하고 서버에서 처리
+          estimate_points: [], // 템플릿 키를 전달할 때는 빈 배열로 전송하고 서버에서 처리
         });
       } else if (estimatePoints) {
         // 사용자 지정 모드 - 서비스를 직접 호출
         // 백엔드에서는 estimate_points 필드가 필요하므로 estimate와 함께 전달
         const payload: Partial<IEstimateFormData> = {
           estimate: {
-            type: estimateSystem
+            type: estimateSystem,
           },
-          estimate_points: estimatePoints
+          estimate_points: estimatePoints,
         };
 
         await estimateService.updateEstimate(workspaceSlug, projectId, estimateId, payload);
@@ -315,7 +309,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
   const renderEstimateStepsCount = useMemo(() => (editMode ? "2" : "1"), [editMode]);
 
   // 시간 입력용 컴포넌트
-  const TimeInput = ({ value, onChange }: { value: string, onChange: (hours: number, minutes: number) => void }) => {
+  const TimeInput = ({ value, onChange }: { value: string; onChange: (hours: number, minutes: number) => void }) => {
     // 문자열 값을 숫자로 변환
     const totalMinutes = parseInt(value) || 0;
 
@@ -338,11 +332,11 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
     }, [totalMinutes]);
 
     // 부모에게 변경 알림 (마지막 포커스된 입력필드 정보 포함)
-    const notifyParent = (h: number, m: number, lastFocused: 'hours' | 'minutes') => {
+    const notifyParent = (h: number, m: number, lastFocused: "hours" | "minutes") => {
       // 둘 다 0인 경우 최소 1분 보장
       if (h === 0 && m === 0) {
         m = 1;
-        if (lastFocused === 'minutes') setMinutesValue('1');
+        if (lastFocused === "minutes") setMinutesValue("1");
       }
 
       // 상위 컴포넌트에 값만 알리고 리렌더링 최소화
@@ -350,9 +344,9 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
 
       // 이전에 포커스된 필드에 포커스 유지
       setTimeout(() => {
-        if (lastFocused === 'hours' && hoursInputRef.current) {
+        if (lastFocused === "hours" && hoursInputRef.current) {
           hoursInputRef.current.focus();
-        } else if (lastFocused === 'minutes' && minutesInputRef.current) {
+        } else if (lastFocused === "minutes" && minutesInputRef.current) {
           minutesInputRef.current.focus();
         }
       }, 0);
@@ -371,14 +365,14 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
             const newHours = newValue === "" ? 0 : parseInt(newValue);
             if (!isNaN(newHours) && newHours >= 0) {
               const minutesNum = minutesValue === "" ? 0 : parseInt(minutesValue);
-              notifyParent(newHours, minutesNum, 'hours');
+              notifyParent(newHours, minutesNum, "hours");
             }
           }}
           onKeyDown={(e) => {
             // 백스페이스 처리
-            if (e.key === 'Backspace' && hoursValue === '0') {
+            if (e.key === "Backspace" && hoursValue === "0") {
               e.preventDefault();
-              setHoursValue('0');
+              setHoursValue("0");
               setTimeout(() => {
                 if (hoursInputRef.current) hoursInputRef.current.focus();
               }, 0);
@@ -402,14 +396,14 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
             const newMinutes = newValue === "" ? 0 : parseInt(newValue);
             if (!isNaN(newMinutes) && newMinutes >= 0 && newMinutes < 60) {
               const hoursNum = hoursValue === "" ? 0 : parseInt(hoursValue);
-              notifyParent(hoursNum, newMinutes, 'minutes');
+              notifyParent(hoursNum, newMinutes, "minutes");
             }
           }}
           onKeyDown={(e) => {
             // 백스페이스 처리
-            if (e.key === 'Backspace' && minutesValue === '0') {
+            if (e.key === "Backspace" && minutesValue === "0") {
               e.preventDefault();
-              setMinutesValue('0');
+              setMinutesValue("0");
               setTimeout(() => {
                 if (minutesInputRef.current) minutesInputRef.current.focus();
               }, 0);
@@ -470,7 +464,16 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                         className="text-green-500 p-1 rounded hover:bg-custom-background-80"
                         onClick={confirmEditing}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                       </button>
@@ -478,7 +481,16 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                         className="text-custom-text-200 p-1 rounded hover:bg-custom-background-80"
                         onClick={cancelEditing}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
@@ -491,9 +503,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
                       className="flex-grow border border-custom-border-200 rounded px-3 py-1 text-sm cursor-pointer hover:bg-custom-background-80"
                       onClick={() => startEditing(point)}
                     >
-                      {isTimeEstimate ?
-                        convertMinutesToHoursMinutesString(Number(point.value)) :
-                        point.value}
+                      {isTimeEstimate ? convertMinutesToHoursMinutesString(Number(point.value)) : point.value}
                     </div>
                   </div>
                 )}
@@ -510,19 +520,29 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
           className="flex items-center text-sm text-custom-primary hover:text-custom-primary-hover transition-colors"
           onClick={() => {
             // 마지막 키 값 찾기
-            const lastKey = Math.max(...estimatePoints.map(p => p.key), 0);
+            const lastKey = Math.max(...estimatePoints.map((p) => p.key), 0);
             // 새 항목 추가
-            const newPoints = [...estimatePoints, {
-              id: undefined,
-              key: lastKey + 1,
-              value: isTimeEstimate ? "60" : "1" // 기본값 (시간 타입이면 1시간 = 60분)
-            }];
+            const newPoints = [
+              ...estimatePoints,
+              {
+                id: undefined,
+                key: lastKey + 1,
+                value: isTimeEstimate ? "60" : "1", // 기본값 (시간 타입이면 1시간 = 60분)
+              },
+            ];
             setEstimatePoints(newPoints);
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
-            <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M12.6667 8L3.33337 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="mr-1"
+          >
+            <path d="M8 3.33331V12.6666" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M12.6667 8L3.33337 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           새 추정값 추가
         </button>
@@ -539,7 +559,7 @@ export const UpdateEstimateModal: FC<TUpdateEstimateModal> = observer((props) =>
             {editMode && (
               <div
                 onClick={() => {
-                  setEstimateSystem(estimate?.type as TEstimateSystemKeys || EEstimateSystem.POINTS);
+                  setEstimateSystem((estimate?.type as TEstimateSystemKeys) || EEstimateSystem.POINTS);
                   setEditMode(false);
                   setEstimatePoints(undefined);
                 }}

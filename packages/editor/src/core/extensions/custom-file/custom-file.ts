@@ -1,5 +1,6 @@
 import { Node, Editor, Extension, mergeAttributes } from "@tiptap/core";
-import { ReactNodeViewRenderer, NodeViewProps } from "@tiptap/react";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import type { NodeViewProps } from "@tiptap/react";
 import { v4 as uuid } from "uuid";
 import { FileNode } from "./components/file-node";
 import { TrackFileDeletionPlugin } from "./plugins/track-file-deletion";
@@ -48,8 +49,7 @@ export type FileEntity = {
   hasOpenedFileInputOnce?: boolean;
 };
 
-export const getFileComponentFileMap = (editor: any) =>
-  (editor.storage.customFile as FileStorage | undefined)?.fileMap;
+export const getFileComponentFileMap = (editor: any) => (editor.storage.customFile as FileStorage | undefined)?.fileMap;
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -131,7 +131,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
       return {
         ArrowDown: insertEmptyParagraphAtNodeBoundaries("down", this.name),
         ArrowUp: insertEmptyParagraphAtNodeBoundaries("up", this.name),
-        "Backspace": ({ editor }) => {
+        Backspace: ({ editor }) => {
           const { selection } = editor.state;
           const { empty, anchor } = selection;
 
@@ -148,7 +148,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
           }
           return false;
         },
-        "Delete": ({ editor }) => {
+        Delete: ({ editor }) => {
           const { selection } = editor.state;
           const { empty, anchor } = selection;
 
@@ -185,7 +185,7 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
         fileMap: new Map<string, FileEntity>(),
         uploadInProgress: false,
         markdown: {
-          serialize: () => { },
+          serialize: () => {},
         },
         fileHandler,
         workspaceSlug: workspaceSlug || (fileHandler as any).workspaceSlug || "",
@@ -197,87 +197,79 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
       return {
         insertFileComponent:
           (props: InsertFileComponentProps) =>
-            ({ commands }) => {
-              const id = uuid();
+          ({ commands }) => {
+            const id = uuid();
 
-              this.editor.storage.customFile.fileMap.set(id, {
-                event: props.event,
-                file: props.file,
-                hasOpenedFileInputOnce: false,
-              });
+            this.editor.storage.customFile.fileMap.set(id, {
+              event: props.event,
+              file: props.file,
+              hasOpenedFileInputOnce: false,
+            });
 
-              const attributes = {
-                id,
-                uploadStatus: "uploading",
-              };
+            const attributes = {
+              id,
+              uploadStatus: "uploading",
+            };
 
-              if (props.pos) {
-                return commands.insertContentAt(props.pos, {
-                  type: "fileComponent",
-                  attrs: attributes,
-                });
-              }
-
-              return commands.insertContent({
+            if (props.pos) {
+              return commands.insertContentAt(props.pos, {
                 type: "fileComponent",
                 attrs: attributes,
               });
-            },
-        uploadFile:
-          (file: File) =>
-            async () => {
-              try {
-                const url = await fileHandler.upload(file);
-                return url;
-              } catch (error) {
-                console.error("Error uploading file:", error);
-                throw error;
-              }
-            },
-        deleteFile:
-          (fileId: string) =>
-            async () => {
-              try {
-                let fileNode: ProseMirrorNode | null = null;
-                this.editor.state.doc.descendants((node) => {
-                  if (node.type.name === "fileComponent" && node.attrs.id === fileId) {
-                    fileNode = node;
-                    return false;
-                  }
-                  return true;
-                });
+            }
 
-                if (!fileNode) {
-                  throw new Error("파일을 찾을 수 없습니다.");
-                }
+            return commands.insertContent({
+              type: "fileComponent",
+              attrs: attributes,
+            });
+          },
+        uploadFile: (file: File) => async () => {
+          try {
+            const url = await fileHandler.upload(file);
+            return url;
+          } catch (error) {
+            console.error("Error uploading file:", error);
+            throw error;
+          }
+        },
+        deleteFile: (fileId: string) => async () => {
+          try {
+            let fileNode: ProseMirrorNode | null = null;
+            this.editor.state.doc.descendants((node) => {
+              if (node.type.name === "fileComponent" && node.attrs.id === fileId) {
+                fileNode = node;
+                return false;
+              }
+              return true;
+            });
 
-                await fileHandler.delete(fileId);
-              } catch (error) {
-                console.error("Error deleting file:", error);
-                throw error;
-              }
-            },
-        restoreFile:
-          (fileId: string) =>
-            async () => {
-              try {
-                await fileHandler.restore(fileId);
-              } catch (error) {
-                console.error("Error restoring file:", error);
-                throw error;
-              }
-            },
-        getFileUrl:
-          (path: string) =>
-            () => {
-              if (!fileHandler.getAssetSrc) {
-                return Promise.resolve(path);
-              }
-              return fileHandler.getAssetSrc(path).catch((error) => {
-                console.error("Error getting file URL:", error);
-                return path;
-              });
-            },
+            if (!fileNode) {
+              throw new Error("파일을 찾을 수 없습니다.");
+            }
+
+            await fileHandler.delete(fileId);
+          } catch (error) {
+            console.error("Error deleting file:", error);
+            throw error;
+          }
+        },
+        restoreFile: (fileId: string) => async () => {
+          try {
+            await fileHandler.restore(fileId);
+          } catch (error) {
+            console.error("Error restoring file:", error);
+            throw error;
+          }
+        },
+        getFileUrl: (path: string) => () => {
+          if (!fileHandler.getAssetSrc) {
+            return Promise.resolve(path);
+          }
+          return fileHandler.getAssetSrc(path).catch((error) => {
+            console.error("Error getting file URL:", error);
+            return path;
+          });
+        },
       };
     },
 
@@ -360,4 +352,4 @@ export const CustomFileExtension = (fileHandler: FileHandler, workspaceSlug: str
       ];
     },
   });
-}; 
+};

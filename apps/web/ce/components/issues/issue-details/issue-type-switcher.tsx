@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { observer } from "mobx-react";
 import { RefreshCw } from "lucide-react";
@@ -18,7 +16,7 @@ export type TIssueTypeSwitcherProps = {
   onOpenModal?: (issueId: string) => void;
 };
 
-export const IssueTypeSwitcher: React.FC<TIssueTypeSwitcherProps> = observer((props) => {
+export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIssueTypeSwitcherProps) {
   const { issueId, disabled, onClose, onOpenModal } = props;
   // store hooks
   const {

@@ -15,7 +15,7 @@ import { useWorkspace } from "@/hooks/store";
 
 const instanceWorkspaceService = new InstanceWorkspaceService();
 
-export const WorkspaceCreateForm = () => {
+export function WorkspaceCreateForm() {
   // router
   const router = useRouter();
   // states
@@ -109,11 +109,11 @@ export const WorkspaceCreateForm = () => {
                     setValue("name", e.target.value);
                     // 한글을 제외한 영문, 숫자, 특수문자만 허용
                     const englishOnly = e.target.value
-                      .replace(/[가-힣]/g, '')
+                      .replace(/[가-힣]/g, "")
                       .toLowerCase()
                       .trim()
                       .replace(/ /g, "-")
-                      .replace(/[^a-z0-9-_]/g, '');
+                      .replace(/[^a-z0-9-_]/g, "");
                     setValue("slug", englishOnly, {
                       shouldValidate: true,
                     });
@@ -184,7 +184,6 @@ export const WorkspaceCreateForm = () => {
                   }
                   buttonClassName="!border-[0.5px] !border-custom-border-200 !shadow-none"
                   input
-                  optionsClassName="w-full"
                 >
                   {ORGANIZATION_SIZE.map((item) => (
                     <CustomSelect.Option key={item} value={item}>
@@ -216,4 +215,4 @@ export const WorkspaceCreateForm = () => {
       </div>
     </div>
   );
-};
+}

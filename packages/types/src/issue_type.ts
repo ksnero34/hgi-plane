@@ -1,4 +1,4 @@
-export interface IIssueType {
+export type IIssueType = {
   id: string;
   name: string;
   description?: string;
@@ -17,9 +17,9 @@ export interface IIssueType {
   updated_at?: Date;
   created_by?: string;
   updated_by?: string;
-}
+};
 
-export interface IProjectIssueType {
+export type IProjectIssueType = {
   id: string;
   issue_type: IIssueType;
   level?: number;
@@ -29,4 +29,4 @@ export interface IProjectIssueType {
   updated_at?: Date;
   created_by?: string;
   updated_by?: string;
-}
+};

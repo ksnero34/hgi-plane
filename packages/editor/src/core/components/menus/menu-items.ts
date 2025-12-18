@@ -18,13 +18,13 @@ import {
   Heading5,
   Heading6,
   CaseSensitive,
-  type LucideIcon,
   MinusSquare,
   Palette,
   AlignCenter,
   LinkIcon,
   FileIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 // constants
 import { CORE_EXTENSIONS } from "@/constants/extension";
 // helpers
@@ -51,7 +51,7 @@ import {
   unsetLinkEditor,
 } from "@/helpers/editor-commands";
 // types
-import { TCommandWithProps, TEditorCommands } from "@/types";
+import type { TCommandWithProps, TEditorCommands } from "@/types";
 
 type isActiveFunction<T extends TEditorCommands> = (params?: TCommandWithProps<T>) => boolean;
 type commandFunction<T extends TEditorCommands> = (params?: TCommandWithProps<T>) => void;
@@ -216,11 +216,13 @@ export const LinkItem = (editor: Editor): EditorMenuItem<"link"> =>
     key: "link",
     name: "Link",
     isActive: () => editor?.isActive("link"),
+
     command: (props) => {
       if (!props) return;
       if (props.url) setLinkEditor(editor, props.url, props.text);
       else unsetLinkEditor(editor);
     },
+
     icon: LinkIcon,
   }) as const;
 

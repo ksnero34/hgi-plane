@@ -1,7 +1,3 @@
-"use client";
-
-import type { FC } from "react";
-
 type TIssueActivityWorklogCreateButton = {
   workspaceSlug: string;
   projectId: string;
@@ -9,4 +5,6 @@ type TIssueActivityWorklogCreateButton = {
   disabled: boolean;
 };
 
-export const IssueActivityWorklogCreateButton: FC<TIssueActivityWorklogCreateButton> = () => <></>;
+export function IssueActivityWorklogCreateButton(_props: TIssueActivityWorklogCreateButton) {
+  return <></>;
+}

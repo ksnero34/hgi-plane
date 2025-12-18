@@ -35,7 +35,7 @@ export type GanttChartBlocksProps = {
   orderBy?: TIssueOrderByOptions;
 };
 
-export const GanttChartRowList: FC<GanttChartBlocksProps> = (props) => {
+export function GanttChartRowList(props: GanttChartBlocksProps) {
   const {
     blockIds,
     blockUpdateHandler,
@@ -132,4 +132,4 @@ export const GanttChartRowList: FC<GanttChartBlocksProps> = (props) => {
           })}
     </div>
   );
-};
+}

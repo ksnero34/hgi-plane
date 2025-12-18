@@ -25,7 +25,7 @@ type Props = {
   issueServiceType?: TIssueServiceType;
 };
 
-export const IssueAttachmentDeleteModal: FC<Props> = observer((props) => {
+export const IssueAttachmentDeleteModal = observer(function IssueAttachmentDeleteModal(props: Props) {
   const { t } = useTranslation();
   const { isOpen, onClose, attachmentId, attachmentOperations, issueServiceType = EIssueServiceType.ISSUES } = props;
   // states
@@ -61,7 +61,8 @@ export const IssueAttachmentDeleteModal: FC<Props> = observer((props) => {
       content={
         <>
           {/* TODO: Translate here */}
-          <span className="font-bold">{getFileName(attachment.attributes.name)}</span>{" "} 첨부파일을 삭제하시겠습니까? 이 첨부파일은 영구적으로 삭제되며 복구는 불가능합니다.
+          <span className="font-bold">{getFileName(attachment.attributes.name)}</span> 첨부파일을 삭제하시겠습니까? 이
+          첨부파일은 영구적으로 삭제되며 복구는 불가능합니다.
         </>
       }
     />

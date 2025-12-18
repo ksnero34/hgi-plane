@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "../api.service";
-import { IIssueType, IProject, IProjectIssueType } from "@plane/types";
+import type { IIssueType, IProject, IProjectIssueType } from "@plane/types";
 
 export class ProjectService extends APIService {
   constructor() {

@@ -6,12 +6,12 @@ type Props = {
   src: string;
 };
 
-export const ImageDownloadAction: React.FC<Props> = (props) => {
+export function ImageDownloadAction(props: Props) {
   const { src } = props;
 
   const handleDownload = () => {
     // 파일과 동일한 방식으로 다운로드 링크 생성
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = src;
     // HTML5 download 속성 제거 - 서버의 Content-Disposition 헤더에 의존
     document.body.appendChild(link);
@@ -31,4 +31,4 @@ export const ImageDownloadAction: React.FC<Props> = (props) => {
       </button>
     </Tooltip>
   );
-};
+}

@@ -1,6 +1,3 @@
-"use client";
-
-import type { FC } from "react";
 import { observer } from "mobx-react";
 // hooks
 import { ModuleIcon } from "@plane/propel/icons";
@@ -11,7 +8,7 @@ import { IssueActivityBlockComponent } from "./";
 
 type TIssueModuleActivity = { activityId: string; ends: "top" | "bottom" | undefined };
 
-export const IssueModuleActivity: FC<TIssueModuleActivity> = observer((props) => {
+export const IssueModuleActivity = observer(function IssueModuleActivity(props: TIssueModuleActivity) {
   const { activityId, ends } = props;
   // hooks
   const {
@@ -38,7 +35,8 @@ export const IssueModuleActivity: FC<TIssueModuleActivity> = observer((props) =>
               className="inline-flex items-center gap-1 truncate font-medium text-custom-text-100 hover:underline"
             >
               <span className="truncate">{activity.new_value}</span>
-            </a> 에 추가했습니다.
+            </a>{" "}
+            에 추가했습니다.
           </>
         ) : activity.verb === "updated" ? (
           <>

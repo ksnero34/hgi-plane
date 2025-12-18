@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -25,12 +23,7 @@ import type { TRenderQuickActions } from "../list/list-view-types";
 import { CalendarIssueBlocks } from "./issue-blocks";
 
 type Props = {
-  issuesFilterStore:
-    | IProjectIssuesFilter
-    | IModuleIssuesFilter
-    | ICycleIssuesFilter
-    | IProjectViewIssuesFilter
-    | IProjectEpicsFilter;
+  issuesFilterStore: IProjectIssuesFilter | IModuleIssuesFilter | ICycleIssuesFilter | IProjectViewIssuesFilter;
   date: ICalendarDate;
   issues: TIssueMap | undefined;
   groupedIssueIds: TGroupedIssues;
@@ -55,7 +48,7 @@ type Props = {
   isEpic?: boolean;
 };
 
-export const CalendarDayTile: React.FC<Props> = observer((props) => {
+export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
   const {
     issuesFilterStore,
     date,
@@ -161,10 +154,14 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
           {date.date.getDate() === 1 && MONTHS_LIST[date.date.getMonth() + 1].shortTitle + " "}
           {isToday ? (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-custom-primary-100 text-white">
-              {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
+              {date.date.getDate()}
+              {date.date.getDate() === 1 ? "일" : ""}
             </span>
           ) : (
-            <>{date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}</>
+            <>
+              {date.date.getDate()}
+              {date.date.getDate() === 1 ? "일" : ""}
+            </>
           )}
         </div>
 
@@ -213,7 +210,8 @@ export const CalendarDayTile: React.FC<Props> = observer((props) => {
               "bg-custom-primary-100/10 text-custom-primary-100 ": isToday && !isSelectedDate,
             })}
           >
-            {date.date.getDate()}{date.date.getDate() === 1 ? "일" : ""}
+            {date.date.getDate()}
+            {date.date.getDate() === 1 ? "일" : ""}
           </div>
         </div>
       </div>

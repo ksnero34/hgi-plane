@@ -1,34 +1,27 @@
-"use client";
-
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { FileText, Folder } from "lucide-react";
 // constants
-import {
-  EPageAccess,
-  EProjectFeatureKey,
-  PROJECT_PAGE_TRACKER_EVENTS,
-  PROJECT_TRACKER_ELEMENTS,
-} from "@plane/constants";
+import { EPageAccess, PROJECT_PAGE_TRACKER_EVENTS, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 // plane types
 import { Button } from "@plane/propel/button";
+import { PageIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TPage } from "@plane/types";
 // plane ui
 import { Breadcrumbs, Header } from "@plane/ui";
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 // helpers
-import {captureClick, captureError, captureSuccess } from "@/helpers/event-tracker.helper";
+import { captureClick, captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 // plane web
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
-// plane web hooks
 import { EPageStoreType, usePageStore } from "@/plane-web/hooks/store";
 
-export const PagesListHeader = observer(() => {
+export const PagesListHeader = observer(function PagesListHeader() {
   // states
   const [isCreatingPage, setIsCreatingPage] = useState(false);
   // router
@@ -60,9 +53,9 @@ export const PagesListHeader = observer(() => {
   const getFolderUrl = (targetFolderId: string | null) => {
     const currentUrl = new URL(window.location.href);
     if (targetFolderId) {
-      currentUrl.searchParams.set('folder', targetFolderId);
+      currentUrl.searchParams.set("folder", targetFolderId);
     } else {
-      currentUrl.searchParams.delete('folder');
+      currentUrl.searchParams.delete("folder");
     }
     return currentUrl.pathname + currentUrl.search;
   };
@@ -114,9 +107,7 @@ export const PagesListHeader = observer(() => {
           <Breadcrumbs isLoading={loader === "init-loader"}>
             <CommonProjectBreadcrumbs
               workspaceSlug={workspaceSlug?.toString() ?? ""}
-              projectId={currentProjectDetails?.toString() ?? ""}
-              featureKey={EProjectFeatureKey.PAGES}
-              isLast
+              projectId={projectId?.toString() ?? ""}
             />
             <Breadcrumbs.Item
               component={
@@ -157,12 +148,14 @@ export const PagesListHeader = observer(() => {
           <Button
             variant="neutral-primary"
             size="sm"
-            onClick={() => toggleCreatePageModal({
-              isOpen: true,
-              isFolder: true,
-              redirectionEnabled: true,
-              parentFolderId: folderId || null
-            })}
+            onClick={() =>
+              toggleCreatePageModal({
+                isOpen: true,
+                isFolder: true,
+                redirectionEnabled: true,
+                parentFolderId: folderId || null,
+              })
+            }
           >
             Add folder
           </Button>

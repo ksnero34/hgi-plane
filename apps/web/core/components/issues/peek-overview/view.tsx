@@ -38,7 +38,7 @@ interface IIssueView {
   issueOperations: TIssueOperations;
 }
 
-export const IssueView: FC<IIssueView> = observer((props) => {
+export const IssueView = observer(function IssueView(props: IIssueView) {
   const {
     workspaceSlug,
     projectId,
@@ -65,7 +65,7 @@ export const IssueView: FC<IIssueView> = observer((props) => {
   const {
     setPeekIssue,
     isAnyModalOpen,
-    issue: { getIssueById, getIsLocalDBIssueDescription },
+    issue: { getIssueById },
   } = useIssueDetail();
   const { isAnyModalOpen: isAnyEpicModalOpen } = useIssueDetail(EIssueServiceType.EPICS);
   const issue = getIssueById(issueId);
@@ -74,8 +74,6 @@ export const IssueView: FC<IIssueView> = observer((props) => {
     setPeekIssue(undefined);
     if (embedIssue && embedRemoveCurrentNotification) embedRemoveCurrentNotification();
   };
-
-  const isLocalDBIssueDescription = getIsLocalDBIssueDescription(issueId);
 
   const toggleDeleteIssueModal = (value: boolean) => setIsDeleteIssueModalOpen(value);
   const toggleArchiveIssueModal = (value: boolean) => setIsArchiveIssueModalOpen(value);
@@ -181,7 +179,7 @@ export const IssueView: FC<IIssueView> = observer((props) => {
                       projectId={projectId}
                       issueId={issueId}
                       issueOperations={issueOperations}
-                      disabled={disabled || isLocalDBIssueDescription}
+                      disabled={disabled}
                       isArchived={is_archived}
                       isSubmitting={isSubmitting}
                       setIsSubmitting={(value) => setIsSubmitting(value)}
@@ -223,7 +221,7 @@ export const IssueView: FC<IIssueView> = observer((props) => {
                           projectId={projectId}
                           issueId={issueId}
                           issueOperations={issueOperations}
-                          disabled={disabled || isLocalDBIssueDescription}
+                          disabled={disabled}
                           isArchived={is_archived}
                           isSubmitting={isSubmitting}
                           setIsSubmitting={(value) => setIsSubmitting(value)}

@@ -1,4 +1,4 @@
-import React, { useRef,useMemo } from "react";
+import React, { useRef, useMemo } from "react";
 import { observer } from "mobx-react";
 // plane constants
 import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
@@ -6,7 +6,6 @@ import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/cons
 import type { TIssue, IIssueDisplayFilterOptions, IIssueDisplayProperties, TCustomField } from "@plane/types";
 import { EIssueLayoutTypes } from "@plane/types";
 // components
-import { LogoSpinner } from "@/components/common/logo-spinner";
 import { MultipleSelectGroup } from "@/components/core/multiple-select";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
@@ -38,7 +37,7 @@ type Props = {
   customFields?: TCustomField[];
 };
 
-export const SpreadsheetView: React.FC<Props> = observer((props) => {
+export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
   const {
     displayProperties,
     displayFilters,
@@ -77,24 +76,20 @@ export const SpreadsheetView: React.FC<Props> = observer((props) => {
         });
 
     // custom_fields 컬럼을 제거하고 개별 커스텀 필드 컬럼들로 대체
-    baseColumns = baseColumns.filter(property => property !== "custom_fields");
+    baseColumns = baseColumns.filter((property) => property !== "custom_fields");
 
     // 활성화된 커스텀 필드들을 개별 컬럼으로 추가
     if (customFields && customFields.length > 0) {
-      const customFieldColumns = customFields.map(field => `custom_field_${field.id}` as keyof IIssueDisplayProperties);
+      const customFieldColumns = customFields.map(
+        (field) => `custom_field_${field.id}` as keyof IIssueDisplayProperties
+      );
       baseColumns = [...baseColumns, ...customFieldColumns];
     }
 
     return baseColumns;
   }, [isWorkspaceLevel, currentProjectDetails, customFields]);
 
-  if (!issueIds || issueIds.length === 0)
-    return (
-      <div className="grid h-full w-full place-items-center">
-        <LogoSpinner />
-      </div>
-    );
-
+  if (!issueIds || issueIds.length === 0) return <></>;
   return (
     <div className="relative flex h-full w-full flex-col overflow-x-hidden whitespace-nowrap rounded-lg bg-custom-background-200 text-custom-text-200">
       <div ref={portalRef} className="spreadsheet-menu-portal" />

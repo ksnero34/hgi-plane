@@ -1,12 +1,12 @@
-"use client";
-
-import React, { useEffect, FC, useState } from "react";
+import { useState } from "react";
+import type { FC } from "react";
 import { observer } from "mobx-react";
-import { Control, Controller } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import type { Control } from "react-hook-form";
 import { useParams } from "next/navigation";
 import { useTranslation } from "@plane/i18n";
 // types
-import { TIssue, TCustomField } from "@plane/types";
+import type { TIssue, TCustomField } from "@plane/types";
 // ui
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // services
@@ -35,16 +35,15 @@ export const IssueCustomField: FC<Props> = observer((props) => {
 
     switch (field.field_type) {
       case "text":
-        
         return (
           <input
             type="text"
             value={currentTextValue}
             onChange={(e) => {
               // 로컬 상태만 업데이트 (UI 반응성)
-              setTextFieldValues(prev => ({
+              setTextFieldValues((prev) => ({
                 ...prev,
-                [field.id]: e.target.value
+                [field.id]: e.target.value,
               }));
             }}
             onKeyDown={(e) => {
@@ -54,12 +53,12 @@ export const IssueCustomField: FC<Props> = observer((props) => {
                 const value = e.currentTarget.value.trim();
                 onChange({
                   custom_field_id: field.id,
-                  value: value || null
+                  value: value || null,
                 });
                 handleFormChange();
                 e.currentTarget.blur();
                 // 로컬 상태 초기화
-                setTextFieldValues(prev => {
+                setTextFieldValues((prev) => {
                   const newState = { ...prev };
                   delete newState[field.id];
                   return newState;
@@ -75,11 +74,11 @@ export const IssueCustomField: FC<Props> = observer((props) => {
               const value = e.currentTarget.value.trim();
               onChange({
                 custom_field_id: field.id,
-                value: value || null
+                value: value || null,
               });
               handleFormChange();
               // 로컬 상태 초기화
-              setTextFieldValues(prev => {
+              setTextFieldValues((prev) => {
                 const newState = { ...prev };
                 delete newState[field.id];
                 return newState;
@@ -98,7 +97,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
               const formattedDate = date ? renderFormattedPayloadDate(date) : null;
               onChange({
                 custom_field_id: field.id,
-                value: formattedDate
+                value: formattedDate,
               });
               handleFormChange();
             }}
@@ -120,7 +119,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
             onChange={(val: any) => {
               onChange({
                 custom_field_id: field.id,
-                value: val
+                value: val,
               });
               handleFormChange();
             }}
@@ -144,7 +143,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
               const newValue = fieldValue === val ? null : val;
               onChange({
                 custom_field_id: field.id,
-                value: newValue
+                value: newValue,
               });
               handleFormChange();
             }}
@@ -166,7 +165,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
             onChange={(val: string[]) => {
               onChange({
                 custom_field_id: field.id,
-                value: val
+                value: val,
               });
               handleFormChange();
             }}
@@ -185,9 +184,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
         return (
           <div className="w-full">
             <div className="w-full h-full flex items-center gap-1.5 rounded border border-custom-border-300 px-2 py-0.5 text-sm justify-between cursor-not-allowed">
-              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">
-                지원하지 않는 필드 타입
-              </span>
+              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">지원하지 않는 필드 타입</span>
             </div>
           </div>
         );
@@ -196,9 +193,7 @@ export const IssueCustomField: FC<Props> = observer((props) => {
 
   if (isLoading) return <div>{t("common.loading")}</div>;
 
-  const filteredCustomFields = customFields.filter(field => 
-    field.issue_type === null
-  );
+  const filteredCustomFields = customFields.filter((field) => field.issue_type === null);
 
   return (
     <>
@@ -217,4 +212,4 @@ export const IssueCustomField: FC<Props> = observer((props) => {
       ))}
     </>
   );
-}); 
+});

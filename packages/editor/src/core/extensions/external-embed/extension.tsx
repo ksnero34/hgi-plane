@@ -1,6 +1,8 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { ExternalLink, Link2, Pencil, Trash2 } from "lucide-react";
-import { ReactNodeViewRenderer, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
+import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
+import type { NodeViewProps } from "@tiptap/react";
 // plane utils
 import { cn, ensureUrlHasProtocol, truncateText } from "@plane/utils";
 // local imports
@@ -344,7 +346,11 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
           data-ignore-dnd
         />
       )}
-      <div className="flex w-full flex-col gap-3 px-4 py-3" contentEditable={false} onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        className="flex w-full flex-col gap-3 px-4 py-3"
+        contentEditable={false}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {isEditing && isEditable ? (
           <form className="flex w-full flex-col gap-2" onSubmit={handleSubmit} onMouseDown={(e) => e.stopPropagation()}>
             <label className="flex items-center gap-2 text-sm font-medium text-custom-text-200">
@@ -415,9 +421,7 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
                 />
                 iframe으로 삽입
               </label>
-              <span className="text-custom-text-400">
-                지원되지 않는 링크도 iframe으로 직접 표시할 수 있어요.
-              </span>
+              <span className="text-custom-text-400">지원되지 않는 링크도 iframe으로 직접 표시할 수 있어요.</span>
             </div>
             {error && <p className="text-xs font-medium text-red-500">{error}</p>}
           </form>
@@ -478,7 +482,10 @@ const ExternalEmbedNodeView = (props: TExternalEmbedNodeViewProps) => {
 
             {/* Embed iframe or link preview card */}
             {embedInfo.embedUrl || (node.attrs.isIframe && node.attrs.url) ? (
-              <div className="relative w-full overflow-hidden rounded-lg bg-custom-background-100" style={{ paddingBottom: "56.25%" }}>
+              <div
+                className="relative w-full overflow-hidden rounded-lg bg-custom-background-100"
+                style={{ paddingBottom: "56.25%" }}
+              >
                 <iframe
                   src={embedInfo.embedUrl || node.attrs.url}
                   className="absolute inset-0 size-full border-0"

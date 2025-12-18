@@ -1,11 +1,10 @@
-"use client";
-
 import type { CSSProperties, FC } from "react";
 import { extractInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 import { clone, isNil, pull, uniq, concat } from "lodash-es";
 import scrollIntoView from "smooth-scroll-into-view-if-needed";
 // plane types
 import { EIconSize, ISSUE_PRIORITIES, STATE_GROUPS } from "@plane/constants";
+import { Logo } from "@plane/propel/emoji-icon-picker";
 import type { ISvgIcons } from "@plane/propel/icons";
 import { CycleGroupIcon, CycleIcon, ModuleIcon, PriorityIcon, StateGroupIcon } from "@plane/propel/icons";
 import type {
@@ -29,8 +28,6 @@ import { EIssuesStoreType } from "@plane/types";
 // plane ui
 import { Avatar } from "@plane/ui";
 import { renderFormattedDate, getFileURL } from "@plane/utils";
-// components
-import { Logo } from "@/components/common/logo";
 // helpers
 // store
 import { store } from "@/lib/store-context";
@@ -181,7 +178,7 @@ const getCycleColumns = (orderBy?: TIssueOrderByOptions): IGroupByColumn[] | und
     cycles.push({
       id: cycle.id,
       name: cycle.name,
-      icon: <CycleGroupIcon cycleGroup={cycleStatus as TCycleGroups} className="h-3.5 w-3.5" />,
+      icon: <CycleGroupIcon cycleGroup={cycleStatus} className="h-3.5 w-3.5" />,
       payload: { cycle_id: cycle.id },
       isDropDisabled,
       dropErrorMessage: isDropDisabled ? "Work item cannot be moved to completed cycles" : undefined,
@@ -243,7 +240,11 @@ const getDateComparator = (direction: "asc" | "desc") => (firstValue?: string | 
   return direction === "asc" ? first - second : second - first;
 };
 
-const sortTimelineGroups = <T extends Record<string, any>>(items: T[], orderBy: TIssueOrderByOptions | undefined, type: TTimelineGroupType) => {
+const sortTimelineGroups = <T extends Record<string, any>>(
+  items: T[],
+  orderBy: TIssueOrderByOptions | undefined,
+  type: TTimelineGroupType
+) => {
   if (!isDateOrderBy(orderBy)) return items;
 
   const isTargetDate = orderBy?.includes("target_date");
@@ -381,7 +382,7 @@ const getParentChildColumns = (
         name: "최상단 작업항목",
         icon: undefined,
         payload: { parent_id: null },
-      }
+      },
     ];
   }
 
@@ -390,7 +391,7 @@ const getParentChildColumns = (
   // groupByFields를 ID로 매핑하여 빠른 조회 가능하도록 함
   const groupByFieldsMap: Record<string, any> = {};
   if (groupByFields && Array.isArray(groupByFields)) {
-    groupByFields.forEach(field => {
+    groupByFields.forEach((field) => {
       if (field && field.id) {
         groupByFieldsMap[field.id] = field;
       }
@@ -398,7 +399,7 @@ const getParentChildColumns = (
   }
 
   // 그룹 키들을 순회하면서 컬럼 생성
-  Object.keys(groupedIssueIds).forEach(groupKey => {
+  Object.keys(groupedIssueIds).forEach((groupKey) => {
     if (groupKey === "None") {
       columns.push({
         id: "None",
@@ -455,7 +456,7 @@ const getTopLevelOnlyColumns = (): IGroupByColumn[] => {
       name: "최상위 작업항목만",
       icon: undefined,
       payload: { parent_id: null },
-    }
+    },
   ];
 };
 
@@ -464,7 +465,7 @@ const getIssueTypeColumns = (issueTypes?: any[]): IGroupByColumn[] => {
 
   // Add issue type columns if available
   if (issueTypes && Array.isArray(issueTypes)) {
-    issueTypes.forEach(projectIssueType => {
+    issueTypes.forEach((projectIssueType) => {
       const issueType = projectIssueType?.issue_type || projectIssueType;
       if (issueType && issueType.id) {
         columns.push({
@@ -671,11 +672,8 @@ const handleSortOrder = (
   return currentIssueState;
 };
 
-export const getIssueBlockId = (
-  issueId: string | undefined,
-  groupId: string | undefined,
-  subGroupId?: string | undefined
-) => `issue_${issueId}_${groupId}_${subGroupId}`;
+export const getIssueBlockId = (issueId: string | undefined, groupId: string | undefined, subGroupId?: string) =>
+  `issue_${issueId}_${groupId}_${subGroupId}`;
 
 /**
  * returns empty Array if groupId is None
@@ -896,12 +894,12 @@ export const getBlockViewDetails = (
  * This method returns the icon for Spreadsheet column headers
  * @param iconKey
  */
-export const SpreadSheetPropertyIcon: FC<ISvgIcons & { iconKey: string }> = (props) => {
+export function SpreadSheetPropertyIcon(props: ISvgIcons & { iconKey: string }) {
   const { iconKey } = props;
   const Icon = SpreadSheetPropertyIconMap[iconKey];
   if (!Icon) return null;
   return <Icon {...props} />;
-};
+}
 
 /**
  * This method returns if the filters are applied

@@ -14,6 +14,7 @@ import { PageEditorInstance } from "./page-editor-info";
 export type TBasePage = TPage & {
   // observables
   isSubmitting: TNameDescriptionLoader;
+  isSyncingWithServer: "syncing" | "synced" | "error";
   // computed
   asJSON: TPage | undefined;
   isCurrentUserOwner: boolean;
@@ -39,6 +40,7 @@ export type TBasePage = TPage & {
   duplicate: () => Promise<TPage | undefined>;
   moveToFolder: (parentId: string | null) => Promise<void>;
   mutateProperties: (data: Partial<TPage>, shouldUpdateName?: boolean) => void;
+  setSyncingStatus: (status: "syncing" | "synced" | "error") => void;
   // sub-store
   editor: PageEditorInstance;
 };
@@ -77,6 +79,7 @@ export type TPageInstance = TBasePage &
 export class BasePage extends ExtendedBasePage implements TBasePage {
   // loaders
   isSubmitting: TNameDescriptionLoader = "saved";
+  isSyncingWithServer: "syncing" | "synced" | "error" = "syncing";
   // page properties
   id: string | undefined;
   name: string | undefined;
@@ -167,6 +170,7 @@ export class BasePage extends ExtendedBasePage implements TBasePage {
       created_at: observable.ref,
       updated_at: observable.ref,
       deleted_at: observable.ref,
+      isSyncingWithServer: observable.ref,
       // helpers
       oldName: observable.ref,
       setIsSubmitting: action,
@@ -469,8 +473,7 @@ export class BasePage extends ExtendedBasePage implements TBasePage {
           value: decimalValue,
           url: value.value.imageUrl || getEmojiImageUrlFromDecimal(decimalValue),
         };
-      }
-      else if (value?.type === "icon") logoValue = value.value;
+      } else if (value?.type === "icon") logoValue = value.value;
 
       const logoProps: TLogoProps = {
         in_use: value?.type,
@@ -622,6 +625,12 @@ export class BasePage extends ExtendedBasePage implements TBasePage {
       const value = data[key as keyof TPage];
       if (key === "name" && !shouldUpdateName) return;
       set(this, key, value);
+    });
+  };
+
+  setSyncingStatus = (status: "syncing" | "synced" | "error") => {
+    runInAction(() => {
+      this.isSyncingWithServer = status;
     });
   };
 }

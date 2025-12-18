@@ -14,7 +14,7 @@ type Props = {
   searchQuery: string;
 };
 
-export const FilterTargetDate: React.FC<Props> = observer((props) => {
+export const FilterTargetDate = observer(function FilterTargetDate(props: Props) {
   const { appliedFilters, handleUpdate, searchQuery } = props;
 
   const [previewEnabled, setPreviewEnabled] = useState(true);
@@ -65,7 +65,12 @@ export const FilterTargetDate: React.FC<Props> = observer((props) => {
                   multiple
                 />
               ))}
-              <FilterOption isChecked={isCustomDateSelected()} onClick={handleCustomDate} title="사용자 정의" multiple />
+              <FilterOption
+                isChecked={isCustomDateSelected()}
+                onClick={handleCustomDate}
+                title="사용자 정의"
+                multiple
+              />
             </>
           ) : (
             <p className="text-xs italic text-custom-text-400">일치하는 항목 없음</p>

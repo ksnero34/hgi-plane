@@ -1,10 +1,8 @@
-"use client";
-
 import React, { useState, useMemo } from "react";
 import { observer } from "mobx-react";
 import { Calendar, User, Users, Tag as TagIcon } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 // components
 import { FilterHeader, FilterOption } from "../helpers";
 import { DateFilterModal } from "@/components/core/filters/date-filter-modal";
@@ -25,20 +23,20 @@ type Props = {
 
 export const FilterCustomFields: React.FC<Props> = observer((props) => {
   const { appliedFilters, handleUpdate, searchQuery, customFields, workspaceSlug, projectId } = props;
-  
+
   // console.log("FilterCustomFields - Received props:");
   // console.log("FilterCustomFields - customFields:", customFields);
   // console.log("FilterCustomFields - customFields length:", customFields?.length);
   // console.log("FilterCustomFields - workspaceSlug:", workspaceSlug);
   // console.log("FilterCustomFields - projectId:", projectId);
-  
+
   // states
   const [previewEnabled, setPreviewEnabled] = useState(true);
   const [isDateFilterModalOpen, setIsDateFilterModalOpen] = useState(false);
   const [selectedDateField, setSelectedDateField] = useState<string | null>(null);
   const [memberFieldsToRender, setMemberFieldsToRender] = useState<{ [fieldId: string]: number }>({});
   const { t } = useTranslation();
-  
+
   // hooks
   const {
     workspace: { getWorkspaceMemberDetails },
@@ -60,25 +58,27 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
 
   const projectMembers = useMemo(() => {
     if (!projectMemberIds.length) return [];
-    
-    return projectMemberIds.map(memberId => {
-      const memberDetails = getProjectMemberDetails(memberId, projectId);
-      return memberDetails ? {
-        id: memberId,
-        name: memberDetails.member?.display_name || memberDetails.member?.first_name || "Unknown",
-        avatar: memberDetails.member?.avatar_url || null,
-        email: memberDetails.member?.email || null,
-      } : null;
-    }).filter(Boolean);
+
+    return projectMemberIds
+      .map((memberId) => {
+        const memberDetails = getProjectMemberDetails(memberId, projectId);
+        return memberDetails
+          ? {
+              id: memberId,
+              name: memberDetails.member?.display_name || memberDetails.member?.first_name || "Unknown",
+              avatar: memberDetails.member?.avatar_url || null,
+              email: memberDetails.member?.email || null,
+            }
+          : null;
+      })
+      .filter(Boolean);
   }, [projectMemberIds, getProjectMemberDetails, projectId]);
 
   // 검색어로 필터링된 커스텀 필드들
   const filteredCustomFields = useMemo(() => {
     if (!customFields || !Array.isArray(customFields)) return [];
     if (!searchQuery) return customFields;
-    return customFields.filter((field) =>
-      field.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return customFields.filter((field) => field.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [customFields, searchQuery]);
 
   // 적용된 필터 개수 계산
@@ -90,27 +90,28 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
   // 적용된 필터의 세부 정보를 생성하는 함수
   const getAppliedFiltersDetails = useMemo(() => {
     if (!appliedFilters || appliedFiltersCount === 0) return "";
-    
+
     const details: string[] = [];
     Object.entries(appliedFilters).forEach(([fieldId, values]) => {
       if (!values || values.length === 0) return;
-      
+
       // customFields가 undefined인 경우 처리
       if (!customFields || !Array.isArray(customFields)) return;
-      
-      const field = customFields.find(f => f.id === fieldId);
+
+      const field = customFields.find((f) => f.id === fieldId);
       if (!field) return;
-      
+
       const fieldName = field.name;
-      
+
       // project_member나 project_members 필드인 경우 UUID를 멤버 이름으로 변환
       if (field.field_type === "project_member" || field.field_type === "project_members") {
         if (values.length === 1) {
           const memberDetails = getProjectMemberDetails(values[0], projectId);
-          const displayName = memberDetails?.member?.display_name || 
-                             memberDetails?.member?.first_name || 
-                             memberDetails?.member?.email ||
-                             `${values[0].substring(0, 8)}...`;
+          const displayName =
+            memberDetails?.member?.display_name ||
+            memberDetails?.member?.first_name ||
+            memberDetails?.member?.email ||
+            `${values[0].substring(0, 8)}...`;
           details.push(`${fieldName}: ${displayName}`);
         } else {
           details.push(`${fieldName}: ${values.length}개 선택`);
@@ -124,7 +125,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
         }
       }
     });
-    
+
     return details.length > 0 ? ` - ${details.join(", ")}` : "";
   }, [appliedFilters, appliedFiltersCount, customFields, getProjectMemberDetails, projectId]);
 
@@ -157,7 +158,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
   const handleDateFilterSelect = (values: string | string[]) => {
     if (selectedDateField) {
       const valuesArray = Array.isArray(values) ? values : [values];
-      valuesArray.forEach(value => handleUpdate(selectedDateField, value));
+      valuesArray.forEach((value) => handleUpdate(selectedDateField, value));
     }
     setIsDateFilterModalOpen(false);
     setSelectedDateField(null);
@@ -165,15 +166,15 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
 
   const isCustomDateSelected = (fieldId: string) => {
     const appliedValues = appliedFilters?.[fieldId] || [];
-    return appliedValues.some(value => value.includes("-"));
+    return appliedValues.some((value) => value.includes("-"));
   };
 
   const handleCustomDate = (fieldId: string) => {
     if (isCustomDateSelected(fieldId)) {
       // 커스텀 날짜 필터 제거
       const appliedValues = appliedFilters?.[fieldId] || [];
-      const customDateValues = appliedValues.filter(value => value.includes("-"));
-      customDateValues.forEach(value => handleUpdate(fieldId, value));
+      const customDateValues = appliedValues.filter((value) => value.includes("-"));
+      customDateValues.forEach((value) => handleUpdate(fieldId, value));
     } else {
       handleDateFilter(fieldId);
     }
@@ -189,7 +190,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
           }}
           isOpen={isDateFilterModalOpen}
           onSelect={handleDateFilterSelect}
-          title={customFields?.find(f => f.id === selectedDateField)?.name || "날짜 필터"}
+          title={customFields?.find((f) => f.id === selectedDateField)?.name || "날짜 필터"}
         />
       )}
       <FilterHeader
@@ -215,11 +216,11 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                         placeholder="검색어 입력..."
                         className="w-full px-2 py-1 text-xs border border-custom-border-200 rounded focus:outline-none focus:border-custom-primary-100"
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             const value = (e.target as HTMLInputElement).value.trim();
                             if (value) {
                               handleUpdate(field.id, value);
-                              (e.target as HTMLInputElement).value = '';
+                              (e.target as HTMLInputElement).value = "";
                             }
                           }
                         }}
@@ -242,7 +243,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                   </div>
                 );
               }
-              
+
               // Select/Multiselect 필드
               if (field.field_type === "select" || field.field_type === "multiselect") {
                 return (
@@ -266,7 +267,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                   </div>
                 );
               }
-              
+
               // 날짜 필드
               if (field.field_type === "date") {
                 const dateFilterOptions = [
@@ -310,7 +311,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                 const itemsToRender = memberFieldsToRender[field.id] || 5;
                 const membersToShow = projectMembers.slice(0, itemsToRender);
                 const hasMore = projectMembers.length > itemsToRender;
-                
+
                 return (
                   <div key={field.id} className="mb-2">
                     <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
@@ -345,12 +346,12 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                               if (hasMore) {
                                 setMemberFieldsToRender({
                                   ...memberFieldsToRender,
-                                  [field.id]: projectMembers.length
+                                  [field.id]: projectMembers.length,
                                 });
                               } else {
                                 setMemberFieldsToRender({
                                   ...memberFieldsToRender,
-                                  [field.id]: 5
+                                  [field.id]: 5,
                                 });
                               }
                             }}
@@ -373,7 +374,7 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                 const itemsToRender = memberFieldsToRender[field.id] || 5;
                 const membersToShow = projectMembers.slice(0, itemsToRender);
                 const hasMore = projectMembers.length > itemsToRender;
-                
+
                 return (
                   <div key={field.id} className="mb-2">
                     <div className="text-xs font-medium text-custom-text-300 mb-1 flex items-center gap-1">
@@ -409,12 +410,12 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
                               if (hasMore) {
                                 setMemberFieldsToRender({
                                   ...memberFieldsToRender,
-                                  [field.id]: projectMembers.length
+                                  [field.id]: projectMembers.length,
                                 });
                               } else {
                                 setMemberFieldsToRender({
                                   ...memberFieldsToRender,
-                                  [field.id]: 5
+                                  [field.id]: 5,
                                 });
                               }
                             }}
@@ -436,13 +437,11 @@ export const FilterCustomFields: React.FC<Props> = observer((props) => {
             })
           ) : (
             <p className="text-xs italic text-custom-text-400">
-              {customFields && customFields.length === 0 
-                ? "커스텀 필드가 없습니다" 
-                : "일치하는 항목 없음"}
+              {customFields && customFields.length === 0 ? "커스텀 필드가 없습니다" : "일치하는 항목 없음"}
             </p>
           )}
         </div>
       )}
     </>
   );
-}); 
+});

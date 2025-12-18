@@ -13,8 +13,8 @@ COPY . .
 RUN corepack enable pnpm && pnpm add -g turbo
 RUN pnpm install
 
-EXPOSE 3002
+EXPOSE 3000
 
-ENV NEXT_PUBLIC_SPACE_BASE_PATH="/spaces"
+ENV VITE_SPACE_BASE_PATH="/spaces"
 
 CMD ["pnpm", "dev", "--filter=space"]

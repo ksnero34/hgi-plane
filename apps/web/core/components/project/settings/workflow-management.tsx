@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -8,7 +6,7 @@ import { Plus, Settings, Play, Pause, Trash2, Edit } from "lucide-react";
 import { Button, Loader } from "@plane/ui";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // types
-import { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
+import type { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
 // hooks
 import { useWorkflow } from "@/hooks/store/use-workflow";
 // components
@@ -20,14 +18,9 @@ export const WorkflowManagement = observer(() => {
   // router
   const { workspaceSlug, projectId } = useParams();
   // store hooks
-  const { 
-    getWorkflowTemplates,
-    fetchWorkflowTemplates,
-    activateWorkflow,
-    deactivateWorkflow,
-    deleteWorkflowTemplate
-  } = useWorkflow();
-  
+  const { getWorkflowTemplates, fetchWorkflowTemplates, activateWorkflow, deactivateWorkflow, deleteWorkflowTemplate } =
+    useWorkflow();
+
   // local state
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,14 +32,13 @@ export const WorkflowManagement = observer(() => {
 
   useEffect(() => {
     if (workspaceSlug && projectId) {
-      fetchWorkflowTemplates(workspaceSlug as string, projectId as string)
-        .finally(() => setIsLoading(false));
+      fetchWorkflowTemplates(workspaceSlug as string, projectId as string).finally(() => setIsLoading(false));
     }
   }, [workspaceSlug, projectId, fetchWorkflowTemplates]);
 
   const handleActivateWorkflow = async (workflowId: string) => {
     if (!workspaceSlug || !projectId) return;
-    
+
     try {
       await activateWorkflow(workspaceSlug as string, projectId as string, workflowId);
       setToast({
@@ -63,7 +55,7 @@ export const WorkflowManagement = observer(() => {
 
   const handleDeactivateWorkflow = async (workflowId: string) => {
     if (!workspaceSlug || !projectId) return;
-    
+
     try {
       await deactivateWorkflow(workspaceSlug as string, projectId as string, workflowId);
       setToast({
@@ -80,9 +72,9 @@ export const WorkflowManagement = observer(() => {
 
   const handleDeleteWorkflow = async (workflowId: string) => {
     if (!workspaceSlug || !projectId) return;
-    
+
     if (!confirm("정말로 이 워크플로우를 삭제하시겠습니까?")) return;
-    
+
     try {
       await deleteWorkflowTemplate(workspaceSlug as string, projectId as string, workflowId);
       setToast({
@@ -121,13 +113,10 @@ export const WorkflowManagement = observer(() => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium text-custom-text-100">워크플로우 템플릿</h3>
-          <p className="mt-1 text-sm text-custom-text-200">
-            이슈의 상태 전환을 체계적으로 관리하세요.
-          </p>
+          <p className="mt-1 text-sm text-custom-text-200">이슈의 상태 전환을 체계적으로 관리하세요.</p>
         </div>
         <Button variant="primary" onClick={handleCreateWorkflow} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          새 워크플로우
+          <Plus className="h-4 w-4" />새 워크플로우
         </Button>
       </div>
 
@@ -139,9 +128,7 @@ export const WorkflowManagement = observer(() => {
               <Settings className="h-6 w-6 text-custom-text-200" />
             </div>
             <h3 className="mt-4 text-sm font-medium text-custom-text-100">워크플로우가 없습니다</h3>
-            <p className="mt-2 text-sm text-custom-text-200">
-              첫 번째 워크플로우를 생성하여 이슈 관리를 시작하세요.
-            </p>
+            <p className="mt-2 text-sm text-custom-text-200">첫 번째 워크플로우를 생성하여 이슈 관리를 시작하세요.</p>
             <div className="mt-6">
               <Button variant="primary" onClick={handleCreateWorkflow} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
@@ -155,16 +142,11 @@ export const WorkflowManagement = observer(() => {
               {/* Workflow Header */}
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center space-x-3">
-                  <button 
-                    onClick={() => toggleWorkflowExpanded(workflow.id)}
-                    className="flex items-center space-x-3"
-                  >
-                    <div className={`h-3 w-3 rounded-full ${workflow.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  <button onClick={() => toggleWorkflowExpanded(workflow.id)} className="flex items-center space-x-3">
+                    <div className={`h-3 w-3 rounded-full ${workflow.is_active ? "bg-green-500" : "bg-gray-400"}`} />
                     <div>
                       <h4 className="text-sm font-medium text-custom-text-100">{workflow.name}</h4>
-                      {workflow.description && (
-                        <p className="text-sm text-custom-text-200">{workflow.description}</p>
-                      )}
+                      {workflow.description && <p className="text-sm text-custom-text-200">{workflow.description}</p>}
                     </div>
                   </button>
                   {workflow.is_default && (
@@ -173,43 +155,27 @@ export const WorkflowManagement = observer(() => {
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-custom-text-200">
                     {workflow.total_states || 0}개 상태, {workflow.total_transitions || 0}개 전환
                   </span>
-                  
-                  <Button
-                    variant="neutral-primary"
-                    size="sm"
-                    onClick={() => handleEditWorkflow(workflow)}
-                  >
+
+                  <Button variant="neutral-primary" size="sm" onClick={() => handleEditWorkflow(workflow)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  
+
                   {workflow.is_active ? (
-                    <Button
-                      variant="neutral-primary"
-                      size="sm"
-                      onClick={() => handleDeactivateWorkflow(workflow.id)}
-                    >
+                    <Button variant="neutral-primary" size="sm" onClick={() => handleDeactivateWorkflow(workflow.id)}>
                       <Pause className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button
-                      variant="neutral-primary"
-                      size="sm"
-                      onClick={() => handleActivateWorkflow(workflow.id)}
-                    >
+                    <Button variant="neutral-primary" size="sm" onClick={() => handleActivateWorkflow(workflow.id)}>
                       <Play className="h-4 w-4" />
                     </Button>
                   )}
-                  
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDeleteWorkflow(workflow.id)}
-                  >
+
+                  <Button variant="danger" size="sm" onClick={() => handleDeleteWorkflow(workflow.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

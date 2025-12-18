@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { InstanceService } from "@plane/services";
-import { IFileSettings } from "@plane/types";
+import type { IFileSettings } from "@plane/types";
 import { API_BASE_URL } from "@plane/constants";
 
 export const useFileSettings = () => {
@@ -22,19 +22,22 @@ export const useFileSettings = () => {
     }
   }, [instanceService]);
 
-  const updateSettings = useCallback(async (data: Partial<IFileSettings>) => {
-    try {
-      setIsLoading(true);
-      const updatedSettings = await instanceService.updateFileSettings(data);
-      setSettings(updatedSettings);
-      return updatedSettings;
-    } catch (error) {
-      console.error("Error updating file settings:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [instanceService]);
+  const updateSettings = useCallback(
+    async (data: Partial<IFileSettings>) => {
+      try {
+        setIsLoading(true);
+        const updatedSettings = await instanceService.updateFileSettings(data);
+        setSettings(updatedSettings);
+        return updatedSettings;
+      } catch (error) {
+        console.error("Error updating file settings:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [instanceService]
+  );
 
   return {
     settings,
@@ -42,4 +45,4 @@ export const useFileSettings = () => {
     fetchSettings,
     updateSettings,
   };
-}; 
+};

@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 import { EPillVariant, Pill, EPillSize } from "@plane/propel/pill";
 import { ToggleSwitch } from "@plane/ui";
+import { joinUrlPath } from "@plane/utils";
 import type { TProperties } from "@/plane-web/constants/project/settings/features";
 
 type Props = {
@@ -14,10 +15,10 @@ type Props = {
   disabled?: boolean;
 };
 
-export const ProjectFeatureToggle = (props: Props) => {
+export function ProjectFeatureToggle(props: Props) {
   const { workspaceSlug, projectId, featureItem, value, handleSubmit, disabled } = props;
   return featureItem.href ? (
-    <Link href={`/${workspaceSlug}/settings/projects/${projectId}/features/${featureItem.href}`}>
+    <Link href={joinUrlPath(workspaceSlug, "settings", "projects", projectId, "features", featureItem.href)}>
       <div className="flex items-center gap-2">
         <Pill
           variant={value ? EPillVariant.PRIMARY : EPillVariant.DEFAULT}
@@ -38,4 +39,4 @@ export const ProjectFeatureToggle = (props: Props) => {
       data-ph-element={PROJECT_TRACKER_ELEMENTS.TOGGLE_FEATURE}
     />
   );
-};
+}

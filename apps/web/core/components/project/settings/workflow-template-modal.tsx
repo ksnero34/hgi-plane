@@ -1,14 +1,12 @@
-"use client";
-
 import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 // ui
-import { Button, Input, ModalCore, EModalPosition, EModalWidth, TextArea, ToggleSwitch} from "@plane/ui";
+import { Button, Input, ModalCore, EModalPosition, EModalWidth, TextArea, ToggleSwitch } from "@plane/ui";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // types
-import { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
+import type { IWorkflowTemplate, IWorkflowTemplateFormData } from "@plane/types";
 // hooks
 import { useWorkflow } from "@/hooks/store/use-workflow";
 
@@ -23,7 +21,7 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
   const { workspaceSlug, projectId } = useParams();
   // store hooks
   const { createWorkflowTemplate, updateWorkflowTemplate, applyWorkflowToAllIssues } = useWorkflow();
-  
+
   // form
   const {
     control,
@@ -62,22 +60,13 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
 
     try {
       if (workflow) {
-        await updateWorkflowTemplate(
-          workspaceSlug as string,
-          projectId as string,
-          workflow.id,
-          data
-        );
+        await updateWorkflowTemplate(workspaceSlug as string, projectId as string, workflow.id, data);
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "워크플로우가 수정되었습니다.",
         });
       } else {
-        await createWorkflowTemplate(
-          workspaceSlug as string,
-          projectId as string,
-          data
-        );
+        await createWorkflowTemplate(workspaceSlug as string, projectId as string, data);
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "워크플로우가 생성되었습니다.",
@@ -100,12 +89,8 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
     }
 
     try {
-      const result = await applyWorkflowToAllIssues(
-        workspaceSlug as string,
-        projectId as string,
-        workflow.id
-      );
-      
+      const result = await applyWorkflowToAllIssues(workspaceSlug as string, projectId as string, workflow.id);
+
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "워크플로우 적용 완료",
@@ -121,17 +106,10 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
   };
 
   return (
-    <ModalCore
-      isOpen={isOpen}
-      handleClose={onClose}
-      position={EModalPosition.CENTER}
-      width={EModalWidth.XXL}
-    >
+    <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XXL}>
       <div className="p-5">
         <div className="mb-5">
-          <h3 className="text-lg font-medium text-custom-text-100">
-            {workflow ? "워크플로우 수정" : "새 워크플로우"}
-          </h3>
+          <h3 className="text-lg font-medium text-custom-text-100">{workflow ? "워크플로우 수정" : "새 워크플로우"}</h3>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -146,16 +124,10 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
                 control={control}
                 rules={{ required: "워크플로우 이름을 입력해주세요" }}
                 render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="워크플로우 이름을 입력하세요"
-                    hasError={!!errors.name}
-                  />
+                  <Input {...field} placeholder="워크플로우 이름을 입력하세요" hasError={!!errors.name} />
                 )}
               />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
             </div>
 
             {/* Description */}
@@ -214,9 +186,7 @@ export const WorkflowTemplateModal = observer(({ isOpen, onClose, workflow }: Pr
                 <div className="rounded-lg bg-yellow-50 p-4">
                   <div className="flex items-start">
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-yellow-800">
-                        모든 이슈에 워크플로우 적용
-                      </h4>
+                      <h4 className="text-sm font-medium text-yellow-800">모든 이슈에 워크플로우 적용</h4>
                       <p className="mt-1 text-sm text-yellow-700">
                         프로젝트의 모든 기존 이슈에 이 워크플로우를 적용합니다. 이 작업은 되돌릴 수 없습니다.
                       </p>

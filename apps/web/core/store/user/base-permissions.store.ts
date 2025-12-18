@@ -32,7 +32,10 @@ export interface IBaseUserPermissionStore {
   workspaceInfoBySlug: (workspaceSlug: string) => IWorkspaceMemberMe | undefined;
   getWorkspaceRoleByWorkspaceSlug: (workspaceSlug: string) => TUserPermissions | EUserWorkspaceRoles | undefined;
   getProjectRolesByWorkspaceSlug: (workspaceSlug: string) => IUserProjectsRole;
-  getProjectRoleByWorkspaceSlugAndProjectId: (workspaceSlug: string, projectId: string) => EUserPermissions | undefined;
+  getProjectRoleByWorkspaceSlugAndProjectId: (
+    workspaceSlug: string,
+    projectId?: string
+  ) => EUserPermissions | undefined;
   allowPermissions: (
     allowPermissions: ETempUserRole[],
     level: TUserPermissionsLevel,
@@ -123,7 +126,7 @@ export abstract class BaseUserPermissionStore implements IBaseUserPermissionStor
    * @param { string } projectId
    * @returns { EUserPermissions | undefined }
    */
-  protected getProjectRole = computedFn((workspaceSlug: string, projectId: string): EUserPermissions | undefined => {
+  protected getProjectRole = computedFn((workspaceSlug: string, projectId?: string): EUserPermissions | undefined => {
     if (!workspaceSlug || !projectId) return undefined;
     const projectRole = this.workspaceProjectsPermissions?.[workspaceSlug]?.[projectId];
     if (!projectRole) return undefined;
@@ -156,7 +159,7 @@ export abstract class BaseUserPermissionStore implements IBaseUserPermissionStor
    */
   abstract getProjectRoleByWorkspaceSlugAndProjectId: (
     workspaceSlug: string,
-    projectId: string
+    projectId?: string
   ) => EUserPermissions | undefined;
 
   /**
@@ -363,7 +366,7 @@ export abstract class BaseUserPermissionStore implements IBaseUserPermissionStor
       workspaceSlug,
       projectId
     );
-    
+
     if (hasFullViewAccess) return true;
 
     // 2. Restricted는 자신에게 할당된 이슈만 조회 가능
@@ -397,7 +400,7 @@ export abstract class BaseUserPermissionStore implements IBaseUserPermissionStor
       workspaceSlug,
       projectId
     );
-    
+
     if (hasFullEditAccess) return true;
 
     // 2. Viewer/Restricted는 자신에게 할당된 이슈만 수정 가능

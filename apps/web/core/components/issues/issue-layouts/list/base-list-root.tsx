@@ -43,7 +43,7 @@ interface IBaseListRoot {
   isCompletedCycle?: boolean;
   isEpic?: boolean;
 }
-export const BaseListRoot = observer((props: IBaseListRoot) => {
+export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot) {
   const {
     QuickActions,
     viewId,
@@ -96,18 +96,26 @@ export const BaseListRoot = observer((props: IBaseListRoot) => {
     const userPerPage = displayFilters?.per_page;
 
     // 사용자 지정 값이 없을 때만 하이퍼 모드에 따른 기본값 사용
-    const defaultPerPage = canUseLocalDB ?
-      (group_by ? 500 : 500) : // 하이퍼 모드일 때
-      (group_by ? 100 : 100);    // 일반 모드일 때
+    const defaultPerPage = canUseLocalDB
+      ? group_by
+        ? 500
+        : 500 // 하이퍼 모드일 때
+      : group_by
+        ? 100
+        : 100; // 일반 모드일 때
 
     // 사용자 지정 값이 있으면 그것을 우선 사용, 없으면 기본값 사용
     const finalPerPage = userPerPage || defaultPerPage;
 
-    fetchIssues("init-loader", {
-      canGroup: true,
-      perPageCount: finalPerPage,
-      perPageFromDisplayFilter: finalPerPage // 동일한 값으로 설정하여 일관성 유지
-    }, viewId);
+    fetchIssues(
+      "init-loader",
+      {
+        canGroup: true,
+        perPageCount: finalPerPage,
+        perPageFromDisplayFilter: finalPerPage, // 동일한 값으로 설정하여 일관성 유지
+      },
+      viewId
+    );
   }, [fetchIssues, storeType, group_by, viewId, displayFilters?.per_page]);
 
   const groupedIssueIds = issues?.groupedIssueIds as TGroupedIssues | undefined;

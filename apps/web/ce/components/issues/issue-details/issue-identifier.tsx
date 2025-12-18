@@ -37,7 +37,7 @@ type TIssueTypeIdentifier = {
   size?: "xs" | "sm" | "md" | "lg";
 };
 
-export const IssueTypeIdentifier: FC<TIssueTypeIdentifier> = observer((props) => {
+export const IssueTypeIdentifier = observer((props: TIssueTypeIdentifier) => {
   const { issueId, size = "sm" } = props;
   const {
     issue: { getIssueById },
@@ -47,7 +47,7 @@ export const IssueTypeIdentifier: FC<TIssueTypeIdentifier> = observer((props) =>
   const projectId = issue?.project_id;
   const { issueTypes, getDefaultIssueType } = useIssueType(projectId || "");
 
-  let issueType = issueTypes.find(it => it.id === issue?.type_id);
+  let issueType = issueTypes.find((it) => it.id === issue?.type_id);
 
   // 이슈에 type_id가 없거나 매치되지 않으면 기본 이슈 타입 사용
   if (!issueType && !issue?.type_id) {
@@ -80,7 +80,7 @@ type TIdentifierTextProps = {
   textContainerClassName?: string;
 };
 
-export const IdentifierText: React.FC<TIdentifierTextProps> = (props) => {
+export function IdentifierText(props: TIdentifierTextProps) {
   const { identifier, enableClickToCopyIdentifier = false, textContainerClassName } = props;
   // handlers
   const handleCopyIssueIdentifier = () => {
@@ -110,9 +110,9 @@ export const IdentifierText: React.FC<TIdentifierTextProps> = (props) => {
       </span>
     </Tooltip>
   );
-};
+}
 
-export const IssueIdentifier: React.FC<TIssueIdentifierProps> = observer((props) => {
+export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueIdentifierProps) {
   const { projectId, textContainerClassName, displayProperties, enableClickToCopyIdentifier = false } = props;
   // store hooks
   const { getProjectIdentifierById } = useProject();
@@ -123,7 +123,7 @@ export const IssueIdentifier: React.FC<TIssueIdentifierProps> = observer((props)
   const isUsingStoreData = "issueId" in props;
   // derived values
   const issue = isUsingStoreData ? getIssueById(props.issueId) : null;
-  const issueTypeId = isUsingStoreData ? issue?.type_id : ("issueTypeId" in props ? props.issueTypeId : null);
+  const issueTypeId = isUsingStoreData ? issue?.type_id : "issueTypeId" in props ? props.issueTypeId : null;
   const projectIdentifier = isUsingStoreData ? getProjectIdentifierById(projectId) : props.projectIdentifier;
   const issueSequenceId = isUsingStoreData ? issue?.sequence_id : props.issueSequenceId;
   const shouldRenderIssueID = displayProperties ? displayProperties.key : true;
@@ -141,10 +141,8 @@ export const IssueIdentifier: React.FC<TIssueIdentifierProps> = observer((props)
   if (!shouldRenderIssueID && !shouldRenderIssueType) return null;
 
   return (
-    <div className="flex items-center gap-1">
-      {shouldRenderIssueType && isUsingStoreData && (
-        <IssueTypeIdentifier issueId={props.issueId} size={props.size} />
-      )}
+    <div className="shrink-0 flex items-center space-x-2">
+      {shouldRenderIssueType && isUsingStoreData && <IssueTypeIdentifier issueId={props.issueId} size={props.size} />}
       {shouldRenderIssueID && (
         <IdentifierText
           identifier={`${projectIdentifier}-${issueSequenceId}`}

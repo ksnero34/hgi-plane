@@ -48,8 +48,6 @@ export const EmojiExtension = Emoji.extend({
           const emojiItem = shortcodeToEmoji(node.attrs.name, extensionOptions.emojis);
           if (emojiItem?.emoji) {
             state.write(emojiItem?.emoji);
-          } else if (emojiItem?.fallbackImage) {
-            state.write(`\n![${emojiItem.name}-${emojiItem.shortcodes[0]}](${emojiItem?.fallbackImage})\n`);
           } else {
             state.write(`:${node.attrs.name}:`);
           }

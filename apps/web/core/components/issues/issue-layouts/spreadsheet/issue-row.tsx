@@ -1,13 +1,12 @@
-"use client";
-
 import type { Dispatch, MouseEvent, MutableRefObject, SetStateAction } from "react";
 import { useRef, useState, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { SPREADSHEET_SELECT_GROUP } from "@plane/constants";
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
+import { ChevronRightIcon } from "@plane/propel/icons";
 // types
 import { Tooltip } from "@plane/propel/tooltip";
 import type { IIssueDisplayProperties, TIssue, TCustomField } from "@plane/types";
@@ -57,7 +56,7 @@ interface Props {
   customFields?: TCustomField[];
 }
 
-export const SpreadsheetIssueRow = observer((props: Props) => {
+export const SpreadsheetIssueRow = observer(function SpreadsheetIssueRow(props: Props) {
   const {
     displayProperties,
     issueId,
@@ -173,7 +172,7 @@ interface IssueRowDetailsProps {
   customFields?: TCustomField[];
 }
 
-const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
+const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetailsProps) {
   const {
     displayProperties,
     issueId,
@@ -252,11 +251,6 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
 
   const canSelectIssues = !disableUserActions && !selectionHelpers.isSelectionDisabled;
 
-  //TODO: add better logic. This is to have a min width for ID/Key based on the length of project identifier
-  const keyMinWidth = displayProperties?.key
-    ? (getProjectIdentifierById(issueDetail.project_id)?.length ?? 0 + 5) * 7
-    : 0;
-
   const workItemLink = generateWorkItemLink({
     workspaceSlug: workspaceSlug?.toString(),
     projectId: issueDetail?.project_id,
@@ -268,14 +262,18 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
 
   // 커스텀 필드 맵 생성
   const customFieldsMap = useMemo(() => {
-    return customFields.reduce((acc, field) => {
-      acc[`custom_field_${field.id}`] = field;
-      return acc;
-    }, {} as Record<string, TCustomField>);
+    return customFields.reduce(
+      (acc, field) => {
+        acc[`custom_field_${field.id}`] = field;
+        return acc;
+      },
+      {} as Record<string, TCustomField>
+    );
   }, [customFields]);
 
   return (
     <>
+      {/* Single sticky column containing both identifier and workitem */}
       <td
         id={`issue-${issueId}`}
         ref={cellRef}
@@ -299,7 +297,29 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
               }
             )}
           >
-            <div className="flex items-center gap-0.5 min-w-min py-2">
+            {/* Identifier section - conditionally rendered */}
+            {displayProperties?.key && (
+              <div className="flex-shrink-0 flex items-center h-full min-w-24">
+                <div className="relative flex cursor-pointer items-center text-xs hover:text-custom-text-100">
+                  {issueDetail.project_id && (
+                    <IssueIdentifier
+                      issueId={issueDetail.id}
+                      projectId={issueDetail.project_id}
+                      textContainerClassName="text-sm md:text-xs text-custom-text-300"
+                      displayProperties={displayProperties}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Workitem section */}
+            <div
+              className={cn("flex items-center gap-0.5 py-2 flex-grow", {
+                "min-w-[360px]": !displayProperties?.key,
+                "min-w-60": displayProperties?.key,
+              })}
+            >
               {/* select checkbox */}
               {projectId && canSelectIssues && (
                 <Tooltip
@@ -332,21 +352,6 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
               {/* sub issues indentation */}
               {nestingLevel !== 0 && <div style={{ width: subIssueIndentation }} />}
 
-              {(displayProperties?.key || displayProperties?.issue_type) && (
-                <div className="relative flex cursor-pointer items-center text-center text-xs hover:text-custom-text-100">
-                  <p className={`flex font-medium leading-7`} style={{ minWidth: `${keyMinWidth}px` }}>
-                    {issueDetail.project_id && (
-                      <IssueIdentifier
-                        issueId={issueDetail.id}
-                        projectId={issueDetail.project_id}
-                        textContainerClassName="text-sm md:text-xs text-custom-text-300"
-                        displayProperties={displayProperties}
-                      />
-                    )}
-                  </p>
-                </div>
-              )}
-
               {/* sub-issues chevron */}
               <div className="grid place-items-center size-4">
                 {subIssuesCount > 0 && !isEpic && (
@@ -355,7 +360,7 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
                     className="grid place-items-center size-4 rounded-sm text-custom-text-400 hover:text-custom-text-300"
                     onClick={handleToggleExpand}
                   >
-                    <ChevronRight
+                    <ChevronRightIcon
                       className={cn("size-4", {
                         "rotate-90": isExpanded,
                       })}
@@ -364,31 +369,31 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
                   </button>
                 )}
               </div>
-            </div>
 
-            <div className="flex items-center gap-2 justify-between h-full w-full truncate my-auto">
-              <div className="w-full line-clamp-1 text-sm text-custom-text-100">
-                <div className="w-full overflow-hidden">
-                  <Tooltip tooltipContent={issueDetail.name} isMobile={isMobile}>
-                    <div
-                      className="h-full w-full cursor-pointer truncate pr-4 text-left text-[0.825rem] text-custom-text-100 focus:outline-none"
-                      tabIndex={-1}
-                    >
-                      {issueDetail.name}
-                    </div>
-                  </Tooltip>
+              <div className="flex items-center gap-2 justify-between h-full w-full truncate my-auto">
+                <div className="w-full line-clamp-1 text-sm text-custom-text-100">
+                  <div className="w-full overflow-hidden">
+                    <Tooltip tooltipContent={issueDetail.name} isMobile={isMobile}>
+                      <div
+                        className="h-full w-full cursor-pointer truncate pr-4 text-left text-[0.825rem] text-custom-text-100 focus:outline-none"
+                        tabIndex={-1}
+                      >
+                        {issueDetail.name}
+                      </div>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
-              <div
-                className={`hidden group-hover:block ${isMenuActive ? "!block" : ""}`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {quickActions({
-                  issue: issueDetail,
-                  parentRef: cellRef,
-                  customActionButton,
-                  portalElement: portalElement.current,
-                })}
+                <div
+                  className={`opacity-0 group-hover:opacity-100 transition-opacity ${isMenuActive ? "!opacity-100" : ""}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {quickActions({
+                    issue: issueDetail,
+                    parentRef: cellRef,
+                    customActionButton,
+                    portalElement: portalElement.current,
+                  })}
+                </div>
               </div>
             </div>
           </Row>
@@ -397,7 +402,7 @@ const IssueRowDetails = observer((props: IssueRowDetailsProps) => {
       {/* Rest of the columns */}
       {spreadsheetColumnsList.map((property) => {
         // 커스텀 필드인지 확인
-        if (property.toString().startsWith('custom_field_')) {
+        if (property.toString().startsWith("custom_field_")) {
           const customField = customFieldsMap[property.toString()];
           if (!customField) return null;
 

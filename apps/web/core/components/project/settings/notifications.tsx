@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -36,12 +34,9 @@ export const ProjectNotificationSettings = observer(() => {
     // 초기 데이터 로드
     const fetchMattermostConfig = async () => {
       try {
-        const response = await fetch(
-          `/api/workspaces/${workspaceSlug}/projects/${projectId}/mattermost-config/`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/mattermost-config/`, {
+          credentials: "include",
+        });
         if (response.ok) {
           const data = await response.json();
           setFormData(data);
@@ -71,19 +66,16 @@ export const ProjectNotificationSettings = observer(() => {
     try {
       // CSRF 토큰 가져오기
       const csrfToken = await getCSRFToken();
-      
-      const response = await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/mattermost-config/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          credentials: "include",
-          body: JSON.stringify(formData),
-        }
-      );
+
+      const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/mattermost-config/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
 
       if (response.ok) {
         setToast({
@@ -118,9 +110,7 @@ export const ProjectNotificationSettings = observer(() => {
           <input
             type="checkbox"
             checked={formData.is_enabled}
-            onChange={(e) =>
-              setFormData({ ...formData, is_enabled: e.target.checked })
-            }
+            onChange={(e) => setFormData({ ...formData, is_enabled: e.target.checked })}
             id="enable-mattermost"
           />
           <label htmlFor="enable-mattermost" className="text-sm">
@@ -135,9 +125,7 @@ export const ProjectNotificationSettings = observer(() => {
               <Input
                 type="url"
                 value={formData.server_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, server_url: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, server_url: e.target.value })}
                 placeholder="https://your-mattermost-instance.com"
                 className="mt-2"
                 required
@@ -152,15 +140,14 @@ export const ProjectNotificationSettings = observer(() => {
               <Input
                 type="password"
                 value={formData.bot_token}
-                onChange={(e) =>
-                  setFormData({ ...formData, bot_token: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, bot_token: e.target.value })}
                 placeholder="Mattermost 봇 계정의 액세스 토큰"
                 className="mt-2"
                 required
               />
               <p className="mt-1 text-xs text-custom-text-400">
-                Mattermost에서 생성한 봇 계정의 액세스 토큰을 입력하세요. 개별 사용자에게 DM으로 알림을 보내는데 사용됩니다.
+                Mattermost에서 생성한 봇 계정의 액세스 토큰을 입력하세요. 개별 사용자에게 DM으로 알림을 보내는데
+                사용됩니다.
               </p>
             </div>
           </div>

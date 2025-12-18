@@ -11,6 +11,7 @@ from .project import (
     ProjectEntityPermission,
     ProjectMemberPermission,
     ProjectLitePermission,
+    ProjectAdminPermission,
 )
 from .instance import InstanceAdminPermission
 from .base import allow_permission, ROLE

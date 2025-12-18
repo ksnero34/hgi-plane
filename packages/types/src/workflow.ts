@@ -1,4 +1,4 @@
-export interface IWorkflowTemplate {
+export type IWorkflowTemplate = {
   id: string;
   name: string;
   description?: string;
@@ -19,9 +19,9 @@ export interface IWorkflowTemplate {
   workflow_states?: IWorkflowState[];
   workflow_transitions?: IWorkflowTransition[];
   assignment_rules?: IWorkflowAssignmentRule[];
-}
+};
 
-export interface IWorkflowState {
+export type IWorkflowState = {
   id: string;
   workflow: string;
   state: string;
@@ -36,9 +36,9 @@ export interface IWorkflowState {
   conditions?: Record<string, any>;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface IWorkflowTransition {
+export type IWorkflowTransition = {
   id: string;
   workflow: string;
   from_state: string;
@@ -61,9 +61,9 @@ export interface IWorkflowTransition {
   reviewers?: IWorkflowTransitionReviewer[];
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface IWorkflowTransitionReviewer {
+export type IWorkflowTransitionReviewer = {
   id: string;
   transition: string;
   reviewer: string;
@@ -75,9 +75,9 @@ export interface IWorkflowTransitionReviewer {
     last_name: string;
   };
   created_at: string;
-}
+};
 
-export interface IWorkflowAssignmentRule {
+export type IWorkflowAssignmentRule = {
   id: string;
   workflow: string;
   condition_field: "label" | "assignee" | "priority" | "custom_field" | "issue_type";
@@ -86,9 +86,9 @@ export interface IWorkflowAssignmentRule {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface IWorkflowTransitionLog {
+export type IWorkflowTransitionLog = {
   id: string;
   issue: string;
   workflow: string;
@@ -126,50 +126,50 @@ export interface IWorkflowTransitionLog {
   comment?: string;
   metadata?: Record<string, any>;
   created_at: string;
-}
+};
 
-export interface IWorkflowValidation {
+export type IWorkflowValidation = {
   from_state_id: string;
   to_state_id: string;
   issue_id: string;
   comment?: string;
-}
+};
 
-export interface IWorkflowValidationResponse {
+export type IWorkflowValidationResponse = {
   allowed: boolean;
   reason?: string;
   requires_reviewer?: boolean;
   reviewers?: string[];
   transition_id?: string;
-}
+};
 
 // Form types for creating/updating workflows
-export interface IWorkflowTemplateFormData {
+export type IWorkflowTemplateFormData = {
   name: string;
   description?: string;
   is_active?: boolean;
   is_default?: boolean;
-}
+};
 
-export interface IWorkflowStateFormData {
+export type IWorkflowStateFormData = {
   state: string;
   sequence: number;
   allow_new_issues?: boolean;
   conditions?: Record<string, any>;
-}
+};
 
-export interface IWorkflowTransitionFormData {
+export type IWorkflowTransitionFormData = {
   from_state: string;
   to_state: string;
   conditions?: Record<string, any>;
   actions?: Record<string, any>;
   require_reviewer?: boolean;
   reviewer_ids?: string[];
-}
+};
 
-export interface IWorkflowAssignmentRuleFormData {
+export type IWorkflowAssignmentRuleFormData = {
   condition_field: "label" | "assignee" | "priority" | "custom_field" | "issue_type";
   condition_value: any;
   priority?: number;
   is_active?: boolean;
-}
+};

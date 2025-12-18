@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC } from "react";
 import { useState } from "react";
 import { observer } from "mobx-react";
@@ -7,7 +5,6 @@ import { User, ChevronUp, ChevronDown } from "lucide-react";
 import type { IUser } from "@plane/types";
 import { Avatar, ToggleSwitch } from "@plane/ui";
 import { useUser } from "@/hooks/store";
-
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat("ko", { numeric: "auto" });
 
@@ -39,8 +36,8 @@ const formatRelativeTime = (value?: string | Date | null) => {
   return "-";
 };
 
-type TSortKey = 'display_name' | 'email' | 'date_joined' | 'last_active' | 'is_instance_admin';
-type TSortOrder = 'asc' | 'desc';
+type TSortKey = "display_name" | "email" | "date_joined" | "last_active" | "is_instance_admin";
+type TSortOrder = "asc" | "desc";
 
 export interface IMemberList {
   members: IUser[];
@@ -49,15 +46,15 @@ export interface IMemberList {
 
 export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }) => {
   const { currentUser } = useUser();
-  const [sortKey, setSortKey] = useState<TSortKey>('display_name');
-  const [sortOrder, setSortOrder] = useState<TSortOrder>('asc');
+  const [sortKey, setSortKey] = useState<TSortKey>("display_name");
+  const [sortOrder, setSortOrder] = useState<TSortOrder>("asc");
 
   const handleSort = (key: TSortKey) => {
     if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
@@ -68,19 +65,19 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
     let compareA: any = a[sortKey];
     let compareB: any = b[sortKey];
 
-    if (sortKey === 'date_joined' || sortKey === 'last_active') {
+    if (sortKey === "date_joined" || sortKey === "last_active") {
       compareA = new Date(compareA || 0).getTime();
       compareB = new Date(compareB || 0).getTime();
     }
 
-    if (compareA < compareB) return sortOrder === 'asc' ? -1 : 1;
-    if (compareA > compareB) return sortOrder === 'asc' ? 1 : -1;
+    if (compareA < compareB) return sortOrder === "asc" ? -1 : 1;
+    if (compareA > compareB) return sortOrder === "asc" ? 1 : -1;
     return 0;
   });
 
   const SortIcon = ({ currentKey }: { currentKey: TSortKey }) => {
     if (sortKey !== currentKey) return null;
-    return sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
+    return sortOrder === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
   };
 
   return (
@@ -90,7 +87,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
           <tr className="bg-custom-background-90">
             <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
-              onClick={() => handleSort('display_name')}
+              onClick={() => handleSort("display_name")}
             >
               <div className="flex items-center gap-x-2">
                 이름
@@ -99,7 +96,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
             </th>
             <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
-              onClick={() => handleSort('email')}
+              onClick={() => handleSort("email")}
             >
               <div className="flex items-center gap-x-2">
                 이메일
@@ -108,7 +105,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
             </th>
             <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
-              onClick={() => handleSort('date_joined')}
+              onClick={() => handleSort("date_joined")}
             >
               <div className="flex items-center gap-x-2">
                 가입일시
@@ -117,7 +114,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
             </th>
             <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
-              onClick={() => handleSort('last_active')}
+              onClick={() => handleSort("last_active")}
             >
               <div className="flex items-center gap-x-2">
                 최근 접속
@@ -126,7 +123,7 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
             </th>
             <th
               className="px-4 py-3 text-left text-xs font-medium text-custom-text-200 cursor-pointer"
-              onClick={() => handleSort('is_instance_admin')}
+              onClick={() => handleSort("is_instance_admin")}
             >
               <div className="flex items-center gap-x-2">
                 권한
@@ -138,35 +135,27 @@ export const MemberList: FC<IMemberList> = observer(({ members, onUpdateMember }
         <tbody className="divide-y divide-custom-border-200">
           <>
             {sortedMembers.map((member) => (
-              <tr
-                key={member.id}
-                className={`${member.id === currentUser?.id ? "bg-custom-background-80" : ""}`}
-              >
+              <tr key={member.id} className={`${member.id === currentUser?.id ? "bg-custom-background-80" : ""}`}>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center gap-x-3">
-                    <Avatar
-                      name={member.display_name}
-                      src={member.avatar_url || undefined}
-                      size={32}
-                      shape="square"
-                    />
+                    <Avatar name={member.display_name} src={member.avatar_url || undefined} size={32} shape="square" />
                     <span className="text-sm font-medium">{member.display_name}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-custom-text-200">
-                  {member.email}
-                </td>
-                <td className="px-4 py-3 text-sm text-custom-text-200">
-                  {formatRelativeTime(member.date_joined)}
-                </td>
+                <td className="px-4 py-3 text-sm text-custom-text-200">{member.email}</td>
+                <td className="px-4 py-3 text-sm text-custom-text-200">{formatRelativeTime(member.date_joined)}</td>
                 <td className="px-4 py-3 text-sm text-custom-text-200">
                   {member.last_active ? formatRelativeTime(member.last_active) : "-"}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-x-2">
-                      <User className={`h-4 w-4 ${member.is_instance_admin ? "text-custom-primary-100" : "text-custom-text-200"}`} />
-                      <span className={`text-sm ${member.is_instance_admin ? "text-custom-primary-100 font-medium" : "text-custom-text-200"}`}>
+                      <User
+                        className={`h-4 w-4 ${member.is_instance_admin ? "text-custom-primary-100" : "text-custom-text-200"}`}
+                      />
+                      <span
+                        className={`text-sm ${member.is_instance_admin ? "text-custom-primary-100 font-medium" : "text-custom-text-200"}`}
+                      >
                         {member.is_instance_admin ? "관리자" : "멤버"}
                       </span>
                     </div>

@@ -1,7 +1,7 @@
 import { observer } from "mobx-react";
 // icons
-import { X } from "lucide-react";
-import { DATE_AFTER_FILTER_OPTIONS,DATE_WITHIN_FILTER_OPTIONS } from "@plane/constants";
+import { DATE_AFTER_FILTER_OPTIONS, DATE_WITHIN_FILTER_OPTIONS } from "@plane/constants";
+import { CloseIcon } from "@plane/propel/icons";
 import { renderFormattedDate, capitalizeFirstLetter } from "@plane/utils";
 // helpers
 // constants
@@ -12,14 +12,15 @@ type Props = {
   values: string[];
 };
 
-export const AppliedDateFilters: React.FC<Props> = observer((props) => {
+export const AppliedDateFilters = observer(function AppliedDateFilters(props: Props) {
   const { editable, handleRemove, values } = props;
 
   const getDateLabel = (value: string): string => {
     let dateLabel = "";
 
-    const dateDetails = DATE_AFTER_FILTER_OPTIONS.find((d) => d.value === value) ||
-                       DATE_WITHIN_FILTER_OPTIONS.find((d) => d.value === value);
+    const dateDetails =
+      DATE_AFTER_FILTER_OPTIONS.find((d) => d.value === value) ||
+      DATE_WITHIN_FILTER_OPTIONS.find((d) => d.value === value);
 
     if (dateDetails) dateLabel = dateDetails.name;
     else {
@@ -46,7 +47,7 @@ export const AppliedDateFilters: React.FC<Props> = observer((props) => {
               className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
               onClick={() => handleRemove(date)}
             >
-              <X size={10} strokeWidth={2} />
+              <CloseIcon height={10} width={10} strokeWidth={2} />
             </button>
           )}
         </div>

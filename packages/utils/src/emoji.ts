@@ -1,5 +1,3 @@
-"use client";
-
 // plane imports
 import { RANDOM_EMOJI_CODES } from "@plane/constants";
 
@@ -15,9 +13,7 @@ const formatUnicodeSegment = (codePoint: number): string => {
 const getEmojiAssetBasePath = (): string => {
   if (typeof process !== "undefined") {
     const configured =
-      process.env.NEXT_PUBLIC_EMOJI_ASSET_PATH ||
-      process.env.EMOJI_ASSET_PATH ||
-      DEFAULT_EMOJI_ASSET_PATH;
+      process.env.NEXT_PUBLIC_EMOJI_ASSET_PATH || process.env.EMOJI_ASSET_PATH || DEFAULT_EMOJI_ASSET_PATH;
     return configured.endsWith("/") ? configured.slice(0, -1) : configured;
   }
   return DEFAULT_EMOJI_ASSET_PATH;
@@ -26,9 +22,7 @@ const getEmojiAssetBasePath = (): string => {
 const getEmojibaseDataBasePath = (): string => {
   if (typeof process !== "undefined") {
     const configured =
-      process.env.NEXT_PUBLIC_EMOJIBASE_DATA_PATH ||
-      process.env.EMOJIBASE_DATA_PATH ||
-      DEFAULT_EMOJIBASE_DATA_PATH;
+      process.env.NEXT_PUBLIC_EMOJIBASE_DATA_PATH || process.env.EMOJIBASE_DATA_PATH || DEFAULT_EMOJIBASE_DATA_PATH;
     return configured.endsWith("/") ? configured.slice(0, -1) : configured;
   }
   return DEFAULT_EMOJIBASE_DATA_PATH;
@@ -156,7 +150,8 @@ const buildEmojiImageUrl = (unicode: string): string => buildEmojiImageUrlCandid
 export const getEmojiImageUrlCandidatesFromDecimal = (emoji: string): string[] =>
   buildEmojiImageUrlCandidates(emojiCodeToUnicode(emoji));
 
-export const getEmojiImageUrlCandidatesFromUnicode = (unicode: string): string[] => buildEmojiImageUrlCandidates(unicode);
+export const getEmojiImageUrlCandidatesFromUnicode = (unicode: string): string[] =>
+  buildEmojiImageUrlCandidates(unicode);
 
 export const getEmojiImageUrlCandidatesFromEmoji = (emoji: string): string[] =>
   buildEmojiImageUrlCandidates(emojiStringToUnicode(emoji));

@@ -4,7 +4,7 @@ import { observer } from "mobx-react";
 import { useFormContext } from "react-hook-form";
 import { useMemo } from "react";
 import { Tag, CalendarCheck2, UserCircle2, Users, MessageSquare } from "lucide-react";
-import { TIssue, TCustomField } from "@plane/types";
+import type { TIssue, TCustomField } from "@plane/types";
 // components
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 // hooks
@@ -19,7 +19,7 @@ export type TWorkItemModalAdditionalPropertiesProps = {
   workspaceSlug: string;
 };
 
-export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditionalPropertiesProps> = observer((props) => {
+export const WorkItemModalAdditionalProperties = observer((props: TWorkItemModalAdditionalPropertiesProps) => {
   const { projectId, workItemId } = props;
 
   if (!projectId) return null;
@@ -34,7 +34,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
   // type_id에 해당하는 ProjectIssueType 찾기 (useMemo로 캐싱)
   const currentProjectIssueType = useMemo(() => {
     if (!issueTypes || !currentTypeId) return null;
-    return issueTypes.find(it => it.id === currentTypeId);
+    return issueTypes.find((it) => it.id === currentTypeId);
   }, [issueTypes, currentTypeId]);
 
   const getFieldIcon = (fieldType: string) => {
@@ -64,10 +64,12 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             <input
               type="text"
               value={value?.value || ""}
-              onChange={(e) => onChange({
-                custom_field_id: field.id,
-                value: e.target.value
-              })}
+              onChange={(e) =>
+                onChange({
+                  custom_field_id: field.id,
+                  value: e.target.value,
+                })
+              }
               placeholder={field.name}
               className="w-full px-2 py-0.5 text-sm bg-transparent border border-custom-border-200 rounded focus:outline-none focus:border-custom-primary-100 text-custom-text-200 placeholder:text-custom-text-400"
             />
@@ -80,10 +82,12 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
             <input
               type="number"
               value={value?.value || ""}
-              onChange={(e) => onChange({
-                custom_field_id: field.id,
-                value: e.target.value ? Number(e.target.value) : null
-              })}
+              onChange={(e) =>
+                onChange({
+                  custom_field_id: field.id,
+                  value: e.target.value ? Number(e.target.value) : null,
+                })
+              }
               placeholder={field.name}
               className="w-full px-2 py-0.5 text-sm bg-transparent border border-custom-border-200 rounded focus:outline-none focus:border-custom-primary-100 text-custom-text-200 placeholder:text-custom-text-400"
             />
@@ -94,10 +98,12 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
         return (
           <DateDropdown
             value={value?.value || null}
-            onChange={(date) => onChange({
-              custom_field_id: field.id,
-              value: date ? renderFormattedPayloadDate(date) : null
-            })}
+            onChange={(date) =>
+              onChange({
+                custom_field_id: field.id,
+                value: date ? renderFormattedPayloadDate(date) : null,
+              })
+            }
             placeholder="날짜 선택"
             buttonVariant="transparent-with-text"
             className="w-3/4 flex-grow group"
@@ -114,10 +120,12 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
           <CustomFieldDropdown
             field={field}
             value={value?.value || (field.field_type === "multiselect" ? [] : null)}
-            onChange={(val) => onChange({
-              custom_field_id: field.id,
-              value: val
-            })}
+            onChange={(val) =>
+              onChange({
+                custom_field_id: field.id,
+                value: val,
+              })
+            }
             buttonVariant="transparent-with-text"
             className="w-3/4 flex-grow group"
             buttonContainerClassName="w-full text-left"
@@ -138,7 +146,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
               const newValue = value?.value === memberId ? null : memberId;
               onChange({
                 custom_field_id: field.id,
-                value: newValue
+                value: newValue,
               });
             }}
             projectId={projectId}
@@ -159,10 +167,12 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
         return (
           <MemberDropdown
             value={value?.value || []}
-            onChange={(memberIds) => onChange({
-              custom_field_id: field.id,
-              value: memberIds
-            })}
+            onChange={(memberIds) =>
+              onChange({
+                custom_field_id: field.id,
+                value: memberIds,
+              })
+            }
             projectId={projectId}
             placeholder={`${field.name} 선택`}
             multiple
@@ -181,9 +191,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
         return (
           <div className="w-3/4 flex-grow">
             <div className="w-full h-full flex items-center gap-1.5 rounded px-2 py-0.5 text-sm justify-between cursor-not-allowed">
-              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">
-                지원하지 않는 필드 타입
-              </span>
+              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">지원하지 않는 필드 타입</span>
             </div>
           </div>
         );
@@ -193,7 +201,7 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
   // ProjectIssueType의 id(커스텀 필드의 issue_type)에 해당하는 커스텀 필드만 필터링 (useMemo로 캐싱)
   const filteredCustomFields = useMemo(() => {
     if (!currentProjectIssueType || !customFields) return [];
-    return customFields.filter(field => {
+    return customFields.filter((field) => {
       if (!field.issue_type) return false;
       // 커스텀 필드의 issue_type과 현재 선택된 ProjectIssueType의 id가 매칭되는지 확인
       return field.issue_type === currentProjectIssueType.id;
@@ -216,10 +224,8 @@ export const WorkItemModalAdditionalProperties: React.FC<TWorkItemModalAdditiona
                 <span>{field.name}</span>
                 {field.is_required && <span className="text-red-500 ml-1">*</span>}
               </div>
-              {renderFieldInput(
-                field,
-                watch(`custom_field_values.${field.id}` as any),
-                (value) => setValue(`custom_field_values.${field.id}` as any, value)
+              {renderFieldInput(field, watch(`custom_field_values.${field.id}` as any), (value) =>
+                setValue(`custom_field_values.${field.id}` as any, value)
               )}
             </div>
           );

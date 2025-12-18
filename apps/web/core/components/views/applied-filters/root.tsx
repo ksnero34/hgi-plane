@@ -3,6 +3,7 @@ import { observer } from "mobx-react";
 import { X } from "lucide-react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
+import { CloseIcon } from "@plane/propel/icons";
 import type { EViewAccess, TViewFilterProps, TCustomField } from "@plane/types";
 import { Tag } from "@plane/ui";
 import {
@@ -61,7 +62,7 @@ export const ViewAppliedFiltersList: React.FC<Props> = observer((props) => {
       owned_by: "소유자",
       favorites: "즐겨찾기",
       view_type: "접근 권한",
-      custom_fields: "커스텀 필드"
+      custom_fields: "커스텀 필드",
     };
 
     return filterLabels[key] || replaceUnderscoreIfSnakeCase(key);
@@ -162,7 +163,7 @@ export const ViewAppliedFiltersList: React.FC<Props> = observer((props) => {
         <button type="button" onClick={handleClearAllFilters}>
           <Tag>
             {t("common.clear_all")}
-            <X size={12} strokeWidth={2} />
+            <CloseIcon height={12} width={12} strokeWidth={2} />
           </Tag>
         </button>
       )}

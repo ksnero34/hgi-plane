@@ -68,7 +68,11 @@ export class WorkspaceService extends APIService {
       });
   }
 
-  async inviteWorkspace(workspaceSlug: string, data: IWorkspaceBulkInviteFormData, autoAccept: boolean = false): Promise<any> {
+  async inviteWorkspace(
+    workspaceSlug: string,
+    data: IWorkspaceBulkInviteFormData,
+    autoAccept: boolean = false
+  ): Promise<any> {
     return this.post(`/api/workspaces/${workspaceSlug}/invitations/`, { ...data, auto_accept: autoAccept })
       .then((response) => response?.data)
       .catch((error) => {
@@ -381,6 +385,17 @@ export class WorkspaceService extends APIService {
     data: Partial<IWorkspaceSidebarNavigationItem>
   ): Promise<IWorkspaceSidebarNavigationItem> {
     return this.patch(`/api/workspaces/${workspaceSlug}/sidebar-preferences/${key}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
+      });
+  }
+
+  async updateBulkSidebarPreferences(
+    workspaceSlug: string,
+    data: Array<{ key: string; is_pinned: boolean; sort_order: number }>
+  ): Promise<IWorkspaceSidebarNavigation> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/sidebar-preferences/`, data)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response;

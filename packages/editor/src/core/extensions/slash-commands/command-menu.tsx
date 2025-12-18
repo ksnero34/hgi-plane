@@ -8,14 +8,14 @@ import { DROPDOWN_NAVIGATION_KEYS, getNextValidIndex } from "@/helpers/tippy";
 // types
 import type { ISlashCommandItem } from "@/types";
 // components
-import { TSlashCommandSection } from "./command-items-list";
+import type { TSlashCommandSection } from "./command-items-list";
 import { CommandMenuItem } from "./command-menu-item";
 
 export type SlashCommandsMenuProps = SuggestionProps<TSlashCommandSection, ISlashCommandItem> & {
   onClose: () => void;
 };
 
-export const SlashCommandsMenu = forwardRef((props: SlashCommandsMenuProps, ref) => {
+export const SlashCommandsMenu = forwardRef(function SlashCommandsMenu(props: SlashCommandsMenuProps, ref) {
   const { items: sections, command, query, onClose } = props;
   // states
   const [selectedIndex, setSelectedIndex] = useState({
@@ -90,16 +90,16 @@ export const SlashCommandsMenu = forwardRef((props: SlashCommandsMenuProps, ref)
       // Check if item is visible within the container
       const containerRect = container.getBoundingClientRect();
       const itemRect = item.getBoundingClientRect();
-      
+
       const isItemAboveView = itemRect.top < containerRect.top;
       const isItemBelowView = itemRect.bottom > containerRect.bottom;
-      
+
       // Only scroll if the item is not fully visible
       if (isItemAboveView || isItemBelowView) {
         // Use scrollTop to manually control scrolling within the container only
         const scrollTop = item.offsetTop - container.offsetTop;
         const scrollBottom = scrollTop + item.offsetHeight - container.clientHeight;
-        
+
         if (isItemAboveView) {
           container.scrollTop = scrollTop;
         } else if (isItemBelowView) {

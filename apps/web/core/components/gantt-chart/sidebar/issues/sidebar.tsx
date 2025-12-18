@@ -1,10 +1,9 @@
-"use client";
-
 import type { RefObject } from "react";
 import { useState, useMemo } from "react";
 import { observer } from "mobx-react";
 // ui
 import type { IBlockUpdateData, TGroupedIssues, TIssueGroupByOptions, TIssueOrderByOptions } from "@plane/types";
+import { GANTT_TIMELINE_TYPE } from "@plane/types";
 import { Loader } from "@plane/ui";
 // components
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
@@ -16,7 +15,6 @@ import { useIssues } from "@/hooks/store/use-issues";
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
 // local imports
 import { useTimeLineChart } from "../../../../hooks/use-timeline-chart";
-import { ETimeLineTypeType } from "../../contexts";
 import { GanttDnDHOC } from "../gantt-dnd-HOC";
 import { handleOrderChange } from "../utils";
 import { IssuesSidebarBlock } from "./block";
@@ -40,7 +38,7 @@ type Props = {
   orderBy?: TIssueOrderByOptions;
 };
 
-export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
+export const IssueGanttSidebar = observer(function IssueGanttSidebar(props: Props) {
   const {
     blockUpdateHandler,
     blockIds,
@@ -59,7 +57,7 @@ export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
     orderBy,
   } = props;
 
-  const { getBlockById } = useTimeLineChart(ETimeLineTypeType.ISSUE);
+  const { getBlockById } = useTimeLineChart(GANTT_TIMELINE_TYPE.ISSUE);
 
   const {
     issues: { getIssueLoader },
@@ -109,7 +107,7 @@ export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
     if (!groups || !groupedIssueIds || !groupBy) return null;
 
     const result: Record<string, string[]> = {};
-    groups.forEach(group => {
+    groups.forEach((group) => {
       const groupIssueIds = groupedIssueIds[group.id] || [];
       result[group.id] = Array.isArray(groupIssueIds) ? groupIssueIds : [];
     });
@@ -174,7 +172,7 @@ export const IssueGanttSidebar: React.FC<Props> = observer((props) => {
                     <div className="sticky top-0 z-[1] bg-custom-background-90 border-b border-custom-border-200 px-2 py-1.5">
                       <div className="flex items-center gap-2">
                         {group.icon && <span className="flex-shrink-0">{group.icon}</span>}
-                        <h3 className="text-xs font-medium text-custom-text-300">{group.name}</h3>
+                        <h3 className="text-xs font-medium text-custom-text-300 truncate">{group.name}</h3>
                         <span className="text-xs text-custom-text-400">({groupIssueIds.length})</span>
                       </div>
                     </div>

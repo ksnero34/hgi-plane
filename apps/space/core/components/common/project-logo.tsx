@@ -8,7 +8,7 @@ type Props = {
   logo: TLogoProps;
 };
 
-export const ProjectLogo: React.FC<Props> = (props) => {
+export function ProjectLogo(props: Props) {
   const { className, logo } = props;
 
   if (logo.in_use === "icon" && logo.icon)
@@ -25,8 +25,7 @@ export const ProjectLogo: React.FC<Props> = (props) => {
 
   if (logo.in_use === "emoji" && logo.emoji) {
     const imageUrl = logo.emoji.url || getEmojiImageUrlFromDecimal(logo.emoji.value || "");
-    if (imageUrl)
-      return <img src={imageUrl} alt="" className={cn("h-4 w-4", className)} loading="lazy" />;
+    if (imageUrl) return <img src={imageUrl} alt="" className={cn("h-4 w-4", className)} loading="lazy" />;
 
     return (
       <span className={cn("text-base", className)}>
@@ -36,4 +35,4 @@ export const ProjectLogo: React.FC<Props> = (props) => {
   }
 
   return <span />;
-};
+}

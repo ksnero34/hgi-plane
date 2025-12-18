@@ -10,7 +10,7 @@ import packageJson from "package.json";
 // local components
 import { HGIPlanModal } from "./hgi-plane-modal";
 
-export const WorkspaceEditionBadge = observer(() => {
+export const WorkspaceEditionBadge = observer(function WorkspaceEditionBadge() {
   // states
   const [isHGIPlanModalOpen, setIsHGIPlanModalOpen] = useState(false);
   // translation
@@ -20,10 +20,7 @@ export const WorkspaceEditionBadge = observer(() => {
 
   return (
     <>
-      <HGIPlanModal
-        isOpen={isHGIPlanModalOpen}
-        handleClose={() => setIsHGIPlanModalOpen(false)}
-      />
+      <HGIPlanModal isOpen={isHGIPlanModalOpen} handleClose={() => setIsHGIPlanModalOpen(false)} />
       <Tooltip tooltipContent={`Version: v${packageJson.version}`} isMobile={isMobile}>
         <Button
           tabIndex={-1}

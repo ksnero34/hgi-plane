@@ -3,8 +3,6 @@ import { action, makeObservable, observable, runInAction, computed } from "mobx"
 // plane imports
 import { EUserPermissions, API_BASE_URL } from "@plane/constants";
 import type { IUser, TUserPermissions } from "@plane/types";
-// local
-import { persistence } from "@/local-db/storage.sqlite";
 // plane web imports
 import type { RootStore } from "@/plane-web/store/root.store";
 import type { IUserPermissionStore } from "@/plane-web/store/user/permission.store";
@@ -49,7 +47,6 @@ export interface IUserStore {
   reset: () => void;
   signOut: () => Promise<void>;
   // computed
-  localDBEnabled: boolean;
   canPerformAnyCreateAction: boolean;
   projectsWithCreatePermissions: { [projectId: string]: number } | null;
 }
@@ -101,8 +98,6 @@ export class UserStore implements IUserStore {
       // computed
       canPerformAnyCreateAction: computed,
       projectsWithCreatePermissions: computed,
-
-      localDBEnabled: computed,
     });
     this.currentUser = undefined;
   }
@@ -257,7 +252,6 @@ export class UserStore implements IUserStore {
    */
   signOut = async (): Promise<void> => {
     await this.authService.signOut(API_BASE_URL);
-    await persistence.clearStorage(true);
     this.store.resetOnSignOut();
   };
 
@@ -299,9 +293,5 @@ export class UserStore implements IUserStore {
   get canPerformAnyCreateAction() {
     const filteredProjects = this.fetchProjectsWithCreatePermissions();
     return filteredProjects ? Object.keys(filteredProjects).length > 0 : false;
-  }
-
-  get localDBEnabled() {
-    return this.userSettings.canUseLocalDB;
   }
 }

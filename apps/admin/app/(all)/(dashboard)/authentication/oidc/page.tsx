@@ -1,8 +1,5 @@
-"use client";
-
 import { useState } from "react";
 import { observer } from "mobx-react";
-import Image from "next/image";
 import useSWR from "swr";
 import { Loader, ToggleSwitch } from "@plane/ui";
 // components
@@ -12,7 +9,7 @@ import { setPromiseToast } from "@plane/propel/toast";
 // hooks
 import { useInstance } from "@/hooks/store";
 // icons
-import OIDCLogo from "@/public/logos/oidc-logo.svg";
+import OIDCLogo from "@/app/assets/logos/oidc-logo.svg?url";
 // local components
 import { InstanceOIDCConfigForm } from "./form";
 
@@ -65,7 +62,7 @@ const InstanceOIDCAuthenticationPage = observer(() => {
           <AuthenticationMethodCard
             name="OpenID Connect"
             description="OIDC를 사용하여 사용자가 안전하게 로그인하거나 가입할 수 있도록 허용합니다."
-            icon={<Image src={OIDCLogo} height={24} width={24} alt="OIDC Logo" />}
+            icon={<img src={OIDCLogo} height={24} width={24} alt="OIDC Logo" />}
             config={
               <ToggleSwitch
                 value={Boolean(parseInt(enableOIDCConfig))}

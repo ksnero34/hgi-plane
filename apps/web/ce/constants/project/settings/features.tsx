@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { Timer } from "lucide-react";
 // plane imports
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon } from "@plane/propel/icons";
 import type { IProject } from "@plane/types";
+import { Timer } from "lucide-react";
 
 export type TProperties = {
   key: string;
@@ -17,7 +17,6 @@ export type TProperties = {
 };
 
 type TProjectBaseFeatureKeys = "cycles" | "modules" | "views" | "pages" | "inbox";
-type TProjectOtherFeatureKeys = "is_time_tracking_enabled";
 
 type TBaseFeatureList = {
   [key in TProjectBaseFeatureKeys]: TProperties;
@@ -71,21 +70,21 @@ export const PROJECT_BASE_FEATURES_LIST: TBaseFeatureList = {
   },
 };
 
-type TOtherFeatureList = {
-  [key in TProjectOtherFeatureKeys]: TProperties;
-};
+// type TOtherFeatureList = {
+//   [key in TProjectOtherFeatureKeys]: TProperties;
+// };
 
-export const PROJECT_OTHER_FEATURES_LIST: TOtherFeatureList = {
-  is_time_tracking_enabled: {
-    key: "time_tracking",
-    property: "is_time_tracking_enabled",
-    title: "Time Tracking",
-    description: "Log time, see timesheets, and download full CSVs for your entire workspace.",
-    icon: <Timer className="h-5 w-5 flex-shrink-0 text-custom-text-300" />,
-    isPro: false,
-    isEnabled: true,
-  },
-};
+// export const PROJECT_OTHER_FEATURES_LIST: TOtherFeatureList = {
+//   is_time_tracking_enabled: {
+//     key: "time_tracking",
+//     property: "is_time_tracking_enabled",
+//     title: "Time Tracking",
+//     description: "Log time, see timesheets, and download full CSVs for your entire workspace.",
+//     icon: <Timer className="h-5 w-5 flex-shrink-0 text-custom-text-300" />,
+//     isPro: false,
+//     isEnabled: true,
+//   },
+// };
 
 type TProjectFeatures = {
   project_features: {
@@ -94,12 +93,6 @@ type TProjectFeatures = {
     description: string;
     featureList: TBaseFeatureList;
   };
-  // project_others: {
-  //   key: string;
-  //   title: string;
-  //   description: string;
-  //   featureList: TOtherFeatureList;
-  // };
 };
 
 export const PROJECT_FEATURES_LIST: TProjectFeatures = {
@@ -109,10 +102,4 @@ export const PROJECT_FEATURES_LIST: TProjectFeatures = {
     description: "Toggle these on or off this project.",
     featureList: PROJECT_BASE_FEATURES_LIST,
   },
-  // project_others: {
-  //   key: "work_management",
-  //   title: "Work management",
-  //   description: "Available only on some plans as indicated by the label next to the feature below.",
-  //   featureList: PROJECT_OTHER_FEATURES_LIST,
-  // },
 };

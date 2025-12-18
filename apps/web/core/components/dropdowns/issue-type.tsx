@@ -1,6 +1,5 @@
-"use client";
-
-import React, { ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
@@ -16,11 +15,11 @@ import { cn, getEmojiImageUrlFromDecimal } from "@plane/utils";
 import { useIssueType } from "@/hooks/store/use-issue-type";
 import { useDropdown } from "@/hooks/use-dropdown";
 // types
-import { IProjectIssueType } from "@plane/types";
+import type { IProjectIssueType } from "@plane/types";
 // components
 import { DropdownButton } from "@/components/dropdowns/buttons";
 import { BUTTON_VARIANTS_WITH_TEXT } from "@/components/dropdowns/constants";
-import { TDropdownProps } from "@/components/dropdowns/types";
+import type { TDropdownProps } from "@/components/dropdowns/types";
 
 export type TIssueTypeDropdownProps = TDropdownProps & {
   button?: ReactNode;
@@ -83,12 +82,7 @@ export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((pr
     ],
   });
   // dropdown init
-  const {
-    handleClose,
-    handleKeyDown,
-    handleOnClick,
-    searchInputKeyDown,
-  } = useDropdown({
+  const { handleClose, handleKeyDown, handleOnClick, searchInputKeyDown } = useDropdown({
     dropdownRef,
     inputRef,
     isOpen,
@@ -151,9 +145,9 @@ export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((pr
 
   const filteredOptions = useMemo(() => {
     if (!options) return [];
-    return query === "" 
-      ? options 
-      : options.filter(option => {
+    return query === ""
+      ? options
+      : options.filter((option) => {
           if (!option?.query) return false;
           return option.query.toLowerCase().includes(query.toLowerCase());
         });
@@ -161,7 +155,7 @@ export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((pr
 
   const selectedOption = useMemo(() => {
     if (!issueTypes || issueTypes.length === 0) return undefined;
-    
+
     // 선택된 값이 있으면 해당 이슈 타입 반환
     if (value) {
       const found = issueTypes.find((projectIssueType: IProjectIssueType) => {
@@ -169,17 +163,17 @@ export const IssueTypeDropdown: React.FC<TIssueTypeDropdownProps> = observer((pr
       });
       return found || undefined;
     }
-    
+
     // 선택된 값이 없으면 기본 이슈 타입 반환
     return getDefaultIssueType();
   }, [issueTypes, value, getDefaultIssueType]);
 
   const getIssueTypeIcon = (projectIssueType: IProjectIssueType | undefined) => {
     if (!projectIssueType) return null;
-    
+
     // 중첩된 데이터 구조 처리
     const issueType = projectIssueType.issue_type || projectIssueType;
-    
+
     if (issueType.logo_props?.emoji?.value) {
       const emojiNode = renderEmojiFromCode(issueType.logo_props.emoji.value);
       if (emojiNode) {

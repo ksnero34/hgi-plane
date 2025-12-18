@@ -1,21 +1,27 @@
 import { useCallback } from "react";
-import { useParams } from "next/navigation";
 // plane types
 import type { TSearchEntities } from "@plane/types";
 // helpers
-import { getBase64Image } from "@plane/utils";
+import { getBase64Image, getEditorAssetSrc } from "@plane/utils";
+import type { TCustomComponentsMetaData } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 // plane web hooks
 import { useAdditionalEditorMention } from "@/plane-web/hooks/use-additional-editor-mention";
 
-export const useParseEditorContent = () => {
-  // params
-  const { workspaceSlug } = useParams();
+type TArgs = {
+  projectId?: string;
+  workspaceSlug: string;
+};
+
+export const useParseEditorContent = (args: TArgs) => {
+  const { projectId, workspaceSlug } = args;
   // store hooks
   const { getUserDetails } = useMember();
   // parse additional content
-  const { parseAdditionalEditorContent } = useAdditionalEditorMention();
+  const { parseAdditionalEditorContent } = useAdditionalEditorMention({
+    enableAdvancedMentions: true,
+  });
 
   /**
    * @description function to replace all the custom components from the html component to make it pdf compatible
@@ -108,12 +114,12 @@ export const useParseEditorContent = () => {
 
           // 이미지 크기 조정 - PDF에서 너무 커지지 않도록 제한
           // 퍼센트 값이면 최대 50%로 제한
-          if (originalWidth.endsWith('%')) {
+          if (originalWidth.endsWith("%")) {
             const widthPercent = Math.min(parseInt(originalWidth), 50);
             img.style.width = `${widthPercent}%`;
           }
           // 픽셀 값이면 최대 500px로 제한
-          else if (originalWidth.endsWith('px')) {
+          else if (originalWidth.endsWith("px")) {
             const widthPx = Math.min(parseInt(originalWidth), 500);
             img.style.width = `${widthPx}px`;
           }
@@ -152,23 +158,23 @@ export const useParseEditorContent = () => {
             // 2. UUID 패턴 확인 (UUID만 있는 경우)
             else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(src)) {
               // URL에서 현재 경로 정보 추출
-              const path = window.location.pathname.split('/');
+              const path = window.location.pathname.split("/");
 
               // 워크스페이스 슬러그와 프로젝트 ID 추출
-              let workspaceSlug = '';
-              let projectId = '';
+              let workspaceSlug = "";
+              let projectId = "";
 
               // 페이지 URL에서 정보 추출
               for (let i = 0; i < path.length; i++) {
-                if ((path[i] === 'workspaces' || path[i] === 'workspace') && i+1 < path.length) {
-                  workspaceSlug = path[i+1];
+                if ((path[i] === "workspaces" || path[i] === "workspace") && i + 1 < path.length) {
+                  workspaceSlug = path[i + 1];
                 } else if (path[1] && !workspaceSlug) {
                   // 첫 번째 경로 세그먼트를 워크스페이스로 사용
                   workspaceSlug = path[1];
                 }
 
-                if (path[i] === 'projects' && i+1 < path.length) {
-                  projectId = path[i+1];
+                if (path[i] === "projects" && i + 1 < path.length) {
+                  projectId = path[i + 1];
                 }
               }
 
@@ -185,7 +191,7 @@ export const useParseEditorContent = () => {
             const response = await fetch(fetchUrl, {
               credentials: "include",
               mode: "cors",
-              redirect: "follow"
+              redirect: "follow",
             });
 
             if (!response.ok) {
@@ -208,7 +214,8 @@ export const useParseEditorContent = () => {
             if (img.style.whiteSpace) img.style.whiteSpace = "";
           } catch (error) {
             console.error("이미지 변환 실패:", src, error);
-            img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+            img.src =
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
           }
         })
       );
@@ -252,7 +259,8 @@ export const useParseEditorContent = () => {
       const fileComponents = doc.querySelectorAll("file-component, div[data-file-component='true']");
       fileComponents.forEach((component) => {
         // 파일 정보 추출
-        const fileName = component.getAttribute("fileName") || component.getAttribute("data-file-name") || "Unknown file";
+        const fileName =
+          component.getAttribute("fileName") || component.getAttribute("data-file-name") || "Unknown file";
         const fileSize = Number(component.getAttribute("fileSize") || component.getAttribute("data-file-size") || "0");
         const fileType = component.getAttribute("fileType") || component.getAttribute("data-file-type") || "";
 
@@ -260,11 +268,11 @@ export const useParseEditorContent = () => {
         const extension = fileName?.split(".").pop()?.toUpperCase() || "";
 
         // 파일 크기 포맷팅
-        const formattedSize = fileSize ? (
-          fileSize >= 1024 * 1024
+        const formattedSize = fileSize
+          ? fileSize >= 1024 * 1024
             ? `${(fileSize / (1024 * 1024)).toFixed(1)}MB`
             : `${Math.round(fileSize / 1024)}KB`
-        ) : "";
+          : "";
 
         // 파일 유형에 따른 아이콘 문자 결정
         let iconChar = extension.charAt(0) || "F";
@@ -460,7 +468,7 @@ export const useParseEditorContent = () => {
       // remove null colors from table elements
       serializedDoc = serializedDoc.replace(/background-color: null/g, "").replace(/color: null/g, "");
       // 문서 전체에 Helvetica 폰트 적용 및 페이지 너비 문제 해결
-      const bodyStyle = doc.createElement('style');
+      const bodyStyle = doc.createElement("style");
       bodyStyle.textContent = `
         @page {
           margin: 25mm 15mm;
@@ -516,49 +524,49 @@ export const useParseEditorContent = () => {
       `;
 
       // 추가: 이미지 및 파일 컴포넌트 조정 - 모든 이미지에 직접 스타일 적용
-      const allImages = doc.querySelectorAll('img');
-      allImages.forEach(img => {
+      const allImages = doc.querySelectorAll("img");
+      allImages.forEach((img) => {
         // 기존 스타일 대신 새 스타일 적용
-        img.removeAttribute('style'); // 기존 스타일 모두 제거
+        img.removeAttribute("style"); // 기존 스타일 모두 제거
 
         // 새 스타일 직접 적용 - 크기 강제 제한
-        if(img.hasAttribute('width') && img.getAttribute('width')?.includes('%')) {
+        if (img.hasAttribute("width") && img.getAttribute("width")?.includes("%")) {
           // width 속성이 있고 %가 포함된 경우
-          const widthValue = img.getAttribute('width') || '';
+          const widthValue = img.getAttribute("width") || "";
           const width = Math.min(parseInt(widthValue), 50);
           img.style.width = `${width}%`;
-        } else if(img.hasAttribute('width') && img.getAttribute('width')?.includes('px')) {
+        } else if (img.hasAttribute("width") && img.getAttribute("width")?.includes("px")) {
           // width 속성이 있고 px가 포함된 경우
-          const widthValue = img.getAttribute('width') || '';
+          const widthValue = img.getAttribute("width") || "";
           const width = Math.min(parseInt(widthValue), 500);
           img.style.width = `${width}px`;
         } else {
-          img.style.width = '90%';
-          img.style.maxWidth = '500px';
+          img.style.width = "90%";
+          img.style.maxWidth = "500px";
         }
 
-        img.style.height = 'auto';
-        img.style.margin = '15px auto';
-        img.style.display = 'block';
-        img.style.objectFit = 'contain';
+        img.style.height = "auto";
+        img.style.margin = "15px auto";
+        img.style.display = "block";
+        img.style.objectFit = "contain";
       });
 
       // 워드랩 적용
-      doc.querySelectorAll('div, p, span, td').forEach(el => {
+      doc.querySelectorAll("div, p, span, td").forEach((el) => {
         // HTMLElement로 타입 캐스팅
         const element = el as HTMLElement;
         if (element.style) {
-          element.style.wordWrap = 'break-word';
-          element.style.overflowWrap = 'break-word';
-          element.style.wordBreak = 'break-word';
-          element.style.maxWidth = '100%';
-          element.style.overflow = 'visible';
+          element.style.wordWrap = "break-word";
+          element.style.overflowWrap = "break-word";
+          element.style.wordBreak = "break-word";
+          element.style.maxWidth = "100%";
+          element.style.overflow = "visible";
         }
       });
       doc.head.appendChild(bodyStyle);
       return serializedDoc;
     },
-    [getUserDetails]
+    [getUserDetails, parseAdditionalEditorContent]
   );
 
   /**
@@ -568,7 +576,6 @@ export const useParseEditorContent = () => {
    */
   const replaceCustomComponentsFromMarkdownContent = useCallback(
     (props: { markdownContent: string; noAssets?: boolean }): string => {
-      const start = performance.now();
       const { markdownContent, noAssets = false } = props;
       let parsedMarkdownContent = markdownContent;
       // replace the matched mention components with [display_name](redirect_url)
@@ -625,7 +632,8 @@ export const useParseEditorContent = () => {
       parsedMarkdownContent = parsedMarkdownContent.replace(issueEmbedRegex, "");
 
       // 파일 컴포넌트를 마크다운 형식으로 변환
-      const fileComponentRegex = /<file-component[^>]*fileName="([^"]+)"[^>]*fileSize="([^"]+)"[^>]*fileType="([^"]+)"[^>]*>[^]*<\/file-component>|<div[^>]*data-file-component="true"[^>]*data-file-name="([^"]+)"[^>]*data-file-size="([^"]+)"[^>]*data-file-type="([^"]+)"[^>]*>[^]*<\/div>/g;
+      const fileComponentRegex =
+        /<file-component[^>]*fileName="([^"]+)"[^>]*fileSize="([^"]+)"[^>]*fileType="([^"]+)"[^>]*>[^]*<\/file-component>|<div[^>]*data-file-component="true"[^>]*data-file-name="([^"]+)"[^>]*data-file-size="([^"]+)"[^>]*data-file-type="([^"]+)"[^>]*>[^]*<\/div>/g;
       parsedMarkdownContent = parsedMarkdownContent.replace(
         fileComponentRegex,
         (_match, fileName1, fileSize1, fileType1, fileName2, fileSize2, fileType2) => {
@@ -635,11 +643,11 @@ export const useParseEditorContent = () => {
           const fileType = fileType1 || fileType2 || "";
 
           const extension = fileName?.split(".").pop()?.toUpperCase() || "";
-          const formattedSize = fileSize ? (
-            fileSize >= 1024 * 1024
+          const formattedSize = fileSize
+            ? fileSize >= 1024 * 1024
               ? `${(fileSize / (1024 * 1024)).toFixed(1)}MB`
               : `${Math.round(fileSize / 1024)}KB`
-          ) : "";
+            : "";
 
           // 파일 유형에 따른 이모티콘 선택
           let fileEmoji = "📎"; // 기본 파일 이모티콘
@@ -683,16 +691,68 @@ export const useParseEditorContent = () => {
           return `${fileEmoji} **${fileName}** (${extension} ${formattedSize ? `• ${formattedSize}` : ""})`;
         }
       );
-
-      const end = performance.now();
-      console.log("Exec time:", end - start);
       return parsedMarkdownContent;
     },
-    [getUserDetails, workspaceSlug]
+    [getUserDetails, parseAdditionalEditorContent, workspaceSlug]
+  );
+
+  const getEditorMetaData = useCallback(
+    (htmlContent: string): TCustomComponentsMetaData => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+      const imageMetaData: TCustomComponentsMetaData["file_assets"] = [];
+      // process image components
+      const imageComponents = doc.querySelectorAll("image-component");
+      imageComponents.forEach((element) => {
+        const src = element.getAttribute("src");
+        if (src) {
+          const assetSrc = src.startsWith("http")
+            ? src
+            : getEditorAssetSrc({
+                assetId: src,
+                projectId,
+                workspaceSlug,
+              });
+          if (assetSrc) {
+            imageMetaData.push({
+              id: src,
+              name: src,
+              url: assetSrc,
+            });
+          }
+        }
+      });
+      // process user mentions
+      const userMentions: TCustomComponentsMetaData["user_mentions"] = [];
+      const mentionComponents = doc.querySelectorAll("mention-component");
+      mentionComponents.forEach((element) => {
+        const id = element.getAttribute("entity_identifier");
+        if (id) {
+          const userDetails = getUserDetails(id);
+          const originUrl = typeof window !== "undefined" && (window.location.origin ?? "");
+          const path = `${workspaceSlug}/profile/${id}`;
+          const url = `${originUrl}/${path}`;
+          if (userDetails) {
+            userMentions.push({
+              id,
+              display_name: userDetails.display_name,
+              url,
+            });
+          }
+        }
+      });
+
+      return {
+        file_assets: imageMetaData,
+        user_mentions: userMentions,
+      };
+    },
+    [getUserDetails, projectId, workspaceSlug]
   );
 
   return {
     replaceCustomComponentsFromHTMLContent,
     replaceCustomComponentsFromMarkdownContent,
+    getEditorMetaData,
   };
 };

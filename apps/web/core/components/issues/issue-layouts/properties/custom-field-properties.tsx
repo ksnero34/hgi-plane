@@ -1,10 +1,9 @@
-"use client";
-
-import React, { SyntheticEvent, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import type { SyntheticEvent } from "react";
 import { observer } from "mobx-react";
 import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings, MessageSquare } from "lucide-react";
 // types
-import { TIssue, TCustomField, IIssueDisplayProperties } from "@plane/types";
+import type { TIssue, TCustomField, IIssueDisplayProperties } from "@plane/types";
 // ui
 import { Tooltip } from "@plane/ui";
 // helpers
@@ -31,7 +30,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   const { issue, updateIssue, isReadOnly, activeLayout, displayProperties, customFields = [] } = props;
   const { isMobile } = usePlatformOS();
   const { getUserDetails } = useMember();
-  
+
   // text 필드의 로컬 상태 관리
   const [textFieldValues, setTextFieldValues] = useState<Record<string, string>>({});
 
@@ -41,7 +40,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   }, [issue?.custom_field_values, issue?.updated_at]); // updated_at을 의존성에 추가
 
   // Filter custom fields based on current issue type
-  const filteredCustomFields = customFields.filter(field => {
+  const filteredCustomFields = customFields.filter((field) => {
     // If custom field has no issue_type restriction, show for all issue types
     if (!field.issue_type) return true;
     // If issue has no type_id, don't show type-specific fields
@@ -49,7 +48,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
     // Show only fields that match the current issue type
     return field.issue_type === issue.type_id;
   });
-  
+
   if (!filteredCustomFields || filteredCustomFields.length === 0 || !displayProperties?.custom_fields) return null;
 
   // 특정 필드의 현재 값 가져오기
@@ -61,22 +60,17 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
   const updateFieldValue = (fieldId: string, value: any) => {
     if (!updateIssue || !issue?.project_id) return;
 
-    const field = filteredCustomFields.find(f => f.id === fieldId);
+    const field = filteredCustomFields.find((f) => f.id === fieldId);
     if (!field) return;
 
     // 안전한 업데이트 함수 사용
-    const updatedValues = updateCustomFieldValueSafely(
-      customFieldValues,
-      fieldId,
-      value,
-      {
-        name: field.name,
-        field_type: field.field_type
-      }
-    );
+    const updatedValues = updateCustomFieldValueSafely(customFieldValues, fieldId, value, {
+      name: field.name,
+      field_type: field.field_type,
+    });
 
     updateIssue(issue.project_id, issue.id, {
-      custom_field_values: updatedValues
+      custom_field_values: updatedValues,
     });
   };
 
@@ -122,10 +116,12 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
         return "";
       case "project_members":
         if (Array.isArray(value) && value.length > 0) {
-          const memberNames = value.map(memberId => {
-            const member = getUserDetails(memberId);
-            return member?.display_name || "알 수 없는 사용자";
-          }).filter(Boolean);
+          const memberNames = value
+            .map((memberId) => {
+              const member = getUserDetails(memberId);
+              return member?.display_name || "알 수 없는 사용자";
+            })
+            .filter(Boolean);
           return memberNames.join(", ");
         }
         return "";
@@ -149,10 +145,8 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
 
     switch (field.field_type) {
       case "text":
-        const currentTextValue = textFieldValues[field.id] !== undefined 
-          ? textFieldValues[field.id] 
-          : (fieldValue || "");
-        
+        const currentTextValue = textFieldValues[field.id] !== undefined ? textFieldValues[field.id] : fieldValue || "";
+
         return (
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <input
@@ -160,9 +154,9 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
               value={currentTextValue}
               onChange={(e) => {
                 // 로컬 상태만 업데이트 (UI 반응성)
-                setTextFieldValues(prev => ({
+                setTextFieldValues((prev) => ({
                   ...prev,
-                  [field.id]: e.target.value
+                  [field.id]: e.target.value,
                 }));
               }}
               onKeyDown={(e) => {
@@ -173,7 +167,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
                   updateFieldValue(field.id, value || null);
                   e.currentTarget.blur();
                   // 로컬 상태 초기화
-                  setTextFieldValues(prev => {
+                  setTextFieldValues((prev) => {
                     const newState = { ...prev };
                     delete newState[field.id];
                     return newState;
@@ -189,7 +183,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
                 const value = e.currentTarget.value.trim();
                 updateFieldValue(field.id, value || null);
                 // 로컬 상태 초기화
-                setTextFieldValues(prev => {
+                setTextFieldValues((prev) => {
                   const newState = { ...prev };
                   delete newState[field.id];
                   return newState;
@@ -204,7 +198,7 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
             />
           </div>
         );
-        
+
       case "select":
       case "multiselect":
         return (
@@ -232,7 +226,9 @@ export const IssueCustomFieldProperties: React.FC<Props> = observer((props) => {
           <div className="h-5 flex items-center" onFocus={handleEventPropagation} onClick={handleEventPropagation}>
             <DateDropdown
               value={fieldValue}
-              onChange={(date: Date | null) => updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)}
+              onChange={(date: Date | null) =>
+                updateFieldValue(field.id, date ? renderFormattedPayloadDate(date) : null)
+              }
               buttonVariant={hasValue ? "border-with-text" : "border-without-text"}
               className="h-5"
               buttonContainerClassName="h-5"

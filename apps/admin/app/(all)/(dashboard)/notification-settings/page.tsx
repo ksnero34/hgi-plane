@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { observer } from "mobx-react";
@@ -84,7 +82,7 @@ function NotificationSettingsPage() {
   const [selectedConfig] = useState<INotificationConfig | null>(null);
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
-  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, '');
+  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, "");
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
@@ -95,15 +93,16 @@ function NotificationSettingsPage() {
   // 직접 인스턴스 관리자 API 호출로 인증 체크
   useEffect(() => {
     console.log("Notification-settings 페이지: 직접 API 호출로 인증 체크");
-    axios.get("/api/instances/admins/", { withCredentials: true })
-      .then(response => {
+    axios
+      .get("/api/instances/admins/", { withCredentials: true })
+      .then((response) => {
         console.log("Notification-settings 페이지: 관리자 API 호출 성공", response.data);
       })
-      .catch(error => {
+      .catch((error) => {
         console.log("Notification-settings 페이지: 관리자 API 호출 오류", error);
         if (error.response && error.response.status === 401) {
           const currentPath = window.location.pathname;
-          const normalizedPath = currentPath.replace(/^\/god-mode/, '');
+          const normalizedPath = currentPath.replace(/^\/god-mode/, "");
           window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
         }
       });
@@ -132,8 +131,10 @@ function NotificationSettingsPage() {
     if (!workspaceSlug) return;
 
     try {
-      const response = await axios.get(`/api/instances/workspaces/${workspaceSlug}/rest-notification-configs/`, { withCredentials: true });
-      console.log('Configs API response:', response.data);
+      const response = await axios.get(`/api/instances/workspaces/${workspaceSlug}/rest-notification-configs/`, {
+        withCredentials: true,
+      });
+      console.log("Configs API response:", response.data);
       // API 응답이 배열이면 직접 사용, 객체면 results 속성 사용
       const configsData = Array.isArray(response.data) ? response.data : response.data.results || [];
       setConfigs(configsData);
@@ -150,7 +151,7 @@ function NotificationSettingsPage() {
   const fetchTemplates = async () => {
     try {
       const response = await axios.get("/api/instances/notification-templates/", { withCredentials: true });
-      console.log('Templates API response:', response.data);
+      console.log("Templates API response:", response.data);
       // API 응답이 배열이면 직접 사용, 객체면 results 속성 사용
       const templatesData = Array.isArray(response.data) ? response.data : response.data.results || [];
       setTemplates(templatesData);
@@ -200,13 +201,13 @@ function NotificationSettingsPage() {
         { withCredentials: true }
       );
 
-      setConfigs(prev => [...prev, response.data]);
+      setConfigs((prev) => [...prev, response.data]);
       setShowCreateModal(false);
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 생성 완료",
-        message: "알림 설정이 성공적으로 생성되었습니다."
+        message: "알림 설정이 성공적으로 생성되었습니다.",
       });
     } catch (error) {
       console.error("설정 생성 오류:", error);
@@ -217,7 +218,7 @@ function NotificationSettingsPage() {
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "설정 생성 실패",
-          message: "알림 설정 생성에 실패했습니다."
+          message: "알림 설정 생성에 실패했습니다.",
         });
       }
     }
@@ -232,14 +233,12 @@ function NotificationSettingsPage() {
         { withCredentials: true }
       );
 
-      setConfigs(prev => prev.map(config =>
-        config.id === configId ? response.data : config
-      ));
+      setConfigs((prev) => prev.map((config) => (config.id === configId ? response.data : config)));
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 업데이트 완료",
-        message: "알림 설정이 성공적으로 업데이트되었습니다."
+        message: "알림 설정이 성공적으로 업데이트되었습니다.",
       });
     } catch (error) {
       console.error("설정 업데이트 오류:", error);
@@ -250,7 +249,7 @@ function NotificationSettingsPage() {
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "설정 업데이트 실패",
-          message: "알림 설정 업데이트에 실패했습니다."
+          message: "알림 설정 업데이트에 실패했습니다.",
         });
       }
     }
@@ -259,17 +258,16 @@ function NotificationSettingsPage() {
   // 알림 설정 삭제
   const handleDeleteConfig = async (configId: string) => {
     try {
-      await axios.delete(
-        `/api/instances/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`,
-        { withCredentials: true }
-      );
+      await axios.delete(`/api/instances/workspaces/${selectedWorkspace}/rest-notification-configs/${configId}/`, {
+        withCredentials: true,
+      });
 
-      setConfigs(prev => prev.filter(config => config.id !== configId));
+      setConfigs((prev) => prev.filter((config) => config.id !== configId));
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 삭제 완료",
-        message: "알림 설정이 성공적으로 삭제되었습니다."
+        message: "알림 설정이 성공적으로 삭제되었습니다.",
       });
     } catch (error) {
       console.error("설정 삭제 오류:", error);
@@ -280,7 +278,7 @@ function NotificationSettingsPage() {
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "설정 삭제 실패",
-          message: "알림 설정 삭제에 실패했습니다."
+          message: "알림 설정 삭제에 실패했습니다.",
         });
       }
     }
@@ -298,7 +296,7 @@ function NotificationSettingsPage() {
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "테스트 알림 전송",
-        message: "테스트 알림이 성공적으로 전송되었습니다."
+        message: "테스트 알림이 성공적으로 전송되었습니다.",
       });
     } catch (error) {
       console.error("테스트 알림 전송 오류:", error);
@@ -309,7 +307,7 @@ function NotificationSettingsPage() {
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "테스트 알림 전송 실패",
-          message: "테스트 알림 전송에 실패했습니다."
+          message: "테스트 알림 전송에 실패했습니다.",
         });
       }
     }
@@ -340,7 +338,7 @@ function NotificationSettingsPage() {
             className="px-3 py-2 text-sm border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100"
           >
             <option value="">워크스페이스 선택</option>
-            {workspaces.map(workspace => (
+            {workspaces.map((workspace) => (
               <option key={workspace.id} value={workspace.slug}>
                 {workspace.name}
               </option>
@@ -392,12 +390,7 @@ function NotificationSettingsPage() {
                 onCreateNew={() => setShowCreateModal(true)}
               />
             )}
-            {activeTab === "templates" && (
-              <NotificationTemplateList
-                templates={templates}
-                onRefresh={fetchTemplates}
-              />
-            )}
+            {activeTab === "templates" && <NotificationTemplateList templates={templates} onRefresh={fetchTemplates} />}
           </>
         )}
       </div>

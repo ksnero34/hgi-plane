@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { observer } from "mobx-react";
 import { Type } from "lucide-react";
 // hooks
@@ -8,7 +7,7 @@ import { IssueActivityBlockComponent } from ".";
 
 type TIssueNameActivity = { activityId: string; ends: "top" | "bottom" | undefined };
 
-export const IssueNameActivity: FC<TIssueNameActivity> = observer((props) => {
+export const IssueNameActivity = observer(function IssueNameActivity(props: TIssueNameActivity) {
   const { activityId, ends } = props;
   // hooks
   const {
@@ -24,7 +23,9 @@ export const IssueNameActivity: FC<TIssueNameActivity> = observer((props) => {
       activityId={activityId}
       ends={ends}
     >
-      <>님이 제목을 <span className="font-medium text-custom-text-100">{activity.new_value}</span> 로 변경했습니다.</>
+      <>
+        님이 제목을 <span className="font-medium text-custom-text-100">{activity.new_value}</span> 로 변경했습니다.
+      </>
     </IssueActivityBlockComponent>
   );
 });

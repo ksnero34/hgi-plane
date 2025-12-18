@@ -1,8 +1,4 @@
-"use client";
-
-import type { FC } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,7 +11,7 @@ import { Input, Spinner } from "@plane/ui";
 // components
 import { Banner } from "@/components/common/banner";
 import { useInstance } from "@/hooks/store";
-import OIDCLogo from "@/public/logos/oidc-logo.svg";
+import OIDCLogo from "@/app/assets/logos/oidc-logo.svg?url";
 // local components
 import { FormHeader } from "../../../core/components/instance/form-header";
 import { AuthBanner } from "./auth-banner";
@@ -50,7 +46,7 @@ const defaultFromData: TFormData = {
   password: "",
 };
 
-export const InstanceSignInForm: FC = () => {
+export function InstanceSignInForm() {
   // search params
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || undefined;
@@ -220,7 +216,7 @@ export const InstanceSignInForm: FC = () => {
                   }`}
                   onClick={handleOIDCSignIn}
                 >
-                  <Image src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />
+                  <img src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />
                   한화손해보험 포털ID로 로그인하기
                 </button>
               </div>
@@ -230,4 +226,4 @@ export const InstanceSignInForm: FC = () => {
       </div>
     </>
   );
-};
+}

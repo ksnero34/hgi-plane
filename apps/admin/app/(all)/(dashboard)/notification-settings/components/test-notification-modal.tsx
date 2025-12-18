@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button, Input } from "@plane/ui";
@@ -12,12 +10,7 @@ interface TestNotificationModalProps {
   onTest: (configId: string) => Promise<void>;
 }
 
-export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
-  isOpen,
-  onClose,
-  config,
-  onTest,
-}) => {
+export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({ isOpen, onClose, config, onTest }) => {
   const [testData, setTestData] = useState({
     user_id: "test_user",
     user_email: "test@example.com",
@@ -57,7 +50,7 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
 
       // 변수 치환
       Object.entries(testData).forEach(([key, value]) => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
+        const regex = new RegExp(`{{${key}}}`, "g");
         preview = preview.replace(regex, value.toString());
       });
 
@@ -96,106 +89,112 @@ export const TestNotificationModal: React.FC<TestNotificationModalProps> = ({
                 <div className="p-6">
                   <h2 className="text-xl font-medium text-custom-text-100 mb-6">알림 테스트</h2>
 
-        <div className="space-y-4 mb-6">
-          <div className="bg-custom-background-80 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-custom-text-200 mb-2">설정 정보</h3>
-            <div className="text-xs text-custom-text-400 space-y-1">
-              <p><strong>이름:</strong> {config.name}</p>
-              <p><strong>엔드포인트:</strong> {config.endpoint_url}</p>
-              <p><strong>메소드:</strong> {config.method}</p>
-              <p><strong>상태:</strong> {config.is_enabled ? "활성화" : "비활성화"}</p>
-            </div>
-          </div>
-        </div>
+                  <div className="space-y-4 mb-6">
+                    <div className="bg-custom-background-80 p-4 rounded-lg">
+                      <h3 className="text-sm font-medium text-custom-text-200 mb-2">설정 정보</h3>
+                      <div className="text-xs text-custom-text-400 space-y-1">
+                        <p>
+                          <strong>이름:</strong> {config.name}
+                        </p>
+                        <p>
+                          <strong>엔드포인트:</strong> {config.endpoint_url}
+                        </p>
+                        <p>
+                          <strong>메소드:</strong> {config.method}
+                        </p>
+                        <p>
+                          <strong>상태:</strong> {config.is_enabled ? "활성화" : "비활성화"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 테스트 데이터 편집 */}
-          <div>
-            <label className="block text-sm font-medium text-custom-text-200 mb-2">
-              테스트 데이터 편집
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-custom-text-400 mb-1">사용자 ID</label>
-                <Input
-                  type="text"
-                  value={testData.user_id}
-                  onChange={(e) => setTestData(prev => ({ ...prev, user_id: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-custom-text-400 mb-1">사용자 이메일</label>
-                <Input
-                  type="email"
-                  value={testData.user_email}
-                  onChange={(e) => setTestData(prev => ({ ...prev, user_email: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-custom-text-400 mb-1">제목</label>
-                <Input
-                  type="text"
-                  value={testData.title}
-                  onChange={(e) => setTestData(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-custom-text-400 mb-1">이슈 ID</label>
-                <Input
-                  type="text"
-                  value={testData.issue_id}
-                  onChange={(e) => setTestData(prev => ({ ...prev, issue_id: e.target.value }))}
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-xs text-custom-text-400 mb-1">메시지</label>
-                <textarea
-                  value={testData.message}
-                  onChange={(e) => setTestData(prev => ({ ...prev, message: e.target.value }))}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100 placeholder:text-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-custom-text-400 mb-1">이슈 이름</label>
-                <Input
-                  type="text"
-                  value={testData.issue_name}
-                  onChange={(e) => setTestData(prev => ({ ...prev, issue_name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-custom-text-400 mb-1">프로젝트 이름</label>
-                <Input
-                  type="text"
-                  value={testData.project_name}
-                  onChange={(e) => setTestData(prev => ({ ...prev, project_name: e.target.value }))}
-                />
-              </div>
-            </div>
-          </div>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* 테스트 데이터 편집 */}
+                    <div>
+                      <label className="block text-sm font-medium text-custom-text-200 mb-2">테스트 데이터 편집</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-custom-text-400 mb-1">사용자 ID</label>
+                          <Input
+                            type="text"
+                            value={testData.user_id}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, user_id: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-custom-text-400 mb-1">사용자 이메일</label>
+                          <Input
+                            type="email"
+                            value={testData.user_email}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, user_email: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-custom-text-400 mb-1">제목</label>
+                          <Input
+                            type="text"
+                            value={testData.title}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, title: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-custom-text-400 mb-1">이슈 ID</label>
+                          <Input
+                            type="text"
+                            value={testData.issue_id}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, issue_id: e.target.value }))}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs text-custom-text-400 mb-1">메시지</label>
+                          <textarea
+                            value={testData.message}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, message: e.target.value }))}
+                            rows={2}
+                            className="w-full px-3 py-2 border border-custom-border-200 rounded-md bg-custom-background-100 text-custom-text-100 placeholder:text-custom-text-400 focus:outline-none focus:ring-2 focus:ring-custom-primary-100 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-custom-text-400 mb-1">이슈 이름</label>
+                          <Input
+                            type="text"
+                            value={testData.issue_name}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, issue_name: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-custom-text-400 mb-1">프로젝트 이름</label>
+                          <Input
+                            type="text"
+                            value={testData.project_name}
+                            onChange={(e) => setTestData((prev) => ({ ...prev, project_name: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-          {/* 템플릿 미리보기 */}
-          <div>
-            <label className="block text-sm font-medium text-custom-text-200 mb-2">
-              전송될 JSON 미리보기
-            </label>
-            <div className="bg-custom-background-80 p-4 rounded-lg">
-              <pre className="text-xs text-custom-text-100 font-mono overflow-x-auto">
-                {getTemplatePreview()}
-              </pre>
-            </div>
-          </div>
+                    {/* 템플릿 미리보기 */}
+                    <div>
+                      <label className="block text-sm font-medium text-custom-text-200 mb-2">
+                        전송될 JSON 미리보기
+                      </label>
+                      <div className="bg-custom-background-80 p-4 rounded-lg">
+                        <pre className="text-xs text-custom-text-100 font-mono overflow-x-auto">
+                          {getTemplatePreview()}
+                        </pre>
+                      </div>
+                    </div>
 
-          {/* 버튼 */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="neutral-primary" size="sm" onClick={onClose}>
-              취소
-            </Button>
-            <Button variant="primary" size="sm" type="submit" loading={isSubmitting}>
-              {isSubmitting ? "전송 중..." : "테스트 전송"}
-            </Button>
-          </div>
+                    {/* 버튼 */}
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button variant="neutral-primary" size="sm" onClick={onClose}>
+                        취소
+                      </Button>
+                      <Button variant="primary" size="sm" type="submit" loading={isSubmitting}>
+                        {isSubmitting ? "전송 중..." : "테스트 전송"}
+                      </Button>
+                    </div>
                   </form>
                 </div>
               </Dialog.Panel>

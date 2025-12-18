@@ -11,7 +11,6 @@ from plane.app.views import (
     ProjectIdentifierEndpoint,
     ProjectFavoritesViewSet,
     UserProjectInvitationsViewset,
-    ProjectPublicCoverImagesEndpoint,
     UserProjectRolesEndpoint,
     ProjectArchiveUnarchiveEndpoint,
     ProjectMattermostConfigViewSet,
@@ -19,6 +18,7 @@ from plane.app.views import (
     ProjectIssueTypeViewSet,
     ProjectOverviewEndpoint,
     ProjectOverviewDescriptionEndpoint,
+    ProjectMemberPreferenceEndpoint,
 )
 
 
@@ -121,11 +121,6 @@ urlpatterns = [
         name="project-favorite",
     ),
     path(
-        "project-covers/",
-        ProjectPublicCoverImagesEndpoint.as_view(),
-        name="project-covers",
-    ),
-    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/project-deploy-boards/",
         DeployBoardViewSet.as_view({"get": "list", "post": "create"}),
         name="project-deploy-board",
@@ -199,5 +194,10 @@ urlpatterns = [
             }
         ),
         name="project-issue-type-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/preferences/member/<uuid:member_id>/",
+        ProjectMemberPreferenceEndpoint.as_view(),
+        name="project-member-preference",
     ),
 ]

@@ -1,5 +1,3 @@
-"use client";
-
 import type { MutableRefObject } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
@@ -36,7 +34,7 @@ interface IssueDetailsBlockProps {
   displayProperties: IIssueDisplayProperties | undefined;
 }
 
-const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((props) => {
+const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props: IssueDetailsBlockProps) {
   const { issue, displayProperties } = props;
   const { anchor } = useParams();
   // hooks
@@ -68,7 +66,7 @@ const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((prop
   );
 });
 
-export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
+export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueBlockProps) {
   const { issueId, groupId, subGroupId, displayProperties } = props;
   const searchParams = useSearchParams();
   // query params
@@ -107,5 +105,3 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
     </div>
   );
 });
-
-KanbanIssueBlock.displayName = "KanbanIssueBlock";

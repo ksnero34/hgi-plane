@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -28,32 +26,35 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
   const { workspaceSlug, projectId } = useParams();
   // store hooks
   const { createWorkflowTransition, updateWorkflowTransition, getWorkflowStates } = useWorkflow();
-  const { 
+  const {
     project: { projectMemberIds, getProjectMemberDetails },
-    getUserDetails
+    getUserDetails,
   } = useMember();
-  
+
   // derived values
   const workflowStates = getWorkflowStates(workflowId);
-  
+
   // 디버깅을 위한 로그
   // React.useEffect(() => {
   //   console.log("Workflow states:", workflowStates);
   // }, [workflowStates]);
-  
-  const projectMembers = projectMemberIds?.map((userId) => {
-    if (!projectId) return null;
-    const memberDetails = getProjectMemberDetails(userId, projectId.toString());
-    if (!memberDetails?.member) return null;
-    
-    return {
-      id: memberDetails.member.id,
-      display_name: memberDetails.member.display_name,
-      avatar_url: memberDetails.member.avatar_url,
-      role: memberDetails.role
-    };
-  }).filter(Boolean) || [];
-  
+
+  const projectMembers =
+    projectMemberIds
+      ?.map((userId) => {
+        if (!projectId) return null;
+        const memberDetails = getProjectMemberDetails(userId, projectId.toString());
+        if (!memberDetails?.member) return null;
+
+        return {
+          id: memberDetails.member.id,
+          display_name: memberDetails.member.display_name,
+          avatar_url: memberDetails.member.avatar_url,
+          role: memberDetails.role,
+        };
+      })
+      .filter(Boolean) || [];
+
   // form
   const {
     control,
@@ -76,15 +77,15 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
 
   React.useEffect(() => {
     // console.log("WorkflowTransition for editing:", workflowTransition);
-    
+
     if (workflowTransition) {
       const formData = {
         from_state: workflowTransition.from_state_detail?.id || workflowTransition.from_state || "",
         to_state: workflowTransition.to_state_detail?.id || workflowTransition.to_state || "",
         require_reviewer: workflowTransition.require_reviewer || false,
-        reviewer_ids: workflowTransition.reviewers?.map(r => r.reviewer) || [],
+        reviewer_ids: workflowTransition.reviewers?.map((r) => r.reviewer) || [],
       };
-      
+
       // console.log("Setting transition form data:", formData);
       reset(formData);
     } else {
@@ -112,7 +113,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
     // 백엔드 API 스펙에 맞게 데이터 변환
     const apiData = {
       from_state: data.from_state, // State 모델의 UUID
-      to_state: data.to_state, // State 모델의 UUID  
+      to_state: data.to_state, // State 모델의 UUID
       require_reviewer: data.require_reviewer,
       reviewer_ids: data.reviewer_ids || [],
     };
@@ -131,12 +132,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
           title: "전환 규칙이 수정되었습니다.",
         });
       } else {
-        await createWorkflowTransition(
-          workspaceSlug as string,
-          projectId as string,
-          workflowId,
-          apiData
-        );
+        await createWorkflowTransition(workspaceSlug as string, projectId as string, workflowId, apiData);
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "전환 규칙이 추가되었습니다.",
@@ -146,9 +142,9 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
     } catch (error: any) {
       // console.log("Transition error details:", error);
       // console.log("API data sent:", apiData);
-      
+
       let errorMessage = workflowTransition ? "전환 규칙 수정에 실패했습니다." : "전환 규칙 추가에 실패했습니다.";
-      
+
       // 409 Conflict - 중복 전환 규칙
       if (error?.status === 409 || error?.response?.status === 409) {
         const responseData = error?.response?.data || error?.data;
@@ -161,16 +157,16 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
       // 400 Bad Request - 유효성 검증 실패
       else if (error?.status === 400 || error?.response?.status === 400) {
         const responseData = error?.response?.data || error?.data;
-        if (responseData && typeof responseData === 'object') {
-          const errorMessages = Object.entries(responseData).map(([field, messages]) => 
-            `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`
+        if (responseData && typeof responseData === "object") {
+          const errorMessages = Object.entries(responseData).map(
+            ([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(", ") : messages}`
           );
           if (errorMessages.length > 0) {
-            errorMessage = errorMessages.join('; ');
+            errorMessage = errorMessages.join("; ");
           }
         }
       }
-      
+
       setToast({
         type: TOAST_TYPE.ERROR,
         title: errorMessage,
@@ -181,21 +177,19 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
   const toggleReviewer = (userId: string) => {
     const current = selectedReviewerIds;
     const isSelected = current.includes(userId);
-    
+
     if (isSelected) {
-      setValue("reviewer_ids", current.filter(id => id !== userId));
+      setValue(
+        "reviewer_ids",
+        current.filter((id) => id !== userId)
+      );
     } else {
       setValue("reviewer_ids", [...current, userId]);
     }
   };
 
   return (
-    <ModalCore
-      isOpen={isOpen}
-      handleClose={onClose}
-      position={EModalPosition.CENTER}
-      width={EModalWidth.XL}
-    >
+    <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XL}>
       <div className="p-5">
         <div className="mb-5">
           <h3 className="text-lg font-medium text-custom-text-100">
@@ -228,9 +222,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                   </select>
                 )}
               />
-              {errors.from_state && (
-                <p className="mt-1 text-sm text-red-500">{errors.from_state.message}</p>
-              )}
+              {errors.from_state && <p className="mt-1 text-sm text-red-500">{errors.from_state.message}</p>}
             </div>
 
             {/* To State */}
@@ -256,9 +248,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                   </select>
                 )}
               />
-              {errors.to_state && (
-                <p className="mt-1 text-sm text-red-500">{errors.to_state.message}</p>
-              )}
+              {errors.to_state && <p className="mt-1 text-sm text-red-500">{errors.to_state.message}</p>}
             </div>
 
             {/* Require Reviewer */}
@@ -270,70 +260,57 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
               <Controller
                 name="require_reviewer"
                 control={control}
-                render={({ field: { value, onChange } }) => (
-                  <ToggleSwitch value={value ?? false} onChange={onChange} />
-                )}
+                render={({ field: { value, onChange } }) => <ToggleSwitch value={value ?? false} onChange={onChange} />}
               />
             </div>
 
             {/* Reviewer Selection */}
             {requireReviewer && (
               <div>
-                <label className="block text-sm font-medium text-custom-text-200 mb-2">
-                  승인자 선택 *
-                </label>
+                <label className="block text-sm font-medium text-custom-text-200 mb-2">승인자 선택 *</label>
                 <div className="border border-custom-border-300 rounded-md p-3 bg-custom-background-100 max-h-60 overflow-y-auto">
                   {projectMembers.length === 0 ? (
-                    <p className="text-sm text-custom-text-300 text-center py-4">
-                      프로젝트 멤버가 없습니다
-                    </p>
+                    <p className="text-sm text-custom-text-300 text-center py-4">프로젝트 멤버가 없습니다</p>
                   ) : (
                     <div className="space-y-2">
-                      {projectMembers.filter(member => member !== null).map((member) => (
-                        <div
-                          key={member.id}
-                          className="flex items-center justify-between p-2 rounded-md hover:bg-custom-background-80 cursor-pointer"
-                          onClick={() => toggleReviewer(member.id)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar 
-                              name={member.display_name} 
-                              src={getFileURL(member.avatar_url || "")} 
-                              size="sm"
-                            />
-                            <span className="text-sm text-custom-text-100">
-                              {member.display_name}
-                            </span>
+                      {projectMembers
+                        .filter((member) => member !== null)
+                        .map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-2 rounded-md hover:bg-custom-background-80 cursor-pointer"
+                            onClick={() => toggleReviewer(member.id)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Avatar name={member.display_name} src={getFileURL(member.avatar_url || "")} size="sm" />
+                              <span className="text-sm text-custom-text-100">{member.display_name}</span>
+                            </div>
+                            {selectedReviewerIds.includes(member.id) && <Check className="h-4 w-4 text-green-500" />}
                           </div>
-                          {selectedReviewerIds.includes(member.id) && (
-                            <Check className="h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   )}
                 </div>
                 {selectedReviewerIds.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-xs text-custom-text-200 mb-2">
-                      선택된 승인자 ({selectedReviewerIds.length}명):
-                    </p>
+                    <p className="text-xs text-custom-text-200 mb-2">선택된 승인자 ({selectedReviewerIds.length}명):</p>
                     <div className="flex flex-wrap gap-1">
                       {selectedReviewerIds.map((userId) => {
-                        const filteredMembers = projectMembers.filter(m => m !== null) as Array<{ id: any; display_name: any; avatar_url: any; role: any; }>;
-                        const member = filteredMembers.find(m => m.id === userId);
+                        const filteredMembers = projectMembers.filter((m) => m !== null) as Array<{
+                          id: any;
+                          display_name: any;
+                          avatar_url: any;
+                          role: any;
+                        }>;
+                        const member = filteredMembers.find((m) => m.id === userId);
                         if (!member) return null;
-                        
+
                         return (
                           <div
                             key={userId}
                             className="inline-flex items-center gap-1 px-2 py-1 bg-custom-primary-100 text-custom-primary-800 rounded-md text-xs"
                           >
-                            <Avatar 
-                              name={member.display_name} 
-                              src={getFileURL(member.avatar_url || "")} 
-                              size="sm"
-                            />
+                            <Avatar name={member.display_name} src={getFileURL(member.avatar_url || "")} size="sm" />
                             <span>{member.display_name}</span>
                             <button
                               type="button"
@@ -349,9 +326,7 @@ export const WorkflowTransitionModal = observer(({ isOpen, onClose, workflowId, 
                   </div>
                 )}
                 {requireReviewer && selectedReviewerIds.length === 0 && (
-                  <p className="mt-1 text-sm text-red-500">
-                    승인자를 최소 1명 선택해주세요
-                  </p>
+                  <p className="mt-1 text-sm text-red-500">승인자를 최소 1명 선택해주세요</p>
                 )}
               </div>
             )}

@@ -23,9 +23,7 @@ import type {
 import { EIssueServiceType, EIssueLayoutTypes } from "@plane/types";
 // helpers
 import { convertToISODateString, getCurrentDateTimeInISO } from "@plane/utils";
-// local-db
-import { SPECIAL_ORDER_BY } from "@/local-db/utils/query-constructor";
-import { updatePersistentLayer } from "@/local-db/utils/utils";
+// plane web imports
 import { workItemSortWithOrderByExtended } from "@/plane-web/store/issue/helpers/base-issue.store";
 // services
 import { CycleService } from "@/services/cycle.service";
@@ -41,7 +39,7 @@ import {
   getSortOrderToFilterEmptyValues,
   getSubGroupIssueKeyActions,
 } from "./base-issues-utils";
-import { IBaseIssueFilterStore } from "./issue-filter-helper.store";
+import type { IBaseIssueFilterStore } from "./issue-filter-helper.store";
 
 export type TIssueDisplayFilterOptions = Exclude<TIssueGroupByOptions, null> | "target_date";
 
@@ -61,7 +59,7 @@ export interface IBaseIssuesStore {
 
   //actions
   removeIssue: (workspaceSlug: string, projectId: string, issueId: string) => Promise<void>;
-  clear(shouldClearPaginationOptions?: boolean, clearForLocal?: boolean): void;
+  clear(shouldClearPaginationOptions?: boolean): void;
   // helper methods
   getIssueIds: (groupId?: string, subGroupId?: string) => string[] | undefined;
   issuesSortWithOrderBy(issueIds: string[], key: Partial<TIssueOrderByOptions>): string[];
@@ -288,20 +286,6 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     const displayFilters = this.issueFilterStore?.issueFilters?.displayFilters;
     if (!displayFilters) return;
 
-    const layout = displayFilters.layout;
-    const orderBy = displayFilters.order_by;
-
-    // Temporary code to fix no load order by
-    if (
-      this.rootIssueStore.rootStore.user.localDBEnabled &&
-      this.rootIssueStore.rootStore.router.projectId &&
-      layout !== EIssueLayoutTypes.SPREADSHEET &&
-      orderBy &&
-      Object.keys(SPECIAL_ORDER_BY).includes(orderBy)
-    ) {
-      return "sort_order";
-    }
-
     return displayFilters?.order_by;
   }
 
@@ -334,15 +318,15 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     const allIssues = groupedIssueIds[ALL_ISSUES] ?? [];
     if (!this.groupBy && !this.subGroupBy && allIssues && Array.isArray(allIssues)) {
-      return allIssues as string[];
+      return allIssues;
     }
 
     if (this.groupBy && groupId && groupedIssueIds?.[groupId] && Array.isArray(groupedIssueIds[groupId])) {
-      return (groupedIssueIds[groupId] ?? []) as string[];
+      return groupedIssueIds[groupId] ?? [];
     }
 
     if (this.groupBy && this.subGroupBy && groupId && subGroupId) {
-      return ((groupedIssueIds as TSubGroupedIssues)[groupId]?.[subGroupId] ?? []) as string[];
+      return (groupedIssueIds as TSubGroupedIssues)[groupId]?.[subGroupId] ?? [];
     }
 
     return undefined;
@@ -502,7 +486,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     // Update all the GroupIds to this Store's groupedIssueIds and update Individual group issue counts
     runInAction(() => {
-      this.clear(shouldClearPaginationOptions, true);
+      this.clear(shouldClearPaginationOptions);
       this.updateGroupedIssueIds(groupedIssues, groupedIssueCount);
       this.loader[getGroupKey()] = undefined;
     });
@@ -563,11 +547,11 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
     try {
       const workflowStore = this.rootIssueStore.rootStore.workflow;
       const workflows = workflowStore.getWorkflowTemplates(projectId);
-      const activeWorkflows = workflows.filter(w => w.is_active);
+      const activeWorkflows = workflows.filter((w) => w.is_active);
 
       if (activeWorkflows.length > 0 && !data.workflow_id) {
         // Find default workflow or first active workflow
-        const defaultWorkflow = activeWorkflows.find(w => w.is_default) || activeWorkflows[0];
+        const defaultWorkflow = activeWorkflows.find((w) => w.is_default) || activeWorkflows[0];
         if (defaultWorkflow) {
           data.workflow_id = defaultWorkflow.id;
         }
@@ -585,8 +569,6 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     // If shouldUpdateList is true, call fetchParentStats
     shouldUpdateList && (await this.fetchParentStats(workspaceSlug, projectId));
-
-    updatePersistentLayer(response.id);
 
     return response;
   }
@@ -626,7 +608,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: "상태 전환 실패",
-            message: validationResult.reason || "이 상태 전환은 워크플로우 규칙에 의해 허용되지 않습니다."
+            message: validationResult.reason || "이 상태 전환은 워크플로우 규칙에 의해 허용되지 않습니다.",
           });
           return;
         }
@@ -638,14 +620,14 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               issue_id: issueId,
               from_state_id: issueBeforeUpdate?.state_id || "",
               to_state_id: data.state_id,
-              comment: `상태 변경 요청`
+              comment: `상태 변경 요청`,
             });
 
             const { setToast, TOAST_TYPE } = await import("@plane/propel/toast");
             setToast({
               type: TOAST_TYPE.INFO,
               title: "승인 요청됨",
-              message: `상태 전환에 대한 승인이 요청되었습니다. 승인자: ${validationResult.reviewers?.length || 0}명`
+              message: `상태 전환에 대한 승인이 요청되었습니다. 승인자: ${validationResult.reviewers?.length || 0}명`,
             });
             return;
           } catch (approvalError) {
@@ -653,7 +635,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
             setToast({
               type: TOAST_TYPE.ERROR,
               title: "승인 요청 실패",
-              message: "상태 전환 승인 요청 중 오류가 발생했습니다."
+              message: "상태 전환 승인 요청 중 오류가 발생했습니다.",
             });
             return;
           }
@@ -678,7 +660,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
             this.rootIssueStore.issues.updateIssue(issueId, {
               ...currentIssue,
               custom_field_values: data.custom_field_values,
-              updated_at: getCurrentDateTimeInISO()
+              updated_at: getCurrentDateTimeInISO(),
             });
           }
         });
@@ -868,7 +850,9 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       }
 
       if (failedValidations.length > 0) {
-        throw new Error(`다음 이슈들의 상태 전환이 워크플로우 규칙에 의해 허용되지 않습니다: ${failedValidations.join(", ")}`);
+        throw new Error(
+          `다음 이슈들의 상태 전환이 워크플로우 규칙에 의해 허용되지 않습니다: ${failedValidations.join(", ")}`
+        );
       }
     }
 
@@ -1302,22 +1286,17 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   /**
    * Method called to clear out the current store
    */
-  clear(shouldClearPaginationOptions = true, clearForLocal = false) {
-    if (
-      (this.rootIssueStore.rootStore.user?.localDBEnabled && clearForLocal) ||
-      (!this.rootIssueStore.rootStore.user?.localDBEnabled && !clearForLocal)
-    ) {
-      runInAction(() => {
-        this.groupedIssueIds = undefined;
-        this.issuePaginationData = {};
-        this.groupedIssueCount = {};
-        if (shouldClearPaginationOptions) {
-          this.paginationOptions = undefined;
-        }
-      });
-      this.controller.abort();
-      this.controller = new AbortController();
-    }
+  clear(shouldClearPaginationOptions = true) {
+    runInAction(() => {
+      this.groupedIssueIds = undefined;
+      this.issuePaginationData = {};
+      this.groupedIssueCount = {};
+      if (shouldClearPaginationOptions) {
+        this.paginationOptions = undefined;
+      }
+    });
+    this.controller.abort();
+    this.controller = new AbortController();
   }
 
   /**
@@ -1793,7 +1772,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
   getArrayStringArray = (
     issueObject: Partial<TIssue> | undefined,
     value: string | string[] | undefined | null,
-    groupByKey?: TIssueGroupByOptions | undefined
+    groupByKey?: TIssueGroupByOptions
   ): string[] => {
     // if issue object is undefined return empty array
     if (!issueObject) return [];
@@ -1922,7 +1901,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
       case "parent_child": {
         const buildIssueTree = (parentId: string | null, allIssues: TIssue[]): string[] => {
           // 현재 부모의 직계 자식들 찾기
-          const children = allIssues.filter(issue => issue.parent_id === parentId);
+          const children = allIssues.filter((issue) => issue.parent_id === parentId);
 
           // 자식들을 날짜 기준으로 정렬
           const sortedChildren = orderBy(
@@ -1931,7 +1910,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               // 1. 날짜 없는 항목 우선순위
               (issue) => {
                 if (!issue.start_date && !issue.target_date) return 0; // 날짜 없음 - 최상위
-                if (!issue.start_date && issue.target_date) return 1;  // end date만 있음
+                if (!issue.start_date && issue.target_date) return 1; // end date만 있음
                 return 2; // start date 있음
               },
               // 2. target_date 기준 정렬 (start_date 없는 경우)
@@ -1942,19 +1921,19 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
                 return null;
               },
               // 3. start_date 기준 정렬
-              (issue) => issue?.start_date ? new Date(issue.start_date).getTime() : Infinity,
+              (issue) => (issue?.start_date ? new Date(issue.start_date).getTime() : Infinity),
               // 4. 기타 정렬 기준
               (issue) => issue?.sort_order || 0,
-              (issue) => issue?.created_at ? new Date(issue.created_at).getTime() : 0
+              (issue) => (issue?.created_at ? new Date(issue.created_at).getTime() : 0),
             ],
-            ['asc', 'asc', 'asc', 'asc', 'asc']
+            ["asc", "asc", "asc", "asc", "asc"]
           );
 
           // 결과 배열 초기화
           const result: string[] = [];
 
           // 각 자식에 대해 재귀적으로 처리
-          sortedChildren.forEach(child => {
+          sortedChildren.forEach((child) => {
             // 현재 자식 ID 추가
             result.push(child.id);
             // 현재 자식의 하위 자식들 재귀적으로 추가
@@ -1965,7 +1944,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         };
 
         // 최상위 이슈들(부모가 없는 이슈들) 찾기
-        const rootIssues = array.filter(issue => !issue.parent_id);
+        const rootIssues = array.filter((issue) => !issue.parent_id);
 
         // 최상위 이슈들도 동일한 정렬 로직 적용
         const sortedRootIssues = orderBy(
@@ -1974,7 +1953,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
             // 1. 날짜 없는 항목 우선순위
             (issue) => {
               if (!issue.start_date && !issue.target_date) return 0; // 날짜 없음 - 최상위
-              if (!issue.start_date && issue.target_date) return 1;  // end date만 있음
+              if (!issue.start_date && issue.target_date) return 1; // end date만 있음
               return 2; // start date 있음
             },
             // 2. target_date 기준 정렬 (start_date 없는 경우)
@@ -1985,19 +1964,19 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
               return null;
             },
             // 3. start_date 기준 정렬
-            (issue) => issue?.start_date ? new Date(issue.start_date).getTime() : Infinity,
+            (issue) => (issue?.start_date ? new Date(issue.start_date).getTime() : Infinity),
             // 4. 기타 정렬 기준
             (issue) => issue?.sort_order || 0,
-            (issue) => issue?.created_at ? new Date(issue.created_at).getTime() : 0
+            (issue) => (issue?.created_at ? new Date(issue.created_at).getTime() : 0),
           ],
-          ['asc', 'asc', 'asc', 'asc', 'asc']
+          ["asc", "asc", "asc", "asc", "asc"]
         );
 
         // 최종 결과 배열
         const sortedIds: string[] = [];
 
         // 각 최상위 이슈와 그 하위 이슈들을 처리
-        sortedRootIssues.forEach(rootIssue => {
+        sortedRootIssues.forEach((rootIssue) => {
           // 최상위 이슈 추가
           sortedIds.push(rootIssue.id);
           // 하위 이슈들 재귀적으로 추가
@@ -2005,9 +1984,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         });
 
         // 부모-자식 관계에 포함되지 않은 나머지 이슈들 추가
-        const remainingIds = array
-          .filter(issue => !sortedIds.includes(issue.id))
-          .map(issue => issue.id);
+        const remainingIds = array.filter((issue) => !sortedIds.includes(issue.id)).map((issue) => issue.id);
 
         return [...sortedIds, ...remainingIds];
       }

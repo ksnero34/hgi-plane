@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC } from "react";
 import { useState } from "react";
 import { isNil } from "lodash-es";
@@ -25,7 +23,7 @@ export type TIssueSubscription = {
   serviceType?: EIssueServiceType;
 };
 
-export const IssueSubscription: FC<TIssueSubscription> = observer((props) => {
+export const IssueSubscription = observer(function IssueSubscription(props: TIssueSubscription) {
   const { workspaceSlug, projectId, issueId, serviceType = EIssueServiceType.ISSUES } = props;
   const { t } = useTranslation();
   // hooks
@@ -44,17 +42,13 @@ export const IssueSubscription: FC<TIssueSubscription> = observer((props) => {
   const isSubscribed = getSubscriptionByIssueId(issueId);
   const issue = getIssueById(issueId);
 
-  const isEditable = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.PROJECT,
-    workspaceSlug,
-    projectId
-  ) || checkIssueEditPermission(
-    workspaceSlug,
-    projectId,
-    issue?.assignee_ids || [],
-    currentUser?.id || ""
-  );
+  const isEditable =
+    allowPermissions(
+      [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
+      EUserPermissionsLevel.PROJECT,
+      workspaceSlug,
+      projectId
+    ) || checkIssueEditPermission(workspaceSlug, projectId, issue?.assignee_ids || [], currentUser?.id || "");
 
   const handleSubscription = async () => {
     setLoading(true);

@@ -90,15 +90,14 @@ class InstanceAdminSignUpEndpoint(View):
         # Check instance first
         instance = Instance.objects.first()
         if instance is None:
-            exc = AuthenticationException(
-                error_code=AUTHENTICATION_ERROR_CODES["INSTANCE_NOT_CONFIGURED"],
-                error_message="INSTANCE_NOT_CONFIGURED",
+            # Auto-create instance if it doesn't exist during signup
+            instance = Instance.objects.create(
+                instance_name="Plane Instance",
+                instance_id=uuid.uuid4().hex,
+                current_version="latest",
+                last_checked_at=timezone.now(),
+                is_setup_done=False,
             )
-            url = urljoin(
-                base_host(request=request, is_admin=True),
-                "?" + urlencode(exc.get_error_dict()),
-            )
-            return HttpResponseRedirect(url)
 
         # check if the instance has already an admin registered
         if InstanceAdmin.objects.first():
@@ -134,7 +133,10 @@ class InstanceAdminSignUpEndpoint(View):
                 },
             )
             url = urljoin(
-                base_host(request=request, is_admin=True),
+                base_host(
+                    request=request,
+                    is_admin=True,
+                ),
                 "?" + urlencode(exc.get_error_dict()),
             )
             return HttpResponseRedirect(url)
@@ -228,7 +230,7 @@ class InstanceAdminSignUpEndpoint(View):
 
             # get tokens for user
             user_login(request=request, user=user, is_admin=True)
-            url = urljoin(base_host(request=request, is_admin=True), "general")
+            url = urljoin(base_host(request=request, is_admin=True), "general/")
             return HttpResponseRedirect(url)
 
 
@@ -347,7 +349,7 @@ class InstanceAdminSignInEndpoint(View):
 
         # get tokens for user
         user_login(request=request, user=user, is_admin=True)
-        url = urljoin(base_host(request=request, is_admin=True), "general")
+        url = urljoin(base_host(request=request, is_admin=True), "general/")
         return HttpResponseRedirect(url)
 
 

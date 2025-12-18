@@ -147,9 +147,7 @@ def validate_binary_data(data):
     # Check for suspicious text patterns (HTML/JS)
     try:
         decoded_text = binary_data.decode("utf-8", errors="ignore")[:200]
-        if any(
-            pattern in decoded_text.lower() for pattern in SUSPICIOUS_BINARY_PATTERNS
-        ):
+        if any(pattern in decoded_text.lower() for pattern in SUSPICIOUS_BINARY_PATTERNS):
             return False, "Binary data contains suspicious content patterns"
     except Exception:
         pass  # Binary data might not be decodable as text, which is fine
@@ -195,6 +193,7 @@ ATTRIBUTES = {
         "data-background-color",
         "data-text-color",
         "data-name",
+        "data-id",
         # callout attributes
         "data-icon-name",
         "data-icon-color",
@@ -239,6 +238,7 @@ ATTRIBUTES = {
         "aspectratio",
         "src",
         "alignment",
+        "status",
     },
     "img": {
         "width",
@@ -398,10 +398,6 @@ def validate_html_content(html_content: str):
             except Exception:
                 summary = str(diff)
             logger.warning(f"HTML sanitization removals: {summary}")
-            log_exception(
-                ValueError(f"HTML sanitization removals: {summary}"),
-                warning=True,
-            )
         return True, None, clean_html
     except Exception as e:
         log_exception(e)

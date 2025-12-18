@@ -1,12 +1,12 @@
-import { TFilterValue } from "../expression";
-import { EQUALITY_OPERATOR, COLLECTION_OPERATOR, COMPARISON_OPERATOR, TEXT_OPERATOR } from "../operators";
-import {
+import type { TFilterValue } from "../expression";
+import type { EQUALITY_OPERATOR, COLLECTION_OPERATOR, COMPARISON_OPERATOR, TEXT_OPERATOR } from "../operators";
+import type {
   TCoreExactOperatorConfigs,
   TCoreInOperatorConfigs,
   TCoreRangeOperatorConfigs,
   TCoreContainsOperatorConfigs,
 } from "./core";
-import {
+import type {
   TExtendedExactOperatorConfigs,
   TExtendedInOperatorConfigs,
   TExtendedOperatorSpecificConfigs,

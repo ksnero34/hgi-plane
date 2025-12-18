@@ -1,9 +1,8 @@
-"use client";
-
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { ChevronDown, ListFilter } from "lucide-react";
+import { ListFilter } from "lucide-react";
+import { ChevronDownIcon } from "@plane/propel/icons";
 // components
 import { Row } from "@plane/ui";
 import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
@@ -13,7 +12,7 @@ import { ViewOrderByDropdown } from "@/components/views/filters/order-by";
 import { useMember } from "@/hooks/store/use-member";
 import { useProjectView } from "@/hooks/store/use-project-view";
 
-export const ViewMobileHeader = observer(() => {
+export const ViewMobileHeader = observer(function ViewMobileHeader() {
   // store hooks
   const { filters, updateFilters } = useProjectView();
   const {
@@ -45,7 +44,7 @@ export const ViewMobileHeader = observer(() => {
             menuButton={
               <Row className="flex items-center text-sm text-custom-text-200">
                 Filters
-                <ChevronDown className="ml-2 h-4 w-4 text-custom-text-200" strokeWidth={2} />
+                <ChevronDownIcon className="ml-2 h-4 w-4 text-custom-text-200" strokeWidth={2} />
               </Row>
             }
           >
@@ -54,7 +53,7 @@ export const ViewMobileHeader = observer(() => {
               handleFiltersUpdate={updateFilters}
               memberIds={projectMemberIds ?? undefined}
               isProjectLevel
-              viewProjectId={projectId as string}
+              viewProjectId={projectId}
             />
           </FiltersDropdown>
         </div>

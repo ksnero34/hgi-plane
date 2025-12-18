@@ -1,4 +1,3 @@
-"use client";
 import type { FC } from "react";
 import { observer } from "mobx-react";
 import type { IInstanceAdminStatus } from "@plane/types";
@@ -11,8 +10,7 @@ export interface IMembersConfigurationForm {
 export const MembersConfigurationForm: FC<IMembersConfigurationForm> = observer((props) => {
   const { instanceAdmins } = props;
 
-  const isAdministrator = (admin: IInstanceAdminStatus) =>
-    admin.is_instance_admin;
+  const isAdministrator = (admin: IInstanceAdminStatus) => admin.is_instance_admin;
 
   return (
     <div className="space-y-8">
@@ -29,7 +27,9 @@ export const MembersConfigurationForm: FC<IMembersConfigurationForm> = observer(
               </div>
               <ToggleSwitch
                 value={isAdministrator(admin)}
-                onChange={() => {/* TODO: 권한 변경 로직 */}}
+                onChange={() => {
+                  /* TODO: 권한 변경 로직 */
+                }}
                 size="sm"
               />
             </div>

@@ -1,17 +1,18 @@
-import { Editor } from "@tiptap/core";
+import type { Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 // constants
 import { ACCEPTED_ATTACHMENT_MIME_TYPES, ACCEPTED_IMAGE_MIME_TYPES } from "@/constants/config";
 // types
-import { TEditorCommands, TExtensions } from "@/types";
+import type { TEditorCommands, TExtensions } from "@/types";
 
 type Props = {
   disabledExtensions?: TExtensions[];
+  flaggedExtensions?: TExtensions[];
   editor: Editor;
 };
 
 export const DropHandlerPlugin = (props: Props): Plugin => {
-  const { disabledExtensions, editor } = props;
+  const { disabledExtensions, flaggedExtensions, editor } = props;
 
   return new Plugin({
     key: new PluginKey("drop-handler-plugin"),
@@ -32,59 +33,59 @@ export const DropHandlerPlugin = (props: Props): Plugin => {
           // 엑셀 데이터 처리 - 테이블이 있는 HTML 확인
           const types = Array.from(event.clipboardData?.types || []);
           const hasHtml = types.indexOf("text/html") !== -1;
-          
+
           if (hasHtml && event.clipboardData) {
             const html = event.clipboardData.getData("text/html");
             const hasTable = html.indexOf("<table") !== -1 && html.indexOf("<td") !== -1;
-            
+
             // CSV나 TSV 형식인지도 확인
-            const isSpreadsheetData = 
-              hasTable || 
-              html.indexOf("LibreOffice") !== -1 || 
+            const isSpreadsheetData =
+              hasTable ||
+              html.indexOf("LibreOffice") !== -1 ||
               html.indexOf("Microsoft Excel") !== -1 ||
               html.indexOf("Google Sheets") !== -1 ||
               html.indexOf("data-sheets-value") !== -1;
-            
+
             if (isSpreadsheetData) {
               event.preventDefault();
-              
+
               try {
                 // HTML을 파싱하여 테이블 데이터 추출
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, "text/html");
                 const tables = doc.querySelectorAll("table");
-                
+
                 if (tables.length > 0) {
                   const table = tables[0];
                   const rows = Array.from(table.rows);
                   const rowCount = rows.length;
                   const colCount = rows[0]?.cells.length || 1;
-                  
+
                   // HTML 테이블로 변환하여 삽입
-                  let tableHTML = '<table><tbody>';
+                  let tableHTML = "<table><tbody>";
                   for (let i = 0; i < rowCount; i++) {
-                    tableHTML += '<tr>';
+                    tableHTML += "<tr>";
                     for (let j = 0; j < colCount; j++) {
                       const cell = rows[i]?.cells[j];
                       if (!cell) continue;
-                      
-                      const content = cell.textContent || '';
-                      const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
-                      const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                      
+
+                      const content = cell.textContent || "";
+                      const colspan = parseInt(cell.getAttribute("colspan") || "1", 10);
+                      const rowspan = parseInt(cell.getAttribute("rowspan") || "1", 10);
+
                       // 병합된 셀인 경우 colspan과 rowspan 속성 추가
-                      tableHTML += `<td${colspan > 1 ? ` colspan="${colspan}"` : ''}${rowspan > 1 ? ` rowspan="${rowspan}"` : ''}>${content}</td>`;
-                      
+                      tableHTML += `<td${colspan > 1 ? ` colspan="${colspan}"` : ""}${rowspan > 1 ? ` rowspan="${rowspan}"` : ""}>${content}</td>`;
+
                       // colspan만큼 j 증가 (다음 셀로 이동)
-                      j += (colspan - 1);
+                      j += colspan - 1;
                     }
-                    tableHTML += '</tr>';
+                    tableHTML += "</tr>";
                   }
-                  tableHTML += '</tbody></table>';
-                  
+                  tableHTML += "</tbody></table>";
+
                   // HTML을 직접 삽입
                   editor.commands.insertContent(tableHTML);
-                  
+
                   // 테이블로 처리했으므로 이후 처리 중단
                   return true;
                 }
@@ -99,6 +100,7 @@ export const DropHandlerPlugin = (props: Props): Plugin => {
             const pos = view.state.selection.from;
             insertFilesSafely({
               disabledExtensions,
+              flaggedExtensions,
               editor,
               files: acceptedFiles,
               initialPos: pos,
@@ -150,6 +152,7 @@ export const DropHandlerPlugin = (props: Props): Plugin => {
 
 type InsertFilesSafelyArgs = {
   disabledExtensions?: TExtensions[];
+  flaggedExtensions?: TExtensions[];
   editor: Editor;
   event: "insert" | "drop";
   files: File[];

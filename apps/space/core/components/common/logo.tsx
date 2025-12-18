@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC } from "react";
 // plane imports
 import { TLogoProps } from "@plane/types";
@@ -29,8 +27,7 @@ export const Logo: FC<Props> = (props) => {
   // emoji
   if (in_use === "emoji") {
     const imageUrl = emoji?.url || getEmojiImageUrlFromDecimal(value || "");
-    if (imageUrl)
-      return <img src={imageUrl} alt="" style={{ height: size, width: size }} loading="lazy" />;
+    if (imageUrl) return <img src={imageUrl} alt="" style={{ height: size, width: size }} loading="lazy" />;
 
     const codePoints = (value || "")
       .split("-")

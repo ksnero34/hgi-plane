@@ -3,7 +3,7 @@ import { observer } from "mobx-react";
 // types
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 import type { IIssueDisplayProperties, TIssue } from "@plane/types";
-import {setToast, TOAST_TYPE} from "@plane/propel/toast"
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // hooks
 import { captureSuccess } from "@/helpers/event-tracker.helper";
 // components
@@ -20,7 +20,7 @@ type Props = {
   isEstimateEnabled: boolean;
 };
 
-export const IssueColumn = observer((props: Props) => {
+export const IssueColumn = observer(function IssueColumn(props: Props) {
   const { displayProperties, issueDetail, disableUserActions, property, updateIssue } = props;
   // router
   const tableCellRef = useRef<HTMLTableCellElement | null>(null);
@@ -60,7 +60,7 @@ export const IssueColumn = observer((props: Props) => {
                 console.error("Error details:", {
                   status: error?.response?.status,
                   data: error?.response?.data,
-                  message: error?.message
+                  message: error?.message,
                 });
 
                 // Extract detailed error message
@@ -80,7 +80,11 @@ export const IssueColumn = observer((props: Props) => {
                   }
 
                   // Check for workflow-related errors
-                  if (errorMessage.includes("workflow") || errorMessage.includes("transition") || errorMessage.includes("승인")) {
+                  if (
+                    errorMessage.includes("workflow") ||
+                    errorMessage.includes("transition") ||
+                    errorMessage.includes("승인")
+                  ) {
                     errorTitle = "워크플로우 규칙 위반";
                   }
                 } else if (error?.message) {

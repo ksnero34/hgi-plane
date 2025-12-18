@@ -1,15 +1,15 @@
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
-import { 
-  IWorkflowTemplate, 
-  IWorkflowState, 
-  IWorkflowTransition, 
+import type {
+  IWorkflowTemplate,
+  IWorkflowState,
+  IWorkflowTransition,
   IWorkflowAssignmentRule,
   IWorkflowTemplateFormData,
   IWorkflowStateFormData,
   IWorkflowTransitionFormData,
   IWorkflowAssignmentRuleFormData,
   IWorkflowValidation,
-  IWorkflowValidationResponse
+  IWorkflowValidationResponse,
 } from "@plane/types";
 // services
 import { WorkflowService } from "@/services/workflow.service";
@@ -20,7 +20,7 @@ export interface IWorkflowStore {
   workflowStates: Record<string, IWorkflowState[]>;
   workflowTransitions: Record<string, IWorkflowTransition[]>;
   workflowAssignmentRules: Record<string, IWorkflowAssignmentRule[]>;
-  
+
   // computed
   getWorkflowTemplates: (projectId: string) => IWorkflowTemplate[];
   getWorkflowStates: (workflowId: string) => IWorkflowState[];
@@ -28,40 +28,114 @@ export interface IWorkflowStore {
   getWorkflowAssignmentRules: (workflowId: string) => IWorkflowAssignmentRule[];
   getActiveWorkflows: (projectId: string) => IWorkflowTemplate[];
   getDefaultWorkflow: (projectId: string) => IWorkflowTemplate | undefined;
-  
+
   // actions
   fetchWorkflowTemplates: (workspaceSlug: string, projectId: string) => Promise<IWorkflowTemplate[]>;
-  createWorkflowTemplate: (workspaceSlug: string, projectId: string, data: IWorkflowTemplateFormData) => Promise<IWorkflowTemplate>;
-  updateWorkflowTemplate: (workspaceSlug: string, projectId: string, workflowId: string, data: Partial<IWorkflowTemplateFormData>) => Promise<IWorkflowTemplate>;
+  createWorkflowTemplate: (
+    workspaceSlug: string,
+    projectId: string,
+    data: IWorkflowTemplateFormData
+  ) => Promise<IWorkflowTemplate>;
+  updateWorkflowTemplate: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    data: Partial<IWorkflowTemplateFormData>
+  ) => Promise<IWorkflowTemplate>;
   deleteWorkflowTemplate: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<void>;
   activateWorkflow: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<void>;
   deactivateWorkflow: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<void>;
-  
+
   fetchWorkflowStates: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<IWorkflowState[]>;
-  createWorkflowState: (workspaceSlug: string, projectId: string, workflowId: string, data: IWorkflowStateFormData) => Promise<IWorkflowState>;
-  updateWorkflowState: (workspaceSlug: string, projectId: string, workflowId: string, stateId: string, data: Partial<IWorkflowStateFormData>) => Promise<IWorkflowState>;
+  createWorkflowState: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    data: IWorkflowStateFormData
+  ) => Promise<IWorkflowState>;
+  updateWorkflowState: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    stateId: string,
+    data: Partial<IWorkflowStateFormData>
+  ) => Promise<IWorkflowState>;
   deleteWorkflowState: (workspaceSlug: string, projectId: string, workflowId: string, stateId: string) => Promise<void>;
-  
-  fetchWorkflowTransitions: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<IWorkflowTransition[]>;
-  createWorkflowTransition: (workspaceSlug: string, projectId: string, workflowId: string, data: IWorkflowTransitionFormData) => Promise<IWorkflowTransition>;
-  updateWorkflowTransition: (workspaceSlug: string, projectId: string, workflowId: string, transitionId: string, data: Partial<IWorkflowTransitionFormData>) => Promise<IWorkflowTransition>;
-  deleteWorkflowTransition: (workspaceSlug: string, projectId: string, workflowId: string, transitionId: string) => Promise<void>;
-  
-  fetchWorkflowAssignmentRules: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<IWorkflowAssignmentRule[]>;
-  createWorkflowAssignmentRule: (workspaceSlug: string, projectId: string, workflowId: string, data: IWorkflowAssignmentRuleFormData) => Promise<IWorkflowAssignmentRule>;
-  updateWorkflowAssignmentRule: (workspaceSlug: string, projectId: string, workflowId: string, ruleId: string, data: Partial<IWorkflowAssignmentRuleFormData>) => Promise<IWorkflowAssignmentRule>;
-  deleteWorkflowAssignmentRule: (workspaceSlug: string, projectId: string, workflowId: string, ruleId: string) => Promise<void>;
-  
-  validateTransition: (workspaceSlug: string, projectId: string, data: IWorkflowValidation) => Promise<IWorkflowValidationResponse>;
+
+  fetchWorkflowTransitions: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string
+  ) => Promise<IWorkflowTransition[]>;
+  createWorkflowTransition: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    data: IWorkflowTransitionFormData
+  ) => Promise<IWorkflowTransition>;
+  updateWorkflowTransition: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    transitionId: string,
+    data: Partial<IWorkflowTransitionFormData>
+  ) => Promise<IWorkflowTransition>;
+  deleteWorkflowTransition: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    transitionId: string
+  ) => Promise<void>;
+
+  fetchWorkflowAssignmentRules: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string
+  ) => Promise<IWorkflowAssignmentRule[]>;
+  createWorkflowAssignmentRule: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    data: IWorkflowAssignmentRuleFormData
+  ) => Promise<IWorkflowAssignmentRule>;
+  updateWorkflowAssignmentRule: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    ruleId: string,
+    data: Partial<IWorkflowAssignmentRuleFormData>
+  ) => Promise<IWorkflowAssignmentRule>;
+  deleteWorkflowAssignmentRule: (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    ruleId: string
+  ) => Promise<void>;
+
+  validateTransition: (
+    workspaceSlug: string,
+    projectId: string,
+    data: IWorkflowValidation
+  ) => Promise<IWorkflowValidationResponse>;
   executeTransition: (workspaceSlug: string, projectId: string, data: IWorkflowValidation) => Promise<void>;
   requestApproval: (workspaceSlug: string, projectId: string, data: IWorkflowValidation) => Promise<any>;
-  approveTransition: (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }) => Promise<void>;
-  rejectTransition: (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }) => Promise<void>;
+  approveTransition: (
+    workspaceSlug: string,
+    projectId: string,
+    approvalRequestId: string,
+    data: { comment?: string }
+  ) => Promise<void>;
+  rejectTransition: (
+    workspaceSlug: string,
+    projectId: string,
+    approvalRequestId: string,
+    data: { comment?: string }
+  ) => Promise<void>;
   applyWorkflowToAllIssues: (workspaceSlug: string, projectId: string, workflowId: string) => Promise<any>;
   getApprovalRequests: (
-    workspaceSlug: string, 
-    projectId: string, 
-    page?: number, 
+    workspaceSlug: string,
+    projectId: string,
+    page?: number,
     pageSize?: number,
     filterStatus?: string,
     searchTerm?: string,
@@ -84,7 +158,7 @@ export class WorkflowStore implements IWorkflowStore {
   workflowStates: Record<string, IWorkflowState[]> = {};
   workflowTransitions: Record<string, IWorkflowTransition[]> = {};
   workflowAssignmentRules: Record<string, IWorkflowAssignmentRule[]> = {};
-  
+
   // services
   workflowService;
 
@@ -95,7 +169,7 @@ export class WorkflowStore implements IWorkflowStore {
       workflowStates: observable,
       workflowTransitions: observable,
       workflowAssignmentRules: observable,
-      
+
       // computed
       getWorkflowTemplates: computed,
       getWorkflowStates: computed,
@@ -103,7 +177,7 @@ export class WorkflowStore implements IWorkflowStore {
       getWorkflowAssignmentRules: computed,
       getActiveWorkflows: computed,
       getDefaultWorkflow: computed,
-      
+
       // actions
       fetchWorkflowTemplates: action,
       createWorkflowTemplate: action,
@@ -111,22 +185,22 @@ export class WorkflowStore implements IWorkflowStore {
       deleteWorkflowTemplate: action,
       activateWorkflow: action,
       deactivateWorkflow: action,
-      
+
       fetchWorkflowStates: action,
       createWorkflowState: action,
       updateWorkflowState: action,
       deleteWorkflowState: action,
-      
+
       fetchWorkflowTransitions: action,
       createWorkflowTransition: action,
       updateWorkflowTransition: action,
       deleteWorkflowTransition: action,
-      
+
       fetchWorkflowAssignmentRules: action,
       createWorkflowAssignmentRule: action,
       updateWorkflowAssignmentRule: action,
       deleteWorkflowAssignmentRule: action,
-      
+
       validateTransition: action,
       executeTransition: action,
       requestApproval: action,
@@ -135,7 +209,7 @@ export class WorkflowStore implements IWorkflowStore {
       applyWorkflowToAllIssues: action,
       getApprovalRequests: action,
     });
-    
+
     this.workflowService = new WorkflowService();
   }
 
@@ -157,13 +231,11 @@ export class WorkflowStore implements IWorkflowStore {
   }
 
   get getActiveWorkflows() {
-    return (projectId: string) => 
-      (this.workflowTemplates[projectId] || []).filter(workflow => workflow.is_active);
+    return (projectId: string) => (this.workflowTemplates[projectId] || []).filter((workflow) => workflow.is_active);
   }
 
   get getDefaultWorkflow() {
-    return (projectId: string) => 
-      (this.workflowTemplates[projectId] || []).find(workflow => workflow.is_default);
+    return (projectId: string) => (this.workflowTemplates[projectId] || []).find((workflow) => workflow.is_default);
   }
 
   // workflow template actions
@@ -181,8 +253,8 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   createWorkflowTemplate = async (
-    workspaceSlug: string, 
-    projectId: string, 
+    workspaceSlug: string,
+    projectId: string,
     data: IWorkflowTemplateFormData
   ): Promise<IWorkflowTemplate> => {
     try {
@@ -201,16 +273,16 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   updateWorkflowTemplate = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
     data: Partial<IWorkflowTemplateFormData>
   ): Promise<IWorkflowTemplate> => {
     try {
       const workflow = await this.workflowService.updateWorkflowTemplate(workspaceSlug, projectId, workflowId, data);
       runInAction(() => {
         if (this.workflowTemplates[projectId]) {
-          const index = this.workflowTemplates[projectId].findIndex(w => w.id === workflowId);
+          const index = this.workflowTemplates[projectId].findIndex((w) => w.id === workflowId);
           if (index !== -1) {
             this.workflowTemplates[projectId][index] = workflow;
           }
@@ -228,7 +300,7 @@ export class WorkflowStore implements IWorkflowStore {
       await this.workflowService.deleteWorkflowTemplate(workspaceSlug, projectId, workflowId);
       runInAction(() => {
         if (this.workflowTemplates[projectId]) {
-          this.workflowTemplates[projectId] = this.workflowTemplates[projectId].filter(w => w.id !== workflowId);
+          this.workflowTemplates[projectId] = this.workflowTemplates[projectId].filter((w) => w.id !== workflowId);
         }
       });
     } catch (error) {
@@ -242,7 +314,7 @@ export class WorkflowStore implements IWorkflowStore {
       await this.workflowService.activateWorkflow(workspaceSlug, projectId, workflowId);
       runInAction(() => {
         if (this.workflowTemplates[projectId]) {
-          const workflow = this.workflowTemplates[projectId].find(w => w.id === workflowId);
+          const workflow = this.workflowTemplates[projectId].find((w) => w.id === workflowId);
           if (workflow) {
             workflow.is_active = true;
           }
@@ -259,7 +331,7 @@ export class WorkflowStore implements IWorkflowStore {
       await this.workflowService.deactivateWorkflow(workspaceSlug, projectId, workflowId);
       runInAction(() => {
         if (this.workflowTemplates[projectId]) {
-          const workflow = this.workflowTemplates[projectId].find(w => w.id === workflowId);
+          const workflow = this.workflowTemplates[projectId].find((w) => w.id === workflowId);
           if (workflow) {
             workflow.is_active = false;
           }
@@ -272,7 +344,11 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   // workflow state actions
-  fetchWorkflowStates = async (workspaceSlug: string, projectId: string, workflowId: string): Promise<IWorkflowState[]> => {
+  fetchWorkflowStates = async (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string
+  ): Promise<IWorkflowState[]> => {
     try {
       const states = await this.workflowService.getWorkflowStates(workspaceSlug, projectId, workflowId);
       runInAction(() => {
@@ -286,9 +362,9 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   createWorkflowState = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
     data: IWorkflowStateFormData
   ): Promise<IWorkflowState> => {
     try {
@@ -307,17 +383,17 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   updateWorkflowState = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
-    stateId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    stateId: string,
     data: Partial<IWorkflowStateFormData>
   ): Promise<IWorkflowState> => {
     try {
       const state = await this.workflowService.updateWorkflowState(workspaceSlug, projectId, workflowId, stateId, data);
       runInAction(() => {
         if (this.workflowStates[workflowId]) {
-          const index = this.workflowStates[workflowId].findIndex(s => s.id === stateId);
+          const index = this.workflowStates[workflowId].findIndex((s) => s.id === stateId);
           if (index !== -1) {
             this.workflowStates[workflowId][index] = state;
           }
@@ -330,12 +406,17 @@ export class WorkflowStore implements IWorkflowStore {
     }
   };
 
-  deleteWorkflowState = async (workspaceSlug: string, projectId: string, workflowId: string, stateId: string): Promise<void> => {
+  deleteWorkflowState = async (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    stateId: string
+  ): Promise<void> => {
     try {
       await this.workflowService.deleteWorkflowState(workspaceSlug, projectId, workflowId, stateId);
       runInAction(() => {
         if (this.workflowStates[workflowId]) {
-          this.workflowStates[workflowId] = this.workflowStates[workflowId].filter(s => s.id !== stateId);
+          this.workflowStates[workflowId] = this.workflowStates[workflowId].filter((s) => s.id !== stateId);
         }
       });
     } catch (error) {
@@ -345,7 +426,11 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   // workflow transition actions
-  fetchWorkflowTransitions = async (workspaceSlug: string, projectId: string, workflowId: string): Promise<IWorkflowTransition[]> => {
+  fetchWorkflowTransitions = async (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string
+  ): Promise<IWorkflowTransition[]> => {
     try {
       const transitions = await this.workflowService.getWorkflowTransitions(workspaceSlug, projectId, workflowId);
       runInAction(() => {
@@ -359,13 +444,18 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   createWorkflowTransition = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
     data: IWorkflowTransitionFormData
   ): Promise<IWorkflowTransition> => {
     try {
-      const transition = await this.workflowService.createWorkflowTransition(workspaceSlug, projectId, workflowId, data);
+      const transition = await this.workflowService.createWorkflowTransition(
+        workspaceSlug,
+        projectId,
+        workflowId,
+        data
+      );
       runInAction(() => {
         if (!this.workflowTransitions[workflowId]) {
           this.workflowTransitions[workflowId] = [];
@@ -380,17 +470,23 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   updateWorkflowTransition = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
-    transitionId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    transitionId: string,
     data: Partial<IWorkflowTransitionFormData>
   ): Promise<IWorkflowTransition> => {
     try {
-      const transition = await this.workflowService.updateWorkflowTransition(workspaceSlug, projectId, workflowId, transitionId, data);
+      const transition = await this.workflowService.updateWorkflowTransition(
+        workspaceSlug,
+        projectId,
+        workflowId,
+        transitionId,
+        data
+      );
       runInAction(() => {
         if (this.workflowTransitions[workflowId]) {
-          const index = this.workflowTransitions[workflowId].findIndex(t => t.id === transitionId);
+          const index = this.workflowTransitions[workflowId].findIndex((t) => t.id === transitionId);
           if (index !== -1) {
             this.workflowTransitions[workflowId][index] = transition;
           }
@@ -403,12 +499,19 @@ export class WorkflowStore implements IWorkflowStore {
     }
   };
 
-  deleteWorkflowTransition = async (workspaceSlug: string, projectId: string, workflowId: string, transitionId: string): Promise<void> => {
+  deleteWorkflowTransition = async (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    transitionId: string
+  ): Promise<void> => {
     try {
       await this.workflowService.deleteWorkflowTransition(workspaceSlug, projectId, workflowId, transitionId);
       runInAction(() => {
         if (this.workflowTransitions[workflowId]) {
-          this.workflowTransitions[workflowId] = this.workflowTransitions[workflowId].filter(t => t.id !== transitionId);
+          this.workflowTransitions[workflowId] = this.workflowTransitions[workflowId].filter(
+            (t) => t.id !== transitionId
+          );
         }
       });
     } catch (error) {
@@ -418,7 +521,11 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   // workflow assignment rule actions
-  fetchWorkflowAssignmentRules = async (workspaceSlug: string, projectId: string, workflowId: string): Promise<IWorkflowAssignmentRule[]> => {
+  fetchWorkflowAssignmentRules = async (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string
+  ): Promise<IWorkflowAssignmentRule[]> => {
     try {
       const rules = await this.workflowService.getWorkflowAssignmentRules(workspaceSlug, projectId, workflowId);
       runInAction(() => {
@@ -432,9 +539,9 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   createWorkflowAssignmentRule = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
     data: IWorkflowAssignmentRuleFormData
   ): Promise<IWorkflowAssignmentRule> => {
     try {
@@ -453,17 +560,23 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   updateWorkflowAssignmentRule = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    workflowId: string, 
-    ruleId: string, 
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    ruleId: string,
     data: Partial<IWorkflowAssignmentRuleFormData>
   ): Promise<IWorkflowAssignmentRule> => {
     try {
-      const rule = await this.workflowService.updateWorkflowAssignmentRule(workspaceSlug, projectId, workflowId, ruleId, data);
+      const rule = await this.workflowService.updateWorkflowAssignmentRule(
+        workspaceSlug,
+        projectId,
+        workflowId,
+        ruleId,
+        data
+      );
       runInAction(() => {
         if (this.workflowAssignmentRules[workflowId]) {
-          const index = this.workflowAssignmentRules[workflowId].findIndex(r => r.id === ruleId);
+          const index = this.workflowAssignmentRules[workflowId].findIndex((r) => r.id === ruleId);
           if (index !== -1) {
             this.workflowAssignmentRules[workflowId][index] = rule;
           }
@@ -476,12 +589,19 @@ export class WorkflowStore implements IWorkflowStore {
     }
   };
 
-  deleteWorkflowAssignmentRule = async (workspaceSlug: string, projectId: string, workflowId: string, ruleId: string): Promise<void> => {
+  deleteWorkflowAssignmentRule = async (
+    workspaceSlug: string,
+    projectId: string,
+    workflowId: string,
+    ruleId: string
+  ): Promise<void> => {
     try {
       await this.workflowService.deleteWorkflowAssignmentRule(workspaceSlug, projectId, workflowId, ruleId);
       runInAction(() => {
         if (this.workflowAssignmentRules[workflowId]) {
-          this.workflowAssignmentRules[workflowId] = this.workflowAssignmentRules[workflowId].filter(r => r.id !== ruleId);
+          this.workflowAssignmentRules[workflowId] = this.workflowAssignmentRules[workflowId].filter(
+            (r) => r.id !== ruleId
+          );
         }
       });
     } catch (error) {
@@ -491,7 +611,11 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   // workflow validation actions
-  validateTransition = async (workspaceSlug: string, projectId: string, data: IWorkflowValidation): Promise<IWorkflowValidationResponse> => {
+  validateTransition = async (
+    workspaceSlug: string,
+    projectId: string,
+    data: IWorkflowValidation
+  ): Promise<IWorkflowValidationResponse> => {
     try {
       return await this.workflowService.validateTransition(workspaceSlug, projectId, data);
     } catch (error) {
@@ -519,7 +643,12 @@ export class WorkflowStore implements IWorkflowStore {
     }
   };
 
-  approveTransition = async (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }): Promise<void> => {
+  approveTransition = async (
+    workspaceSlug: string,
+    projectId: string,
+    approvalRequestId: string,
+    data: { comment?: string }
+  ): Promise<void> => {
     try {
       await this.workflowService.approveTransition(workspaceSlug, projectId, approvalRequestId, data);
     } catch (error) {
@@ -528,7 +657,12 @@ export class WorkflowStore implements IWorkflowStore {
     }
   };
 
-  rejectTransition = async (workspaceSlug: string, projectId: string, approvalRequestId: string, data: { comment?: string }): Promise<void> => {
+  rejectTransition = async (
+    workspaceSlug: string,
+    projectId: string,
+    approvalRequestId: string,
+    data: { comment?: string }
+  ): Promise<void> => {
     try {
       await this.workflowService.rejectTransition(workspaceSlug, projectId, approvalRequestId, data);
     } catch (error) {
@@ -547,13 +681,13 @@ export class WorkflowStore implements IWorkflowStore {
   };
 
   getApprovalRequests = async (
-    workspaceSlug: string, 
-    projectId: string, 
-    page: number = 1, 
+    workspaceSlug: string,
+    projectId: string,
+    page: number = 1,
     pageSize: number = 10,
-    filterStatus: string = 'all',
-    searchTerm: string = '',
-    sortOrder: string = 'newest'
+    filterStatus: string = "all",
+    searchTerm: string = "",
+    sortOrder: string = "newest"
   ): Promise<{
     count: number;
     can_approve_count: number;
@@ -565,7 +699,15 @@ export class WorkflowStore implements IWorkflowStore {
     results: any[];
   }> => {
     try {
-      return await this.workflowService.getApprovalRequests(workspaceSlug, projectId, page, pageSize, filterStatus, searchTerm, sortOrder);
+      return await this.workflowService.getApprovalRequests(
+        workspaceSlug,
+        projectId,
+        page,
+        pageSize,
+        filterStatus,
+        searchTerm,
+        sortOrder
+      );
     } catch (error) {
       console.error("Error fetching approval requests:", error);
       throw error;

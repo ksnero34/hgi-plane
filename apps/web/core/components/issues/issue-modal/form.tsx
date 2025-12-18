@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC } from "react";
 import React, { useState, useRef, useEffect } from "react";
 import { observer } from "mobx-react";
@@ -75,7 +73,7 @@ export interface IssueFormProps {
   dataResetProperties?: any[];
 }
 
-export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
+export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormProps) {
   const { t } = useTranslation();
   const {
     data,
@@ -151,7 +149,7 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
         if (fieldValue.custom_field_id) {
           customFieldObject[fieldValue.custom_field_id] = {
             custom_field_id: fieldValue.custom_field_id,
-            value: fieldValue.value
+            value: fieldValue.value,
           };
         }
       });
@@ -261,15 +259,17 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
       return;
 
     // 커스텀 필드 값을 백엔드 형식으로 변환
-    const customFieldValues = formData.custom_field_values ?
-      Object.values(formData.custom_field_values).filter(value =>
-        value && value.custom_field_id && value.value !== undefined && value.value !== null && value.value !== ""
-      ) : [];
+    const customFieldValues = formData.custom_field_values
+      ? Object.values(formData.custom_field_values).filter(
+          (value) =>
+            value && value.custom_field_id && value.value !== undefined && value.value !== null && value.value !== ""
+        )
+      : [];
 
     const submitData = !data?.id
       ? {
           ...formData,
-          custom_field_values: customFieldValues
+          custom_field_values: customFieldValues,
         }
       : (() => {
           const changedFields = getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined });
@@ -280,8 +280,8 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
             project_id: getValues<"project_id">("project_id"),
             id: data.id,
             description_html: formData.description_html ?? "<p></p>",
-            type_id: currentTypeId || (data?.type_id || null),
-            custom_field_values: customFieldValues
+            type_id: currentTypeId || data?.type_id || null,
+            custom_field_values: customFieldValues,
           };
         })();
 
@@ -532,24 +532,24 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                 activeAdditionalPropertiesLength > 0 && "shadow-custom-shadow-xs"
               )}
             >
-                <div className="pb-3 border-b-[0.5px] border-custom-border-200">
-                    <IssueDefaultProperties
-                        control={control}
-                        id={data?.id}
-                        projectId={projectId}
-                        workspaceSlug={workspaceSlug?.toString()}
-                        selectedParentIssue={selectedParentIssue}
-                        startDate={watch("start_date")}
-                        targetDate={watch("target_date")}
-                        parentId={watch("parent_id")}
-                        isDraft={isDraft}
-                        handleFormChange={handleFormChange}
-                        setSelectedParentIssue={setSelectedParentIssue}
-                    />
-                </div>
-                {showActionButtons && (
-                    <div
-                        className="flex items-center justify-end gap-4 pb-3 pt-6 border-t-[0.5px] border-custom-border-200"
+              <div className="pb-3 border-b-[0.5px] border-custom-border-200">
+                <IssueDefaultProperties
+                  control={control}
+                  id={data?.id}
+                  projectId={projectId}
+                  workspaceSlug={workspaceSlug?.toString()}
+                  selectedParentIssue={selectedParentIssue}
+                  startDate={watch("start_date")}
+                  targetDate={watch("target_date")}
+                  parentId={watch("parent_id")}
+                  isDraft={isDraft}
+                  handleFormChange={handleFormChange}
+                  setSelectedParentIssue={setSelectedParentIssue}
+                />
+              </div>
+              {showActionButtons && (
+                <div
+                  className="flex items-center justify-end gap-4 pb-3 pt-6 border-t-[0.5px] border-custom-border-200"
                   tabIndex={getIndex("create_more")}
                 >
                   {!data?.id && (

@@ -1,5 +1,3 @@
-"use client";
-
 import axios from "axios";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -13,15 +11,16 @@ import {
   SPACE_BASE_PATH,
   SPACE_BASE_URL,
   WORK_ITEM_TRACKER_ELEMENTS,
-  EProjectFeatureKey,
 } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
+import { WorkItemsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { EIssuesStoreType, TIssue } from "@plane/types";
 import { Breadcrumbs, Header } from "@plane/ui";
 // components
+import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { CountChip } from "@/components/common/count-chip";
 // constants
 import { HeaderFilters } from "@/components/issues/filters";
@@ -38,15 +37,15 @@ import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web
-import { CommonProjectBreadcrumbs } from "../breadcrumbs/common";
+import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { BulkEditModal } from "./bulk-operations/bulk-edit-modal";
 import { IssueUploadModal } from "./issue-uploader/issue-upload-modal";
 import { WorkflowApprovalModal } from "./workflow-approval-modal";
 
-export const IssuesHeader = observer(() => {
+export const IssuesHeader = observer(function IssuesHeader() {
   // router
   const router = useAppRouter();
-  const { workspaceSlug, projectId } = useParams() as { workspaceSlug: string; projectId: string };
+  const { workspaceSlug, projectId } = useParams();
   // store hooks
   const {
     issues: { getGroupIssueCount },
@@ -84,9 +83,7 @@ export const IssuesHeader = observer(() => {
 
   const selectedIssuesList = useMemo(
     () =>
-      selectedEntityIds
-        .map((issueId) => getIssueById(issueId))
-        .filter((issue): issue is TIssue => issue !== undefined),
+      selectedEntityIds.map((issueId) => getIssueById(issueId)).filter((issue): issue is TIssue => issue !== undefined),
     [selectedEntityIds, getIssueById]
   );
 
@@ -174,9 +171,18 @@ export const IssuesHeader = observer(() => {
           <div className="flex items-center gap-2.5">
             <Breadcrumbs onBack={() => router.back()} isLoading={loader === "init-loader"} className="flex-grow-0">
               <CommonProjectBreadcrumbs
-                workspaceSlug={workspaceSlug?.toString()}
-                projectId={projectId?.toString()}
-                featureKey={EProjectFeatureKey.WORK_ITEMS}
+                workspaceSlug={workspaceSlug?.toString() ?? ""}
+                projectId={projectId?.toString() ?? ""}
+              />
+              <Breadcrumbs.Item
+                component={
+                  <BreadcrumbLink
+                    label="Work Items"
+                    href={`/${workspaceSlug}/projects/${projectId}/issues/`}
+                    icon={<WorkItemsIcon className="h-4 w-4 text-custom-text-300" />}
+                    isLast
+                  />
+                }
                 isLast
               />
             </Breadcrumbs>

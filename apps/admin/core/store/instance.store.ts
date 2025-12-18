@@ -111,23 +111,32 @@ export class InstanceStore implements IInstanceStore {
       if (this.instance === undefined) this.isLoading = true;
       this.error = undefined;
       const instanceInfo = await this.instanceService.info();
+
+      // Check if the response follows IInstanceInfo structure or is a flat IInstance object
+      // When instance is not setup, the API might return a flat object with is_setup_done
+      const isFlatInstance = !instanceInfo?.instance && (instanceInfo as any)?.is_setup_done !== undefined;
+      const finalInstance = isFlatInstance ? (instanceInfo as unknown as IInstance) : instanceInfo.instance;
+      const finalConfig = isFlatInstance ? undefined : instanceInfo.config;
+
       // handling the new user popup toggle
-      if (this.instance === undefined && !instanceInfo?.instance?.workspaces_exist)
-        this.store.theme.toggleNewUserPopup();
+      if (this.instance === undefined && !finalInstance?.workspaces_exist) this.store.theme.toggleNewUserPopup();
+
       runInAction(() => {
         // console.log("instanceInfo: ", instanceInfo);
         this.isLoading = false;
-        this.instance = instanceInfo.instance;
-        this.config = instanceInfo.config;
+        this.instance = finalInstance;
+        this.config = finalConfig;
       });
       return instanceInfo;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching the instance info");
-      this.isLoading = false;
-      this.error = { message: "Failed to fetch the instance info" };
-      this.instanceStatus = {
-        status: EInstanceStatus.ERROR,
-      };
+      runInAction(() => {
+        this.isLoading = false;
+        this.error = error;
+        this.instanceStatus = {
+          status: EInstanceStatus.ERROR,
+        };
+      });
       throw error;
     }
   };
@@ -218,10 +227,9 @@ export class InstanceStore implements IInstanceStore {
       const response = await this.instanceService.updateInstanceMember(userId, data);
 
       // 멤버 목록을 다시 불러와서 상태 업데이트
-      await this.fetchInstanceMembers()
-        .then(members => {
-          return response;
-        });
+      await this.fetchInstanceMembers().then((members) => {
+        return response;
+      });
 
       return response;
     } catch (error) {

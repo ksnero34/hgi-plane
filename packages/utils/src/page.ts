@@ -1,6 +1,12 @@
 import { sortBy } from "lodash-es";
 // plane imports
-import { TPage, TPageFilterProps, TPageFiltersSortBy, TPageFiltersSortKey, TPageNavigationTabs } from "@plane/types";
+import type {
+  TPage,
+  TPageFilterProps,
+  TPageFiltersSortBy,
+  TPageFiltersSortKey,
+  TPageNavigationTabs,
+} from "@plane/types";
 // local imports
 import { getDate } from "./datetime";
 import { satisfiesDateFilter } from "./filter";
@@ -35,8 +41,8 @@ export const orderPages = (
   if (pages.length === 0 || !sortByKey) return [];
 
   // 폴더와 페이지를 분리
-  const folders = pages.filter(page => page.is_folder);
-  const regularPages = pages.filter(page => !page.is_folder);
+  const folders = pages.filter((page) => page.is_folder);
+  const regularPages = pages.filter((page) => !page.is_folder);
 
   // 각각 정렬
   let orderedFolders: TPage[] = [];

@@ -17,7 +17,7 @@ type Props = {
   forceRender?: boolean;
 };
 
-const RenderIfVisible: React.FC<Props> = (props) => {
+function RenderIfVisible(props: Props) {
   const {
     defaultHeight = "300px",
     root,
@@ -62,7 +62,7 @@ const RenderIfVisible: React.FC<Props> = (props) => {
       const observer = new IntersectionObserver(
         (entries) => {
           // Check if any entry is intersecting
-          const isAnyIntersecting = entries.some(entry => entry.isIntersecting);
+          const isAnyIntersecting = entries.some((entry) => entry.isIntersecting);
 
           //DO no remove comments for future
           if (typeof window !== undefined && window.requestIdleCallback && useIdletime) {
@@ -103,6 +103,6 @@ const RenderIfVisible: React.FC<Props> = (props) => {
   const className = isVisible || placeholderChildren ? classNames : cn(classNames, "bg-custom-background-80");
 
   return React.createElement(as, { ref: intersectionRef, style, className }, child);
-};
+}
 
 export default RenderIfVisible;

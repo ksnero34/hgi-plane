@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useRouter, usePathname } from "next/navigation";
@@ -22,12 +20,12 @@ const WorkspaceConfigPage = observer(() => {
     fetchWorkspaceConfigs,
     createWorkspaceConfig,
     deleteWorkspaceConfig,
-    updateWorkspaceConfig
+    updateWorkspaceConfig,
   } = useWorkspaceConfig();
   const [dataInitialized, setDataInitialized] = useState(false);
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
-  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, '');
+  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, "");
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
@@ -39,8 +37,8 @@ const WorkspaceConfigPage = observer(() => {
   // 에러 확인 유틸리티
   const checkAndLogError = (error: any, context: string): boolean => {
     // 에러 디버깅을 위해 상세 정보 출력
-      console.error(`${context} 중 에러 발생:`, error);
-      // console.log("에러 타입:", typeof error);
+    console.error(`${context} 중 에러 발생:`, error);
+    // console.log("에러 타입:", typeof error);
 
     try {
       console.log("에러 객체 구조:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
@@ -60,9 +58,7 @@ const WorkspaceConfigPage = observer(() => {
 
     // 401 상태 확인
     const status401 =
-      error?.response?.status === 401 ||
-      error?.status === 401 ||
-      (error?.message && error.message.includes("401"));
+      error?.response?.status === 401 || error?.status === 401 || (error?.message && error.message.includes("401"));
 
     // console.log("401 에러 여부:", status401);
 
@@ -98,7 +94,7 @@ const WorkspaceConfigPage = observer(() => {
     if (!authLoading) {
       if (!isAdmin) {
         // 관리자가 아닌 경우 즉시 리다이렉션
-          // console.log("관리자 권한이 없습니다. 리다이렉션을 수행합니다.");
+        // console.log("관리자 권한이 없습니다. 리다이렉션을 수행합니다.");
         const normalizedPath = getNormalizedPath(pathname);
         window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
         return;
@@ -137,14 +133,10 @@ const WorkspaceConfigPage = observer(() => {
     // });
 
     // 업데이트 요청 전송
-    updateWorkspaceConfig(
-      workspaceConfig.id,
-      updateData
-    )
-      .catch(error => {
-        // 401 에러 확인 및 처리
-        checkAndLogError(error, "워크스페이스 설정 업데이트");
-      });
+    updateWorkspaceConfig(workspaceConfig.id, updateData).catch((error) => {
+      // 401 에러 확인 및 처리
+      checkAndLogError(error, "워크스페이스 설정 업데이트");
+    });
   };
 
   const handleDeleteWorkspace = async (configId: string) => {
@@ -200,9 +192,7 @@ const WorkspaceConfigPage = observer(() => {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-medium text-custom-text-100">기본 워크스페이스 구성</h2>
-          <p className="text-sm text-custom-text-300">
-            사용자가 가입할 때 자동으로 추가될 워크스페이스를 구성하세요.
-          </p>
+          <p className="text-sm text-custom-text-300">사용자가 가입할 때 자동으로 추가될 워크스페이스를 구성하세요.</p>
         </div>
       </div>
 
@@ -216,7 +206,7 @@ const WorkspaceConfigPage = observer(() => {
           handleEditWorkspace={handleEditWorkspace}
           handleDeleteWorkspace={handleDeleteWorkspace}
           handleCreateWorkspaceConfig={(config) =>
-            createWorkspaceConfig(config).catch(error => {
+            createWorkspaceConfig(config).catch((error) => {
               checkAndLogError(error, "워크스페이스 설정 생성");
               throw error;
             })

@@ -1,4 +1,4 @@
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 
 export class CustomFieldService {
   async getCustomFields(workspaceSlug: string, projectId: string): Promise<TCustomField[]> {

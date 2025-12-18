@@ -1,13 +1,11 @@
-"use client";
-
 import { observer } from "mobx-react";
 import type { Control, FieldArrayWithId, FormState } from "react-hook-form";
 import { Controller } from "react-hook-form";
-import { X } from "lucide-react";
 // plane imports
 import { ROLE } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { Avatar, CustomSelect, Input, CustomSearchSelect } from "@plane/ui";
+import { Avatar, CustomSearchSelect, CustomSelect, Input } from "@plane/ui";
+import { CloseIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
 // hooks
 import { useUserPermissions } from "@/hooks/store/user";
@@ -25,7 +23,7 @@ type TInvitationFieldsProps = {
   className?: string;
 };
 
-export const InvitationFields = observer((props: TInvitationFieldsProps) => {
+export const InvitationFields = observer(function InvitationFields(props: TInvitationFieldsProps) {
   const {
     workspaceSlug,
     fields,
@@ -40,7 +38,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
   const { workspaceInfoBySlug } = useUserPermissions();
   const {
     workspace: { workspaceMemberIds, getWorkspaceMemberDetails },
-    instance: { instanceMemberIds, getInstanceMemberDetails, fetchInstanceMembers }
+    instance: { instanceMemberIds, getInstanceMemberDetails, fetchInstanceMembers },
   } = useMember();
 
   // 인스턴스 멤버 조회
@@ -58,24 +56,30 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
   });
 
   // 멤버 선택 옵션 생성
-  const memberOptions = uninvitedMembers?.map((userId: string) => {
-    const memberDetails = getInstanceMemberDetails(userId);
-    if (!memberDetails) return null;
-    return {
-      value: memberDetails.email,
-      query: `${memberDetails.first_name} ${memberDetails.last_name} ${memberDetails.display_name.toLowerCase()}`,
-      content: (
-        <div className="flex w-full items-center gap-2">
-          <div className="flex-shrink-0 pt-0.5">
-            <Avatar name={memberDetails.display_name} src={memberDetails.avatar ? getFileURL(memberDetails.avatar) : undefined} />
-          </div>
-          <div className="truncate">
-            {memberDetails.display_name} ({memberDetails.email})
-          </div>
-        </div>
-      ),
-    };
-  }).filter(Boolean) || [];
+  const memberOptions =
+    uninvitedMembers
+      ?.map((userId: string) => {
+        const memberDetails = getInstanceMemberDetails(userId);
+        if (!memberDetails) return null;
+        return {
+          value: memberDetails.email,
+          query: `${memberDetails.first_name} ${memberDetails.last_name} ${memberDetails.display_name.toLowerCase()}`,
+          content: (
+            <div className="flex w-full items-center gap-2">
+              <div className="flex-shrink-0 pt-0.5">
+                <Avatar
+                  name={memberDetails.display_name}
+                  src={memberDetails.avatar ? getFileURL(memberDetails.avatar) : undefined}
+                />
+              </div>
+              <div className="truncate">
+                {memberDetails.display_name} ({memberDetails.email})
+              </div>
+            </div>
+          ),
+        };
+      })
+      .filter(Boolean) || [];
 
   const options = [
     ...memberOptions,
@@ -99,7 +103,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                 e.preventDefault();
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   e.preventDefault();
                   const email = e.currentTarget.value;
                   if (!email) {
@@ -112,13 +116,13 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                   }
                   setError(null);
                   onChange(email);
-                  e.currentTarget.value = ''; // 입력 필드 초기화
+                  e.currentTarget.value = ""; // 입력 필드 초기화
 
                   // 드롭다운 버튼 클릭하여 닫기
                   const button = document.querySelector('[id^="headlessui-combobox-button-"]');
                   if (button) {
-                    button.setAttribute('aria-expanded', 'false');
-                    button.setAttribute('data-headlessui-state', '');
+                    button.setAttribute("aria-expanded", "false");
+                    button.setAttribute("data-headlessui-state", "");
                     (button as HTMLElement).click();
                   }
 
@@ -127,11 +131,7 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                 }
               }}
             />
-            {error && (
-              <div className="text-xs text-red-500">
-                {error}
-              </div>
-            )}
+            {error && <div className="text-xs text-red-500">{error}</div>}
           </div>
         );
       },
@@ -165,17 +165,21 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
                         onChange(val);
                       }
                     }}
-                    options={options.filter(Boolean).map(option => {
+                    options={options.filter(Boolean).map((option) => {
                       const opt = option as any;
                       return {
                         value: opt.value,
                         query: opt.query || "",
                         content: opt.isManualInput ? opt.content(onChange) : opt.content,
                         disabled: opt.disabled || false,
-                        tooltip: opt.tooltip || undefined
+                        tooltip: opt.tooltip || undefined,
                       };
                     })}
-                    label={selectedMember ? selectedMember.content : value || t("workspace_settings.settings.members.modal.placeholder")}
+                    label={
+                      selectedMember
+                        ? selectedMember.content
+                        : value || t("workspace_settings.settings.members.modal.placeholder")
+                    }
                     className="w-full"
                     input
                   />
@@ -214,13 +218,11 @@ export const InvitationFields = observer((props: TInvitationFieldsProps) => {
               />
             </div>
             {fields.length > 1 && (
-              <button
-                type="button"
-                className="flex-shrink-0"
-                onClick={() => remove(index)}
-              >
-                <X className="h-4 w-4 text-custom-text-200" />
-              </button>
+              <div className="flex-item flex w-6">
+                <button type="button" className="place-items-center self-center rounded" onClick={() => remove(index)}>
+                  <CloseIcon className="h-4 w-4 text-custom-text-200" />
+                </button>
+              </div>
             )}
           </div>
         </div>

@@ -1,109 +1,49 @@
-"use client";
+import React from "react";
 
-import type { FC } from "react";
-// Due to some weird issue with the import order, the import of useFontFaceObserver
-// should be after the imported here rather than some below helper functions as it is in the original file
-// eslint-disable-next-line import/order
-import useFontFaceObserver from "use-font-face-observer";
-// plane imports
-import { getEmojiSize, LUCIDE_ICONS_LIST, stringToEmoji } from "@plane/propel/emoji-icon-picker";
-import { getEmojiImageUrlFromDecimal } from "@plane/utils";
-import { TLogoProps } from "@plane/types";
+// define types inlined to avoid external dependency issues for now
+interface ILogoProps {
+  in_use: "emoji" | "icon";
+  emoji?: {
+    value?: string;
+    url?: string;
+  };
+  icon?: {
+    name?: string;
+    color?: string;
+  };
+}
 
-type Props = {
-  logo: TLogoProps;
+interface LogoProps {
+  logo: ILogoProps;
   size?: number;
-  type?: "lucide" | "material";
-};
+  className?: string;
+}
 
-export const Logo: FC<Props> = (props) => {
-  const { logo, size = 16, type = "material" } = props;
+export const Logo: React.FC<LogoProps> = ({ logo, size = 16, className = "" }) => {
+  if (!logo) return null;
 
-  // destructuring the logo object
   const { in_use, emoji, icon } = logo;
 
-  // derived values
-  const value = in_use === "emoji" ? emoji?.value : icon?.name;
-  const color = icon?.color;
-  const lucideIcon = LUCIDE_ICONS_LIST.find((item) => item.name === value);
-
-  const isMaterialSymbolsFontLoaded = useFontFaceObserver([
-    {
-      family: `Material Symbols Rounded`,
-      style: `normal`,
-      weight: `normal`,
-      stretch: `condensed`,
-    },
-  ]);
-  // if no value, return empty fragment
-  if (!value) return <></>;
-
-  if (!isMaterialSymbolsFontLoaded) {
+  if (in_use === "emoji" && emoji) {
     return (
       <span
-        style={{
-          height: size,
-          width: size,
-        }}
-        className="rounded animate-pulse bg-custom-background-80"
-      />
-    );
-  }
-
-  // emoji
-  if (in_use === "emoji") {
-    const imageUrl = emoji?.url || getEmojiImageUrlFromDecimal(emoji?.value || "");
-    return (
-      <span
-        className="flex items-center justify-center"
-        style={{
-          fontSize: `${getEmojiSize(size)}rem`,
-          lineHeight: `${getEmojiSize(size)}rem`,
-          height: size,
-          width: size,
-        }}
+        style={{ fontSize: size }}
+        className={`flex items-center justify-center ${className}`}
+        role="img"
+        aria-label={emoji.value || "emoji"}
       >
-        {imageUrl ? (
-          <img src={imageUrl} alt="" style={{ height: "100%", width: "100%" }} loading="lazy" />
-        ) : (
-          stringToEmoji(emoji?.value || "")
-        )}
+        {String.fromCodePoint(parseInt(emoji.value || "128512", 10))}
       </span>
     );
   }
 
-  // icon
-  if (in_use === "icon") {
+  if (in_use === "icon" && icon) {
     return (
-      <>
-        {type === "lucide" ? (
-          <>
-            {lucideIcon && (
-              <lucideIcon.element
-                style={{
-                  color: color,
-                  height: size,
-                  width: size,
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <span
-            className="material-symbols-rounded"
-            style={{
-              fontSize: size,
-              color: color,
-              scale: "115%",
-            }}
-          >
-            {value}
-          </span>
-        )}
-      </>
+      <span className={`material-symbols-rounded ${className}`} style={{ fontSize: size, color: icon.color }}>
+        {icon.name}
+      </span>
     );
   }
 
-  // if no value, return empty fragment
-  return <></>;
+  return null;
 };

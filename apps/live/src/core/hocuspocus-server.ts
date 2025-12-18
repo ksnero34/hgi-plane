@@ -2,15 +2,16 @@ import { Server } from "@hocuspocus/server";
 import * as Y from "yjs";
 import { v4 as uuidv4 } from "uuid";
 // editor types
-import { TUserDetails } from "@plane/editor";
-import { DocumentCollaborativeEvents, TDocumentEventsServer } from "@plane/editor/lib";
+import type { TUserDetails } from "@plane/editor";
+import { DocumentCollaborativeEvents } from "@plane/editor/lib";
+import type { TDocumentEventsServer } from "@plane/editor/lib";
 // extensions
 import { getExtensions } from "@/extensions";
 // lib
 import { handleAuthentication } from "@/lib/auth";
 import { maskPrivateInformation } from "@/core/utils/privacy-masking";
 // types
-import { type HocusPocusServerContext } from "@/types";
+import type { HocusPocusServerContext } from "@/types";
 
 export const getHocusPocusServer = async () => {
   const extensions = await getExtensions();
@@ -28,9 +29,7 @@ export const getHocusPocusServer = async () => {
         const maskedText = maskPrivateInformation(part.insert);
         if (maskedText !== part.insert) {
           hasChanges = true;
-          return part.attributes
-            ? { insert: maskedText, attributes: part.attributes }
-            : { insert: maskedText };
+          return part.attributes ? { insert: maskedText, attributes: part.attributes } : { insert: maskedText };
         }
       }
       return part;
@@ -134,7 +133,7 @@ export const getHocusPocusServer = async () => {
             const yElements = Array.from(xmlFragment.toArray());
             let hasChanges = false;
 
-            yElements.forEach(yElement => {
+            yElements.forEach((yElement) => {
               if (yElement instanceof Y.XmlElement) {
                 if (processElement(yElement)) {
                   hasChanges = true;

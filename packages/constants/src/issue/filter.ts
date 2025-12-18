@@ -1,17 +1,14 @@
-import {
-  EIssuesStoreType,
+import type {
   IIssueFilterOptions,
   ILayoutDisplayFiltersOptions,
   TIssueActivityComment,
   TWorkItemFilterProperty,
 } from "@plane/types";
-import {
-  TIssueFilterPriorityObject,
-  ISSUE_DISPLAY_PROPERTIES_KEYS,
-  SUB_ISSUES_DISPLAY_PROPERTIES_KEYS,
-} from "./common";
+import { EIssuesStoreType } from "@plane/types";
+import type { TIssueFilterPriorityObject } from "./common";
+import { ISSUE_DISPLAY_PROPERTIES_KEYS, SUB_ISSUES_DISPLAY_PROPERTIES_KEYS } from "./common";
 
-import { TIssueLayout } from "./layout";
+import type { TIssueLayout } from "./layout";
 
 export type TIssueFilterKeys = "priority" | "state" | "labels";
 
@@ -224,7 +221,19 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       list: {
         display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
-          group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by","issue_type", "parent_child","top_level_only", null],
+          group_by: [
+            "state",
+            "priority",
+            "cycle",
+            "module",
+            "labels",
+            "assignees",
+            "created_by",
+            "issue_type",
+            "parent_child",
+            "top_level_only",
+            null,
+          ],
           order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
           type: ["active", "backlog"],
           per_page: [25, 50, 100, 200, 500, 1000, 3000, 5000],
@@ -237,14 +246,24 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       kanban: {
         display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
         display_filters: {
-        group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", "issue_type"],
-        sub_group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", "issue_type", null],
+          group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", "issue_type"],
+          sub_group_by: [
+            "state",
+            "priority",
+            "cycle",
+            "module",
+            "labels",
+            "assignees",
+            "created_by",
+            "issue_type",
+            null,
+          ],
           order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
-        per_page: [25, 50, 100, 200, 500, 1000, 3000, 5000],
+          per_page: [25, 50, 100, 200, 500, 1000, 3000, 5000],
         },
         extra_options: {
           access: true,
-        values: ["show_empty_groups", "sub_issue", "my_issues_only"],
+          values: ["show_empty_groups", "sub_issue", "my_issues_only"],
         },
       },
       calendar: {
@@ -271,7 +290,19 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       gantt_chart: {
         display_properties: ["key", "issue_type"],
         display_filters: {
-          group_by: ["state", "priority", "cycle", "module", "labels", "assignees", "created_by", "issue_type", "parent_child", "top_level_only", null],
+          group_by: [
+            "state",
+            "priority",
+            "cycle",
+            "module",
+            "labels",
+            "assignees",
+            "created_by",
+            "issue_type",
+            "parent_child",
+            "top_level_only",
+            null,
+          ],
           order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority"],
           type: ["active", "backlog"],
         },

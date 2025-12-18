@@ -1,8 +1,5 @@
-"use client";
-
 import { useState } from "react";
 import { observer } from "mobx-react";
-import { useParams } from "next/navigation";
 import { Search } from "lucide-react";
 // types
 import {
@@ -31,14 +28,15 @@ import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserPermissions } from "@/hooks/store/user";
 // plane web components
 import { BillingActionsButton } from "@/plane-web/components/workspace/billing/billing-actions-button";
-import { SendWorkspaceInvitationModal } from "@/plane-web/components/workspace/members/invite-modal";
+import { SendWorkspaceInvitationModal, MembersActivityButton } from "@/plane-web/components/workspace/members";
+import type { Route } from "./+types/page";
 
-const WorkspaceMembersSettingsPage = observer(() => {
+const WorkspaceMembersSettingsPage = observer(function WorkspaceMembersSettingsPage({ params }: Route.ComponentProps) {
   // states
   const [inviteModal, setInviteModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   // router
-  const { workspaceSlug } = useParams();
+  const { workspaceSlug } = params;
   // store hooks
   const { workspaceUserInfo, allowPermissions } = useUserPermissions();
   const {
@@ -54,39 +52,46 @@ const WorkspaceMembersSettingsPage = observer(() => {
     EUserPermissionsLevel.WORKSPACE
   );
 
-  const handleWorkspaceInvite = (data: IWorkspaceBulkInviteFormData) => {
-    if (!workspaceSlug) return;
+  const handleWorkspaceInvite = async (data: IWorkspaceBulkInviteFormData) => {
+    try {
+      await inviteMembersToWorkspace(workspaceSlug, data);
 
-    return inviteMembersToWorkspace(workspaceSlug.toString(), data)
-      .then(() => {
-        setInviteModal(false);
-        captureSuccess({
-          eventName: MEMBER_TRACKER_EVENTS.invite,
-          payload: {
-            emails: [...data.emails.map((email) => email.email)],
-          },
-        });
-        setToast({
-          type: TOAST_TYPE.SUCCESS,
-          title: "Success!",
-          message: t("workspace_settings.settings.members.invitations_sent_successfully"),
-        });
-      })
-      .catch((err) => {
-        captureError({
-          eventName: MEMBER_TRACKER_EVENTS.invite,
-          payload: {
-            emails: [...data.emails.map((email) => email.email)],
-          },
-          error: err,
-        });
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: "Error!",
-          message: `${err.error ?? t("something_went_wrong_please_try_again")}`,
-        });
-        throw err;
+      setInviteModal(false);
+
+      captureSuccess({
+        eventName: MEMBER_TRACKER_EVENTS.invite,
+        payload: {
+          emails: data.emails.map((email) => email.email),
+        },
       });
+
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "Success!",
+        message: t("workspace_settings.settings.members.invitations_sent_successfully"),
+      });
+    } catch (error: unknown) {
+      let message = undefined;
+      if (error instanceof Error) {
+        const err = error as Error & { error?: string };
+        message = err.error;
+      }
+      captureError({
+        eventName: MEMBER_TRACKER_EVENTS.invite,
+        payload: {
+          emails: data.emails.map((email) => email.email),
+        },
+        error: error as Error,
+      });
+
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Error!",
+        message: `${message ?? t("something_went_wrong_please_try_again")}`,
+      });
+
+      throw error;
+    }
   };
 
   // Handler for role filter updates
@@ -136,6 +141,7 @@ const WorkspaceMembersSettingsPage = observer(() => {
                 className="w-full max-w-[234px] border-none bg-transparent text-sm outline-none placeholder:text-custom-text-400"
                 placeholder={`${t("search")}...`}
                 value={searchQuery}
+                // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -145,6 +151,7 @@ const WorkspaceMembersSettingsPage = observer(() => {
               handleUpdate={handleRoleFilterUpdate}
               memberType="workspace"
             />
+            <MembersActivityButton workspaceSlug={workspaceSlug} />
             {canPerformWorkspaceAdminActions && (
               <Button
                 variant="primary"

@@ -5,7 +5,7 @@ import useSWR from "swr";
 // icons
 import { History, MessageSquare } from "lucide-react";
 import { calculateTimeAgo, getFileURL } from "@plane/utils";
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 // hooks
 import { ActivityIcon, ActivityMessage } from "@/components/core/activity";
 import { RichTextEditor } from "@/components/editor/rich-text";
@@ -26,7 +26,7 @@ type Props = {
   updateEmptyState: (state: boolean) => void;
 };
 
-export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
+export const ProfileActivityListPage = observer(function ProfileActivityListPage(props: Props) {
   const { cursor, perPage, updateResultsCount, updateTotalPages, updateEmptyState } = props;
   // store hooks
   const { data: currentUser } = useUser();
@@ -69,10 +69,9 @@ export const ProfileActivityListPage: React.FC<Props> = observer((props) => {
       await Promise.all(
         Object.entries(projectData).map(async ([projectId, workspaceSlug]) => {
           try {
-            const response = await fetch(
-              `/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`,
-              { credentials: "include" }
-            );
+            const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`, {
+              credentials: "include",
+            });
             if (response.ok) {
               customFieldsMap[projectId] = await response.json();
             } else {

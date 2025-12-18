@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { AlertTriangle } from "lucide-react";
@@ -8,7 +6,7 @@ import { Button } from "@plane/propel/button";
 import { useUser } from "@/hooks/store/user";
 import type { Props } from "./confirm-workspace-member-remove";
 
-export const ConfirmWorkspaceMemberRemove: React.FC<Props> = observer((props) => {
+export const ConfirmWorkspaceMemberRemove = observer(function ConfirmWorkspaceMemberRemove(props: Props) {
   const { isOpen, onClose, onSubmit, userDetails } = props;
   // states
   const [isRemoving, setIsRemoving] = useState(false);
@@ -69,12 +67,14 @@ export const ConfirmWorkspaceMemberRemove: React.FC<Props> = observer((props) =>
                       <div className="mt-2">
                         {currentUser?.id === userDetails.id ? (
                           <p className="text-sm text-custom-text-200">
-                            이 워크스페이스를 나가시겠습니까? 이 워크스페이스에 더 이상 접근할 수 없게 됩니다. 이 작업은 되돌릴 수 없습니다.
+                            이 워크스페이스를 나가시겠습니까? 이 워크스페이스에 더 이상 접근할 수 없게 됩니다. 이 작업은
+                            되돌릴 수 없습니다.
                           </p>
                         ) : (
                           <p className="text-sm text-custom-text-200">
                             정말로 멤버를 제거하시겠습니까?{" "}
-                            <span className="font-bold">{userDetails?.display_name}</span> 은(는) 이 워크스페이스에 더 이상 접근할 수 없게 됩니다. 이 작업은 되돌릴 수 없습니다.
+                            <span className="font-bold">{userDetails?.display_name}</span> 은(는) 이 워크스페이스에 더
+                            이상 접근할 수 없게 됩니다. 이 작업은 되돌릴 수 없습니다.
                           </p>
                         )}
                       </div>

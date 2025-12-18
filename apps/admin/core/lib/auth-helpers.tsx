@@ -1,10 +1,10 @@
-import { ReactNode } from "react";
-import Image from "next/image";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { KeyRound, Mails } from "lucide-react";
 // plane packages
-import { SUPPORT_EMAIL, EAdminAuthErrorCodes, TAdminAuthErrorInfo } from "@plane/constants";
-import { TGetBaseAuthenticationModeProps, TInstanceAuthenticationModes } from "@plane/types";
+import { SUPPORT_EMAIL, EAdminAuthErrorCodes } from "@plane/constants";
+import type { TAdminAuthErrorInfo } from "@plane/constants";
+import type { TGetBaseAuthenticationModeProps, TInstanceAuthenticationModes } from "@plane/types";
 import { resolveGeneralTheme } from "@plane/utils";
 // components
 // import {
@@ -24,11 +24,11 @@ import { PasswordLoginConfiguration } from "@/components/authentication/password
 import { OIDCConfiguration } from "@/components/authentication/oidc-config";
 
 // images
-import githubLightModeImage from "@/public/logos/github-black.png";
-import githubDarkModeImage from "@/public/logos/github-white.png";
-import GitlabLogo from "@/public/logos/gitlab-logo.svg";
-import GoogleLogo from "@/public/logos/google-logo.svg";
-import OIDCLogo from "@/public/logos/oidc-logo.svg";
+import githubLightModeImage from "@/app/assets/logos/github-black.png";
+import githubDarkModeImage from "@/app/assets/logos/github-white.png";
+import GitlabLogo from "@/app/assets/logos/gitlab-logo.svg";
+import GoogleLogo from "@/app/assets/logos/google-logo.svg";
+import OIDCLogo from "@/app/assets/logos/oidc-logo.svg?url";
 export enum EErrorAlertType {
   BANNER_ALERT = "BANNER_ALERT",
   INLINE_FIRST_NAME = "INLINE_FIRST_NAME",
@@ -38,7 +38,7 @@ export enum EErrorAlertType {
 }
 
 const errorCodeMessages: {
-  [key in EAdminAuthErrorCodes]: { title: string; message: (email?: string | undefined) => ReactNode };
+  [key in EAdminAuthErrorCodes]: { title: string; message: (email?: string  ) => ReactNode };
 } = {
   // admin
   [EAdminAuthErrorCodes.ADMIN_ALREADY_EXIST]: {
@@ -91,13 +91,13 @@ const errorCodeMessages: {
   },
   [EAdminAuthErrorCodes.ADMIN_USER_DEACTIVATED]: {
     title: `User account deactivated`,
-    message: () => `User account deactivated. Please contact ${!!SUPPORT_EMAIL ? SUPPORT_EMAIL : "administrator"}.`,
+    message: () => `User account deactivated. Please contact ${SUPPORT_EMAIL ? SUPPORT_EMAIL : "administrator"}.`,
   },
 };
 
 export const authErrorHandler = (
   errorCode: EAdminAuthErrorCodes,
-  email?: string | undefined
+  email?: string  
 ): TAdminAuthErrorInfo | undefined => {
   const bannerAlertErrorCodes = [
     EAdminAuthErrorCodes.ADMIN_ALREADY_EXIST,
@@ -146,7 +146,7 @@ export const getBaseAuthenticationModes: (props: TGetBaseAuthenticationModeProps
     key: "google",
     name: "Google",
     description: "Allow members to log in or sign up for Plane with their Google accounts.",
-    icon: <Image src={GoogleLogo} height={20} width={20} alt="Google Logo" />,
+    icon: <img src={GoogleLogo} height={20} width={20} alt="Google Logo" />,
     config: <GoogleConfiguration disabled={disabled} updateConfig={updateConfig} />,
   },
   {
@@ -154,7 +154,7 @@ export const getBaseAuthenticationModes: (props: TGetBaseAuthenticationModeProps
     name: "GitHub",
     description: "Allow members to log in or sign up for Plane with their GitHub accounts.",
     icon: (
-      <Image
+      <img
         src={resolveGeneralTheme(resolvedTheme) === "dark" ? githubDarkModeImage : githubLightModeImage}
         height={20}
         width={20}
@@ -167,14 +167,14 @@ export const getBaseAuthenticationModes: (props: TGetBaseAuthenticationModeProps
     key: "gitlab",
     name: "GitLab",
     description: "Allow members to log in or sign up to plane with their GitLab accounts.",
-    icon: <Image src={GitlabLogo} height={20} width={20} alt="GitLab Logo" />,
+    icon: <img src={GitlabLogo} height={20} width={20} alt="GitLab Logo" />,
     config: <GitlabConfiguration disabled={disabled} updateConfig={updateConfig} />,
   },
   {
     key: "hgi-oidc",
     name: "HGI OpenID Connect",
     description: "한화손해보험 포털ID로 로그인하세요.",
-    icon: <Image src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />,
+    icon: <img src={OIDCLogo} height={20} width={20} alt="OIDC Logo" />,
     config: <OIDCConfiguration disabled={disabled} updateConfig={updateConfig} />,
   },
 ];

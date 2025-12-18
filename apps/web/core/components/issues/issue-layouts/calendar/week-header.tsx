@@ -11,7 +11,7 @@ type Props = {
   showWeekends: boolean;
 };
 
-export const CalendarWeekHeader: React.FC<Props> = observer((props) => {
+export const CalendarWeekHeader = observer(function CalendarWeekHeader(props: Props) {
   const { isLoading, showWeekends } = props;
   // hooks
   const { data } = useUserProfile();
@@ -37,15 +37,15 @@ export const CalendarWeekHeader: React.FC<Props> = observer((props) => {
         if (!showWeekends && (day.value === EStartOfTheWeek.SUNDAY || day.value === EStartOfTheWeek.SATURDAY))
           return null;
 
-          return (
-            <div
-              key={day.shortTitle}
-              className="flex h-11 items-center justify-center md:justify-end bg-custom-background-90 px-4"
-            >
-              {day.shortTitle}
-            </div>
-          );
-        })}
+        return (
+          <div
+            key={day.shortTitle}
+            className="flex h-11 items-center justify-center md:justify-end bg-custom-background-90 px-4"
+          >
+            {day.shortTitle}
+          </div>
+        );
+      })}
     </div>
   );
 });

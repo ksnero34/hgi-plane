@@ -1,6 +1,5 @@
-"use client";
-
-import { ReactNode, useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
+import type { ReactNode } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
@@ -26,7 +25,7 @@ import { WorkflowReviewerModal } from "@/components/project/settings/workflow-re
 // constants
 import { BUTTON_VARIANTS_WITH_TEXT } from "./constants";
 // types
-import { TDropdownProps } from "./types";
+import type { TDropdownProps } from "./types";
 
 type Props = TDropdownProps & {
   button?: ReactNode;
@@ -107,7 +106,16 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
   const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   const { fetchProjectStates, getProjectStates, getStateById } = useProjectState();
-  const { validateTransition, requestApproval, getDefaultWorkflow, getWorkflowTransitions, getWorkflowStates, fetchWorkflowStates, fetchWorkflowTransitions, workflowStates: allWorkflowStates } = useWorkflow();
+  const {
+    validateTransition,
+    requestApproval,
+    getDefaultWorkflow,
+    getWorkflowTransitions,
+    getWorkflowStates,
+    fetchWorkflowStates,
+    fetchWorkflowTransitions,
+    workflowStates: allWorkflowStates,
+  } = useWorkflow();
   const statesList = stateIds
     ? stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state)
     : getProjectStates(projectId);
@@ -130,7 +138,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
               .then(() => {
                 setWorkflowStatesLoaded(true);
               })
-              .catch(error => {
+              .catch((error) => {
                 console.error("StateDropdown: Error fetching workflow states", error);
               });
           }
@@ -143,14 +151,25 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
               .then(() => {
                 setWorkflowStatesLoaded(true);
               })
-              .catch(error => {
+              .catch((error) => {
                 console.error("StateDropdown: Error fetching workflow transitions", error);
               });
           }
         }
       }
     }
-  }, [props.isForWorkItemCreation, projectId, workspaceSlug, issueId, enableWorkflowValidation, getDefaultWorkflow, getWorkflowStates, getWorkflowTransitions, fetchWorkflowStates, fetchWorkflowTransitions]);
+  }, [
+    props.isForWorkItemCreation,
+    projectId,
+    workspaceSlug,
+    issueId,
+    enableWorkflowValidation,
+    getDefaultWorkflow,
+    getWorkflowStates,
+    getWorkflowTransitions,
+    fetchWorkflowStates,
+    fetchWorkflowTransitions,
+  ]);
 
   // Get available states based on workflow rules and new issue creation settings
   const getAvailableStates = useMemo(() => {
@@ -158,22 +177,20 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     if (props.isForWorkItemCreation && projectId && workspaceSlug) {
       // Get default workflow for the project
       const defaultWorkflow = getDefaultWorkflow(projectId);
-      
+
       if (defaultWorkflow) {
         // Get workflow states
         const workflowStates = getWorkflowStates(defaultWorkflow.id);
-        
+
         if (workflowStates && workflowStates.length > 0) {
           // Filter states that allow new issues
           const allowedStateIds = workflowStates
             .filter((workflowState) => workflowState.allow_new_issues)
             .map((workflowState) => workflowState.state);
-          
+
           // Filter project states to only include those allowed for new issues
-          const filteredStates = statesList?.filter((state) => 
-            allowedStateIds.indexOf(state?.id ?? "") !== -1
-          ) || [];
-          
+          const filteredStates = statesList?.filter((state) => allowedStateIds.indexOf(state?.id ?? "") !== -1) || [];
+
           if (filteredStates.length > 0) {
             return filteredStates;
           }
@@ -213,9 +230,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     }
 
     // Find transitions from current state
-    const availableTransitions = transitions.filter(
-      (transition) => transition.from_state === currentStateId
-    );
+    const availableTransitions = transitions.filter((transition) => transition.from_state === currentStateId);
     // console.log("StateDropdown: Available transitions from current state", availableTransitions);
 
     // Extract target state IDs
@@ -228,7 +243,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     // Filter states list to only include available states
     const filteredStates = statesList?.filter((state) => availableStateIds.has(state?.id ?? "")) || [];
     // console.log("StateDropdown: Filtered states for update", filteredStates);
-    
+
     return filteredStates;
   }, [
     props.isForWorkItemCreation,
@@ -250,7 +265,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     if (!enableWorkflowValidation || !issueId || !workspaceSlug || !projectId || !stateValue) {
       return { allowed: true, requiresReviewer: false };
     }
-    
+
     if (stateValue === toStateId) {
       return { allowed: true, requiresReviewer: false }; // Same state is always allowed
     }
@@ -319,7 +334,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     // Workflow validation before allowing state change
     if (enableWorkflowValidation && issueId) {
       const validation = await validateStateTransition(val);
-      
+
       if (!validation.allowed) {
         setToast({
           type: TOAST_TYPE.ERROR,
@@ -328,7 +343,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
         });
         return;
       }
-      
+
       // If reviewer is required, show modal without creating approval request yet
       if (validation.requiresReviewer && validation.reviewers && validation.reviewers.length > 0) {
         // Show reviewer modal - let the modal handle approval request creation
@@ -343,7 +358,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
         return;
       }
     }
-    
+
     onChange(val);
     handleClose();
   };
@@ -469,7 +484,7 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
           </Combobox.Options>
         )}
       </ComboDropDown>
-      
+
       {/* Workflow Reviewer Modal */}
       <WorkflowReviewerModal
         isOpen={!!reviewerModalData}

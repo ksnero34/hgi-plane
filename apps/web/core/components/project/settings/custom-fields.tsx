@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useRef } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -74,7 +72,10 @@ const CustomFieldItem: React.FC<{
   }, [field.id, index]);
 
   return (
-    <div ref={elementRef} className={`relative flex flex-col gap-4 p-4 border rounded-md ${isDragging ? "opacity-50" : ""}`}>
+    <div
+      ref={elementRef}
+      className={`relative flex flex-col gap-4 p-4 border rounded-md ${isDragging ? "opacity-50" : ""}`}
+    >
       <DropIndicator isVisible={instruction === "DRAG_OVER"} />
       <div className="w-full grid grid-cols-12 gap-4 items-center">
         <div className="col-span-3">
@@ -87,15 +88,16 @@ const CustomFieldItem: React.FC<{
         </div>
         <div className="col-span-2">
           <div className="text-sm text-custom-text-200">필드 타입</div>
-          <div className="font-medium">{FIELD_TYPES.find(t => t.value === field.field_type)?.label || field.field_type}</div>
+          <div className="font-medium">
+            {FIELD_TYPES.find((t) => t.value === field.field_type)?.label || field.field_type}
+          </div>
         </div>
         <div className="col-span-2">
           <div className="text-sm text-custom-text-200">옵션/값</div>
           <div className="font-medium">
-            {field.field_type === "select" || field.field_type === "multiselect" 
+            {field.field_type === "select" || field.field_type === "multiselect"
               ? `${field.options?.length || 0}개 옵션`
-              : "없음"
-            }
+              : "없음"}
           </div>
         </div>
         <div className="col-span-1">
@@ -103,8 +105,12 @@ const CustomFieldItem: React.FC<{
           <div className="font-medium">{field.is_required ? "예" : "아니오"}</div>
         </div>
         <div className="col-span-2 flex justify-end gap-2">
-          <Button variant="neutral-primary" size="sm" onClick={() => onEdit(field)}>수정</Button>
-          <Button variant="danger" size="sm" onClick={() => onDelete(field.id)}>삭제</Button>
+          <Button variant="neutral-primary" size="sm" onClick={() => onEdit(field)}>
+            수정
+          </Button>
+          <Button variant="danger" size="sm" onClick={() => onDelete(field.id)}>
+            삭제
+          </Button>
         </div>
       </div>
     </div>
@@ -113,7 +119,9 @@ const CustomFieldItem: React.FC<{
 
 export const CustomFields: React.FC = observer(() => {
   const { workspaceSlug, projectId } = useParams();
-  const { customFields, createCustomField, updateCustomField, deleteCustomField, mutateCustomFields } = useCustomField(projectId as string);
+  const { customFields, createCustomField, updateCustomField, deleteCustomField, mutateCustomFields } = useCustomField(
+    projectId as string
+  );
 
   const [newField, setNewField] = useState<Partial<ICustomField>>({});
   const [isEditMode, setIsEditMode] = useState(false);
@@ -189,9 +197,9 @@ export const CustomFields: React.FC = observer(() => {
   };
 
   const handleDrop = async (sourceId: string, destinationId: string) => {
-    const sourceIndex = fields.findIndex(f => f.id === sourceId);
-    const destinationIndex = fields.findIndex(f => f.id === destinationId);
-    
+    const sourceIndex = fields.findIndex((f) => f.id === sourceId);
+    const destinationIndex = fields.findIndex((f) => f.id === destinationId);
+
     if (sourceIndex === -1 || destinationIndex === -1) return;
 
     const items = Array.from(fields);
@@ -223,37 +231,51 @@ export const CustomFields: React.FC = observer(() => {
   };
 
   const getFieldPlaceholder = (fieldType: TCustomFieldType) => {
-    switch(fieldType) {
-      case 'text': return '예: 버그 설명';
-      case 'number': return '예: 스토리 포인트';
-      case 'date': return '예: 출시일';
-      case 'select':
-      case 'multiselect':
-        return '예: 우선순위';
-      default: return '필드 이름';
+    switch (fieldType) {
+      case "text":
+        return "예: 버그 설명";
+      case "number":
+        return "예: 스토리 포인트";
+      case "date":
+        return "예: 출시일";
+      case "select":
+      case "multiselect":
+        return "예: 우선순위";
+      default:
+        return "필드 이름";
     }
   };
 
   const getFieldHelperText = (fieldType: TCustomFieldType) => {
-    switch(fieldType) {
-      case 'text': return '이슈에 대한 자세한 설명을 추가할 수 있습니다.';
-      case 'number': return '숫자 값을 입력하여 측정 항목을 관리합니다.';
-      case 'date': return '마감일, 출시일 등 중요한 날짜를 추적합니다.';
-      case 'select': return '하나의 옵션을 선택할 수 있는 드롭다운 목록입니다.';
-      case 'multiselect': return '여러 옵션을 선택할 수 있는 드롭다운 목록입니다.';
-      default: return '필드의 용도를 입력하세요.';
+    switch (fieldType) {
+      case "text":
+        return "이슈에 대한 자세한 설명을 추가할 수 있습니다.";
+      case "number":
+        return "숫자 값을 입력하여 측정 항목을 관리합니다.";
+      case "date":
+        return "마감일, 출시일 등 중요한 날짜를 추적합니다.";
+      case "select":
+        return "하나의 옵션을 선택할 수 있는 드롭다운 목록입니다.";
+      case "multiselect":
+        return "여러 옵션을 선택할 수 있는 드롭다운 목록입니다.";
+      default:
+        return "필드의 용도를 입력하세요.";
     }
   };
 
   const getKeyPlaceholder = (fieldType: TCustomFieldType) => {
-    switch(fieldType) {
-      case 'text': return 'bug_description';
-      case 'number': return 'story_points';
-      case 'date': return 'release_date';
-      case 'select':
-      case 'multiselect':
-        return 'priority';
-      default: return 'field_key';
+    switch (fieldType) {
+      case "text":
+        return "bug_description";
+      case "number":
+        return "story_points";
+      case "date":
+        return "release_date";
+      case "select":
+      case "multiselect":
+        return "priority";
+      default:
+        return "field_key";
     }
   };
 
@@ -267,9 +289,7 @@ export const CustomFields: React.FC = observer(() => {
         {/* 새 필드 추가 폼 */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-lg font-medium">
-              {isEditMode ? "커스텀 필드 수정" : "새 커스텀 필드 추가"}
-            </h4>
+            <h4 className="text-lg font-medium">{isEditMode ? "커스텀 필드 수정" : "새 커스텀 필드 추가"}</h4>
             {isEditMode && (
               <Button variant="neutral-primary" onClick={resetForm}>
                 취소
@@ -291,10 +311,16 @@ export const CustomFields: React.FC = observer(() => {
               <Input
                 value={newField.key}
                 onChange={(e) => setNewField({ ...newField, key: e.target.value })}
-                placeholder={newField.name ? newField.name.toLowerCase().replace(/\s+/g, "_") : getKeyPlaceholder(newField.field_type || "text")}
+                placeholder={
+                  newField.name
+                    ? newField.name.toLowerCase().replace(/\s+/g, "_")
+                    : getKeyPlaceholder(newField.field_type || "text")
+                }
                 disabled={isEditMode}
               />
-              <p className="text-xs text-custom-text-200">{isEditMode ? "식별자는 수정할 수 없습니다" : "시스템에서 사용될 고유 식별자 (영문, 숫자, _ 만 사용)"}</p>
+              <p className="text-xs text-custom-text-200">
+                {isEditMode ? "식별자는 수정할 수 없습니다" : "시스템에서 사용될 고유 식별자 (영문, 숫자, _ 만 사용)"}
+              </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -302,7 +328,7 @@ export const CustomFields: React.FC = observer(() => {
               <label className="text-sm font-medium text-custom-text-300">필드 타입</label>
               <CustomSelect
                 value={newField.field_type}
-                label={FIELD_TYPES.find(t => t.value === newField.field_type)?.label || "필드 타입 선택"}
+                label={FIELD_TYPES.find((t) => t.value === newField.field_type)?.label || "필드 타입 선택"}
                 onChange={(val: string) => setNewField({ ...newField, field_type: val as TCustomFieldType })}
                 buttonClassName="w-full text-left"
               >
@@ -324,7 +350,7 @@ export const CustomFields: React.FC = observer(() => {
               <span className="ml-2">필수 필드</span>
             </div>
           </div>
-          
+
           {/* 선택/다중선택 타입의 옵션 추가 */}
           {(newField.field_type === "select" || newField.field_type === "multiselect") && (
             <div className="space-y-2">
@@ -365,12 +391,8 @@ export const CustomFields: React.FC = observer(() => {
               <p className="text-xs text-custom-text-200">Enter 키를 눌러 옵션을 추가하세요</p>
             </div>
           )}
-          
-          <Button
-            variant="primary"
-            onClick={handleCreateOrUpdateField}
-            loading={isLoading}
-          >
+
+          <Button variant="primary" onClick={handleCreateOrUpdateField} loading={isLoading}>
             {isEditMode ? "필드 수정" : "필드 추가"}
           </Button>
         </div>
@@ -390,4 +412,4 @@ export const CustomFields: React.FC = observer(() => {
       </div>
     </div>
   );
-}); 
+});

@@ -8,4 +8,5 @@ export default defineConfig({
   clean: true,
   sourcemap: false,
   ignoreWatch: [".turbo"],
+  exports: true,
 });

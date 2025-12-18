@@ -1,31 +1,32 @@
-"use client";
-
 import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { Lock } from "lucide-react";
-// plane constants
+// plane imports
 import {
   EIssueFilterType,
   ISSUE_DISPLAY_FILTERS_BY_PAGE,
   EUserPermissions,
   EUserPermissionsLevel,
-  EProjectFeatureKey,
   WORK_ITEM_TRACKER_ELEMENTS,
 } from "@plane/constants";
-// types
 import { Button } from "@plane/propel/button";
 import { ViewsIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
-import type { ICustomSearchSelectOption, IIssueDisplayFilterOptions, IIssueDisplayProperties,TBulkOperationsPayload, TIssue } from "@plane/types";
+import type {
+  ICustomSearchSelectOption,
+  IIssueDisplayFilterOptions,
+  IIssueDisplayProperties,
+  TBulkOperationsPayload,
+  TIssue,
+} from "@plane/types";
 import { EIssuesStoreType, EViewAccess, EIssueLayoutTypes } from "@plane/types";
-// ui
 import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown } from "@plane/ui";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // components
+import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
 import { DisplayFiltersSelection, FiltersDropdown, LayoutSelection } from "@/components/issues/issue-layouts/filters";
-// constants
 import { ViewQuickActions } from "@/components/views/quick-actions";
 import { WorkItemFiltersToggle } from "@/components/work-item-filters/filters-toggle";
 // hooks
@@ -34,18 +35,15 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectView } from "@/hooks/store/use-project-view";
 import { useUserPermissions } from "@/hooks/store/user";
-import { useLabel } from "@/hooks/store/use-label";
-import { useMember } from "@/hooks/store/use-member";
-import { useProjectState } from "@/hooks/store/use-project-state";
 import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
-import { useCustomField } from "@/hooks/store/use-custom-field";
 // plane web
 import { useAppRouter } from "@/hooks/use-app-router";
+// plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { BulkEditModal } from "@/plane-web/components/issues/bulk-operations/bulk-edit-modal";
 
-export const ProjectViewIssuesHeader: React.FC = observer(() => {
+export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader() {
   // refs
   const parentRef = useRef(null);
   // states
@@ -121,17 +119,14 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
   // 일괄변경을 위한 핸들러 함수
   const handleBulkUpdate = async (bulkUpdatePayload: TBulkOperationsPayload) => {
     try {
-      const response = await fetch(
-        `/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(bulkUpdatePayload),
-        }
-      );
+      const response = await fetch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/bulk-operation-issues/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(bulkUpdatePayload),
+      });
 
       if (response.ok) {
         const result = await response.json();
@@ -150,17 +145,13 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
         });
 
         // 이슈 목록 새로고침
-        await fetchIssues(
-          "mutation",
-          {
-            canGroup: true,
-            perPageCount: issueFilters?.displayFilters?.per_page || 100
-          }
-        );
+        await fetchIssues("mutation", {
+          canGroup: true,
+          perPageCount: issueFilters?.displayFilters?.per_page || 100,
+        });
 
         // 선택 해제
         clearSelection();
-
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || "업데이트에 실패했습니다.");
@@ -175,7 +166,7 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
 
   // 선택된 이슈들의 데이터를 가져오기 (완전한 이슈 데이터가 있는 것만)
   const selectedIssuesList = selectedEntityIds
-    .map(issueId => issueMap[issueId])
+    .map((issueId) => issueMap[issueId])
     .filter((issue): issue is TIssue => issue !== undefined);
 
   if (!viewDetails) return;
@@ -196,12 +187,16 @@ export const ProjectViewIssuesHeader: React.FC = observer(() => {
     <Header>
       <Header.LeftItem>
         <Breadcrumbs isLoading={loader === "init-loader"}>
-          <CommonProjectBreadcrumbs
-            workspaceSlug={workspaceSlug?.toString() ?? ""}
-            projectId={projectId?.toString() ?? ""}
-            featureKey={EProjectFeatureKey.VIEWS}
+          <CommonProjectBreadcrumbs workspaceSlug={workspaceSlug?.toString()} projectId={projectId?.toString()} />
+          <Breadcrumbs.Item
+            component={
+              <BreadcrumbLink
+                label="Views"
+                href={`/${workspaceSlug}/projects/${projectId}/views/`}
+                icon={<ViewsIcon className="h-4 w-4 text-custom-text-300" />}
+              />
+            }
           />
-
           <Breadcrumbs.Item
             component={
               <BreadcrumbNavigationSearchDropdown

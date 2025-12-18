@@ -7,11 +7,13 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # restart: always
+    env_file:
+      - ./apps/web/.env
     networks:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:1.1.15
+    image: harbor.hwgeneralins.com/plane/web:1.2.1
 
   admin:
     container_name: admin
@@ -21,12 +23,14 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # restart: always
+    env_file:
+      - ./apps/admin/.env
     networks:
       - dev_env
     depends_on:
       - api
       - web
-    image: harbor.hwgeneralins.com/plane/admin:1.1.1
+    image: harbor.hwgeneralins.com/plane/admin:1.2.1
 
   space:
     container_name: space
@@ -36,12 +40,14 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     # restart: always
+    env_file:
+      - ./apps/space/.env
     networks:
       - dev_env
     depends_on:
       - api
       - web
-    image: harbor.hwgeneralins.com/plane/space:1.1.1
+    image: harbor.hwgeneralins.com/plane/space:1.2.1
 
   api:
     container_name: api
@@ -64,7 +70,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.1.13
+    image: harbor.hwgeneralins.com/plane/api:1.2.1
 
   worker:
     container_name: bgworker
@@ -79,7 +85,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.1.13
+    image: harbor.hwgeneralins.com/plane/api:1.2.1
 
   beat-worker:
     container_name: beatworker
@@ -94,7 +100,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.1.13
+    image: harbor.hwgeneralins.com/plane/api:1.2.1
 
   migrator:
     container_name: plane-migrator
@@ -107,7 +113,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: harbor.hwgeneralins.com/plane/api:1.1.13
+    image: harbor.hwgeneralins.com/plane/api:1.2.1
 
   live:
     container_name: plane-live
@@ -120,7 +126,7 @@ services:
     networks:
       - dev_env
     # command: ls -al live
-    image: harbor.hwgeneralins.com/plane/live:1.1.11
+    image: harbor.hwgeneralins.com/plane/live:1.2.1
     env_file:
       - ./apps/live/.env
     environment:
@@ -203,7 +209,7 @@ services:
       - api
       - space
       - admin
-    image: harbor.hwgeneralins.com/plane/proxy:3.0.2
+    image: harbor.hwgeneralins.com/plane/proxy:1.2.1
 
 volumes:
   redisdata:

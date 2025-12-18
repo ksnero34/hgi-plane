@@ -1,6 +1,4 @@
-"use client";
-
-import type { Dispatch, SetStateAction, FC } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
@@ -40,7 +38,7 @@ type Props = {
 
 const workspaceService = new WorkspaceService();
 
-export const CreateWorkspaceForm: FC<Props> = observer((props) => {
+export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: Props) {
   const { t } = useTranslation();
   const {
     onSubmit,
@@ -69,52 +67,46 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
   } = useForm<IWorkspace>({ defaultValues, mode: "onChange" });
 
   const handleCreateWorkspace = async (formData: IWorkspace) => {
-    await workspaceService
-      .workspaceSlugCheck(formData.slug)
-      .then(async (res) => {
-        if (res.status === true && !RESTRICTED_URLS.includes(formData.slug)) {
-          setSlugError(false);
+    try {
+      const res = (await workspaceService.workspaceSlugCheck(formData.slug)) as { status: boolean };
+      if (res.status === true && !RESTRICTED_URLS.includes(formData.slug)) {
+        setSlugError(false);
 
-          await createWorkspace(formData)
-            .then(async (res) => {
-              captureSuccess({
-                eventName: WORKSPACE_TRACKER_EVENTS.create,
-                payload: { slug: formData.slug },
-              });
-              setToast({
-                type: TOAST_TYPE.SUCCESS,
-                title: t("workspace_creation.toast.success.title"),
-                message: t("workspace_creation.toast.success.message"),
-              });
+        try {
+          const workspaceResponse = await createWorkspace(formData);
+          captureSuccess({
+            eventName: WORKSPACE_TRACKER_EVENTS.create,
+            payload: { slug: formData.slug },
+          });
+          setToast({
+            type: TOAST_TYPE.SUCCESS,
+            title: t("workspace_creation.toast.success.title"),
+            message: t("workspace_creation.toast.success.message"),
+          });
 
-              if (onSubmit) await onSubmit(res);
-            })
-            .catch((error) => {
-              captureError({
-                eventName: WORKSPACE_TRACKER_EVENTS.create,
-                payload: { slug: formData.slug },
-                error: new Error("Error creating workspace"),
-              });
-
-              const errorMessage = (error as any)?.response?.data?.error === "Only instance administrators can create workspaces"
-                ? "인스턴스 관리자만 워크스페이스를 생성할 수 있습니다."
-                : "워크스페이스 생성에 실패했습니다. 다시 시도해주세요.";
-
-              setToast({
-                type: TOAST_TYPE.ERROR,
-                title: t("workspace_creation.toast.error.title"),
-                message: t("workspace_creation.toast.error.message"),
-              });
-            });
-        } else setSlugError(true);
-      })
-      .catch(() => {
-        setToast({
-          type: TOAST_TYPE.ERROR,
-          title: t("workspace_creation.toast.error.title"),
-          message: t("workspace_creation.toast.error.message"),
-        });
+          if (onSubmit) await onSubmit(workspaceResponse);
+        } catch {
+          captureError({
+            eventName: WORKSPACE_TRACKER_EVENTS.create,
+            payload: { slug: formData.slug },
+            error: new Error("Error creating workspace"),
+          });
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: t("workspace_creation.toast.error.title"),
+            message: t("workspace_creation.toast.error.message"),
+          });
+        }
+      } else {
+        setSlugError(true);
+      }
+    } catch {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("workspace_creation.toast.error.title"),
+        message: t("workspace_creation.toast.error.message"),
       });
+    }
   };
 
   useEffect(
@@ -126,7 +118,12 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
   );
 
   return (
-    <form className="space-y-6 sm:space-y-9" onSubmit={handleSubmit(handleCreateWorkspace)}>
+    <form
+      className="space-y-6 sm:space-y-9"
+      onSubmit={(e) => {
+        void handleSubmit(handleCreateWorkspace)(e);
+      }}
+    >
       <div className="space-y-6 sm:space-y-7">
         <div className="space-y-1 text-sm">
           <label htmlFor="workspaceName">
@@ -157,11 +154,11 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
                     setValue("name", e.target.value);
                     // 한글을 제외한 영문, 숫자, 특수문자만 허용
                     const englishOnly = e.target.value
-                      .replace(/[가-힣]/g, '')
+                      .replace(/[가-힣]/g, "")
                       .toLowerCase()
                       .trim()
                       .replace(/ /g, "-")
-                      .replace(/[^a-z0-9-_]/g, '');
+                      .replace(/[^a-z0-9-_]/g, "");
                     setValue("slug", englishOnly, {
                       shouldValidate: true,
                     });
@@ -257,7 +254,6 @@ export const CreateWorkspaceForm: FC<Props> = observer((props) => {
           </div>
         </div>
       </div>
-
       <div className="flex items-center gap-4">
         {secondaryButton}
         <Button

@@ -1,10 +1,8 @@
-"use client";
-
 import React, { useCallback, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings, Type, MessageSquare } from "lucide-react";
 // types
-import { TIssue, TCustomField } from "@plane/types";
+import type { TIssue, TCustomField } from "@plane/types";
 // components
 import { CustomFieldDropdown, DateDropdown, MemberDropdown } from "@/components/dropdowns";
 // ui
@@ -27,41 +25,45 @@ type Props = {
 export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) => {
   const { issue, customField, onChange, disabled, onClose } = props;
   const { isMobile } = usePlatformOS();
-  
+
   // text 필드의 로컬 상태 관리
   const [textValue, setTextValue] = useState<string>("");
   const [isTextEditing, setIsTextEditing] = useState(false);
 
   // 필드 값 가져오기
   const getFieldValue = () => {
-    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === customField.id);
+    const fieldValue = issue?.custom_field_values?.find((cfv) => cfv.custom_field_id === customField.id);
     return fieldValue?.value;
   };
 
   // 필드 값 업데이트
   const updateFieldValue = (value: any) => {
-    const existingValues = (issue?.custom_field_values || []).filter(cfv => cfv.custom_field_id !== customField.id);
-    
+    const existingValues = (issue?.custom_field_values || []).filter((cfv) => cfv.custom_field_id !== customField.id);
+
     const updatedValues = [...existingValues];
-    
+
     if (value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
       const newFieldValue = {
         custom_field_id: customField.id,
         value: value,
         field_name: customField.name,
-        field_type: customField.field_type
+        field_type: customField.field_type,
       };
       updatedValues.push(newFieldValue);
     }
-    
-    onChange(issue, { custom_field_values: updatedValues }, {
-      changed_property: "custom_field_values",
-      change_details: {
-        field_id: customField.id,
-        field_name: customField.name,
-        new_value: value
+
+    onChange(
+      issue,
+      { custom_field_values: updatedValues },
+      {
+        changed_property: "custom_field_values",
+        change_details: {
+          field_id: customField.id,
+          field_name: customField.name,
+          new_value: value,
+        },
       }
-    });
+    );
   };
 
   const fieldValue = getFieldValue();
@@ -86,7 +88,8 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
     }
   };
 
-  const clickableAreaBaseClass = "flex h-full w-full cursor-pointer items-center gap-1.5 rounded-none px-page-x py-1 text-xs hover:bg-custom-background-80 group-[.selected-issue-row]:bg-custom-primary-100/5 group-[.selected-issue-row]:hover:bg-custom-primary-100/10";
+  const clickableAreaBaseClass =
+    "flex h-full w-full cursor-pointer items-center gap-1.5 rounded-none px-page-x py-1 text-xs hover:bg-custom-background-80 group-[.selected-issue-row]:bg-custom-primary-100/5 group-[.selected-issue-row]:hover:bg-custom-primary-100/10";
 
   // select/multiselect 타입을 위한 컴포넌트들 (라벨 컴포넌트와 동일한 패턴)
   const NoValue = useMemo(
@@ -118,9 +121,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
       >
         <div className={cn(clickableAreaBaseClass, "text-custom-text-200")}>
           {getFieldIcon(customField.field_type)}
-          <span className="truncate">
-            {Array.isArray(fieldValue) ? `${fieldValue.length} selected` : fieldValue}
-          </span>
+          <span className="truncate">{Array.isArray(fieldValue) ? `${fieldValue.length} selected` : fieldValue}</span>
         </div>
       </Tooltip>
     ),
@@ -153,8 +154,8 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
 
     switch (customField.field_type) {
       case "text":
-        const currentValue = isTextEditing ? textValue : (fieldValue || "");
-        
+        const currentValue = isTextEditing ? textValue : fieldValue || "";
+
         return (
           <input
             type="text"
@@ -202,10 +203,10 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
             )}
           />
         );
-        
+
       case "select":
         const hasSelectValue = fieldValue && fieldValue !== "";
-        
+
         return (
           <CustomFieldDropdown
             field={customField}
@@ -225,7 +226,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
       case "multiselect":
         const selectedValues = Array.isArray(fieldValue) ? fieldValue : [];
         const hasMultiSelectValue = selectedValues.length > 0;
-        
+
         return (
           <CustomFieldDropdown
             field={customField}
@@ -297,11 +298,7 @@ export const SpreadsheetCustomFieldColumn: React.FC<Props> = observer((props) =>
     }
   };
 
-  return (
-    <div className="h-11 border-b-[0.5px] border-custom-border-200">
-      {renderFieldInput()}
-    </div>
-  );
+  return <div className="h-11 border-b-[0.5px] border-custom-border-200">{renderFieldInput()}</div>;
 });
 
 // 개별 커스텀 필드 컬럼 컴포넌트 (issue-column.tsx에서 사용)
@@ -331,7 +328,7 @@ export const AllCustomFieldsColumn: React.FC<IAllCustomFieldsColumn> = observer(
 
   // 이슈의 모든 커스텀 필드 값들
   const customFieldValues = issue?.custom_field_values || [];
-  
+
   // 값이 있는 커스텀 필드들만 표시
   const hasValues = customFieldValues.length > 0;
   const maxRender = 1; // 스프레드시트에서는 1개만 표시
@@ -372,9 +369,7 @@ export const AllCustomFieldsColumn: React.FC<IAllCustomFieldsColumn> = observer(
       >
         <div className="flex h-full items-center gap-1.5 rounded-none px-page-x py-1 text-xs hover:bg-custom-background-80 group-[.selected-issue-row]:bg-custom-primary-100/5 group-[.selected-issue-row]:hover:bg-custom-primary-100/10 w-full cursor-pointer">
           {getFieldIcon()}
-          <span className="text-custom-text-200 truncate">
-            {customFieldValues.length}개 설정됨
-          </span>
+          <span className="text-custom-text-200 truncate">{customFieldValues.length}개 설정됨</span>
         </div>
       </Tooltip>
     ),
@@ -382,11 +377,7 @@ export const AllCustomFieldsColumn: React.FC<IAllCustomFieldsColumn> = observer(
   );
 
   if (!hasValues) {
-    return (
-      <div className="h-11 border-b-[0.5px] border-custom-border-200">
-        {NoValue}
-      </div>
-    );
+    return <div className="h-11 border-b-[0.5px] border-custom-border-200">{NoValue}</div>;
   }
 
   if (customFieldValues.length <= maxRender) {
@@ -413,9 +404,5 @@ export const AllCustomFieldsColumn: React.FC<IAllCustomFieldsColumn> = observer(
   }
 
   // 여러 개일 때 요약 표시
-  return (
-    <div className="h-11 border-b-[0.5px] border-custom-border-200">
-      {Summary}
-    </div>
-  );
-}); 
+  return <div className="h-11 border-b-[0.5px] border-custom-border-200">{Summary}</div>;
+});

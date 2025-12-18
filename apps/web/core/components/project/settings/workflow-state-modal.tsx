@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -8,7 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Button, Input, ModalCore, EModalPosition, EModalWidth, ToggleSwitch } from "@plane/ui";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // types
-import { IWorkflowState, IWorkflowStateFormData } from "@plane/types";
+import type { IWorkflowState, IWorkflowStateFormData } from "@plane/types";
 // hooks
 import { useWorkflow } from "@/hooks/store/use-workflow";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -26,7 +24,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
   // store hooks
   const { createWorkflowState, updateWorkflowState } = useWorkflow();
   const { projectStates } = useProjectState();
-  
+
   // form
   const {
     control,
@@ -43,14 +41,14 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
 
   React.useEffect(() => {
     // console.log("WorkflowState for editing:", workflowState);
-    
+
     if (workflowState) {
       const formData = {
         state: workflowState.state_detail?.id || workflowState.state || "",
         sequence: workflowState.sequence || 1,
         allow_new_issues: workflowState.allow_new_issues || false,
       };
-      
+
       // console.log("Setting form data:", formData);
       reset(formData);
     } else {
@@ -74,24 +72,13 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
 
     try {
       if (workflowState) {
-        await updateWorkflowState(
-          workspaceSlug as string,
-          projectId as string,
-          workflowId,
-          workflowState.id,
-          apiData
-        );
+        await updateWorkflowState(workspaceSlug as string, projectId as string, workflowId, workflowState.id, apiData);
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "워크플로우 상태가 수정되었습니다.",
         });
       } else {
-        await createWorkflowState(
-          workspaceSlug as string,
-          projectId as string,
-          workflowId,
-          apiData
-        );
+        await createWorkflowState(workspaceSlug as string, projectId as string, workflowId, apiData);
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: "워크플로우 상태가 추가되었습니다.",
@@ -100,9 +87,11 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
       onClose();
     } catch (error: any) {
       console.log("Error details:", error);
-      
-      let errorMessage = workflowState ? "워크플로우 상태 수정에 실패했습니다." : "워크플로우 상태 추가에 실패했습니다.";
-      
+
+      let errorMessage = workflowState
+        ? "워크플로우 상태 수정에 실패했습니다."
+        : "워크플로우 상태 추가에 실패했습니다.";
+
       // 409 Conflict - 중복 상태나 순서 에러
       if (error?.status === 409 || error?.response?.status === 409) {
         const responseData = error?.response?.data || error?.data;
@@ -115,14 +104,14 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
       // 400 Bad Request - 유효성 검증 실패
       else if (error?.status === 400 || error?.response?.status === 400) {
         const responseData = error?.response?.data || error?.data;
-        if (responseData && typeof responseData === 'object') {
+        if (responseData && typeof responseData === "object") {
           const errorMessages = Object.values(responseData).flat();
           if (errorMessages.length > 0) {
-            errorMessage = errorMessages.join(', ');
+            errorMessage = errorMessages.join(", ");
           }
         }
       }
-      
+
       setToast({
         type: TOAST_TYPE.ERROR,
         title: errorMessage,
@@ -131,12 +120,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
   };
 
   return (
-    <ModalCore
-      isOpen={isOpen}
-      handleClose={onClose}
-      position={EModalPosition.CENTER}
-      width={EModalWidth.XL}
-    >
+    <ModalCore isOpen={isOpen} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XL}>
       <div className="p-5">
         <div className="mb-5">
           <h3 className="text-lg font-medium text-custom-text-100">
@@ -169,9 +153,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
                   </select>
                 )}
               />
-              {errors.state && (
-                <p className="mt-1 text-sm text-red-500">{errors.state.message}</p>
-              )}
+              {errors.state && <p className="mt-1 text-sm text-red-500">{errors.state.message}</p>}
             </div>
 
             {/* Sequence */}
@@ -184,17 +166,10 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
                 control={control}
                 rules={{ required: "순서를 입력해주세요", min: { value: 1, message: "1 이상의 값을 입력해주세요" } }}
                 render={({ field }) => (
-                  <Input
-                    {...field}
-                    type="number"
-                    placeholder="순서를 입력하세요"
-                    hasError={!!errors.sequence}
-                  />
+                  <Input {...field} type="number" placeholder="순서를 입력하세요" hasError={!!errors.sequence} />
                 )}
               />
-              {errors.sequence && (
-                <p className="mt-1 text-sm text-red-500">{errors.sequence.message}</p>
-              )}
+              {errors.sequence && <p className="mt-1 text-sm text-red-500">{errors.sequence.message}</p>}
             </div>
 
             {/* Allow New Issues */}
@@ -206,9 +181,7 @@ export const WorkflowStateModal = observer(({ isOpen, onClose, workflowId, workf
               <Controller
                 name="allow_new_issues"
                 control={control}
-                render={({ field: { value, onChange } }) => (
-                  <ToggleSwitch value={value ?? false} onChange={onChange} />
-                )}
+                render={({ field: { value, onChange } }) => <ToggleSwitch value={value ?? false} onChange={onChange} />}
               />
             </div>
           </div>

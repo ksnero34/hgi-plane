@@ -35,7 +35,7 @@ type Props = {
   customFields?: TCustomField[];
 };
 
-export const SpreadsheetTable = observer((props: Props) => {
+export const SpreadsheetTable = observer(function SpreadsheetTable(props: Props) {
   const {
     displayProperties,
     displayFilters,

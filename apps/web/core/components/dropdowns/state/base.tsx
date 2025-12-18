@@ -1,15 +1,13 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { useRef, useState, useEffect, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
-import { ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
-import { StateGroupIcon } from "@plane/propel/icons";
+import { StateGroupIcon, ChevronDownIcon } from "@plane/propel/icons";
 import type { IState } from "@plane/types";
 import { ComboDropDown, Spinner } from "@plane/ui";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -56,7 +54,9 @@ type TReviewerModalState = {
   approvalRequestId?: string;
 } | null;
 
-export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps> = observer((props) => {
+export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdownBase(
+  props: TWorkItemStateDropdownBaseProps
+) {
   const {
     alwaysAllowStateChange,
     button,
@@ -108,6 +108,9 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     validateTransition,
   } = useWorkflow();
 
+  const statesList = stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state);
+  const defaultState = statesList?.find((state) => state?.default);
+  const stateValue = value ? value : showDefaultState ? defaultState?.id : undefined;
   // popper-js init
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: placement ?? "bottom-start",
@@ -121,24 +124,16 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     ],
   });
 
-  const statesList = useMemo(
-    () =>
-      stateIds
-        .map((stateId) => getStateById(stateId))
-        .filter((state): state is IState => Boolean(state)),
-    [stateIds, getStateById]
-  );
-
   const defaultWorkflow = projectId ? getDefaultWorkflow(projectId) : undefined;
   const workflowStates = defaultWorkflow ? getWorkflowStates(defaultWorkflow.id) : [];
   const workflowTransitions = defaultWorkflow ? getWorkflowTransitions(defaultWorkflow.id) : [];
-  const workflowStatesSignature = workflowStates.map((state) => `${state.id}:${state.allow_new_issues ? 1 : 0}`).join("|");
+  const workflowStatesSignature = workflowStates
+    .map((state) => `${state.id}:${state.allow_new_issues ? 1 : 0}`)
+    .join("|");
   const workflowTransitionsSignature = workflowTransitions
     .map((transition) => `${transition.id}:${transition.from_state}->${transition.to_state}`)
     .join("|");
 
-  const defaultState = useMemo(() => statesList.find((state) => state.default), [statesList]);
-  const stateValue = value ?? (showDefaultState ? defaultState?.id : undefined);
   const selectedState = stateValue ? getStateById(stateValue) : undefined;
 
   // Ensure workflow metadata is available when needed
@@ -150,10 +145,9 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
 
     if (isForWorkItemCreation) {
       if (!workflowStates || workflowStates.length === 0) {
-        fetchWorkflowStates(workspaceSlug.toString(), projectId, defaultWorkflow.id)
-          .catch((error) => {
-            console.error("StateDropdown: Error fetching workflow states", error);
-          });
+        fetchWorkflowStates(workspaceSlug.toString(), projectId, defaultWorkflow.id).catch((error) => {
+          console.error("StateDropdown: Error fetching workflow states", error);
+        });
       }
       return;
     }
@@ -161,10 +155,9 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
     if (!enableWorkflowValidation || !issueId) return;
 
     if (!workflowTransitions || workflowTransitions.length === 0) {
-      fetchWorkflowTransitions(workspaceSlug.toString(), projectId, defaultWorkflow.id)
-        .catch((error) => {
-          console.error("StateDropdown: Error fetching workflow transitions", error);
-        });
+      fetchWorkflowTransitions(workspaceSlug.toString(), projectId, defaultWorkflow.id).catch((error) => {
+        console.error("StateDropdown: Error fetching workflow transitions", error);
+      });
     }
   }, [
     alwaysAllowStateChange,
@@ -250,9 +243,7 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
 
   const filteredOptions = useMemo(
     () =>
-      query === ""
-        ? options
-        : options.filter((option) => option.query.toLowerCase().includes(query.toLowerCase())),
+      query === "" ? options : options.filter((option) => option.query.toLowerCase().includes(query.toLowerCase())),
     [options, query]
   );
 
@@ -384,7 +375,10 @@ export const WorkItemStateDropdownBase: React.FC<TWorkItemStateDropdownBaseProps
                   <span className="flex-grow truncate text-left">{selectedState?.name ?? t("state")}</span>
                 )}
                 {dropdownArrow && (
-                  <ChevronDown className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
+                  <ChevronDownIcon
+                    className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)}
+                    aria-hidden="true"
+                  />
                 )}
               </>
             )}

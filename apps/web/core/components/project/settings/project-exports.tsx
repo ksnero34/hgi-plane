@@ -1,9 +1,6 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
-import Image from "next/image";
-import Link from "next/link";
+
 import { useParams, useSearchParams } from "next/navigation";
 import useSWR, { mutate } from "swr";
 // icons
@@ -25,9 +22,9 @@ import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 // services images
-import CSVLogo from "@/public/services/csv.svg";
-import ExcelLogo from "@/public/services/excel.svg";
-import JSONLogo from "@/public/services/json.svg";
+import CSVLogo from "@/app/assets/services/csv.svg";
+import ExcelLogo from "@/app/assets/services/excel.svg";
+import JSONLogo from "@/app/assets/services/json.svg";
 // services
 import { IntegrationService } from "@/services/integrations";
 
@@ -99,8 +96,8 @@ export const ProjectExports = observer(() => {
   }, [exporterServices]);
 
   // 현재 프로젝트의 export만 필터링
-  const filteredExports = exporterServices?.results?.filter((service) => 
-    Array.isArray(service.project) && service.project.includes(projectId as string)
+  const filteredExports = exporterServices?.results?.filter(
+    (service) => Array.isArray(service.project) && service.project.includes(projectId as string)
   );
 
   return (
@@ -119,12 +116,7 @@ export const ProjectExports = observer(() => {
                 <div className="flex w-full items-start justify-between gap-4">
                   <div className="item-center flex gap-2.5">
                     <div className="relative h-10 w-10 flex-shrink-0">
-                      <Image
-                        src={getExporterLogo(service?.provider)}
-                        layout="fill"
-                        objectFit="cover"
-                        alt={`${t(service.i18n_title)} Logo`}
-                      />
+                      <img src={getExporterLogo(service?.provider)} alt={`${t(service.i18n_title)} Logo`} />
                     </div>
                     <div>
                       <h3 className="flex items-center gap-4 text-sm font-medium">{t(service.i18n_title)}</h3>
@@ -132,17 +124,18 @@ export const ProjectExports = observer(() => {
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    <Link href={`/${workspaceSlug}/projects/${projectId}/settings/exports?provider=${service.provider}`}>
-                      <span>
-                        <Button
-                          variant="primary"
-                          className="capitalize"
-                          disabled={!canExport}
-                        >
-                          {t(service.type)}
-                        </Button>
-                      </span>
-                    </Link>
+                    <Button
+                      variant="primary"
+                      className="capitalize"
+                      disabled={!canExport}
+                      onClick={() =>
+                        router.push(
+                          `/${workspaceSlug}/projects/${projectId}/settings/exports?provider=${service.provider}`
+                        )
+                      }
+                    >
+                      {t(service.type)}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -230,4 +223,4 @@ export const ProjectExports = observer(() => {
       </div>
     </>
   );
-}); 
+});

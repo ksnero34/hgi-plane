@@ -24,70 +24,70 @@ import { MultiSelectFilterValueInput } from "./select/multi";
 import { SingleSelectFilterValueInput } from "./select/single";
 import { TextFilterValueInput } from "./text";
 
-export const FilterValueInput = observer(
-  <P extends TFilterProperty, V extends TFilterValue>(props: TFilterValueInputProps<P, V>) => {
-    const { condition, filterFieldConfig, isDisabled = false, onChange } = props;
+export const FilterValueInput = observer(function FilterValueInput<P extends TFilterProperty, V extends TFilterValue>(
+  props: TFilterValueInputProps<P, V>
+) {
+  const { condition, filterFieldConfig, isDisabled = false, onChange } = props;
 
-    // Single select input
-    if (filterFieldConfig?.type === FILTER_FIELD_TYPE.SINGLE_SELECT) {
-      return (
-        <SingleSelectFilterValueInput<P>
-          config={filterFieldConfig as TSingleSelectFilterFieldConfig<string>}
-          condition={condition as TFilterConditionNodeForDisplay<P, string>}
-          isDisabled={isDisabled}
-          onChange={(value) => onChange(value as SingleOrArray<V>)}
-        />
-      );
-    }
-
-    // Multi select input
-    if (filterFieldConfig?.type === FILTER_FIELD_TYPE.MULTI_SELECT) {
-      return (
-        <MultiSelectFilterValueInput<P>
-          config={filterFieldConfig as TMultiSelectFilterFieldConfig<string>}
-          condition={condition as TFilterConditionNode<P, string>}
-          isDisabled={isDisabled}
-          onChange={(value) => onChange(value as SingleOrArray<V>)}
-        />
-      );
-    }
-
-    // Date filter input
-    if (filterFieldConfig?.type === FILTER_FIELD_TYPE.DATE) {
-      return (
-        <SingleDateFilterValueInput<P>
-          config={filterFieldConfig as TDateFilterFieldConfig<string>}
-          condition={condition as TFilterConditionNodeForDisplay<P, string>}
-          isDisabled={isDisabled}
-          onChange={(value) => onChange(value as SingleOrArray<V>)}
-        />
-      );
-    }
-
-    // Date range filter input
-    if (filterFieldConfig?.type === FILTER_FIELD_TYPE.DATE_RANGE) {
-      return (
-        <DateRangeFilterValueInput<P>
-          config={filterFieldConfig as TDateRangeFilterFieldConfig<string>}
-          condition={condition as TFilterConditionNodeForDisplay<P, string>}
-          isDisabled={isDisabled}
-          onChange={(value) => onChange(value as SingleOrArray<V>)}
-        />
-      );
-    }
-
-    // Text input
-    if (filterFieldConfig?.type === FILTER_FIELD_TYPE.TEXT) {
-      return (
-        <TextFilterValueInput<P>
-          config={filterFieldConfig as TTextFilterFieldConfig<string>}
-          condition={condition as TFilterConditionNodeForDisplay<P, string>}
-          isDisabled={isDisabled}
-          onChange={(value) => onChange((value ?? null) as SingleOrArray<V>)}
-        />
-      );
-    }
-
-    return <AdditionalFilterValueInput {...props} />;
+  // Single select input
+  if (filterFieldConfig?.type === FILTER_FIELD_TYPE.SINGLE_SELECT) {
+    return (
+      <SingleSelectFilterValueInput<P>
+        config={filterFieldConfig as TSingleSelectFilterFieldConfig<string>}
+        condition={condition as TFilterConditionNodeForDisplay<P, string>}
+        isDisabled={isDisabled}
+        onChange={(value) => onChange(value as SingleOrArray<V>)}
+      />
+    );
   }
-);
+
+  // Multi select input
+  if (filterFieldConfig?.type === FILTER_FIELD_TYPE.MULTI_SELECT) {
+    return (
+      <MultiSelectFilterValueInput<P>
+        config={filterFieldConfig as TMultiSelectFilterFieldConfig<string>}
+        condition={condition as TFilterConditionNode<P, string>}
+        isDisabled={isDisabled}
+        onChange={(value) => onChange(value as SingleOrArray<V>)}
+      />
+    );
+  }
+
+  // Date filter input
+  if (filterFieldConfig?.type === FILTER_FIELD_TYPE.DATE) {
+    return (
+      <SingleDateFilterValueInput<P>
+        config={filterFieldConfig as TDateFilterFieldConfig<string>}
+        condition={condition as TFilterConditionNodeForDisplay<P, string>}
+        isDisabled={isDisabled}
+        onChange={(value) => onChange(value as SingleOrArray<V>)}
+      />
+    );
+  }
+
+  // Date range filter input
+  if (filterFieldConfig?.type === FILTER_FIELD_TYPE.DATE_RANGE) {
+    return (
+      <DateRangeFilterValueInput<P>
+        config={filterFieldConfig as TDateRangeFilterFieldConfig<string>}
+        condition={condition as TFilterConditionNodeForDisplay<P, string>}
+        isDisabled={isDisabled}
+        onChange={(value) => onChange(value as SingleOrArray<V>)}
+      />
+    );
+  }
+
+  // Text input
+  if (filterFieldConfig?.type === FILTER_FIELD_TYPE.TEXT) {
+    return (
+      <TextFilterValueInput<P>
+        config={filterFieldConfig as TTextFilterFieldConfig<string>}
+        condition={condition as TFilterConditionNodeForDisplay<P, string>}
+        isDisabled={isDisabled}
+        onChange={(value) => onChange((value ?? null) as SingleOrArray<V>)}
+      />
+    );
+  }
+
+  return <AdditionalFilterValueInput {...props} />;
+});

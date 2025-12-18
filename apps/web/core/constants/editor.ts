@@ -130,18 +130,18 @@ const BASIC_MARK_ITEMS: ToolbarMenuItem<"bold" | "italic" | "underline" | "strik
 
 const LIST_ITEMS: ToolbarMenuItem<"bulleted-list" | "numbered-list" | "to-do-list">[] = [
   {
-    itemKey: "bulleted-list",
-    renderKey: "bulleted-list",
-    name: "Bulleted list",
-    icon: List,
-    shortcut: ["Cmd", "Shift", "7"],
-    editors: ["lite", "document"],
-  },
-  {
     itemKey: "numbered-list",
     renderKey: "numbered-list",
     name: "Numbered list",
     icon: ListOrdered,
+    shortcut: ["Cmd", "Shift", "7"],
+    editors: ["lite", "document"],
+  },
+  {
+    itemKey: "bulleted-list",
+    renderKey: "bulleted-list",
+    name: "Bulleted list",
+    icon: List,
     shortcut: ["Cmd", "Shift", "8"],
     editors: ["lite", "document"],
   },
@@ -161,12 +161,12 @@ const USER_ACTION_ITEMS: ToolbarMenuItem<"quote" | "code">[] = [
 ];
 
 export const IMAGE_ITEM = {
-    itemKey: "image",
-    renderKey: "image",
-    name: "Image",
-    icon: Image,
-    editors: ["lite", "document"],
-    extraProps: {},
+  itemKey: "image",
+  renderKey: "image",
+  name: "Image",
+  icon: Image,
+  editors: ["lite", "document"],
+  extraProps: {},
 } as ToolbarMenuItem<"image">;
 
 const COMPLEX_ITEMS: ToolbarMenuItem<"table" | "image" | "file">[] = [
@@ -389,7 +389,7 @@ const EDITOR_PDF_FILE_STYLES: Styles = {
     marginBottom: convertRemToPixel(0.25),
     textAlign: "center",
     border: "1px solid #d1e0ff",
-    backgroundColor: "#e6efff"
+    backgroundColor: "#e6efff",
   },
   // 파일 정보 컨테이너
   ".file-info": {

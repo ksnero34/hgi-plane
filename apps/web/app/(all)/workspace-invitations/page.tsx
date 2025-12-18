@@ -1,10 +1,9 @@
-"use client";
-
 import React from "react";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { Boxes, Check, Share2, Star, User2, X } from "lucide-react";
+import { Boxes, Check, Share2, Star, User2 } from "lucide-react";
+import { CloseIcon } from "@plane/propel/icons";
 // components
 import { LogoSpinner } from "@/components/common/logo-spinner";
 import { EmptySpace, EmptySpaceItem } from "@/components/ui/empty-space";
@@ -23,7 +22,7 @@ import { WorkspaceService } from "@/plane-web/services";
 // service initialization
 const workspaceService = new WorkspaceService();
 
-const WorkspaceInvitationPage = observer(() => {
+function WorkspaceInvitationPage() {
   // router
   const router = useAppRouter();
   // query params
@@ -85,7 +84,7 @@ const WorkspaceInvitationPage = observer(() => {
               description="이슈트레커(Plane) 에서 프로젝트를 생성하고, 작업 항목(이슈)에 대해 협업하며 업무 효율을 증대할 수 있습니다."
             >
               <EmptySpaceItem Icon={Check} title="수락" action={handleAccept} />
-              <EmptySpaceItem Icon={X} title="거절" action={handleReject} />
+              <EmptySpaceItem Icon={CloseIcon} title="거절" action={handleReject} />
             </EmptySpace>
           )
         ) : error || invitationDetail?.responded_at ? (
@@ -123,6 +122,6 @@ const WorkspaceInvitationPage = observer(() => {
       </div>
     </AuthenticationWrapper>
   );
-});
+}
 
-export default WorkspaceInvitationPage;
+export default observer(WorkspaceInvitationPage);

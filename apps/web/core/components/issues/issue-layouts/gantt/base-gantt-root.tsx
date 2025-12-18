@@ -6,10 +6,10 @@ import { ALL_ISSUES, EUserPermissions, EUserPermissionsLevel } from "@plane/cons
 import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { EIssuesStoreType, IBlockUpdateData, TIssue } from "@plane/types";
-import { EIssueLayoutTypes } from "@plane/types";
+import { EIssueLayoutTypes, GANTT_TIMELINE_TYPE } from "@plane/types";
 import { renderFormattedPayloadDate } from "@plane/utils";
 // components
-import { ETimeLineTypeType, TimeLineTypeContext } from "@/components/gantt-chart/contexts";
+import { TimeLineTypeContext } from "@/components/gantt-chart/contexts";
 import { GanttChartRoot } from "@/components/gantt-chart/root";
 import { IssueGanttSidebar } from "@/components/gantt-chart/sidebar/issues/sidebar";
 // hooks
@@ -39,7 +39,7 @@ export type GanttStoreType =
   | EIssuesStoreType.PROJECT_VIEW
   | EIssuesStoreType.EPIC;
 
-export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGanttRoot) => {
+export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRoot) {
   const { viewId, isCompletedCycle = false, isEpic = false } = props;
   const { t } = useTranslation();
   // router
@@ -48,7 +48,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
   const storeType = useIssueStoreType() as GanttStoreType;
   const { issues, issuesFilter, issueMap } = useIssues(storeType);
   const { fetchIssues, fetchNextIssues, updateIssue, quickAddIssue } = useIssuesActions(storeType);
-  const { initGantt } = useTimeLineChart(ETimeLineTypeType.ISSUE);
+  const { initGantt } = useTimeLineChart(GANTT_TIMELINE_TYPE.ISSUE);
   // store hooks
   const { allowPermissions } = useUserPermissions();
   const { issueTypes } = useIssueType(projectId as string);
@@ -80,7 +80,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
         // For parent_child grouping, preserve the order from groupByFields
         if (groupBy === "parent_child" && groupByFields && Array.isArray(groupByFields)) {
           const orderedIds: string[] = [];
-          groupByFields.forEach(field => {
+          groupByFields.forEach((field) => {
             const groupId = typeof field === "object" ? field.id : field;
             const groupIssues = groupedIssueIds?.[groupId];
             if (Array.isArray(groupIssues)) {
@@ -92,7 +92,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
         // For other groupings, use the original logic
         return Object.values(groupedIssueIds || {}).flat() as string[];
       })()
-    : (groupedIssueIds?.[ALL_ISSUES] as string[]) ?? [];
+    : ((groupedIssueIds?.[ALL_ISSUES] as string[]) ?? []);
   const nextPageResults = issues.getPaginationData(undefined, undefined)?.nextPageResults;
 
   const { enableIssueCreation } = issues?.viewFlags || {};
@@ -146,7 +146,7 @@ export const BaseGanttRoot: React.FC<IBaseGanttRoot> = observer((props: IBaseGan
 
   return (
     <IssueLayoutHOC layout={EIssueLayoutTypes.GANTT}>
-      <TimeLineTypeContext.Provider value={ETimeLineTypeType.ISSUE}>
+      <TimeLineTypeContext.Provider value={GANTT_TIMELINE_TYPE.ISSUE}>
         <div className="h-full w-full">
           <GanttChartRoot
             border={false}

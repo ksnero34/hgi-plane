@@ -1,14 +1,9 @@
 // plane imports
-import { EQUALITY_OPERATOR, TFilterProperty, TSupportedOperators, TEXT_OPERATOR } from "@plane/types";
+import { EQUALITY_OPERATOR, TEXT_OPERATOR } from "@plane/types";
+import type { TFilterProperty, TSupportedOperators } from "@plane/types";
 // local imports
-import {
-  createFilterConfig,
-  createOperatorConfigEntry,
-  getTextInputConfig,
-  IFilterIconConfig,
-  TCreateFilterConfig,
-  TCreateFilterConfigParams,
-} from "../../../rich-filters";
+import { createFilterConfig, createOperatorConfigEntry, getTextInputConfig } from "../../../rich-filters";
+import type { IFilterIconConfig, TCreateFilterConfig, TCreateFilterConfigParams } from "../../../rich-filters";
 
 /**
  * Search filter specific params

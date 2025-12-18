@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { observer } from "mobx-react";
-import { Placement } from "@popperjs/core";
+import type { Placement } from "@popperjs/core";
 import { usePopper } from "react-popper";
 import { Tag, Tags, CalendarCheck2, UserCircle2, Users, Settings, Check, Search, X } from "lucide-react";
 import { Combobox } from "@headlessui/react";
@@ -9,7 +9,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 // ui
 import { ComboDropDown, Tooltip } from "@plane/ui";
 // types
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 // helpers
 import { cn } from "@plane/utils";
 // hooks
@@ -46,12 +46,7 @@ const CustomFieldTag: React.FC<{
   const { isMobile } = usePlatformOS();
 
   return (
-    <Tooltip
-      tooltipHeading={field.name}
-      tooltipContent={value}
-      isMobile={isMobile}
-      renderByDefault={false}
-    >
+    <Tooltip tooltipHeading={field.name} tooltipContent={value} isMobile={isMobile} renderByDefault={false}>
       <div
         className={cn(
           "flex h-5 flex-shrink-0 items-center gap-1 rounded border-[0.5px] border-custom-border-300 px-1.5 text-xs",
@@ -128,20 +123,20 @@ const CustomFieldOptions: React.FC<{
 
   const handleSingleSelectChange = (selectedValue: string) => {
     if (!onChange) return;
-    
+
     if (multiple) {
       // Multiselect 처리
       const currentValues = Array.isArray(value) ? value : [];
       let newValues;
-      
+
       if (currentValues.includes(selectedValue)) {
         // 이미 선택된 값이면 제거
-        newValues = currentValues.filter(v => v !== selectedValue);
+        newValues = currentValues.filter((v) => v !== selectedValue);
       } else {
         // 선택되지 않은 값이면 추가
         newValues = [...currentValues, selectedValue];
       }
-      
+
       onChange(newValues.length > 0 ? newValues : null);
     } else {
       // Single select 처리 - labels와 동일하게 동일한 값 클릭시 제거
@@ -160,9 +155,8 @@ const CustomFieldOptions: React.FC<{
     content: option,
   }));
 
-  const filteredOptions = query === "" ? options : options?.filter((o) => 
-    o.query.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredOptions =
+    query === "" ? options : options?.filter((o) => o.query.toLowerCase().includes(query.toLowerCase()));
 
   if (!isOpen) return null;
 
@@ -194,13 +188,16 @@ const CustomFieldOptions: React.FC<{
                   key={option.value}
                   className={cn(
                     "flex w-full cursor-pointer select-none items-center justify-between gap-2 truncate rounded px-1 py-1.5 hover:bg-custom-background-80",
-                    multiple && Array.isArray(value) && value.includes(option.value) ? "text-custom-text-100" : 
-                    !multiple && value === option.value ? "text-custom-text-100" : "text-custom-text-200"
+                    multiple && Array.isArray(value) && value.includes(option.value)
+                      ? "text-custom-text-100"
+                      : !multiple && value === option.value
+                        ? "text-custom-text-100"
+                        : "text-custom-text-200"
                   )}
                   onClick={() => handleSingleSelectChange(option.value)}
                 >
                   <span className="flex-grow truncate">{option.content}</span>
-                  {((multiple && Array.isArray(value) && value.includes(option.value)) || 
+                  {((multiple && Array.isArray(value) && value.includes(option.value)) ||
                     (!multiple && value === option.value)) && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                 </div>
               ))
@@ -274,16 +271,16 @@ const CustomFieldSingleDropdown: React.FC<{
 
   const handleSingleSelectChange = (selectedValue: string) => {
     if (!onChange) return;
-    
+
     const currentValues = Array.isArray(value) ? value : [];
     let newValues;
-    
+
     if (currentValues.includes(selectedValue)) {
-      newValues = currentValues.filter(v => v !== selectedValue);
+      newValues = currentValues.filter((v) => v !== selectedValue);
     } else {
       newValues = [...currentValues, selectedValue];
     }
-    
+
     onChange(newValues.length > 0 ? newValues : []);
   };
 
@@ -293,9 +290,8 @@ const CustomFieldSingleDropdown: React.FC<{
     content: option,
   }));
 
-  const filteredOptions = query === "" ? options : options?.filter((o) => 
-    o.query.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredOptions =
+    query === "" ? options : options?.filter((o) => o.query.toLowerCase().includes(query.toLowerCase()));
 
   const searchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (query !== "" && e.key === "Escape") {
@@ -343,12 +339,16 @@ const CustomFieldSingleDropdown: React.FC<{
                       key={option.value}
                       className={cn(
                         "flex w-full cursor-pointer select-none items-center justify-between gap-2 truncate rounded px-1 py-1.5 hover:bg-custom-background-80",
-                        Array.isArray(value) && value.includes(option.value) ? "text-custom-text-100" : "text-custom-text-200"
+                        Array.isArray(value) && value.includes(option.value)
+                          ? "text-custom-text-100"
+                          : "text-custom-text-200"
                       )}
                       onClick={() => handleSingleSelectChange(option.value)}
                     >
                       <span className="flex-grow truncate">{option.content}</span>
-                      {Array.isArray(value) && value.includes(option.value) && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                      {Array.isArray(value) && value.includes(option.value) && (
+                        <Check className="h-3.5 w-3.5 flex-shrink-0" />
+                      )}
                     </div>
                   ))
                 ) : (
@@ -455,21 +455,27 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
         >
           {showFieldNameWhenEmpty ? (
             hideIconWhenEmpty ? (
-              <div className={`flex items-center justify-start w-full ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+              <div
+                className={`flex items-center justify-start w-full ${buttonVariant === "border-with-text" ? "px-2 py-1" : ""}`}
+              >
                 <span className="truncate">{field.name}</span>
               </div>
             ) : (
-              <div className={`flex items-center gap-1.5 ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+              <div className={`flex items-center gap-1.5 ${buttonVariant === "border-with-text" ? "px-2 py-1" : ""}`}>
                 {getFieldIcon(field.field_type)}
                 <span className="truncate">{field.name}</span>
               </div>
             )
           ) : hideIcon ? (
-            <div className={`flex items-center justify-start w-full ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+            <div
+              className={`flex items-center justify-start w-full ${buttonVariant === "border-with-text" ? "px-2 py-1" : ""}`}
+            >
               <span className="truncate">{placeholder || field.name}</span>
             </div>
           ) : (
-            <div className={`flex items-center justify-center ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+            <div
+              className={`flex items-center justify-center ${buttonVariant === "border-with-text" ? "px-2 py-1" : ""}`}
+            >
               {getFieldIcon(field.field_type)}
             </div>
           )}
@@ -477,15 +483,12 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
       );
 
       const tooltipWrappedButton = showTooltip ? (
-        <Tooltip
-          tooltipHeading={field.name}
-          tooltipContent="none"
-          isMobile={isMobile}
-          renderByDefault={false}
-        >
+        <Tooltip tooltipHeading={field.name} tooltipContent="none" isMobile={isMobile} renderByDefault={false}>
           {comboButton}
         </Tooltip>
-      ) : comboButton;
+      ) : (
+        comboButton
+      );
 
       return (
         <ComboDropDown
@@ -527,13 +530,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
               disabled={disabled}
               placement={placement}
               onClose={onClose}
-              tag={
-                <CustomFieldTag
-                  field={field}
-                  value={val}
-                  disabled={disabled}
-                />
-              }
+              tag={<CustomFieldTag field={field} value={val} disabled={disabled} />}
             />
           ))}
         </>
@@ -548,13 +545,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           disabled={disabled}
           placement={placement}
           onClose={onClose}
-          tag={
-            <CustomFieldSummary
-              field={field}
-              values={selectedValues}
-              disabled={disabled}
-            />
-          }
+          tag={<CustomFieldSummary field={field} values={selectedValues} disabled={disabled} />}
         />
       );
     }
@@ -563,7 +554,9 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
   // SELECT 타입 처리
   if (field.field_type === "select") {
     const hasValue = value && value !== "";
-    const showText = (buttonVariant === "border-with-text" || buttonVariant === "transparent-with-text") && (hasValue || showFieldNameWhenEmpty);
+    const showText =
+      (buttonVariant === "border-with-text" || buttonVariant === "transparent-with-text") &&
+      (hasValue || showFieldNameWhenEmpty);
 
     const comboboxProps: any = {
       value,
@@ -589,27 +582,22 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
         onClick={handleOnClick}
         disabled={disabled}
       >
-        <div className={`flex items-center ${showText ? 'gap-1.5' : 'justify-center'} ${buttonVariant === "border-with-text" ? 'px-2 py-1' : ''}`}>
+        <div
+          className={`flex items-center ${showText ? "gap-1.5" : "justify-center"} ${buttonVariant === "border-with-text" ? "px-2 py-1" : ""}`}
+        >
           {(!hideIconWhenEmpty || hasValue) && getFieldIcon(field.field_type)}
-          {showText && (
-            <span className="truncate">
-              {hasValue ? value : field.name}
-            </span>
-          )}
+          {showText && <span className="truncate">{hasValue ? value : field.name}</span>}
         </div>
       </button>
     );
 
     const tooltipWrappedButton = showTooltip ? (
-      <Tooltip
-        tooltipHeading={field.name}
-        tooltipContent={value || "none"}
-        isMobile={isMobile}
-        renderByDefault={false}
-      >
+      <Tooltip tooltipHeading={field.name} tooltipContent={value || "none"} isMobile={isMobile} renderByDefault={false}>
         {comboButton}
       </Tooltip>
-    ) : comboButton;
+    ) : (
+      comboButton
+    );
 
     return (
       <ComboDropDown
@@ -638,14 +626,10 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
   return (
     <div
       className="flex h-5 flex-shrink-0 items-center justify-center gap-1.5 overflow-hidden rounded border-[0.5px] border-custom-border-300 px-2 py-1"
-      title={`${field.name}${value ? `: ${value}` : ''}`}
+      title={`${field.name}${value ? `: ${value}` : ""}`}
     >
       {getFieldIcon(field.field_type)}
-      {value && (
-        <div className="text-xs truncate max-w-20">
-          {value}
-        </div>
-      )}
+      {value && <div className="text-xs truncate max-w-20">{value}</div>}
     </div>
   );
-}); 
+});

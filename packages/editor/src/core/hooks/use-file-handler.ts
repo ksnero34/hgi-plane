@@ -1,4 +1,5 @@
-import { DragEvent, useCallback, useState } from "react";
+import {  useCallback, useState } from "react";
+import type {DragEvent} from "react";
 import { Editor } from "@tiptap/core";
 
 type TFileHandlerArgs = {
@@ -25,10 +26,10 @@ const isFileValid = ({
   maxFileSize: number;
   allowedExtensions: string[];
 }) => {
-  const fileExtension = file.name.split('.').pop()?.toLowerCase();
-  
+  const fileExtension = file.name.split(".").pop()?.toLowerCase();
+
   if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-    console.error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}`);
+    console.error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(", ")}`);
     return false;
   }
 
@@ -43,31 +44,36 @@ const isFileValid = ({
 export const useFileHandler = ({ editor, maxFileSize, allowedExtensions, onUpload }: TFileHandlerArgs) => {
   const [uploading, setUploading] = useState(false);
 
-  const uploadFile = useCallback(async (file: File) => {
-    setUploading(true);
-    try {
-      if (maxFileSize && file.size > maxFileSize) {
-        throw new Error(`파일 크기가 너무 큽니다. 최대 크기: ${maxFileSize / (1024 * 1024)}MB`);
-      }
-
-      if (allowedExtensions) {
-        const fileExtension = file.name.split('.').pop()?.toLowerCase();
-        if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${fileExtension}`);
+  const uploadFile = useCallback(
+    async (file: File) => {
+      setUploading(true);
+      try {
+        if (maxFileSize && file.size > maxFileSize) {
+          throw new Error(`파일 크기가 너무 큽니다. 최대 크기: ${maxFileSize / (1024 * 1024)}MB`);
         }
-      }
 
-      const uploadFn = editor.commands.uploadFile(file);
-      const url = await uploadFn();
-      if (!url) throw new Error("파일 업로드에 실패했습니다.");
-      onUpload(url);
-    } catch (error) {
-      console.error("파일 업로드 중 오류 발생:", error);
-      throw error;
-    } finally {
-      setUploading(false);
-    }
-  }, [editor, onUpload, maxFileSize, allowedExtensions]);
+        if (allowedExtensions) {
+          const fileExtension = file.name.split(".").pop()?.toLowerCase();
+          if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+            throw new Error(
+              `허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(", ")}, 선택한 파일 확장자: ${fileExtension}`
+            );
+          }
+        }
+
+        const uploadFn = editor.commands.uploadFile(file);
+        const url = await uploadFn();
+        if (!url) throw new Error("파일 업로드에 실패했습니다.");
+        onUpload(url);
+      } catch (error) {
+        console.error("파일 업로드 중 오류 발생:", error);
+        throw error;
+      } finally {
+        setUploading(false);
+      }
+    },
+    [editor, onUpload, maxFileSize, allowedExtensions]
+  );
 
   return { uploading, uploadFile };
 };
@@ -103,4 +109,4 @@ export const useFileDropzone = ({ editor, maxFileSize, allowedExtensions, pos, u
     onDragEnter,
     onDragLeave,
   };
-}; 
+};

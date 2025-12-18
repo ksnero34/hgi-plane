@@ -21,7 +21,7 @@ type Props = {
   showOutline?: boolean;
 };
 
-export const PageContentBrowser: React.FC<Props> = (props) => {
+export function PageContentBrowser(props: Props) {
   const { className, editorRef, emptyState, setSidePeekVisible, showOutline = false } = props;
   // states
   const [headings, setHeadings] = useState<IMarking[]>([]);
@@ -76,13 +76,7 @@ export const PageContentBrowser: React.FC<Props> = (props) => {
               className="flex-shrink-0 h-0.5 bg-custom-border-400 self-end rounded-sm"
               style={{
                 width:
-                  marking.level === 1
-                    ? "20px"
-                    : marking.level === 2
-                      ? "18px"
-                      : marking.level === 3
-                        ? "14px"
-                        : "10px",
+                  marking.level === 1 ? "20px" : marking.level === 2 ? "18px" : marking.level === 3 ? "14px" : "10px",
               }}
             />
           );
@@ -96,4 +90,4 @@ export const PageContentBrowser: React.FC<Props> = (props) => {
       })}
     </div>
   );
-};
+}

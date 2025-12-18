@@ -1,6 +1,3 @@
-"use client";
-
-import Head from "next/head";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { useTranslation } from "@plane/i18n";
@@ -19,14 +16,11 @@ const ProjectOverviewPage = observer(() => {
 
   const project = getProjectById(projectId.toString());
   const overviewLabel = t("sidebar.overview");
-  const pageTitle = project?.name ? `${project.name} - ${overviewLabel}` : undefined;
+  const pageTitle = project?.name ? `${project.name} - ${overviewLabel}` : "Project overview";
 
   return (
     <>
       <PageHead title={pageTitle} />
-      <Head>
-        <title>{project?.name ? `${project.name} - ${overviewLabel}` : "Project overview"}</title>
-      </Head>
       <ProjectOverviewRoot />
     </>
   );

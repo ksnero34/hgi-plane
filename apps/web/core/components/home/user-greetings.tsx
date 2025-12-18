@@ -11,7 +11,7 @@ export interface IUserGreetingsView {
   user: IUser;
 }
 
-export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
+export function UserGreetingsView(props: IUserGreetingsView) {
   const { user } = props;
   // current time hook
   const { currentTime } = useCurrentTime();
@@ -43,7 +43,14 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
     minute: "2-digit",
   }).format(currentTime);
 
-  const greeting = parseInt(hour, 10) < 6 ? "dawn" : parseInt(hour, 10) < 12 ? "morning" : parseInt(hour, 10) < 18 ? "afternoon" : "evening";
+  const greeting =
+    parseInt(hour, 10) < 6
+      ? "dawn"
+      : parseInt(hour, 10) < 12
+        ? "morning"
+        : parseInt(hour, 10) < 18
+          ? "afternoon"
+          : "evening";
 
   // Random welcome messages
   const welcomeMessages = [
@@ -67,15 +74,11 @@ export const UserGreetingsView: FC<IUserGreetingsView> = (props) => {
       <h2 className="text-2xl font-semibold">
         {t("good")} {t(greeting)}, {user?.first_name} 님
       </h2>
-      <p className="text-base text-custom-text-300 mt-2 mb-4">
-        {randomMessage}
-      </p>
+      <p className="text-base text-custom-text-300 mt-2 mb-4">{randomMessage}</p>
       <h5 className="flex items-center gap-2 font-medium text-custom-text-400">
         <div>{greeting === "dawn" ? "🌃" : greeting === "morning" ? "🌤️" : greeting === "afternoon" ? "🌥️" : "🌙️"}</div>
-        <div>
-          {`${dateString} ${weekDay} ${timeString}`}
-        </div>
+        <div>{`${dateString} ${weekDay} ${timeString}`}</div>
       </h5>
     </div>
   );
-};
+}

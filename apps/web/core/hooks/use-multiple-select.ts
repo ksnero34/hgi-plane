@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // hooks
 import { useMultipleSelectStore } from "@/hooks/store/use-multiple-select-store";
@@ -298,20 +296,20 @@ export const useMultipleSelect = (props: Props) => {
       if (isEditorFocused()) return;
 
       const activeEntityDetails = getActiveEntityDetails();
-      
+
       if (!activeEntityDetails) return;
 
       // 현재 활성 엔티티를 기준으로 이전/다음 엔티티 가져오기
       const { previousEntity, nextEntity } = getPreviousAndNextEntities(activeEntityDetails.entityID);
-      
+
       let targetEntity: TEntityDetails | null = null;
-      
+
       if (e.key === "ArrowUp" && previousEntity) {
         targetEntity = previousEntity;
       } else if (e.key === "ArrowDown" && nextEntity) {
         targetEntity = nextEntity;
       }
-      
+
       if (!targetEntity) return;
 
       // 타겟 엔티티가 이미 선택되어 있다면 현재 활성 엔티티를 선택 해제
@@ -328,24 +326,32 @@ export const useMultipleSelect = (props: Props) => {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [disabled, getActiveEntityDetails, getPreviousAndNextEntities, getIsEntitySelected, updateSelectedEntityDetails, handleActiveEntityChange]);
+  }, [
+    disabled,
+    getActiveEntityDetails,
+    getPreviousAndNextEntities,
+    getIsEntitySelected,
+    updateSelectedEntityDetails,
+    handleActiveEntityChange,
+  ]);
 
   useEffect(() => {
     if (disabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.shiftKey) return;
-      
+
       // 에디터가 포커스되었는지 확인
-      const editorFocused = document.activeElement?.classList.contains("tiptap") || 
-                           document.activeElement?.closest(".tiptap") ||
-                           document.activeElement?.closest(".ProseMirror") ||
-                           document.activeElement?.id === "title-input" ||
-                           document.querySelector(".tiptap:focus-within") ||
-                           document.querySelector(".ProseMirror:focus-within");
-      
+      const editorFocused =
+        document.activeElement?.classList.contains("tiptap") ||
+        document.activeElement?.closest(".tiptap") ||
+        document.activeElement?.closest(".ProseMirror") ||
+        document.activeElement?.id === "title-input" ||
+        document.querySelector(".tiptap:focus-within") ||
+        document.querySelector(".ProseMirror:focus-within");
+
       if (editorFocused) return;
-      
+
       const activeEntityDetails = getActiveEntityDetails();
       // set active entity id to the first entity
       if (["ArrowUp", "ArrowDown"].includes(e.key) && !activeEntityDetails) {

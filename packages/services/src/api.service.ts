@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import type { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios from "axios";
 
 /**
  * Abstract base class for making HTTP requests using axios
@@ -78,7 +79,7 @@ export abstract class APIService {
     // 설정 객체에 데이터와 다른 설정을 올바르게 병합
     const mergedConfig = {
       ...config,
-      data: data
+      data: data,
     };
     // console.log('Delete 요청 설정:', JSON.stringify({
     //   url,

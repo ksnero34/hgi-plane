@@ -1,4 +1,3 @@
-import type { FC } from "react";
 // plane imports
 import type { TNotification } from "@plane/types";
 import {
@@ -11,13 +10,19 @@ import {
 // components
 import { LiteTextEditor } from "@/components/editor/lite-text";
 
-export const NotificationContent: FC<{
+export function NotificationContent({
+  notification,
+  workspaceId,
+  workspaceSlug,
+  projectId,
+  renderCommentBox = false,
+}: {
   notification: TNotification;
   workspaceId: string;
   workspaceSlug: string;
   projectId: string;
   renderCommentBox?: boolean;
-}> = ({ notification, workspaceId, workspaceSlug, projectId, renderCommentBox = false }) => {
+}) {
   const { data, triggered_by_details: triggeredBy } = notification;
   const notificationField = data?.issue_activity?.field;
   const newValue = data?.issue_activity?.new_value;
@@ -111,7 +116,11 @@ export const NotificationContent: FC<{
     if (notificationField === "custom_field") {
       // 커스텀 필드 값이 JSON 형태인 경우 파싱해서 표시
       try {
-        if (newValue && typeof newValue === "string" && (newValue.indexOf('"') !== -1 || newValue.indexOf('[') !== -1)) {
+        if (
+          newValue &&
+          typeof newValue === "string" &&
+          (newValue.indexOf('"') !== -1 || newValue.indexOf("[") !== -1)
+        ) {
           const parsed = JSON.parse(newValue);
           return Array.isArray(parsed) ? parsed.join(", ") : parsed;
         }
@@ -182,14 +191,21 @@ export const NotificationContent: FC<{
     return "";
   };
 
-  const needsValueDisplay = approvalRequest && !notificationField
-    ? true
-    : ["None", "archived_at"].indexOf(notificationField || "") === -1;
+  const needsValueDisplay =
+    approvalRequest && !notificationField ? true : ["None", "archived_at"].indexOf(notificationField || "") === -1;
 
   // 마침표가 필요없는 필드 목록
   const fieldsWithCustomSuffix = [
-    "priority", "state", "estimate_time", "start_date", "target_date",
-    "labels", "assignees", "parent", "cycles", "custom_field"
+    "priority",
+    "state",
+    "estimate_time",
+    "start_date",
+    "target_date",
+    "labels",
+    "assignees",
+    "parent",
+    "cycles",
+    "custom_field",
   ];
   const shouldShowConnector =
     !(approvalRequest && !notificationField) &&
@@ -238,4 +254,4 @@ export const NotificationContent: FC<{
       )}
     </>
   );
-};
+}

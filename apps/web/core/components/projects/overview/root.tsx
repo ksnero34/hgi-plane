@@ -1,7 +1,5 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Head from "next/head";
+
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { observer } from "mobx-react";
@@ -11,7 +9,12 @@ import { CollaborativeDocumentEditorWithRef } from "@plane/editor";
 import type { EditorRefApi, TRealtimeConfig, TServerHandler, TFileHandler } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { EFileAssetType } from "@plane/types";
-import type { TLogoProps, TProjectOverviewSnapshot, TSearchEntityRequestPayload, TWebhookConnectionQueryParams } from "@plane/types";
+import type {
+  TLogoProps,
+  TProjectOverviewSnapshot,
+  TSearchEntityRequestPayload,
+  TWebhookConnectionQueryParams,
+} from "@plane/types";
 import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Loader, Spinner } from "@plane/ui";
@@ -66,16 +69,11 @@ export const ProjectOverviewRoot = observer(() => {
   const editorRef = useRef<EditorRefApi>(null);
 
   const project = pid ? getProjectById(pid) : undefined;
-  const workspaceId = slug ? getWorkspaceBySlug(slug)?.id?.toString() ?? "" : "";
+  const workspaceId = slug ? (getWorkspaceBySlug(slug)?.id?.toString() ?? "") : "";
   const isAdmin =
-    !!slug &&
-    !!pid &&
-    allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT, slug, pid);
+    !!slug && !!pid && allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT, slug, pid);
 
-  const {
-    data: overviewData,
-    isLoading: isOverviewLoading,
-  } = useSWR<TProjectOverviewSnapshot>(
+  const { data: overviewData, isLoading: isOverviewLoading } = useSWR<TProjectOverviewSnapshot>(
     slug && pid ? ["project-overview", slug, pid] : null,
     () => projectService.getProjectOverview(slug!, pid!),
     {
@@ -194,7 +192,7 @@ export const ProjectOverviewRoot = observer(() => {
 
   const fallbackLogo: TLogoProps = {
     in_use: "emoji" as const,
-    emoji: { value: "128736", url: getEmojiImageUrlFromDecimal("128736") }
+    emoji: { value: "128736", url: getEmojiImageUrlFromDecimal("128736") },
   };
   const projectLogo: TLogoProps = (project?.logo_props as TLogoProps) ?? fallbackLogo;
 
@@ -359,6 +357,7 @@ export const ProjectOverviewRoot = observer(() => {
     () => ({
       onConnect: handleServerConnect,
       onServerError: handleServerError,
+      onStateChange: () => {},
     }),
     [handleServerConnect, handleServerError]
   );
@@ -377,10 +376,11 @@ export const ProjectOverviewRoot = observer(() => {
       getEditorFileHandlers({
         projectId: pid ?? "",
         uploadFile: handleAssetUpload,
+        duplicateFile: async () => "",
         workspaceId,
         workspaceSlug: slug ?? "",
       }),
-    [getEditorFileHandlers, pid, workspaceId, slug]
+    [getEditorFileHandlers, pid, workspaceId, slug, handleAssetUpload]
   );
 
   const handleEditorReady = useCallback((status: boolean) => {
@@ -390,9 +390,7 @@ export const ProjectOverviewRoot = observer(() => {
   return (
     <>
       <PageHead title={pageTitle} />
-      <Head>
-        <title>{project?.name ? `${project.name} - Overview` : "Project overview"}</title>
-      </Head>
+
       <div className="flex h-full w-full flex-col overflow-hidden bg-custom-background-100">
         <div className="relative h-44 w-full">
           <img
@@ -422,12 +420,8 @@ export const ProjectOverviewRoot = observer(() => {
               buttonClassName="flex h-[52px] w-[52px] items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20"
               closeOnSelect
               onChange={handleLogoChange}
-              defaultIconColor={
-                projectLogo?.in_use === "icon" ? projectLogo?.icon?.color : undefined
-              }
-              defaultOpen={
-                projectLogo?.in_use === "emoji" ? EmojiIconPickerTypes.EMOJI : EmojiIconPickerTypes.ICON
-              }
+              defaultIconColor={projectLogo?.in_use === "icon" ? projectLogo?.icon?.color : undefined}
+              defaultOpen={projectLogo?.in_use === "emoji" ? EmojiIconPickerTypes.EMOJI : EmojiIconPickerTypes.ICON}
               className="flex items-center justify-center"
               disabled={!isAdmin || isLogoUpdating}
             />
@@ -466,6 +460,7 @@ export const ProjectOverviewRoot = observer(() => {
                     }),
                   }}
                   extendedEditorProps={extendedEditorProps}
+                  getEditorMetaData={(_) => ({}) as any}
                 />
               ) : (
                 <div className="grid place-items-center min-h-[480px]">

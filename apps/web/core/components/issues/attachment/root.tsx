@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC } from "react";
 import { useEffect } from "react";
 import { observer } from "mobx-react";
@@ -18,7 +16,7 @@ export type TIssueAttachmentRoot = {
   disabled?: boolean;
 };
 
-export const IssueAttachmentRoot: FC<TIssueAttachmentRoot> = observer((props) => {
+export const IssueAttachmentRoot = observer(function IssueAttachmentRoot(props: TIssueAttachmentRoot) {
   // props
   const { workspaceSlug, projectId, issueId, disabled = false } = props;
   // hooks

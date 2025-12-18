@@ -25,9 +25,6 @@ const extensionRegistry: TDocumentEditorAdditionalExtensionsRegistry[] = [
     getExtension: ({ disabledExtensions, flaggedExtensions, extendedEditorProps }) =>
       SlashCommands({ disabledExtensions, flaggedExtensions, extendedEditorProps }),
   },
-
-
-
 ];
 
 export const DocumentEditorAdditionalExtensions = (props: TDocumentEditorAdditionalExtensionsProps) => {

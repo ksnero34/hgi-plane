@@ -1,5 +1,3 @@
-"use client";
-
 import type { MutableRefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -64,8 +62,17 @@ interface IssueDetailsBlockProps {
   customFields?: TCustomField[];
 }
 
-const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((props) => {
-  const { cardRef, issue, updateIssue, quickActions, isReadOnly, displayProperties, isEpic = false, customFields = [] } = props;
+const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props: IssueDetailsBlockProps) {
+  const {
+    cardRef,
+    issue,
+    updateIssue,
+    quickActions,
+    isReadOnly,
+    displayProperties,
+    isEpic = false,
+    customFields = [],
+  } = props;
   // refs
   const menuActionRef = useRef<HTMLDivElement | null>(null);
   // states
@@ -151,7 +158,7 @@ const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((prop
   );
 });
 
-export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
+export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueBlockProps) {
   const {
     issueId,
     groupId,
@@ -306,5 +313,3 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
     </>
   );
 });
-
-KanbanIssueBlock.displayName = "KanbanIssueBlock";

@@ -1,26 +1,27 @@
-"use client";
-
-import type { FC } from "react";
 import { useState, useMemo } from "react";
 import { observer } from "mobx-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { DEFAULT_PROJECT_FORM_VALUES, PROJECT_TRACKER_EVENTS, PROJECT_UNSPLASH_COVERS, RANDOM_EMOJI_CODES } from "@plane/constants";
+import { PROJECT_TRACKER_EVENTS, RANDOM_EMOJI_CODES } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 // ui
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // utils
 import { getEmojiImageUrlFromDecimal } from "@plane/utils";
+import { EFileAssetType } from "@plane/types";
+import type { IProject } from "@plane/types";
 // constants
 import ProjectCommonAttributes from "@/components/project/create/common-attributes";
 import ProjectCreateHeader from "@/components/project/create/header";
 import ProjectCreateButtons from "@/components/project/create/project-create-buttons";
 // hooks
+import { DEFAULT_COVER_IMAGE_URL, getCoverImageType, uploadCoverImage } from "@/helpers/cover-image.helper";
 import { captureError, captureSuccess } from "@/helpers/event-tracker.helper";
 import { useProject } from "@/hooks/store/use-project";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web types
 import type { TProject } from "@/plane-web/types/projects";
 import ProjectAttributes from "./attributes";
+import { getProjectFormValues } from "./utils";
 
 export type TCreateProjectFormProps = {
   setToFavorite?: boolean;
@@ -32,40 +33,16 @@ export type TCreateProjectFormProps = {
   updateCoverImageStatus: (projectId: string, coverImage: string) => Promise<void>;
 };
 
-export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) => {
+export const CreateProjectForm = observer(function CreateProjectForm(props: TCreateProjectFormProps) {
   const { setToFavorite, workspaceSlug, data, onClose, handleNextStep, updateCoverImageStatus } = props;
   // store
   const { t } = useTranslation();
-  const { addProjectToFavorites, createProject } = useProject();
+  const { addProjectToFavorites, createProject, updateProject } = useProject();
   // states
   const [isChangeInIdentifierRequired, setIsChangeInIdentifierRequired] = useState(true);
-
-  // Generate random cover image for each form instance
-  const randomCoverImage = useMemo(
-    () => PROJECT_UNSPLASH_COVERS[Math.floor(Math.random() * PROJECT_UNSPLASH_COVERS.length)],
-    []
-  );
-
-  // Generate random emoji for each form instance
-  const randomEmoji = useMemo(
-    () => RANDOM_EMOJI_CODES[Math.floor(Math.random() * RANDOM_EMOJI_CODES.length)],
-    []
-  );
-
   // form info
   const methods = useForm<TProject>({
-    defaultValues: {
-      ...DEFAULT_PROJECT_FORM_VALUES,
-      cover_image_url: randomCoverImage,
-      logo_props: {
-        in_use: "emoji",
-        emoji: {
-          value: randomEmoji,
-          url: getEmojiImageUrlFromDecimal(randomEmoji),
-        },
-      },
-      ...data
-    },
+    defaultValues: { ...getProjectFormValues(), ...data },
     reValidateMode: "onChange",
   });
   const { handleSubmit, reset, setValue } = methods;
@@ -86,16 +63,42 @@ export const CreateProjectForm: FC<TCreateProjectFormProps> = observer((props) =
     // Upper case identifier
     formData.identifier = formData.identifier?.toUpperCase();
     const coverImage = formData.cover_image_url;
-    // if unsplash, pre-defined image, or local path is provided, set it as cover_image
-    if (coverImage && (coverImage.startsWith("http") || coverImage.startsWith("/"))) {
-      formData.cover_image = coverImage;
-      formData.cover_image_asset = null;
+    let uploadedAssetUrl: string | null = null;
+
+    if (coverImage) {
+      const imageType = getCoverImageType(coverImage);
+
+      if (imageType === "local_static") {
+        try {
+          uploadedAssetUrl = await uploadCoverImage(coverImage, {
+            workspaceSlug: workspaceSlug.toString(),
+            entityIdentifier: "",
+            entityType: EFileAssetType.PROJECT_COVER,
+            isUserAsset: false,
+          });
+        } catch (error) {
+          console.error("Error uploading cover image:", error);
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: t("toast.error"),
+            message: error instanceof Error ? error.message : "Failed to upload cover image",
+          });
+          return Promise.reject(error);
+        }
+      } else {
+        formData.cover_image = coverImage;
+        formData.cover_image_asset = null;
+      }
     }
 
     return createProject(workspaceSlug.toString(), formData)
       .then(async (res) => {
-        if (coverImage) {
+        if (uploadedAssetUrl) {
+          await updateCoverImageStatus(res.id, uploadedAssetUrl);
+          await updateProject(workspaceSlug.toString(), res.id, { cover_image_url: uploadedAssetUrl });
+        } else if (coverImage && coverImage.startsWith("http")) {
           await updateCoverImageStatus(res.id, coverImage);
+          await updateProject(workspaceSlug.toString(), res.id, { cover_image_url: coverImage });
         }
         captureSuccess({
           eventName: PROJECT_TRACKER_EVENTS.create,

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Button } from "@plane/ui";
 import type { INotificationConfig } from "../page";
@@ -56,11 +54,7 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-custom-text-100">알림 설정</h3>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onCreateNew}
-        >
+        <Button variant="primary" size="sm" onClick={onCreateNew}>
           새 설정 추가
         </Button>
       </div>
@@ -68,11 +62,7 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
       {configs.length === 0 ? (
         <div className="text-center py-8 border border-custom-border-200 rounded-lg">
           <p className="text-custom-text-400 mb-4">설정된 알림이 없습니다.</p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onCreateNew}
-          >
+          <Button variant="primary" size="sm" onClick={onCreateNew}>
             첫 번째 설정 추가
           </Button>
         </div>
@@ -84,39 +74,37 @@ export const NotificationConfigList: React.FC<NotificationConfigListProps> = ({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="font-medium text-custom-text-100">{config.name}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      config.is_enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full font-medium ${
+                        config.is_enabled ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {config.is_enabled ? "활성" : "비활성"}
                     </span>
                   </div>
                   <div className="text-sm text-custom-text-400 space-y-1">
-                    <p><strong>엔드포인트:</strong> {config.endpoint_url}</p>
-                    <p><strong>메소드:</strong> {config.method}</p>
-                    <p><strong>타임아웃:</strong> {config.timeout}초</p>
-                    <p><strong>재시도 횟수:</strong> {config.retry_count}회</p>
+                    <p>
+                      <strong>엔드포인트:</strong> {config.endpoint_url}
+                    </p>
+                    <p>
+                      <strong>메소드:</strong> {config.method}
+                    </p>
+                    <p>
+                      <strong>타임아웃:</strong> {config.timeout}초
+                    </p>
+                    <p>
+                      <strong>재시도 횟수:</strong> {config.retry_count}회
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => handleToggleEnabled(config)}
-                  >
+                  <Button variant="outline-primary" size="sm" onClick={() => handleToggleEnabled(config)}>
                     {config.is_enabled ? "비활성화" : "활성화"}
                   </Button>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => handleTest(config)}
-                  >
+                  <Button variant="outline-primary" size="sm" onClick={() => handleTest(config)}>
                     테스트
                   </Button>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => handleEdit(config)}
-                  >
+                  <Button variant="outline-primary" size="sm" onClick={() => handleEdit(config)}>
                     편집
                   </Button>
                   <Button

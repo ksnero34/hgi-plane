@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CustomBaseFileNodeViewProps } from "../custom-file";
+import type { CustomBaseFileNodeViewProps } from "../custom-file";
 import { Upload, AlertCircle, Loader2 } from "lucide-react";
 
 interface FileUploaderProps extends CustomBaseFileNodeViewProps {
@@ -25,21 +25,21 @@ export const FileUploader = (props: FileUploaderProps) => {
   useEffect(() => {
     const fetchFileSettings = async () => {
       try {
-        const response = await fetch('/api/instances/file-settings/');
+        const response = await fetch("/api/instances/file-settings/");
         if (!response.ok) {
-          throw new Error('파일 설정을 가져오는데 실패했습니다.');
+          throw new Error("파일 설정을 가져오는데 실패했습니다.");
         }
         const data = await response.json();
         setFileSettings({
           allowed_extensions: data.allowed_extensions || ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"],
-          max_file_size: data.max_file_size || 52428800 // 기본값 50MB
+          max_file_size: data.max_file_size || 52428800, // 기본값 50MB
         });
       } catch (error) {
-        console.error('파일 설정 가져오기 오류:', error);
+        console.error("파일 설정 가져오기 오류:", error);
         // 기본값 설정
         setFileSettings({
           allowed_extensions: ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"],
-          max_file_size: 52428800 // 50MB
+          max_file_size: 52428800, // 50MB
         });
       }
     };
@@ -61,17 +61,27 @@ export const FileUploader = (props: FileUploaderProps) => {
       setUploadProgress(0);
       try {
         const fileHandler = editor.storage.customFile.fileHandler;
-        
+
         // 파일 유효성 검사
-        const fileExtension = file.name.split('.').pop()?.toLowerCase();
-        
+        const fileExtension = file.name.split(".").pop()?.toLowerCase();
+
         // API에서 가져온 설정 또는 기본값 사용
-        const allowedExtensions = fileSettings?.allowed_extensions || ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"];
+        const allowedExtensions = fileSettings?.allowed_extensions || [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "pdf",
+          "txt",
+          "xlxs",
+        ];
         const maxFileSize = fileSettings?.max_file_size || 52428800; // 50MB
         const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
         if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-          throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')} , 선택한 파일 확장자: ${fileExtension}`);
+          throw new Error(
+            `허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(", ")} , 선택한 파일 확장자: ${fileExtension}`
+          );
         }
 
         if (file.size > maxFileSize) {
@@ -80,7 +90,7 @@ export const FileUploader = (props: FileUploaderProps) => {
 
         // 업로드 진행 상태를 시뮬레이션
         const progressInterval = setInterval(() => {
-          setUploadProgress(prev => {
+          setUploadProgress((prev) => {
             if (prev >= 90) {
               clearInterval(progressInterval);
               return prev;
@@ -138,17 +148,19 @@ export const FileUploader = (props: FileUploaderProps) => {
 
     try {
       const fileHandler = editor.storage.customFile.fileHandler;
-      
+
       // 파일 유효성 검사
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+
       // API에서 가져온 설정 또는 기본값 사용
       const allowedExtensions = fileSettings?.allowed_extensions || ["jpg", "jpeg", "png", "gif", "pdf", "txt", "xlxs"];
       const maxFileSize = fileSettings?.max_file_size || 52428800; // 50MB
       const maxFileSizeMB = Math.round(maxFileSize / (1024 * 1024));
 
       if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-        throw new Error(`허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(', ')}, 선택한 파일 확장자: ${fileExtension}`);
+        throw new Error(
+          `허용되지 않는 파일 형식입니다. 허용된 확장자: ${allowedExtensions.join(", ")}, 선택한 파일 확장자: ${fileExtension}`
+        );
       }
 
       if (file.size > maxFileSize) {
@@ -157,7 +169,7 @@ export const FileUploader = (props: FileUploaderProps) => {
 
       // 업로드 진행 상태를 시뮬레이션
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return prev;
@@ -198,20 +210,16 @@ export const FileUploader = (props: FileUploaderProps) => {
   const isError = node.attrs.uploadStatus === "error";
 
   return (
-    <div 
+    <div
       className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md transition-colors cursor-pointer
-        ${isError 
-          ? "border-red-300 bg-red-50 hover:bg-red-100" 
-          : "border-custom-border-200 hover:border-custom-border-400 hover:bg-custom-background-90"
+        ${
+          isError
+            ? "border-red-300 bg-red-50 hover:bg-red-100"
+            : "border-custom-border-200 hover:border-custom-border-400 hover:bg-custom-background-90"
         }`}
       onClick={() => fileInputRef.current?.click()}
     >
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
       <div className="flex flex-col items-center gap-2">
         {isError ? (
           <>
@@ -223,11 +231,9 @@ export const FileUploader = (props: FileUploaderProps) => {
         ) : isUploading ? (
           <>
             <Loader2 className="w-5 h-5 text-custom-text-200 animate-spin" />
-            <p className="text-sm text-custom-text-200">
-              파일 업로드 중... {uploadProgress}%
-            </p>
+            <p className="text-sm text-custom-text-200">파일 업로드 중... {uploadProgress}%</p>
             <div className="w-full h-1 bg-gray-200 rounded-full mt-2">
-              <div 
+              <div
                 className="h-full bg-blue-500 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
@@ -236,12 +242,10 @@ export const FileUploader = (props: FileUploaderProps) => {
         ) : (
           <>
             <Upload className="w-5 h-5 text-custom-text-200" />
-            <p className="text-sm text-custom-text-200">
-              Click to select a file
-            </p>
+            <p className="text-sm text-custom-text-200">Click to select a file</p>
           </>
         )}
       </div>
     </div>
   );
-}; 
+};

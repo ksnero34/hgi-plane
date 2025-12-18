@@ -1,5 +1,5 @@
 // types
-import { IIssueFilterOptions } from "@plane/types";
+import type { IIssueFilterOptions } from "@plane/types";
 import type { TCustomField } from "@plane/types";
 import { calculateFilterValue } from "./filter-update.helper";
 
@@ -51,20 +51,17 @@ export const stringifyCustomFieldFilter = (value: { [field_id: string]: string[]
  * @param {string} fieldValue - "fieldId:value" 형태의 값
  * @returns {string | null} - 업데이트된 JSON 문자열 또는 null (빈 객체인 경우)
  */
-export const toggleCustomFieldValue = (
-  currentCustomFields: string | null,
-  fieldValue: string
-): string | null => {
+export const toggleCustomFieldValue = (currentCustomFields: string | null, fieldValue: string): string | null => {
   const parsed = parseCustomFieldFilter(currentCustomFields || "{}");
   const [fieldId, value] = fieldValue.split(":");
-  
+
   if (!parsed[fieldId]) {
     parsed[fieldId] = [];
   }
-  
+
   const fieldValues = parsed[fieldId];
   const valueIndex = fieldValues.indexOf(value);
-  
+
   if (valueIndex === -1) {
     // 값이 없으면 추가
     fieldValues.push(value);
@@ -75,7 +72,7 @@ export const toggleCustomFieldValue = (
       delete parsed[fieldId];
     }
   }
-  
+
   // 빈 객체면 null 반환, 아니면 JSON 문자열 반환
   return Object.keys(parsed).length > 0 ? stringifyCustomFieldFilter(parsed) : null;
 };
@@ -86,22 +83,19 @@ export const toggleCustomFieldValue = (
  * @param {string} fieldValue - "fieldId:value" 형태의 값
  * @returns {string | null} - 업데이트된 JSON 문자열 또는 null (빈 객체인 경우)
  */
-export const removeCustomFieldValue = (
-  currentCustomFields: string | null,
-  fieldValue: string
-): string | null => {
+export const removeCustomFieldValue = (currentCustomFields: string | null, fieldValue: string): string | null => {
   if (!currentCustomFields) return null;
-  
+
   const parsed = parseCustomFieldFilter(currentCustomFields);
   const [fieldId, value] = fieldValue.split(":");
-  
+
   if (parsed[fieldId]) {
     parsed[fieldId] = parsed[fieldId].filter((val: string) => val !== value);
     if (parsed[fieldId].length === 0) {
       delete parsed[fieldId];
     }
   }
-  
+
   return Object.keys(parsed).length > 0 ? stringifyCustomFieldFilter(parsed) : null;
 };
 
@@ -111,16 +105,13 @@ export const removeCustomFieldValue = (
  * @param {string[]} fieldValues - "fieldId:value" 형태의 값들 배열
  * @returns {string | null} - 업데이트된 JSON 문자열 또는 null (빈 객체인 경우)
  */
-export const updateCustomFieldValues = (
-  currentCustomFields: string | null,
-  fieldValues: string[]
-): string | null => {
+export const updateCustomFieldValues = (currentCustomFields: string | null, fieldValues: string[]): string | null => {
   let result = currentCustomFields;
-  
+
   fieldValues.forEach((fieldValue) => {
     result = toggleCustomFieldValue(result, fieldValue);
   });
-  
+
   return result;
 };
 
@@ -131,7 +122,7 @@ export const updateCustomFieldValues = (
  */
 export const isCustomFieldFilterActive = (customFieldsFilter: any): boolean => {
   if (!customFieldsFilter) return false;
-  
+
   const parsed = parseCustomFieldFilter(customFieldsFilter);
   return Object.keys(parsed).length > 0;
 };
@@ -143,7 +134,7 @@ export const isCustomFieldFilterActive = (customFieldsFilter: any): boolean => {
  */
 export const calculateCustomFieldFilterCount = (customFieldsFilter: any): number => {
   if (!customFieldsFilter) return 0;
-  
+
   const parsed = parseCustomFieldFilter(customFieldsFilter);
   return Object.values(parsed).reduce((total: number, values: string[]) => total + values.length, 0);
 };
@@ -174,16 +165,16 @@ export const removeCustomFieldFilterValue = (
   valueToRemove: string
 ): string | null => {
   if (!currentCustomFields) return null;
-  
+
   const customFieldFilters = parseCustomFieldFilter(currentCustomFields);
   const currentFieldValues = customFieldFilters[fieldId] || [];
-  const newFieldValues = currentFieldValues.filter(v => v !== valueToRemove);
-  
+  const newFieldValues = currentFieldValues.filter((v) => v !== valueToRemove);
+
   // undefined 값들을 제거하고 새로운 객체 생성
   const newCustomFieldFilters: { [field_id: string]: string[] } = {};
-  
+
   // 기존 필드들 복사 (수정된 필드 제외)
-  Object.keys(customFieldFilters).forEach(key => {
+  Object.keys(customFieldFilters).forEach((key) => {
     if (key === fieldId) {
       if (newFieldValues.length > 0) {
         newCustomFieldFilters[key] = newFieldValues;
@@ -195,26 +186,21 @@ export const removeCustomFieldFilterValue = (
       }
     }
   });
-  
-  return Object.keys(newCustomFieldFilters).length > 0 
-    ? stringifyCustomFieldFilter(newCustomFieldFilters) 
-    : null;
+
+  return Object.keys(newCustomFieldFilters).length > 0 ? stringifyCustomFieldFilter(newCustomFieldFilters) : null;
 };
 
 /**
  * 커스텀 필드 필터에서 특정 필드의 모든 값을 제거합니다
  */
-export const removeCustomFieldFilterField = (
-  currentCustomFields: string | null,
-  fieldId: string
-): string | null => {
+export const removeCustomFieldFilterField = (currentCustomFields: string | null, fieldId: string): string | null => {
   if (!currentCustomFields) return null;
-  
+
   const customFieldFilters = parseCustomFieldFilter(currentCustomFields);
   const newCustomFieldFilters: { [field_id: string]: string[] } = {};
-  
+
   // 삭제할 필드 제외하고 복사
-  Object.keys(customFieldFilters).forEach(key => {
+  Object.keys(customFieldFilters).forEach((key) => {
     if (key !== fieldId) {
       const values = customFieldFilters[key];
       if (values && values.length > 0) {
@@ -222,10 +208,8 @@ export const removeCustomFieldFilterField = (
       }
     }
   });
-  
-  return Object.keys(newCustomFieldFilters).length > 0 
-    ? stringifyCustomFieldFilter(newCustomFieldFilters) 
-    : null;
+
+  return Object.keys(newCustomFieldFilters).length > 0 ? stringifyCustomFieldFilter(newCustomFieldFilters) : null;
 };
 
 /**
@@ -239,30 +223,31 @@ export const prepareCustomFieldFiltersForRender = (
   field: TCustomField;
   fieldValues: string[];
 }> => {
-  const customFieldFilters = typeof customFieldsValue === 'string' 
-    ? JSON.parse(customFieldsValue) 
-    : customFieldsValue as { [field_id: string]: string[] };
-  
+  const customFieldFilters =
+    typeof customFieldsValue === "string"
+      ? JSON.parse(customFieldsValue)
+      : (customFieldsValue as { [field_id: string]: string[] });
+
   const result: Array<{
     fieldId: string;
     field: TCustomField;
     fieldValues: string[];
   }> = [];
-  
-  Object.keys(customFieldFilters).forEach(fieldId => {
+
+  Object.keys(customFieldFilters).forEach((fieldId) => {
     const fieldValues = customFieldFilters[fieldId];
     if (!fieldValues || !Array.isArray(fieldValues) || fieldValues.length === 0) return;
-    
-    const field = customFields.find(f => f.id === fieldId);
+
+    const field = customFields.find((f) => f.id === fieldId);
     if (!field) return;
-    
+
     result.push({
       fieldId,
       field,
-      fieldValues
+      fieldValues,
     });
   });
-  
+
   return result;
 };
 
@@ -275,12 +260,12 @@ export const isValidCustomFieldValue = (value: any): boolean => {
   if (value === null || value === undefined || value === "") {
     return false;
   }
-  
+
   // 배열인 경우 길이가 0이면 무효
   if (Array.isArray(value) && value.length === 0) {
     return false;
   }
-  
+
   return true;
 };
 
@@ -301,8 +286,8 @@ export const updateCustomFieldValueSafely = (
   fieldInfo: { name: string; field_type: string }
 ): any[] => {
   // 변경할 필드를 제외한 기존 값들 보존 (peek-overview 방식)
-  const existingValues = (currentValues || []).filter(cfv => cfv.custom_field_id !== fieldId);
-  
+  const existingValues = (currentValues || []).filter((cfv) => cfv.custom_field_id !== fieldId);
+
   // 새 값이 유효한 경우에만 추가
   if (isValidCustomFieldValue(newValue)) {
     const newFieldValue = {
@@ -311,12 +296,12 @@ export const updateCustomFieldValueSafely = (
       field_name: fieldInfo.name,
       field_type: fieldInfo.field_type,
       // MobX 반응성을 위한 타임스탬프 추가
-      _updated_at: Date.now()
+      _updated_at: Date.now(),
     };
     // 완전히 새로운 배열 생성하여 MobX 반응성 보장
     return [...existingValues, newFieldValue];
   }
-  
+
   // 값이 무효하면 해당 필드 제거된 상태로 반환
   // 빈 배열이라도 새로운 배열 인스턴스 생성
   return [...existingValues];
@@ -329,6 +314,6 @@ export const updateCustomFieldValueSafely = (
  * @returns {any} - 필드 값 또는 undefined
  */
 export const getCustomFieldValue = (customFieldValues: any[], fieldId: string): any => {
-  const fieldValue = customFieldValues?.find(cfv => cfv.custom_field_id === fieldId);
+  const fieldValue = customFieldValues?.find((cfv) => cfv.custom_field_id === fieldId);
   return fieldValue?.value;
-}; 
+};

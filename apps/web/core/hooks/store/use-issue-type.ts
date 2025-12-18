@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 // types
-import { IIssueType, IProjectIssueType } from "@plane/types";
+import type { IIssueType, IProjectIssueType } from "@plane/types";
 // services
 import { ProjectService } from "@/services/project";
 
@@ -68,7 +68,9 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
         data
       );
       mutateIssueTypes((prevData) =>
-        prevData ? prevData.map((projectIssueType) => (projectIssueType.id === issueTypeId ? response : projectIssueType)) : [response]
+        prevData
+          ? prevData.map((projectIssueType) => (projectIssueType.id === issueTypeId ? response : projectIssueType))
+          : [response]
       );
       return response;
     },
@@ -98,17 +100,17 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
   useEffect(() => {
     const createDefaultIssueTypeAndMigrate = async () => {
       if (!workspaceSlug || !projectId || !issueTypes || isValidating) return;
-      
+
       // 이슈 타입이 없으면 기본 "Issue" 타입 생성
       if (issueTypes.length === 0) {
         const projectKey = `${workspaceSlug}-${projectId}`;
-        
+
         // 이미 생성 중인지 확인
         if (creatingDefaultIssueType.has(projectKey)) {
           await creatingDefaultIssueType.get(projectKey);
           return;
         }
-        
+
         // 생성 Promise를 Map에 저장
         const createPromise = (async () => {
           try {
@@ -117,7 +119,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
             if (latestIssueTypes.length > 0) {
               return undefined;
             }
-            
+
             const defaultIssueType = await createIssueType({
               name: "Issue",
               description: "기본 이슈 타입",
@@ -127,24 +129,24 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
               logo_props: {
                 in_use: "emoji",
                 emoji: {
-                  value: "128204" // 📋 이모지
-                }
-              }
+                  value: "128204", // 📋 이모지
+                },
+              },
             });
 
             // 기본 이슈 타입 생성 후 기존 이슈들에게 할당
             if (defaultIssueType) {
               try {
                 await projectService.assignDefaultIssueTypeToExistingIssues(
-                  workspaceSlug as string, 
-                  projectId, 
+                  workspaceSlug as string,
+                  projectId,
                   defaultIssueType.issue_type.id
                 );
               } catch (error) {
                 console.error("기존 이슈들에게 기본 이슈 타입 할당 실패:", error);
               }
             }
-            
+
             return defaultIssueType;
           } catch (error) {
             console.error("기본 이슈 타입 생성 실패:", error);
@@ -154,7 +156,7 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
             creatingDefaultIssueType.delete(projectKey);
           }
         })();
-        
+
         creatingDefaultIssueType.set(projectKey, createPromise);
         await createPromise;
       }
@@ -166,26 +168,24 @@ export const useIssueType = (projectId: string): UseIssueTypeReturn => {
   // 기본 이슈 타입을 반환하는 헬퍼 함수
   const getDefaultIssueType = useCallback(() => {
     if (!issueTypes || issueTypes.length === 0) return undefined;
-    
+
     // 먼저 ProjectIssueType의 is_default=true인 것을 찾기
-    const defaultProjectIssueType = issueTypes.find(projectIssueType => 
-      projectIssueType.is_default === true
-    );
-    
+    const defaultProjectIssueType = issueTypes.find((projectIssueType) => projectIssueType.is_default === true);
+
     if (defaultProjectIssueType) {
       return defaultProjectIssueType;
     }
-    
+
     // 그 다음 이름이 "Issue"인 것을 찾기
-    const issueTypeByName = issueTypes.find(projectIssueType => {
+    const issueTypeByName = issueTypes.find((projectIssueType) => {
       const issueType = projectIssueType.issue_type;
       return issueType.name === "Issue";
     });
-    
+
     if (issueTypeByName) {
       return issueTypeByName;
     }
-    
+
     // 기본 타입이 없으면 첫 번째 타입 반환
     const firstType = issueTypes[0];
     return firstType || undefined;

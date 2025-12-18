@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx";
-import { IInstanceMember } from "@plane/types";
-import { IMemberRootStore } from ".";
+import type { IInstanceMember } from "@plane/types";
+import type { IMemberRootStore } from ".";
 import { CoreRootStore } from "../root.store";
 import { InstanceService } from "@/services/instance.service";
 
@@ -47,12 +47,12 @@ export class InstanceMemberStore implements IInstanceMemberStore {
   fetchInstanceMembers = async () => {
     try {
       const response = await this.instanceService.getInstanceMembers();
-      
+
       // Update instance member map
       response.forEach((member: IInstanceMember) => {
         this.instanceMemberMap[member.id] = member;
       });
-      
+
       // Update instance member ids
       this.instanceMemberIds = response.map((member: IInstanceMember) => member.id);
     } catch (error) {
@@ -60,4 +60,4 @@ export class InstanceMemberStore implements IInstanceMemberStore {
       this.instanceMemberIds = null;
     }
   };
-} 
+}

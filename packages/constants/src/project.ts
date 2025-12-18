@@ -1,7 +1,6 @@
 // plane imports
-import { IProject, TProjectAppliedDisplayFilterKeys, TProjectOrderByOptions } from "@plane/types";
+import type { TProjectAppliedDisplayFilterKeys, TProjectOrderByOptions } from "@plane/types";
 // local imports
-import { RANDOM_EMOJI_CODES } from "./emoji";
 
 export type TNetworkChoiceIconKey = "Lock" | "Globe2";
 
@@ -79,7 +78,6 @@ export const PROJECT_UNSPLASH_COVERS = [
   "/cover-images/project-covers/cover-15.jpg",
   "/cover-images/project-covers/cover-16.jpg",
 ];
-
 export const PROJECT_ORDER_BY_OPTIONS: {
   key: TProjectOrderByOptions;
   i18n_label: string;
@@ -133,21 +131,6 @@ export const PROJECT_ERROR_MESSAGES = {
     i18n_title: "error",
     i18n_message: "workspace_projects.error.issue_delete",
   },
-};
-
-export const DEFAULT_PROJECT_FORM_VALUES: Partial<IProject> = {
-  cover_image_url: PROJECT_UNSPLASH_COVERS[Math.floor(Math.random() * PROJECT_UNSPLASH_COVERS.length)],
-  description: "",
-  logo_props: {
-    in_use: "emoji",
-    emoji: {
-      value: RANDOM_EMOJI_CODES[Math.floor(Math.random() * RANDOM_EMOJI_CODES.length)],
-    },
-  },
-  identifier: "",
-  name: "",
-  network: 2,
-  project_lead: null,
 };
 
 export enum EProjectFeatureKey {

@@ -1,9 +1,6 @@
-"use client";
-
-import type { FC } from "react";
 import { observer } from "mobx-react";
 // hooks
-import { DoubleCircleIcon } from "@plane/propel/icons";
+import { StatePropertyIcon } from "@plane/propel/icons";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 // components
 import { IssueActivityBlockComponent, IssueLink } from "./";
@@ -11,7 +8,7 @@ import { IssueActivityBlockComponent, IssueLink } from "./";
 
 type TIssueStateActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
-export const IssueStateActivity: FC<TIssueStateActivity> = observer((props) => {
+export const IssueStateActivity = observer(function IssueStateActivity(props: TIssueStateActivity) {
   const { activityId, showIssue = true, ends } = props;
   // hooks
   const {
@@ -29,9 +26,8 @@ export const IssueStateActivity: FC<TIssueStateActivity> = observer((props) => {
   const oldValue = activity.old_value || "";
   const oldStateName = oldValue.split("|")[0] || oldValue;
 
-  const reasonFromComment = activity.comment && activity.comment.includes(":")
-    ? activity.comment.split(":").slice(1).join(":").trim()
-    : "";
+  const reasonFromComment =
+    activity.comment && activity.comment.includes(":") ? activity.comment.split(":").slice(1).join(":").trim() : "";
 
   const workflowApprovalInfo = (() => {
     // Try parsing structured data embedded in new_value
@@ -62,7 +58,10 @@ export const IssueStateActivity: FC<TIssueStateActivity> = observer((props) => {
       };
     }
 
-    if (comment.toLowerCase().startsWith("approved the state transition") || comment.toLowerCase().startsWith("self-approved the state transition")) {
+    if (
+      comment.toLowerCase().startsWith("approved the state transition") ||
+      comment.toLowerCase().startsWith("self-approved the state transition")
+    ) {
       return {
         approverName: activity.actor_detail?.display_name || "",
         approvalComment: reasonFromComment,
@@ -78,7 +77,7 @@ export const IssueStateActivity: FC<TIssueStateActivity> = observer((props) => {
 
   return (
     <IssueActivityBlockComponent
-      icon={<DoubleCircleIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
+      icon={<StatePropertyIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />}
       activityId={activityId}
       ends={ends}
     >
@@ -108,11 +107,13 @@ export const IssueStateActivity: FC<TIssueStateActivity> = observer((props) => {
         )}
         {workflowApprovalInfo && (
           <span className="text-custom-text-200">
-            {" "}(
-            {workflowApprovalInfo.isSelfApproval ? "본인 승인" : "승인자"}: <span className="font-medium text-custom-text-100">{workflowApprovalInfo.approverName || "미확인"}</span>
+            {" "}
+            ({workflowApprovalInfo.isSelfApproval ? "본인 승인" : "승인자"}:{" "}
+            <span className="font-medium text-custom-text-100">{workflowApprovalInfo.approverName || "미확인"}</span>
             {workflowApprovalInfo.approvalComment && (
               <>
-                , 승인 사유: <span className="font-medium text-custom-text-100">{workflowApprovalInfo.approvalComment}</span>
+                , 승인 사유:{" "}
+                <span className="font-medium text-custom-text-100">{workflowApprovalInfo.approvalComment}</span>
               </>
             )}
             )

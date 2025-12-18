@@ -1,29 +1,25 @@
-"use client";
-
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 // ui
 import { useTranslation } from "@plane/i18n";
+import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { Loader, Card } from "@plane/ui";
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 import { calculateTimeAgo, getFileURL } from "@plane/utils";
 // components
 import { ActivityMessage, IssueLink } from "@/components/core/activity";
-import { ProfileEmptyState } from "@/components/ui/profile-empty-state";
 // constants
 import { USER_PROFILE_ACTIVITY } from "@/constants/fetch-keys";
 // helpers
 // hooks
 import { useUser } from "@/hooks/store/user";
-// assets
-import recentActivityEmptyState from "@/public/empty-state/recent_activity.svg";
 // services
 import { UserService } from "@/services/user.service";
 
 const userService = new UserService();
 
-export const ProfileActivity = observer(() => {
+export const ProfileActivity = observer(function ProfileActivity() {
   const { workspaceSlug, userId } = useParams();
   // store hooks
   const { data: currentUser } = useUser();
@@ -72,10 +68,9 @@ export const ProfileActivity = observer(() => {
       await Promise.all(
         Object.entries(projectData).map(async ([projectId, wsSlug]) => {
           try {
-            const customFieldsResponse = await fetch(
-              `/api/workspaces/${wsSlug}/projects/${projectId}/custom-fields/`,
-              { credentials: "include" }
-            );
+            const customFieldsResponse = await fetch(`/api/workspaces/${wsSlug}/projects/${projectId}/custom-fields/`, {
+              credentials: "include",
+            });
             if (customFieldsResponse.ok) {
               customFieldsMap[projectId] = await customFieldsResponse.json();
             } else {
@@ -105,13 +100,13 @@ export const ProfileActivity = observer(() => {
       project: {
         getProjectMemberDetails: (memberId: string) => {
           // 워크스페이스 멤버에서 해당 멤버 찾기
-          const member = projectMembers.find(m => m.member?.id === memberId || m.id === memberId);
+          const member = projectMembers.find((m) => m.member?.id === memberId || m.id === memberId);
           return member || null;
         },
         getProjectMemberIds: () => {
-          return projectMembers.map(m => m.member?.id || m.id).filter(Boolean);
-        }
-      }
+          return projectMembers.map((m) => m.member?.id || m.id).filter(Boolean);
+        },
+      },
     };
   };
 
@@ -144,7 +139,9 @@ export const ProfileActivity = observer(() => {
                     <div className="-mt-1 w-4/5 break-words">
                       <p className="inline text-sm text-custom-text-200">
                         <span className="font-medium text-custom-text-100">
-                          {currentUser?.id === activity.actor_detail?.id ? "당신이" : activity.actor_detail?.display_name + " 님이"}{" "}
+                          {currentUser?.id === activity.actor_detail?.id
+                            ? "당신이"
+                            : activity.actor_detail?.display_name + " 님이"}{" "}
                         </span>
                         {activity.field ? (
                           <ProfileActivityMessage
@@ -168,11 +165,7 @@ export const ProfileActivity = observer(() => {
               })}
             </div>
           ) : (
-            <ProfileEmptyState
-              title={t("no_data_yet")}
-              description={t("profile.stats.recent_activity.empty")}
-              image={recentActivityEmptyState}
-            />
+            <EmptyStateCompact title={t("no_data_yet")} assetKey="unknown" assetClassName="size-20" />
           )
         ) : (
           <Loader className="space-y-5">
@@ -189,7 +182,12 @@ export const ProfileActivity = observer(() => {
 });
 
 // 프로필 전용 ActivityMessage 컴포넌트
-const ProfileActivityMessage = ({ activity, showIssue = false, customFields = [], memberHook }: {
+const ProfileActivityMessage = ({
+  activity,
+  showIssue = false,
+  customFields = [],
+  memberHook,
+}: {
   activity: any;
   showIssue?: boolean;
   customFields?: TCustomField[];
@@ -229,7 +227,7 @@ const getCustomFieldActivityMessage = (
   // 실제 커스텀 필드에서 이름 찾기
   const field = customFields.find((f: TCustomField) => f.name === fieldKey || f.key === fieldKey);
   const fieldName = field?.name || fieldKey || "알 수 없는 필드";
-  const fieldType = field?.field_type || 'text';
+  const fieldType = field?.field_type || "text";
 
   const projectId = activity.project;
 
@@ -242,7 +240,8 @@ const getCustomFieldActivityMessage = (
         </span>
         {showIssue && (
           <>
-            {" "}(으)로 <IssueLink activity={activity} />에{" "}
+            {" "}
+            (으)로 <IssueLink activity={activity} />에{" "}
           </>
         )}
         {!showIssue && " (으)로"} 설정했습니다
@@ -254,13 +253,16 @@ const getCustomFieldActivityMessage = (
         커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span> 값을{" "}
         <span className="font-medium text-custom-text-100">
           {formatCustomFieldValueForProfile(activity.old_value, fieldType, workspaceSlug, projectId, memberHook)}
-        </span>에서{" "}
+        </span>
+        에서{" "}
         <span className="font-medium text-custom-text-100">
           {formatCustomFieldValueForProfile(activity.new_value, fieldType, workspaceSlug, projectId, memberHook)}
         </span>
         {showIssue && (
           <>
-            {" "}(으)로 <IssueLink activity={activity} />에서{" "}
+            {" "}
+            (으)로 <IssueLink activity={activity} />
+            에서{" "}
           </>
         )}
         {!showIssue && " (으)로"} 변경했습니다
@@ -272,7 +274,9 @@ const getCustomFieldActivityMessage = (
         커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>
         {showIssue && (
           <>
-            {" "}을(를) <IssueLink activity={activity} />에서{" "}
+            {" "}
+            을(를) <IssueLink activity={activity} />
+            에서{" "}
           </>
         )}
         {!showIssue && " 을(를)"} 삭제했습니다
@@ -285,7 +289,9 @@ const getCustomFieldActivityMessage = (
       커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>을(를) 수정했습니다
       {showIssue && (
         <>
-          {" "} <IssueLink activity={activity} />에서
+          {" "}
+          <IssueLink activity={activity} />
+          에서
         </>
       )}
     </>
@@ -302,7 +308,9 @@ const formatCustomFieldValueForProfile = (
 ): React.ReactNode => {
   if (!value) return "없음";
 
-  const { project: { getProjectMemberDetails, getProjectMemberIds } } = memberHook;
+  const {
+    project: { getProjectMemberDetails, getProjectMemberIds },
+  } = memberHook;
 
   if (fieldType === "project_member") {
     // 단일 멤버인 경우 - 백엔드에서 UUID를 받음
@@ -333,18 +341,18 @@ const formatCustomFieldValueForProfile = (
 
     try {
       // JSON 배열 형태인지 확인
-      if (value.startsWith('[') && value.endsWith(']')) {
+      if (value.startsWith("[") && value.endsWith("]")) {
         memberIds = JSON.parse(value);
-      } else if (value.includes(',')) {
+      } else if (value.includes(",")) {
         // 쉼표로 구분된 문자열인 경우
-        memberIds = value.split(',').map(id => id.trim());
+        memberIds = value.split(",").map((id) => id.trim());
       } else {
         // 단일 값인 경우
         memberIds = [value.trim()];
       }
     } catch {
       // JSON 파싱 실패 시 쉼표로 구분된 문자열로 처리
-      memberIds = value.split(',').map(id => id.trim());
+      memberIds = value.split(",").map((id) => id.trim());
     }
 
     return memberIds.map((memberId, index) => {
@@ -367,22 +375,16 @@ const formatCustomFieldValueForProfile = (
           </a>
         );
 
-        return index < memberIds.length - 1 ? (
-          <span key={`wrapper-${index}`}>
-            {memberElement},
-          </span>
-        ) : memberElement;
+        return index < memberIds.length - 1 ? <span key={`wrapper-${index}`}>{memberElement},</span> : memberElement;
       } else {
         // UUID가 아닌 경우 (레거시 데이터) 일반 텍스트로 표시
         const memberElement = (
-          <span key={index} className="font-medium text-custom-text-100">{memberId}</span>
+          <span key={index} className="font-medium text-custom-text-100">
+            {memberId}
+          </span>
         );
 
-        return index < memberIds.length - 1 ? (
-          <span key={`wrapper-${index}`}>
-            {memberElement},
-          </span>
-        ) : memberElement;
+        return index < memberIds.length - 1 ? <span key={`wrapper-${index}`}>{memberElement},</span> : memberElement;
       }
     });
   } else if (fieldType === "date") {

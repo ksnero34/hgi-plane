@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { observer } from "mobx-react";
 import { Search } from "lucide-react";
@@ -80,11 +78,7 @@ export const FilterTitleDescription: React.FC<Props> = observer((props) => {
               적용
             </button>
           </div>
-          {appliedFilters && (
-            <div className="text-xs text-custom-text-300 px-1">
-              현재 필터: "{appliedFilters}"
-            </div>
-          )}
+          {appliedFilters && <div className="text-xs text-custom-text-300 px-1">현재 필터: "{appliedFilters}"</div>}
         </div>
       )}
     </>

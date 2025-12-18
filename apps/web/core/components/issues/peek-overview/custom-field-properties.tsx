@@ -6,7 +6,7 @@ import { Tag, CalendarCheck2, UserCircle2, Users, MessageSquare } from "lucide-r
 import { DateDropdown, MemberDropdown, CustomFieldDropdown } from "@/components/dropdowns";
 
 // types
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 import type { TIssueOperations } from "@/components/issues/issue-detail";
 
 // hooks
@@ -31,19 +31,19 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
   } = useIssueDetail();
 
   const { customFields, isLoading: customFieldsLoading } = useCustomField(projectId);
-  
+
   // derived values
   const issue = getIssueById(issueId);
-  
+
   // console.log('Issue data:', {
   //   issueId: issueId,
   //   issue: issue,
   //   type_id: issue?.type_id,
   //   allIssueFields: issue ? Object.keys(issue) : 'no issue'
   // });
-  
+
   // Filter custom fields based on current issue type
-  const filteredCustomFields = customFields.filter(field => {
+  const filteredCustomFields = customFields.filter((field) => {
     // console.log('Custom field filtering:', {
     //   fieldId: field.id,
     //   fieldName: field.name,
@@ -51,7 +51,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
     //   issueTypeId: issue?.type_id,
     //   match: field.issue_type === issue?.type_id
     // });
-    
+
     // If custom field has no issue_type restriction, show for all issue types
     if (!field.issue_type) return true;
     // If issue has no type_id, don't show type-specific fields
@@ -59,26 +59,26 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
     // Show only fields that match the current issue type
     return field.issue_type === issue.type_id;
   });
-  
+
   const getFieldValue = (fieldId: string) => {
-    const fieldValue = issue?.custom_field_values?.find(cfv => cfv.custom_field_id === fieldId);
+    const fieldValue = issue?.custom_field_values?.find((cfv) => cfv.custom_field_id === fieldId);
     return fieldValue?.value;
   };
 
   const updateFieldValue = (fieldId: string, value: any) => {
-    const fieldArray = filteredCustomFields.filter(f => f.id === fieldId);
+    const fieldArray = filteredCustomFields.filter((f) => f.id === fieldId);
     const field = fieldArray.length > 0 ? fieldArray[0] : null;
     issueOperations.update(workspaceSlug, projectId, issueId, {
       custom_field_values: [
-        ...(issue?.custom_field_values || []).filter(cfv => cfv.custom_field_id !== fieldId),
-        { 
-          custom_field_id: fieldId, 
+        ...(issue?.custom_field_values || []).filter((cfv) => cfv.custom_field_id !== fieldId),
+        {
+          custom_field_id: fieldId,
           value: value,
-          field_name: field?.name || '',
-          field_type: field?.field_type || ''
-        }
+          field_name: field?.name || "",
+          field_type: field?.field_type || "",
+        },
       ],
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     });
   };
 
@@ -216,9 +216,7 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
         return (
           <div className="w-3/4 flex-grow">
             <div className="w-full h-full flex items-center gap-1.5 rounded px-2 py-0.5 text-sm justify-between cursor-not-allowed">
-              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">
-                지원하지 않는 필드 타입
-              </span>
+              <span className="flex-grow truncate text-xs leading-5 text-custom-text-400">지원하지 않는 필드 타입</span>
             </div>
           </div>
         );
@@ -244,4 +242,4 @@ export const CustomFieldProperties: React.FC<TCustomFieldProperties> = observer(
       })}
     </>
   );
-}); 
+});

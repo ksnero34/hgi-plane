@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -22,7 +20,7 @@ export const WorkflowTransitionsList = observer(({ workflowId }: Props) => {
   const { workspaceSlug, projectId } = useParams();
   // store hooks
   const { getWorkflowTransitions, fetchWorkflowTransitions } = useWorkflow();
-  
+
   // local state
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,8 +31,9 @@ export const WorkflowTransitionsList = observer(({ workflowId }: Props) => {
 
   useEffect(() => {
     if (workspaceSlug && projectId && workflowId) {
-      fetchWorkflowTransitions(workspaceSlug as string, projectId as string, workflowId)
-        .finally(() => setIsLoading(false));
+      fetchWorkflowTransitions(workspaceSlug as string, projectId as string, workflowId).finally(() =>
+        setIsLoading(false)
+      );
     }
   }, [workspaceSlug, projectId, workflowId, fetchWorkflowTransitions]);
 
@@ -68,9 +67,7 @@ export const WorkflowTransitionsList = observer(({ workflowId }: Props) => {
             <Settings className="h-4 w-4 text-custom-text-200" />
           </div>
           <h4 className="mt-2 text-sm font-medium text-custom-text-100">전환 규칙이 없습니다</h4>
-          <p className="mt-1 text-sm text-custom-text-200">
-            상태 간 전환을 제어할 규칙을 추가하세요.
-          </p>
+          <p className="mt-1 text-sm text-custom-text-200">상태 간 전환을 제어할 규칙을 추가하세요.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -88,14 +85,12 @@ export const WorkflowTransitionsList = observer(({ workflowId }: Props) => {
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: transition.from_state_detail.color }}
                     />
-                    <span className="text-sm text-custom-text-100">
-                      {transition.from_state_detail.name}
-                    </span>
+                    <span className="text-sm text-custom-text-100">{transition.from_state_detail.name}</span>
                   </div>
                 )}
-                
+
                 <ArrowRight className="h-4 w-4 text-custom-text-300" />
-                
+
                 {/* To State */}
                 {transition.to_state_detail && (
                   <div className="flex items-center space-x-2">
@@ -103,13 +98,11 @@ export const WorkflowTransitionsList = observer(({ workflowId }: Props) => {
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: transition.to_state_detail.color }}
                     />
-                    <span className="text-sm text-custom-text-100">
-                      {transition.to_state_detail.name}
-                    </span>
+                    <span className="text-sm text-custom-text-100">{transition.to_state_detail.name}</span>
                   </div>
                 )}
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 {transition.require_reviewer && (
                   <div className="flex items-center space-x-1">
@@ -119,11 +112,9 @@ export const WorkflowTransitionsList = observer(({ workflowId }: Props) => {
                     </span>
                   </div>
                 )}
-                
+
                 {transition.reviewers && transition.reviewers.length > 0 && (
-                  <span className="text-xs text-custom-text-200">
-                    {transition.reviewers.length}명의 승인자
-                  </span>
+                  <span className="text-xs text-custom-text-200">{transition.reviewers.length}명의 승인자</span>
                 )}
               </div>
             </div>

@@ -24,7 +24,7 @@ type TInboxContentRoot = {
   embedRemoveCurrentNotification?: () => void;
 };
 
-export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
+export const InboxContentRoot = observer(function InboxContentRoot(props: TInboxContentRoot) {
   const {
     workspaceSlug,
     projectId,
@@ -78,13 +78,9 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   // });
 
   // checking if issue is editable, based on user role
-  const isEditable = checkIssueEditPermission(
-    workspaceSlug,
-    projectId,
-    inboxIssue?.issue?.assignee_ids || [],
-    currentUser?.id || ""
-  )||
-  inboxIssue?.issue.created_by === currentUser?.id;
+  const isEditable =
+    checkIssueEditPermission(workspaceSlug, projectId, inboxIssue?.issue?.assignee_ids || [], currentUser?.id || "") ||
+    inboxIssue?.issue.created_by === currentUser?.id;
 
   // 권한 상태 로깅
   // console.log("Inbox Permission Check:", {
@@ -94,7 +90,6 @@ export const InboxContentRoot: FC<TInboxContentRoot> = observer((props) => {
   //   workspaceSlug,
   //   projectId
   // });
-
 
   const isGuest = getProjectRoleByWorkspaceSlugAndProjectId(workspaceSlug, projectId) === EUserPermissions.GUEST;
   const isOwner = inboxIssue?.issue.created_by === currentUser?.id;

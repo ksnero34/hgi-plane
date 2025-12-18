@@ -1,5 +1,3 @@
-"use client";
-
 import { observer } from "mobx-react";
 import { Link, Paperclip } from "lucide-react";
 import { ViewsIcon } from "@plane/propel/icons";
@@ -31,7 +29,7 @@ export interface IIssueProperties {
   anchor?: string;
 }
 
-export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
+export const IssueProperties = observer(function IssueProperties(props: IIssueProperties) {
   const { issue, displayProperties, className, anchor = "" } = props;
 
   // store hooks
@@ -84,7 +82,11 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
       {issue?.start_date && (
         <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="start_date">
           <div className="h-5">
-            <IssueBlockDate due_date={issue?.start_date} stateId={issue?.state_id ?? undefined} shouldHighLight={false} />
+            <IssueBlockDate
+              due_date={issue?.start_date}
+              stateId={issue?.state_id ?? undefined}
+              shouldHighLight={false}
+            />
           </div>
         </WithDisplayPropertiesHOC>
       )}
@@ -198,4 +200,3 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
     </div>
   );
 });
-

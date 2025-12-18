@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useMemo, useState } from "react";
 import { observer } from "mobx-react";
@@ -18,7 +16,7 @@ type Props = {
   searchQuery: string;
 };
 
-export const FilterIssueTypes: React.FC<Props> = observer((props) => {
+export const FilterIssueTypes = observer((props: Props) => {
   const { appliedFilters, handleUpdate, searchQuery } = props;
 
   // hooks

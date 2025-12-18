@@ -1,6 +1,6 @@
 export type TStateGroups = "backlog" | "unstarted" | "started" | "completed" | "cancelled";
 
-export interface IState {
+export type IState = {
   readonly id: string;
   color: string;
   default: boolean;
@@ -11,18 +11,18 @@ export interface IState {
   sequence: number;
   workspace_id: string;
   order: number;
-}
+};
 
-export interface IStateLite {
+export type IStateLite = {
   color: string;
   group: TStateGroups;
   id: string;
   name: string;
-}
+};
 
-export interface IStateResponse {
+export type IStateResponse = {
   [key: string]: IState[];
-}
+};
 
 export type TStateOperationsCallbacks = {
   createState: (data: Partial<IState>) => Promise<IState>;

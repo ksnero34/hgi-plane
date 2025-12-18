@@ -3,7 +3,6 @@ from .project.base import (
     ProjectIdentifierEndpoint,
     ProjectUserViewsEndpoint,
     ProjectFavoritesViewSet,
-    ProjectPublicCoverImagesEndpoint,
     DeployBoardViewSet,
     ProjectArchiveUnarchiveEndpoint,
 )
@@ -23,6 +22,7 @@ from .project.member import (
     ProjectMemberViewSet,
     ProjectMemberUserEndpoint,
     UserProjectRolesEndpoint,
+    ProjectMemberPreferenceEndpoint,
 )
 
 from .user.base import (
@@ -95,7 +95,8 @@ from .notification_template import (
     NotificationTemplateListEndpoint,
 )
 
-from .state.base import StateViewSet
+from .state.base import StateViewSet, IntakeStateEndpoint
+
 from .view.base import (
     WorkspaceViewViewSet,
     WorkspaceViewIssuesViewSet,
@@ -124,6 +125,7 @@ from .asset.v2 import (
     ProjectBulkAssetEndpoint,
     PageFileAssetEndpoint,
     AssetCheckEndpoint,
+    DuplicateAssetEndpoint,
     WorkspaceAssetDownloadEndpoint,
     ProjectAssetDownloadEndpoint,
 )

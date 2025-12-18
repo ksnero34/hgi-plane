@@ -1,17 +1,15 @@
-"use client";
-
 import type { SyntheticEvent } from "react";
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { xor } from "lodash-es";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { CalendarCheck2, CalendarClock, Link, Paperclip } from "lucide-react";
+import { Link, Paperclip } from "lucide-react";
 // types
 import { WORK_ITEM_TRACKER_EVENTS } from "@plane/constants";
 // i18n
 import { useTranslation } from "@plane/i18n";
-import { ViewsIcon } from "@plane/propel/icons";
+import { StartDatePropertyIcon, ViewsIcon, DueDatePropertyIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TIssue, IIssueDisplayProperties, TIssuePriorities, TCustomField } from "@plane/types";
 // ui
@@ -61,8 +59,17 @@ export interface IIssueProperties {
   customFields?: TCustomField[];
 }
 
-export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
-  const { issue, updateIssue, displayProperties, isReadOnly, className,activeLayout, isEpic = false, customFields = [] } = props;
+export const IssueProperties = observer(function IssueProperties(props: IIssueProperties) {
+  const {
+    issue,
+    updateIssue,
+    displayProperties,
+    isReadOnly,
+    className,
+    activeLayout,
+    isEpic = false,
+    customFields = [],
+  } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
@@ -124,7 +131,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
           console.error("Error details:", {
             status: error?.response?.status,
             data: error?.response?.data,
-            message: error?.message
+            message: error?.message,
           });
 
           // Extract and show detailed error message
@@ -142,7 +149,11 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
             }
 
             // Check for workflow-related errors
-            if (errorMessage.includes("workflow") || errorMessage.includes("transition") || errorMessage.includes("승인")) {
+            if (
+              errorMessage.includes("workflow") ||
+              errorMessage.includes("transition") ||
+              errorMessage.includes("승인")
+            ) {
               errorTitle = "워크플로우 규칙 위반";
             }
           } else if (error?.message) {
@@ -366,7 +377,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
             onChange={handleStartDate}
             maxDate={maxDate}
             placeholder={t("common.order_by.start_date")}
-            icon={<CalendarClock className="h-3 w-3 flex-shrink-0" />}
+            icon={<StartDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
             buttonVariant={issue.start_date ? "border-with-text" : "border-without-text"}
             optionsClassName="z-10"
             disabled={isReadOnly}
@@ -388,7 +399,7 @@ export const IssueProperties: React.FC<IIssueProperties> = observer((props) => {
             onChange={handleTargetDate}
             minDate={minDate}
             placeholder={t("common.order_by.due_date")}
-            icon={<CalendarCheck2 className="h-3 w-3 flex-shrink-0" />}
+            icon={<DueDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
             buttonVariant={issue.target_date ? "border-with-text" : "border-without-text"}
             buttonClassName={shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group) ? "text-red-500" : ""}
             clearIconClassName="!text-custom-text-100"

@@ -26,7 +26,7 @@ type Props = {
   extendedEditorProps: TExtendedEditorExtensionsConfig;
 };
 
-export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
+export const PageVersionsMainContent = observer(function PageVersionsMainContent(props: Props) {
   const {
     activeVersion,
     editorComponent,
@@ -123,7 +123,12 @@ export const PageVersionsMainContent: React.FC<Props> = observer((props) => {
             )}
           </div>
           <div className="pt-8 h-full overflow-y-scroll vertical-scrollbar scrollbar-sm">
-            <VersionEditor activeVersion={activeVersion} storeType={storeType} versionDetails={versionDetails} extendedEditorProps={extendedEditorProps} />
+            <VersionEditor
+              activeVersion={activeVersion}
+              storeType={storeType}
+              versionDetails={versionDetails}
+              extendedEditorProps={extendedEditorProps}
+            />
           </div>
         </>
       )}

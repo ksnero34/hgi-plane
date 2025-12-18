@@ -2,31 +2,13 @@ from .common import ChangePasswordEndpoint, CSRFTokenEndpoint, SetUserPasswordEn
 
 from .app.check import EmailCheckEndpoint
 
-from .app.email import (
-    SignInAuthEndpoint,
-    SignUpAuthEndpoint,
-)
-from .app.github import (
-    GitHubCallbackEndpoint,
-    GitHubOauthInitiateEndpoint,
-)
-from .app.gitlab import (
-    GitLabCallbackEndpoint,
-    GitLabOauthInitiateEndpoint,
-)
-from .app.google import (
-    GoogleCallbackEndpoint,
-    GoogleOauthInitiateEndpoint,
-)
-from .app.magic import (
-    MagicGenerateEndpoint,
-    MagicSignInEndpoint,
-    MagicSignUpEndpoint,
-)
-from .app.oidc import (
-    OIDCOauthInitiateEndpoint,
-    OIDCCallbackEndpoint,
-)
+from .app.email import SignInAuthEndpoint, SignUpAuthEndpoint
+from .app.github import GitHubCallbackEndpoint, GitHubOauthInitiateEndpoint
+from .app.gitlab import GitLabCallbackEndpoint, GitLabOauthInitiateEndpoint
+from .app.gitea import GiteaCallbackEndpoint, GiteaOauthInitiateEndpoint
+from .app.google import GoogleCallbackEndpoint, GoogleOauthInitiateEndpoint
+from .app.magic import MagicGenerateEndpoint, MagicSignInEndpoint, MagicSignUpEndpoint
+from .app.oidc import OIDCOauthInitiateEndpoint, OIDCCallbackEndpoint
 
 from .app.signout import SignOutAuthEndpoint
 
@@ -36,6 +18,8 @@ from .space.email import SignInAuthSpaceEndpoint, SignUpAuthSpaceEndpoint
 from .space.github import GitHubCallbackSpaceEndpoint, GitHubOauthInitiateSpaceEndpoint
 
 from .space.gitlab import GitLabCallbackSpaceEndpoint, GitLabOauthInitiateSpaceEndpoint
+
+from .space.gitea import GiteaCallbackSpaceEndpoint, GiteaOauthInitiateSpaceEndpoint
 
 from .space.google import GoogleCallbackSpaceEndpoint, GoogleOauthInitiateSpaceEndpoint
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { observer } from "mobx-react";
@@ -30,7 +28,7 @@ function FileSettingsPage() {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // 경로에서 '/god-mode' 접두사를 제거하는 함수
-  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, '');
+  const getNormalizedPath = (path: string) => path.replace(/^\/god-mode/, "");
 
   // 인증 오류 처리 함수
   const handleAuthError = () => {
@@ -43,16 +41,17 @@ function FileSettingsPage() {
   useEffect(() => {
     // 페이지 로드 즉시 직접 API 호출하여 401 에러 발생시키기
     console.log("File-settings 페이지: 직접 API 호출로 인증 체크");
-    axios.get("/api/instances/admins/", { withCredentials: true })
-      .then(response => {
+    axios
+      .get("/api/instances/admins/", { withCredentials: true })
+      .then((response) => {
         console.log("File-settings 페이지: 관리자 API 호출 성공", response.data);
       })
-      .catch(error => {
+      .catch((error) => {
         console.log("File-settings 페이지: 관리자 API 호출 오류", error);
         // 401 에러 발생 시 리다이렉션
         if (error.response && error.response.status === 401) {
           const currentPath = window.location.pathname;
-          const normalizedPath = currentPath.replace(/^\/god-mode/, '');
+          const normalizedPath = currentPath.replace(/^\/god-mode/, "");
           window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
         }
       });
@@ -83,7 +82,7 @@ function FileSettingsPage() {
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "설정 저장 완료",
-        message: "설정이 성공적으로 저장되었습니다."
+        message: "설정이 성공적으로 저장되었습니다.",
       });
       return result;
     } catch (error) {
@@ -99,7 +98,7 @@ function FileSettingsPage() {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "설정 저장 실패",
-        message: "설정 저장에 실패했습니다."
+        message: "설정 저장에 실패했습니다.",
       });
       throw error;
     }
@@ -120,14 +119,7 @@ function FileSettingsPage() {
         </div>
       </div>
       <div className="flex-grow overflow-hidden overflow-y-scroll vertical-scrollbar scrollbar-md px-4">
-        {isLoading ? (
-          <div>로딩 중...</div>
-        ) : (
-          <FileSettingsForm
-            settings={settings}
-            onSubmit={handleSubmit}
-          />
-        )}
+        {isLoading ? <div>로딩 중...</div> : <FileSettingsForm settings={settings} onSubmit={handleSubmit} />}
       </div>
     </div>
   );

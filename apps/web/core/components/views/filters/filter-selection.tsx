@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
+import { CloseIcon } from "@plane/propel/icons";
 import type { TViewFilterProps, TViewFilters, TCustomField } from "@plane/types";
 import { EViewAccess } from "@plane/types";
 // components
@@ -30,7 +31,6 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
   // 컴포넌트 렌더링 확인을 위한 로그
   // console.log("ViewFiltersSelection - Component rendered");
   // console.log("ViewFiltersSelection - props:", { isProjectLevel, viewProjectId, memberIds: memberIds?.length });
-
   // states
   const [filtersSearchQuery, setFiltersSearchQuery] = useState("");
   // store
@@ -78,14 +78,14 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
     // 현재 커스텀 필드 필터를 파싱
     let currentCustomFieldFilters: { [field_id: string]: string[] } = {};
     if (filters.filters?.custom_fields) {
-      if (typeof filters.filters.custom_fields === 'string' && filters.filters.custom_fields.trim() !== '') {
+      if (typeof filters.filters.custom_fields === "string" && filters.filters.custom_fields.trim() !== "") {
         try {
           currentCustomFieldFilters = JSON.parse(filters.filters.custom_fields);
         } catch (e) {
           // console.error('Failed to parse custom_fields:', e);
           currentCustomFieldFilters = {};
         }
-      } else if (typeof filters.filters.custom_fields === 'object') {
+      } else if (typeof filters.filters.custom_fields === "object") {
         currentCustomFieldFilters = JSON.parse(JSON.stringify(filters.filters.custom_fields));
       }
     }
@@ -96,7 +96,7 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
 
     let newFieldValues: string[];
     if (currentFieldValues.includes(value)) {
-      newFieldValues = currentFieldValues.filter(v => v !== value);
+      newFieldValues = currentFieldValues.filter((v) => v !== value);
     } else {
       newFieldValues = [...currentFieldValues, value];
     }
@@ -105,11 +105,11 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
 
     const newCustomFieldFilters = {
       ...currentCustomFieldFilters,
-      [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined
+      [fieldId]: newFieldValues.length > 0 ? newFieldValues : undefined,
     };
 
     // 빈 배열인 필드들 제거
-    Object.keys(newCustomFieldFilters).forEach(key => {
+    Object.keys(newCustomFieldFilters).forEach((key) => {
       const fieldValues = newCustomFieldFilters[key];
       if (!fieldValues || fieldValues.length === 0) {
         delete newCustomFieldFilters[key];
@@ -117,9 +117,8 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
     });
 
     // JSON 문자열로 변환하여 전달 (빈 객체인 경우 빈 문자열)
-    const customFieldsValue = Object.keys(newCustomFieldFilters).length > 0
-      ? JSON.stringify(newCustomFieldFilters)
-      : "";
+    const customFieldsValue =
+      Object.keys(newCustomFieldFilters).length > 0 ? JSON.stringify(newCustomFieldFilters) : "";
 
     // console.log("ViewFiltersSelection - final customFieldsValue:", customFieldsValue);
 
@@ -144,7 +143,7 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
           />
           {filtersSearchQuery !== "" && (
             <button type="button" className="grid place-items-center" onClick={() => setFiltersSearchQuery("")}>
-              <X className="text-custom-text-300" size={12} strokeWidth={2} />
+              <CloseIcon className="text-custom-text-300" height={12} width={12} strokeWidth={2} />
             </button>
           )}
         </div>
@@ -208,24 +207,22 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
             return (
               <div>
                 <FilterCustomFields
-                  appliedFilters={
-                    (() => {
-                      const customFieldsData = filters.filters?.custom_fields;
-                      // console.log("ViewFiltersSelection - raw custom_fields:", customFieldsData);
+                  appliedFilters={(() => {
+                    const customFieldsData = filters.filters?.custom_fields;
+                    // console.log("ViewFiltersSelection - raw custom_fields:", customFieldsData);
 
-                      if (customFieldsData && typeof customFieldsData === 'string' && customFieldsData.trim() !== '') {
-                        try {
-                          const parsed = JSON.parse(customFieldsData);
-                          // console.log("ViewFiltersSelection - parsed custom_fields:", parsed);
-                          return parsed;
-                        } catch (e) {
-                          // console.error("ViewFiltersSelection - failed to parse custom_fields:", e);
-                          return {};
-                        }
+                    if (customFieldsData && typeof customFieldsData === "string" && customFieldsData.trim() !== "") {
+                      try {
+                        const parsed = JSON.parse(customFieldsData);
+                        // console.log("ViewFiltersSelection - parsed custom_fields:", parsed);
+                        return parsed;
+                      } catch (e) {
+                        // console.error("ViewFiltersSelection - failed to parse custom_fields:", e);
+                        return {};
                       }
-                      return {};
-                    })()
-                  }
+                    }
+                    return {};
+                  })()}
                   handleUpdate={handleCustomFieldUpdate}
                   searchQuery={filtersSearchQuery}
                   customFields={customFields || []}
@@ -236,11 +233,7 @@ export const ViewFiltersSelection: React.FC<Props> = observer((props) => {
             );
           } else if (isProjectLevel && effectiveProjectId && isLoadingCustomFields) {
             // 로딩 중일 때 표시
-            return (
-              <div style={{ padding: '8px', fontSize: '12px', color: 'gray' }}>
-                커스텀 필드 로딩 중...
-              </div>
-            );
+            return <div style={{ padding: "8px", fontSize: "12px", color: "gray" }}>커스텀 필드 로딩 중...</div>;
           }
           return null;
         })()}

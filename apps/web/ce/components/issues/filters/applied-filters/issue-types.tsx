@@ -1,5 +1,3 @@
-"use client";
-
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { X } from "lucide-react";
@@ -15,9 +13,9 @@ type Props = {
   editable: boolean | undefined;
 };
 
-export const AppliedIssueTypeFilters: React.FC<Props> = observer((props) => {
+export const AppliedIssueTypeFilters = observer((props: Props) => {
   const { handleRemove, values, editable } = props;
-  
+
   // hooks
   const { projectId } = useParams();
   const { issueTypes } = useIssueType(projectId as string);
@@ -44,16 +42,11 @@ export const AppliedIssueTypeFilters: React.FC<Props> = observer((props) => {
       {values.map((issueTypeId) => {
         const issueTypeData = getIssueTypeData(issueTypeId);
         const issueTypeName = getIssueTypeName(issueTypeId);
-        
+
         return (
           <div key={issueTypeId} className="flex items-center gap-1 rounded bg-custom-background-80 p-1 text-xs">
             {issueTypeData && (
-              <IssueTypeIcon
-                issueType={issueTypeData}
-                size={12}
-                showTooltip={false}
-                className="flex-shrink-0"
-              />
+              <IssueTypeIcon issueType={issueTypeData} size={12} showTooltip={false} className="flex-shrink-0" />
             )}
             {issueTypeName}
             {editable && (

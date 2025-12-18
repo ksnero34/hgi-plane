@@ -1,16 +1,15 @@
-"use client";
-
 import { useMemo, useCallback, useEffect } from "react";
 // hooks
 import { TOAST_TYPE, setToast, setPromiseToast } from "@plane/propel/toast";
 import { IssueAttachmentUpload } from "@/components/issues/attachment/attachment-upload";
 import { IssueAttachmentsList } from "@/components/issues/attachment/attachments-list";
-import { TAttachmentOperations } from "@/components/issues/issue-detail-widgets/attachments/helper";
+import type { TAttachmentOperations } from "@/components/issues/issue-detail-widgets/attachments/helper";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useFileValidation } from "@/hooks/store/use-file-validation";
 import { useInstance } from "@/hooks/store/use-instance";
 import { validateFileBeforeUpload, handleUploadError } from "@/components/issues/attachment/helper";
-import { useDropzone, FileRejection } from "react-dropzone";
+import { useDropzone } from "react-dropzone";
+import type { FileRejection } from "react-dropzone";
 import { MAX_FILE_SIZE } from "@/constants/common";
 // helpers
 import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
@@ -40,7 +39,7 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
-    
+
     const file = acceptedFiles[0];
     const validationResult = await validateFile(file);
     if (!validationResult.isValid) {
@@ -62,7 +61,7 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "파일 업로드 실패",
-        message: errorMessage
+        message: errorMessage,
       });
     }
   }, []);
@@ -169,8 +168,8 @@ export const PeekOverviewIssueAttachments: React.FC<Props> = (props) => {
           attachmentHelpers={{
             operations: handleAttachmentOperations,
             snapshot: {
-              uploadStatus: undefined
-            }
+              uploadStatus: undefined,
+            },
           }}
         />
       </div>

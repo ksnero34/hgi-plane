@@ -3,7 +3,8 @@ import type { Node as ProseMirrorNode, ResolvedPos } from "@tiptap/pm/model";
 import { CellSelection, TableMap, updateColumnsOnResize } from "@tiptap/pm/tables";
 import type { Decoration, NodeView } from "@tiptap/pm/view";
 import { h } from "jsx-dom-cjs";
-import tippy, { Instance, Props } from "tippy.js";
+import tippy from "tippy.js";
+import type {Instance, Props} from "tippy.js";
 import { CORE_EXTENSIONS } from "@/constants/extension";
 import { icons } from "./icons";
 import { isCellSelection } from "./utilities/helpers";
@@ -205,7 +206,8 @@ const selectionToolbarItems: ContextMenuItem[] = [
     label: "Merge cells",
     icon: icons.insertLeftTableIcon,
     action: ({ editor }) => editor.chain().focus().mergeCells().run(),
-    shouldDisplay: ({ selection, editor }) => Boolean(selection && selection.ranges.length > 0 && editor.can().mergeCells()),
+    shouldDisplay: ({ selection, editor }) =>
+      Boolean(selection && selection.ranges.length > 0 && editor.can().mergeCells()),
   },
   {
     label: "Unmerge cells",
@@ -228,11 +230,7 @@ const selectionToolbarItems: ContextMenuItem[] = [
     label: "Clear cell background",
     icon: icons.toggleRowHeader,
     action: ({ editor }) =>
-      editor
-        .chain()
-        .focus()
-        .updateAttributes(CORE_EXTENSIONS.TABLE_CELL, { background: null, textColor: null })
-        .run(),
+      editor.chain().focus().updateAttributes(CORE_EXTENSIONS.TABLE_CELL, { background: null, textColor: null }).run(),
     shouldDisplay: ({ selection }) => Boolean(selection),
   },
 ];
@@ -252,7 +250,8 @@ function createSelectionToolbarContent(
       h(
         "button",
         {
-          class: "flex w-full items-center gap-2 px-2 py-1.5 text-left text-custom-text-200 hover:bg-custom-background-80",
+          class:
+            "flex w-full items-center gap-2 px-2 py-1.5 text-left text-custom-text-200 hover:bg-custom-background-80",
           disabled: item.disabled ? item.disabled(context) : false,
           onClick: (event: Event) => {
             event.preventDefault();
@@ -305,7 +304,8 @@ function createToolbox({
                   class: "grid place-items-center size-6 rounded cursor-pointer",
                   style: `background-color: ${colorValue.backgroundColor};color: ${colorValue.textColor || "inherit"};`,
                   innerHTML:
-                    colorValue.icon ?? `<span class=\"text-md\" style=\"color: ${colorValue.textColor || colorValue.backgroundColor}\">A</span>` ,
+                    colorValue.icon ??
+                    `<span class=\"text-md\" style=\"color: ${colorValue.textColor || colorValue.backgroundColor}\">A</span>`,
                   onClick: (event: MouseEvent) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -405,7 +405,7 @@ function createContextMenu(content: HTMLElement, appendTo: () => HTMLElement): I
     interactive: true,
     theme: "light-border no-padding",
     appendTo,
-  }) as Instance<Props>;
+  });
 }
 
 export class TableView implements NodeView {
@@ -454,7 +454,7 @@ export class TableView implements NodeView {
     this.getPos = getPos;
     this.hoveredCell = null;
     this.map = TableMap.get(node);
-    this.editorContainer = this.editor.view.dom.closest(".editor-container") as HTMLElement | null;
+    this.editorContainer = this.editor.view.dom.closest(".editor-container");
 
     if (editor.isEditable) {
       this.rowsControl = h(
@@ -493,7 +493,7 @@ export class TableView implements NodeView {
         None: {
           backgroundColor: "none",
           textColor: "none",
-          icon: `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"gray\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-ban\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/></svg>` ,
+          icon: `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"gray\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-ban\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/></svg>`,
         },
       };
 
@@ -538,7 +538,7 @@ export class TableView implements NodeView {
       this.cellSelectionToolbar = tippy(document.body, {
         ...(selectionToolbarOptions as Props),
         appendTo: () => this.getAppendToElement(),
-      }) as Instance<Props>;
+      });
       this.contextMenu = createContextMenu(
         createSelectionToolbarContent(contextMenuItems, {
           editor,
@@ -698,17 +698,18 @@ export class TableView implements NodeView {
     }
 
     this.cellSelectionToolbar.setProps({
-      getReferenceClientRect: () => ({
-        width: 0,
-        height: 0,
-        top: coords.bottom + 4,
-        bottom: coords.bottom + 4,
-        left: coords.left,
-        right: coords.left,
-        x: coords.left,
-        y: coords.bottom + 4,
-        toJSON: () => ({}),
-      } as DOMRect),
+      getReferenceClientRect: () =>
+        ({
+          width: 0,
+          height: 0,
+          top: coords.bottom + 4,
+          bottom: coords.bottom + 4,
+          left: coords.left,
+          right: coords.left,
+          x: coords.left,
+          y: coords.bottom + 4,
+          toJSON: () => ({}),
+        }) as DOMRect,
     });
 
     this.cellSelectionToolbar.show();
@@ -746,17 +747,18 @@ export class TableView implements NodeView {
 
     this.contextMenu.setContent(content);
     this.contextMenu.setProps({
-      getReferenceClientRect: () => ({
-        width: 0,
-        height: 0,
-        top: event.clientY,
-        bottom: event.clientY,
-        left: event.clientX,
-        right: event.clientX,
-        x: event.clientX,
-        y: event.clientY,
-        toJSON: () => ({}),
-      } as DOMRect),
+      getReferenceClientRect: () =>
+        ({
+          width: 0,
+          height: 0,
+          top: event.clientY,
+          bottom: event.clientY,
+          left: event.clientX,
+          right: event.clientX,
+          x: event.clientX,
+          y: event.clientY,
+          toJSON: () => ({}),
+        }) as DOMRect,
     });
     this.contextMenu.show();
   };

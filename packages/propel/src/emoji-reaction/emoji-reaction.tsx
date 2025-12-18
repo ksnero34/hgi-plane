@@ -1,8 +1,8 @@
 import * as React from "react";
-import { Plus } from "lucide-react";
-import { getEmojiImageUrlCandidatesFromDecimal } from "@plane/utils";
 import { AnimatedCounter } from "../animated-counter";
 import { stringToEmoji } from "../emoji-icon-picker";
+import { AddReactionIcon } from "../icons";
+import { getEmojiImageUrlCandidatesFromDecimal } from "@plane/utils";
 import { Tooltip } from "../tooltip";
 import { cn } from "../utils";
 
@@ -31,7 +31,6 @@ export interface EmojiReactionGroupProps extends React.HTMLAttributes<HTMLDivEle
   className?: string;
   showAddButton?: boolean;
   maxDisplayUsers?: number;
-  size?: "sm" | "md" | "lg";
 }
 
 export interface EmojiReactionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -42,25 +41,19 @@ export interface EmojiReactionButtonProps extends React.ButtonHTMLAttributes<HTM
 
 const sizeClasses = {
   sm: {
-    button: "px-2 py-1 text-xs gap-1",
-    emoji: "text-sm",
-    count: "text-xs",
-    addButton: "h-6 w-6",
-    addIcon: "h-3 w-3",
+    button: "h-5 px-1.5 text-xs gap-1",
+    emoji: "text-xs",
+    count: "text-[10px]",
   },
   md: {
-    button: "px-2.5 py-1.5 text-sm gap-1.5",
-    emoji: "text-base",
-    count: "text-sm",
-    addButton: "h-7 w-7",
-    addIcon: "h-3.5 w-3.5",
+    button: "h-6 px-2 text-sm gap-1.5",
+    emoji: "text-sm",
+    count: "text-xs",
   },
   lg: {
-    button: "px-3 py-2 text-base gap-2",
-    emoji: "text-lg",
-    count: "text-base",
-    addButton: "h-8 w-8",
-    addIcon: "h-4 w-4",
+    button: "h-7 px-2.5 text-base gap-2",
+    emoji: "text-base",
+    count: "text-sm",
   },
 };
 
@@ -69,7 +62,7 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
     { emoji, count, reacted = false, users = [], onReactionClick, className, showCount = true, size = "md", ...props },
     ref
   ) => {
-    const sizeClass = sizeClasses[size];
+    const sizeClass = sizeClasses[size] || sizeClasses.md;
     const emojiImageCandidates = React.useMemo(() => getEmojiImageUrlCandidatesFromDecimal(emoji), [emoji]);
     const [emojiCandidateIndex, setEmojiCandidateIndex] = React.useState(0);
 
@@ -156,45 +149,43 @@ const EmojiReaction = React.forwardRef<HTMLButtonElement, EmojiReactionProps>(
   }
 );
 
-const EmojiReactionButton = React.forwardRef<HTMLButtonElement, EmojiReactionButtonProps>(
-  ({ onAddReaction, className, size = "md", ...props }, ref) => {
-    const sizeClass = sizeClasses[size];
+const EmojiReactionButton = React.forwardRef(function EmojiReactionButton(
+  { onAddReaction, className, ...props }: EmojiReactionButtonProps,
+  ref: React.ForwardedRef<HTMLButtonElement>
+) {
+  return (
+    <button
+      ref={ref}
+      onClick={onAddReaction}
+      className={cn(
+        "inline-flex items-center justify-center rounded-full border border-dashed border-custom-border-300",
+        "bg-custom-background-100 text-custom-text-400 transition-all duration-200",
+        "hover:border-custom-primary-100 hover:text-custom-primary-100 hover:bg-custom-primary-100/5",
+        "focus:outline-none focus:ring-2 focus:ring-custom-primary-100/20 focus:ring-offset-1",
+        "h-6 w-6",
+        className
+      )}
+      title="Add reaction"
+      {...props}
+    >
+      <AddReactionIcon className="h-3 w-3" />
+    </button>
+  );
+});
 
-    return (
-      <button
-        ref={ref}
-        onClick={onAddReaction}
-        className={cn(
-          "inline-flex items-center justify-center rounded-full border border-dashed border-custom-border-300",
-          "bg-custom-background-100 text-custom-text-400 transition-all duration-200",
-          "hover:border-custom-primary-100 hover:text-custom-primary-100 hover:bg-custom-primary-100/5",
-          "focus:outline-none focus:ring-2 focus:ring-custom-primary-100/20 focus:ring-offset-1",
-          sizeClass.addButton,
-          className
-        )}
-        title="Add reaction"
-        {...props}
-      >
-        <Plus className={sizeClass.addIcon} />
-      </button>
-    );
-  }
-);
-
-const EmojiReactionGroup = React.forwardRef<HTMLDivElement, EmojiReactionGroupProps>(
-  (
-    {
-      reactions,
-      onReactionClick,
-      onAddReaction,
-      className,
-      showAddButton = true,
-      maxDisplayUsers = 5,
-      size = "md",
-      ...props
-    },
-    ref
-  ) => (
+const EmojiReactionGroup = React.forwardRef(function EmojiReactionGroup(
+  {
+    reactions,
+    onReactionClick,
+    onAddReaction,
+    className,
+    showAddButton = true,
+    maxDisplayUsers = 5,
+    ...props
+  }: EmojiReactionGroupProps,
+  ref: React.ForwardedRef<HTMLDivElement>
+) {
+  return (
     <div ref={ref} className={cn("flex flex-wrap items-center gap-2", className)} {...props}>
       {reactions.map((reaction, index) => (
         <EmojiReaction
@@ -204,13 +195,12 @@ const EmojiReactionGroup = React.forwardRef<HTMLDivElement, EmojiReactionGroupPr
           reacted={reaction.reacted}
           users={reaction.users?.slice(0, maxDisplayUsers)}
           onReactionClick={onReactionClick}
-          size={size}
         />
       ))}
-      {showAddButton && <EmojiReactionButton onAddReaction={onAddReaction} size={size} />}
+      {showAddButton && <EmojiReactionButton onAddReaction={onAddReaction} />}
     </div>
-  )
-);
+  );
+});
 
 EmojiReaction.displayName = "EmojiReaction";
 EmojiReactionButton.displayName = "EmojiReactionButton";

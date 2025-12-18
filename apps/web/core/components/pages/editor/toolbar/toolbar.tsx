@@ -1,12 +1,11 @@
-"use client";
-
 import React, { useEffect, useState, useCallback } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
+import { ChevronDownIcon } from "@plane/propel/icons";
 import { Tooltip } from "@plane/propel/tooltip";
 import { CustomMenu } from "@plane/ui";
-import {setToast, TOAST_TYPE} from "@plane/propel/toast"
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { cn } from "@plane/utils";
 import { useInstance } from "@/hooks/store/use-instance";
 // constants
@@ -25,36 +24,8 @@ type ToolbarButtonProps = {
   executeCommand: EditorRefApi["executeMenuItemCommand"];
 };
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
-  const { item, isActive, executeCommand} = props;
-  // store hooks
-  const { fileSettings } = useInstance();
-
-  const validateFile = (file: File): boolean => {
-    // 파일 확장자 체크
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExtension || !fileSettings?.allowed_extensions?.includes(fileExtension)) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 형식 오류",
-        message: `허용되는 파일 형식: ${fileSettings?.allowed_extensions?.join(', ')}`,
-      });
-      return false;
-    }
-
-    // 파일 크기 체크 (bytes로 변환)
-    const maxSize = fileSettings?.max_file_size || 5 * 1024 * 1024; // 기본값 5MB
-    if (file.size > maxSize) {
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: "파일 크기 초과",
-        message: `최대 파일 크기: ${Math.floor(maxSize / (1024 * 1024))}MB`,
-      });
-      return false;
-    }
-
-    return true;
-  };
+const ToolbarButton = React.memo(function ToolbarButton(props: ToolbarButtonProps) {
+  const { item, isActive, executeCommand } = props;
 
   return (
     <Tooltip
@@ -75,9 +46,12 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = React.memo((props) => {
             ...item.extraProps,
           })
         }
-        className={cn("grid size-7 place-items-center rounded text-custom-text-300 hover:bg-custom-background-80", {
-          "bg-custom-background-80 text-custom-text-100": isActive,
-        })}
+        className={cn(
+          "shrink-0 grid size-7 place-items-center rounded text-custom-text-300 hover:bg-custom-background-80",
+          {
+            "bg-custom-background-80 text-custom-text-100": isActive,
+          }
+        )}
       >
         <item.icon
           className={cn("size-4", {
@@ -93,7 +67,7 @@ ToolbarButton.displayName = "ToolbarButton";
 
 const toolbarItems = TOOLBAR_ITEMS.document;
 
-export const PageToolbar: React.FC<Props> = (props) => {
+export function PageToolbar(props: Props) {
   const { editorRef } = props;
   // states
   const [activeStates, setActiveStates] = useState<Record<string, boolean>>({});
@@ -132,7 +106,7 @@ export const PageToolbar: React.FC<Props> = (props) => {
         customButton={
           <span className="text-custom-text-300 text-sm border-[0.5px] border-custom-border-300 hover:bg-custom-background-80 h-7 w-24 rounded px-2 flex items-center justify-between gap-2 whitespace-nowrap text-left">
             {activeTypography?.name || "Text"}
-            <ChevronDown className="flex-shrink-0 size-3" />
+            <ChevronDownIcon className="flex-shrink-0 size-3" />
           </span>
         }
         className="pr-2"
@@ -191,4 +165,4 @@ export const PageToolbar: React.FC<Props> = (props) => {
       ))}
     </div>
   );
-};
+}

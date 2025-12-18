@@ -1,10 +1,11 @@
 import { useCallback, useRef } from "react";
 import { observer } from "mobx-react";
-import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { Button, getButtonStyling } from "@plane/propel/button";
+import { ChevronLeftIcon, ChevronRightIcon } from "@plane/propel/icons";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TDescriptionVersion } from "@plane/types";
@@ -30,7 +31,7 @@ type Props = {
   workspaceSlug: string;
 };
 
-export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
+export const DescriptionVersionsModal = observer(function DescriptionVersionsModal(props: Props) {
   const {
     activeVersionDescription,
     activeVersionDetails,
@@ -58,13 +59,12 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
 
   const handleCopyMarkdown = useCallback(() => {
     if (!editorRef.current) return;
-    copyTextToClipboard(editorRef.current.getMarkDown()).then(() =>
-      setToast({
-        type: TOAST_TYPE.SUCCESS,
-        title: t("toast.success"),
-        message: "Markdown copied to clipboard.",
-      })
-    );
+    editorRef.current.copyMarkdownToClipboard();
+    setToast({
+      type: TOAST_TYPE.SUCCESS,
+      title: t("toast.success"),
+      message: "Markdown copied to clipboard.",
+    });
   }, [t]);
 
   if (!workspaceId) return null;
@@ -102,7 +102,7 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
               )}
               disabled={isPrevDisabled}
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeftIcon className="size-4" />
             </button>
             <button
               type="button"
@@ -116,7 +116,7 @@ export const DescriptionVersionsModal: React.FC<Props> = observer((props) => {
               )}
               disabled={isNextDisabled}
             >
-              <ChevronRight className="size-4" />
+              <ChevronRightIcon className="size-4" />
             </button>
           </div>
         </div>

@@ -1,27 +1,25 @@
-"use client";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { FileText, Folder } from "lucide-react";
 import { EProjectFeatureKey } from "@plane/constants";
 import { PageIcon } from "@plane/propel/icons";
-// types
 import type { ICustomSearchSelectOption } from "@plane/types";
 // ui
 import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown, CustomSearchSelect } from "@plane/ui";
 // components
 import { getPageName } from "@plane/utils";
+// components
 import { PageAccessIcon } from "@/components/common/page-access-icon";
 import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { PageHeaderActions } from "@/components/pages/header/actions";
-// helpers
+import { PageSyncingBadge } from "@/components/pages/header/syncing-badge";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
-// plane web components
 import { useAppRouter } from "@/hooks/use-app-router";
+// plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { PageDetailsHeaderExtraActions } from "@/plane-web/components/pages";
-// plane web hooks
 import { EPageStoreType, usePage, usePageStore } from "@/plane-web/hooks/store";
 
 export interface IPagesHeaderProps {
@@ -30,7 +28,7 @@ export interface IPagesHeaderProps {
 
 const storeType = EPageStoreType.PROJECT;
 
-export const PageDetailsHeader = observer(() => {
+export const PageDetailsHeader = observer(function PageDetailsHeader() {
   // router
   const router = useAppRouter();
   const { workspaceSlug, pageId, projectId } = useParams();
@@ -72,7 +70,7 @@ export const PageDetailsHeader = observer(() => {
     const allCurrentFolderPageIds = [
       ...currentFolderPageIds,
       ...currentFolderPrivatePageIds,
-      ...currentFolderArchivedPageIds
+      ...currentFolderArchivedPageIds,
     ];
 
     return allCurrentFolderPageIds
@@ -108,26 +106,29 @@ export const PageDetailsHeader = observer(() => {
   // derived values
   const projectPageIds = getCurrentProjectPageIds(projectId?.toString());
 
-  const switcherOptions = folderLevelOptions.length > 0 ? folderLevelOptions : projectPageIds
-    .map((id) => {
-      const _page = id === pageId ? page : getPageById(id);
-      if (!_page) return;
-      return {
-        value: _page.id,
-        query: _page.name,
-        content: (
-          <div className="flex gap-2 items-center justify-between">
-            <SwitcherLabel
-              logo_props={_page.logo_props}
-              name={getPageName(_page.name) || "Untitled"}
-              LabelIcon={_page.is_folder ? Folder : FileText}
-            />
-            {!_page.is_folder && <PageAccessIcon {..._page} />}
-          </div>
-        ),
-      };
-    })
-    .filter((option) => option !== undefined) as ICustomSearchSelectOption[];
+  const switcherOptions =
+    folderLevelOptions.length > 0
+      ? folderLevelOptions
+      : (projectPageIds
+          .map((id) => {
+            const _page = id === pageId ? page : getPageById(id);
+            if (!_page) return;
+            return {
+              value: _page.id,
+              query: _page.name,
+              content: (
+                <div className="flex gap-2 items-center justify-between">
+                  <SwitcherLabel
+                    logo_props={_page.logo_props}
+                    name={getPageName(_page.name) || "Untitled"}
+                    LabelIcon={_page.is_folder ? Folder : FileText}
+                  />
+                  {!_page.is_folder && <PageAccessIcon {..._page} />}
+                </div>
+              ),
+            };
+          })
+          .filter((option) => option !== undefined) as ICustomSearchSelectOption[]);
 
   if (!page) return null;
 
@@ -136,11 +137,7 @@ export const PageDetailsHeader = observer(() => {
       <Header.LeftItem>
         <div>
           <Breadcrumbs isLoading={loader === "init-loader"}>
-            <CommonProjectBreadcrumbs
-              workspaceSlug={workspaceSlug?.toString()}
-              projectId={projectId?.toString()}
-              featureKey={EProjectFeatureKey.PAGES}
-            />
+            <CommonProjectBreadcrumbs workspaceSlug={workspaceSlug?.toString()} projectId={projectId?.toString()} />
 
             <Breadcrumbs.Item
               component={
@@ -206,7 +203,11 @@ export const PageDetailsHeader = observer(() => {
                   title={getPageName(page?.name)}
                   icon={
                     <Breadcrumbs.Icon>
-                      <SwitcherIcon logo_props={page.logo_props} LabelIcon={page.is_folder ? Folder : FileText} size={16} />
+                      <SwitcherIcon
+                        logo_props={page.logo_props}
+                        LabelIcon={page.is_folder ? Folder : FileText}
+                        size={16}
+                      />
                     </Breadcrumbs.Icon>
                   }
                   isLast
@@ -217,6 +218,7 @@ export const PageDetailsHeader = observer(() => {
         </div>
       </Header.LeftItem>
       <Header.RightItem>
+        <PageSyncingBadge syncStatus={page.isSyncingWithServer} />
         <PageDetailsHeaderExtraActions page={page} storeType={storeType} />
         <PageHeaderActions page={page} storeType={storeType} />
       </Header.RightItem>

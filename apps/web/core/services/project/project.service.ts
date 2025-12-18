@@ -60,7 +60,7 @@ export class ProjectService extends APIService {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/`)
       .then((response) => response?.data)
       .catch((error) => {
-        throw error?.response?.data;
+        throw error?.response;
       });
   }
 
@@ -204,7 +204,11 @@ export class ProjectService extends APIService {
       });
   }
 
-  async createProjectIssueType(workspaceSlug: string, projectId: string, data: Partial<IIssueType>): Promise<IProjectIssueType> {
+  async createProjectIssueType(
+    workspaceSlug: string,
+    projectId: string,
+    data: Partial<IIssueType>
+  ): Promise<IProjectIssueType> {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/`, data)
       .then((response) => response?.data)
       .catch((error) => {
@@ -233,9 +237,13 @@ export class ProjectService extends APIService {
       });
   }
 
-  async assignDefaultIssueTypeToExistingIssues(workspaceSlug: string, projectId: string, issueTypeId: string): Promise<any> {
+  async assignDefaultIssueTypeToExistingIssues(
+    workspaceSlug: string,
+    projectId: string,
+    issueTypeId: string
+  ): Promise<any> {
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/assign-default-issue-type/`, {
-      issue_type_id: issueTypeId
+      issue_type_id: issueTypeId,
     })
       .then((response) => response?.data)
       .catch((error) => {
@@ -243,7 +251,11 @@ export class ProjectService extends APIService {
       });
   }
 
-  async getIssueTypeUsageCount(workspaceSlug: string, projectId: string, issueTypeId: string): Promise<{ count: number }> {
+  async getIssueTypeUsageCount(
+    workspaceSlug: string,
+    projectId: string,
+    issueTypeId: string
+  ): Promise<{ count: number }> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issue-types/${issueTypeId}/usage-count/`)
       .then((response) => response?.data)
       .catch((error) => {

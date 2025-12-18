@@ -1,5 +1,3 @@
-"use client";
-
 import { observer } from "mobx-react";
 import useSWR from "swr";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";

@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { observer } from "mobx-react";
 import { CalendarDays } from "lucide-react";
 // hooks
@@ -10,7 +9,7 @@ import { IssueActivityBlockComponent, IssueLink } from "./";
 
 type TIssueStartDateActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
-export const IssueStartDateActivity: FC<TIssueStartDateActivity> = observer((props) => {
+export const IssueStartDateActivity = observer(function IssueStartDateActivity(props: TIssueStartDateActivity) {
   const { activityId, showIssue = true, ends } = props;
   // hooks
   const {
@@ -30,7 +29,8 @@ export const IssueStartDateActivity: FC<TIssueStartDateActivity> = observer((pro
         {activity.new_value ? `님이 시작일을 ` : `님이 시작일을 삭제했습니다 `}
         {activity.new_value && (
           <>
-            <span className="font-medium text-custom-text-100">{renderFormattedDate(activity.new_value)}</span> 로 변경했습니다
+            <span className="font-medium text-custom-text-100">{renderFormattedDate(activity.new_value)}</span> 로
+            변경했습니다
           </>
         )}
         {showIssue && (activity.new_value ? ` for ` : ` from `)}

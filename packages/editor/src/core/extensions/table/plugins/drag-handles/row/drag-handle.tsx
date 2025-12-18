@@ -45,7 +45,7 @@ export type RowDragHandleProps = {
   row: number;
 };
 
-export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
+export function RowDragHandle(props: RowDragHandleProps) {
   const { editor, row } = props;
   // states
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -80,28 +80,14 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
 
   useEffect(() => {
     if (!isDropdownOpen) return;
-
-    const handleOutsideMouseDown = (event: MouseEvent) => {
-      const floating = refs.floating.current;
-      const reference = refs.reference.current;
-      const target = event.target as Node | null;
-
-      const isInsideFloating = floating instanceof HTMLElement && floating.contains(target as Node);
-      const isInsideReference = reference instanceof HTMLElement && reference.contains(target as Node);
-
-      if (isInsideFloating || isInsideReference) {
-        return;
-      }
-
-      setIsDropdownOpen(false);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      context.onOpenChange(false);
+      event.preventDefault();
+      event.stopPropagation();
     };
-
-    document.addEventListener("mousedown", handleOutsideMouseDown, true);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideMouseDown, true);
-    };
-  }, [isDropdownOpen, refs.floating, refs.reference]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isDropdownOpen, context]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -240,4 +226,4 @@ export const RowDragHandle: React.FC<RowDragHandleProps> = (props) => {
       )}
     </>
   );
-};
+}

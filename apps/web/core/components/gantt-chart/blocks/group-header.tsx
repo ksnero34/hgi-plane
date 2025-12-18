@@ -27,7 +27,7 @@ export const GanttChartGroupHeader: FC<GanttChartGroupHeaderProps> = (props) => 
     >
       <div className="flex items-center gap-2 text-xs">
         {group.icon && <span className="flex-shrink-0 text-custom-text-400">{group.icon}</span>}
-        <h3 className="text-xs font-medium text-custom-text-300">{group.name}</h3>
+        <h3 className="text-xs font-medium text-custom-text-300 truncate">{group.name}</h3>
         <span className="text-xs text-custom-text-400">({count})</span>
       </div>
     </div>

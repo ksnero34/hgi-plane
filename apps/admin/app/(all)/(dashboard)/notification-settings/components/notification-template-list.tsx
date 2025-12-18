@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Button } from "@plane/ui";
 import type { INotificationTemplate } from "../page";
@@ -10,10 +8,7 @@ interface NotificationTemplateListProps {
   onRefresh: () => Promise<void>;
 }
 
-export const NotificationTemplateList: React.FC<NotificationTemplateListProps> = ({
-  templates,
-  onRefresh,
-}) => {
+export const NotificationTemplateList: React.FC<NotificationTemplateListProps> = ({ templates, onRefresh }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const getServiceTypeBadge = (serviceType: string) => {
@@ -60,18 +55,10 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-custom-text-100">템플릿 관리</h3>
         <div className="flex gap-2">
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={handleCreateSystemTemplates}
-          >
+          <Button variant="outline-primary" size="sm" onClick={handleCreateSystemTemplates}>
             시스템 템플릿 생성
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowCreateModal(true)}
-          >
+          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
             새 템플릿 추가
           </Button>
         </div>
@@ -81,18 +68,10 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
         <div className="text-center py-8 border border-custom-border-200 rounded-lg">
           <p className="text-custom-text-400 mb-4">템플릿이 없습니다.</p>
           <div className="flex justify-center gap-2">
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={handleCreateSystemTemplates}
-            >
+            <Button variant="outline-primary" size="sm" onClick={handleCreateSystemTemplates}>
               시스템 템플릿 생성
             </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowCreateModal(true)}
-            >
+            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
               새 템플릿 추가
             </Button>
           </div>
@@ -105,12 +84,17 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h4 className="font-medium text-custom-text-100">{template.name}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      getServiceTypeBadge(template.service_type) === 'success' ? 'bg-green-100 text-green-800' :
-                      getServiceTypeBadge(template.service_type) === 'primary' ? 'bg-blue-100 text-blue-800' :
-                      getServiceTypeBadge(template.service_type) === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full font-medium ${
+                        getServiceTypeBadge(template.service_type) === "success"
+                          ? "bg-green-100 text-green-800"
+                          : getServiceTypeBadge(template.service_type) === "primary"
+                            ? "bg-blue-100 text-blue-800"
+                            : getServiceTypeBadge(template.service_type) === "warning"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {getServiceTypeLabel(template.service_type)}
                     </span>
                   </div>
@@ -119,14 +103,16 @@ export const NotificationTemplateList: React.FC<NotificationTemplateListProps> =
                       시스템 템플릿
                     </span>
                   )}
-                  <p className="text-sm text-custom-text-400 mb-2">
-                    {template.description || "설명 없음"}
-                  </p>
+                  <p className="text-sm text-custom-text-400 mb-2">{template.description || "설명 없음"}</p>
                   <div className="text-xs text-custom-text-400 space-y-1">
                     {template.endpoint_url && (
-                      <p><strong>엔드포인트:</strong> {template.endpoint_url}</p>
+                      <p>
+                        <strong>엔드포인트:</strong> {template.endpoint_url}
+                      </p>
                     )}
-                    <p><strong>메소드:</strong> {template.method}</p>
+                    <p>
+                      <strong>메소드:</strong> {template.method}
+                    </p>
                   </div>
                 </div>
               </div>

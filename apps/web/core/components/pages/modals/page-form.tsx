@@ -1,5 +1,3 @@
-"use client";
-
 import type { FormEvent } from "react";
 import { useState } from "react";
 import type { LucideIcon, FileText } from "lucide-react";
@@ -9,14 +7,13 @@ import { Globe2, Lock } from "lucide-react";
 import { ETabIndices, EPageAccess } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
-import { EmojiPicker, EmojiIconPickerTypes } from "@plane/propel/emoji-icon-picker";
+import { EmojiPicker, EmojiIconPickerTypes, Logo } from "@plane/propel/emoji-icon-picker";
 import { PageIcon } from "@plane/propel/icons";
 import type { TPage } from "@plane/types";
 import { Input } from "@plane/ui";
 import { getEmojiImageUrlFromDecimal, getTabIndex } from "@plane/utils";
 // components
 import { AccessField } from "@/components/common/access-field";
-import { Logo } from "@/components/common/logo";
 // hooks
 import { usePlatformOS } from "@/hooks/use-platform-os";
 
@@ -36,7 +33,7 @@ const PAGE_ACCESS_SPECIFIERS: {
   { key: EPageAccess.PRIVATE, i18n_label: "common.access.private", icon: Lock },
 ];
 
-export const PageForm: React.FC<Props> = (props) => {
+export function PageForm(props: Props) {
   const { formData, handleFormData, handleModalClose, handleFormSubmit } = props;
   // hooks
   const { isMobile } = usePlatformOS();
@@ -66,9 +63,7 @@ export const PageForm: React.FC<Props> = (props) => {
   return (
     <form onSubmit={handlePageFormSubmit}>
       <div className="space-y-5 p-5">
-        <h3 className="text-xl font-medium text-custom-text-200">
-          {isFolder ? "Create folder" : "Create page"}
-        </h3>
+        <h3 className="text-xl font-medium text-custom-text-200">{isFolder ? "Create folder" : "Create page"}</h3>
         <div className="flex items-start gap-2 h-9 w-full">
           {!isFolder && (
             <EmojiPicker
@@ -109,7 +104,9 @@ export const PageForm: React.FC<Props> = (props) => {
                   : undefined
               }
               defaultOpen={
-                formData?.logo_props?.in_use && formData?.logo_props?.in_use === "icon" ? EmojiIconPickerTypes.ICON : EmojiIconPickerTypes.EMOJI
+                formData?.logo_props?.in_use && formData?.logo_props?.in_use === "icon"
+                  ? EmojiIconPickerTypes.ICON
+                  : EmojiIconPickerTypes.EMOJI
               }
             />
           )}
@@ -164,4 +161,4 @@ export const PageForm: React.FC<Props> = (props) => {
       </div>
     </form>
   );
-};
+}

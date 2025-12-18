@@ -1,9 +1,9 @@
-import { AnyExtension, Extensions } from "@tiptap/core";
+import type { AnyExtension, Extensions } from "@tiptap/core";
 // extensions
 import { SlashCommands } from "@/extensions/slash-commands/root";
 import { CustomReadOnlyFileExtension } from "@/extensions/custom-file/read-only-custom-file";
 // types
-import { IEditorProps, TExtensions } from "@/types";
+import type { IEditorProps, TExtensions } from "@/types";
 
 export type TRichTextEditorAdditionalExtensionsProps = Pick<
   IEditorProps,
@@ -31,11 +31,9 @@ const extensionRegistry: TRichTextEditorAdditionalExtensionsRegistry[] = [
         flaggedExtensions,
       }),
   },
-
-
 ];
 
-export const RichTextEditorAdditionalExtensions = (props: TRichTextEditorAdditionalExtensionsProps) => {
+export function RichTextEditorAdditionalExtensions(props: TRichTextEditorAdditionalExtensionsProps) {
   const { disabledExtensions, flaggedExtensions } = props;
 
   const extensions: Extensions = extensionRegistry
@@ -44,4 +42,4 @@ export const RichTextEditorAdditionalExtensions = (props: TRichTextEditorAdditio
     .filter((extension): extension is AnyExtension => extension !== undefined);
 
   return extensions;
-};
+}

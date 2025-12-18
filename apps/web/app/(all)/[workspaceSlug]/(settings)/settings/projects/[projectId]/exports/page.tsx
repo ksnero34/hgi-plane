@@ -1,5 +1,3 @@
-"use client";
-
 import { observer } from "mobx-react";
 // params
 import { useParams } from "next/navigation";
@@ -8,12 +6,11 @@ import { ProjectExports } from "@/components/project/settings/project-exports";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 
-
 const ProjectExportsPage = observer(() => {
   const { projectId } = useParams();
   const { getProjectById } = useProject();
 
-  const currentProject = getProjectById(projectId as string);
+  const currentProject = getProjectById(projectId);
 
   if (!currentProject) return null;
 

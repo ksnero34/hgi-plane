@@ -1,6 +1,6 @@
-import { TLogoProps } from "../common";
-import { EPageAccess } from "../enums";
-import { TPageExtended } from "./extended";
+import type { TLogoProps } from "../common";
+import type { EPageAccess } from "../enums";
+import type { TPageExtended } from "./extended";
 
 export type TPage = TPageExtended & {
   access: EPageAccess | undefined;
@@ -25,7 +25,7 @@ export type TPage = TPageExtended & {
   workspace: string | undefined;
   logo_props: TLogoProps | undefined;
   deleted_at: Date | undefined;
-} & TPageExtended;
+}  ;
 
 // page filters
 export type TPageNavigationTabs = "public" | "private" | "archived";

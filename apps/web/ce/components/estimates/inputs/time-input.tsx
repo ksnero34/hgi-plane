@@ -1,5 +1,3 @@
-import type { FC } from "react";
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "@plane/i18n";
 import { convertMinutesToHoursAndMinutes } from "@plane/utils";
@@ -9,7 +7,7 @@ export type TEstimateTimeInputProps = {
   handleEstimateInputValue: (value: string) => void;
 };
 
-export const EstimateTimeInput: FC<TEstimateTimeInputProps> = (props) => {
+export const EstimateTimeInput = (props: TEstimateTimeInputProps) => {
   const { value, handleEstimateInputValue } = props;
   const [hours, setHours] = useState<number>(0);
   const [minutes, setMinutes] = useState<number>(0);

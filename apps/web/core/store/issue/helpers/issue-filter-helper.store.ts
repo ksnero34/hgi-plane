@@ -24,6 +24,7 @@ import { EIssueLayoutTypes } from "@plane/types";
 import { getComputedDisplayFilters, getComputedDisplayProperties } from "@plane/utils";
 // lib
 import { storage } from "@/lib/local-storage";
+import { getEnabledDisplayFilters } from "@/plane-web/store/issue/helpers/filter-utils";
 
 interface ILocalStoreIssueFilters {
   key: EIssuesStoreType;
@@ -224,7 +225,10 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   computedDisplayFilters = (
     displayFilters: IIssueDisplayFilterOptions,
     defaultValues?: IIssueDisplayFilterOptions
-  ): IIssueDisplayFilterOptions => getComputedDisplayFilters(displayFilters, defaultValues);
+  ): IIssueDisplayFilterOptions => {
+    const computedFilters = getComputedDisplayFilters(displayFilters, defaultValues);
+    return getEnabledDisplayFilters(computedFilters);
+  };
 
   /**
    * @description This method is used to apply the display properties on the issues
@@ -308,8 +312,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     const displayFilterKeys = Object.keys(displayFilters);
 
     // 서버에서 처리해야 하는 필터(NON_SERVER_DISPLAY_FILTERS에 없는 필터)가 변경되었는지 확인
-    const hasServerSideFilters = displayFilterKeys.some((filterKey: string) =>
-      NON_SERVER_DISPLAY_FILTERS.indexOf(filterKey) === -1
+    const hasServerSideFilters = displayFilterKeys.some(
+      (filterKey: string) => NON_SERVER_DISPLAY_FILTERS.indexOf(filterKey) === -1
     );
 
     return hasServerSideFilters;
@@ -374,7 +378,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       delete paginationParams["group_by"];
 
       if (groupBy && groupBy in EServerGroupByToFilterOptions) {
-        const groupByFilterOption = EServerGroupByToFilterOptions[groupBy as keyof typeof EServerGroupByToFilterOptions];
+        const groupByFilterOption =
+          EServerGroupByToFilterOptions[groupBy as keyof typeof EServerGroupByToFilterOptions];
         paginationParams[groupByFilterOption] = groupId;
       }
     }
@@ -385,7 +390,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       delete paginationParams["sub_group_by"];
 
       if (subGroupBy && subGroupBy in EServerGroupByToFilterOptions) {
-        const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy as keyof typeof EServerGroupByToFilterOptions];
+        const subGroupByFilterOption =
+          EServerGroupByToFilterOptions[subGroupBy as keyof typeof EServerGroupByToFilterOptions];
         paginationParams[subGroupByFilterOption] = subGroupId;
       }
     }

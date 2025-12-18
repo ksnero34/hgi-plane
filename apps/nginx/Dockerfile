@@ -95,7 +95,7 @@ RUN cat <<'EOF' > /download-images.sh
 set -euo pipefail
 
 EMOJI_VERSION="16.0.0"
-EMOJIBASE_VERSION="15.3.0"
+EMOJIBASE_VERSION="16.0.0"
 
 mkdir -p /www/data/images/project-covers
 

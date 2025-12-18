@@ -24,7 +24,7 @@ type Props = {
   validateFile: (file: File) => Promise<ValidationResult>;
 };
 
-export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
+export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(props: Props) {
   const { workspaceSlug, disabled = false, attachmentOperations, validateFile } = props;
   // states
   const [isLoading, setIsLoading] = useState(false);
@@ -101,8 +101,8 @@ export const IssueAttachmentUpload: React.FC<Props> = observer((props) => {
     (fileRejections.length > 0
       ? `Invalid file type or size (max ${maxSizeInMB} MB)`
       : isDragReject
-      ? `Invalid file type or size (max ${maxSizeInMB} MB)`
-      : null);
+        ? `Invalid file type or size (max ${maxSizeInMB} MB)`
+        : null);
 
   return (
     <div

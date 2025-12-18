@@ -1,12 +1,10 @@
-"use client";
-
 import React from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 // icons
 import { Settings2 } from "lucide-react";
 // types
-import { TInstanceAuthenticationMethodKeys } from "@plane/types";
+import type { TInstanceAuthenticationMethodKeys } from "@plane/types";
 // ui
 import { ToggleSwitch, getButtonStyling } from "@plane/ui";
 // helpers
@@ -56,4 +54,4 @@ export const OIDCConfiguration: React.FC<Props> = observer((props) => {
       )}
     </>
   );
-}); 
+});

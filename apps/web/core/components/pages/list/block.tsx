@@ -1,16 +1,14 @@
-"use client";
-
 import type { FC } from "react";
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
+import { Logo } from "@plane/propel/emoji-icon-picker";
 import { PageIcon } from "@plane/propel/icons";
 // plane imports
 import { getPageName } from "@plane/utils";
 import { FileText, Folder } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import {setToast, TOAST_TYPE} from "@plane/propel/toast"
+import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // components
-import { Logo } from "@/components/common/logo";
 import { ListItem } from "@/components/core/list";
 import { BlockItemAction } from "@/components/pages/list/block-item-action";
 // hooks
@@ -23,7 +21,7 @@ type TPageListBlock = {
   storeType: EPageStoreType;
 };
 
-export const PageListBlock: FC<TPageListBlock> = observer((props) => {
+export const PageListBlock = observer(function PageListBlock(props: TPageListBlock) {
   const { pageId, storeType } = props;
   // refs
   const parentRef = useRef(null);
@@ -49,7 +47,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
   const getFolderLink = () => {
     if (is_folder) {
       const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('folder', pageId);
+      currentUrl.searchParams.set("folder", pageId);
       return currentUrl.pathname + currentUrl.search;
     }
     return getRedirectionLink();
@@ -57,8 +55,8 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
 
   // 드래그 시작 핸들러
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('text/plain', pageId);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData("text/plain", pageId);
+    e.dataTransfer.effectAllowed = "move";
   };
 
   // 드래그 오버 핸들러 (폴더에만 적용)
@@ -66,7 +64,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
     if (!is_folder) return;
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
 
     // 타임아웃 클리어
     if (dragOverTimeoutRef.current) {
@@ -122,7 +120,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
 
     setIsDragOver(false);
 
-    const draggedPageId = e.dataTransfer.getData('text/plain');
+    const draggedPageId = e.dataTransfer.getData("text/plain");
     if (!draggedPageId || draggedPageId === pageId) return;
 
     try {
@@ -163,7 +161,7 @@ export const PageListBlock: FC<TPageListBlock> = observer((props) => {
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`${isDragOver && is_folder ? 'bg-custom-primary-100/10 border-custom-primary-300 border-dashed border-2 rounded' : ''}`}
+      className={`${isDragOver && is_folder ? "bg-custom-primary-100/10 border-custom-primary-300 border-dashed border-2 rounded" : ""}`}
     >
       <ListItem
         prependTitleElement={

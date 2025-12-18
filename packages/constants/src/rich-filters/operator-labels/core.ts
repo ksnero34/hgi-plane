@@ -1,10 +1,9 @@
+import type { TCoreSupportedOperators, TCoreSupportedDateFilterOperators } from "@plane/types";
 import {
   CORE_EQUALITY_OPERATOR,
   CORE_COLLECTION_OPERATOR,
   CORE_COMPARISON_OPERATOR,
   CORE_TEXT_OPERATOR,
-  TCoreSupportedOperators,
-  TCoreSupportedDateFilterOperators,
 } from "@plane/types";
 
 /**

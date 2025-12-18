@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -44,7 +42,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // types
 
-export const IssueLink = ({ activity }: { activity: IIssueActivity }) => {
+export function IssueLink({ activity }: { activity: IIssueActivity }) {
   // router params
   const { workspaceSlug } = useParams();
   const { isMobile } = usePlatformOS();
@@ -80,9 +78,9 @@ export const IssueLink = ({ activity }: { activity: IIssueActivity }) => {
       )}
     </Tooltip>
   );
-};
+}
 
-const UserLink = ({ activity }: { activity: IIssueActivity }) => {
+function UserLink({ activity }: { activity: IIssueActivity }) {
   // router params
   const { workspaceSlug } = useParams();
 
@@ -98,9 +96,9 @@ const UserLink = ({ activity }: { activity: IIssueActivity }) => {
       {activity.new_value && activity.new_value !== "" ? activity.new_value : activity.old_value}
     </a>
   );
-};
+}
 
-const LabelPill = observer(({ labelId, workspaceSlug }: { labelId: string; workspaceSlug: string }) => {
+const LabelPill = observer(function LabelPill({ labelId, workspaceSlug }: { labelId: string; workspaceSlug: string }) {
   // store hooks
   const { workspaceLabels, fetchWorkspaceLabels } = useLabel();
 
@@ -148,7 +146,9 @@ const formatCustomFieldValue = (
 ): React.ReactNode => {
   if (!value) return "없음";
 
-  const { project: { getProjectMemberDetails, getProjectMemberIds } } = memberHook;
+  const {
+    project: { getProjectMemberDetails, getProjectMemberIds },
+  } = memberHook;
 
   if (fieldType === "project_member") {
     // 단일 멤버인 경우 - 백엔드에서 UUID를 받음
@@ -179,7 +179,7 @@ const formatCustomFieldValue = (
 
     try {
       // JSON 배열 형태인지 확인
-      if (value.startsWith('[') && value.endsWith(']')) {
+      if (value.startsWith("[") && value.endsWith("]")) {
         memberIds = JSON.parse(value);
       } else {
         // 단일 값인 경우
@@ -210,22 +210,16 @@ const formatCustomFieldValue = (
           </a>
         );
 
-        return index < memberIds.length - 1 ? (
-          <span key={`wrapper-${index}`}>
-            {memberElement},
-          </span>
-        ) : memberElement;
+        return index < memberIds.length - 1 ? <span key={`wrapper-${index}`}>{memberElement},</span> : memberElement;
       } else {
         // UUID가 아닌 경우 (레거시 데이터) 일반 텍스트로 표시
         const memberElement = (
-          <span key={index} className="font-medium text-custom-text-100">{memberId}</span>
+          <span key={index} className="font-medium text-custom-text-100">
+            {memberId}
+          </span>
         );
 
-        return index < memberIds.length - 1 ? (
-          <span key={`wrapper-${index}`}>
-            {memberElement},
-          </span>
-        ) : memberElement;
+        return index < memberIds.length - 1 ? <span key={`wrapper-${index}`}>{memberElement},</span> : memberElement;
       }
     });
   } else if (fieldType === "date") {
@@ -243,10 +237,10 @@ const formatCustomFieldValue = (
 const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField[]): string => {
   const fieldKey = activity.field?.replace("custom_field_", "");
 
-  if (!fieldKey) return 'text';
+  if (!fieldKey) return "text";
 
   // 실제 커스텀 필드에서 타입 찾기
-  const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
+  const field = customFields.find((f) => f.name === fieldKey || f.key === fieldKey);
 
   if (field) {
     return field.field_type;
@@ -258,34 +252,34 @@ const getCustomFieldType = (activity: IIssueActivity, customFields: TCustomField
     // UUID 패턴 체크 (project_member)
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (uuidPattern.test(value)) {
-      return 'project_member';
+      return "project_member";
     }
 
     // JSON 배열 패턴 체크 (project_members)
-    if (value.startsWith('[') && value.endsWith(']')) {
+    if (value.startsWith("[") && value.endsWith("]")) {
       try {
         const parsed = JSON.parse(value);
         if (Array.isArray(parsed) && parsed.length > 0 && uuidPattern.test(parsed[0])) {
-          return 'project_members';
+          return "project_members";
         }
       } catch {}
     }
 
     // 쉼표로 구분된 UUID들 (project_members)
-    if (value.includes(',')) {
-      const parts = value.split(',').map(p => p.trim());
-      if (parts.length > 1 && parts.every(p => uuidPattern.test(p) || p.length > 0)) {
-        return 'project_members';
+    if (value.includes(",")) {
+      const parts = value.split(",").map((p) => p.trim());
+      if (parts.length > 1 && parts.every((p) => uuidPattern.test(p) || p.length > 0)) {
+        return "project_members";
       }
     }
 
     // 날짜 패턴 체크
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      return 'date';
+      return "date";
     }
   }
 
-  return 'text'; // 기본값
+  return "text"; // 기본값
 };
 
 // 커스텀 필드 activity 메시지 생성
@@ -299,7 +293,7 @@ const getCustomFieldActivityMessage = (
   const fieldKey = activity.field?.replace("custom_field_", "");
 
   // 실제 커스텀 필드에서 이름 찾기
-  const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
+  const field = customFields.find((f) => f.name === fieldKey || f.key === fieldKey);
   const fieldName = field?.name || fieldKey || "알 수 없는 필드";
   const fieldType = getCustomFieldType(activity, customFields);
 
@@ -314,7 +308,8 @@ const getCustomFieldActivityMessage = (
         </span>
         {showIssue && (
           <>
-            {" "}(으)로 <IssueLink activity={activity} />에{" "}
+            {" "}
+            (으)로 <IssueLink activity={activity} />에{" "}
           </>
         )}
         {!showIssue && " (으)로"} 설정했습니다
@@ -326,13 +321,16 @@ const getCustomFieldActivityMessage = (
         커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span> 값을{" "}
         <span className="font-medium text-custom-text-100">
           {formatCustomFieldValue(activity.old_value, fieldType, workspaceSlug, projectId, memberHook, activity)}
-        </span>에서{" "}
+        </span>
+        에서{" "}
         <span className="font-medium text-custom-text-100">
           {formatCustomFieldValue(activity.new_value, fieldType, workspaceSlug, projectId, memberHook, activity)}
         </span>
         {showIssue && (
           <>
-            {" "}(으)로 <IssueLink activity={activity} />에서{" "}
+            {" "}
+            (으)로 <IssueLink activity={activity} />
+            에서{" "}
           </>
         )}
         {!showIssue && " (으)로"} 변경했습니다
@@ -344,7 +342,9 @@ const getCustomFieldActivityMessage = (
         커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>
         {showIssue && (
           <>
-            {" "}을(를) <IssueLink activity={activity} />에서{" "}
+            {" "}
+            을(를) <IssueLink activity={activity} />
+            에서{" "}
           </>
         )}
         {!showIssue && " 을(를)"} 삭제했습니다
@@ -357,7 +357,9 @@ const getCustomFieldActivityMessage = (
       커스텀 필드 <span className="font-medium text-custom-text-100">{fieldName}</span>을(를) 수정했습니다
       {showIssue && (
         <>
-          {" "} <IssueLink activity={activity} />에서
+          {" "}
+          <IssueLink activity={activity} />
+          에서
         </>
       )}
     </>
@@ -487,7 +489,7 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            새로운 첨부파일 {" "}
+            새로운 첨부파일{" "}
             <a
               href={`${activity.new_value}`}
               target="_blank"
@@ -582,9 +584,9 @@ const activityDetails: {
         );
       else {
         // 시간 값을 분에서 시간:분 형식으로 변환
-        const timeDisplay = activity.new_value ?
-          convertMinutesToHoursMinutesString(Number(activity.new_value)) :
-          activity.new_value;
+        const timeDisplay = activity.new_value
+          ? convertMinutesToHoursMinutesString(Number(activity.new_value))
+          : activity.new_value;
 
         return (
           <>
@@ -712,7 +714,7 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <span className="overflow-hidden">
-            새로운 레이블 {" "}
+            새로운 레이블{" "}
             <span className="inline-flex items-center gap-2 rounded-full border border-custom-border-300 px-2 py-0.5 text-xs">
               <LabelPill labelId={activity.new_identifier ?? ""} workspaceSlug={workspaceSlug} />
               <span className="flex-shrink font-medium text-custom-text-100 break-all line-clamp-1">
@@ -726,13 +728,13 @@ const activityDetails: {
                 <IssueLink activity={activity} /> 에{" "}
               </span>
             )}
-             추가했습니다.
+            추가했습니다.
           </span>
         );
       else
         return (
           <>
-            레이블 {" "} 을
+            레이블 을
             <span className="inline-flex items-center gap-2 rounded-full border border-custom-border-300 px-2 py-0.5 text-xs">
               <LabelPill labelId={activity.old_identifier ?? ""} workspaceSlug={workspaceSlug} />
               <span className="flex-shrink font-medium text-custom-text-100 break-all line-clamp-1">
@@ -756,14 +758,14 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            새로운 링크 {" "}
+            새로운 링크{" "}
             <a
               href={`${activity.new_value}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-custom-text-100 hover:underline"
             >
-             링크
+              링크
             </a>
             {showIssue && (
               <>
@@ -777,7 +779,7 @@ const activityDetails: {
       else if (activity.verb === "updated")
         return (
           <>
-            링크 {" "}
+            링크{" "}
             <a
               href={`${activity.old_value}`}
               target="_blank"
@@ -786,7 +788,7 @@ const activityDetails: {
             >
               링크
             </a>
-             를
+            를
             {showIssue && (
               <>
                 {" "}
@@ -799,7 +801,7 @@ const activityDetails: {
       else
         return (
           <>
-            링크 {" "}
+            링크{" "}
             <a
               href={`${activity.old_value}`}
               target="_blank"
@@ -808,7 +810,7 @@ const activityDetails: {
             >
               링크
             </a>
-             를
+            를
             {showIssue && (
               <>
                 {" "}
@@ -859,7 +861,7 @@ const activityDetails: {
       else
         return (
           <>
-            <IssueLink activity={activity} /> 을(를) 사이클 {" "}
+            <IssueLink activity={activity} /> 을(를) 사이클{" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/cycles/${activity.old_identifier}`}
               target="_blank"
@@ -879,7 +881,7 @@ const activityDetails: {
       if (activity.verb === "created")
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}을 모듈 {" "}
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}을 모듈{" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.new_identifier}`}
               target="_blank"
@@ -894,7 +896,7 @@ const activityDetails: {
       else if (activity.verb === "updated")
         return (
           <>
-            모듈을 {" "}
+            모듈을{" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.new_identifier}`}
               target="_blank"
@@ -909,7 +911,7 @@ const activityDetails: {
       else
         return (
           <>
-            <IssueLink activity={activity} /> 을(를) 모듈 {" "}
+            <IssueLink activity={activity} /> 을(를) 모듈{" "}
             <a
               href={`/${workspaceSlug}/projects/${activity.project}/modules/${activity.old_identifier}`}
               target="_blank"
@@ -944,12 +946,12 @@ const activityDetails: {
       if (!activity.new_value)
         return (
           <>
-            상위 항목 {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>
+            상위 항목 <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>
             {showIssue && (
               <>
                 {" "}
-                을(를) <IssueLink activity={activity} />에서{" "}
+                을(를) <IssueLink activity={activity} />
+                에서{" "}
               </>
             )}
             제거했습니다
@@ -958,8 +960,7 @@ const activityDetails: {
       else
         return (
           <>
-            상위 항목을 {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>
+            상위 항목을 <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>
             {showIssue && (
               <>
                 {" "}
@@ -975,7 +976,7 @@ const activityDetails: {
   priority: {
     message: (activity, showIssue) => (
       <>
-        우선순위를 {" "}
+        우선순위를{" "}
         <span className="font-medium text-custom-text-100">
           {activity.new_value ? capitalizeFirstLetter(activity.new_value) : "없음"}
         </span>
@@ -995,14 +996,16 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>와(과) 관련됨을 표시했습니다.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가){" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>와(과)
+            관련됨을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>와(과)의 관계를 제거했습니다.
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>와(과)의
+            관계를 제거했습니다.
           </>
         );
     },
@@ -1013,15 +1016,17 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span> 작업항목을 차단하고 있음을 표시했습니다.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가){" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span> 작업항목을
+            차단하고 있음을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            차단 작업항목 {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>을(를) 제거했습니다.
+            차단 작업항목{" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>을(를)
+            제거했습니다.
           </>
         );
     },
@@ -1032,15 +1037,17 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>에 의해 차단되고 있음을 표시했습니다.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가){" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>에 의해
+            차단되고 있음을 표시했습니다.
           </>
         );
       else
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) 작업항목 {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>에 의해 차단되는 것을 제거했습니다.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) 작업항목{" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>에 의해
+            차단되는 것을 제거했습니다.
           </>
         );
     },
@@ -1051,15 +1058,17 @@ const activityDetails: {
       if (activity.old_value === "")
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>의 중복임을 표시했습니다.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가){" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.new_value}</span>의 중복임을
+            표시했습니다.
           </>
         );
       else
         return (
           <>
-            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가) {" "}
-            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>의 중복이라는 표시를 제거했습니다.
+            {showIssue ? <IssueLink activity={activity} /> : "이 작업항목"}이(가){" "}
+            <span className="font-medium text-custom-text-100 whitespace-nowrap">{activity.old_value}</span>의
+            중복이라는 표시를 제거했습니다.
           </>
         );
     },
@@ -1083,10 +1092,14 @@ const activityDetails: {
           {!showIssue && " (으)로"} 설정했습니다.
           {approvalMatch && (
             <span className="text-custom-text-200">
-              {" "}(승인자: <span className="font-medium text-custom-text-100">{approvalMatch[1]}</span>
+              {" "}
+              (승인자: <span className="font-medium text-custom-text-100">{approvalMatch[1]}</span>
               {approvalMatch[2] && (
-                <>, 승인 코멘트: <span className="font-medium text-custom-text-100">{approvalMatch[2]}</span></>
-              )})
+                <>
+                  , 승인 코멘트: <span className="font-medium text-custom-text-100">{approvalMatch[2]}</span>
+                </>
+              )}
+              )
             </span>
           )}
         </>
@@ -1122,7 +1135,8 @@ const activityDetails: {
           {" (으)로 변경하는 것을 승인했습니다."}
           {reason && (
             <span className="text-custom-text-200">
-              {" "}(승인 사유: <span className="font-medium text-custom-text-100 break-all">{reason}</span>)
+              {" "}
+              (승인 사유: <span className="font-medium text-custom-text-100 break-all">{reason}</span>)
             </span>
           )}
         </>
@@ -1139,7 +1153,8 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} />에서{" "}
+                <IssueLink activity={activity} />
+                에서{" "}
               </>
             )}
             삭제했습니다
@@ -1148,7 +1163,7 @@ const activityDetails: {
       else
         return (
           <>
-            시작일을 {" "}
+            시작일을{" "}
             <span className="font-medium text-custom-text-100 whitespace-nowrap">
               {renderFormattedDate(activity.new_value)}
             </span>
@@ -1173,7 +1188,8 @@ const activityDetails: {
             {showIssue && (
               <>
                 {" "}
-                <IssueLink activity={activity} />에서{" "}
+                <IssueLink activity={activity} />
+                에서{" "}
               </>
             )}
             삭제했습니다
@@ -1182,13 +1198,14 @@ const activityDetails: {
       else
         return (
           <>
-            마감일을 {" "}
+            마감일을{" "}
             <span className="font-medium text-custom-text-100 whitespace-nowrap">
               {renderFormattedDate(activity.new_value)}
             </span>
             {showIssue && (
               <>
-                {" "}(으)로 <IssueLink activity={activity} />에{" "}
+                {" "}
+                (으)로 <IssueLink activity={activity} />에{" "}
               </>
             )}
             {!showIssue && " (으)로"} 설정했습니다
@@ -1214,7 +1231,13 @@ const activityDetails: {
   },
 };
 
-export const ActivityIcon = ({ activity, customFields = [] }: { activity: IIssueActivity; customFields?: TCustomField[] }) => {
+export const ActivityIcon = ({
+  activity,
+  customFields = [],
+}: {
+  activity: IIssueActivity;
+  customFields?: TCustomField[];
+}) => {
   // 커스텀 필드 activity인 경우
   if (activity.field?.startsWith("custom_field_")) {
     const fieldType = getCustomFieldType(activity, customFields);
@@ -1238,8 +1261,8 @@ export const ActivityMessage = ({ activity, showIssue = false, customFields = []
 
   // 커스텀 필드 activity 처리
   if (activity.field?.startsWith("custom_field_")) {
-  return (
-    <>
+    return (
+      <>
         {getCustomFieldActivityMessage(
           activity,
           showIssue,

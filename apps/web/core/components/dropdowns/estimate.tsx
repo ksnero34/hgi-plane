@@ -3,10 +3,11 @@ import { useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { usePopper } from "react-popper";
-import { Check, ChevronDown, Search, Triangle } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import { Combobox } from "@headlessui/react";
 // plane imports
 import { useTranslation } from "@plane/i18n";
+import { EstimatePropertyIcon, ChevronDownIcon } from "@plane/propel/icons";
 import { EEstimateSystem } from "@plane/types";
 import { ComboDropDown } from "@plane/ui";
 import { convertMinutesToHoursMinutesString, cn } from "@plane/utils";
@@ -39,7 +40,7 @@ type DropdownOptions =
     }[]
   | undefined;
 
-export const EstimateDropdown: React.FC<Props> = observer((props) => {
+export const EstimateDropdown = observer(function EstimateDropdown(props: Props) {
   const {
     button,
     buttonClassName,
@@ -107,7 +108,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
           query: `${currentEstimatePoint?.value}`,
           content: (
             <div className="flex items-center gap-2">
-              <Triangle className="h-3 w-3 flex-shrink-0" />
+              <EstimatePropertyIcon className="h-3 w-3 flex-shrink-0" />
               <span className="flex-grow truncate">
                 {currentActiveEstimate?.type === EEstimateSystem.TIME
                   ? convertMinutesToHoursMinutesString(Number(currentEstimatePoint.value))
@@ -124,7 +125,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
     query: t("project_settings.estimates.no_estimate"),
     content: (
       <div className="flex items-center gap-2">
-        <Triangle className="h-3 w-3 flex-shrink-0" />
+        <EstimatePropertyIcon className="h-3 w-3 flex-shrink-0" />
         <span className="flex-grow truncate">{t("project_settings.estimates.no_estimate")}</span>
       </div>
     ),
@@ -192,7 +193,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
             variant={buttonVariant}
             renderToolTipByDefault={renderByDefault}
           >
-            {!hideIcon && <Triangle className="h-3 w-3 flex-shrink-0" />}
+            {!hideIcon && <EstimatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
             {(selectedEstimate || placeholder) && BUTTON_VARIANTS_WITH_TEXT.includes(buttonVariant) && (
               <span className="flex-grow truncate">
                 {selectedEstimate
@@ -203,7 +204,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
               </span>
             )}
             {dropdownArrow && (
-              <ChevronDown className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
+              <ChevronDownIcon className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
             )}
           </DropdownButton>
         </button>
@@ -252,7 +253,7 @@ export const EstimateDropdown: React.FC<Props> = observer((props) => {
                 >
                   {/* NOTE: This condition renders when estimates are not enabled for the project */}
                   <div className="flex-grow flex items-center gap-2">
-                    <Triangle className="h-3 w-3 flex-shrink-0" />
+                    <EstimatePropertyIcon className="h-3 w-3 flex-shrink-0" />
                     <span className="flex-grow truncate">{t("project_settings.estimates.no_estimate")}</span>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 // types
-import { TPage } from "@plane/types";
+import type { TPage } from "@plane/types";
 // services
 import { APIService } from "@/services/api.service";
 

@@ -2,6 +2,7 @@ import React from "react";
 import { observer } from "mobx-react";
 import { X } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
+import { CloseIcon } from "@plane/propel/icons";
 import type { TModuleDisplayFilters, TModuleFilters, TCustomField } from "@plane/types";
 // components
 import { Header, EHeaderVariant, Tag } from "@plane/ui";
@@ -9,7 +10,11 @@ import { replaceUnderscoreIfSnakeCase } from "@plane/utils";
 import { AppliedDateFilters, AppliedMembersFilters, AppliedStatusFilters } from "@/components/modules";
 import { AppliedCustomFieldFilters } from "@/components/issues/issue-layouts/filters/applied-filters";
 // helpers
-import { prepareCustomFieldFiltersForRender, removeCustomFieldFilterValue, removeCustomFieldFilterField } from "@plane/utils";
+import {
+  prepareCustomFieldFiltersForRender,
+  removeCustomFieldFilterValue,
+  removeCustomFieldFilterField,
+} from "@plane/utils";
 // types
 
 type Props = {
@@ -28,7 +33,7 @@ type Props = {
 const MEMBERS_FILTERS = ["lead", "members"];
 const DATE_FILTERS = ["start_date", "target_date"];
 
-export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
+export function ModuleAppliedFiltersList(props: Props) {
   const {
     appliedFilters,
     isFavoriteFilterApplied,
@@ -56,7 +61,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
       start_date: "시작일",
       target_date: "마감일",
       status: "상태",
-      custom_fields: "커스텀 필드"
+      custom_fields: "커스텀 필드",
     };
 
     return filterLabels[key] || replaceUnderscoreIfSnakeCase(key);
@@ -85,7 +90,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                     editable={isEditingAllowed ?? false}
                     handleRemove={(fieldId, val) => {
                       const newValue = removeCustomFieldFilterValue(
-                        typeof appliedFilters.custom_fields === 'string'
+                        typeof appliedFilters.custom_fields === "string"
                           ? appliedFilters.custom_fields
                           : JSON.stringify(appliedFilters.custom_fields || {}),
                         fieldId,
@@ -102,7 +107,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                       className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
                       onClick={() => {
                         const newValue = removeCustomFieldFilterField(
-                          typeof appliedFilters.custom_fields === 'string'
+                          typeof appliedFilters.custom_fields === "string"
                             ? appliedFilters.custom_fields
                             : JSON.stringify(appliedFilters.custom_fields || {}),
                           fieldId
@@ -149,7 +154,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                     className="grid place-items-center text-custom-text-300 hover:text-custom-text-200"
                     onClick={() => handleRemoveFilter(filterKey, null)}
                   >
-                    <X size={12} strokeWidth={2} />
+                    <CloseIcon height={12} width={12} strokeWidth={2} />
                   </button>
                 )}
               </div>
@@ -176,7 +181,7 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
                       })
                     }
                   >
-                    <X size={10} strokeWidth={2} />
+                    <CloseIcon height={10} width={10} strokeWidth={2} />
                   </button>
                 )}
               </div>
@@ -187,11 +192,11 @@ export const ModuleAppliedFiltersList: React.FC<Props> = (props) => {
           <button type="button" onClick={handleClearAllFilters}>
             <Tag>
               {t("common.clear_all")}
-              <X size={12} strokeWidth={2} />
+              <CloseIcon height={12} width={12} strokeWidth={2} />
             </Tag>
           </button>
         )}
       </div>
     </Header>
   );
-};
+}

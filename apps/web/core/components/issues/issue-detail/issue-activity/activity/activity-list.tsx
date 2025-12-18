@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { observer } from "mobx-react";
 // helpers
 import { getValidKeysFromObject } from "@plane/utils";
@@ -8,7 +7,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { IssueTypeActivity, AdditionalActivityRoot } from "@/plane-web/components/issues/issue-details";
 import { useTimeLineRelationOptions } from "@/plane-web/components/relations";
 // types
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 // local components
 import {
   IssueDefaultActivity,
@@ -38,7 +37,7 @@ type TIssueActivityItem = {
   customFields?: TCustomField[];
 };
 
-export const IssueActivityItem: FC<TIssueActivityItem> = observer((props) => {
+export const IssueActivityItem = observer(function IssueActivityItem(props: TIssueActivityItem) {
   const { activityId, ends, customFields = [] } = props;
   // hooks
   const {
@@ -51,12 +50,12 @@ export const IssueActivityItem: FC<TIssueActivityItem> = observer((props) => {
   const componentDefaultProps = { activityId, ends };
 
   const activityField = getActivityById(activityId)?.field;
-  
+
   // 커스텀 필드 activity 처리
   if (activityField?.startsWith("custom_field_")) {
     return <IssueCustomFieldActivity {...componentDefaultProps} showIssue={false} customFields={customFields} />;
   }
-  
+
   switch (activityField) {
     case null: // default issue creation
       return <IssueDefaultActivity {...componentDefaultProps} />;
@@ -73,7 +72,7 @@ export const IssueActivityItem: FC<TIssueActivityItem> = observer((props) => {
     case "estimate_points":
     case "estimate_categories":
     case "estimate_point" /* This case is to handle all the older recorded activities for estimates. Field changed from  "estimate_point" -> `estimate_${estimate_type}`*/:
-    case "estimate_time": /* 시간 추정 타입을 위한 처리 추가 */
+    case "estimate_time" /* 시간 추정 타입을 위한 처리 추가 */:
       return <IssueEstimateActivity {...componentDefaultProps} showIssue={false} />;
     case "parent":
       return <IssueParentActivity {...componentDefaultProps} showIssue={false} />;

@@ -1,4 +1,4 @@
-import {
+import type {
   FILTER_FIELD_TYPE,
   TBaseFilterFieldConfig,
   TDateFilterFieldConfig,
@@ -92,5 +92,5 @@ export const createFilterFieldConfig = <T extends TFilterFieldType, V extends TF
           ? TDateRangeFilterFieldConfig<V>
           : T extends typeof FILTER_FIELD_TYPE.TEXT
             ? TTextFilterFieldConfig<V>
-          : never
+            : never
 ): TSupportedFilterFieldConfigs<V> => config as TSupportedFilterFieldConfigs<V>;

@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "@/services/api.service";
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 
 export class CustomFieldService extends APIService {
   constructor() {
@@ -15,7 +15,11 @@ export class CustomFieldService extends APIService {
       });
   }
 
-  async createCustomField(workspaceSlug: string, projectId: string, data: Partial<TCustomField>): Promise<TCustomField> {
+  async createCustomField(
+    workspaceSlug: string,
+    projectId: string,
+    data: Partial<TCustomField>
+  ): Promise<TCustomField> {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/`, data)
       .then((response) => response?.data)
       .catch((error) => {
@@ -23,7 +27,12 @@ export class CustomFieldService extends APIService {
       });
   }
 
-  async updateCustomField(workspaceSlug: string, projectId: string, customFieldId: string, data: Partial<TCustomField>): Promise<TCustomField> {
+  async updateCustomField(
+    workspaceSlug: string,
+    projectId: string,
+    customFieldId: string,
+    data: Partial<TCustomField>
+  ): Promise<TCustomField> {
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-fields/${customFieldId}/`, data)
       .then((response) => response?.data)
       .catch((error) => {

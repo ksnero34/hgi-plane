@@ -1,6 +1,16 @@
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
-import { ChevronDown, Search, Tag, CalendarCheck2, UserCircle2, Users, Settings, Type, MessageSquare } from "lucide-react";
+import {
+  ChevronDown,
+  Search,
+  Tag,
+  CalendarCheck2,
+  UserCircle2,
+  Users,
+  Settings,
+  Type,
+  MessageSquare,
+} from "lucide-react";
 import { Combobox } from "@headlessui/react";
 import { usePopper } from "react-popper";
 import { useTranslation } from "@plane/i18n";
@@ -15,7 +25,7 @@ import { DropdownButton } from "../buttons";
 import { BUTTON_VARIANTS_WITH_TEXT } from "../constants";
 // types
 import { TDropdownProps } from "../types";
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 
 type Props = TDropdownProps & {
   button?: React.ReactNode;
@@ -52,7 +62,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     placeholder,
     showPlaceholder = false,
   } = props;
-  
+
   // states
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -74,29 +84,30 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
       },
     ],
   });
-  
+
   const { t } = useTranslation();
 
   // 필드 타입에 따른 옵션 생성
   const getOptions = () => {
     if (field.field_type === "select" || field.field_type === "multiselect") {
-      return field.options?.map((option) => ({
-        value: option,
-        query: option,
-        content: (
-          <div className="flex items-center gap-2">
-            <span className="flex-grow truncate">{option}</span>
-          </div>
-        ),
-      })) || [];
+      return (
+        field.options?.map((option) => ({
+          value: option,
+          query: option,
+          content: (
+            <div className="flex items-center gap-2">
+              <span className="flex-grow truncate">{option}</span>
+            </div>
+          ),
+        })) || []
+      );
     }
     return [];
   };
 
   const options = getOptions();
-  const filteredOptions = query === "" ? options : options.filter((o) => 
-    o.query.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredOptions =
+    query === "" ? options : options.filter((o) => o.query.toLowerCase().includes(query.toLowerCase()));
 
   const { handleClose, handleKeyDown, handleOnClick, searchInputKeyDown } = useDropdown({
     dropdownRef,
@@ -120,11 +131,11 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     if (!value || (Array.isArray(value) && value.length === 0)) {
       return null; // 값이 없을 때는 null 반환
     }
-    
+
     if (field.field_type === "multiselect" && Array.isArray(value)) {
       return value.length > 0 ? `${value.length}개 선택됨` : null;
     }
-    
+
     return value;
   };
 
@@ -170,53 +181,49 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
           >
             {!hideIcon && !hasValue && (
               <div className="flex items-center justify-center">
-              {field.field_type === "text" ? (
-                <Type className="h-3 w-3 text-custom-text-400" />
-              ) : field.field_type === "select" || field.field_type === "multiselect" ? (
-                <Tag className="h-3 w-3 text-custom-text-400" />
-              ) : field.field_type === "date" ? (
-                <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
-              ) : field.field_type === "project_member" ? (
-                <UserCircle2 className="h-3 w-3 text-custom-text-400" />
-              ) : field.field_type === "project_members" ? (
-                <Users className="h-3 w-3 text-custom-text-400" />
-              ) : (
-                <Settings className="h-3 w-3 text-custom-text-400" />
+                {field.field_type === "text" ? (
+                  <Type className="h-3 w-3 text-custom-text-400" />
+                ) : field.field_type === "select" || field.field_type === "multiselect" ? (
+                  <Tag className="h-3 w-3 text-custom-text-400" />
+                ) : field.field_type === "date" ? (
+                  <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
+                ) : field.field_type === "project_member" ? (
+                  <UserCircle2 className="h-3 w-3 text-custom-text-400" />
+                ) : field.field_type === "project_members" ? (
+                  <Users className="h-3 w-3 text-custom-text-400" />
+                ) : (
+                  <Settings className="h-3 w-3 text-custom-text-400" />
                 )}
               </div>
-              )}
-              
-              {!hasValue && placeholder && showPlaceholder && (
-                <span className="flex-grow truncate text-xs text-custom-text-400 leading-5">
-                  {placeholder}
-                </span>
-              )}
-              
-              {hasValue && (
-                <div className="flex items-center gap-1.5">
-                  {!hideIcon && (
-                    <>
-                      {field.field_type === "text" ? (
-                        <Type className="h-3 w-3 text-custom-text-400" />
-                      ) : field.field_type === "select" || field.field_type === "multiselect" ? (
-                        <Tag className="h-3 w-3 text-custom-text-400" />
-                      ) : field.field_type === "date" ? (
-                        <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
-                      ) : field.field_type === "project_member" ? (
-                        <UserCircle2 className="h-3 w-3 text-custom-text-400" />
-                      ) : field.field_type === "project_members" ? (
-                        <Users className="h-3 w-3 text-custom-text-400" />
-                      ) : (
-                        <Settings className="h-3 w-3 text-custom-text-400" />
-                      )}
-                    </>
-                  )}
-                  <span className="flex-grow truncate leading-5">
-                    {getDisplayValue()}
-                  </span>
-                </div>
-              )}
-            
+            )}
+
+            {!hasValue && placeholder && showPlaceholder && (
+              <span className="flex-grow truncate text-xs text-custom-text-400 leading-5">{placeholder}</span>
+            )}
+
+            {hasValue && (
+              <div className="flex items-center gap-1.5">
+                {!hideIcon && (
+                  <>
+                    {field.field_type === "text" ? (
+                      <Type className="h-3 w-3 text-custom-text-400" />
+                    ) : field.field_type === "select" || field.field_type === "multiselect" ? (
+                      <Tag className="h-3 w-3 text-custom-text-400" />
+                    ) : field.field_type === "date" ? (
+                      <CalendarCheck2 className="h-3 w-3 text-custom-text-400" />
+                    ) : field.field_type === "project_member" ? (
+                      <UserCircle2 className="h-3 w-3 text-custom-text-400" />
+                    ) : field.field_type === "project_members" ? (
+                      <Users className="h-3 w-3 text-custom-text-400" />
+                    ) : (
+                      <Settings className="h-3 w-3 text-custom-text-400" />
+                    )}
+                  </>
+                )}
+                <span className="flex-grow truncate leading-5">{getDisplayValue()}</span>
+              </div>
+            )}
+
             {dropdownArrow && (
               <ChevronDown className={cn("h-2.5 w-2.5 flex-shrink-0", dropdownArrowClassName)} aria-hidden="true" />
             )}
@@ -231,9 +238,7 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
     return (
       <div className={cn("h-full", className)}>
         <div className="w-full h-full flex items-center gap-1.5 rounded px-2 py-0.5 text-sm justify-between cursor-not-allowed">
-          <span className="flex-grow truncate text-xs leading-5">
-            {value || "-"}
-          </span>
+          <span className="flex-grow truncate text-xs leading-5">{value || "-"}</span>
         </div>
       </div>
     );
@@ -311,4 +316,4 @@ export const CustomFieldDropdown: React.FC<Props> = observer((props) => {
       )}
     </ComboDropDown>
   );
-}); 
+});

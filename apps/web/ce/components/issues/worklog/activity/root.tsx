@@ -1,6 +1,3 @@
-"use client";
-
-import type { FC } from "react";
 import type { TIssueActivityComment } from "@plane/types";
 
 type TIssueActivityWorklog = {
@@ -11,4 +8,6 @@ type TIssueActivityWorklog = {
   ends?: "top" | "bottom";
 };
 
-export const IssueActivityWorklog: FC<TIssueActivityWorklog> = () => <></>;
+export function IssueActivityWorklog(_props: TIssueActivityWorklog) {
+  return <></>;
+}

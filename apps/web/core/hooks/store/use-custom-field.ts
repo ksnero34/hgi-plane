@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 // types
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 // services
 import { CustomFieldService } from "@/services/custom-field.service";
 // hooks
@@ -49,8 +49,8 @@ export const useCustomField = (
     ? workspaceLevel
       ? `/api/workspaces/${workspaceSlug}/custom-fields/`
       : currentProjectId
-      ? `/api/workspaces/${workspaceSlug}/projects/${currentProjectId}/custom-fields/`
-      : null
+        ? `/api/workspaces/${workspaceSlug}/projects/${currentProjectId}/custom-fields/`
+        : null
     : null;
 
   const fetcher = () => {
@@ -131,4 +131,4 @@ export const useCustomField = (
     deleteCustomField,
     getCustomFieldUsageCount,
   };
-}; 
+};

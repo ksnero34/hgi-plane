@@ -2,13 +2,12 @@ import type { AxiosRequestConfig } from "axios";
 // plane types
 import { API_BASE_URL } from "@plane/constants";
 import { getFileMetaDataForUpload, generateFileUploadPayload } from "@plane/services";
-import type { TFileEntityInfo, TFileSignedURLResponse, IUser } from "@plane/types";
+import type { EFileAssetType, TFileEntityInfo, TFileSignedURLResponse, IUser } from "@plane/types";
 import { getAssetIdFromUrl } from "@plane/utils";
 // helpers
 // services
 import { APIService } from "@/services/api.service";
 import { FileUploadService } from "@/services/file-upload.service";
-import { EFileAssetType } from "@plane/types";
 
 export interface UnSplashImage {
   id: string;
@@ -291,11 +290,19 @@ export class FileService extends APIService {
       });
   }
 
-  async getProjectCoverImages(): Promise<string[]> {
-    return this.get(`/api/project-covers/`)
-      .then((res) => res?.data)
-      .catch((err) => {
-        throw err?.response?.data;
+  async duplicateAsset(
+    workspaceSlug: string,
+    assetId: string,
+    data: {
+      entity_id?: string;
+      entity_type: EFileAssetType;
+      project_id?: string;
+    }
+  ): Promise<{ asset_id: string }> {
+    return this.post(`/api/assets/v2/workspaces/${workspaceSlug}/duplicate-assets/${assetId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
       });
   }
 
@@ -330,33 +337,20 @@ export class FileService extends APIService {
       });
   }
 
-  async getPageFiles(
-    workspaceSlug: string,
-    projectId: string,
-    pageId: string
-  ): Promise<FileAsset[]> {
-    return this.get(
-      `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/`,
-      {
-        params: {
-          page_id: pageId
-        }
-      }
-    )
+  async getPageFiles(workspaceSlug: string, projectId: string, pageId: string): Promise<FileAsset[]> {
+    return this.get(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/`, {
+      params: {
+        page_id: pageId,
+      },
+    })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
       });
   }
 
-  async deleteFile(
-    workspaceSlug: string,
-    projectId: string,
-    assetId: string
-  ): Promise<void> {
-    return this.delete(
-      `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/${assetId}/`
-    )
+  async deleteFile(workspaceSlug: string, projectId: string, assetId: string): Promise<void> {
+    return this.delete(`/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/pages/files/${assetId}/`)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

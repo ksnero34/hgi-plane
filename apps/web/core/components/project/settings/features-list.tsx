@@ -1,6 +1,3 @@
-"use client";
-
-import type { FC } from "react";
 import { observer } from "mobx-react";
 // plane imports
 import { PROJECT_TRACKER_EVENTS } from "@plane/constants";
@@ -26,7 +23,7 @@ type Props = {
   isAdmin: boolean;
 };
 
-export const ProjectFeaturesList: FC<Props> = observer((props) => {
+export const ProjectFeaturesList = observer(function ProjectFeaturesList(props: Props) {
   const { workspaceSlug, projectId, isAdmin } = props;
   // store hooks
   const { t } = useTranslation();
@@ -35,7 +32,7 @@ export const ProjectFeaturesList: FC<Props> = observer((props) => {
   // derived values
   const currentProjectDetails = getProjectById(projectId);
 
-  const handleSubmit = async (featureKey: string, featureProperty: string) => {
+  const handleSubmit = (featureKey: string, featureProperty: string) => {
     if (!workspaceSlug || !projectId || !currentProjectDetails) return;
 
     // making the request to update the project feature
@@ -55,13 +52,14 @@ export const ProjectFeaturesList: FC<Props> = observer((props) => {
         message: () => "Something went wrong while updating project feature. Please try again.",
       },
     });
-    updateProjectPromise.then(() => {
+    void updateProjectPromise.then(() => {
       captureSuccess({
         eventName: PROJECT_TRACKER_EVENTS.feature_toggled,
         payload: {
           feature_key: featureKey,
         },
       });
+      return undefined;
     });
   };
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, Fragment } from "react";
 
 import { Transition, Dialog } from "@headlessui/react";
@@ -20,7 +18,7 @@ type TJoinProjectModalProps = {
   handleClose: () => void;
 };
 
-export const JoinProjectModal: React.FC<TJoinProjectModalProps> = (props) => {
+export function JoinProjectModal(props: TJoinProjectModalProps) {
   const { handleClose, isOpen, project, workspaceSlug } = props;
   // states
   const [isJoiningLoading, setIsJoiningLoading] = useState(false);
@@ -76,7 +74,8 @@ export const JoinProjectModal: React.FC<TJoinProjectModalProps> = (props) => {
                     프로젝트에 참가하시겠습니까?
                   </Dialog.Title>
                   <p>
-                    <span className="break-words font-semibold">{project?.name}</span> 프로젝트에 참여하시겠습니까? 아래의 &apos;참여하기&apos; 버튼을 클릭하여 계속 진행하세요.
+                    <span className="break-words font-semibold">{project?.name}</span> 프로젝트에 참여하시겠습니까?
+                    아래의 &apos;참여하기&apos; 버튼을 클릭하여 계속 진행하세요.
                   </p>
                   <div className="space-y-3" />
                 </div>
@@ -102,4 +101,4 @@ export const JoinProjectModal: React.FC<TJoinProjectModalProps> = (props) => {
       </Dialog>
     </Transition.Root>
   );
-};
+}

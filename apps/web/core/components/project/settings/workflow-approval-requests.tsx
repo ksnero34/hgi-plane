@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -55,7 +53,15 @@ export const WorkflowApprovalRequests = observer(() => {
 
     try {
       setLoading(true);
-      const response = await getApprovalRequests(workspaceSlug as string, projectId as string, 1, 100, 'all', '', 'newest');
+      const response = await getApprovalRequests(
+        workspaceSlug as string,
+        projectId as string,
+        1,
+        100,
+        "all",
+        "",
+        "newest"
+      );
       setApprovalRequests(response.results || []);
     } catch (error) {
       setToast({
@@ -76,14 +82,9 @@ export const WorkflowApprovalRequests = observer(() => {
     if (!workspaceSlug || !projectId) return;
 
     try {
-      setApprovingIds(prev => new Set(prev).add(approvalRequestId));
-      
-      await approveTransition(
-        workspaceSlug as string,
-        projectId as string,
-        approvalRequestId,
-        { comment }
-      );
+      setApprovingIds((prev) => new Set(prev).add(approvalRequestId));
+
+      await approveTransition(workspaceSlug as string, projectId as string, approvalRequestId, { comment });
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -100,7 +101,7 @@ export const WorkflowApprovalRequests = observer(() => {
         message: "상태 전환 승인 중 오류가 발생했습니다.",
       });
     } finally {
-      setApprovingIds(prev => {
+      setApprovingIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(approvalRequestId);
         return newSet;
@@ -123,52 +124,37 @@ export const WorkflowApprovalRequests = observer(() => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-custom-text-100">
-          워크플로우 승인 요청 ({approvalRequests.length})
-        </h3>
+        <h3 className="text-lg font-semibold text-custom-text-100">워크플로우 승인 요청 ({approvalRequests.length})</h3>
         <Button variant="neutral-primary" size="sm" onClick={fetchApprovalRequests}>
           새로고침
         </Button>
       </div>
 
       {approvalRequests.length === 0 ? (
-        <div className="text-center py-8 text-custom-text-400">
-          승인 대기 중인 요청이 없습니다.
-        </div>
+        <div className="text-center py-8 text-custom-text-400">승인 대기 중인 요청이 없습니다.</div>
       ) : (
         <div className="space-y-3">
           {approvalRequests.map((request) => (
-            <div
-              key={request.id}
-              className="border border-custom-border-200 rounded-lg p-4 bg-custom-background-100"
-            >
+            <div key={request.id} className="border border-custom-border-200 rounded-lg p-4 bg-custom-background-100">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium text-custom-text-100">
-                      #{request.issue.sequence_id}
-                    </span>
-                    <span className="text-sm text-custom-text-200">
-                      {request.issue.name}
-                    </span>
+                    <span className="text-sm font-medium text-custom-text-100">#{request.issue.sequence_id}</span>
+                    <span className="text-sm text-custom-text-200">{request.issue.name}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 mb-2">
                     <span
                       className="inline-block w-3 h-3 rounded-full"
                       style={{ backgroundColor: request.from_state.color }}
                     />
-                    <span className="text-sm text-custom-text-200">
-                      {request.from_state.name}
-                    </span>
+                    <span className="text-sm text-custom-text-200">{request.from_state.name}</span>
                     <span className="text-custom-text-400">→</span>
                     <span
                       className="inline-block w-3 h-3 rounded-full"
                       style={{ backgroundColor: request.to_state.color }}
                     />
-                    <span className="text-sm text-custom-text-200">
-                      {request.to_state.name}
-                    </span>
+                    <span className="text-sm text-custom-text-200">{request.to_state.name}</span>
                   </div>
 
                   <div className="flex items-center gap-2 mb-2">
@@ -181,9 +167,7 @@ export const WorkflowApprovalRequests = observer(() => {
                           className="w-5 h-5 rounded-full"
                         />
                       )}
-                      <span className="text-sm text-custom-text-200">
-                        {request.requester.display_name}
-                      </span>
+                      <span className="text-sm text-custom-text-200">{request.requester.display_name}</span>
                     </div>
                   </div>
 

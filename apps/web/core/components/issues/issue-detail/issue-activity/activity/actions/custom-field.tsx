@@ -9,7 +9,7 @@ import { useParams } from "next/navigation";
 import { IssueActivityBlockComponent } from "./helpers/activity-block";
 import { IssueLink } from "./helpers/issue-link";
 // types
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 
 type TIssueCustomFieldActivity = {
   activityId: string;
@@ -26,8 +26,8 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
   const {
     activity: { getActivityById },
   } = useIssueDetail();
-  const { 
-    project: { getProjectMemberDetails, getProjectMemberIds } 
+  const {
+    project: { getProjectMemberDetails, getProjectMemberIds },
   } = useMember();
 
   const activity = getActivityById(activityId);
@@ -36,19 +36,19 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
 
   const getFieldName = () => {
     const fieldKey = activity.field?.replace("custom_field_", "");
-    const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
+    const field = customFields.find((f) => f.name === fieldKey || f.key === fieldKey);
     return field?.name || fieldKey || "알 수 없는 필드";
   };
 
   const getFieldType = () => {
     const fieldKey = activity.field?.replace("custom_field_", "");
-    const field = customFields.find(f => f.name === fieldKey || f.key === fieldKey);
+    const field = customFields.find((f) => f.name === fieldKey || f.key === fieldKey);
     return field?.field_type || "text";
   };
 
   const getIcon = () => {
     const fieldType = getFieldType();
-    
+
     switch (fieldType) {
       case "text":
         return <MessageSquareIcon className="h-4 w-4 flex-shrink-0 text-custom-text-200" />;
@@ -67,17 +67,17 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
 
   const formatValue = (value: string | null): React.ReactNode => {
     if (!value) return "없음";
-    
+
     // 해당 커스텀 필드 정보 찾기
     const fieldType = getFieldType();
-    
+
     // project_member 타입인 경우 멤버 이름으로 변환
     if (fieldType === "project_member") {
       try {
         // 백엔드에서 이미 포맷팅된 멤버 이름인지 확인
         // UUID 형태가 아니라면 이미 포맷팅된 이름일 가능성이 높음
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-        
+
         if (isUUID) {
           // UUID인 경우 기존 로직 사용
           const memberDetails = getProjectMemberDetails(value, projectId as string);
@@ -107,11 +107,11 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
         } else {
           // 이미 포맷팅된 멤버 이름인 경우, 모든 프로젝트 멤버에서 이름으로 찾기
           const allMemberIds = getProjectMemberIds(projectId as string, true) || [];
-          const memberId = allMemberIds.find(id => {
+          const memberId = allMemberIds.find((id) => {
             const memberDetails = getProjectMemberDetails(id, projectId as string);
             return memberDetails?.member?.display_name === value.trim();
           });
-          
+
           if (memberId) {
             return (
               <a
@@ -132,7 +132,7 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
         return value;
       }
     }
-    
+
     // project_members 타입인 경우 멤버 이름들로 변환
     if (fieldType === "project_members") {
       try {
@@ -142,14 +142,14 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
           // 모든 프로젝트 멤버를 가져와서 이름으로 매칭하여 하이퍼링크 생성
           const memberNames = value.split(", ");
           const allMemberIds = getProjectMemberIds(projectId as string, true) || [];
-          
+
           const memberElements = memberNames.map((name, index) => {
             // 이름으로 멤버 찾기
-            const memberId = allMemberIds.find(id => {
+            const memberId = allMemberIds.find((id) => {
               const memberDetails = getProjectMemberDetails(id, projectId as string);
               return memberDetails?.member?.display_name === name.trim();
             });
-            
+
             if (memberId) {
               return (
                 <span key={`${name}-${index}`}>
@@ -174,10 +174,10 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
               );
             }
           });
-          
+
           return <>{memberElements}</>;
         }
-        
+
         // JSON 배열인지 확인
         let memberIds: string[];
         if (typeof value === "string") {
@@ -191,7 +191,7 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
         } else {
           memberIds = Array.isArray(value) ? value : [value];
         }
-        
+
         if (Array.isArray(memberIds)) {
           const memberElements = memberIds
             .map((id, index) => {
@@ -213,8 +213,8 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
               }
               return null;
             })
-            .filter(element => element !== null);
-          
+            .filter((element) => element !== null);
+
           return memberElements.length > 0 ? <>{memberElements}</> : value;
         }
       } catch (e) {
@@ -222,7 +222,7 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
       }
       return value;
     }
-    
+
     // 기타 타입의 경우 JSON 배열 처리
     try {
       // JSON 배열인 경우 쉼표로 구분된 문자열로 변환
@@ -235,7 +235,7 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
     } catch (e) {
       // JSON 파싱 실패 시 원본 값 반환
     }
-    
+
     return value;
   };
 
@@ -281,11 +281,7 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
   };
 
   return (
-    <IssueActivityBlockComponent
-      icon={getIcon()}
-      activityId={activityId}
-      ends={ends}
-    >
+    <IssueActivityBlockComponent icon={getIcon()} activityId={activityId} ends={ends}>
       <>
         {getActivityMessage()}
         {showIssue ? ` for ` : ``}
@@ -293,4 +289,4 @@ export const IssueCustomFieldActivity: FC<TIssueCustomFieldActivity> = observer(
       </>
     </IssueActivityBlockComponent>
   );
-}); 
+});

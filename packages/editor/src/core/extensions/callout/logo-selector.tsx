@@ -1,8 +1,9 @@
 // plane imports
-import { EmojiIconPicker, EmojiIconPickerTypes, Logo, TEmojiLogoProps } from "@plane/ui";
-import { cn, getEmojiImageUrlFromUnicode } from "@plane/utils";
+import { EmojiPicker, EmojiIconPickerTypes, Logo } from "@plane/propel/emoji-icon-picker";
+import type { TLogoProps } from "@plane/types";
+import { cn, getEmojiImageUrlFromDecimal } from "@plane/utils";
 // types
-import { TCalloutBlockAttributes } from "./types";
+import type { TCalloutBlockAttributes } from "./types";
 // utils
 import { DEFAULT_CALLOUT_BLOCK_ATTRIBUTES, updateStoredLogo } from "./utils";
 
@@ -14,10 +15,10 @@ type Props = {
   updateAttributes: (attrs: Partial<TCalloutBlockAttributes>) => void;
 };
 
-export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
+export function CalloutBlockLogoSelector(props: Props) {
   const { blockAttributes, disabled, handleOpen, isOpen, updateAttributes } = props;
 
-  const logoValue: TEmojiLogoProps = {
+  const logoValue: TLogoProps = {
     in_use: blockAttributes["data-logo-in-use"],
     icon: {
       color: blockAttributes["data-icon-color"],
@@ -31,7 +32,7 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
 
   return (
     <div contentEditable={false}>
-      <EmojiIconPicker
+      <EmojiPicker
         closeOnSelect={false}
         isOpen={isOpen}
         handleToggle={handleOpen}
@@ -43,7 +44,7 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
         onChange={(val) => {
           // construct the new logo value based on the type of value
           let newLogoValue: Partial<TCalloutBlockAttributes> = {};
-          let newLogoValueToStoreInLocalStorage: TEmojiLogoProps = {
+          let newLogoValueToStoreInLocalStorage: TLogoProps = {
             in_use: "emoji",
             emoji: {
               value: DEFAULT_CALLOUT_BLOCK_ATTRIBUTES["data-emoji-unicode"],
@@ -51,29 +52,31 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
             },
           };
           if (val.type === "emoji") {
-            const decimalValue = val.value.decimal;
-            const emojiUrl = val.value.imageUrl || getEmojiImageUrlFromUnicode(val.value.unified);
+            // val.value is now a string in decimal format (e.g. "128512")
+            const emojiValue = val.value as unknown as string;
+            const emojiUrl = getEmojiImageUrlFromDecimal(emojiValue);
             newLogoValue = {
-              "data-emoji-unicode": decimalValue,
+              "data-emoji-unicode": emojiValue,
               "data-emoji-url": emojiUrl,
             };
             newLogoValueToStoreInLocalStorage = {
               in_use: "emoji",
               emoji: {
-                value: decimalValue,
+                value: emojiValue,
                 url: emojiUrl,
               },
             };
           } else if (val.type === "icon") {
+            const iconValue = val.value as { name: string; color: string };
             newLogoValue = {
-              "data-icon-name": val.value.name,
-              "data-icon-color": val.value.color,
+              "data-icon-name": iconValue.name,
+              "data-icon-color": iconValue.color,
             };
             newLogoValueToStoreInLocalStorage = {
               in_use: "icon",
               icon: {
-                name: val.value.name,
-                color: val.value.color,
+                name: iconValue.name,
+                color: iconValue.color,
               },
             };
           }
@@ -93,4 +96,4 @@ export const CalloutBlockLogoSelector: React.FC<Props> = (props) => {
       />
     </div>
   );
-};
+}

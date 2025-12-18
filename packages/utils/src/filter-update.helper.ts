@@ -1,5 +1,5 @@
 // types
-import { IIssueFilterOptions } from "@plane/types";
+import type { IIssueFilterOptions } from "@plane/types";
 // helpers
 import { toggleCustomFieldValue, updateCustomFieldValues } from "./custom-field.helper";
 
@@ -18,26 +18,26 @@ export const calculateFilterValue = (
   // 커스텀 필드의 경우 특별한 처리
   if (key === "custom_fields") {
     const currentCustomFields = currentFilters[key] as string | null;
-    
+
     // value가 이미 JSON 문자열인 경우 (프로젝트 뷰 등에서 직접 전달)
     if (typeof value === "string" && (value === "" || value.startsWith("{"))) {
       return value || null;
     }
-    
+
     // value가 "fieldId:value" 형태인 경우 (FilterCustomFields에서 전달)
     if (typeof value === "string" && value.includes(":")) {
       return toggleCustomFieldValue(currentCustomFields, value);
     }
-    
+
     // value가 단순 문자열인 경우, 컨텍스트에서 fieldId를 추출해야 함
     // 이 경우는 FilterCustomFields에서 handleUpdate가 직접 호출될 때 발생
     // 하지만 이 경우는 handleCustomFieldUpdate에서 처리되므로 여기서는 발생하지 않아야 함
-    
+
     // 배열인 경우 (다중 값 처리)
     if (Array.isArray(value)) {
       return updateCustomFieldValues(currentCustomFields, value);
     }
-    
+
     // 기본적으로 toggleCustomFieldValue 사용
     return toggleCustomFieldValue(currentCustomFields, value);
   }
@@ -87,28 +87,28 @@ export const calculateFilterRemovalValue = <T extends Record<string, any>>(
   // 커스텀 필드의 경우 특별한 처리
   if (key === "custom_fields") {
     if (!value) return null;
-    
+
     // value가 이미 처리된 JSON 문자열인 경우 (removeCustomFieldFilterValue에서 처리된 결과)
     // 이 경우 그대로 반환
     if (value.startsWith("{") || value === "null") {
       return value === "null" ? null : value;
     }
-    
+
     // value가 "fieldId:value" 형태인 경우 (직접 제거 요청)
     const currentCustomFields = currentFilters[key] as string | null;
     if (!currentCustomFields) return null;
-    
+
     try {
       const parsed = JSON.parse(currentCustomFields);
       const [fieldId, fieldValue] = value.split(":");
-      
+
       if (parsed[fieldId]) {
         parsed[fieldId] = parsed[fieldId].filter((val: string) => val !== fieldValue);
         if (parsed[fieldId].length === 0) {
           delete parsed[fieldId];
         }
       }
-      
+
       return Object.keys(parsed).length > 0 ? JSON.stringify(parsed) : null;
     } catch (error) {
       console.error("커스텀 필드 파싱 오류:", error);
@@ -167,4 +167,4 @@ export const handleFilterRemoval = <T extends Record<string, any>>(
 ): void => {
   const updatedValue = calculateFilterRemovalValue(key, value, currentFilters);
   updateFunction({ [key]: updatedValue } as Partial<T>);
-}; 
+};

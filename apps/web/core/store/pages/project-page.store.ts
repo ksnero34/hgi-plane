@@ -40,7 +40,10 @@ export interface IProjectPageStore {
   // helper actions
   getCurrentProjectPageIdsByTab: (pageType: TPageNavigationTabs) => string[] | undefined;
   getCurrentProjectPageIds: (projectId: string) => string[];
-  getCurrentProjectFilteredPageIdsByTab: (pageType: TPageNavigationTabs, folderId?: string | null) => string[] | undefined;
+  getCurrentProjectFilteredPageIdsByTab: (
+    pageType: TPageNavigationTabs,
+    folderId?: string | null
+  ) => string[] | undefined;
   getPageById: (pageId: string) => TProjectPage | undefined;
   getFolderPages: () => TProjectPage[];
   updateFilters: <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => void;
@@ -165,10 +168,7 @@ export class ProjectPageStore implements IProjectPageStore {
     const { projectId } = this.store.router;
     if (!projectId) return undefined;
 
-    let filteredPages = filterPagesByPageType(
-      pageType,
-      Object.values(this.data || {})
-    ).filter(
+    let filteredPages = filterPagesByPageType(pageType, Object.values(this.data || {})).filter(
       (p) =>
         p.project_ids?.includes(projectId) &&
         getPageName(p.name).toLowerCase().includes(this.filters.searchQuery.toLowerCase()) &&
@@ -191,9 +191,7 @@ export class ProjectPageStore implements IProjectPageStore {
   getFolderPages = () => {
     const { projectId } = this.store.router;
     if (!projectId) return [] as TProjectPage[];
-    return Object.values(this.data || {}).filter(
-      (p) => p.project_ids?.includes(projectId) && p.is_folder
-    );
+    return Object.values(this.data || {}).filter((p) => p.project_ids?.includes(projectId) && p.is_folder);
   };
 
   updateFilters = <T extends keyof TPageFilters>(filterKey: T, filterValue: TPageFilters[T]) => {
@@ -235,6 +233,7 @@ export class ProjectPageStore implements IProjectPageStore {
             const existingPage = this.getPageById(page.id);
             if (existingPage) {
               // If page already exists, update all fields except name
+
               const { name, ...otherFields } = page;
               existingPage.mutateProperties(otherFields, false);
             } else {

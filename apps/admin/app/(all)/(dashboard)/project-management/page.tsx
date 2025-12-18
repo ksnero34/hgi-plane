@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { observer } from "mobx-react";
@@ -13,13 +11,10 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { useAuth } from "@/hooks/store";
 
-
-
 const ProjectManagementPage = observer(() => {
   const router = useRouter();
   const pathname = usePathname();
   const { isAdmin, isLoading: authLoading } = useAuth();
-
 
   const instanceWorkspaceService = new InstanceWorkspaceService();
 
@@ -36,8 +31,9 @@ const ProjectManagementPage = observer(() => {
   useEffect(() => {
     // 페이지 로드 즉시 직접 API 호출하여 401 에러 발생시키기
     // // console.log("General 페이지: 직접 API 호출로 인증 체크");
-    axios.get("/api/instances/admins/", { withCredentials: true })
-      .then(response => {
+    axios
+      .get("/api/instances/admins/", { withCredentials: true })
+      .then((response) => {
         // // console.log("General 페이지: 관리자 API 호출 성공", response.data);
       })
       .catch((error: any) => {
@@ -45,7 +41,7 @@ const ProjectManagementPage = observer(() => {
         // 401 에러 발생 시 리다이렉션
         if (error.response && error.response.status === 401) {
           const currentPath = window.location.pathname;
-          const normalizedPath = currentPath.replace(/^\/god-mode/, '');
+          const normalizedPath = currentPath.replace(/^\/god-mode/, "");
           window.location.replace(`/god-mode/?next_path=${normalizedPath}`);
         }
       });
@@ -56,7 +52,7 @@ const ProjectManagementPage = observer(() => {
     try {
       // CSRF 토큰 요청
       const response = await axios.get("/auth/get-csrf-token/", {
-        withCredentials: true
+        withCredentials: true,
       });
 
       if (response.data && response.data.csrf_token) {
@@ -123,7 +119,7 @@ const ProjectManagementPage = observer(() => {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "오류",
-        message: "워크스페이스를 불러오는 중 오류가 발생했습니다."
+        message: "워크스페이스를 불러오는 중 오류가 발생했습니다.",
       });
 
       // 401 에러 처리
@@ -140,7 +136,7 @@ const ProjectManagementPage = observer(() => {
     try {
       setIsLoading(true);
       // 선택된 워크스페이스 찾기
-      const selectedWorkspace = workspaces.find(w => w.id === workspaceId);
+      const selectedWorkspace = workspaces.find((w) => w.id === workspaceId);
       if (!selectedWorkspace) {
         console.error("선택한 워크스페이스를 찾을 수 없습니다.");
         setProjects([]);
@@ -160,9 +156,9 @@ const ProjectManagementPage = observer(() => {
 
         const response = await axios.get(url, {
           headers: {
-            'X-CSRFToken': csrfToken
+            "X-CSRFToken": csrfToken,
           },
-          withCredentials: true
+          withCredentials: true,
         });
 
         // console.log("프로젝트 API 응답:", response);
@@ -188,7 +184,7 @@ const ProjectManagementPage = observer(() => {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: "오류",
-            message: "프로젝트 목록을 불러오는데 실패했습니다."
+            message: "프로젝트 목록을 불러오는데 실패했습니다.",
           });
         }
 
@@ -201,7 +197,7 @@ const ProjectManagementPage = observer(() => {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "오류",
-        message: "프로젝트를 불러오는 중 오류가 발생했습니다."
+        message: "프로젝트를 불러오는 중 오류가 발생했습니다.",
       });
 
       setIsLoading(false);
@@ -227,7 +223,7 @@ const ProjectManagementPage = observer(() => {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "입력 오류",
-        message: "소스 워크스페이스, 프로젝트, 대상 워크스페이스를 모두 선택해주세요."
+        message: "소스 워크스페이스, 프로젝트, 대상 워크스페이스를 모두 선택해주세요.",
       });
       return;
     }
@@ -237,7 +233,7 @@ const ProjectManagementPage = observer(() => {
       setToast({
         type: TOAST_TYPE.WARNING,
         title: "경고",
-        message: "프로젝트가 이미 해당 워크스페이스에 있습니다."
+        message: "프로젝트가 이미 해당 워크스페이스에 있습니다.",
       });
       return;
     }
@@ -254,25 +250,29 @@ const ProjectManagementPage = observer(() => {
       const csrfToken = await getCSRFToken();
 
       // 프로젝트 이동 요청
-      const selectedWorkspace = workspaces.find(w => w.id === selectedSourceWorkspace);
+      const selectedWorkspace = workspaces.find((w) => w.id === selectedSourceWorkspace);
       const url = `/api/instances/workspaces/${selectedWorkspace?.slug}/projects/`;
 
-      const response = await axios.post(url, {
-        project_id: selectedProject,
-        target_workspace_id: selectedTargetWorkspace
-      }, {
-        headers: {
-          'X-CSRFToken': csrfToken
+      const response = await axios.post(
+        url,
+        {
+          project_id: selectedProject,
+          target_workspace_id: selectedTargetWorkspace,
         },
-        withCredentials: true
-      });
+        {
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          withCredentials: true,
+        }
+      );
 
       // console.log("프로젝트 이동 결과:", response);
 
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "성공",
-        message: "프로젝트가 성공적으로 이동되었습니다."
+        message: "프로젝트가 성공적으로 이동되었습니다.",
       });
 
       // 상태 초기화 및 UI 업데이트
@@ -285,7 +285,6 @@ const ProjectManagementPage = observer(() => {
           fetchProjects(selectedSourceWorkspace).catch(console.error);
         }, 1000);
       }
-
     } catch (error: any) {
       console.error("프로젝트 이동 실패:", error);
 
@@ -296,7 +295,7 @@ const ProjectManagementPage = observer(() => {
         console.error("오류 스택:", error.stack);
       }
 
-      const errorResponse = (error as any)?.response;
+      const errorResponse = (error)?.response;
       if (errorResponse) {
         console.error("서버 응답 상태:", errorResponse.status);
         console.error("서버 응답 데이터:", errorResponse.data);
@@ -306,8 +305,9 @@ const ProjectManagementPage = observer(() => {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: "오류",
-        message: "프로젝트 이동 중 오류가 발생했습니다: " +
-          (error?.response?.data?.error || error?.message || "알 수 없는 오류")
+        message:
+          "프로젝트 이동 중 오류가 발생했습니다: " +
+          (error?.response?.data?.error || error?.message || "알 수 없는 오류"),
       });
 
       // 401 에러 처리
@@ -340,13 +340,11 @@ const ProjectManagementPage = observer(() => {
       <div className="space-y-6 max-w-3xl">
         {/* 소스 워크스페이스 선택 */}
         <div>
-          <label className="block text-sm font-medium text-custom-text-100 mb-2">
-            소스 워크스페이스
-          </label>
+          <label className="block text-sm font-medium text-custom-text-100 mb-2">소스 워크스페이스</label>
           <CustomSelect
-            key={selectedSourceWorkspace || 'workspace-select'}
+            key={selectedSourceWorkspace || "workspace-select"}
             value={selectedSourceWorkspace}
-            label={workspaces.find(w => w.id === selectedSourceWorkspace)?.name || "워크스페이스 선택"}
+            label={workspaces.find((w) => w.id === selectedSourceWorkspace)?.name || "워크스페이스 선택"}
             onChange={(value: string | null) => {
               // console.log("워크스페이스 선택됨:", value);
               if (value) {
@@ -370,13 +368,11 @@ const ProjectManagementPage = observer(() => {
 
         {/* 프로젝트 선택 */}
         <div>
-          <label className="block text-sm font-medium text-custom-text-100 mb-2">
-            프로젝트
-          </label>
+          <label className="block text-sm font-medium text-custom-text-100 mb-2">프로젝트</label>
           <CustomSelect
-            key={`project-select-${selectedSourceWorkspace || ''}`}
+            key={`project-select-${selectedSourceWorkspace || ""}`}
             value={selectedProject}
-            label={projects.find(p => p.id === selectedProject)?.name || "프로젝트 선택"}
+            label={projects.find((p) => p.id === selectedProject)?.name || "프로젝트 선택"}
             onChange={handleProjectChange}
             disabled={!selectedSourceWorkspace || isLoading || isTransferring}
           >
@@ -390,13 +386,11 @@ const ProjectManagementPage = observer(() => {
 
         {/* 대상 워크스페이스 선택 */}
         <div>
-          <label className="block text-sm font-medium text-custom-text-100 mb-2">
-            대상 워크스페이스
-          </label>
+          <label className="block text-sm font-medium text-custom-text-100 mb-2">대상 워크스페이스</label>
           <CustomSelect
-            key={`target-workspace-select-${selectedProject || ''}`}
+            key={`target-workspace-select-${selectedProject || ""}`}
             value={selectedTargetWorkspace}
-            label={workspaces.find(w => w.id === selectedTargetWorkspace)?.name || "워크스페이스 선택"}
+            label={workspaces.find((w) => w.id === selectedTargetWorkspace)?.name || "워크스페이스 선택"}
             onChange={handleTargetWorkspaceChange}
             disabled={!selectedProject || isLoading || isTransferring}
           >

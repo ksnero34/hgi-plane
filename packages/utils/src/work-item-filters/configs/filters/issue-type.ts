@@ -1,20 +1,9 @@
 // plane imports
-import {
-  COLLECTION_OPERATOR,
-  EQUALITY_OPERATOR,
-  IProjectIssueType,
-  TFilterProperty,
-  TSupportedOperators,
-} from "@plane/types";
+import { COLLECTION_OPERATOR, EQUALITY_OPERATOR } from "@plane/types";
+import type { IProjectIssueType, TFilterProperty, TSupportedOperators } from "@plane/types";
 // local imports
-import {
-  createFilterConfig,
-  getMultiSelectConfig,
-  IFilterIconConfig,
-  TCreateFilterConfig,
-  TCreateFilterConfigParams,
-  createOperatorConfigEntry,
-} from "../../../rich-filters";
+import { createFilterConfig, getMultiSelectConfig, createOperatorConfigEntry } from "../../../rich-filters";
+import type { IFilterIconConfig, TCreateFilterConfig, TCreateFilterConfigParams } from "../../../rich-filters";
 
 /**
  * Issue type filter specific params

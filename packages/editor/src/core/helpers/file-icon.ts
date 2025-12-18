@@ -10,7 +10,7 @@ import {
   Table,
   Presentation,
 } from "lucide-react";
-import { FC } from "react";
+import type { FC } from "react";
 
 type IconComponent = FC<{ className?: string }>;
 
@@ -22,7 +22,7 @@ const FILE_ICONS: Record<string, IconComponent> = {
   gif: Image,
   svg: Image,
   webp: Image,
-  
+
   // 문서
   pdf: File,
   doc: FileText,
@@ -30,16 +30,16 @@ const FILE_ICONS: Record<string, IconComponent> = {
   txt: FileText,
   md: FileText,
   rtf: FileText,
-  
+
   // 스프레드시트
   xls: Table,
   xlsx: Table,
   csv: Table,
-  
+
   // 프레젠테이션
   ppt: Presentation,
   pptx: Presentation,
-  
+
   // 코드
   js: FileCode,
   ts: FileCode,
@@ -48,18 +48,18 @@ const FILE_ICONS: Record<string, IconComponent> = {
   html: FileCode,
   css: FileCode,
   json: FileCode,
-  
+
   // 비디오
   mp4: FileVideo,
   webm: FileVideo,
   avi: FileVideo,
   mov: FileVideo,
-  
+
   // 오디오
   mp3: FileAudio,
   wav: FileAudio,
   ogg: FileAudio,
-  
+
   // 압축
   zip: Archive,
   rar: Archive,
@@ -70,4 +70,4 @@ const FILE_ICONS: Record<string, IconComponent> = {
 
 export const getFileIconByExtension = (extension: string): IconComponent => {
   return FILE_ICONS[extension.toLowerCase()] || FileIcon;
-}; 
+};

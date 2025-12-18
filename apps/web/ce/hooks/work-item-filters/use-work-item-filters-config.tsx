@@ -16,14 +16,21 @@ import {
   Search,
 } from "lucide-react";
 // plane imports
+import { Logo } from "@plane/propel/emoji-icon-picker";
 import {
   CycleGroupIcon,
   CycleIcon,
   ModuleIcon,
-  DoubleCircleIcon,
+  StatePropertyIcon,
   PriorityIcon,
   StateGroupIcon,
   WorkItemsIcon,
+  MembersPropertyIcon,
+  LabelPropertyIcon,
+  StartDatePropertyIcon,
+  DueDatePropertyIcon,
+  UserCirclePropertyIcon,
+  PriorityPropertyIcon,
 } from "@plane/propel/icons";
 import type {
   ICycle,
@@ -37,12 +44,8 @@ import type {
   IProjectIssueType,
   TWorkItemFilterProperty,
 } from "@plane/types";
-import {
-  COLLECTION_OPERATOR,
-  EQUALITY_OPERATOR,
-  TEXT_OPERATOR,
-} from "@plane/types";
-import { Avatar, Logo } from "@plane/ui";
+import { COLLECTION_OPERATOR, EQUALITY_OPERATOR, TEXT_OPERATOR } from "@plane/types";
+import { Avatar } from "@plane/ui";
 import {
   getAssigneeFilterConfig,
   getCreatedAtFilterConfig,
@@ -113,8 +116,18 @@ export type TWorkItemFiltersConfig = {
 };
 
 export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps): TWorkItemFiltersConfig => {
-  const { allowedFilters, cycleIds, issueTypeIds, labelIds, memberIds, moduleIds, projectId, projectIds, stateIds, workspaceSlug } =
-    props;
+  const {
+    allowedFilters,
+    cycleIds,
+    issueTypeIds,
+    labelIds,
+    memberIds,
+    moduleIds,
+    projectId,
+    projectIds,
+    stateIds,
+    workspaceSlug,
+  } = props;
   // store hooks
   const { loader: projectLoader, getProjectById } = useProject();
   const { getCycleById } = useCycle();
@@ -164,9 +177,10 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [projectIds, getProjectById]
   );
   const issueTypes = useMemo(
-    () => issueTypeIds
-      ? projectIssueTypes.filter((projectIssueType) => issueTypeIds.includes(projectIssueType.issue_type.id))
-      : projectIssueTypes,
+    () =>
+      issueTypeIds
+        ? projectIssueTypes.filter((projectIssueType) => issueTypeIds.includes(projectIssueType.issue_type.id))
+        : projectIssueTypes,
     [issueTypeIds, projectIssueTypes]
   );
   const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
@@ -193,7 +207,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getStateGroupFilterConfig<TWorkItemFilterProperty>("state_group")({
         isEnabled: isFilterEnabled("state_group"),
-        filterIcon: DoubleCircleIcon,
+        filterIcon: StatePropertyIcon,
         getOptionIcon: (stateGroupKey) => <StateGroupIcon stateGroup={stateGroupKey} />,
         ...operatorConfigs,
       }),
@@ -205,7 +219,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getStateFilterConfig<TWorkItemFilterProperty>("state_id")({
         isEnabled: isFilterEnabled("state_id") && workItemStates !== undefined,
-        filterIcon: DoubleCircleIcon,
+        filterIcon: StatePropertyIcon,
         getOptionIcon: (state) => <StateGroupIcon stateGroup={state.group} color={state.color} />,
         states: workItemStates ?? [],
         ...operatorConfigs,
@@ -218,7 +232,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getLabelFilterConfig<TWorkItemFilterProperty>("label_id")({
         isEnabled: isFilterEnabled("label_id") && workItemLabels !== undefined,
-        filterIcon: Tag,
+        filterIcon: LabelPropertyIcon,
         labels: workItemLabels ?? [],
         getOptionIcon: (color) => (
           <span className="flex flex-shrink-0 size-2.5 rounded-full" style={{ backgroundColor: color }} />
@@ -259,7 +273,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getAssigneeFilterConfig<TWorkItemFilterProperty>("assignee_id")({
         isEnabled: isFilterEnabled("assignee_id") && members !== undefined,
-        filterIcon: Users,
+        filterIcon: MembersPropertyIcon,
         members: members ?? [],
         getOptionIcon: (memberDetails) => (
           <Avatar
@@ -299,7 +313,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getCreatedByFilterConfig<TWorkItemFilterProperty>("created_by_id")({
         isEnabled: isFilterEnabled("created_by_id") && members !== undefined,
-        filterIcon: CircleUserRound,
+        filterIcon: UserCirclePropertyIcon,
         members: members ?? [],
         getOptionIcon: (memberDetails) => (
           <Avatar
@@ -319,7 +333,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getSubscriberFilterConfig<TWorkItemFilterProperty>("subscriber_id")({
         isEnabled: isFilterEnabled("subscriber_id") && members !== undefined,
-        filterIcon: Users,
+        filterIcon: MembersPropertyIcon,
         members: members ?? [],
         getOptionIcon: (memberDetails) => (
           <Avatar
@@ -339,7 +353,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getPriorityFilterConfig<TWorkItemFilterProperty>("priority")({
         isEnabled: isFilterEnabled("priority"),
-        filterIcon: SignalHigh,
+        filterIcon: PriorityPropertyIcon,
         getOptionIcon: (priority) => <PriorityIcon priority={priority} />,
         ...operatorConfigs,
       }),
@@ -355,10 +369,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         isEnabled: true,
         icon: User,
         supportedOperatorConfigsMap: new Map([
-          createOperatorConfigEntry(
-            EQUALITY_OPERATOR.EXACT,
-            { ...operatorConfigs, isEnabled: true },
-            (updatedParams) =>
+          createOperatorConfigEntry(EQUALITY_OPERATOR.EXACT, { ...operatorConfigs, isEnabled: true }, (updatedParams) =>
             getMultiSelectConfig<boolean, boolean, boolean>(
               {
                 items: [true],
@@ -373,7 +384,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
               },
               {}
             )
-          )
+          ),
         ]),
       }),
     [operatorConfigs]
@@ -395,7 +406,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getStartDateFilterConfig<TWorkItemFilterProperty>("start_date")({
         isEnabled: true,
-        filterIcon: CalendarClock,
+        filterIcon: StartDatePropertyIcon,
         ...operatorConfigs,
       }),
     [operatorConfigs]
@@ -406,7 +417,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       getTargetDateFilterConfig<TWorkItemFilterProperty>("target_date")({
         isEnabled: true,
-        filterIcon: CalendarCheck2,
+        filterIcon: DueDatePropertyIcon,
         ...operatorConfigs,
       }),
     [operatorConfigs]
@@ -455,12 +466,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         filterIcon: WorkItemsIcon,
         issueTypes: issueTypes ?? [],
         getOptionIcon: (issueType) => (
-          <IssueTypeIcon
-            issueType={issueType.issue_type}
-            size={14}
-            showTooltip={false}
-            className="flex-shrink-0"
-          />
+          <IssueTypeIcon issueType={issueType.issue_type} size={14} showTooltip={false} className="flex-shrink-0" />
         ),
         ...operatorConfigs,
       }),
@@ -492,7 +498,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const customFieldConfigs = useMemo(() => {
     if (!customFields || customFields.length === 0) return [];
 
-    return customFields.map(field => {
+    return customFields.map((field) => {
       const filterKey = `customproperty_${field.id}`;
 
       const baseParams = {
@@ -679,10 +685,13 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       issue_type_id: issueTypeFilterConfig,
       my_issues_only: myIssuesOnlyFilterConfig,
       // 커스텀 필드 configs를 동적으로 추가
-      ...customFieldConfigs.reduce((acc, config) => {
-        acc[config.id] = config;
-        return acc;
-      }, {} as Record<string, any>),
+      ...customFieldConfigs.reduce(
+        (acc, config) => {
+          acc[config.id] = config;
+          return acc;
+        },
+        {} as Record<string, any>
+      ),
     },
     isFilterEnabled,
     members: members ?? [],

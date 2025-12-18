@@ -3,7 +3,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 // components
 import { FileNode } from "./components/file-node";
 // types
-import { TFileHandler } from "@/types";
+import type { TFileHandler } from "@/types";
 
 export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetSrc" | "getAssetDownloadSrc">) => {
   const { getAssetSrc, getAssetDownloadSrc } = props;
@@ -82,7 +82,7 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
       return {
         fileMap: new Map(),
         markdown: {
-          serialize() { },
+          serialize() {},
         },
         fileHandler: {
           getAssetSrc: async (path: string) => {
@@ -102,11 +102,11 @@ export const CustomReadOnlyFileExtension = (props: Pick<TFileHandler, "getAssetS
             }
           },
           upload: async () => "",
-          delete: async () => { },
-          restore: async () => { },
+          delete: async () => {},
+          restore: async () => {},
           validateFile: async () => true,
         },
       };
     },
   });
-}; 
+};

@@ -19,7 +19,6 @@ import { forceCloseDocumentAcrossServers } from "./force-close-handler";
 const fetchDocument = async ({ context, documentName: pageId, instance }: FetchPayloadWithContext) => {
   try {
     const service = getPageService(context.documentType, context);
-
     // For project_overview, fetchDescriptionBinary doesn't need pageId
     let response;
     if (context.documentType === "project_overview") {
@@ -28,7 +27,7 @@ const fetchDocument = async ({ context, documentName: pageId, instance }: FetchP
       response = await (service as any).fetchDescriptionBinary(pageId);
     }
 
-    const binaryData = new Uint8Array(response);
+    const binaryData = new Uint8Array(response as Buffer);
 
     // if binary data is empty, convert HTML to binary data
     if (binaryData.byteLength === 0) {
@@ -40,8 +39,25 @@ const fetchDocument = async ({ context, documentName: pageId, instance }: FetchP
         }
       } else {
         const pageDetails = await (service as any).fetchDetails(pageId);
-        const convertedBinaryData = getBinaryDataFromDocumentEditorHTMLString(pageDetails.description_html ?? "<p></p>");
+        const convertedBinaryData = getBinaryDataFromDocumentEditorHTMLString(
+          pageDetails.description_html ?? "<p></p>",
+          pageDetails.name
+        );
         if (convertedBinaryData) {
+          // save the converted binary data back to the database
+          try {
+            const { contentBinaryEncoded, contentHTML, contentJSON } =
+              getAllDocumentFormatsFromDocumentEditorBinaryData(convertedBinaryData, true);
+            const payload = {
+              description_binary: contentBinaryEncoded,
+              description_html: contentHTML,
+              description: contentJSON,
+            };
+            await (service as any).updateDescriptionBinary(pageId, payload);
+          } catch (e) {
+            const error = new AppError(e);
+            logger.error("Failed to save binary after first convertion from html:", error);
+          }
           return convertedBinaryData;
         }
       }
@@ -68,8 +84,10 @@ const storeDocument = async ({
   try {
     const service = getPageService(context.documentType, context);
     // convert binary data to all formats
-    const { contentBinaryEncoded, contentHTML, contentJSON } =
-      getAllDocumentFormatsFromDocumentEditorBinaryData(pageBinaryData);
+    const { contentBinaryEncoded, contentHTML, contentJSON } = getAllDocumentFormatsFromDocumentEditorBinaryData(
+      pageBinaryData,
+      true
+    );
 
     // For project_overview, use different payload structure
     if (context.documentType === "project_overview") {

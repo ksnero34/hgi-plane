@@ -8,7 +8,7 @@ import { DateDropdown, MemberDropdown } from "@/components/dropdowns";
 import { CustomFieldDropdown } from "@/components/dropdowns/custom-field";
 
 // types
-import { TCustomField } from "@plane/types";
+import type { TCustomField } from "@plane/types";
 
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -43,29 +43,24 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
   // 필드 값 업데이트 (peek-overview 방식 적용)
   const updateFieldValue = (fieldId: string, value: any) => {
     // console.log("[IssueCustomFieldSidebar] Updating field:", fieldId, "with value:", value);
-    
-    const field = customFields.find(f => f.id === fieldId);
+
+    const field = customFields.find((f) => f.id === fieldId);
     if (!field) {
       console.error("[IssueCustomFieldSidebar] Field not found:", fieldId);
       return;
     }
 
     // 공통 유틸리티 함수 사용 (peek-overview 방식)
-    const updatedValues = updateCustomFieldValueSafely(
-      issue?.custom_field_values || [],
-      fieldId,
-      value,
-      {
-        name: field.name,
-        field_type: field.field_type
-      }
-    );
+    const updatedValues = updateCustomFieldValueSafely(issue?.custom_field_values || [], fieldId, value, {
+      name: field.name,
+      field_type: field.field_type,
+    });
 
     // console.log("[IssueCustomFieldSidebar] Final update values:", updatedValues);
 
     // 이슈 업데이트
     issueOperations.update(workspaceSlug, projectId, issueId, {
-      custom_field_values: updatedValues
+      custom_field_values: updatedValues,
     });
   };
 
@@ -183,7 +178,7 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
     <>
       {customFields.map((field) => {
         const FieldIcon = getFieldIcon(field.field_type);
-        
+
         return (
           <div key={field.id} className="flex h-8 items-center gap-2">
             <div className="flex w-2/5 flex-shrink-0 items-center gap-1 text-sm text-custom-text-300">
@@ -199,4 +194,4 @@ export const IssueCustomFieldSidebar: React.FC<Props> = observer((props) => {
       })}
     </>
   );
-}); 
+});

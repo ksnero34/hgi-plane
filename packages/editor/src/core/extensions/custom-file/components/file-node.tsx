@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { NodeViewWrapper } from "@tiptap/react";
-import { CustomBaseFileNodeViewProps } from "../custom-file";
+import type { CustomBaseFileNodeViewProps } from "../custom-file";
 import { FileBlock } from "./file-block";
 import { FileUploader } from "./file-uploader";
 import { FileDeleteConfirmModal } from "./file-delete-confirm-modal";
 
 export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   const { node, editor, getPos, updateAttributes } = props;
-  
+
   // 속성을 안전하게 추출 (id와 fileId 둘 다 지원)
   const fileId = node.attrs.id || node.attrs.fileId;
   const fileName = node.attrs.fileName;
@@ -40,7 +40,7 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
   const handleDeleteConfirm = async () => {
     // 편집 모드가 아니면 삭제 불가능
     if (!editor.isEditable) return;
-    
+
     try {
       const pos = getPos();
       await editor.commands.deleteFile(fileId);
@@ -48,9 +48,9 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
     } catch (error: any) {
       console.error("Error deleting file:", error);
       const message = error?.response?.data?.message || error?.message || "파일 삭제에 실패했습니다.";
-      updateAttributes({ 
+      updateAttributes({
         uploadStatus: "error",
-        errorMessage: message
+        errorMessage: message,
       });
       setFailedToLoadFile(true);
     } finally {
@@ -69,7 +69,7 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
 
       // 각 모드에 맞는 fileHandler 찾기
       let fileHandler;
-      
+
       try {
         // customFile 스토리지에서 fileHandler 가져오기
         if (editor.storage.customFile?.fileHandler?.getAssetSrc) {
@@ -105,20 +105,20 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
       }
 
       // 파일 다운로드를 위한 임시 링크 생성
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       // HTML5 download 속성 제거 - 서버의 Content-Disposition 헤더에 의존
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       console.log(`[FileDownload] Download initiated: ${fileName} from ${url}`);
     } catch (error: any) {
       console.error("Error downloading file:", error);
       const message = error?.message || "파일 다운로드에 실패했습니다.";
-      updateAttributes({ 
+      updateAttributes({
         uploadStatus: "error",
-        errorMessage: message
+        errorMessage: message,
       });
       setFailedToLoadFile(true);
     }
@@ -137,11 +137,7 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
               setFailedToLoadFile={setFailedToLoadFile}
             />
           ) : editor.isEditable ? (
-            <FileUploader
-              {...props}
-              setIsUploaded={setIsUploaded}
-              setFailedToLoadFile={setFailedToLoadFile}
-            />
+            <FileUploader {...props} setIsUploaded={setIsUploaded} setFailedToLoadFile={setFailedToLoadFile} />
           ) : (
             // 읽기 모드에서 업로드 실패/진행 중인 경우 간단한 메시지 표시
             <div className="p-3 border rounded-md bg-custom-background-100">
@@ -164,4 +160,4 @@ export const FileNode = (props: CustomBaseFileNodeViewProps) => {
       )}
     </>
   );
-}; 
+};

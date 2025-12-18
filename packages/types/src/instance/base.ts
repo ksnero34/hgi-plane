@@ -1,18 +1,20 @@
-import { IUserLite } from "../users";
-import {
+import type { IUserLite } from "../users";
+import type {
   TInstanceAIConfigurationKeys,
   TInstanceEmailConfigurationKeys,
   TInstanceImageConfigurationKeys,
   TInstanceAuthenticationKeys,
   TInstanceWorkspaceConfigurationKeys,
+  TCoreLoginMediums,
 } from "./";
+import type { TExtendedLoginMediums } from "./auth-ee";
 
-export interface IInstanceInfo {
+export type IInstanceInfo = {
   instance: IInstance;
   config: IInstanceConfig;
-}
+};
 
-export interface IInstance {
+export type IInstance = {
   id: string;
   created_at: string;
   updated_at: string;
@@ -35,14 +37,15 @@ export interface IInstance {
   updated_by: string | undefined;
   workspaces_exist: boolean;
   fileSettings?: IFileSettings;
-}
+};
 
-export interface IInstanceConfig {
+export type IInstanceConfig = {
   enable_signup: boolean;
   is_workspace_creation_disabled: boolean;
   is_google_enabled: boolean;
   is_github_enabled: boolean;
   is_gitlab_enabled: boolean;
+  is_gitea_enabled: boolean;
   is_magic_login_enabled: boolean;
   is_email_password_enabled: boolean;
   github_app_name: string | undefined;
@@ -56,14 +59,15 @@ export interface IInstanceConfig {
   app_base_url: string | undefined;
   space_base_url: string | undefined;
   admin_base_url: string | undefined;
+  is_self_managed: boolean;
   // intercom
   is_intercom_enabled: boolean;
   intercom_app_id: string | undefined;
   is_oidc_enabled: boolean;
   instance_changelog_url?: string;
-}
+};
 
-export interface IInstanceAdmin {
+export type IInstanceAdmin = {
   created_at: string;
   created_by: string;
   id: string;
@@ -73,7 +77,7 @@ export interface IInstanceAdmin {
   updated_by: string;
   user: string;
   user_detail: IUserLite;
-}
+};
 
 export type TInstanceIntercomConfigurationKeys = "IS_INTERCOM_ENABLED" | "INTERCOM_APP_ID";
 
@@ -85,7 +89,7 @@ export type TInstanceConfigurationKeys =
   | TInstanceIntercomConfigurationKeys
   | TInstanceWorkspaceConfigurationKeys;
 
-export interface IInstanceConfiguration {
+export type IInstanceConfiguration = {
   id: string;
   created_at: string;
   updated_at: string;
@@ -93,22 +97,22 @@ export interface IInstanceConfiguration {
   value: string;
   created_by: string | null;
   updated_by: string | null;
-}
+};
 
 export type IFormattedInstanceConfiguration = {
   [key in TInstanceConfigurationKeys]: string;
 };
 
-export interface IFileSettings {
+export type IFileSettings = {
   allowed_extensions: string[];
   max_file_size: number;
   created_at?: string;
   updated_at?: string;
   id?: string;
   instance?: string;
-}
+};
 
-export interface IInstanceMember {
+export type IInstanceMember = {
   id: string;
   email: string;
   first_name: string;
@@ -117,4 +121,5 @@ export interface IInstanceMember {
   avatar?: string;
   created_at?: string;
   updated_at?: string;
-}
+};
+export type TLoginMediums = TCoreLoginMediums | TExtendedLoginMediums;

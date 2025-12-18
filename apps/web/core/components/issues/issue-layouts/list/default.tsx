@@ -57,7 +57,7 @@ export interface IList {
   groupByFields?: any[];
 }
 
-export const List: React.FC<IList> = observer((props) => {
+export const List = observer(function List(props: IList) {
   const {
     groupedIssueIds,
     issuesMap,

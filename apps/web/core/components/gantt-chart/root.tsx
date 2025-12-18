@@ -37,7 +37,7 @@ type GanttChartRootProps = {
   orderBy?: TIssueOrderByOptions;
 };
 
-export const GanttChartRoot: FC<GanttChartRootProps> = observer((props) => {
+export const GanttChartRoot = observer(function GanttChartRoot(props: GanttChartRootProps) {
   const {
     border = true,
     title,

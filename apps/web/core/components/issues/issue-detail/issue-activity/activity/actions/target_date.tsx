@@ -10,7 +10,7 @@ import { IssueActivityBlockComponent, IssueLink } from "./";
 
 type TIssueTargetDateActivity = { activityId: string; showIssue?: boolean; ends: "top" | "bottom" | undefined };
 
-export const IssueTargetDateActivity: FC<TIssueTargetDateActivity> = observer((props) => {
+export const IssueTargetDateActivity = observer(function IssueTargetDateActivity(props: TIssueTargetDateActivity) {
   const { activityId, showIssue = true, ends } = props;
   // hooks
   const {
@@ -30,7 +30,8 @@ export const IssueTargetDateActivity: FC<TIssueTargetDateActivity> = observer((p
         {activity.new_value ? `님이 종료일을 ` : `님이 종료일을 삭제했습니다 `}
         {activity.new_value && (
           <>
-            <span className="font-medium text-custom-text-100">{renderFormattedDate(activity.new_value)}</span> 로 변경했습니다
+            <span className="font-medium text-custom-text-100">{renderFormattedDate(activity.new_value)}</span> 로
+            변경했습니다
           </>
         )}
         {showIssue && (activity.new_value ? ` for ` : ` from `)}

@@ -27,7 +27,7 @@ type Props = {
   storeType: EPageStoreType;
 };
 
-export const CreatePageModal: FC<Props> = (props) => {
+export function CreatePageModal(props: Props) {
   const {
     workspaceSlug,
     projectId,
@@ -76,7 +76,7 @@ export const CreatePageModal: FC<Props> = (props) => {
   const handleFormSubmit = async () => {
     if (!workspaceSlug || !projectId) return;
 
-    console.log('handleFormSubmit - pageFormData:', pageFormData);
+    console.log("handleFormSubmit - pageFormData:", pageFormData);
 
     try {
       const pageData = await createPage(pageFormData);
@@ -123,4 +123,4 @@ export const CreatePageModal: FC<Props> = (props) => {
       />
     </ModalCore>
   );
-};
+}
