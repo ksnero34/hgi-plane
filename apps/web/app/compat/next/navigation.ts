@@ -8,11 +8,11 @@ export function useRouter() {
     () => ({
       push: (to: string) => {
         // Defer navigation to avoid state updates during render
-        setTimeout(() => navigate(ensureTrailingSlash(to)), 0);
+        setTimeout(() => navigate(to), 0);
       },
       replace: (to: string) => {
         // Defer navigation to avoid state updates during render
-        setTimeout(() => navigate(ensureTrailingSlash(to), { replace: true }), 0);
+        setTimeout(() => navigate(to, { replace: true }), 0);
       },
       back: () => {
         setTimeout(() => navigate(-1), 0);

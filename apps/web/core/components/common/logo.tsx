@@ -25,6 +25,18 @@ export const Logo: React.FC<LogoProps> = ({ logo, size = 16, className = "" }) =
   const { in_use, emoji, icon } = logo;
 
   if (in_use === "emoji" && emoji) {
+    if (emoji.url) {
+      return (
+        <img
+          src={emoji.url}
+          alt={emoji.value || "emoji"}
+          style={{ width: size, height: size }}
+          className={`object-contain ${className}`}
+          draggable={false}
+        />
+      );
+    }
+
     return (
       <span
         style={{ fontSize: size }}

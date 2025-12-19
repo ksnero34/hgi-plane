@@ -12,6 +12,7 @@ import { useWorkspace } from "@/hooks/store/use-workspace";
 // local imports
 import { NotificationContent } from "./content";
 import { NotificationOption } from "./options";
+import { NotificationWorkflowApprovalActions } from "./workflow-approval-actions";
 
 type TNotificationItem = {
   workspaceSlug: string;
@@ -138,6 +139,23 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
               )}
             </div>
           </div>
+
+          {isApprovalRequest && notification?.data?.approval_request && (
+            <NotificationWorkflowApprovalActions
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              approvalRequestId={
+                typeof notification.data.approval_request === "string"
+                  ? notification.data.approval_request
+                  : notification.data.approval_request.id || ""
+              }
+              initialStatus={
+                typeof notification.data.approval_request === "object"
+                  ? (notification.data.approval_request as any)?.status
+                  : undefined
+              }
+            />
+          )}
         </div>
       </div>
     </Row>

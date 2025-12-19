@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useParams } from "next/navigation";
+import { useParams } from "react-router";
 import useSWR from "swr";
 import { observer } from "mobx-react";
 import { useForm } from "react-hook-form";

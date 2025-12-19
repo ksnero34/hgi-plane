@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "react-router";
 import useSWR, { mutate } from "swr";
 // icons
 import { MoveLeft, MoveRight, RefreshCw } from "lucide-react";
@@ -9,6 +9,10 @@ import { MoveLeft, MoveRight, RefreshCw } from "lucide-react";
 import { EXPORTERS_LIST, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/ui";
+import { useTheme } from "next-themes";
+// assets
+import exportsDark from "@/app/assets/empty-state/workspace-settings/exports-dark.webp?url";
+import exportsLight from "@/app/assets/empty-state/workspace-settings/exports-light.webp?url";
 // components
 import { DetailedEmptyState } from "@/components/empty-state/detailed-empty-state-root";
 import { Exporter } from "@/components/exporter/export-modal";
@@ -20,7 +24,6 @@ import { EXPORT_SERVICES_LIST } from "@/constants/fetch-keys";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
-import { useResolvedAssetPath } from "@/hooks/use-resolved-asset-path";
 // services images
 import CSVLogo from "@/app/assets/services/csv.svg";
 import ExcelLogo from "@/app/assets/services/excel.svg";
@@ -51,18 +54,20 @@ export const ProjectExports = observer(() => {
   const per_page = 10;
   const [cursor, setCursor] = useState<string | undefined>(`10:0:0`);
   // router
-  const router = useAppRouter();
+  // router
+  // const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
-  const searchParams = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const provider = searchParams.get("provider");
   // plane hooks
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
   // store hooks
   const { data: currentUser, canPerformAnyCreateAction } = useUser();
   const { allowPermissions } = useUserPermissions();
   const { workspaceProjectIds } = useProject();
   // derived values
-  const resolvedPath = useResolvedAssetPath({ basePath: "/empty-state/workspace-settings/exports" });
+  const resolvedPath = resolvedTheme === "dark" ? exportsDark : exportsLight;
 
   const { data: exporterServices } = useSWR(
     workspaceSlug && cursor ? EXPORT_SERVICES_LIST(workspaceSlug as string, cursor, `${per_page}`) : null,
@@ -77,7 +82,9 @@ export const ProjectExports = observer(() => {
   };
 
   const handleCsvClose = () => {
-    router.replace(`/${workspaceSlug?.toString()}/projects/${projectId}/settings/exports`);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("provider");
+    setSearchParams(newParams, { replace: true });
   };
 
   const hasProjects = workspaceProjectIds && workspaceProjectIds.length > 0;
@@ -128,11 +135,11 @@ export const ProjectExports = observer(() => {
                       variant="primary"
                       className="capitalize"
                       disabled={!canExport}
-                      onClick={() =>
-                        router.push(
-                          `/${workspaceSlug}/projects/${projectId}/settings/exports?provider=${service.provider}`
-                        )
-                      }
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set("provider", service.provider);
+                        setSearchParams(newParams);
+                      }}
                     >
                       {t(service.type)}
                     </Button>

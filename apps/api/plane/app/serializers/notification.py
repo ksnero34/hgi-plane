@@ -17,6 +17,30 @@ class NotificationSerializer(BaseSerializer):
         model = Notification
         fields = "__all__"
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        try:
+            # Check if this is an approval notification with an approval_request ID
+            if (
+                ret.get("data")
+                and isinstance(ret["data"], dict)
+                and "approval_request" in ret["data"]
+                and isinstance(ret["data"]["approval_request"], dict)
+                and "id" in ret["data"]["approval_request"]
+            ):
+                from plane.db.models import WorkflowApprovalRequest
+                
+                approval_id = ret["data"]["approval_request"]["id"]
+                # Fetch only the status to minimize overhead
+                # We use filter().values_list().first() to avoid exceptions and get just the value
+                status = WorkflowApprovalRequest.objects.filter(id=approval_id).values_list('status', flat=True).first()
+                if status:
+                    ret["data"]["approval_request"]["status"] = status
+        except Exception:
+            # Fail silently to avoid breaking the notification list
+            pass
+        return ret
+
 
 class UserNotificationPreferenceSerializer(BaseSerializer):
     class Meta:

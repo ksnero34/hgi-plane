@@ -161,6 +161,7 @@ export const PageDetailsHeader = observer(function PageDetailsHeader() {
                   component={
                     <CustomSearchSelect
                       value={folder.id}
+                      buttonClassName="py-0.5"
                       options={folderLevelOptions}
                       label={
                         <SwitcherLabel

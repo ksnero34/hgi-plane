@@ -273,7 +273,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                     <div className="flex-1">
                       <div className="text-sm text-custom-text-200">{t("accordion_navigation_control")}</div>
                       <div className="text-xs text-custom-text-300">
-                        Feature tabs will appear as nested items under project and acts as accordion.
+                        오버뷰,작업항목,페이지 등 프로젝트의 기능이 사이드바에 아코디언 형태로 표시됩니다.
                       </div>
                     </div>
                   </label>
@@ -290,7 +290,7 @@ export const CustomizeNavigationDialog = observer(function CustomizeNavigationDi
                     <div className="flex-1">
                       <div className="text-sm text-custom-text-200">{t("horizontal_navigation_bar")}</div>
                       <div className="text-xs text-custom-text-300">
-                        Feature tabs will appear as horizontal tabs inside a project.
+                        오버뷰,작업항목,페이지 등 프로젝트의 기능이 상단에 표시됩니다.
                       </div>
                     </div>
                   </label>

@@ -20,6 +20,7 @@ import { Button, ModalCore, EModalPosition, EModalWidth, TextArea } from "@plane
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 // hooks
 import { useWorkflow } from "@/hooks/store/use-workflow";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 
 interface ApprovalRequest {
   id: string;
@@ -80,6 +81,9 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
   const { workspaceSlug, projectId } = useParams();
   // store hooks
   const workflowStore = useWorkflow();
+  const {
+    issue: { fetchIssue },
+  } = useIssueDetail();
   // state
   const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -170,6 +174,25 @@ export const WorkflowApprovalModal = observer(({ isOpen, onClose, onApprovalProc
 
       // Notify parent component
       onApprovalProcessed?.();
+
+      // Refresh issue details
+      const request = approvalRequests.find((r) => r.id === approvalRequestId);
+      if (request && workspaceSlug && projectId) {
+        await fetchIssue(workspaceSlug.toString(), projectId.toString(), request.issue.id);
+      }
+
+      // Refresh issue details locally if visible
+      // We can use a custom event or a store refresh if we can access it.
+      // But this modal is likely opened from a context where we can inject the refresher.
+      // Wait, `onApprovalProcessed` is passed as a prop!
+      // I should check who passes `onApprovalProcessed` to this modal.
+      // If `StateDropdown` passes it, then my previous fix handles it?
+      // No, this is `WorkflowApprovalModal` (the big one), not `WorkflowReviewerModal` (the small one).
+      // The user said: "apps/web/ce/components/issues/workflow-approval-modal.tsx ... 이 파일에서 리뷰어가 승인 완료 시 화면에 반영되게 해야지."
+      // So I need to add refresh logic here.
+      
+      // I will add `useIssueDetail` hook and call `fetchIssue`.
+
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,

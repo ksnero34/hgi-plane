@@ -9,6 +9,7 @@ export default {
     inbox: "받은 편지함",
     workspace: "작업 공간",
     views: "보기",
+    stickies: "스티키",
     analytics: "분석",
     work_items: "작업 항목",
     cycles: "주기",
@@ -2674,4 +2675,13 @@ export default {
     close_button: "네비게이션 패널 닫기",
     outline_floating_button: "개요 열기",
   },
+  // Navigation customization
+  customize_navigation: "내비게이션 사용자 설정",
+  personal: "개인",
+  accordion_navigation_control: "아코디언 사이드바 내비게이션",
+  horizontal_navigation_bar: "탭형 내비게이션",
+  show_limited_projects_on_sidebar: "사이드바에 제한된 프로젝트 표시",
+  enter_number_of_projects: "표시할 프로젝트 수 입력",
+  pin: "고정",
+  unpin: "고정 해제",
 } as const;

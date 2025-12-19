@@ -13,6 +13,7 @@ export type EmojiItem = {
   emoji: string;
   shortcodes: string[];
   tags: string[];
+  fallbackImage?: string;
 };
 
 const updatePosition = (editor: Editor, element: HTMLElement) => {
@@ -204,7 +205,13 @@ export const EmojisListDropdown = forwardRef<EmojiListRef, EmojisListDropdownPro
                 onClick={() => selectItem(index)}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
-                <span className="size-5 grid place-items-center flex-shrink-0 text-base">{item.emoji}</span>
+                <span className="size-5 grid place-items-center flex-shrink-0 text-base">
+                  {item.fallbackImage ? (
+                    <img src={item.fallbackImage} alt={item.emoji} className="size-5 object-contain" draggable={false} />
+                  ) : (
+                    item.emoji
+                  )}
+                </span>
                 <span className="flex-grow truncate">
                   <span className="font-medium">:{item.name}:</span>
                 </span>

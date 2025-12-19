@@ -37,7 +37,7 @@ export const CommentReactions = observer(function CommentReactions(props: TProps
         const users = tooltipContent ? tooltipContent.split(", ") : [];
 
         return {
-          emoji: stringToEmoji(reaction),
+          emoji: reaction,
           count: reactionIds[reaction].length,
           reacted: userReactions?.includes(reaction) || false,
           users: users,
@@ -47,10 +47,8 @@ export const CommentReactions = observer(function CommentReactions(props: TProps
 
   const handleReactionClick = (emoji: string) => {
     if (disabled || !userReactions) return;
-    // Convert emoji back to decimal string format for the API
-    const emojiCodePoints = Array.from(emoji).map((char) => char.codePointAt(0));
-    const reactionString = emojiCodePoints.join("-");
-    activityOperations.react(comment.id, reactionString, userReactions);
+    // emoji is already in decimal string format
+    activityOperations.react(comment.id, emoji, userReactions);
   };
 
   const handleEmojiSelect = (emoji: string) => {

@@ -210,13 +210,13 @@ export const EXPORTERS_LIST = [
     provider: "xlsx",
     type: "export",
     i18n_title: "exporter.excel.title",
-    i18n_description: "exporter.csv.description",
+    i18n_description: "exporter.xlsx.description",
   },
   {
     provider: "json",
     type: "export",
     i18n_title: "exporter.json.title",
-    i18n_description: "exporter.csv.description",
+    i18n_description: "exporter.json.description",
   },
 ];
 

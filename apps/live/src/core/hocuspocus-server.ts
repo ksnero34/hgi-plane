@@ -17,8 +17,6 @@ export const getHocusPocusServer = async () => {
   const extensions = await getExtensions();
   const serverName = process.env.HOSTNAME || uuidv4();
 
-  let lastUpdateTime = 0;
-  const UPDATE_INTERVAL = 1000;
 
   const processTextNode = (textNode: Y.XmlText): boolean => {
     const delta = textNode.toDelta();
@@ -114,15 +112,8 @@ export const getHocusPocusServer = async () => {
       }
     },
     extensions,
-    debounce: 1000,
     onChange: async (data) => {
       try {
-        const now = Date.now();
-        if (now - lastUpdateTime < UPDATE_INTERVAL) {
-          return;
-        }
-        lastUpdateTime = now;
-
         const document = data instanceof Y.Doc ? data : data.document;
 
         if (document instanceof Y.Doc) {
@@ -142,7 +133,7 @@ export const getHocusPocusServer = async () => {
             });
 
             if (hasChanges) {
-              //console.log("[Hocuspocus] Document updated with masked content");
+              // console.log("[Hocuspocus] Document updated with masked content");
             }
           });
         } else {

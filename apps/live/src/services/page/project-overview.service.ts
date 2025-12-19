@@ -67,4 +67,21 @@ export class ProjectOverviewService extends APIService {
         throw appError;
       });
   }
+
+  /**
+   * Fetch project details (used for title sync)
+   */
+  async fetchDetails(_documentName: string): Promise<{ name: string }> {
+    return this.get(this.basePath + "/", {
+      headers: this.getHeader(),
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        const appError = new AppError(error, {
+          context: { operation: "fetchDetails" },
+        });
+        logger.error("Failed to fetch project details for overview", appError);
+        throw appError;
+      });
+  }
 }

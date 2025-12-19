@@ -101,7 +101,7 @@ export const IssueReaction = observer(function IssueReaction(props: TIssueReacti
     return Object.keys(reactionIds)
       .filter((reaction) => reactionIds[reaction]?.length > 0)
       .map((reaction) => ({
-        emoji: stringToEmoji(reaction),
+        emoji: reaction,
         count: reactionIds[reaction].length,
         reacted: userReactions.includes(reaction),
         users: getReactionUsers(reaction),
@@ -110,10 +110,8 @@ export const IssueReaction = observer(function IssueReaction(props: TIssueReacti
 
   const handleReactionClick = (emoji: string) => {
     if (disabled) return;
-    // Convert emoji back to decimal string format for the API
-    const emojiCodePoints = Array.from(emoji).map((char) => char.codePointAt(0));
-    const reactionString = emojiCodePoints.join("-");
-    issueReactionOperations.react(reactionString);
+    // emoji is already in decimal string format
+    issueReactionOperations.react(emoji);
   };
 
   const handleEmojiSelect = (emoji: string) => {

@@ -21,6 +21,7 @@ import emojiRegex from "emoji-regex";
 import { isEmojiSupported } from "is-emoji-supported";
 // helpers
 import { customFindSuggestionMatch } from "@/helpers/find-suggestion-match";
+import { getEmojiImageUrlCandidatesFromEmoji } from "@plane/utils";
 
 // Extended storage type to include our custom forceOpen flag
 export interface ExtendedEmojiStorage extends EmojiStorage {
@@ -98,7 +99,13 @@ export const Emoji = Node.create<EmojiOptions, EmojiStorage>({
     return {
       HTMLAttributes: {},
       // emojis: ,
-      emojis: emojis,
+      emojis: emojis.map((item) => {
+        const fallbackImages = item.emoji ? getEmojiImageUrlCandidatesFromEmoji(item.emoji) : [];
+        return {
+          ...item,
+          fallbackImage: fallbackImages.length > 0 ? fallbackImages[0] : undefined,
+        };
+      }),
       enableEmoticons: false,
       forceFallbackImages: false,
       suggestion: {
@@ -196,7 +203,7 @@ export const Emoji = Node.create<EmojiOptions, EmojiStorage>({
       return ["span", attributes, `:${node.attrs.name}:`];
     }
 
-    const renderFallbackImage = false;
+    const renderFallbackImage = !!emojiItem.fallbackImage;
 
     return [
       "span",
@@ -209,6 +216,8 @@ export const Emoji = Node.create<EmojiOptions, EmojiStorage>({
               draggable: "false",
               loading: "lazy",
               align: "absmiddle",
+              alt: emojiItem.emoji,
+              style: "object-fit: contain; width: 1.25em; height: 1.25em; vertical-align: bottom;", // Added styles for proper sizing
             },
           ]
         : emojiItem.emoji || `:${emojiItem.shortcodes[0]}:`,
