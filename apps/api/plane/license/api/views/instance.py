@@ -388,11 +388,10 @@ class OIDCCallbackAdminEndpoint(View):
             # print("[OIDC Admin Callback] Admin login successful")
 
             # admin 대시보드로 리다이렉트
-            if next_path:
-                url = f"{base_host}{str(next_path)}"
-            else:
-                # 기본 admin 대시보드 URL로 리다이렉트
-                url = f"{base_host}/general"
+            path = str(next_path) if next_path else "general"
+            if path.startswith("/"):
+                path = path[1:]
+            url = f"{base_host}{path}"
 
             # print(f"[OIDC Admin Callback] Redirecting to: {url}")
             return HttpResponseRedirect(url)

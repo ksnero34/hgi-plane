@@ -4,6 +4,8 @@ import { createContext, useContext } from "react";
 import type { IInstance, IInstanceConfig,IFileSettings } from "@plane/types";
 // services
 import { InstanceService } from "@/services/instance.service";
+// constants
+import { MAX_FILE_SIZE } from "@/constants/common";
 
 type TError = {
   status: string;
@@ -20,7 +22,7 @@ const defaultInstanceStore = {
   instance: undefined,
   config: undefined,
   fileSettings: {
-    max_file_size: 5 * 1024 * 1024, // 5MB
+    max_file_size: MAX_FILE_SIZE, // 50MB
     allowed_extensions: ["jpg", "jpeg", "png", "gif", "pdf"]
   },
   error: undefined,
@@ -85,7 +87,7 @@ export class InstanceStore implements IInstanceStore {
     // 기본값으로 초기화
     runInAction(() => {
       this.fileSettings = {
-        max_file_size: 5 * 1024 * 1024,
+        max_file_size: MAX_FILE_SIZE,
         allowed_extensions: ["jpg", "jpeg", "png", "gif", "pdf"]
       };
       console.log("⚠️ Using default file settings initially");

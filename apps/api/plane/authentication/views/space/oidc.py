@@ -92,7 +92,10 @@ class OIDCCallbackSpaceEndpoint(View):
             # Login the user and record his device info
             user_login(request=request, user=user, is_space=True)
             # redirect to referer path
-            url = f"{base_host}{str(next_path) if next_path else ''}"
+            path = str(next_path) if next_path else ""
+            if path.startswith("/"):
+                path = path[1:]
+            url = f"{base_host}{path}"
             return HttpResponseRedirect(url)
         except AuthenticationException as e:
             params = e.get_error_dict()

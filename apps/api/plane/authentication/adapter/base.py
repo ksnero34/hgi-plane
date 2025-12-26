@@ -243,21 +243,24 @@ class Adapter:
                 user.set_password(self.code)
                 user.is_password_autoset = False
 
+            # Get user details from user_data
+            user_info = self.user_data.get("user", {})
+            avatar = user_info.get("avatar", "")
+            first_name = user_info.get("first_name", "")
+            last_name = user_info.get("last_name", "")
+            display_name = user_info.get("display_name", "")
+            user_group = user_info.get("user_group", "")
+
             # Set user details
-            first_name = self.user_data.get("user", {}).get("first_name", "")
-            last_name = self.user_data.get("user", {}).get("last_name", "")
-            display_name = self.user_data.get("user", {}).get("display_name", "")
-            user_group = self.user_data.get("user", {}).get("user_group", "")
-            
             user.avatar = avatar if avatar else ""
             user.first_name = first_name if first_name else ""
             user.last_name = last_name if last_name else ""
             user.user_group = user_group if user_group else ""
-            
+
             if display_name:
                 user.display_name = display_name
                 # print(f"[신규가입] 사용자 {email}의 display_name을 '{display_name}'으로 설정")
-                
+
             user.save()
 
             # Download and upload avatar
