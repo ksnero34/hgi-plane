@@ -4,7 +4,9 @@ from django.template.defaultfilters import slugify
 from django.db.models import Q
 
 # Module imports
+# Module imports
 from .project import ProjectBaseModel
+from plane.db.mixins import SoftDeletionManager
 
 
 class StateGroup(models.TextChoices):
@@ -58,14 +60,14 @@ DEFAULT_STATES = [
 ]
 
 
-class StateManager(models.Manager):
+class StateManager(SoftDeletionManager):
     """Default manager - excludes triage states"""
 
     def get_queryset(self):
         return super().get_queryset().exclude(group=StateGroup.TRIAGE.value)
 
 
-class TriageStateManager(models.Manager):
+class TriageStateManager(SoftDeletionManager):
     """Manager for triage states only"""
 
     def get_queryset(self):

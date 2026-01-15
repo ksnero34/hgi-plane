@@ -13,10 +13,13 @@ import { StateGroupIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useIssues } from "@/hooks/store/use-issues";
 import { useWorkflow } from "@/hooks/store/use-workflow";
 // ui
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { useDropdown } from "@/hooks/use-dropdown";
+// types
+import { EIssuesStoreType } from "@plane/types";
 // Plane-web
 import { StateOption } from "@/plane-web/components/workflow";
 // components
@@ -115,7 +118,17 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     fetchWorkflowStates,
     fetchWorkflowTransitions,
     workflowStates: allWorkflowStates,
+    pendingApprovalIssueIds,
+    fetchPendingApprovals,
   } = useWorkflow();
+
+  // issues store
+  const { issueMap } = useIssues(EIssuesStoreType.PROJECT);
+  // const issue = issueId ? issueMap?.[issueId] : undefined;
+  const isApprovalPending = issueId ? pendingApprovalIssueIds?.[issueId] : false;
+
+  // console.log("StateDropdown Debug:", { issueId, isApprovalPending });
+
   const statesList = stateIds
     ? stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state)
     : getProjectStates(projectId);
@@ -169,7 +182,15 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
     getWorkflowTransitions,
     fetchWorkflowStates,
     fetchWorkflowTransitions,
+    fetchPendingApprovals, // dependency added
   ]);
+
+  // Fetch pending approvals on mount
+  useEffect(() => {
+    if (workspaceSlug && projectId) {
+      fetchPendingApprovals(workspaceSlug.toString(), projectId);
+    }
+  }, [workspaceSlug, projectId, fetchPendingApprovals]);
 
   // Get available states based on workflow rules and new issue creation settings
   const getAvailableStates = useMemo(() => {
@@ -384,20 +405,24 @@ export const StateDropdown: React.FC<Props> = observer((props) => {
           className={cn(
             "clickable block h-full max-w-full outline-none",
             {
-              "cursor-not-allowed text-custom-text-200": disabled,
-              "cursor-pointer": !disabled,
+              "cursor-not-allowed text-custom-text-200": disabled || isApprovalPending,
+              "cursor-pointer": !disabled && !isApprovalPending,
             },
             buttonContainerClassName
           )}
           onClick={handleOnClick}
-          disabled={disabled}
+          disabled={disabled || isApprovalPending}
         >
           <DropdownButton
             className={buttonClassName}
             isActive={isOpen}
             tooltipHeading={t("state")}
-            tooltipContent={selectedState?.name ?? t("state")}
-            showTooltip={showTooltip}
+            tooltipContent={
+              isApprovalPending
+                ? "승인 대기 중"
+                : selectedState?.name ?? t("state")
+            }
+            showTooltip={showTooltip || !!isApprovalPending}
             variant={buttonVariant}
             renderToolTipByDefault={renderByDefault}
           >

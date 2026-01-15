@@ -1,12 +1,13 @@
 import { observer } from "mobx-react";
 // plane imports
 import { PriorityIcon, StateGroupIcon } from "@plane/propel/icons";
-import type { TIssue, TStateGroups } from "@plane/types";
+import type { TIssue, TStateGroups, TCustomField, IIssueDisplayProperties } from "@plane/types";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web imports
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
+import { IssueCustomFieldProperties } from "../issue-layouts/properties/custom-field-properties";
 // local imports
 import { WorkItemPreviewCardDate } from "./date";
 
@@ -17,11 +18,15 @@ type Props = {
     id?: string;
     name?: string;
   };
-  workItem: Pick<TIssue, "id" | "name" | "sequence_id" | "priority" | "start_date" | "target_date" | "type_id">;
+  workItem: TIssue;
+  customFields?: TCustomField[];
+  displayProperties?: IIssueDisplayProperties;
+  updateIssue?: (projectId: string | null, issueId: string, data: Partial<TIssue>) => Promise<void>;
+  isReadOnly?: boolean;
 };
 
 export const WorkItemPreviewCard = observer(function WorkItemPreviewCard(props: Props) {
-  const { projectId, stateDetails, workItem } = props;
+  const { projectId, stateDetails, workItem, customFields, displayProperties, updateIssue, isReadOnly = true } = props;
   // store hooks
   const { getProjectIdentifierById } = useProject();
   const { getStateById } = useProjectState();
@@ -56,6 +61,16 @@ export const WorkItemPreviewCard = observer(function WorkItemPreviewCard(props: 
           startDate={workItem.start_date}
           stateGroup={stateGroup}
           targetDate={workItem.target_date}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <IssueCustomFieldProperties
+          issue={workItem}
+          customFields={customFields}
+          displayProperties={displayProperties}
+          updateIssue={updateIssue}
+          isReadOnly={isReadOnly}
+          activeLayout="Calendar"
         />
       </div>
     </div>

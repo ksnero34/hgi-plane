@@ -13,7 +13,7 @@ services:
       - dev_env
     depends_on:
       - api
-    image: harbor.hwgeneralins.com/plane/web:1.2.2
+    image: harbor.hwgeneralins.com/plane/web:1.2.3
 
   admin:
     container_name: admin
@@ -70,7 +70,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.2.2
+    image: harbor.hwgeneralins.com/plane/api:1.2.4
 
   worker:
     container_name: bgworker
@@ -85,7 +85,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.2.2
+    image: harbor.hwgeneralins.com/plane/api:1.2.4
 
   beat-worker:
     container_name: beatworker
@@ -100,7 +100,7 @@ services:
       - plane-db
       - plane-redis
       - plane-mq
-    image: harbor.hwgeneralins.com/plane/api:1.2.2
+    image: harbor.hwgeneralins.com/plane/api:1.2.4
 
   migrator:
     container_name: plane-migrator
@@ -113,7 +113,7 @@ services:
     depends_on:
       - plane-db
       - plane-redis
-    image: harbor.hwgeneralins.com/plane/api:1.2.2
+    image: harbor.hwgeneralins.com/plane/api:1.2.4
 
   live:
     container_name: plane-live

@@ -1,6 +1,6 @@
 import { observer } from "mobx-react";
 // plane imports
-import type { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate, ICalendarWeek } from "@plane/types";
+import type { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate, ICalendarWeek, TCustomField } from "@plane/types";
 import { cn, getOrderedDays, renderFormattedPayloadDate } from "@plane/utils";
 // hooks
 import { useUserProfile } from "@/hooks/store/user";
@@ -37,6 +37,7 @@ type Props = {
   setSelectedDate: (date: Date) => void;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 };
 
 export const CalendarWeekDays = observer(function CalendarWeekDays(props: Props) {
@@ -59,6 +60,7 @@ export const CalendarWeekDays = observer(function CalendarWeekDays(props: Props)
     setSelectedDate,
     canEditProperties,
     isEpic = false,
+    customFields,
   } = props;
   // hooks
   const { data } = useUserProfile();
@@ -109,6 +111,7 @@ export const CalendarWeekDays = observer(function CalendarWeekDays(props: Props)
             handleDragAndDrop={handleDragAndDrop}
             canEditProperties={canEditProperties}
             isEpic={isEpic}
+            customFields={customFields}
           />
         );
       })}

@@ -70,10 +70,15 @@ class IssueSerializer(BaseSerializer):
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
 
+    is_approval_pending = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Issue
         read_only_fields = ["id", "workspace", "project", "updated_by", "updated_at"]
         exclude = ["description", "description_stripped"]
+    
+    def get_is_approval_pending(self, obj):
+        return obj.workflow_approval_requests.filter(status="pending").exists()
 
     def validate(self, data):
         if (
@@ -781,6 +786,10 @@ class IssueExpandSerializer(BaseSerializer):
     labels = serializers.SerializerMethodField()
     assignees = serializers.SerializerMethodField()
     state = StateLiteSerializer(read_only=True)
+    is_approval_pending = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_approval_pending(self, obj):
+        return obj.workflow_approval_requests.filter(status="pending").exists()
 
     def get_labels(self, obj):
         expand = self.context.get("expand", [])

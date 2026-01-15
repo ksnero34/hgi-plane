@@ -5,12 +5,13 @@ import { MoreHorizontal } from "lucide-react";
 // plane imports
 import { useOutsideClickDetector } from "@plane/hooks";
 import { Popover } from "@plane/propel/popover";
-import type { TIssue } from "@plane/types";
+import type { TIssue, TCustomField } from "@plane/types";
 import { ControlLink } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
+import { useIssuesActions } from "@/hooks/use-issues-actions";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
@@ -28,11 +29,13 @@ type Props = {
   quickActions: TRenderQuickActions;
   isDragging?: boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
+  isReadOnly?: boolean;
 };
 
 export const CalendarIssueBlock = observer(
   forwardRef(function CalendarIssueBlock(props: Props, ref: React.ForwardedRef<HTMLAnchorElement>) {
-    const { issue, quickActions, isDragging = false, isEpic = false } = props;
+    const { issue, quickActions, isDragging = false, isEpic = false, customFields, isReadOnly = true } = props;
     // states
     const [isMenuActive, setIsMenuActive] = useState(false);
     // refs
@@ -46,6 +49,7 @@ export const CalendarIssueBlock = observer(
     const { isMobile } = usePlatformOS();
     const storeType = useIssueStoreType() as CalendarStoreType;
     const { issuesFilter } = useIssues(storeType);
+    const { updateIssue } = useIssuesActions(storeType);
     const { getProjectIdentifierById } = useProject();
 
     const stateColor = getProjectStates(issue?.project_id)?.find((state) => state?.id == issue?.state_id)?.color || "";
@@ -160,6 +164,10 @@ export const CalendarIssueBlock = observer(
                   id: issue.state_id ?? undefined,
                 }}
                 workItem={issue}
+                customFields={customFields}
+                displayProperties={issuesFilter?.issueFilters?.displayProperties}
+                updateIssue={updateIssue}
+                isReadOnly={isReadOnly}
               />
             )}
           </>

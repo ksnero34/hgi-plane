@@ -12,6 +12,7 @@ import type {
   TPaginationData,
   ICalendarWeek,
   TSupportedFilterForUpdate,
+  TCustomField,
 } from "@plane/types";
 import { EIssuesStoreType, EIssueLayoutTypes } from "@plane/types";
 // ui
@@ -65,6 +66,7 @@ type Props = {
   ) => Promise<void>;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;
+  customFields: TCustomField[];
 };
 
 export const CalendarChart = observer(function CalendarChart(props: Props) {
@@ -86,6 +88,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
     canEditProperties,
     readOnly = false,
     isEpic = false,
+    customFields,
   } = props;
   // states
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -170,6 +173,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
                         readOnly={readOnly}
                         canEditProperties={canEditProperties}
                         isEpic={isEpic}
+                        customFields={customFields}
                       />
                     ))}
                 </div>
@@ -194,6 +198,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
                   readOnly={readOnly}
                   canEditProperties={canEditProperties}
                   isEpic={isEpic}
+                  customFields={customFields}
                 />
               )}
             </div>
@@ -219,6 +224,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
                 isDragDisabled
                 isMobileView
                 isEpic={isEpic}
+                customFields={customFields}
               />
             </div>
           </div>
@@ -245,6 +251,7 @@ export const CalendarChart = observer(function CalendarChart(props: Props) {
             isDragDisabled
             isMobileView
             isEpic={isEpic}
+            customFields={customFields}
           />
         </div>
       </div>

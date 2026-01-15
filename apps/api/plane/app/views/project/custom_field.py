@@ -48,13 +48,11 @@ class CustomFieldViewSet(BaseViewSet):
             custom_field=instance,
             deleted_at__isnull=True
         ).update(
-            deleted_at=timezone.now(),
-            deleted_by=self.request.user
+            deleted_at=timezone.now()
         )
         
         # 2. CustomField 소프트 삭제
         instance.deleted_at = timezone.now()
-        instance.deleted_by = self.request.user
         instance.save()
 
     def bulk_create(self, request, slug, project_id):

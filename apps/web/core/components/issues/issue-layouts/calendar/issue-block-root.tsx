@@ -9,6 +9,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { HIGHLIGHT_CLASS } from "../utils";
 import { CalendarIssueBlock } from "./issue-block";
+import type { TCustomField } from "@plane/types";
 // types
 
 type Props = {
@@ -17,10 +18,11 @@ type Props = {
   isDragDisabled: boolean;
   isEpic?: boolean;
   canEditProperties: (projectId: string | undefined) => boolean;
+  customFields?: TCustomField[];
 };
 
 export const CalendarIssueBlockRoot = observer(function CalendarIssueBlockRoot(props: Props) {
-  const { issueId, quickActions, isDragDisabled, isEpic = false, canEditProperties } = props;
+  const { issueId, quickActions, isDragDisabled, isEpic = false, canEditProperties, customFields } = props;
 
   const issueRef = useRef<HTMLAnchorElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -62,10 +64,12 @@ export const CalendarIssueBlockRoot = observer(function CalendarIssueBlockRoot(p
   return (
     <CalendarIssueBlock
       isDragging={isDragging}
+      isReadOnly={!canEditProperties(issue.project_id)}
       issue={issue}
       quickActions={quickActions}
       ref={issueRef}
       isEpic={isEpic}
+      customFields={customFields}
     />
   );
 });

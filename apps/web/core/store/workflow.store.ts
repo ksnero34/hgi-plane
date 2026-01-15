@@ -150,6 +150,7 @@ export interface IWorkflowStore {
     previous: boolean;
     results: any[];
   }>;
+  fetchPendingApprovals: (workspaceSlug: string, projectId: string) => Promise<void>;
 }
 
 export class WorkflowStore implements IWorkflowStore {
@@ -157,7 +158,9 @@ export class WorkflowStore implements IWorkflowStore {
   workflowTemplates: Record<string, IWorkflowTemplate[]> = {};
   workflowStates: Record<string, IWorkflowState[]> = {};
   workflowTransitions: Record<string, IWorkflowTransition[]> = {};
+  pendingApprovalsLoading: Record<string, boolean> = {}; // projectId -> boolean
   workflowAssignmentRules: Record<string, IWorkflowAssignmentRule[]> = {};
+  pendingApprovalIssueIds: Record<string, boolean> = {}; // issueId -> true if pending
 
   // services
   workflowService;
@@ -169,6 +172,7 @@ export class WorkflowStore implements IWorkflowStore {
       workflowStates: observable,
       workflowTransitions: observable,
       workflowAssignmentRules: observable,
+      pendingApprovalIssueIds: observable,
 
       // computed
       getWorkflowTemplates: computed,
@@ -208,6 +212,7 @@ export class WorkflowStore implements IWorkflowStore {
       rejectTransition: action,
       applyWorkflowToAllIssues: action,
       getApprovalRequests: action,
+      fetchPendingApprovals: action,
     });
 
     this.workflowService = new WorkflowService();
@@ -711,6 +716,38 @@ export class WorkflowStore implements IWorkflowStore {
     } catch (error) {
       console.error("Error fetching approval requests:", error);
       throw error;
+    }
+  };
+  // Fetch all pending approvals for a project to efficiently check status
+  fetchPendingApprovals = async (workspaceSlug: string, projectId: string): Promise<void> => {
+    if (this.pendingApprovalsLoading[projectId]) return;
+
+    try {
+      this.pendingApprovalsLoading[projectId] = true;
+      // Fetch pending requests with a large page size to cover most cases
+      // In a real generic implementation, we might need to handle pagination or use a specific lightweight endpoint
+      const response = await this.workflowService.getApprovalRequests(
+        workspaceSlug,
+        projectId,
+        1,
+        100, // page size
+        "pending"
+      );
+      
+      runInAction(() => {
+        // Let's iterate and set
+        response.results.forEach((request: any) => {
+          if (request.status === "pending" && request.issue?.id) {
+            this.pendingApprovalIssueIds[request.issue.id] = true;
+          }
+        });
+        this.pendingApprovalsLoading[projectId] = false;
+      });
+    } catch (error) {
+      console.error("Error fetching pending approvals:", error);
+      runInAction(() => { 
+        this.pendingApprovalsLoading[projectId] = false;
+      });
     }
   };
 }

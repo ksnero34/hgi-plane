@@ -4,7 +4,7 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { differenceInCalendarDays } from "date-fns/differenceInCalendarDays";
 import { observer } from "mobx-react";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate } from "@plane/types";
+import type { TGroupedIssues, TIssue, TIssueMap, TPaginationData, ICalendarDate, TCustomField } from "@plane/types";
 // types
 // ui
 // components
@@ -46,6 +46,7 @@ type Props = {
   setSelectedDate: (date: Date) => void;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 };
 
 export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
@@ -68,6 +69,7 @@ export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
     setSelectedDate,
     canEditProperties,
     isEpic = false,
+    customFields,
   } = props;
 
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -190,6 +192,7 @@ export const CalendarDayTile = observer(function CalendarDayTile(props: Props) {
               readOnly={readOnly}
               canEditProperties={canEditProperties}
               isEpic={isEpic}
+              customFields={customFields}
             />
           </div>
         </div>

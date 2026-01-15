@@ -13,6 +13,7 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
+import { useCustomField } from "@/hooks/store/use-custom-field";
 // types
 import type { IQuickActionProps } from "../list/list-view-types";
 import { CalendarChart } from "./calendar";
@@ -47,7 +48,7 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
   } = props;
 
   // router
-  const { workspaceSlug } = useParams();
+  const { workspaceSlug, projectId } = useParams();
 
   // hooks
   const fallbackStoreType = useIssueStoreType() as CalendarStoreType;
@@ -65,6 +66,7 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
     restoreIssue,
     updateFilters,
   } = useIssuesActions(storeType);
+  const { customFields } = useCustomField(projectId?.toString());
 
   const issueCalendarView = useCalendarView();
 
@@ -183,6 +185,7 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
           handleDragAndDrop={handleDragAndDrop}
           canEditProperties={canEditProperties}
           isEpic={isEpic}
+          customFields={customFields}
         />
       </div>
     </>

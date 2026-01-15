@@ -1,6 +1,6 @@
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
-import type { TIssue, TPaginationData } from "@plane/types";
+import type { TIssue, TPaginationData, TCustomField } from "@plane/types";
 // components
 import { renderFormattedPayloadDate } from "@plane/utils";
 // helpers
@@ -26,6 +26,7 @@ type Props = {
   isMobileView?: boolean;
   canEditProperties: (projectId: string | undefined) => boolean;
   isEpic?: boolean;
+  customFields?: TCustomField[];
 };
 
 export const CalendarIssueBlocks = observer(function CalendarIssueBlocks(props: Props) {
@@ -43,6 +44,7 @@ export const CalendarIssueBlocks = observer(function CalendarIssueBlocks(props: 
     isMobileView = false,
     canEditProperties,
     isEpic = false,
+    customFields,
   } = props;
   const formattedDatePayload = renderFormattedPayloadDate(date);
   const { t } = useTranslation();
@@ -72,6 +74,7 @@ export const CalendarIssueBlocks = observer(function CalendarIssueBlocks(props: 
             isDragDisabled={isDragDisabled || isMobileView}
             canEditProperties={canEditProperties}
             isEpic={isEpic}
+            customFields={customFields}
           />
         </div>
       ))}

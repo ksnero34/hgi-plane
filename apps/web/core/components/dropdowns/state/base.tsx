@@ -20,6 +20,8 @@ import { WorkflowReviewerModal } from "@/components/project/settings/workflow-re
 // hooks
 import { useDropdown } from "@/hooks/use-dropdown";
 import { useWorkflow } from "@/hooks/store/use-workflow";
+import { useIssues } from "@/hooks/store/use-issues";
+import { EIssuesStoreType } from "@plane/types";
 // plane web imports
 import { StateOption } from "@/plane-web/components/workflow";
 
@@ -101,12 +103,21 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
   const { workspaceSlug } = useParams();
   const {
     getDefaultWorkflow,
-    getWorkflowTransitions,
     getWorkflowStates,
+    getWorkflowTransitions,
     fetchWorkflowStates,
     fetchWorkflowTransitions,
     validateTransition,
+    pendingApprovalIssueIds,
+    fetchPendingApprovals,
   } = useWorkflow();
+
+  // issues store
+  const { issueMap } = useIssues(EIssuesStoreType.PROJECT);
+  // const issue = issueId ? issueMap?.[issueId] : undefined;
+  const isApprovalPending = issueId ? pendingApprovalIssueIds?.[issueId] : false;
+
+  // console.log("StateDropdownBase Debug:", { issueId, isApprovalPending });
 
   const statesList = stateIds.map((stateId) => getStateById(stateId)).filter((state) => !!state);
   const defaultState = statesList?.find((state) => state?.default);
@@ -133,6 +144,13 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
   const workflowTransitionsSignature = workflowTransitions
     .map((transition) => `${transition.id}:${transition.from_state}->${transition.to_state}`)
     .join("|");
+
+  // Fetch pending approvals on mount
+  useEffect(() => {
+    if (workspaceSlug && projectId) {
+      fetchPendingApprovals(workspaceSlug.toString(), projectId);
+    }
+  }, [workspaceSlug, projectId, fetchPendingApprovals]);
 
   const selectedState = stateValue ? getStateById(stateValue) : undefined;
 
@@ -342,20 +360,24 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
           className={cn(
             "clickable block h-full max-w-full outline-none",
             {
-              "cursor-not-allowed text-custom-text-200": disabled,
-              "cursor-pointer": !disabled,
+              "cursor-not-allowed text-custom-text-200": disabled || isApprovalPending,
+              "cursor-pointer": !disabled && !isApprovalPending,
             },
             buttonContainerClassName
           )}
           onClick={handleOnClick}
-          disabled={disabled}
+          disabled={disabled || isApprovalPending}
         >
           <DropdownButton
             className={buttonClassName}
             isActive={isOpen}
             tooltipHeading={t("state")}
-            tooltipContent={selectedState?.name ?? t("state")}
-            showTooltip={showTooltip}
+            tooltipContent={
+              isApprovalPending
+                ? "승인 대기 중"
+                : selectedState?.name ?? t("state")
+            }
+            showTooltip={showTooltip || !!isApprovalPending}
             variant={buttonVariant}
             renderToolTipByDefault={renderByDefault}
           >
@@ -396,7 +418,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
         className={cn("h-full", className)}
         value={stateValue}
         onChange={dropdownOnChange}
-        disabled={disabled}
+        disabled={disabled || isApprovalPending}
         onKeyDown={handleKeyDown}
         button={comboButton}
         renderByDefault={renderByDefault}
