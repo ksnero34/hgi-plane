@@ -51,7 +51,15 @@ export const CalendarIssueBlocks = observer(function CalendarIssueBlocks(props: 
 
   const {
     issues: { getGroupIssueCount, getPaginationData, getIssueLoader },
+    issueMap,
   } = useIssuesStore();
+
+  const sortedIssueIdList = [...(issueIdList ?? [])].sort((a, b) => {
+    const issueA = issueMap?.[a];
+    const issueB = issueMap?.[b];
+    if (!issueA || !issueB) return 0;
+    return (issueA.name || "").localeCompare(issueB.name || "");
+  });
 
   if (!formattedDatePayload) return null;
 
@@ -61,12 +69,12 @@ export const CalendarIssueBlocks = observer(function CalendarIssueBlocks(props: 
 
   const shouldLoadMore =
     nextPageResults === undefined && dayIssueCount !== undefined
-      ? issueIdList?.length < dayIssueCount
+      ? sortedIssueIdList?.length < dayIssueCount
       : !!nextPageResults;
 
   return (
     <>
-      {issueIdList?.map((issueId) => (
+      {sortedIssueIdList?.map((issueId) => (
         <div key={issueId} className="relative cursor-pointer p-1 px-2">
           <CalendarIssueBlockRoot
             issueId={issueId}

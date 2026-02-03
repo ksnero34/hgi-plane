@@ -90,7 +90,7 @@ export const BaseCalendarRoot = observer(function BaseCalendarRoot(props: IBaseC
         "init-loader",
         {
           canGroup: true,
-          perPageCount: layout === "month" ? 4 : 30,
+          perPageCount: layout === "month" ? 300 : 30,
           before: endDate,
           after: startDate,
           groupedBy: EIssueGroupByToServerOptions["target_date"],
